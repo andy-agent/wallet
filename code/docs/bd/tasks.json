@@ -5,11 +5,12 @@
   "updated_at": "2026-03-29T21:40:00+08:00",
   "status": "security_audit_v2_completed",
   "summary": {
-    "total": 43,
-    "completed": 43,
+    "total": 55,
+    "completed": 55,
     "pending": 0,
     "critical_fixed": 7,
-    "high_pending": 5
+    "high_fixed": 5,
+    "medium_fixed": 9
   },
   "phases": {
     "A": {"name": "需求固化", "total": 3, "completed": 3},
@@ -23,7 +24,9 @@
     "I": {"name": "Android补充", "total": 4, "completed": 4},
     "J": {"name": "区块链集成", "total": 5, "completed": 5},
     "K": {"name": "安全审计", "total": 3, "completed": 3},
-    "L": {"name": "安全修复", "total": 4, "completed": 4}
+    "L": {"name": "安全修复", "total": 4, "completed": 4},
+    "M": {"name": "安全修复-P1", "total": 5, "completed": 5},
+    "N": {"name": "安全修复-P2", "total": 7, "completed": 7}
   },
   "git": {
     "commit": "4ab4d0f",
@@ -74,6 +77,18 @@
     {"id": "L-1", "phase": "安全修复", "title": "Fix: HTTP资源泄漏", "status": "completed", "details": "scanner.py + fulfillment.py try/finally修复"},
     {"id": "L-2", "phase": "安全修复", "title": "Fix: 金融精度问题", "status": "completed", "details": "float → Decimal"},
     {"id": "L-3", "phase": "安全修复", "title": "Fix: JWT认证", "status": "completed", "details": "静态Token → JWT多用户认证"},
-    {"id": "L-4", "phase": "安全修复", "title": "Fix: Android安全问题", "status": "completed", "details": "内存泄漏 + SSL固定 + 错误处理"}
+    {"id": "L-4", "phase": "安全修复", "title": "Fix: Android安全问题", "status": "completed", "details": "内存泄漏 + SSL固定 + 错误处理"},
+    {"id": "M-1", "phase": "安全修复-P1", "title": "Fix: RBAC授权", "status": "completed", "details": "require_permission()依赖"},
+    {"id": "M-2", "phase": "安全修复-P1", "title": "Fix: 金额验证", "status": "completed", "details": "Decimal + gt=0验证"},
+    {"id": "M-3", "phase": "安全修复-P1", "title": "Fix: Tron确认逻辑", "status": "completed", "details": "实际区块高度计算"},
+    {"id": "M-4", "phase": "安全修复-P1", "title": "Fix: 竞态条件", "status": "completed", "details": "SELECT FOR UPDATE"},
+    {"id": "M-5", "phase": "安全修复-P1", "title": "Fix: CancellationException", "status": "completed", "details": "正确传播取消"},
+    {"id": "N-1", "phase": "安全修复-P2", "title": "Fix: 限流", "status": "completed", "details": "sliding window rate limiting"},
+    {"id": "N-2", "phase": "安全修复-P2", "title": "Fix: 字典安全", "status": "completed", "details": "安全访问+长度检查"},
+    {"id": "N-3", "phase": "安全修复-P2", "title": "Fix: 错误处理", "status": "completed", "details": "区分404和RPC错误"},
+    {"id": "N-4", "phase": "安全修复-P2", "title": "Fix: JWT过期", "status": "completed", "details": "30天→1小时"},
+    {"id": "N-5", "phase": "安全修复-P2", "title": "Fix: Android改进", "status": "completed", "details": "SupervisorJob+MMKV+ISO日期+头部"},
+    {"id": "N-6", "phase": "安全修复-P2", "title": "Fix: API URL TODO", "status": "completed", "details": "添加配置注释"},
+    {"id": "N-7", "phase": "安全修复-P2", "title": "审计v3.0", "status": "completed", "details": "最终审计报告"}
   ]
 }
