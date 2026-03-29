@@ -5,9 +5,21 @@
   "updated_at": "2026-03-29T21:40:00+08:00",
   "status": "completed_and_synced",
   "summary": {
-    "total": 31,
-    "completed": 31,
+    "total": 36,
+    "completed": 36,
     "pending": 0
+  },
+  "phases": {
+    "A": {"name": "需求固化", "total": 3, "completed": 3},
+    "B": {"name": "服务端骨架", "total": 2, "completed": 2},
+    "C": {"name": "客户端API", "total": 4, "completed": 4},
+    "D": {"name": "支付核心", "total": 5, "completed": 5},
+    "E": {"name": "Marzban集成", "total": 3, "completed": 3},
+    "F": {"name": "管理端", "total": 2, "completed": 2},
+    "G": {"name": "Android客户端", "total": 5, "completed": 5},
+    "H": {"name": "部署", "total": 3, "completed": 3},
+    "I": {"name": "Android补充", "total": 4, "completed": 4},
+    "J": {"name": "区块链集成", "total": 5, "completed": 5}
   },
   "git": {
     "commit": "4ab4d0f",
@@ -46,6 +58,11 @@
     {"id": "I-1", "phase": "Android补充", "title": "Layout布局文件", "status": "completed"},
     {"id": "I-2", "phase": "Android补充", "title": "AndroidManifest配置", "status": "completed"},
     {"id": "I-3", "phase": "Android补充", "title": "Gradle依赖配置", "status": "completed"},
-    {"id": "I-4", "phase": "Android补充", "title": "MainActivity入口集成", "status": "completed"}
+    {"id": "I-4", "phase": "Android补充", "title": "MainActivity入口集成", "status": "completed"},
+    {"id": "J-1", "phase": "区块链集成", "title": "Solana RPC客户端", "status": "completed", "details": "支持主网/开发网RPC调用，含Mock模式"},
+    {"id": "J-2", "phase": "区块链集成", "title": "Tron TRC20客户端", "status": "completed", "details": "支持USDT TRC20转账检测，含Mock模式"},
+    {"id": "J-3", "phase": "区块链集成", "title": "区块扫描Worker", "status": "completed", "details": "5个定时任务：待支付扫描、交易确认、订单过期、地址释放、订单履行"},
+    {"id": "J-4", "phase": "区块链集成", "title": "区块链配置部署", "status": "completed", "details": "Docker Compose配置RPC节点、环境变量、地址池管理"},
+    {"id": "J-5", "phase": "区块链集成", "title": "链上支付检测", "status": "completed", "details": "支持SOL和USDT-TRC20支付检测，金额容差处理"}
   ]
 }
