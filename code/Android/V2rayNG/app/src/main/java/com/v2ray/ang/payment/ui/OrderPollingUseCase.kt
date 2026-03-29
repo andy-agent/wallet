@@ -18,7 +18,7 @@ class OrderPollingUseCase(
     private val callbackRef = WeakReference(callback)
     
     private fun getCallback(): PollingCallback? = callbackRef.get()
-    private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var pollingJob: Job? = null
     private val handler = Handler(Looper.getMainLooper())
     
@@ -128,6 +128,9 @@ class OrderPollingUseCase(
                     // 出错后继续轮询
                     scheduleNextPoll(orderId)
                 }
+            } catch (e: CancellationException) {
+                // Re-throw to properly propagate coroutine cancellation
+                throw e
             } catch (e: Exception) {
                 getCallback()?.onError(e.message ?: "未知错误")
                 scheduleNextPoll(orderId)

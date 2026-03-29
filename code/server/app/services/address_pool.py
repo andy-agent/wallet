@@ -18,7 +18,7 @@
 - 同一订单只能分配一个地址
 - 使用数据库唯一约束: allocated_order_id
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from sqlalchemy import select, update
@@ -89,7 +89,7 @@ class AddressPoolService:
         # 分配地址给订单
         address.status = AddressStatus.ALLOCATED
         address.allocated_order_id = order_id
-        address.allocated_at = datetime.utcnow()
+        address.allocated_at = datetime.now(timezone.utc)
         
         await self.session.flush()
         

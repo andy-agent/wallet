@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.exceptions import NotFoundException, UnauthorizedException, ForbiddenException
+from app.core.rate_limit import admin_rate_limit, strict_rate_limit
 from app.models.order import Order
 from app.models.plan import Plan
 from app.schemas.base import Response, Pagination, PaginatedResponse
@@ -163,7 +164,8 @@ async def list_orders(
     page: int = Query(1, ge=1, description="页码"),
     size: int = Query(20, ge=1, le=100, description="每页数量"),
     db: AsyncSession = Depends(get_db),
-    admin_token: AdminTokenPayload = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = Depends(verify_admin_token),
+    _: None = Depends(admin_rate_limit)
 ) -> PaginatedResponse[OrderListItem]:
     """
     获取订单列表（分页）
@@ -259,7 +261,8 @@ async def list_orders(
 async def get_order(
     order_id: str,
     db: AsyncSession = Depends(get_db),
-    admin_token: AdminTokenPayload = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = Depends(verify_admin_token),
+    _: None = Depends(admin_rate_limit)
 ) -> Response[OrderDetailResponse]:
     """
     获取订单详情
@@ -325,7 +328,8 @@ async def get_order(
 )
 async def get_order_stats(
     db: AsyncSession = Depends(get_db),
-    admin_token: AdminTokenPayload = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = Depends(verify_admin_token),
+    _: None = Depends(admin_rate_limit)
 ) -> Response[OrderStatsResponseData]:
     """
     获取订单统计

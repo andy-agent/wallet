@@ -30,6 +30,14 @@ class PaymentRepository(context: Context) {
 
         val client = OkHttpClient.Builder()
             .certificatePinner(certificatePinner)
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .addHeader("User-Agent", "V2rayNG/${BuildConfig.VERSION_NAME} (Android)")
+                    .addHeader("Accept", "application/json")
+                    .addHeader("X-Client-Version", BuildConfig.VERSION_NAME)
+                    .build()
+                chain.proceed(request)
+            }
             .build()
 
         Retrofit.Builder()
@@ -41,16 +49,27 @@ class PaymentRepository(context: Context) {
     }
 
     private val mmkv = MmkvManager.mmkv
+    
+    // In-memory fallback when MMKV is unavailable
+    private var cachedDeviceId: String? = null
 
     /**
      * 获取设备唯一ID
      */
     fun getDeviceId(): String {
+        // Return cached value if available (handles MMKV null case)
+        cachedDeviceId?.let { return it }
+        
+        // Try to get from MMKV
         var deviceId = mmkv?.decodeString(PaymentConfig.Prefs.DEVICE_ID)
+        
         if (deviceId == null) {
             deviceId = UUID.randomUUID().toString()
             mmkv?.encode(PaymentConfig.Prefs.DEVICE_ID, deviceId)
         }
+        
+        // Cache in memory to avoid regenerating if MMKV is null
+        cachedDeviceId = deviceId
         return deviceId
     }
 

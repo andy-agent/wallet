@@ -1,10 +1,11 @@
 """
 Admin Order Actions API - 异常订单处理
 """
+from decimal import Decimal
 from typing import List, Optional
 
 import jwt
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +14,7 @@ from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.exceptions import UnauthorizedException, NotFoundException, ValidationException, ForbiddenException
 from app.core.logging import get_logger
+from app.core.rate_limit import strict_rate_limit
 from app.models.order import Order
 from app.schemas.base import Response
 from app.services.fulfillment import FulfillmentService
@@ -30,6 +32,23 @@ class AdminTokenPayload(BaseModel):
     admin_id: str
     role: str
     permissions: List[str]
+
+
+def require_permission(permission: str):
+    """
+    Dependency factory that checks if the admin has the required permission.
+    
+    Args:
+        permission: The required permission string (e.g., "orders:confirm")
+        
+    Returns:
+        Depends: FastAPI dependency that validates the permission
+    """
+    def checker(token: AdminTokenPayload = Depends(verify_admin_token)) -> AdminTokenPayload:
+        if permission not in token.permissions:
+            raise HTTPException(status_code=403, detail=f"Missing permission: {permission}")
+        return token
+    return Depends(checker)
 
 
 def verify_admin_token(authorization: str = Header(None)) -> AdminTokenPayload:
@@ -85,7 +104,7 @@ def verify_admin_token(authorization: str = Header(None)) -> AdminTokenPayload:
 class ManualConfirmRequest(BaseModel):
     """人工确认支付请求"""
     tx_hash: str = Field(..., description="交易哈希")
-    amount_crypto: str = Field(..., description="实际支付金额")
+    amount_crypto: Decimal = Field(..., gt=0, description="实际支付金额，必须为正数")
     note: Optional[str] = Field(None, description="备注")
 
 
@@ -106,7 +125,8 @@ async def manual_confirm_payment(
     order_id: str,
     request: ManualConfirmRequest,
     db: AsyncSession = Depends(get_db),
-    admin_token: AdminTokenPayload = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = require_permission("orders:confirm"),
+    _: None = Depends(strict_rate_limit)
 ):
     """
     人工确认支付（用于异常单处理）
@@ -177,7 +197,8 @@ async def manual_confirm_payment(
 async def retry_fulfill_order(
     order_id: str,
     db: AsyncSession = Depends(get_db),
-    admin_token: AdminTokenPayload = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = require_permission("orders:fulfill"),
+    _: None = Depends(strict_rate_limit)
 ):
     """
     重试开通账号
@@ -274,7 +295,8 @@ async def mark_order_ignore(
     order_id: str,
     request: MarkIgnoreRequest,
     db: AsyncSession = Depends(get_db),
-    admin_token: AdminTokenPayload = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = require_permission("orders:ignore"),
+    _: None = Depends(strict_rate_limit)
 ):
     """
     标记订单为忽略
@@ -337,7 +359,8 @@ async def mark_order_ignore(
 async def mark_order_refund(
     order_id: str,
     db: AsyncSession = Depends(get_db),
-    admin_token: AdminTokenPayload = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = require_permission("orders:refund"),
+    _: None = Depends(strict_rate_limit)
 ):
     """
     标记订单为待退款

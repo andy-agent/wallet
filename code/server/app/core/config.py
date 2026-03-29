@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # JWT
     jwt_secret: str = Field(alias="JWT_SECRET")
     jwt_algorithm: str = "HS256"
-    jwt_access_token_expire_minutes: int = 43200  # 30 days
+    jwt_access_token_expire_minutes: int = 60  # 1 hour
     jwt_refresh_token_expire_days: int = 90
     
     # Encryption

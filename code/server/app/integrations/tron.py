@@ -3,7 +3,7 @@ Tron chain integration module for TRC20 USDT monitoring
 支持 Mock 模式用于测试
 """
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 import asyncio
 import logging
@@ -108,35 +108,67 @@ class TronClient:
             
         Returns:
             float: 代币余额（已转换精度）
+            
+        Raises:
+            httpx.HTTPError: RPC 请求失败时抛出
         """
         if self.mock_mode:
             return self._mock_balances.get(address, 0.0)
         
         contract = contract or self.usdt_contract
         
+        # 使用 TronGrid API 查询账户信息
+        url = f"/v1/accounts/{address}"
+        response = await self.client.get(url)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        if not data.get("success"):
+            # RPC 返回错误 - 可能是地址不存在或其他问题
+            error_msg = data.get("error", "Unknown RPC error")
+            logger.warning(f"RPC returned error for account {address}: {error_msg}")
+            # 地址不存在时返回 0 余额（这不是 RPC 错误，是正常业务情况）
+            if "address not found" in error_msg.lower():
+                return 0.0
+            raise httpx.HTTPError(f"Tron RPC error: {error_msg}")
+        
+        # 查找指定合约的余额
+        account_data = data.get("data", [])
+        if not account_data:
+            # 地址存在但无数据，返回 0
+            return 0.0
+            
+        for trc20 in account_data[0].get("trc20", []):
+            if contract in trc20:
+                raw_balance = int(trc20[contract])
+                return self._from_raw_amount(raw_balance)
+        
+        return 0.0
+    
+    async def _get_latest_block_number(self) -> Optional[int]:
+        """
+        获取当前最新区块高度
+        
+        Returns:
+            Optional[int]: 最新区块高度，获取失败返回 None
+        """
         try:
-            # 使用 TronGrid API 查询账户信息
-            url = f"/v1/accounts/{address}"
-            response = await self.client.get(url)
+            response = await self.client.get("/walletsolidity/getnowblock")
             response.raise_for_status()
             
             data = response.json()
+            block_header = data.get("block_header", {})
+            raw_data = block_header.get("raw_data", {})
+            block_number = raw_data.get("number")
             
-            if not data.get("success"):
-                logger.warning(f"Failed to get account info: {data}")
-                return 0.0
-            
-            # 查找指定合约的余额
-            for trc20 in data.get("data", [{}])[0].get("trc20", []):
-                if contract in trc20:
-                    raw_balance = int(trc20[contract])
-                    return self._from_raw_amount(raw_balance)
-            
-            return 0.0
+            if block_number is not None:
+                return int(block_number)
+            return None
             
         except Exception as e:
-            logger.error(f"Error getting TRC20 balance: {e}")
-            return 0.0
+            logger.error(f"Error getting latest block number: {e}")
+            return None
     
     async def get_trc20_transfers(
         self,
@@ -161,6 +193,9 @@ class TronClient:
             ][:limit]
         
         try:
+            # 获取当前最新区块高度用于计算确认数
+            latest_block = await self._get_latest_block_number()
+            
             # 使用 TronGrid API 查询合约交易
             url = f"/v1/contracts/{self.usdt_contract}/transactions"
             params = {
@@ -174,17 +209,24 @@ class TronClient:
             data = response.json()
             
             if not data.get("success"):
-                logger.warning(f"Failed to get transactions: {data}")
-                return []
+                # RPC 返回错误 - 区分"未找到"和"RPC 错误"
+                error_msg = data.get("error", "Unknown RPC error")
+                logger.warning(f"Failed to get transactions: {error_msg}")
+                raise httpx.HTTPError(f"Tron RPC error: {error_msg}")
             
             transfers = []
-            current_time = datetime.utcnow()
+            current_time = datetime.now(timezone.utc)
             
             for tx in data.get("data", []):
                 # 解析交易信息
                 tx_id = tx.get("txID", "")
                 raw_data = tx.get("raw_data", {})
-                contract_data = raw_data.get("contract", [{}])[0].get("parameter", {}).get("value", {})
+                
+                # 安全地访问嵌套字典
+                contract_list = raw_data.get("contract", [])
+                if not contract_list:
+                    continue
+                contract_data = contract_list[0].get("parameter", {}).get("value", {})
                 
                 # 获取转账详情
                 from_addr = contract_data.get("from_address", "")
@@ -198,13 +240,30 @@ class TronClient:
                 raw_amount = int(contract_data.get("amount", 0))
                 amount = self._from_raw_amount(raw_amount)
                 
-                # 获取确认数
-                ret = tx.get("ret", [{}])[0]
-                confirmations = 1 if ret.get("contractRet") == "SUCCESS" else 0
+                # 计算确认数：使用区块高度差
+                # block_number 可能不在交易列表响应中，需要从交易详情获取
+                tx_block_number = tx.get("block_number") or tx.get("blockNumber", 0)
+                
+                if latest_block is not None and tx_block_number:
+                    confirmations = max(0, latest_block - int(tx_block_number) + 1)
+                else:
+                    # 无法获取区块高度时，使用 contractRet 作为降级方案
+                    # 但这只是交易执行状态，不是真正的确认数
+                    # 安全地访问嵌套字典
+                    ret_list = tx.get("ret", [])
+                    if ret_list and len(ret_list) > 0:
+                        ret = ret_list[0]
+                        confirmations = 1 if ret.get("contractRet") == "SUCCESS" else 0
+                    else:
+                        confirmations = 0
+                    logger.warning(
+                        f"Cannot calculate real confirmations for tx {tx_id}, "
+                        f"using execution status fallback (confirmations={confirmations})"
+                    )
                 
                 # 获取时间戳（毫秒转秒）
                 timestamp_ms = raw_data.get("timestamp", 0)
-                timestamp = datetime.fromtimestamp(timestamp_ms / 1000) if timestamp_ms else current_time
+                timestamp = datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc) if timestamp_ms else current_time
                 
                 transfer = TRC20Transfer(
                     transaction_id=tx_id,
@@ -222,9 +281,12 @@ class TronClient:
             
             return transfers
             
+        except httpx.HTTPError:
+            # RPC 错误需要向上抛出，让调用者知道是服务问题
+            raise
         except Exception as e:
             logger.error(f"Error getting TRC20 transfers: {e}")
-            return []
+            raise
     
     async def detect_payment(
         self,

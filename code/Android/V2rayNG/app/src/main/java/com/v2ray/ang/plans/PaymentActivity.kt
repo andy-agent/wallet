@@ -20,6 +20,9 @@ import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.repository.PaymentRepository
 import com.v2ray.ang.payment.ui.OrderPollingUseCase
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 /**
  * 支付页面
@@ -183,8 +186,26 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
     }
 
     private fun parseIsoDate(dateStr: String): Long {
-        // 简化处理，实际应使用 SimpleDateFormat 或 java.time
-        return System.currentTimeMillis() + 15 * 60 * 1000 // 默认15分钟
+        return try {
+            // Parse ISO 8601 date format (e.g., "2024-01-15T10:30:00Z" or "2024-01-15T10:30:00.000Z")
+            val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+            val date = isoFormat.parse(dateStr)
+            date?.time ?: (System.currentTimeMillis() + 15 * 60 * 1000)
+        } catch (e: Exception) {
+            try {
+                // Fallback format without milliseconds
+                val isoFormatNoMs = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                    timeZone = TimeZone.getTimeZone("UTC")
+                }
+                val date = isoFormatNoMs.parse(dateStr)
+                date?.time ?: (System.currentTimeMillis() + 15 * 60 * 1000)
+            } catch (e2: Exception) {
+                // Fallback to default 15 minutes on parse failure
+                System.currentTimeMillis() + 15 * 60 * 1000
+            }
+        }
     }
 
     // PollingCallback 实现

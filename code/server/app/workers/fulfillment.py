@@ -206,11 +206,12 @@ async def fulfill_paid_orders():
     
     async with get_db_context() as session:
         try:
-            # 查询 paid_success 状态的订单
+            # 查询 paid_success 状态的订单，使用行锁防止竞争条件
             stmt = (
                 select(Order)
                 .where(Order.status == OrderStatus.PAID_SUCCESS.value)
                 .limit(50)  # 批次处理
+                .with_for_update(skip_locked=True)  # 获取行锁，跳过已被其他worker锁定的行
             )
             result = await session.execute(stmt)
             orders = result.scalars().all()
