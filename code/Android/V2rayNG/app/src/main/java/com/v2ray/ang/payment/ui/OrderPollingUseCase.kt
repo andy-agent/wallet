@@ -6,14 +6,18 @@ import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.repository.PaymentRepository
 import kotlinx.coroutines.*
+import java.lang.ref.WeakReference
 
 /**
  * 订单轮询用例
  */
 class OrderPollingUseCase(
     private val repository: PaymentRepository,
-    private val callback: PollingCallback
+    callback: PollingCallback
 ) {
+    private val callbackRef = WeakReference(callback)
+    
+    private fun getCallback(): PollingCallback? = callbackRef.get()
     private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private var pollingJob: Job? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -64,7 +68,7 @@ class OrderPollingUseCase(
         val elapsed = System.currentTimeMillis() - startTime
         if (elapsed > PaymentConfig.MAX_POLLING_TIME_MS) {
             stopPolling()
-            callback.onExpired()
+            getCallback()?.onExpired()
             return
         }
 
@@ -93,22 +97,22 @@ class OrderPollingUseCase(
                 val result = repository.getOrder(orderId)
                 
                 result.onSuccess { order ->
-                    callback.onStatusUpdate(order)
+                    getCallback()?.onStatusUpdate(order)
                     
                     when (order.status) {
                         PaymentConfig.OrderStatus.FULFILLED -> {
                             stopPolling()
-                            callback.onPaymentSuccess(order)
+                            getCallback()?.onPaymentSuccess(order)
                         }
                         PaymentConfig.OrderStatus.EXPIRED,
                         PaymentConfig.OrderStatus.FAILED,
                         PaymentConfig.OrderStatus.LATE_PAID -> {
                             stopPolling()
-                            callback.onPaymentFailed(order.statusText)
+                            getCallback()?.onPaymentFailed(order.statusText)
                         }
                         PaymentConfig.OrderStatus.UNDERPAID -> {
                             stopPolling()
-                            callback.onPaymentFailed("支付金额不足，请联系客服")
+                            getCallback()?.onPaymentFailed("支付金额不足，请联系客服")
                         }
                         PaymentConfig.OrderStatus.OVERPAID -> {
                             // 多付但仍成功，继续轮询直到 fulfilled
@@ -120,12 +124,12 @@ class OrderPollingUseCase(
                         }
                     }
                 }.onFailure { error ->
-                    callback.onError(error.message ?: "查询失败")
+                    getCallback()?.onError(error.message ?: "查询失败")
                     // 出错后继续轮询
                     scheduleNextPoll(orderId)
                 }
             } catch (e: Exception) {
-                callback.onError(e.message ?: "未知错误")
+                getCallback()?.onError(e.message ?: "未知错误")
                 scheduleNextPoll(orderId)
             }
         }

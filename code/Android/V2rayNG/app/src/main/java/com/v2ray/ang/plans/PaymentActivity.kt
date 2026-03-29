@@ -215,7 +215,13 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
     }
 
     override fun onError(error: String) {
-        // 静默处理，继续轮询
+        // Log error for debugging
+        android.util.Log.e("PaymentActivity", "Payment polling error: $error")
+        
+        // Show error to user
+        runOnUiThread {
+            Toast.makeText(this@PaymentActivity, "查询状态失败: $error", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroy() {

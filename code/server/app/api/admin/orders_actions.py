@@ -1,8 +1,9 @@
 """
 Admin Order Actions API - 异常订单处理
 """
-from typing import Optional
+from typing import List, Optional
 
+import jwt
 from fastapi import APIRouter, Depends, Header
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -10,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_db
-from app.core.exceptions import UnauthorizedException, NotFoundException, ValidationException
+from app.core.exceptions import UnauthorizedException, NotFoundException, ValidationException, ForbiddenException
 from app.core.logging import get_logger
 from app.models.order import Order
 from app.schemas.base import Response
@@ -22,11 +23,63 @@ router = APIRouter()
 settings = get_settings()
 
 
-async def verify_admin_token(admin_token: str = Header(...)) -> str:
-    """验证 admin token"""
-    if not settings.admin_token or admin_token != settings.admin_token:
-        raise UnauthorizedException(message="无效的 admin_token")
-    return admin_token
+# ============ JWT Admin Auth ============
+
+class AdminTokenPayload(BaseModel):
+    """Admin JWT token payload"""
+    admin_id: str
+    role: str
+    permissions: List[str]
+
+
+def verify_admin_token(authorization: str = Header(None)) -> AdminTokenPayload:
+    """
+    Verify admin JWT token from Authorization header
+    
+    Expected format: Bearer <jwt_token>
+    
+    Args:
+        authorization: Authorization header value
+        
+    Returns:
+        AdminTokenPayload: Decoded admin token payload
+        
+    Raises:
+        UnauthorizedException: If token is missing or invalid
+        ForbiddenException: If token validation fails
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise UnauthorizedException(message="Missing or invalid Authorization header. Expected: Bearer <token>")
+    
+    token = authorization.replace("Bearer ", "")
+    
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret,
+            algorithms=[settings.jwt_algorithm]
+        )
+        
+        # Verify token type is admin
+        token_type = payload.get("type")
+        if token_type != "admin_access":
+            raise ForbiddenException(message="Invalid token type. Admin access required.")
+        
+        # Extract admin identity
+        admin_id = payload.get("sub")
+        if not admin_id:
+            raise ForbiddenException(message="Invalid token: missing admin identity")
+        
+        return AdminTokenPayload(
+            admin_id=admin_id,
+            role=payload.get("role", "admin"),
+            permissions=payload.get("permissions", [])
+        )
+        
+    except jwt.ExpiredSignatureError:
+        raise UnauthorizedException(message="Token has expired")
+    except jwt.InvalidTokenError as e:
+        raise ForbiddenException(message=f"Invalid token: {str(e)}")
 
 
 class ManualConfirmRequest(BaseModel):
@@ -53,7 +106,7 @@ async def manual_confirm_payment(
     order_id: str,
     request: ManualConfirmRequest,
     db: AsyncSession = Depends(get_db),
-    admin_token: str = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = Depends(verify_admin_token)
 ):
     """
     人工确认支付（用于异常单处理）
@@ -97,7 +150,8 @@ async def manual_confirm_payment(
             tx_hash=request.tx_hash,
             amount=request.amount_crypto,
             note=request.note,
-            admin_token=admin_token[:8] + "..."
+            admin_id=admin_token.admin_id,
+            admin_role=admin_token.role
         )
         
         await db.commit()
@@ -123,7 +177,7 @@ async def manual_confirm_payment(
 async def retry_fulfill_order(
     order_id: str,
     db: AsyncSession = Depends(get_db),
-    admin_token: str = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = Depends(verify_admin_token)
 ):
     """
     重试开通账号
@@ -193,7 +247,8 @@ async def retry_fulfill_order(
                 "order_fulfill_retried",
                 order_id=order_id,
                 marzban_username=result.marzban_username,
-                admin_token=admin_token[:8] + "..."
+                admin_id=admin_token.admin_id,
+                admin_role=admin_token.role
             )
             
             return Response(
@@ -219,7 +274,7 @@ async def mark_order_ignore(
     order_id: str,
     request: MarkIgnoreRequest,
     db: AsyncSession = Depends(get_db),
-    admin_token: str = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = Depends(verify_admin_token)
 ):
     """
     标记订单为忽略
@@ -263,7 +318,8 @@ async def mark_order_ignore(
         order_id=order_id,
         original_status=original_status,
         reason=request.reason,
-        admin_token=admin_token[:8] + "..."
+        admin_id=admin_token.admin_id,
+        admin_role=admin_token.role
     )
     
     return Response(
@@ -281,7 +337,7 @@ async def mark_order_ignore(
 async def mark_order_refund(
     order_id: str,
     db: AsyncSession = Depends(get_db),
-    admin_token: str = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = Depends(verify_admin_token)
 ):
     """
     标记订单为待退款
@@ -313,7 +369,8 @@ async def mark_order_refund(
         order_id=order_id,
         tx_hash=order.tx_hash,
         amount=str(order.amount_crypto),
-        admin_token=admin_token[:8] + "..."
+        admin_id=admin_token.admin_id,
+        admin_role=admin_token.role
     )
     
     return Response(

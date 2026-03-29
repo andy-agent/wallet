@@ -132,6 +132,7 @@ async def scan_pending_orders():
             
             # 对每个链的订单进行检测
             for chain, chain_orders in orders_by_chain.items():
+                client = None
                 try:
                     client = _get_chain_client(chain)
                     
@@ -146,11 +147,12 @@ async def scan_pending_orders():
                             logger.error(f"Error detecting payment for order {order.id}: {e}")
                             continue
                     
-                    await client.close()
-                    
                 except Exception as e:
                     logger.error(f"Error processing chain {chain}: {e}")
                     continue
+                finally:
+                    if client:
+                        await client.close()
             
             await session.commit()
             logger.info(f"Completed scan_pending_orders, processed {len(orders)} orders")
@@ -178,7 +180,7 @@ async def _detect_payment_for_order(
         bool: 是否检测到支付
     """
     # 检测支付
-    expected_amount = float(order.amount_crypto)
+    expected_amount = Decimal(str(order.amount_crypto))
     detection_result = await client.detect_payment(
         address=order.receive_address,
         expected_amount=expected_amount
@@ -270,6 +272,7 @@ async def confirm_seen_transactions():
             
             # 处理每个链的订单
             for chain, chain_orders in orders_by_chain.items():
+                client = None
                 try:
                     client = _get_chain_client(chain)
                     required_confirmations = _get_required_confirmations(chain)
@@ -283,11 +286,12 @@ async def confirm_seen_transactions():
                             logger.error(f"Error confirming order {order.id}: {e}")
                             continue
                     
-                    await client.close()
-                    
                 except Exception as e:
                     logger.error(f"Error processing chain {chain}: {e}")
                     continue
+                finally:
+                    if client:
+                        await client.close()
             
             await session.commit()
             logger.info(f"Completed confirm_seen_transactions, processed {len(orders)} orders")
@@ -329,7 +333,7 @@ async def _confirm_order(
             return
     elif order.chain == "tron":
         # TronClient 没有 get_transaction 方法，使用 detect_payment
-        expected_amount = float(order.amount_crypto)
+        expected_amount = Decimal(str(order.amount_crypto))
         detection = await client.detect_payment(
             address=order.receive_address,
             expected_amount=expected_amount
@@ -372,7 +376,7 @@ async def _confirm_order(
     # 获取实际支付金额（从链上重新查询或从记录中获取）
     detection = await client.detect_payment(
         address=order.receive_address,
-        expected_amount=float(expected_amount)
+        expected_amount=expected_amount
     )
     
     if detection and detection.found:

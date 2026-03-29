@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import List, Optional
 
+import jwt
 from fastapi import APIRouter, Depends, Header, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select, and_
@@ -13,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_db
-from app.core.exceptions import NotFoundException, UnauthorizedException
+from app.core.exceptions import NotFoundException, UnauthorizedException, ForbiddenException
 from app.models.order import Order
 from app.models.plan import Plan
 from app.schemas.base import Response, Pagination, PaginatedResponse
@@ -23,13 +24,63 @@ router = APIRouter(prefix="/orders", tags=["admin-orders"])
 settings = get_settings()
 
 
-# ============ Dependencies ============
+# ============ JWT Admin Auth ============
 
-async def verify_admin_token(token: str = Header(..., alias="admin_token")) -> str:
-    """验证管理员 token"""
-    if not settings.admin_token or token != settings.admin_token:
-        raise UnauthorizedException(message="无效的 admin_token")
-    return token
+class AdminTokenPayload(BaseModel):
+    """Admin JWT token payload"""
+    admin_id: str
+    role: str
+    permissions: List[str]
+
+
+def verify_admin_token(authorization: str = Header(None)) -> AdminTokenPayload:
+    """
+    Verify admin JWT token from Authorization header
+    
+    Expected format: Bearer <jwt_token>
+    
+    Args:
+        authorization: Authorization header value
+        
+    Returns:
+        AdminTokenPayload: Decoded admin token payload
+        
+    Raises:
+        UnauthorizedException: If token is missing or invalid
+        ForbiddenException: If token validation fails
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise UnauthorizedException(message="Missing or invalid Authorization header. Expected: Bearer <token>")
+    
+    token = authorization.replace("Bearer ", "")
+    
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret,
+            algorithms=[settings.jwt_algorithm]
+        )
+        
+        # Verify token type is admin
+        token_type = payload.get("type")
+        if token_type != "admin_access":
+            raise ForbiddenException(message="Invalid token type. Admin access required.")
+        
+        # Extract admin identity
+        admin_id = payload.get("sub")
+        if not admin_id:
+            raise ForbiddenException(message="Invalid token: missing admin identity")
+        
+        return AdminTokenPayload(
+            admin_id=admin_id,
+            role=payload.get("role", "admin"),
+            permissions=payload.get("permissions", [])
+        )
+        
+    except jwt.ExpiredSignatureError:
+        raise UnauthorizedException(message="Token has expired")
+    except jwt.InvalidTokenError as e:
+        raise ForbiddenException(message=f"Invalid token: {str(e)}")
 
 
 # ============ Schemas ============
@@ -112,7 +163,7 @@ async def list_orders(
     page: int = Query(1, ge=1, description="页码"),
     size: int = Query(20, ge=1, le=100, description="每页数量"),
     db: AsyncSession = Depends(get_db),
-    token: str = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = Depends(verify_admin_token)
 ) -> PaginatedResponse[OrderListItem]:
     """
     获取订单列表（分页）
@@ -208,7 +259,7 @@ async def list_orders(
 async def get_order(
     order_id: str,
     db: AsyncSession = Depends(get_db),
-    token: str = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = Depends(verify_admin_token)
 ) -> Response[OrderDetailResponse]:
     """
     获取订单详情
@@ -274,7 +325,7 @@ async def get_order(
 )
 async def get_order_stats(
     db: AsyncSession = Depends(get_db),
-    token: str = Depends(verify_admin_token)
+    admin_token: AdminTokenPayload = Depends(verify_admin_token)
 ) -> Response[OrderStatsResponseData]:
     """
     获取订单统计

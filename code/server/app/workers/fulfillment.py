@@ -223,33 +223,34 @@ async def fulfill_paid_orders():
             
             # 创建 Marzban 客户端
             marzban_client = await get_marzban_client()
-            fulfillment_service = FulfillmentService(marzban_client)
-            
-            fulfilled_count = 0
-            failed_count = 0
-            
-            for order in orders:
-                try:
-                    success = await _fulfill_single_order(
-                        session, order, fulfillment_service
-                    )
-                    if success:
+            try:
+                fulfillment_service = FulfillmentService(marzban_client)
+                
+                fulfilled_count = 0
+                failed_count = 0
+                
+                for order in orders:
+                    try:
+                        success = await _fulfill_single_order(
+                            session, order, fulfillment_service
+                        )
+                        if success:
+                            fulfilled_count += 1
+                        else:
+                            failed_count += 1
+                            
+                    except DuplicateTransitionError:
+                        logger.debug(f"Order {order.id} already fulfilled")
                         fulfilled_count += 1
-                    else:
+                    except Exception as e:
+                        logger.error(f"Error fulfilling order {order.id}: {e}")
                         failed_count += 1
-                        
-                except DuplicateTransitionError:
-                    logger.debug(f"Order {order.id} already fulfilled")
-                    fulfilled_count += 1
-                except Exception as e:
-                    logger.error(f"Error fulfilling order {order.id}: {e}")
-                    failed_count += 1
-                    continue
-            
-            await session.commit()
-            
-            # 关闭 Marzban 客户端
-            await marzban_client.close()
+                        continue
+                
+                await session.commit()
+            finally:
+                # 确保 Marzban 客户端始终被关闭
+                await marzban_client.close()
             
             logger.info(
                 f"Completed fulfill_paid_orders: "
