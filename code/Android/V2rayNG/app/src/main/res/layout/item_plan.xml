@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_view"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/padding_spacing_dp8"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/md_theme_surface">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/padding_spacing_dp16">
+
+        <!-- Badge (HOT/NEW) -->
+        <TextView
+            android:id="@+id/tv_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:background="@drawable/bg_badge"
+            android:paddingStart="@dimen/padding_spacing_dp8"
+            android:paddingEnd="@dimen/padding_spacing_dp8"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:textColor="@color/colorWhite"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            tools:text="HOT"
+            tools:visibility="visible" />
+
+        <!-- Plan Name -->
+        <TextView
+            android:id="@+id/tv_plan_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toStartOf="@id/tv_badge"
+            android:layout_marginEnd="@dimen/padding_spacing_dp8"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            android:textColor="@color/md_theme_onSurface"
+            android:textStyle="bold"
+            tools:text="Premium Plan" />
+
+        <!-- Plan Description -->
+        <TextView
+            android:id="@+id/tv_plan_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_plan_name"
+            android:layout_marginTop="@dimen/padding_spacing_dp4"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textColor="@color/md_theme_onSurfaceVariant"
+            tools:text="High-speed servers for streaming and gaming" />
+
+        <!-- Divider -->
+        <View
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_plan_description"
+            android:layout_marginTop="@dimen/padding_spacing_dp12"
+            android:layout_marginBottom="@dimen/padding_spacing_dp12"
+            android:background="@color/md_theme_outlineVariant" />
+
+        <!-- Price -->
+        <TextView
+            android:id="@+id/tv_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/divider"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            android:textColor="@color/md_theme_secondary"
+            android:textStyle="bold"
+            tools:text="$9.99" />
+
+        <!-- Info Container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_price"
+            android:layout_marginTop="@dimen/padding_spacing_dp12"
+            android:orientation="horizontal">
+
+            <!-- Traffic -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="@dimen/image_size_dp24"
+                    android:layout_height="@dimen/image_size_dp24"
+                    android:contentDescription="@string/traffic"
+                    android:alpha="0.7"
+                    app:srcCompat="@drawable/ic_arrow_downward_24dp"
+                    app:tint="@color/md_theme_onSurfaceVariant" />
+
+                <TextView
+                    android:id="@+id/tv_traffic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/padding_spacing_dp4"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                    android:textColor="@color/md_theme_onSurfaceVariant"
+                    tools:text="500GB" />
+
+            </LinearLayout>
+
+            <!-- Duration -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="@dimen/image_size_dp24"
+                    android:layout_height="@dimen/image_size_dp24"
+                    android:contentDescription="@string/duration"
+                    android:alpha="0.7"
+                    app:srcCompat="@drawable/ic_clock_24dp"
+                    app:tint="@color/md_theme_onSurfaceVariant" />
+
+                <TextView
+                    android:id="@+id/tv_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/padding_spacing_dp4"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                    android:textColor="@color/md_theme_onSurfaceVariant"
+                    tools:text="30 Days" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Payment Methods -->
+        <TextView
+            android:id="@+id/tv_payment_methods"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_price"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/padding_spacing_dp12"
+            android:background="@drawable/bg_payment_method"
+            android:paddingStart="@dimen/padding_spacing_dp8"
+            android:paddingEnd="@dimen/padding_spacing_dp8"
+            android:paddingTop="@dimen/padding_spacing_dp4"
+            android:paddingBottom="@dimen/padding_spacing_dp4"
+            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+            android:textColor="@color/md_theme_onSecondaryContainer"
+            tools:text="SOL / USDT" />
+
+    </RelativeLayout>
+
+</androidx.cardview.widget.CardView>

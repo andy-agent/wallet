@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "project": "v2rayng-payment",
+  "created_at": "2026-03-29T20:30:00+08:00",
+  "updated_at": "2026-03-29T22:30:00+08:00",
+  "status": "completed_and_synced",
+  "summary": {
+    "total": 31,
+    "completed": 31,
+    "pending": 0
+  },
+  "git": {
+    "commit": "4ee0f70",
+    "branch": "master",
+    "remote": "https://github.com/andy-agent/wallet.git",
+    "synced": true
+  },
+  "tasks": [
+    {"id": "A-1", "phase": "需求固化", "title": "创建 PRD v2.0", "status": "completed"},
+    {"id": "A-2", "phase": "需求固化", "title": "创建 bd 任务流", "status": "completed"},
+    {"id": "A-3", "phase": "需求固化", "title": "冻结 API 契约", "status": "completed"},
+    {"id": "B-1", "phase": "服务端骨架", "title": "FastAPI 项目初始化", "status": "completed"},
+    {"id": "B-2", "phase": "服务端骨架", "title": "数据库迁移（Alembic）", "status": "completed"},
+    {"id": "C-1", "phase": "客户端API", "title": "套餐模块", "status": "completed"},
+    {"id": "C-2", "phase": "客户端API", "title": "订单创建接口", "status": "completed"},
+    {"id": "C-3", "phase": "客户端API", "title": "订单查询接口", "status": "completed"},
+    {"id": "E-4", "phase": "客户端API", "title": "订阅接口", "status": "completed"},
+    {"id": "D-1", "phase": "支付核心", "title": "订单状态机实现", "status": "completed"},
+    {"id": "D-2", "phase": "支付核心", "title": "地址池管理", "status": "completed"},
+    {"id": "D-3", "phase": "支付核心", "title": "Solana 链上监听", "status": "completed"},
+    {"id": "D-4", "phase": "支付核心", "title": "Tron 链上监听", "status": "completed"},
+    {"id": "D-5", "phase": "支付核心", "title": "Worker 定时任务", "status": "completed"},
+    {"id": "E-1", "phase": "Marzban集成", "title": "Marzban Client 封装", "status": "completed"},
+    {"id": "E-2", "phase": "Marzban集成", "title": "新购开通逻辑", "status": "completed"},
+    {"id": "E-3", "phase": "Marzban集成", "title": "续费逻辑", "status": "completed"},
+    {"id": "F-1", "phase": "管理端", "title": "订单查询接口", "status": "completed"},
+    {"id": "F-2", "phase": "管理端", "title": "异常订单处理", "status": "completed"},
+    {"id": "G-1", "phase": "Android客户端", "title": "Payment 模块初始化", "status": "completed"},
+    {"id": "G-2", "phase": "Android客户端", "title": "套餐列表页面", "status": "completed"},
+    {"id": "G-3", "phase": "Android客户端", "title": "支付页面", "status": "completed"},
+    {"id": "G-4", "phase": "Android客户端", "title": "支付轮询", "status": "completed"},
+    {"id": "G-5", "phase": "Android客户端", "title": "订阅导入", "status": "completed"},
+    {"id": "H-1", "phase": "部署", "title": "Docker Compose 配置", "status": "completed"},
+    {"id": "H-2", "phase": "部署", "title": "环境变量清单", "status": "completed"},
+    {"id": "H-3", "phase": "部署", "title": "上线检查表", "status": "completed"},
+    {"id": "I-1", "phase": "Android补充", "title": "Layout布局文件", "status": "completed"},
+    {"id": "I-2", "phase": "Android补充", "title": "AndroidManifest配置", "status": "completed"},
+    {"id": "I-3", "phase": "Android补充", "title": "Gradle依赖配置", "status": "completed"},
+    {"id": "I-4", "phase": "Android补充", "title": "MainActivity入口集成", "status": "completed"}
+  ]
+}

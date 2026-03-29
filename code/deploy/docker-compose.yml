@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: v2rayng_payment_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-payment}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: ${DB_NAME:-v2rayng_payment}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-payment}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: v2rayng_payment_redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Payment Bridge API
+  api:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    container_name: v2rayng_payment_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # App
+      APP_ENV: ${APP_ENV:-production}
+      DEBUG: "false"
+      
+      # Database
+      DATABASE_URL: postgresql://${DB_USER:-payment}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-v2rayng_payment}
+      
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
+      
+      # Encryption
+      ENCRYPTION_MASTER_KEY: ${ENCRYPTION_MASTER_KEY}
+      
+      # Marzban
+      MARZBAN_BASE_URL: ${MARZBAN_BASE_URL}
+      MARZBAN_ADMIN_USERNAME: ${MARZBAN_ADMIN_USERNAME}
+      MARZBAN_ADMIN_PASSWORD: ${MARZBAN_ADMIN_PASSWORD}
+      
+      # Solana
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL:-https://api.mainnet-beta.solana.com}
+      SOLANA_MOCK_MODE: "false"
+      
+      # Tron
+      TRON_RPC_URL: ${TRON_RPC_URL:-https://api.trongrid.io}
+      TRON_USDT_CONTRACT: ${TRON_USDT_CONTRACT:-TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t}
+      TRON_MOCK_MODE: "false"
+      
+      # Order
+      ORDER_EXPIRE_MINUTES: ${ORDER_EXPIRE_MINUTES:-15}
+      
+      # Worker
+      WORKER_ENABLED: "false"  # API 实例不运行 worker
+      
+      # Admin
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Payment Bridge Worker
+  worker:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    container_name: v2rayng_payment_worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      DEBUG: "false"
+      DATABASE_URL: postgresql://${DB_USER:-payment}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-v2rayng_payment}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_MASTER_KEY: ${ENCRYPTION_MASTER_KEY}
+      MARZBAN_BASE_URL: ${MARZBAN_BASE_URL}
+      MARZBAN_ADMIN_USERNAME: ${MARZBAN_ADMIN_USERNAME}
+      MARZBAN_ADMIN_PASSWORD: ${MARZBAN_ADMIN_PASSWORD}
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL:-https://api.mainnet-beta.solana.com}
+      SOLANA_MOCK_MODE: "false"
+      TRON_RPC_URL: ${TRON_RPC_URL:-https://api.trongrid.io}
+      TRON_USDT_CONTRACT: ${TRON_USDT_CONTRACT:-TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t}
+      TRON_MOCK_MODE: "false"
+      ORDER_EXPIRE_MINUTES: ${ORDER_EXPIRE_MINUTES:-15}
+      WORKER_ENABLED: "true"  # Worker 实例运行定时任务
+      WORKER_SCAN_INTERVAL_SECONDS: ${WORKER_SCAN_INTERVAL_SECONDS:-10}
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+    command: ["python", "-m", "app.workers.scheduler"]  # 启动 worker
+    # 或者使用 supervisord 同时运行 api 和 worker
+
+  # Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: v2rayng_payment_nginx
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+
+volumes:
+  postgres_data:
+  redis_data:
