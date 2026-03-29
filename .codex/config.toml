@@ -1,0 +1,19 @@
+[features]
+multi_agent = true
+child_agents_md = true
+
+[agents]
+max_threads = 8
+max_depth = 4
+
+[agents.explorer]
+description = "Use for repository-first recovery, codebase exploration, dependency/impact analysis, and implementation scoping before coding."
+config_file = ".codex/agents/explorer.toml"
+
+[agents.implementer]
+description = "Use for scoped implementation work: features, bugfixes, refactors, migrations, and required docs updates."
+config_file = ".codex/agents/implementer.toml"
+
+[agents.tester]
+description = "Use for regression validation, risk review, acceptance checks, and release-readiness evidence."
+config_file = ".codex/agents/tester.toml"
