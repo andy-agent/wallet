@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --trusted-host pypi.python.org -r requirements.txt
+
+# Copy application
+COPY app/ ./app/
+
+# Copy wallet service entry point
+COPY app/services/wallet_server.py ./wallet_server.py
+
+# Expose port
+EXPOSE 9000
+
+# Run wallet service
+CMD ["python", "wallet_server.py"]

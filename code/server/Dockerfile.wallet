@@ -1,3 +1,6 @@
+# 区块链钱包服务 Dockerfile
+# 仅暴露内网端口，不映射到宿主机
+
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -20,8 +23,15 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r re
 # Copy application
 COPY app/ ./app/
 
-# Expose port
-EXPOSE 8000
+# Copy wallet service entry point
+COPY app/services/wallet_server.py ./wallet_server.py
 
-# Run application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Expose port (仅容器内暴露，不映射到宿主机)
+EXPOSE 9000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:9000/health || exit 1
+
+# Run wallet service
+CMD ["python", "wallet_server.py"]

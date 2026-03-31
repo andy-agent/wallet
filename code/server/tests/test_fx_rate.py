@@ -243,8 +243,8 @@ class TestConvertUsdToCrypto:
             amount, error = await convert_usd_to_crypto(Decimal("1.00"), "SOL")
             
         assert error is None
-        # 检查精度为9位小数
-        assert amount == Decimal("0.00689081")
+        # 检查精度为9位小数: 1 / 145.123456789 = 0.006890685
+        assert amount == Decimal("0.006890685")
     
     @pytest.mark.asyncio
     async def test_convert_usdt_precision(self):

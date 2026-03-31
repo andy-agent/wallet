@@ -10,12 +10,12 @@
 ## 1. 环境准备
 
 ### 1.1 服务器环境
-- [ ] 服务器系统：Ubuntu 22.04 LTS 或 CentOS 8+
-- [ ] Docker 版本 >= 24.0
-- [ ] Docker Compose 版本 >= 2.0
+- [x] 服务器系统：Ubuntu 24.04 LTS
+- [x] Docker 版本 >= 24.0
+- [x] Docker Compose 版本 >= 2.0
 - [ ] 服务器时区设置为 UTC 或本地时区
 - [ ] NTP 时间同步已启用
-- [ ] 防火墙已配置（只开放必要端口）
+- [x] 防火墙已配置（只开放必要端口 8080/8443）
 
 ### 1.2 域名和证书
 - [ ] 域名已解析到服务器
@@ -96,16 +96,16 @@ pytest tests/ -v
 ## 5. 部署配置
 
 ### 5.1 环境变量
-- [ ] `.env` 文件已创建
-- [ ] 所有必需变量已填充
+- [x] `.env` 文件已创建 (code/deploy/.env)
+- [x] 所有必需变量已填充
 - [ ] 无默认值保留在生产环境
 - [ ] `.env` 文件权限设置为 600
 
 ### 5.2 Docker Compose
-- [ ] `docker-compose.yml` 已检查
-- [ ] 镜像版本已固定（避免使用 latest）
-- [ ] 重启策略已配置
-- [ ] 健康检查已配置
+- [x] `docker-compose.test.yml` 已检查
+- [x] 镜像版本已固定（使用 alpine 版本）
+- [x] 重启策略已配置 (unless-stopped)
+- [x] 健康检查已配置
 
 ### 5.3 Nginx 配置
 - [ ] `nginx.conf` 已配置
@@ -117,29 +117,33 @@ pytest tests/ -v
 
 ## 6. 上线部署
 
-### 6.1 数据库
+### 6.1 数据库 (测试服务器)
 ```bash
-docker-compose up -d postgres redis
+cd /opt/payment-bridge/deploy
+docker-compose -f docker-compose.test.yml up -d postgres redis
 ```
-- [ ] PostgreSQL 启动成功
-- [ ] Redis 启动成功
+- [x] PostgreSQL 配置完成 (端口不暴露)
+- [x] Redis 配置完成 (端口不暴露)
 - [ ] 数据库迁移执行成功：`alembic upgrade head`
+- [x] SSL 配置完成
 
-### 6.2 应用服务
+### 6.2 应用服务 (测试服务器)
 ```bash
-docker-compose up -d api worker nginx
+cd /opt/payment-bridge/deploy
+docker-compose -f docker-compose.test.yml up -d api worker wallet
 ```
-- [ ] API 服务启动成功
-- [ ] Worker 服务启动成功
-- [ ] Nginx 启动成功
+- [x] API 服务配置完成 (端口 8080)
+- [x] Worker 服务配置完成
+- [x] Wallet 服务配置完成 (仅内部网络)
+- [x] Nginx 配置完成 (端口 8443，可选)
 
-### 6.3 健康检查
+### 6.3 健康检查 (测试服务器)
 ```bash
 # API 健康检查
-curl https://your-domain/healthz
+curl http://154.36.173.184:8080/healthz
 
 # 套餐列表检查
-curl https://your-domain/client/v1/plans
+curl http://154.36.173.184:8080/client/v1/plans
 ```
 - [ ] 健康检查接口返回 200
 - [ ] 套餐列表接口返回正常数据
