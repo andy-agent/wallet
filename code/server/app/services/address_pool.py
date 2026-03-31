@@ -70,7 +70,7 @@ class AddressPoolService:
             .where(
                 PaymentAddress.chain == chain,
                 PaymentAddress.asset_code == asset_code,
-                PaymentAddress.status == AddressStatus.AVAILABLE
+                PaymentAddress.status == AddressStatus.AVAILABLE.value
             )
             .limit(1)
             .with_for_update(skip_locked=True)
@@ -87,7 +87,7 @@ class AddressPoolService:
             )
         
         # 分配地址给订单
-        address.status = AddressStatus.ALLOCATED
+        address.status = AddressStatus.ALLOCATED.value
         address.allocated_order_id = order_id
         address.allocated_at = datetime.now(timezone.utc)
         
@@ -120,12 +120,12 @@ class AddressPoolService:
             raise NotFoundException(f"地址不存在: id={address_id}")
         
         # 只有 allocated 或 expired 状态的地址才能被释放
-        if address.status not in [AddressStatus.ALLOCATED, AddressStatus.EXPIRED]:
+        if address.status not in [AddressStatus.ALLOCATED.value, AddressStatus.EXPIRED.value]:
             # 已经是 available 或其他状态，无需操作
             return
         
         # 重置地址状态
-        address.status = AddressStatus.AVAILABLE
+        address.status = AddressStatus.AVAILABLE.value
         address.allocated_order_id = None
         address.allocated_at = None
         
@@ -185,11 +185,11 @@ class AddressPoolService:
         if not address:
             raise NotFoundException(f"地址不存在: id={address_id}")
         
-        if address.status != AddressStatus.ALLOCATED:
+        if address.status != AddressStatus.ALLOCATED.value:
             # 只有已分配的地址才能标记为过期
             return
         
-        address.status = AddressStatus.EXPIRED
+        address.status = AddressStatus.EXPIRED.value
         await self.session.flush()
     
     async def mark_address_swept(
@@ -220,7 +220,7 @@ class AddressPoolService:
         if not address:
             raise NotFoundException(f"地址不存在: id={address_id}")
         
-        address.status = AddressStatus.SWEPT
+        address.status = AddressStatus.SWEPT.value
         if tx_hash:
             address.last_seen_tx_hash = tx_hash
         
@@ -267,7 +267,7 @@ class AddressPoolService:
                 asset_code=asset_code,
                 address=address_str,
                 encrypted_private_key=encrypted_private_key,
-                status=AddressStatus.AVAILABLE,
+                status=AddressStatus.AVAILABLE.value,
             ).on_conflict_do_nothing(
                 index_elements=["address"]  # 基于 address 字段的唯一约束
             )
@@ -366,7 +366,7 @@ class AddressPoolService:
         if not address:
             raise NotFoundException(f"地址不存在: id={address_id}")
         
-        address.status = AddressStatus.DISABLED
+        address.status = AddressStatus.DISABLED.value
         await self.session.flush()
     
     async def enable_address(self, address_id: int) -> None:
@@ -390,6 +390,6 @@ class AddressPoolService:
         if not address:
             raise NotFoundException(f"地址不存在: id={address_id}")
         
-        if address.status == AddressStatus.DISABLED:
-            address.status = AddressStatus.AVAILABLE
+        if address.status == AddressStatus.DISABLED.value:
+            address.status = AddressStatus.AVAILABLE.value
             await self.session.flush()

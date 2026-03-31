@@ -1,7 +1,7 @@
 """
 PaymentAddress model - 收款地址池
 """
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, func, Enum as SQLEnum
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, func
 import enum
 
 from app.core.database import Base
@@ -28,8 +28,8 @@ class PaymentAddress(Base):
     address = Column(String(64), unique=True, nullable=False, index=True)
     encrypted_private_key = Column(String(512), nullable=True)
     
-    # 状态
-    status = Column(SQLEnum(AddressStatus), default=AddressStatus.AVAILABLE, index=True)
+    # 状态 (使用 String 类型存储枚举值)
+    status = Column(String(20), default=AddressStatus.AVAILABLE.value, index=True)
     
     # 分配信息
     allocated_order_id = Column(String(32), ForeignKey("orders.id"), nullable=True)

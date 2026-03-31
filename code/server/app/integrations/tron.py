@@ -126,33 +126,44 @@ class TronClient:
         contract = contract or self.usdt_contract
         
         # 使用 TronGrid API 查询账户信息
+        # 注意：Nile 测试网可能需要特殊处理
         url = f"/v1/accounts/{address}"
-        response = await self.client.get(url)
-        response.raise_for_status()
         
-        data = response.json()
-        
-        if not data.get("success"):
-            # RPC 返回错误 - 可能是地址不存在或其他问题
-            error_msg = data.get("error", "Unknown RPC error")
-            logger.warning(f"RPC returned error for account {address}: {error_msg}")
-            # 地址不存在时返回 0 余额（这不是 RPC 错误，是正常业务情况）
-            if "address not found" in error_msg.lower():
+        try:
+            response = await self.client.get(url)
+            response.raise_for_status()
+            data = response.json()
+            
+            # 处理 TronGrid v1 API 响应
+            if not data.get("success", True):
+                error_msg = data.get("error", "Unknown RPC error")
+                logger.warning(f"RPC returned error for account {address}: {error_msg}")
+                if "address not found" in error_msg.lower():
+                    return 0.0
+                # 对于其他错误，返回 0 而不是抛出异常
                 return 0.0
-            raise httpx.HTTPError(f"Tron RPC error: {error_msg}")
-        
-        # 查找指定合约的余额
-        account_data = data.get("data", [])
-        if not account_data:
-            # 地址存在但无数据，返回 0
+            
+            # 查找指定合约的余额
+            account_data = data.get("data", [])
+            if not account_data:
+                return 0.0
+                
+            for trc20 in account_data[0].get("trc20", []):
+                if contract in trc20:
+                    raw_balance = int(trc20[contract])
+                    return self._from_raw_amount(raw_balance)
+            
             return 0.0
             
-        for trc20 in account_data[0].get("trc20", []):
-            if contract in trc20:
-                raw_balance = int(trc20[contract])
-                return self._from_raw_amount(raw_balance)
-        
-        return 0.0
+        except httpx.HTTPStatusError as e:
+            # 400 错误通常表示地址格式错误或地址不存在
+            if e.response.status_code == 400:
+                logger.warning(f"Address not found or invalid: {address}")
+                return 0.0
+            raise
+        except Exception as e:
+            logger.error(f"Error getting TRC20 balance: {e}")
+            raise
     
     async def _get_latest_block_number(self) -> Optional[int]:
         """
@@ -204,97 +215,111 @@ class TronClient:
             # 获取当前最新区块高度用于计算确认数
             latest_block = await self._get_latest_block_number()
             
-            # 使用 TronGrid API 查询合约交易
-            url = f"/v1/contracts/{self.usdt_contract}/transactions"
+            # 使用 TronGrid API 查询指定地址的交易
+            # 尝试两种方式：1. 通过 accounts 端点 2. 通过 contracts 端点
+            transfers = []
+            
+            # 方法 1: 查询账户的交易历史
+            url = f"/v1/accounts/{to_address}/transactions/trc20"
             params = {
-                "limit": limit * 3,  # 多查询一些以过滤
-                "event_name": "Transfer",
+                "limit": limit,
+                "contract_address": self.usdt_contract,
             }
             
-            response = await self.client.get(url, params=params)
-            response.raise_for_status()
+            try:
+                response = await self.client.get(url, params=params)
+                response.raise_for_status()
+                data = response.json()
+                
+                if data.get("success") and data.get("data"):
+                    transfers = self._parse_transfers(data["data"], to_address, latest_block)
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 400:
+                    # 地址不存在或格式错误，返回空列表
+                    logger.warning(f"Address not found or invalid: {to_address}")
+                    return []
+                # 其他 HTTP 错误，尝试方法 2
+                logger.warning(f"Failed to get account transactions, trying contract endpoint: {e}")
             
-            data = response.json()
+            # 如果方法 1 没有结果，尝试方法 2
+            if not transfers:
+                url = f"/v1/contracts/{self.usdt_contract}/transactions"
+                params = {
+                    "limit": limit * 3,
+                    "event_name": "Transfer",
+                }
+                
+                response = await self.client.get(url, params=params)
+                response.raise_for_status()
+                data = response.json()
+                
+                if data.get("success") and data.get("data"):
+                    transfers = self._parse_transfers(data["data"], to_address, latest_block)
             
-            if not data.get("success"):
-                # RPC 返回错误 - 区分"未找到"和"RPC 错误"
-                error_msg = data.get("error", "Unknown RPC error")
-                logger.warning(f"Failed to get transactions: {error_msg}")
-                raise httpx.HTTPError(f"Tron RPC error: {error_msg}")
+            return transfers[:limit]
             
-            transfers = []
-            current_time = datetime.now(timezone.utc)
-            
-            for tx in data.get("data", []):
-                # 解析交易信息
-                tx_id = tx.get("txID", "")
-                raw_data = tx.get("raw_data", {})
-                
-                # 安全地访问嵌套字典
-                contract_list = raw_data.get("contract", [])
-                if not contract_list:
-                    continue
-                contract_data = contract_list[0].get("parameter", {}).get("value", {})
-                
-                # 获取转账详情
-                from_addr = contract_data.get("from_address", "")
-                to_addr = contract_data.get("to_address", "")
-                
-                # 只返回指定地址的转入记录
-                if to_addr.lower() != to_address.lower():
-                    continue
-                
-                # 解析金额
-                raw_amount = int(contract_data.get("amount", 0))
-                amount = self._from_raw_amount(raw_amount)
-                
-                # 计算确认数：使用区块高度差
-                # block_number 可能不在交易列表响应中，需要从交易详情获取
-                tx_block_number = tx.get("block_number") or tx.get("blockNumber", 0)
-                
-                if latest_block is not None and tx_block_number:
-                    confirmations = max(0, latest_block - int(tx_block_number) + 1)
-                else:
-                    # 无法获取区块高度时，使用 contractRet 作为降级方案
-                    # 但这只是交易执行状态，不是真正的确认数
-                    # 安全地访问嵌套字典
-                    ret_list = tx.get("ret", [])
-                    if ret_list and len(ret_list) > 0:
-                        ret = ret_list[0]
-                        confirmations = 1 if ret.get("contractRet") == "SUCCESS" else 0
-                    else:
-                        confirmations = 0
-                    logger.warning(
-                        f"Cannot calculate real confirmations for tx {tx_id}, "
-                        f"using execution status fallback (confirmations={confirmations})"
-                    )
-                
-                # 获取时间戳（毫秒转秒）
-                timestamp_ms = raw_data.get("timestamp", 0)
-                timestamp = datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc) if timestamp_ms else current_time
-                
-                transfer = TRC20Transfer(
-                    transaction_id=tx_id,
-                    from_address=from_addr,
-                    to_address=to_addr,
-                    amount=amount,
-                    token_contract=self.usdt_contract,
-                    confirmations=confirmations,
-                    timestamp=timestamp
-                )
-                transfers.append(transfer)
-                
-                if len(transfers) >= limit:
-                    break
-            
-            return transfers
-            
-        except httpx.HTTPError:
-            # RPC 错误需要向上抛出，让调用者知道是服务问题
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 400:
+                # 400 错误通常表示地址问题，返回空列表
+                logger.warning(f"Bad request for address {to_address}: {e}")
+                return []
             raise
         except Exception as e:
             logger.error(f"Error getting TRC20 transfers: {e}")
             raise
+    
+    def _parse_transfers(
+        self,
+        tx_data: list,
+        to_address: str,
+        latest_block: Optional[int]
+    ) -> List[TRC20Transfer]:
+        """解析交易数据为 TRC20Transfer 列表"""
+        transfers = []
+        current_time = datetime.now(timezone.utc)
+        
+        for tx in tx_data:
+            # 解析交易信息
+            tx_id = tx.get("transaction_id") or tx.get("txID", "")
+            
+            # 获取转账详情 - 处理不同 API 格式的响应
+            from_addr = tx.get("from") or tx.get("from_address", "")
+            to_addr = tx.get("to") or tx.get("to_address", "")
+            
+            # 只返回指定地址的转入记录
+            if to_addr.lower() != to_address.lower():
+                continue
+            
+            # 解析金额 - 处理不同格式
+            amount_raw = tx.get("value") or tx.get("amount", 0)
+            if isinstance(amount_raw, str):
+                amount_raw = int(amount_raw)
+            amount = self._from_raw_amount(amount_raw)
+            
+            # 计算确认数
+            tx_block_number = tx.get("block_number") or tx.get("blockNumber", 0)
+            
+            if latest_block is not None and tx_block_number:
+                confirmations = max(0, latest_block - int(tx_block_number) + 1)
+            else:
+                confirmations = 1 if tx.get("finalResult") == "SUCCESS" else 0
+            
+            # 获取时间戳
+            timestamp_ms = tx.get("block_timestamp") or tx.get("timestamp", 0)
+            timestamp = datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc) if timestamp_ms else current_time
+            
+            transfer = TRC20Transfer(
+                transaction_id=tx_id,
+                from_address=from_addr,
+                to_address=to_addr,
+                amount=amount,
+                token_contract=self.usdt_contract,
+                confirmations=confirmations,
+                timestamp=timestamp
+            )
+            transfers.append(transfer)
+        
+        return transfers
     
     async def detect_payment(
         self,

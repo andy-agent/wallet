@@ -130,8 +130,21 @@ def upgrade() -> None:
     op.create_index('idx_audit_created', 'audit_logs', ['created_at'])
     
     # Insert default plans
-    op.bulk_insert(
+    plans_table = sa.table(
         'plans',
+        sa.column('id', sa.String(32)),
+        sa.column('code', sa.String(32)),
+        sa.column('name', sa.String(128)),
+        sa.column('description', sa.String(512)),
+        sa.column('traffic_bytes', sa.BigInteger),
+        sa.column('duration_days', sa.Integer),
+        sa.column('price_usd', sa.Numeric(10, 2)),
+        sa.column('supported_assets', sa.JSON),
+        sa.column('enabled', sa.Boolean),
+        sa.column('sort_order', sa.Integer),
+    )
+    op.bulk_insert(
+        plans_table,
         [
             {
                 'id': 'plan_monthly_100g',

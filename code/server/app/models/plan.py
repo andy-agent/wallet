@@ -1,8 +1,7 @@
 """
 Plan model - 套餐
 """
-from sqlalchemy import Column, String, Integer, BigInteger, Numeric, Boolean, DateTime, func
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy import Column, String, Integer, BigInteger, Numeric, Boolean, DateTime, func, JSON
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -21,8 +20,8 @@ class Plan(Base):
     duration_days = Column(Integer, nullable=False)
     price_usd = Column(Numeric(10, 2), nullable=False)
     
-    # 支持的支付方式
-    supported_assets = Column(ARRAY(String(20)), default=["SOL", "USDT_TRC20"])
+    # 支持的支付方式 (数据库使用 JSON 类型)
+    supported_assets = Column(JSON, default=["SOL", "USDT_TRC20"])
     
     # 状态
     enabled = Column(Boolean, default=True, index=True)
