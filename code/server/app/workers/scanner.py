@@ -5,7 +5,7 @@
 所有任务都必须是幂等的。
 """
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Optional
 
@@ -110,7 +110,7 @@ async def scan_pending_orders():
             stmt = (
                 select(Order)
                 .where(Order.status == OrderStatus.PENDING_PAYMENT.value)
-                .where(Order.expires_at > datetime.utcnow())  # 未过期的
+                .where(Order.expires_at > datetime.now(timezone.utc))  # 未过期的
                 .limit(100)  # 批次处理
             )
             result = await session.execute(stmt)
@@ -212,7 +212,7 @@ async def _detect_payment_for_order(
     order.tx_hash = detection_result.tx_hash
     order.tx_from = detection_result.from_address
     order.confirm_count = detection_result.confirmations
-    order.paid_at = datetime.utcnow()
+    order.paid_at = datetime.now(timezone.utc)
     
     await session.flush()
     return True
@@ -394,11 +394,11 @@ async def _confirm_order(
                 order_id=order.id,
                 current_status=current_status,
                 confirm_count=current_confirmations,
-                paid_at=datetime.utcnow(),
+                paid_at=datetime.now(timezone.utc),
                 triggered_by="worker"
             )
             order.status = OrderStatus.PAID_SUCCESS.value
-            order.confirmed_at = datetime.utcnow()
+            order.confirmed_at = datetime.now(timezone.utc)
             logger.info(f"Order {order.order_no} confirmed as paid_success")
             
         elif actual_amount < min_acceptable:
@@ -449,7 +449,7 @@ async def expire_orders():
     
     async with get_db_context() as session:
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             
             # 查询已超时的 pending_payment 订单
             stmt = (

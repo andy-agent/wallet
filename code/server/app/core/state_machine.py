@@ -26,7 +26,7 @@ any → late_paid (过期后检测到支付)
 from enum import Enum
 from typing import Dict, Set, Optional, Callable, Any, List
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -88,6 +88,7 @@ class OrderStateMachine:
         },
         OrderStatus.SEEN_ONCHAIN: {
             OrderStatus.CONFIRMING,     # 确认中
+            OrderStatus.PAID_SUCCESS,   # 达到确认数（确认数足够时直接成功）
             OrderStatus.UNDERPAID,      # 少付
             OrderStatus.OVERPAID,       # 多付
             OrderStatus.FAILED,         # 金额/币种错误
@@ -270,7 +271,7 @@ class OrderStateMachine:
         transition = StateTransition(
             from_status=current_status,
             to_status=new_status,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             triggered_by=triggered_by,
             metadata=context
         )

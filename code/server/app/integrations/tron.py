@@ -94,6 +94,14 @@ class TronClient:
         if self.client and not self.mock_mode:
             await self.client.aclose()
     
+    async def __aenter__(self):
+        """异步上下文管理器入口"""
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """异步上下文管理器出口"""
+        await self.close()
+    
     async def get_trc20_balance(
         self,
         address: str,
