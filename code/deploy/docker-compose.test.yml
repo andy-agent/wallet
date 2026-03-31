@@ -1,0 +1,146 @@
+# 测试服务器 Docker Compose 配置
+# 约束: 不使用443端口，不暴露钱包服务，数据库SSL连接
+
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库（仅容器内访问，不暴露宿主机端口）
+  postgres:
+    image: postgres:15-alpine
+    container_name: payment_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-payment}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-payment_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-payment_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    networks:
+      - payment_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-payment}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存（仅容器内访问）
+  redis:
+    image: redis:7-alpine
+    container_name: payment_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - payment_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 区块链钱包服务（仅内网暴露，不映射到宿主机）
+  wallet:
+    build:
+      context: ../server
+      dockerfile: Dockerfile.wallet
+    container_name: payment_wallet
+    restart: unless-stopped
+    environment:
+      - WALLET_MODE=internal
+      - SOLANA_RPC_URL=${SOLANA_RPC_URL}
+      - TRON_RPC_URL=${TRON_RPC_URL}
+    volumes:
+      - wallet_keys:/app/keys:ro
+    networks:
+      - payment_network
+    # 不暴露任何端口到宿主机，仅内部服务访问
+    expose:
+      - "9000"
+
+  # API 服务（暴露 8080 端口，替代 443）
+  api:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    container_name: payment_api
+    restart: unless-stopped
+    ports:
+      - "8080:8000"  # 使用 8080 替代 443
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY}
+      - MARZBAN_BASE_URL=${MARZBAN_BASE_URL}
+      - MARZBAN_ADMIN_USERNAME=${MARZBAN_ADMIN_USERNAME}
+      - MARZBAN_ADMIN_PASSWORD=${MARZBAN_ADMIN_PASSWORD}
+      - SOLANA_RPC_URL=${SOLANA_RPC_URL}
+      - TRON_RPC_URL=${TRON_RPC_URL}
+      - WORKER_ENABLED=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      wallet:
+        condition: service_started
+    networks:
+      - payment_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  # Worker 服务（后台任务处理）
+  worker:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    container_name: payment_worker
+    restart: unless-stopped
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY}
+      - MARZBAN_BASE_URL=${MARZBAN_BASE_URL}
+      - MARZBAN_ADMIN_USERNAME=${MARZBAN_ADMIN_USERNAME}
+      - MARZBAN_ADMIN_PASSWORD=${MARZBAN_ADMIN_PASSWORD}
+      - SOLANA_RPC_URL=${SOLANA_RPC_URL}
+      - TRON_RPC_URL=${TRON_RPC_URL}
+      - WORKER_ENABLED=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      wallet:
+        condition: service_started
+    networks:
+      - payment_network
+    command: python -m app.workers.scheduler
+
+  # Nginx 反向代理（可选，使用 8443 作为 HTTPS 替代端口）
+  nginx:
+    image: nginx:alpine
+    container_name: payment_nginx
+    restart: unless-stopped
+    ports:
+      - "8443:8443"  # HTTPS 替代端口
+    volumes:
+      - ./nginx/nginx.test.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+    networks:
+      - payment_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  wallet_keys:
+
+networks:
+  payment_network:
+    driver: bridge
