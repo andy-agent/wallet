@@ -401,26 +401,34 @@ async def fulfill_paid_orders():
 
 ### 5.3 Mock模式 vs 真实模式
 
-当前配置 (Mock模式):
+**当前配置状态** (2026-04-01):
 ```env
-SOLANA_MOCK_MODE=true
-TRON_MOCK_MODE=true
-MARZBAN_MOCK_MODE=true
+# ✅ Marzban - 真实模式已配置
+MARZBAN_MOCK_MODE=false
+MARZBAN_BASE_URL=https://vpn.residential-agent.com:8443/api
+
+# ⚠️ 区块链 - 仍需要配置真实RPC
+SOLANA_MOCK_MODE=true  # 待关闭
+TRON_MOCK_MODE=true    # 待关闭
 ```
 
 **Mock行为**:
-- SolanaClient: 返回模拟交易数据
-- TronClient: 返回模拟转账记录
-- MarzbanClient: 返回模拟用户信息
+- SolanaClient: 返回模拟交易数据（需要真实 RPC）
+- TronClient: 返回模拟转账记录（需要真实 RPC）
+- ✅ MarzbanClient: **已连接真实服务器** (38.58.59.142)
 
 **生产环境需要**:
 ```env
 SOLANA_MOCK_MODE=false
-TRON_MOCK_MODE=false
-MARZBAN_MOCK_MODE=false
 SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
-TRON_RPC_URL=https://api.trongrid.io
-MARZBAN_BASE_URL=https://your-marzban-domain.com
+
+TRON_MOCK_MODE=false
+TRON_FULL_NODE=https://api.trongrid.io
+TRON_SOLIDITY_NODE=https://api.trongrid.io
+TRON_EVENT_SERVER=https://api.trongrid.io
+
+MARZBAN_MOCK_MODE=false
+MARZBAN_BASE_URL=https://vpn.residential-agent.com:8443/api
 ```
 
 ---
@@ -470,9 +478,139 @@ curl -sk https://154.36.173.184:8080/client/v1/orders/{order_id} \
 
 ### 7.1 当前配置问题
 
-1. **Mock模式启用**: 所有区块链交互都是模拟数据，不会真实检测支付
-2. **Marzban未配置**: 无法真实开通VPN账号
-3. **Worker未启动**: scheduler.py 没有运行，不会自动处理订单状态
+1. **Mock模式启用**: 区块链交互是模拟数据（Solana/Tron仍在Mock模式）
+2. **Marzban已配置**: ✅ VPN服务器已部署 (38.58.59.142)
+3. **Worker状态**: 待启动 - scheduler.py需要手动运行
+
+---
+
+## 8. Marzban 服务器部署记录
+
+### 8.1 服务器信息
+
+| 项目 | 值 |
+|------|-----|
+| IP 地址 | 38.58.59.142 |
+| 域名 | vpn.residential-agent.com |
+| 管理面板 | https://vpn.residential-agent.com:8443/dashboard |
+| 管理员账号 | admin |
+| 管理员密码 | MarzbanAdmin2024! |
+| API 地址 | https://vpn.residential-agent.com:8443/api |
+
+### 8.2 部署步骤
+
+```bash
+# 1. 安装 Docker
+curl -fsSL https://get.docker.com | sh
+
+# 2. 克隆 Marzban
+cd /opt && git clone https://github.com/Gozargah/Marzban.git
+
+# 3. 配置环境变量 (.env)
+UVICORN_HOST=0.0.0.0
+UVICORN_PORT=8000
+UVICORN_SSL_CERTFILE=/var/lib/marzban/cert.crt
+UVICORN_SSL_KEYFILE=/var/lib/marzban/key.key
+SUDO_USERNAME=admin
+SUDO_PASSWORD=MarzbanAdmin2024!
+SQLALCHEMY_DATABASE_URL=sqlite:////var/lib/marzban/db.sqlite3
+
+# 4. 上传 Cloudflare Origin Certificate
+# - cert.crt -> /var/lib/marzban/cert.crt
+# - key.key -> /var/lib/marzban/key.key
+
+# 5. 下载 Xray 核心
+cd /var/lib/marzban
+wget https://github.com/XTLS/Xray-core/releases/download/v1.8.23/Xray-linux-64.zip
+unzip Xray-linux-64.zip
+mv xray-core xray && chmod +x xray
+
+# 6. 初始化数据库
+docker compose run --rm marzban bash -c "cd /code && alembic upgrade head"
+
+# 7. 启动服务
+docker compose up -d
+
+# 8. 安装并配置 Nginx 反向代理
+apt-get install -y nginx
+cat > /etc/nginx/sites-available/marzban << 'EOF'
+server {
+    listen 8443 ssl http2;
+    server_name vpn.residential-agent.com;
+    ssl_certificate /var/lib/marzban/cert.crt;
+    ssl_certificate_key /var/lib/marzban/key.key;
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+EOF
+ln -s /etc/nginx/sites-available/marzban /etc/nginx/sites-enabled/
+systemctl restart nginx
+
+# 9. 配置防火墙
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 8443/tcp
+ufw allow 10000:65000/tcp
+ufw allow 10000:65000/udp
+ufw --force enable
+```
+
+### 8.3 Cloudflare DNS 配置
+
+- **类型**: A 记录
+- **名称**: vpn.residential-agent.com
+- **内容**: 38.58.59.142
+- **代理状态**: 已启用（橙云）
+- **SSL/TLS**: Full (strict) - 使用 Origin Certificate
+
+### 8.4 支付桥接服务器配置更新
+
+在 `/opt/payment-bridge/code/deploy/.env` 中更新：
+
+```env
+# Marzban (新服务器)
+MARZban_API_URL=https://vpn.residential-agent.com:8443/api
+MARZban_USERNAME=admin
+MARZban_PASSWORD=MarzbanAdmin2024!
+MARZban_MOCK_MODE=false
+
+# 区块链（待配置真实RPC）
+SOLANA_MOCK_MODE=false
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+TRON_MOCK_MODE=false
+TRON_FULL_NODE=https://api.trongrid.io
+```
+
+### 8.5 API 测试验证
+
+```bash
+# 获取管理员 Token
+curl -X POST https://vpn.residential-agent.com:8443/api/admin/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=admin&password=MarzbanAdmin2024!"
+
+# 响应示例
+{"access_token":"eyJ...","token_type":"bearer"}
+```
+
+**状态**: ✅ API 测试通过
+
+---
+
+## 7. 已知问题与风险
+
+### 7.1 当前配置问题
+
+1. **Mock模式启用**: 区块链交互是模拟数据（Solana/Tron仍在Mock模式）
+2. **Marzban已配置**: ✅ VPN服务器已部署 (38.58.59.142)
+3. **Worker状态**: 待启动 - scheduler.py需要手动运行
 
 ### 7.2 代码逻辑问题
 
@@ -482,13 +620,30 @@ curl -sk https://154.36.173.184:8080/client/v1/orders/{order_id} \
 
 ### 7.3 生产环境部署清单
 
-- [ ] 关闭所有 Mock 模式
-- [ ] 配置真实 Marzban API 地址和凭据
-- [ ] 启动 Worker 进程 (scheduler.py)
+#### 基础设施
+- [x] 部署 Marzban VPN 服务器 (38.58.59.142)
+- [x] 配置 Cloudflare DNS (vpn.residential-agent.com)
+- [x] 配置 Cloudflare Origin Certificate
+- [x] 配置 Nginx 反向代理 (8443端口)
+- [x] 配置防火墙规则
+- [ ] 配置 Solana 真实 RPC 节点
+- [ ] 配置 Tron 真实 RPC 节点 (TronGrid)
 - [ ] 替换自签名证书为正规 SSL 证书
+
+#### 应用配置
+- [x] 配置 Marzban API 凭据
+- [ ] 关闭 Solana Mock 模式
+- [ ] 关闭 Tron Mock 模式
+- [ ] 启动 Worker 进程 (scheduler.py)
 - [ ] 配置 JWT 密钥为随机强密码
 - [ ] 添加地址池监控和预警
 - [ ] 配置日志收集和告警
+
+#### 测试验证
+- [ ] 完整购买流程测试 (注册→支付→开通)
+- [ ] 真实区块链支付测试
+- [ ] VPN 连接测试
+- [ ] 续费流程测试
 
 ---
 
