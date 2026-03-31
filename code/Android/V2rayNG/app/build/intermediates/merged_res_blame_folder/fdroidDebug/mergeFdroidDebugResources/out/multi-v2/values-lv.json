@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-64:/values-lv/values-lv.xml",
+            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-65:/values-lv/values-lv.xml",
             "map": [
                 {
                     "source": "/Users/cnyirui/.gradle/caches/9.3.1/transforms/44b6ec5982922702c89d4f3ef10209da/transformed/quickie-foss-1.14.0/res/values-lv/values-lv.xml",

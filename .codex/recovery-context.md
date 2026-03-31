@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-03-31T15:51:42Z
+Generated: 2026-03-31T15:57:59Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-55u
-- next_task_title: 【价格策略】USDT=3U, SOL等值计价
+- next_task_id: liaojiang-tta
+- next_task_title: 【J-1+J-3】管理端审计日志接口
 
 ## Counters
-- in_progress: 4
+- in_progress: 0
 - ready: 6
-- open: 10
-- closed: 11
-- dirty: 4
+- open: 6
+- closed: 15
+- dirty: 691
 
 ## Next Milestone
 - Continue the next task and complete one milestone

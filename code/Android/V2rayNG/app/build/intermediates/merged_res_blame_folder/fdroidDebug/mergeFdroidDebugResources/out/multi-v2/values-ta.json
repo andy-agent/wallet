@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-64:/values-ta/values-ta.xml",
+            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-65:/values-ta/values-ta.xml",
             "map": [
                 {
                     "source": "/Users/cnyirui/.gradle/caches/9.3.1/transforms/c717d29356428faae5346eb5dc02921d/transformed/core-1.17.0/res/values-ta/values-ta.xml",

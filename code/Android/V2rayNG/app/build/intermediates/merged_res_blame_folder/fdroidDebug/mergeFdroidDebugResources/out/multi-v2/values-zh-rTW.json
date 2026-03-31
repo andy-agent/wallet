@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-64:/values-zh-rTW/values-zh-rTW.xml",
+            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-65:/values-zh-rTW/values-zh-rTW.xml",
             "map": [
                 {
                     "source": "/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/res/values-zh-rTW/strings.xml",
