@@ -5,24 +5,99 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
+import androidx.viewbinding.ViewBindings;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.v2ray.ang.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
+import java.lang.String;
 
 public final class ActivityLoginBinding implements ViewBinding {
   @NonNull
-  private final LinearLayout rootView;
+  private final ScrollView rootView;
 
-  private ActivityLoginBinding(@NonNull LinearLayout rootView) {
+  @NonNull
+  public final MaterialButton btnAction;
+
+  @NonNull
+  public final TextInputEditText etConfirmPassword;
+
+  @NonNull
+  public final TextInputEditText etEmail;
+
+  @NonNull
+  public final TextInputEditText etPassword;
+
+  @NonNull
+  public final TextInputEditText etUsername;
+
+  @NonNull
+  public final LinearLayout formContainer;
+
+  @NonNull
+  public final ProgressBar progressBar;
+
+  @NonNull
+  public final TextInputLayout tilConfirmPassword;
+
+  @NonNull
+  public final TextInputLayout tilEmail;
+
+  @NonNull
+  public final TextInputLayout tilPassword;
+
+  @NonNull
+  public final TextInputLayout tilUsername;
+
+  @NonNull
+  public final TextView tvSubtitle;
+
+  @NonNull
+  public final TextView tvTitle;
+
+  @NonNull
+  public final TextView tvToggleAction;
+
+  @NonNull
+  public final TextView tvToggleHint;
+
+  private ActivityLoginBinding(@NonNull ScrollView rootView, @NonNull MaterialButton btnAction,
+      @NonNull TextInputEditText etConfirmPassword, @NonNull TextInputEditText etEmail,
+      @NonNull TextInputEditText etPassword, @NonNull TextInputEditText etUsername,
+      @NonNull LinearLayout formContainer, @NonNull ProgressBar progressBar,
+      @NonNull TextInputLayout tilConfirmPassword, @NonNull TextInputLayout tilEmail,
+      @NonNull TextInputLayout tilPassword, @NonNull TextInputLayout tilUsername,
+      @NonNull TextView tvSubtitle, @NonNull TextView tvTitle, @NonNull TextView tvToggleAction,
+      @NonNull TextView tvToggleHint) {
     this.rootView = rootView;
+    this.btnAction = btnAction;
+    this.etConfirmPassword = etConfirmPassword;
+    this.etEmail = etEmail;
+    this.etPassword = etPassword;
+    this.etUsername = etUsername;
+    this.formContainer = formContainer;
+    this.progressBar = progressBar;
+    this.tilConfirmPassword = tilConfirmPassword;
+    this.tilEmail = tilEmail;
+    this.tilPassword = tilPassword;
+    this.tilUsername = tilUsername;
+    this.tvSubtitle = tvSubtitle;
+    this.tvTitle = tvTitle;
+    this.tvToggleAction = tvToggleAction;
+    this.tvToggleHint = tvToggleHint;
   }
 
   @Override
   @NonNull
-  public LinearLayout getRoot() {
+  public ScrollView getRoot() {
     return rootView;
   }
 
@@ -43,10 +118,105 @@ public final class ActivityLoginBinding implements ViewBinding {
 
   @NonNull
   public static ActivityLoginBinding bind(@NonNull View rootView) {
-    if (rootView == null) {
-      throw new NullPointerException("rootView");
-    }
+    // The body of this method is generated in a way you would not otherwise write.
+    // This is done to optimize the compiled bytecode for size and performance.
+    int id;
+    missingId: {
+      id = R.id.btn_action;
+      MaterialButton btnAction = ViewBindings.findChildViewById(rootView, id);
+      if (btnAction == null) {
+        break missingId;
+      }
 
-    return new ActivityLoginBinding((LinearLayout) rootView);
+      id = R.id.et_confirm_password;
+      TextInputEditText etConfirmPassword = ViewBindings.findChildViewById(rootView, id);
+      if (etConfirmPassword == null) {
+        break missingId;
+      }
+
+      id = R.id.et_email;
+      TextInputEditText etEmail = ViewBindings.findChildViewById(rootView, id);
+      if (etEmail == null) {
+        break missingId;
+      }
+
+      id = R.id.et_password;
+      TextInputEditText etPassword = ViewBindings.findChildViewById(rootView, id);
+      if (etPassword == null) {
+        break missingId;
+      }
+
+      id = R.id.et_username;
+      TextInputEditText etUsername = ViewBindings.findChildViewById(rootView, id);
+      if (etUsername == null) {
+        break missingId;
+      }
+
+      id = R.id.form_container;
+      LinearLayout formContainer = ViewBindings.findChildViewById(rootView, id);
+      if (formContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.progress_bar;
+      ProgressBar progressBar = ViewBindings.findChildViewById(rootView, id);
+      if (progressBar == null) {
+        break missingId;
+      }
+
+      id = R.id.til_confirm_password;
+      TextInputLayout tilConfirmPassword = ViewBindings.findChildViewById(rootView, id);
+      if (tilConfirmPassword == null) {
+        break missingId;
+      }
+
+      id = R.id.til_email;
+      TextInputLayout tilEmail = ViewBindings.findChildViewById(rootView, id);
+      if (tilEmail == null) {
+        break missingId;
+      }
+
+      id = R.id.til_password;
+      TextInputLayout tilPassword = ViewBindings.findChildViewById(rootView, id);
+      if (tilPassword == null) {
+        break missingId;
+      }
+
+      id = R.id.til_username;
+      TextInputLayout tilUsername = ViewBindings.findChildViewById(rootView, id);
+      if (tilUsername == null) {
+        break missingId;
+      }
+
+      id = R.id.tv_subtitle;
+      TextView tvSubtitle = ViewBindings.findChildViewById(rootView, id);
+      if (tvSubtitle == null) {
+        break missingId;
+      }
+
+      id = R.id.tv_title;
+      TextView tvTitle = ViewBindings.findChildViewById(rootView, id);
+      if (tvTitle == null) {
+        break missingId;
+      }
+
+      id = R.id.tv_toggle_action;
+      TextView tvToggleAction = ViewBindings.findChildViewById(rootView, id);
+      if (tvToggleAction == null) {
+        break missingId;
+      }
+
+      id = R.id.tv_toggle_hint;
+      TextView tvToggleHint = ViewBindings.findChildViewById(rootView, id);
+      if (tvToggleHint == null) {
+        break missingId;
+      }
+
+      return new ActivityLoginBinding((ScrollView) rootView, btnAction, etConfirmPassword, etEmail,
+          etPassword, etUsername, formContainer, progressBar, tilConfirmPassword, tilEmail,
+          tilPassword, tilUsername, tvSubtitle, tvTitle, tvToggleAction, tvToggleHint);
+    }
+    String missingId = rootView.getResources().getResourceName(id);
+    throw new NullPointerException("Missing required view with ID: ".concat(missingId));
   }
 }

@@ -291,6 +291,7 @@
     <string name="sub_setting_pre_profile_tip">The config remarks exist and are unique</string>
     <string name="title_sub_update">Update subscription</string>
     <string name="title_plans">Purchase Plan</string>
+    <string name="title_user_profile">User Profile</string>
     <string name="title_ping_all_server">Tcping config</string>
     <string name="title_real_ping_all_server">Real delay config</string>
     <string name="title_user_asset_setting">Asset files</string>
@@ -492,5 +493,30 @@
     <string name="not_logged_in">Not logged in</string>
     <string name="go_to_login">Go to Login</string>
     <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="login_subtitle">Sign in to continue</string>
+    <string name="register_subtitle">Create a new account</string>
+    <string name="hint_username">Username</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_confirm_password">Confirm Password</string>
+    <string name="hint_email_optional">Email (Optional)</string>
+    <string name="no_account_hint">Don\'t have an account?</string>
+    <string name="has_account_hint">Already have an account?</string>
+    <string name="register_now">Register now</string>
+    <string name="login_now">Login now</string>
+    <string name="error_username_too_short">Username must be at least 3 characters</string>
+    <string name="error_username_too_long">Username must be at most 64 characters</string>
+    <string name="error_username_invalid">Username can only contain letters, numbers and underscores</string>
+    <string name="error_password_too_short">Password must be at least 8 characters</string>
+    <string name="error_password_requirements">Password must contain uppercase, lowercase and numbers</string>
+    <string name="error_passwords_not_match">Passwords do not match</string>
+    <string name="error_email_invalid">Invalid email format</string>
+    <string name="error_network">Network connection failed, please check your network</string>
+    <string name="error_unauthorized">Invalid username or password</string>
+    <string name="error_user_exists">Username already exists</string>
+    <string name="error_invalid_input">Invalid input: %s</string>
+    <string name="error_operation_failed">Operation failed: %s</string>
+    <string name="login_success">Login successful</string>
+    <string name="register_success">Registration successful</string>
 
 </resources>

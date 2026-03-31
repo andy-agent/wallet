@@ -36,6 +36,9 @@ import com.v2ray.ang.handler.V2RayServiceManager
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.MainViewModel
 import com.v2ray.ang.plans.PlansActivity
+import com.v2ray.ang.payment.data.repository.PaymentRepository
+import com.v2ray.ang.payment.ui.activity.LoginActivity
+import com.v2ray.ang.payment.ui.activity.UserProfileActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -49,6 +52,22 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     val mainViewModel: MainViewModel by viewModels()
     private lateinit var groupPagerAdapter: GroupPagerAdapter
     private var tabMediator: TabLayoutMediator? = null
+    private lateinit var paymentRepository: PaymentRepository
+
+    // 用于接收登录结果
+    private val loginLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            // 登录成功，跳转到之前想去的页面
+            pendingDestination?.let { destination ->
+                startActivity(destination)
+                pendingDestination = null
+            }
+        }
+    }
+
+    private var pendingDestination: Intent? = null
 
     private val requestVpnPermission = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) {
@@ -96,6 +115,8 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
 
         binding.fab.setOnClickListener { handleFabAction() }
         binding.layoutTest.setOnClickListener { handleLayoutTestClick() }
+
+        paymentRepository = PaymentRepository(this)
 
         setupGroupTab()
         setupViewModel()
@@ -346,7 +367,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         }
 
         R.id.action_purchase_plan -> {
-            startActivity(Intent(this, PlansActivity::class.java))
+            checkLoginAndProceed(Intent(this, PlansActivity::class.java))
             true
         }
 
@@ -629,10 +650,29 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     }
 
 
+    /**
+     * 检查登录状态，如果未登录则引导登录
+     * @param destination 登录成功后要跳转的 Intent
+     * @return 是否已登录
+     */
+    private fun checkLoginAndProceed(destination: Intent): Boolean {
+        return if (paymentRepository.isTokenValid()) {
+            // 已登录，直接跳转
+            startActivity(destination)
+            true
+        } else {
+            // 未登录，保存目标页面，跳转到登录页
+            pendingDestination = destination
+            loginLauncher.launch(Intent(this, LoginActivity::class.java))
+            false
+        }
+    }
+
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
         when (item.itemId) {
-            R.id.nav_purchase -> startActivity(Intent(this, PlansActivity::class.java))
+            R.id.nav_purchase -> checkLoginAndProceed(Intent(this, PlansActivity::class.java))
+            R.id.nav_user_profile -> checkLoginAndProceed(Intent(this, UserProfileActivity::class.java))
             R.id.sub_setting -> requestActivityLauncher.launch(Intent(this, SubSettingActivity::class.java))
             R.id.per_app_proxy_settings -> requestActivityLauncher.launch(Intent(this, PerAppProxyActivity::class.java))
             R.id.routing_setting -> requestActivityLauncher.launch(Intent(this, RoutingSettingActivity::class.java))

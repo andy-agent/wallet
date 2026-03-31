@@ -94,3 +94,84 @@ data class GetOrderResponse(
     val message: String,
     val data: Order?
 )
+
+// ==================== 认证相关数据类 ====================
+
+/**
+ * 登录请求
+ */
+data class LoginRequest(
+    val username: String,
+    val password: String
+)
+
+/**
+ * 注册请求
+ */
+data class RegisterRequest(
+    val username: String,
+    val password: String,
+    val email: String? = null
+)
+
+/**
+ * 认证响应数据
+ */
+data class AuthData(
+    @SerializedName("user_id")
+    val userId: String,
+    val username: String,
+    @SerializedName("access_token")
+    val accessToken: String,
+    @SerializedName("refresh_token")
+    val refreshToken: String,
+    @SerializedName("expires_at")
+    val expiresAt: String
+)
+
+/**
+ * 登录响应
+ */
+data class LoginResponse(
+    val code: String,
+    val message: String,
+    val data: AuthData?
+)
+
+/**
+ * 注册响应
+ */
+data class RegisterResponse(
+    val code: String,
+    val message: String,
+    val data: AuthData?
+)
+
+// ==================== Token 刷新相关数据类 ====================
+
+/**
+ * Token 刷新请求
+ * 实际使用 Header 传递 refresh_token，此请求体为空
+ */
+data class RefreshTokenRequest(
+    val dummy: String? = null
+)
+
+/**
+ * Token 刷新响应数据
+ */
+data class RefreshTokenData(
+    @SerializedName("access_token")
+    val accessToken: String,
+    @SerializedName("expires_at")
+    val expiresAt: String
+)
+
+/**
+ * Token 刷新响应
+ */
+data class RefreshTokenResponse(
+    val code: String,
+    val message: String,
+    val data: RefreshTokenData?
+)

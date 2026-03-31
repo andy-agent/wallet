@@ -3,7 +3,7 @@ package com.v2ray.ang.payment;
 /**
  * 支付模块配置
  */
-@kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\"\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\u0003\n\u0002\u0010\t\n\u0000\n\u0002\u0010 \n\u0002\b\b\b\u00c6\u0002\u0018\u00002\u00020\u0001:\u0004\u000f\u0010\u0011\u0012B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0007\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\b\u001a\u00020\tX\u0086T\u00a2\u0006\u0002\n\u0000R\u0017\u0010\n\u001a\b\u0012\u0004\u0012\u00020\t0\u000b\u00a2\u0006\b\n\u0000\u001a\u0004\b\f\u0010\rR\u000e\u0010\u000e\u001a\u00020\tX\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u0013"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig;", "", "<init>", "()V", "API_BASE_URL", "", "API_VERSION", "FULL_API_URL", "ORDER_EXPIRE_TIME_MS", "", "POLLING_INTERVALS", "", "getPOLLING_INTERVALS", "()Ljava/util/List;", "MAX_POLLING_TIME_MS", "Prefs", "AssetCode", "OrderStatus", "PurchaseType", "app_fdroidDebug"})
+@kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\"\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\u0003\n\u0002\u0010\t\n\u0000\n\u0002\u0010 \n\u0002\b\t\b\u00c6\u0002\u0018\u00002\u00020\u0001:\u0005\u000f\u0010\u0011\u0012\u0013B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0007\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\b\u001a\u00020\tX\u0086T\u00a2\u0006\u0002\n\u0000R\u0017\u0010\n\u001a\b\u0012\u0004\u0012\u00020\t0\u000b\u00a2\u0006\b\n\u0000\u001a\u0004\b\f\u0010\rR\u000e\u0010\u000e\u001a\u00020\tX\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u0014"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig;", "", "<init>", "()V", "API_BASE_URL", "", "API_VERSION", "FULL_API_URL", "ORDER_EXPIRE_TIME_MS", "", "POLLING_INTERVALS", "", "getPOLLING_INTERVALS", "()Ljava/util/List;", "MAX_POLLING_TIME_MS", "Prefs", "TokenConfig", "AssetCode", "OrderStatus", "PurchaseType", "app_fdroidDebug"})
 public final class PaymentConfig {
     
     /**
@@ -107,7 +107,7 @@ public final class PaymentConfig {
     /**
      * MMKV 存储键
      */
-    @kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\u0014\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\u0006\b\u00c6\u0002\u0018\u00002\u00020\u0001B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0007\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\b\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\t\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\n\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u000b"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig$Prefs;", "", "<init>", "()V", "CLIENT_TOKEN", "", "TOKEN_EXPIRES_AT", "MARZBAN_USERNAME", "SUBSCRIPTION_URL", "CURRENT_ORDER_ID", "DEVICE_ID", "app_fdroidDebug"})
+    @kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\u0014\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\t\b\u00c6\u0002\u0018\u00002\u00020\u0001B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0007\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\b\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\t\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\n\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u000b\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\f\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\r\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u000e"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig$Prefs;", "", "<init>", "()V", "CLIENT_TOKEN", "", "TOKEN_EXPIRES_AT", "MARZBAN_USERNAME", "SUBSCRIPTION_URL", "CURRENT_ORDER_ID", "DEVICE_ID", "ACCESS_TOKEN", "REFRESH_TOKEN", "AUTH_TOKEN_EXPIRES_AT", "app_fdroidDebug"})
     public static final class Prefs {
         @org.jetbrains.annotations.NotNull()
         public static final java.lang.String CLIENT_TOKEN = "payment_client_token";
@@ -121,6 +121,12 @@ public final class PaymentConfig {
         public static final java.lang.String CURRENT_ORDER_ID = "payment_current_order_id";
         @org.jetbrains.annotations.NotNull()
         public static final java.lang.String DEVICE_ID = "payment_device_id";
+        @org.jetbrains.annotations.NotNull()
+        public static final java.lang.String ACCESS_TOKEN = "payment_access_token";
+        @org.jetbrains.annotations.NotNull()
+        public static final java.lang.String REFRESH_TOKEN = "payment_refresh_token";
+        @org.jetbrains.annotations.NotNull()
+        public static final java.lang.String AUTH_TOKEN_EXPIRES_AT = "payment_auth_token_expires_at";
         @org.jetbrains.annotations.NotNull()
         public static final com.v2ray.ang.payment.PaymentConfig.Prefs INSTANCE = null;
         
@@ -142,6 +148,20 @@ public final class PaymentConfig {
         public static final com.v2ray.ang.payment.PaymentConfig.PurchaseType INSTANCE = null;
         
         private PurchaseType() {
+            super();
+        }
+    }
+    
+    /**
+     * Token 相关配置
+     */
+    @kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\u0012\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\t\n\u0000\b\u00c6\u0002\u0018\u00002\u00020\u0001B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u0006"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig$TokenConfig;", "", "<init>", "()V", "TOKEN_REFRESH_BUFFER_MS", "", "app_fdroidDebug"})
+    public static final class TokenConfig {
+        public static final long TOKEN_REFRESH_BUFFER_MS = 300000L;
+        @org.jetbrains.annotations.NotNull()
+        public static final com.v2ray.ang.payment.PaymentConfig.TokenConfig INSTANCE = null;
+        
+        private TokenConfig() {
             super();
         }
     }

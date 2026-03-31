@@ -6,6 +6,12 @@ import retrofit2.Response
 import com.google.gson.annotations.SerializedName
 import retrofit2.http.*
 
+// Import auth-related classes
+import com.v2ray.ang.payment.data.model.LoginRequest
+import com.v2ray.ang.payment.data.model.RegisterRequest
+import com.v2ray.ang.payment.data.model.LoginResponse
+import com.v2ray.ang.payment.data.model.RegisterResponse
+
 /**
  * 支付 API 接口
  */
@@ -40,6 +46,31 @@ interface PaymentApi {
     suspend fun getSubscription(
         @Header("Authorization") token: String
     ): Response<SubscriptionResponse>
+
+    /**
+     * 用户登录
+     */
+    @POST("${PaymentConfig.API_VERSION}/auth/login")
+    suspend fun login(
+        @Body request: LoginRequest
+    ): Response<LoginResponse>
+
+    /**
+     * 用户注册
+     */
+    @POST("${PaymentConfig.API_VERSION}/auth/register")
+    suspend fun register(
+        @Body request: RegisterRequest
+    ): Response<RegisterResponse>
+
+    /**
+     * 刷新 Token
+     * 使用 refresh_token 作为 Bearer Token
+     */
+    @POST("${PaymentConfig.API_VERSION}/auth/refresh")
+    suspend fun refreshToken(
+        @Header("Authorization") authorization: String
+    ): Response<RefreshTokenResponse>
 }
 
 /**

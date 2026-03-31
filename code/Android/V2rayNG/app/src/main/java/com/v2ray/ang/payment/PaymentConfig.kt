@@ -45,6 +45,19 @@ object PaymentConfig {
         const val SUBSCRIPTION_URL = "payment_subscription_url"
         const val CURRENT_ORDER_ID = "payment_current_order_id"
         const val DEVICE_ID = "payment_device_id"
+        
+        // Token 相关存储键
+        const val ACCESS_TOKEN = "payment_access_token"
+        const val REFRESH_TOKEN = "payment_refresh_token"
+        const val AUTH_TOKEN_EXPIRES_AT = "payment_auth_token_expires_at"
+    }
+    
+    /**
+     * Token 相关配置
+     */
+    object TokenConfig {
+        // Token 过期前 5 分钟的缓冲时间（毫秒）
+        const val TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000L
     }
     
     /**

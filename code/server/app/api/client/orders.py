@@ -48,12 +48,20 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 
 class CreateOrderRequest(BaseModel):
     """创建订单请求"""
+    model_config = {"populate_by_name": True}
+    
     plan_id: str = Field(..., description="套餐ID")
     purchase_type: str = Field(..., description="购买类型: new(新购) | renew(续费)")
     asset_code: str = Field(..., description="支付资产: SOL | USDT_TRC20 | SPL_TOKEN")
+    
+    # 客户端信息（可选，用于追踪）
+    client_device_id: Optional[str] = Field(default=None, description="客户端设备ID")
+    client_version: Optional[str] = Field(default=None, description="客户端版本")
+    client_token: Optional[str] = Field(default=None, description="客户端Token")
+    
     # 续费专用
-    client_user_id: str = Field(default=None, description="续费时的客户端用户ID")
-    marzban_username: str = Field(default=None, description="续费时的 Marzban 用户名")
+    client_user_id: Optional[str] = Field(default=None, description="续费时的客户端用户ID")
+    marzban_username: Optional[str] = Field(default=None, description="续费时的 Marzban 用户名")
     
     @field_validator('purchase_type')
     @classmethod
@@ -195,7 +203,38 @@ async def create_order(
             )
         raise
     
-    # 6. 创建订单
+    # 6. 续费验证
+    if request.purchase_type == "renew":
+        # 查询当前用户的已履行订单
+        result = await db.execute(
+            select(Order)
+            .where(Order.user_id == current_user.id)
+            .where(Order.status == "fulfilled")
+            .where(Order.marzban_username.isnot(None))
+            .order_by(Order.fulfilled_at.desc())
+            .limit(1)
+        )
+        last_order = result.scalar_one_or_none()
+        
+        if not last_order:
+            raise ForbiddenException(
+                message="您没有已开通的套餐，无法续费。请先购买新套餐。"
+            )
+        
+        # 验证客户端提供的 marzban_username 是否匹配
+        if request.marzban_username and request.marzban_username != last_order.marzban_username:
+            raise ForbiddenException(
+                message="续费信息不匹配，无法为其他账号续费"
+            )
+        
+        # 自动填充正确的续费信息
+        client_user_id = last_order.client_user_id or last_order.marzban_username
+        marzban_username = last_order.marzban_username
+    else:
+        client_user_id = request.client_user_id
+        marzban_username = request.marzban_username
+    
+    # 7. 创建订单
     order_id = str(ulid.new().str)
     order_no = _generate_order_no()
     expires_at = datetime.now(timezone.utc) + timedelta(
@@ -208,8 +247,8 @@ async def create_order(
         purchase_type=request.purchase_type,
         plan_id=request.plan_id,
         user_id=current_user.id,  # 使用当前登录用户ID
-        client_user_id=request.client_user_id,
-        marzban_username=request.marzban_username,
+        client_user_id=client_user_id,
+        marzban_username=marzban_username,
         chain=chain,
         asset_code=asset_code,
         receive_address=address.address,

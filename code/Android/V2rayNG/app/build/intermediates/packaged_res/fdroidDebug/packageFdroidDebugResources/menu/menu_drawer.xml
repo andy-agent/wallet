@@ -9,6 +9,10 @@
             android:icon="@drawable/ic_add_24dp"
             android:title="@string/title_plans" />
         <item
+            android:id="@+id/nav_user_profile"
+            android:icon="@drawable/ic_person_24dp"
+            android:title="@string/title_user_profile" />
+        <item
             android:id="@+id/sub_setting"
             android:icon="@drawable/ic_subscriptions_24dp"
             android:title="@string/title_sub_setting" />

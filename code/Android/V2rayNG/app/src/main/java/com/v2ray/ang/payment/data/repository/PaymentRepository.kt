@@ -29,7 +29,7 @@ class PaymentRepository(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val localRepository = LocalPaymentRepository(context)
 
-    private val api: PaymentApi by lazy {
+    val api: PaymentApi by lazy {
         // 创建信任所有证书的 SSL Socket Factory (用于自签名证书)
         val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
             override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
@@ -71,6 +71,9 @@ class PaymentRepository(context: Context) {
         private const val PREFS_NAME = "payment_prefs"
         private const val KEY_CURRENT_USER_ID = "current_user_id"
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }
     }
 
     // ==================== 本地数据库操作 ====================
@@ -83,7 +86,7 @@ class PaymentRepository(context: Context) {
     /**
      * 缓存当前用户ID
      */
-    private fun saveCurrentUserId(userId: String) {
+    fun saveCurrentUserId(userId: String) {
         prefs.edit().putString(KEY_CURRENT_USER_ID, userId).apply()
     }
 
@@ -388,7 +391,12 @@ class PaymentRepository(context: Context) {
      */
     suspend fun getSubscription(): Result<SubscriptionData> = withContext(Dispatchers.IO) {
         try {
-            val token = getClientToken()
+            // 自动刷新 Token（如果需要）
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            
+            val token = getAccessToken()
                 ?: return@withContext Result.failure(Exception("未登录"))
 
             val response = api.getSubscription("Bearer $token")
@@ -406,6 +414,152 @@ class PaymentRepository(context: Context) {
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    // ==================== Token 管理方法 ====================
+
+    /**
+     * 保存登录认证响应（包含 access_token 和 refresh_token）
+     */
+    fun saveAuthResponse(authData: AuthData) {
+        prefs.edit()
+            .putString(PaymentConfig.Prefs.ACCESS_TOKEN, authData.accessToken)
+            .putString(PaymentConfig.Prefs.REFRESH_TOKEN, authData.refreshToken)
+            .putString(PaymentConfig.Prefs.AUTH_TOKEN_EXPIRES_AT, authData.expiresAt)
+            .apply()
+    }
+
+    /**
+     * 获取 Access Token
+     */
+    fun getAccessToken(): String? = prefs.getString(PaymentConfig.Prefs.ACCESS_TOKEN, null)
+
+    /**
+     * 获取 Refresh Token
+     */
+    fun getRefreshToken(): String? = prefs.getString(PaymentConfig.Prefs.REFRESH_TOKEN, null)
+
+    /**
+     * 检查 Token 是否过期
+     * 在 Token 过期前 5 分钟认为即将过期
+     */
+    fun isTokenExpired(): Boolean {
+        val expiresAtStr = prefs.getString(PaymentConfig.Prefs.AUTH_TOKEN_EXPIRES_AT, null) ?: return true
+        val expiresAt = parseIsoDate(expiresAtStr)
+        return if (expiresAt != null) {
+            System.currentTimeMillis() + PaymentConfig.TokenConfig.TOKEN_REFRESH_BUFFER_MS >= expiresAt
+        } else {
+            true
+        }
+    }
+
+    /**
+     * 检查 Token 是否有效（未过期）
+     */
+    fun isTokenValid(): Boolean {
+        return getAccessToken() != null && !isTokenExpired()
+    }
+
+    /**
+     * 自动刷新 Token（如果需要）
+     * @return true 表示 Token 有效（无需刷新或刷新成功），false 表示刷新失败
+     */
+    suspend fun refreshTokenIfNeeded(): Boolean {
+        // Token 未过期，无需刷新
+        if (!isTokenExpired()) return true
+
+        val refreshToken = getRefreshToken() ?: return false
+
+        return try {
+            val response = api.refreshToken("Bearer $refreshToken")
+            if (response.isSuccessful && response.body()?.code == "SUCCESS") {
+                response.body()?.data?.let { data ->
+                    // 保存新的 access_token，保留原有的 refresh_token
+                    prefs.edit()
+                        .putString(PaymentConfig.Prefs.ACCESS_TOKEN, data.accessToken)
+                        .putString(PaymentConfig.Prefs.AUTH_TOKEN_EXPIRES_AT, data.expiresAt)
+                        .apply()
+                    
+                    // 同时更新 Room 数据库中的 token
+                    updateCachedUserToken(data.accessToken)
+                }
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * 强制刷新 Token
+     * @return true 表示刷新成功，false 表示刷新失败
+     */
+    suspend fun forceRefreshToken(): Boolean {
+        val refreshToken = getRefreshToken() ?: return false
+
+        return try {
+            val response = api.refreshToken("Bearer $refreshToken")
+            if (response.isSuccessful && response.body()?.code == "SUCCESS") {
+                response.body()?.data?.let { data ->
+                    prefs.edit()
+                        .putString(PaymentConfig.Prefs.ACCESS_TOKEN, data.accessToken)
+                        .putString(PaymentConfig.Prefs.AUTH_TOKEN_EXPIRES_AT, data.expiresAt)
+                        .apply()
+                    
+                    updateCachedUserToken(data.accessToken)
+                }
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * 清除认证信息（退出登录）
+     */
+    suspend fun clearAuth() = withContext(Dispatchers.IO) {
+        prefs.edit()
+            .remove(PaymentConfig.Prefs.ACCESS_TOKEN)
+            .remove(PaymentConfig.Prefs.REFRESH_TOKEN)
+            .remove(PaymentConfig.Prefs.AUTH_TOKEN_EXPIRES_AT)
+            .remove(KEY_CURRENT_USER_ID)
+            .remove(PaymentConfig.Prefs.CLIENT_TOKEN)
+            .remove(PaymentConfig.Prefs.TOKEN_EXPIRES_AT)
+            .remove(PaymentConfig.Prefs.SUBSCRIPTION_URL)
+            .remove(PaymentConfig.Prefs.MARZBAN_USERNAME)
+            .apply()
+        
+        // 清除 Room 数据库中的用户数据
+        localRepository.clearAllData()
+    }
+
+    /**
+     * 更新缓存用户的 Token
+     */
+    private suspend fun updateCachedUserToken(newAccessToken: String) = withContext(Dispatchers.IO) {
+        val currentUser = localRepository.getCurrentUser()
+        if (currentUser != null) {
+            val updatedUser = currentUser.copy(
+                accessToken = newAccessToken
+            )
+            localRepository.saveUser(updatedUser)
+        }
+    }
+
+    /**
+     * 解析 ISO 8601 日期字符串
+     */
+    private fun parseIsoDate(dateString: String): Long? {
+        return try {
+            isoDateFormat.parse(dateString)?.time
+        } catch (e: Exception) {
+            null
         }
     }
 }
