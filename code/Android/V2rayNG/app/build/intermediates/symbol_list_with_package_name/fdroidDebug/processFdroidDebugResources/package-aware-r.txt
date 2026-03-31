@@ -1681,7 +1681,6 @@ color cardview_dark_background
 color cardview_light_background
 color cardview_shadow_end_color
 color cardview_shadow_start_color
-color colorAccent
 color colorConfigType
 color colorIndicator
 color colorPing

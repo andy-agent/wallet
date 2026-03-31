@@ -40,7 +40,6 @@ array vpn_interface_address
 array vpn_interface_address_value
 array xhttp_mode
 bool config_materialPreferenceIconSpaceReserved
-color colorAccent
 color colorConfigType
 color colorIndicator
 color colorPing

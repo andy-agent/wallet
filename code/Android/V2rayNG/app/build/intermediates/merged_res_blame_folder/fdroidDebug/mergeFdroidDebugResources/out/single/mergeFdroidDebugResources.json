@@ -300,10 +300,6 @@
         "source": "com.v2ray.ang.app-main-71:/drawable/ic_rounded_corner_active.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-67:/drawable_ic_stat_name.xml.flat",
-        "source": "com.v2ray.ang.app-main-71:/drawable/ic_stat_name.xml"
-    },
-    {
         "merged": "com.v2ray.ang.app-fdroidDebug-67:/drawable_ic_about_24dp.xml.flat",
         "source": "com.v2ray.ang.app-main-71:/drawable/ic_about_24dp.xml"
     },

@@ -252,7 +252,6 @@
         <item>stream-up</item>
         <item>stream-one</item>
     </string-array>
-    <color name="colorAccent">@color/md_theme_secondary</color>
     <color name="colorConfigType">#f97910</color>
     <color name="colorIndicator">@color/md_theme_primary</color>
     <color name="colorPing">#009966</color>

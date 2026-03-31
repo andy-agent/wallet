@@ -1,0 +1,10 @@
+com.v2ray.ang.app-fdroid-0 /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/build/generated/res/pngs/fdroid/debug
+com.v2ray.ang.app-fdroid-1 /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/build/generated/res/resValues/fdroid/debug
+com.v2ray.ang.app-updated_navigation_xml-2 /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/build/generated/updated_navigation_xml/fdroidDebug
+com.v2ray.ang.app-packageFdroidDebugResources-3 /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/build/intermediates/incremental/fdroidDebug/packageFdroidDebugResources/merged.dir
+com.v2ray.ang.app-packageFdroidDebugResources-4 /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/build/intermediates/incremental/fdroidDebug/packageFdroidDebugResources/stripped.dir
+com.v2ray.ang.app-fdroidDebug-5 /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/build/intermediates/merged_res/fdroidDebug/mergeFdroidDebugResources
+com.v2ray.ang.app-debug-6 /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/res
+com.v2ray.ang.app-fdroid-7 /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/fdroid/res
+com.v2ray.ang.app-fdroidDebug-8 /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/fdroidDebug/res
+com.v2ray.ang.app-main-9 /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/res

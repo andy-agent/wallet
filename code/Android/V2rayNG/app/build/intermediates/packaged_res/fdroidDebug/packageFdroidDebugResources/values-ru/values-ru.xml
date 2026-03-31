@@ -265,7 +265,7 @@
     <string name="title_fragment_settings">Настройки фрагментирования</string>
     <string name="title_import_config_count">Импортировано профилей: %d</string>
     <string name="title_language">Язык</string>
-    <string name="title_locate_selected_config">Locate the selected config</string>
+    <string name="title_locate_selected_config">Найти выбранный профиль</string>
     <string name="title_logcat">Журнал</string>
     <string name="title_mode">Режим</string>
     <string name="title_mode_help">Нажмите для получения дополнительной информации</string>

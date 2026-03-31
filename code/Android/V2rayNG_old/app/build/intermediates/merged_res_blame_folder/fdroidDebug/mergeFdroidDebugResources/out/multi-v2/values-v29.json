@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-65:/values-v29/values-v29.xml",
+            "map": [
+                {
+                    "source": "/Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/res/values-v29/values-v29.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "14",
+                        "endColumns": "10",
+                        "endOffsets": "728"
+                    }
+                }
+            ]
+        }
+    ]
+}

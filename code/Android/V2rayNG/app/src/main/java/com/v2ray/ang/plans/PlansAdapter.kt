@@ -68,7 +68,7 @@ class PlansAdapter(
             // 推荐套餐高亮
             if (plan.badge == "HOT") {
                 cardView.setCardBackgroundColor(
-                    ContextCompat.getColor(itemView.context, R.color.colorAccent)
+                    ContextCompat.getColor(itemView.context, R.color.md_theme_secondary)
                 )
             } else {
                 cardView.setCardBackgroundColor(
