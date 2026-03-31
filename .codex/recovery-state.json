@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-31T15:48:25Z",
+  "generated_at": "2026-03-31T15:51:42Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-55u",
   "next_task_title": "【价格策略】USDT=3U, SOL等值计价",
@@ -7,7 +7,7 @@
   "ready_count": 6,
   "open_count": 10,
   "closed_count": 11,
-  "dirty_count": 70,
+  "dirty_count": 4,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
