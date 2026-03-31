@@ -438,4 +438,23 @@
         <item>WebDAV</item>
     </string-array>
 
+    <!-- Payment Module -->
+    <string name="title_payment">Payment</string>
+    <string name="nav_purchase">Purchase Plan</string>
+    <string name="action_purchase_plan">Purchase Plan</string>
+    <string name="select_payment_method">Select Payment Method</string>
+    <string name="payment_sol">SOL</string>
+    <string name="payment_usdt_trc20">USDT-TRC20</string>
+    <string name="order_info">Order Information</string>
+    <string name="order_number">Order Number:</string>
+    <string name="scan_to_pay">Scan to Pay</string>
+    <string name="payment_amount">Amount:</string>
+    <string name="receiving_address">Receiving Address:</string>
+    <string name="countdown">Time Remaining:</string>
+    <string name="payment_status">Status:</string>
+    <string name="refresh_status">Refresh Status</string>
+    <string name="copy">Copy</string>
+    <string name="status_pending">Pending Payment</string>
+    <string name="no_plans_available">No plans available</string>
+
 </resources>

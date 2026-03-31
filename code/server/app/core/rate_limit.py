@@ -198,3 +198,23 @@ async def public_rate_limit(request: Request) -> None:
             detail=f"Rate limit exceeded. Try again in {retry_after} seconds.",
             headers={"Retry-After": str(retry_after)}
         )
+
+
+# Client rate limiter: 60 requests per minute for authenticated client endpoints
+_client_limiter = RateLimiter(requests=60, window_seconds=60)
+
+
+async def client_rate_limit(request: Request) -> None:
+    """
+    Rate limit for client authenticated endpoints: 60 requests per minute
+    Used for subscription retrieval and other client APIs.
+    """
+    identifier = get_client_identifier(request, f"client:{request.url.path}")
+    allowed, retry_after = _client_limiter.is_allowed(identifier)
+    
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Try again in {retry_after} seconds.",
+            headers={"Retry-After": str(retry_after)}
+        )

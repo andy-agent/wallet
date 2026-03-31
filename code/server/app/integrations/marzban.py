@@ -30,6 +30,7 @@ class MarzbanAPIError(Exception):
     """Marzban API 调用异常"""
     def __init__(self, message: str, status_code: Optional[int] = None, response: Optional[Any] = None):
         super().__init__(message)
+        self.message = message
         self.status_code = status_code
         self.response = response
 

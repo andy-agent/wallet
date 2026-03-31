@@ -18,12 +18,8 @@ os.environ.setdefault("MARZBAN_ADMIN_PASSWORD", "password")
 
 # Provide a tiny jwt stub when PyJWT is unavailable in the test environment.
 if "jwt" not in sys.modules:
-    jwt_stub = types.SimpleNamespace(
-        ExpiredSignatureError=Exception,
-        InvalidTokenError=Exception,
-        decode=lambda *_args, **_kwargs: {"type": "admin_access", "sub": "test-admin"},
-    )
-    sys.modules["jwt"] = jwt_stub
+    import jwt as real_jwt
+    sys.modules["jwt"] = real_jwt
 
 from app.main import app
 

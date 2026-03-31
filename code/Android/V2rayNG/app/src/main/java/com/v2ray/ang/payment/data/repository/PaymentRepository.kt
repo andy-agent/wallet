@@ -1,11 +1,12 @@
 package com.v2ray.ang.payment.data.repository
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.api.PaymentApi
+import com.v2ray.ang.payment.data.api.SubscriptionData
 import com.v2ray.ang.payment.data.model.*
-import com.v2ray.ang.util.MmkvManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.CertificatePinner
@@ -18,6 +19,8 @@ import java.util.*
  * 支付仓库类
  */
 class PaymentRepository(context: Context) {
+
+    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     private val api: PaymentApi by lazy {
         // TODO: Replace with your actual API domain and certificate SHA-256 hash.
@@ -48,27 +51,29 @@ class PaymentRepository(context: Context) {
             .create(PaymentApi::class.java)
     }
 
-    private val mmkv = MmkvManager.mmkv
-    
-    // In-memory fallback when MMKV is unavailable
+    // In-memory fallback
     private var cachedDeviceId: String? = null
+
+    companion object {
+        private const val PREFS_NAME = "payment_prefs"
+    }
 
     /**
      * 获取设备唯一ID
      */
     fun getDeviceId(): String {
-        // Return cached value if available (handles MMKV null case)
+        // Return cached value if available
         cachedDeviceId?.let { return it }
-        
-        // Try to get from MMKV
-        var deviceId = mmkv?.decodeString(PaymentConfig.Prefs.DEVICE_ID)
-        
+
+        // Try to get from SharedPreferences
+        var deviceId = prefs.getString(PaymentConfig.Prefs.DEVICE_ID, null)
+
         if (deviceId == null) {
             deviceId = UUID.randomUUID().toString()
-            mmkv?.encode(PaymentConfig.Prefs.DEVICE_ID, deviceId)
+            prefs.edit().putString(PaymentConfig.Prefs.DEVICE_ID, deviceId).apply()
         }
-        
-        // Cache in memory to avoid regenerating if MMKV is null
+
+        // Cache in memory
         cachedDeviceId = deviceId
         return deviceId
     }
@@ -77,44 +82,48 @@ class PaymentRepository(context: Context) {
      * 保存客户端Token
      */
     fun saveClientToken(token: String, expiresAt: String) {
-        mmkv?.encode(PaymentConfig.Prefs.CLIENT_TOKEN, token)
-        mmkv?.encode(PaymentConfig.Prefs.TOKEN_EXPIRES_AT, expiresAt)
+        prefs.edit()
+            .putString(PaymentConfig.Prefs.CLIENT_TOKEN, token)
+            .putString(PaymentConfig.Prefs.TOKEN_EXPIRES_AT, expiresAt)
+            .apply()
     }
 
     /**
      * 获取客户端Token
      */
     fun getClientToken(): String? {
-        return mmkv?.decodeString(PaymentConfig.Prefs.CLIENT_TOKEN)
+        return prefs.getString(PaymentConfig.Prefs.CLIENT_TOKEN, null)
     }
 
     /**
      * 保存当前订单ID
      */
     fun saveCurrentOrderId(orderId: String) {
-        mmkv?.encode(PaymentConfig.Prefs.CURRENT_ORDER_ID, orderId)
+        prefs.edit().putString(PaymentConfig.Prefs.CURRENT_ORDER_ID, orderId).apply()
     }
 
     /**
      * 获取当前订单ID
      */
     fun getCurrentOrderId(): String? {
-        return mmkv?.decodeString(PaymentConfig.Prefs.CURRENT_ORDER_ID)
+        return prefs.getString(PaymentConfig.Prefs.CURRENT_ORDER_ID, null)
     }
 
     /**
      * 清除当前订单
      */
     fun clearCurrentOrder() {
-        mmkv?.remove(PaymentConfig.Prefs.CURRENT_ORDER_ID)
+        prefs.edit().remove(PaymentConfig.Prefs.CURRENT_ORDER_ID).apply()
     }
 
     /**
      * 保存订阅信息
      */
     fun saveSubscription(url: String, username: String) {
-        mmkv?.encode(PaymentConfig.Prefs.SUBSCRIPTION_URL, url)
-        mmkv?.encode(PaymentConfig.Prefs.MARZBAN_USERNAME, username)
+        prefs.edit()
+            .putString(PaymentConfig.Prefs.SUBSCRIPTION_URL, url)
+            .putString(PaymentConfig.Prefs.MARZBAN_USERNAME, username)
+            .apply()
     }
 
     /**
@@ -152,7 +161,7 @@ class PaymentRepository(context: Context) {
                 clientVersion = BuildConfig.VERSION_NAME,
                 clientToken = clientToken
             )
-            
+
             val response = api.createOrder(request)
             if (response.isSuccessful && response.body()?.code == "SUCCESS") {
                 val order = response.body()?.data
@@ -210,7 +219,7 @@ class PaymentRepository(context: Context) {
         try {
             val token = getClientToken()
                 ?: return@withContext Result.failure(Exception("未登录"))
-            
+
             val response = api.getSubscription("Bearer $token")
             if (response.isSuccessful && response.body()?.code == "SUCCESS") {
                 val data = response.body()?.data

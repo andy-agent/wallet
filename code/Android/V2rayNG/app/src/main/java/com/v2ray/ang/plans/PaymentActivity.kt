@@ -15,11 +15,16 @@ import androidx.lifecycle.lifecycleScope
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.v2ray.ang.databinding.ActivityPaymentBinding
+import com.v2ray.ang.dto.SubscriptionItem
+import com.v2ray.ang.handler.AngConfigManager
+import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.repository.PaymentRepository
 import com.v2ray.ang.payment.ui.OrderPollingUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -80,8 +85,8 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
         // 支付方式选择
         binding.radioGroupPaymentMethod.setOnCheckedChangeListener { _, checkedId ->
             val assetCode = when (checkedId) {
-                R.id.radioSol -> PaymentConfig.AssetCode.SOL
-                R.id.radioUsdt -> PaymentConfig.AssetCode.USDT_TRC20
+                com.v2ray.ang.R.id.radioSol -> PaymentConfig.AssetCode.SOL
+                com.v2ray.ang.R.id.radioUsdt -> PaymentConfig.AssetCode.USDT_TRC20
                 else -> PaymentConfig.AssetCode.SOL
             }
             currentOrder?.let { order ->
@@ -215,14 +220,100 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
     override fun onPaymentSuccess(order: Order) {
         binding.textStatus.text = "支付成功"
-        AlertDialog.Builder(this)
-            .setTitle("支付成功")
-            .setMessage("您的订阅已开通！")
-            .setPositiveButton("确定") { _, _ ->
-                finish()
+        
+        // 导入订阅到 v2rayNG
+        lifecycleScope.launch {
+            val success = importSubscription(order)
+            
+            if (success) {
+                AlertDialog.Builder(this@PaymentActivity)
+                    .setTitle("支付成功")
+                    .setMessage("您的订阅已开通并自动导入！\n\n订阅名称：${order.plan.name}\n\n点击「立即连接」开始使用代理。")
+                    .setPositiveButton("立即连接") { _, _ ->
+                        setResult(RESULT_OK)
+                        finish()
+                    }
+                    .setNegativeButton("稍后再说") { _, _ ->
+                        setResult(RESULT_OK)
+                        finish()
+                    }
+                    .setCancelable(false)
+                    .show()
+            } else {
+                AlertDialog.Builder(this@PaymentActivity)
+                    .setTitle("支付成功")
+                    .setMessage("您的订阅已开通！\n\n但自动导入订阅失败，请手动添加订阅链接。\n\n订阅链接已保存到设置中。")
+                    .setPositiveButton("确定") { _, _ ->
+                        setResult(RESULT_OK)
+                        finish()
+                    }
+                    .setCancelable(false)
+                    .show()
             }
-            .setCancelable(false)
-            .show()
+        }
+    }
+    
+    /**
+     * 导入订阅到 v2rayNG
+     */
+    private suspend fun importSubscription(order: Order): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val fulfillment = order.fulfillment ?: return@withContext false
+            val subscriptionUrl = fulfillment.subscriptionUrl
+            
+            if (subscriptionUrl.isBlank()) {
+                return@withContext false
+            }
+            
+            // 保存订阅信息到 PaymentRepository
+            repository.saveSubscription(subscriptionUrl, fulfillment.marzbanUsername)
+            
+            // 检查是否已存在相同 URL 的订阅
+            val existingSubs = MmkvManager.decodeSubscriptions()
+            val existingSub = existingSubs.find { it.subscription.url == subscriptionUrl }
+            
+            if (existingSub != null) {
+                // 更新现有订阅
+                val subItem = existingSub.subscription.apply {
+                    remarks = order.plan.name
+                    lastUpdated = -1 // 强制下次更新
+                }
+                MmkvManager.encodeSubscription(existingSub.guid, subItem)
+            } else {
+                // 创建新订阅
+                val subItem = SubscriptionItem(
+                    remarks = order.plan.name,
+                    url = subscriptionUrl,
+                    enabled = true,
+                    autoUpdate = true,
+                    updateInterval = 360  // 6小时自动更新
+                )
+                
+                // 生成新订阅ID并保存
+                val newSubId = com.v2ray.ang.util.Utils.getUuid()
+                MmkvManager.encodeSubscription(newSubId, subItem)
+                
+                // 将新订阅移到列表顶部
+                val subsList = MmkvManager.decodeSubsList()
+                if (subsList.size > 1) {
+                    val index = subsList.indexOf(newSubId)
+                    if (index > 0) {
+                        // 移除并插入到顶部
+                        subsList.removeAt(index)
+                        subsList.add(0, newSubId)
+                        MmkvManager.encodeSubsList(subsList)
+                    }
+                }
+            }
+            
+            // 立即更新订阅节点
+            val result = AngConfigManager.updateConfigViaSubAll()
+            
+            return@withContext result.successCount > 0 || result.configCount > 0
+        } catch (e: Exception) {
+            android.util.Log.e("PaymentActivity", "导入订阅失败", e)
+            return@withContext false
+        }
     }
 
     override fun onPaymentFailed(error: String) {

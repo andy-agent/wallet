@@ -56,15 +56,18 @@ class PlansActivity : AppCompatActivity() {
             result.onSuccess { plans ->
                 if (plans.isEmpty()) {
                     binding.textViewEmpty.visibility = View.VISIBLE
+                    binding.textViewEmptyMessage.visibility = View.VISIBLE
                     binding.recyclerViewPlans.visibility = View.GONE
                 } else {
                     binding.textViewEmpty.visibility = View.GONE
+                    binding.textViewEmptyMessage.visibility = View.GONE
                     binding.recyclerViewPlans.visibility = View.VISIBLE
                     adapter.submitList(plans)
                 }
             }.onFailure { error ->
                 binding.textViewEmpty.visibility = View.VISIBLE
-                binding.textViewEmpty.text = "加载失败: ${error.message}"
+                binding.textViewEmptyMessage.visibility = View.VISIBLE
+                binding.textViewEmptyMessage.text = "加载失败: ${error.message}"
                 Toast.makeText(this@PlansActivity, "加载套餐失败: ${error.message}", Toast.LENGTH_LONG).show()
             }
         }

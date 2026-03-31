@@ -14,13 +14,14 @@ from typing import Optional, Tuple
 import jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from ulid import ULID
+import ulid
 
 from app.core.config import get_settings
 from app.core.database import get_db_context
 from app.core.state_machine import (
     OrderStatus, 
     transition_to_fulfilled,
+    transition_to_failed,
     DuplicateTransitionError,
     StateTransitionError
 )
@@ -145,19 +146,30 @@ def verify_client_token(token: str, expected_type: str = "access") -> str:
 
 async def _get_order_with_plan(
     session: AsyncSession, 
-    order_id: str
+    order_id: str,
+    for_update: bool = False
 ) -> Tuple[Order, Plan]:
     """
     获取订单及关联套餐
     
+    Args:
+        session: 数据库会话
+        order_id: 订单ID
+        for_update: 是否使用 SELECT FOR UPDATE 加锁
+        
     Raises:
         FulfillmentError: 订单不存在
     """
-    result = await session.execute(
+    query = (
         select(Order, Plan)
         .join(Plan, Order.plan_id == Plan.id)
         .where(Order.id == order_id)
     )
+    
+    if for_update:
+        query = query.with_for_update()
+    
+    result = await session.execute(query)
     row = result.first()
     
     if not row:
@@ -219,7 +231,7 @@ async def _record_audit_log(
     import json
     
     audit_log = AuditLog(
-        id=str(ULID()),
+        id=str(ulid.new().str),
         entity_type=entity_type,
         entity_id=entity_id,
         action=action,
@@ -236,7 +248,7 @@ def _generate_username() -> str:
     
     格式: user_{ulid}
     """
-    return f"user_{ULID().lower()}"
+    return f"user_{ulid.new().str.lower()}"
 
 
 async def fulfill_new_order(order_id: str) -> FulfillmentResult:
@@ -262,8 +274,8 @@ async def fulfill_new_order(order_id: str) -> FulfillmentResult:
             return existing
         
         try:
-            # 2. 获取订单和套餐信息
-            order, plan = await _get_order_with_plan(session, order_id)
+            # 2. 获取订单和套餐信息（使用 SELECT FOR UPDATE 加锁）
+            order, plan = await _get_order_with_plan(session, order_id, for_update=True)
             
             # 验证订单类型
             if order.purchase_type != "new":
@@ -312,7 +324,7 @@ async def fulfill_new_order(order_id: str) -> FulfillmentResult:
             access_token, refresh_token, expires_at = generate_client_tokens(username)
             
             client_session = ClientSession(
-                id=str(ULID()),
+                id=str(ulid.new().str),
                 order_id=order_id,
                 marzban_username=username,
                 access_token=access_token,
@@ -374,14 +386,52 @@ async def fulfill_new_order(order_id: str) -> FulfillmentResult:
                 return existing
             raise FulfillmentError("ALREADY_FULFILLED", "Order already fulfilled but no session found")
             
-        except FulfillmentError:
+        except FulfillmentError as e:
             await session.rollback()
+            # 尝试将订单转移到 failed 状态
+            await _try_transition_to_failed(session, order_id, e.error_code, e.error_message)
             raise
             
         except Exception as e:
             await session.rollback()
             logger.exception(f"Unexpected error during fulfillment for {order_id}")
+            # 尝试将订单转移到 failed 状态
+            await _try_transition_to_failed(session, order_id, "INTERNAL_ERROR", str(e))
             raise FulfillmentError("INTERNAL_ERROR", str(e))
+
+
+async def _try_transition_to_failed(
+    session: AsyncSession,
+    order_id: str,
+    error_code: str,
+    error_message: str
+) -> None:
+    """
+    尝试将订单转移到 failed 状态
+    
+    这是一个尽最大努力的操作，失败不抛出异常。
+    """
+    try:
+        result = await session.execute(
+            select(Order).where(Order.id == order_id).with_for_update()
+        )
+        order = result.scalar_one_or_none()
+        
+        if order and order.status == OrderStatus.PAID_SUCCESS.value:
+            transition_to_failed(
+                order_id=order_id,
+                current_status=OrderStatus(order.status),
+                error_code=error_code,
+                error_message=error_message,
+            )
+            order.status = OrderStatus.FAILED.value
+            order.error_code = error_code
+            order.error_message = error_message
+            await session.commit()
+            logger.info(f"Order {order_id} transitioned to failed: {error_code}")
+    except Exception as e:
+        logger.error(f"Failed to transition order {order_id} to failed: {e}")
+        await session.rollback()
 
 
 async def fulfill_renew_order(order_id: str, client_token: str) -> FulfillmentResult:
@@ -411,8 +461,8 @@ async def fulfill_renew_order(order_id: str, client_token: str) -> FulfillmentRe
             # 2. 验证 client_token，获取原用户
             username = verify_client_token(client_token, expected_type="access")
             
-            # 获取订单和套餐信息
-            order, plan = await _get_order_with_plan(session, order_id)
+            # 获取订单和套餐信息（使用 SELECT FOR UPDATE 加锁）
+            order, plan = await _get_order_with_plan(session, order_id, for_update=True)
             
             # 验证订单类型
             if order.purchase_type != "renew":
@@ -497,7 +547,7 @@ async def fulfill_renew_order(order_id: str, client_token: str) -> FulfillmentRe
                 existing_session.revoked_at = now
                 # 创建新会话
                 new_session = ClientSession(
-                    id=str(ULID()),
+                    id=str(ulid.new().str),
                     order_id=order_id,
                     marzban_username=username,
                     access_token=access_token,
@@ -508,7 +558,7 @@ async def fulfill_renew_order(order_id: str, client_token: str) -> FulfillmentRe
             else:
                 # 创建新会话
                 new_session = ClientSession(
-                    id=str(ULID()),
+                    id=str(ulid.new().str),
                     order_id=order_id,
                     marzban_username=username,
                     access_token=access_token,
@@ -571,13 +621,17 @@ async def fulfill_renew_order(order_id: str, client_token: str) -> FulfillmentRe
                 return existing
             raise FulfillmentError("ALREADY_FULFILLED", "Order already fulfilled but no session found")
             
-        except FulfillmentError:
+        except FulfillmentError as e:
             await session.rollback()
+            # 尝试将订单转移到 failed 状态
+            await _try_transition_to_failed(session, order_id, e.error_code, e.error_message)
             raise
             
         except Exception as e:
             await session.rollback()
             logger.exception(f"Unexpected error during renew fulfillment for {order_id}")
+            # 尝试将订单转移到 failed 状态
+            await _try_transition_to_failed(session, order_id, "INTERNAL_ERROR", str(e))
             raise FulfillmentError("INTERNAL_ERROR", str(e))
 
 
@@ -632,7 +686,7 @@ async def refresh_session(
         
         # 创建新会话
         new_session = ClientSession(
-            id=str(ULID()),
+            id=str(ulid.new().str),
             order_id=client_session.order_id,
             marzban_username=username,
             access_token=new_access_token,
