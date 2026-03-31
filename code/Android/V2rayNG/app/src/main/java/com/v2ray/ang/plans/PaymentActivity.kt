@@ -3,12 +3,14 @@ package com.v2ray.ang.plans
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -22,6 +24,7 @@ import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.repository.PaymentRepository
 import com.v2ray.ang.payment.ui.OrderPollingUseCase
+import com.v2ray.ang.payment.ui.activity.LoginActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,6 +43,25 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
     private var currentOrder: Order? = null
     private var countDownTimer: CountDownTimer? = null
+
+    private val loginLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            // 登录成功，重新尝试创建订单
+            val planId = intent.getStringExtra("plan_id") ?: return@registerForActivityResult
+            val assetCode = when (binding.radioGroupPaymentMethod.checkedRadioButtonId) {
+                com.v2ray.ang.R.id.radioSol -> PaymentConfig.AssetCode.SOL
+                com.v2ray.ang.R.id.radioUsdt -> PaymentConfig.AssetCode.USDT_TRC20
+                else -> PaymentConfig.AssetCode.SOL
+            }
+            createOrder(planId, assetCode)
+        } else {
+            // 登录取消或失败，返回上一页
+            Toast.makeText(this, "登录已取消", Toast.LENGTH_SHORT).show()
+            finish()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,8 +135,35 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
                 displayOrder(order)
                 startPolling(order)
             }.onFailure { error ->
-                Toast.makeText(this@PaymentActivity, "创建订单失败: ${error.message}", Toast.LENGTH_LONG).show()
-                finish()
+                val errorMessage = error.message ?: "创建订单失败"
+                
+                // 检查是否是 401 未授权错误
+                if (errorMessage.contains("401") || 
+                    errorMessage.contains("Unauthorized") ||
+                    errorMessage.contains("未登录") ||
+                    errorMessage.contains("未授权")) {
+                    
+                    // 清除过期的 Token
+                    repository.clearAuth()
+                    
+                    // 显示对话框引导登录
+                    AlertDialog.Builder(this@PaymentActivity)
+                        .setTitle("需要登录")
+                        .setMessage("您的登录已过期，请重新登录后继续购买。")
+                        .setPositiveButton("去登录") { _, _ ->
+                            val intent = Intent(this@PaymentActivity, LoginActivity::class.java)
+                            loginLauncher.launch(intent)
+                        }
+                        .setNegativeButton("取消") { _, _ ->
+                            finish()
+                        }
+                        .setCancelable(false)
+                        .show()
+                } else {
+                    // 其他错误，显示 Toast
+                    Toast.makeText(this@PaymentActivity, "创建订单失败: $errorMessage", Toast.LENGTH_LONG).show()
+                    finish()
+                }
             }
         }
     }
@@ -349,12 +398,34 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
     }
 
     override fun onError(error: String) {
-        // Log error for debugging
         android.util.Log.e("PaymentActivity", "Payment polling error: $error")
         
-        // Show error to user
-        runOnUiThread {
-            Toast.makeText(this@PaymentActivity, "查询状态失败: $error", Toast.LENGTH_SHORT).show()
+        // 检查是否是 401 错误
+        if (error.contains("401") || error.contains("Unauthorized") || error.contains("未登录")) {
+            lifecycleScope.launch {
+                pollingUseCase.stopPolling()
+                repository.clearAuth()
+                
+                withContext(Dispatchers.Main) {
+                    AlertDialog.Builder(this@PaymentActivity)
+                        .setTitle("需要登录")
+                        .setMessage("您的登录已过期，请重新登录后查看订单状态。")
+                        .setPositiveButton("去登录") { _, _ ->
+                            val intent = Intent(this@PaymentActivity, LoginActivity::class.java)
+                            loginLauncher.launch(intent)
+                        }
+                        .setNegativeButton("取消") { _, _ ->
+                            finish()
+                        }
+                        .setCancelable(false)
+                        .show()
+                }
+            }
+        } else {
+            // 其他错误，继续轮询
+            runOnUiThread {
+                Toast.makeText(this@PaymentActivity, "查询状态失败: $error", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
