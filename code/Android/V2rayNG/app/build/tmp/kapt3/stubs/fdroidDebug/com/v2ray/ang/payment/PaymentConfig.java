@@ -8,11 +8,9 @@ public final class PaymentConfig {
     
     /**
      * API 基础 URL
-     * TODO: Configure your actual API domain before production deployment
-     * This placeholder must be replaced with your real backend domain.
      */
     @org.jetbrains.annotations.NotNull()
-    public static final java.lang.String API_BASE_URL = "https://your-api-domain.com";
+    public static final java.lang.String API_BASE_URL = "https://154.36.173.184:8080";
     
     /**
      * 客户端 API 版本
@@ -24,7 +22,7 @@ public final class PaymentConfig {
      * 完整 API 基础 URL
      */
     @org.jetbrains.annotations.NotNull()
-    public static final java.lang.String FULL_API_URL = "https://your-api-domain.com/client/v1";
+    public static final java.lang.String FULL_API_URL = "https://154.36.173.184:8080/client/v1";
     
     /**
      * 订单过期时间（毫秒）

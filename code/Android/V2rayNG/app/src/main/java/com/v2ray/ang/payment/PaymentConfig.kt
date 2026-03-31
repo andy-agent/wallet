@@ -7,10 +7,8 @@ object PaymentConfig {
     
     /**
      * API 基础 URL
-     * TODO: Configure your actual API domain before production deployment
-     * This placeholder must be replaced with your real backend domain.
      */
-    const val API_BASE_URL = "https://your-api-domain.com"
+    const val API_BASE_URL = "https://154.36.173.184:8080"
     
     /**
      * 客户端 API 版本

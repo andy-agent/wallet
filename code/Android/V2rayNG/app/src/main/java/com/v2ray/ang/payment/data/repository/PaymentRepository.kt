@@ -12,12 +12,12 @@ import com.v2ray.ang.payment.data.local.entity.UserEntity
 import com.v2ray.ang.payment.data.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.CertificatePinner
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 /**
  * 支付仓库类
@@ -29,16 +29,7 @@ class PaymentRepository(context: Context) {
     private val localRepository = LocalPaymentRepository(context)
 
     private val api: PaymentApi by lazy {
-        // TODO: Replace with your actual API domain and certificate SHA-256 hash.
-        // To get the certificate hash, run:
-        //   openssl s_client -connect api.yourdomain.com:443 -servername api.yourdomain.com < /dev/null 2>/dev/null | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64
-        // Or use: ./gradlew :app:pinCert -Purl=https://api.yourdomain.com
-        val certificatePinner = CertificatePinner.Builder()
-            .add("api.example.com", "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
-            .build()
-
         val client = OkHttpClient.Builder()
-            .certificatePinner(certificatePinner)
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
                     .addHeader("User-Agent", "V2rayNG/${BuildConfig.VERSION_NAME} (Android)")
