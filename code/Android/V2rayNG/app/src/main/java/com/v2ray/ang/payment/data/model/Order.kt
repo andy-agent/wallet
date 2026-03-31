@@ -70,7 +70,11 @@ data class CreateOrderRequest(
     @SerializedName("client_version")
     val clientVersion: String,
     @SerializedName("client_token")
-    val clientToken: String? = null
+    val clientToken: String? = null,
+    @SerializedName("client_user_id")
+    val clientUserId: String? = null,
+    @SerializedName("marzban_username")
+    val marzbanUsername: String? = null
 )
 
 /**

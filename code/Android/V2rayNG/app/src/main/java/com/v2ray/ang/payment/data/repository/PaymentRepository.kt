@@ -17,6 +17,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.net.ssl.*
 
 
 /**
@@ -29,7 +30,22 @@ class PaymentRepository(context: Context) {
     private val localRepository = LocalPaymentRepository(context)
 
     private val api: PaymentApi by lazy {
+        // 创建信任所有证书的 SSL Socket Factory (用于自签名证书)
+        val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
+            override fun checkServerTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
+            override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
+        })
+        
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+        
+        // 创建允许所有主机名的 HostnameVerifier
+        val allHostsValid = HostnameVerifier { _, _ -> true }
+        
         val client = OkHttpClient.Builder()
+            .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
+            .hostnameVerifier(allHostsValid)
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
                     .addHeader("User-Agent", "V2rayNG/${BuildConfig.VERSION_NAME} (Android)")
@@ -304,7 +320,9 @@ class PaymentRepository(context: Context) {
                 assetCode = assetCode,
                 clientDeviceId = getDeviceId(),
                 clientVersion = BuildConfig.VERSION_NAME,
-                clientToken = clientToken
+                clientToken = clientToken,
+                clientUserId = getCurrentUserId(),
+                marzbanUsername = prefs.getString(PaymentConfig.Prefs.MARZBAN_USERNAME, null)
             )
 
             val response = api.createOrder(request)
