@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-31T14:44:52Z",
+  "generated_at": "2026-03-31T14:46:31Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-f1y",
   "next_task_title": "【L-1+L-4】端到端验证与部署修复",
@@ -7,7 +7,7 @@
   "ready_count": 2,
   "open_count": 8,
   "closed_count": 8,
-  "dirty_count": 21,
+  "dirty_count": 0,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {

@@ -234,6 +234,23 @@ POST /admin/v1/address-pool/import
 
 ---
 
-**上线日期**: _______________
-**执行人**: _______________
+**上线日期**: 2026-03-31
+**执行人**: DevOps 部署脚本
 **确认人**: _______________
+
+---
+
+## 测试服务器部署状态 (liaojiang-f1y)
+
+- [x] Docker 和 Docker Compose 安装完成
+- [x] 代码上传到 /opt/payment-bridge
+- [x] 环境变量配置完成 (.env)
+- [x] PostgreSQL 启动成功 (healthy)
+- [x] Redis 启动成功 (healthy)
+- [ ] API 服务构建中 (pip 依赖安装)
+- [ ] Worker 服务构建中
+- [ ] Wallet 服务构建中
+- [ ] 数据库迁移待执行
+- [ ] 端到端测试待执行
+
+**注意**: 由于网络原因，Docker 镜像构建需要较长时间。请登录服务器手动执行 `docker-compose -f docker-compose.test.yml up -d --build` 完成部署。
