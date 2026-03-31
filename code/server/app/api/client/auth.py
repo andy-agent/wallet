@@ -42,12 +42,14 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """验证密码"""
-    return pwd_context.verify(plain_password, hashed_password)
+    # bcrypt 限制密码长度最多72字节
+    return pwd_context.verify(plain_password[:72], hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """获取密码哈希"""
-    return pwd_context.hash(password)
+    # bcrypt 限制密码长度最多72字节
+    return pwd_context.hash(password[:72])
 
 
 def validate_password_strength(password: str) -> tuple[bool, Optional[str]]:
