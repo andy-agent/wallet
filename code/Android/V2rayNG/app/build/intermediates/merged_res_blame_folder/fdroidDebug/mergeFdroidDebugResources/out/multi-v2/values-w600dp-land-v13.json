@@ -4,7 +4,7 @@
             "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-65:/values-w600dp-land-v13/values-w600dp-land-v13.xml",
             "map": [
                 {
-                    "source": "/Users/cnyirui/.gradle/caches/9.3.1/transforms/0f07c59994529fef8a3aef9dde67d44d/transformed/material-1.13.0/res/values-w600dp-land-v13/values-w600dp-land-v13.xml",
+                    "source": "/Users/cnyirui/.gradle/caches/9.3.1/transforms/6bf2437b324d4fd198247962e46d81de/transformed/material-1.13.0/res/values-w600dp-land-v13/values-w600dp-land-v13.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

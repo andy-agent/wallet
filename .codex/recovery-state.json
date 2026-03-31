@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-31T15:57:59Z",
+  "generated_at": "2026-03-31T16:19:15Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-tta",
   "next_task_title": "【J-1+J-3】管理端审计日志接口",
@@ -7,7 +7,7 @@
   "ready_count": 6,
   "open_count": 6,
   "closed_count": 15,
-  "dirty_count": 691,
+  "dirty_count": 247,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {

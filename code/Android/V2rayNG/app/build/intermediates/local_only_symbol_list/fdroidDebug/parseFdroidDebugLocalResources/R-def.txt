@@ -86,6 +86,7 @@ dimen image_size_dp24
 dimen padding_spacing_dp12
 dimen padding_spacing_dp16
 dimen padding_spacing_dp24
+dimen padding_spacing_dp32
 dimen padding_spacing_dp4
 dimen padding_spacing_dp8
 dimen preference_category_padding_start
