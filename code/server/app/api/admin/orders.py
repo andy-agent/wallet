@@ -128,7 +128,7 @@ class OrderDetailResponse(OrderListItem):
     tx_from: Optional[str] = Field(None, description="付款地址")
     
     # 客户端信息
-    client_device_id: str = Field(..., description="设备ID")
+    user_id: str = Field(..., description="用户ID")
     client_version: str = Field(..., description="客户端版本")
 
 
@@ -309,7 +309,7 @@ async def get_order(
         fx_rate_locked=str(order.fx_rate_locked),
         confirm_count=order.confirm_count or 0,
         tx_from=order.tx_from,
-        client_device_id=order.client_device_id,
+        user_id=order.user_id,
         client_version=order.client_version
     )
     

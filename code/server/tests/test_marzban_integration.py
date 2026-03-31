@@ -100,6 +100,7 @@ def sample_new_order_data(sample_plan_data):
         "order_no": f"ORD{uuid.uuid4().hex[:16].upper()}",
         "purchase_type": "new",
         "plan_id": sample_plan_data["id"],
+        "user_id": "test-user-123",
         "client_user_id": None,
         "marzban_username": None,
         "chain": "solana",
@@ -110,7 +111,6 @@ def sample_new_order_data(sample_plan_data):
         "fx_rate_locked": Decimal("99.90"),
         "status": OrderStatus.PAID_SUCCESS.value,
         "expires_at": datetime.now(timezone.utc) + timedelta(minutes=15),
-        "client_device_id": "test-device-123",
         "client_version": "1.0.0",
     }
 
@@ -123,6 +123,7 @@ def sample_renew_order_data(sample_plan_data):
         "order_no": f"ORD{uuid.uuid4().hex[:16].upper()}",
         "purchase_type": "renew",
         "plan_id": sample_plan_data["id"],
+        "user_id": "test-user-123",
         "client_user_id": "user_existing_123",
         "marzban_username": "user_existing_123",
         "chain": "solana",
@@ -133,7 +134,6 @@ def sample_renew_order_data(sample_plan_data):
         "fx_rate_locked": Decimal("99.90"),
         "status": OrderStatus.PAID_SUCCESS.value,
         "expires_at": datetime.now(timezone.utc) + timedelta(minutes=15),
-        "client_device_id": "test-device-123",
         "client_version": "1.0.0",
     }
 

@@ -7,6 +7,7 @@ Client API - Order module
 import logging
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Header
 from pydantic import BaseModel, Field, field_validator
@@ -20,19 +21,24 @@ from app.core.exceptions import (
     AppException, 
     ErrorCode, 
     NotFoundException,
-    ValidationException
+    ValidationException,
+    UnauthorizedException,
+    ForbiddenException
 )
 from app.models.order import Order
 from app.models.plan import Plan
 from app.models.payment_address import PaymentAddress
+from app.models.user import User
 from app.schemas.base import Response
 from app.services.address_pool import AddressPoolService
 from app.services.fx_rate import (
     FXRateService, 
     convert_usd_to_crypto,
     get_sol_usd_rate,
-    get_usdt_usd_rate
+    get_usdt_usd_rate,
+    get_spl_token_usd_rate
 )
+from app.api.client.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -44,7 +50,7 @@ class CreateOrderRequest(BaseModel):
     """创建订单请求"""
     plan_id: str = Field(..., description="套餐ID")
     purchase_type: str = Field(..., description="购买类型: new(新购) | renew(续费)")
-    asset_code: str = Field(..., description="支付资产: SOL | USDT_TRC20")
+    asset_code: str = Field(..., description="支付资产: SOL | USDT_TRC20 | SPL_TOKEN")
     # 续费专用
     client_user_id: str = Field(default=None, description="续费时的客户端用户ID")
     marzban_username: str = Field(default=None, description="续费时的 Marzban 用户名")
@@ -59,7 +65,7 @@ class CreateOrderRequest(BaseModel):
     @field_validator('asset_code')
     @classmethod
     def validate_asset_code(cls, v: str) -> str:
-        supported = ['SOL', 'USDT_TRC20']
+        supported = ['SOL', 'USDT_TRC20', 'SPL_TOKEN']
         if v not in supported:
             raise ValueError(f'asset_code 必须是 {supported} 之一')
         return v
@@ -104,17 +110,23 @@ class OrderStatusResponse(BaseModel):
     paid_at: datetime = Field(default=None, description="支付时间")
 
 
+class OrderListResponseData(BaseModel):
+    """订单列表响应数据"""
+    orders: list[OrderResponseData]
+    total: int
+
+
 # ========== API 端点 ==========
 
 @router.post(
     "",
     response_model=Response[OrderResponseData],
     summary="创建订单",
-    description="创建新订单，系统会分配收款地址并锁定汇率"
+    description="创建新订单，系统会分配收款地址并锁定汇率。需要登录。"
 )
 async def create_order(
     request: CreateOrderRequest,
-    x_device_id: str = Header(..., description="设备ID"),
+    current_user: User = Depends(get_current_user),
     x_client_version: str = Header(..., description="客户端版本"),
     db: AsyncSession = Depends(get_db)
 ) -> Response[OrderResponseData]:
@@ -122,11 +134,12 @@ async def create_order(
     创建新订单
     
     流程：
-    1. 验证套餐存在且启用
-    2. 获取实时汇率（带缓存和故障转移）
-    3. 计算加密货币金额
-    4. 分配收款地址
-    5. 创建订单记录
+    1. 验证用户已登录
+    2. 验证套餐存在且启用
+    3. 获取实时汇率（带缓存和故障转移）
+    4. 计算加密货币金额
+    5. 分配收款地址
+    6. 创建订单记录
     """
     settings = get_settings()
     
@@ -194,6 +207,7 @@ async def create_order(
         order_no=order_no,
         purchase_type=request.purchase_type,
         plan_id=request.plan_id,
+        user_id=current_user.id,  # 使用当前登录用户ID
         client_user_id=request.client_user_id,
         marzban_username=request.marzban_username,
         chain=chain,
@@ -204,7 +218,6 @@ async def create_order(
         fx_rate_locked=fx_rate,
         status="pending_payment",
         expires_at=expires_at,
-        client_device_id=x_device_id,
         client_version=x_client_version,
     )
     
@@ -212,7 +225,7 @@ async def create_order(
     await db.flush()
     
     logger.info(
-        f"订单创建成功: {order_no}, asset={asset_code}, "
+        f"订单创建成功: {order_no}, user={current_user.username}, asset={asset_code}, "
         f"amount={amount_crypto}, rate={fx_rate}"
     )
     
@@ -240,13 +253,85 @@ async def create_order(
 
 
 @router.get(
+    "",
+    response_model=Response[OrderListResponseData],
+    summary="获取订单列表",
+    description="获取当前登录用户的订单列表。需要登录。"
+)
+async def list_orders(
+    current_user: User = Depends(get_current_user),
+    status: Optional[str] = None,
+    limit: int = 20,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db)
+) -> Response[OrderListResponseData]:
+    """
+    获取订单列表
+    
+    - 只返回当前登录用户的订单
+    - 支持按状态筛选
+    - 支持分页
+    """
+    # 构建查询
+    query = select(Order).where(Order.user_id == current_user.id)
+    
+    if status:
+        query = query.where(Order.status == status)
+    
+    # 获取总数
+    count_query = select(Order).where(Order.user_id == current_user.id)
+    if status:
+        count_query = count_query.where(Order.status == status)
+    
+    total_result = await db.execute(count_query)
+    total = len(total_result.scalars().all())
+    
+    # 分页
+    query = query.order_by(Order.created_at.desc()).offset(offset).limit(limit)
+    
+    result = await db.execute(query)
+    orders = result.scalars().all()
+    
+    # 构建响应
+    order_list = []
+    for order in orders:
+        order_list.append(OrderResponseData(
+            order_id=order.id,
+            order_no=order.order_no,
+            plan_id=order.plan_id,
+            purchase_type=order.purchase_type,
+            chain=order.chain,
+            asset_code=order.asset_code,
+            receive_address=order.receive_address,
+            amount_crypto=str(order.amount_crypto),
+            amount_usd=str(order.amount_usd_locked),
+            fx_rate=str(order.fx_rate_locked),
+            status=order.status,
+            expires_at=order.expires_at,
+            created_at=order.created_at,
+            client_user_id=order.client_user_id,
+            marzban_username=order.marzban_username,
+        ))
+    
+    return Response(
+        code="SUCCESS",
+        message="success",
+        data=OrderListResponseData(
+            orders=order_list,
+            total=total
+        )
+    )
+
+
+@router.get(
     "/{order_id}",
     response_model=Response[OrderDetailResponse],
     summary="获取订单详情",
-    description="根据订单ID获取订单详情"
+    description="根据订单ID获取订单详情。只能查看自己的订单。"
 )
 async def get_order(
     order_id: str,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> Response[OrderDetailResponse]:
     """获取订单详情"""
@@ -257,6 +342,10 @@ async def get_order(
     
     if not order:
         raise NotFoundException("订单不存在")
+    
+    # 验证订单属于当前用户
+    if order.user_id != current_user.id:
+        raise ForbiddenException("无权查看此订单")
     
     return Response(
         code="SUCCESS",
@@ -287,10 +376,11 @@ async def get_order(
     "/{order_id}/status",
     response_model=Response[OrderStatusResponse],
     summary="获取订单状态",
-    description="获取订单支付状态（轻量级查询）"
+    description="获取订单支付状态（轻量级查询）。只能查看自己的订单。"
 )
 async def get_order_status(
     order_id: str,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> Response[OrderStatusResponse]:
     """获取订单状态"""
@@ -301,6 +391,10 @@ async def get_order_status(
     
     if not order:
         raise NotFoundException("订单不存在")
+    
+    # 验证订单属于当前用户
+    if order.user_id != current_user.id:
+        raise ForbiddenException("无权查看此订单")
     
     return Response(
         code="SUCCESS",
@@ -319,10 +413,11 @@ async def get_order_status(
     "/{order_id}/cancel",
     response_model=Response[dict],
     summary="取消订单",
-    description="取消待支付的订单"
+    description="取消待支付的订单。只能取消自己的订单。"
 )
 async def cancel_order(
     order_id: str,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> Response[dict]:
     """取消订单"""
@@ -333,6 +428,10 @@ async def cancel_order(
     
     if not order:
         raise NotFoundException("订单不存在")
+    
+    # 验证订单属于当前用户
+    if order.user_id != current_user.id:
+        raise ForbiddenException("无权取消此订单")
     
     if order.status != "pending_payment":
         raise ValidationException("只有待支付订单可以取消")
@@ -354,6 +453,8 @@ async def cancel_order(
     
     await db.flush()
     
+    logger.info(f"订单已取消: {order.order_no}, user={current_user.username}")
+    
     return Response(
         code="SUCCESS",
         message="订单已取消",
@@ -372,6 +473,7 @@ def _resolve_chain_and_asset(asset_code: str) -> tuple[str, str]:
     """
     mapping = {
         "SOL": ("solana", "SOL"),
+        "SPL_TOKEN": ("solana", "SPL_TOKEN"),
         "USDT_TRC20": ("tron", "USDT_TRC20"),
     }
     return mapping.get(asset_code, ("solana", asset_code))
@@ -391,6 +493,8 @@ async def _get_fx_rate_safe(asset_code: str) -> tuple[Optional[Decimal], Optiona
         
         if asset_code == "SOL":
             rate = await service.get_sol_usd_rate()
+        elif asset_code == "SPL_TOKEN":
+            rate = await service.get_spl_token_usd_rate()
         elif asset_code in ["USDT_TRC20", "USDT"]:
             rate = await service.get_usdt_usd_rate()
         else:
@@ -419,12 +523,17 @@ async def _convert_amount_safe(
     """
     try:
         from decimal import ROUND_HALF_UP
+        settings = get_settings()
         
         if fx_rate <= 0:
             return None, "汇率无效"
         
-        # 计算加密货币金额
-        if asset_code in ["USDT_TRC20", "USDT"]:
+        # 计算加密货币金额，根据资产代码确定精度
+        if asset_code == "SPL_TOKEN":
+            # SPL Token 使用配置的精度
+            decimals = settings.spl_token_decimals
+            precision = Decimal("0.1") ** decimals
+        elif asset_code in ["USDT_TRC20", "USDT"]:
             precision = Decimal("0.000001")  # USDT 6位小数
         else:
             precision = Decimal("0.000000001")  # SOL 9位小数

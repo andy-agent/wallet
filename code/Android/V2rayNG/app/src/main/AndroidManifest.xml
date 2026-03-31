@@ -161,6 +161,15 @@
             android:label="@string/title_payment"
             android:parentActivityName=".plans.PlansActivity"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
+        <activity
+            android:name=".payment.ui.activity.UserProfileActivity"
+            android:label="@string/user_profile"
+            android:parentActivityName=".ui.MainActivity"
+            android:theme="@style/AppThemeDayNight.NoActionBar" />
+        <activity
+            android:name=".payment.ui.activity.LoginActivity"
+            android:label="@string/login"
+            android:theme="@style/AppThemeDayNight.NoActionBar" />
 
         <service
             android:name=".service.V2RayVpnService"

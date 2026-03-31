@@ -18,6 +18,7 @@ from app.core.exceptions import UnauthorizedException, ForbiddenException, NotFo
 from app.core.rate_limit import client_rate_limit
 from app.integrations.marzban import get_marzban_client, MarzbanAPIError
 from app.models.client_session import ClientSession
+from app.models.user import User
 from app.schemas.base import Response
 
 logger = logging.getLogger(__name__)
@@ -45,8 +46,9 @@ class SubscriptionResponseData(BaseModel):
     nodes: Optional[List[NodeInfo]] = Field(default=None, description="节点信息列表（可选）")
 
 
-class ClientTokenPayload(BaseModel):
-    """客户端 JWT token payload"""
+class JWTTokenPayload(BaseModel):
+    """JWT token payload"""
+    user_id: str
     username: str
     exp: datetime
     type: str
@@ -57,7 +59,7 @@ class ClientTokenPayload(BaseModel):
 async def verify_client_token(
     authorization: str = Header(None),
     db: AsyncSession = Depends(get_db)
-) -> ClientTokenPayload:
+) -> JWTTokenPayload:
     """
     验证客户端 JWT token
     
@@ -74,7 +76,7 @@ async def verify_client_token(
         db: 数据库会话
         
     Returns:
-        ClientTokenPayload: 解析后的 token payload
+        JWTTokenPayload: 解析后的 token payload
         
     Raises:
         UnauthorizedException: Token 过期或无效
@@ -102,16 +104,18 @@ async def verify_client_token(
                 message=f"Invalid token type. Expected 'access', got '{token_type}'"
             )
         
-        # 3. 获取用户名
+        # 3. 获取用户信息
+        user_id = payload.get("user_id")
         username = payload.get("sub")
-        if not username:
-            raise ForbiddenException(message="Invalid token: missing username (sub)")
+        
+        if not user_id or not username:
+            raise ForbiddenException(message="Invalid token: missing user info")
         
         # 4. 从数据库验证 token 未被吊销
         result = await db.execute(
             select(ClientSession)
             .where(ClientSession.access_token == token)
-            .where(ClientSession.marzban_username == username)
+            .where(ClientSession.user_id == user_id)
         )
         client_session = result.scalar_one_or_none()
         
@@ -126,7 +130,8 @@ async def verify_client_token(
         if client_session.expires_at < now:
             raise UnauthorizedException(message="Session has expired")
         
-        return ClientTokenPayload(
+        return JWTTokenPayload(
+            user_id=user_id,
             username=username,
             exp=datetime.fromtimestamp(payload.get("exp")),
             type=token_type
@@ -138,16 +143,38 @@ async def verify_client_token(
         raise ForbiddenException(message=f"Invalid token: {str(e)}")
 
 
+async def get_current_user_from_token(
+    token_payload: JWTTokenPayload = Depends(verify_client_token),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    从 token 获取当前用户
+    """
+    result = await db.execute(
+        select(User).where(User.id == token_payload.user_id)
+    )
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise NotFoundException(message="User not found")
+    
+    if not user.is_active:
+        raise ForbiddenException(message="User is inactive")
+    
+    return user
+
+
 # ============ Endpoints ============
 
 @router.get(
     "",
     response_model=Response[SubscriptionResponseData],
     summary="获取订阅信息",
-    description="客户端拉取订阅信息，包含订阅链接、过期时间、流量使用情况。需要 client_token 认证。"
+    description="客户端拉取订阅信息，包含订阅链接、过期时间、流量使用情况。需要 JWT access_token 认证。"
 )
 async def get_subscription(
-    client_token: ClientTokenPayload = Depends(verify_client_token),
+    token_payload: JWTTokenPayload = Depends(verify_client_token),
+    current_user: User = Depends(get_current_user_from_token),
     db: AsyncSession = Depends(get_db),
     _: None = Depends(client_rate_limit)
 ) -> Response[SubscriptionResponseData]:
@@ -157,11 +184,38 @@ async def get_subscription(
     - 返回订阅链接 URL
     - 返回账户过期时间
     - 返回流量使用情况（总量、已用、剩余）
-    - 需要有效的 client_token
+    - 需要有效的 access_token
     - Token 过期返回 401
     - Token 无效或被吊销返回 401/403
     """
-    username = client_token.username
+    # 获取用户的最新订单以确定 Marzban 用户名
+    from app.models.order import Order
+    
+    result = await db.execute(
+        select(Order)
+        .where(Order.user_id == current_user.id)
+        .where(Order.marzban_username.isnot(None))
+        .where(Order.status == "fulfilled")
+        .order_by(Order.fulfilled_at.desc())
+    )
+    latest_order = result.scalar_one_or_none()
+    
+    if not latest_order or not latest_order.marzban_username:
+        # 用户还没有完成过订单，返回空订阅信息
+        return Response(
+            code="SUCCESS",
+            message="success",
+            data=SubscriptionResponseData(
+                subscription_url="",
+                expires_at=datetime.utcnow(),
+                traffic_total=0,
+                traffic_used=0,
+                traffic_remaining=0,
+                nodes=None
+            )
+        )
+    
+    username = latest_order.marzban_username
     
     try:
         # 查询 Marzban 用户信息

@@ -124,8 +124,12 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
         // 显示支付信息
         binding.textOrderNo.text = "订单号: ${order.orderNo}"
-        binding.textAssetCode.text = "支付方式: ${order.payment.assetCode}"
-        binding.textAmount.text = order.payment.amountCrypto
+        binding.textAssetCode.text = "支付方式: ${getPaymentMethodDisplay(order.payment.assetCode)}"
+        
+        // 格式化金额显示，添加等值信息
+        val amountDisplay = formatAmountDisplay(order.payment.assetCode, order.payment.amountCrypto)
+        binding.textAmount.text = amountDisplay
+        
         binding.textReceiveAddress.text = order.payment.receiveAddress
 
         // 生成二维码
@@ -134,6 +138,24 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
         // 启动倒计时
         startCountdown(order)
+    }
+    
+    private fun getPaymentMethodDisplay(assetCode: String): String {
+        return when (assetCode) {
+            "SOL" -> "SOL (Solana)"
+            "USDT_TRC20" -> "USDT-TRC20 (Tron)"
+            "SPL_TOKEN" -> "SPL Token (Solana)"
+            else -> assetCode
+        }
+    }
+    
+    private fun formatAmountDisplay(assetCode: String, amountCrypto: String): String {
+        return when (assetCode) {
+            "SOL" -> "$amountCrypto SOL (等值3 USDT)"
+            "USDT_TRC20" -> "$amountCrypto USDT"
+            "SPL_TOKEN" -> "$amountCrypto SPL (等值3 USDT)"
+            else -> amountCrypto
+        }
     }
 
     private fun startCountdown(order: Order) {

@@ -13,6 +13,7 @@ from app.core.database import get_db
 from app.core.exceptions import NotFoundException
 from app.models.plan import Plan
 from app.schemas.base import Response
+# from app.services.fx_rate import BASE_PRICE_USD
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
@@ -77,7 +78,7 @@ async def list_plans(
             description=plan.description or "",
             traffic_bytes=plan.traffic_bytes,
             duration_days=plan.duration_days,
-            price_usd=str(plan.price_usd),  # Decimal 转为字符串
+            price_usd=str(plan.price_usd),
             supported_assets=plan.supported_assets or ["SOL", "USDT_TRC20"],
             badge=badge
         ))
@@ -127,7 +128,7 @@ async def get_plan(
         description=plan.description or "",
         traffic_bytes=plan.traffic_bytes,
         duration_days=plan.duration_days,
-        price_usd=str(plan.price_usd),
+        price_usd=str(BASE_PRICE_USD),  # 统一使用基础价格 3.00
         supported_assets=plan.supported_assets or ["SOL", "USDT_TRC20"],
         badge=badge
     )

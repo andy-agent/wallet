@@ -112,6 +112,7 @@ class DatabaseTester:
                     order_no=order_no,
                     purchase_type="new",
                     plan_id=plan.id,
+                    user_id=f"user_{uuid.uuid4().hex[:8]}",
                     chain="solana",
                     asset_code="SOL",
                     receive_address=f"SOL{uuid.uuid4().hex[:32]}",
@@ -120,7 +121,6 @@ class DatabaseTester:
                     fx_rate_locked=Decimal("100.00"),
                     status="pending_payment",
                     expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
-                    client_device_id=f"device_{uuid.uuid4().hex[:8]}",
                     client_version="1.0.0"
                 )
                 session.add(order)
@@ -208,6 +208,7 @@ class DatabaseTester:
                     order_no=order_no,
                     purchase_type="new",
                     plan_id=plan.id,
+                    user_id=f"user_{uuid.uuid4().hex[:8]}",
                     chain="solana",
                     asset_code="SOL",
                     receive_address=f"SOL{uuid.uuid4().hex[:32]}",
@@ -216,7 +217,6 @@ class DatabaseTester:
                     fx_rate_locked=Decimal("100.00"),
                     status="pending_payment",
                     expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
-                    client_device_id=f"device_{uuid.uuid4().hex[:8]}",
                     client_version="1.0.0"
                 )
                 session.add(order)
@@ -266,6 +266,7 @@ class DatabaseTester:
                         order_no=order_no,
                         purchase_type="new",
                         plan_id=plan.id,
+                        user_id=f"user_{task_id}",
                         chain="solana",
                         asset_code="SOL",
                         receive_address=f"SOL{uuid.uuid4().hex[:32]}",
@@ -274,7 +275,6 @@ class DatabaseTester:
                         fx_rate_locked=Decimal("100.00"),
                         status="pending_payment",
                         expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
-                        client_device_id=f"device_{task_id}",
                         client_version="1.0.0"
                     )
                     session.add(order)
@@ -333,6 +333,7 @@ class DatabaseTester:
                         order_no=f"ORDCONC{i:03d}{uuid.uuid4().hex[:4]}",
                         purchase_type="new",
                         plan_id=plan.id,
+                        user_id=f"user_{i}",
                         chain="solana",
                         asset_code="SOL",
                         receive_address=f"SOL{uuid.uuid4().hex[:32]}",
@@ -341,7 +342,6 @@ class DatabaseTester:
                         fx_rate_locked=Decimal("100.00"),
                         status="pending_payment",
                         expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
-                        client_device_id=f"device_{i}",
                         client_version="1.0.0"
                     )
                     session.add(order)

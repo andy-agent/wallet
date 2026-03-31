@@ -50,7 +50,7 @@ class PlansAdapter(
 
             textName.text = plan.name
             textDescription.text = plan.description
-            textPrice.text = "$${plan.priceUsd}"
+            textPrice.text = "3 USDT 等值"
             textTraffic.text = "流量: ${plan.getTrafficDisplay()}"
             textDuration.text = "时长: ${plan.getDurationDisplay()}"
 

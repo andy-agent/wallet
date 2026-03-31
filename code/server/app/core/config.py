@@ -1,6 +1,7 @@
 """
 Application configuration using pydantic-settings
 """
+from decimal import Decimal
 from functools import lru_cache
 from typing import List, Optional
 
@@ -56,6 +57,15 @@ class Settings(BaseSettings):
     solana_confirmations: int = 12
     solana_mock_mode: bool = Field(default=False, alias="SOLANA_MOCK_MODE")
     
+    # SPL Token Configuration
+    spl_token_mint: str = Field(
+        default="8zFP8GeszFz7FvuHesguekTxDjm4KLsJEYBZTKyMLEoE",
+        alias="SPL_TOKEN_MINT"
+    )
+    spl_token_decimals: int = Field(default=6, alias="SPL_TOKEN_DECIMALS")
+    spl_token_symbol: str = Field(default="USDC", alias="SPL_TOKEN_SYMBOL")
+    spl_token_enabled: bool = Field(default=True, alias="SPL_TOKEN_ENABLED")
+    
     # Tron
     tron_rpc_url: str = Field(
         default="https://nile.trongrid.io",
@@ -78,6 +88,9 @@ class Settings(BaseSettings):
     
     # Admin
     admin_token: Optional[str] = Field(default=None, alias="ADMIN_TOKEN")
+    
+    # Pricing
+    base_price_usd: Decimal = Field(default=Decimal("3.00"), alias="BASE_PRICE_USD")
     
     @property
     def is_development(self) -> bool:

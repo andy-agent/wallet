@@ -133,6 +133,7 @@ class FulfillmentIntegrationTest:
                     order_no=order_no,
                     purchase_type="new",
                     plan_id=self.test_plan.id,
+                    user_id="test-user-001",
                     client_user_id=None,
                     marzban_username=None,
                     chain="solana",
@@ -143,7 +144,6 @@ class FulfillmentIntegrationTest:
                     fx_rate_locked=Decimal("99.90"),
                     status=OrderStatus.PAID_SUCCESS.value,
                     expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
-                    client_device_id="test-device-123",
                     client_version="1.0.0",
                 )
                 session.add(self.test_order_new)
@@ -227,6 +227,7 @@ class FulfillmentIntegrationTest:
                     order_no=order_no,
                     purchase_type="renew",
                     plan_id=self.test_plan.id,
+                    user_id="test-user-001",
                     client_user_id=username,
                     marzban_username=username,
                     chain="solana",
@@ -237,7 +238,6 @@ class FulfillmentIntegrationTest:
                     fx_rate_locked=Decimal("99.90"),
                     status=OrderStatus.PAID_SUCCESS.value,
                     expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
-                    client_device_id="test-device-123",
                     client_version="1.0.0",
                 )
                 session.add(self.test_order_renew)

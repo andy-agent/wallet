@@ -326,6 +326,7 @@ async def fulfill_new_order(order_id: str) -> FulfillmentResult:
             client_session = ClientSession(
                 id=str(ulid.new().str),
                 order_id=order_id,
+                user_id=order.user_id,
                 marzban_username=username,
                 access_token=access_token,
                 refresh_token=refresh_token,
@@ -549,6 +550,7 @@ async def fulfill_renew_order(order_id: str, client_token: str) -> FulfillmentRe
                 new_session = ClientSession(
                     id=str(ulid.new().str),
                     order_id=order_id,
+                    user_id=order.user_id,
                     marzban_username=username,
                     access_token=access_token,
                     refresh_token=refresh_token,
@@ -560,6 +562,7 @@ async def fulfill_renew_order(order_id: str, client_token: str) -> FulfillmentRe
                 new_session = ClientSession(
                     id=str(ulid.new().str),
                     order_id=order_id,
+                    user_id=order.user_id,
                     marzban_username=username,
                     access_token=access_token,
                     refresh_token=refresh_token,
@@ -688,6 +691,7 @@ async def refresh_session(
         new_session = ClientSession(
             id=str(ulid.new().str),
             order_id=client_session.order_id,
+            user_id=client_session.user_id,
             marzban_username=username,
             access_token=new_access_token,
             refresh_token=new_refresh_token,

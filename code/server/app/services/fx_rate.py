@@ -4,6 +4,7 @@
 提供加密货币与 USD 之间的汇率转换：
 - SOL/USD 汇率获取
 - USDT/USD 汇率获取（通常为 1.0）
+- SPL Token/USD 汇率获取
 - USD 到加密货币的金额转换
 
 数据源:
@@ -64,6 +65,7 @@ class FXRateService:
         "SOL": {"coingecko_id": "solana", "binance_symbol": "SOLUSDT"},
         "USDT_TRC20": {"coingecko_id": "tether", "binance_symbol": "USDTUSD"},
         "USDT": {"coingecko_id": "tether", "binance_symbol": "USDTUSD"},
+        "SPL_TOKEN": {"coingecko_id": "usd-coin", "binance_symbol": "USDCUSDT"},
     }
     
     def __init__(self):
@@ -175,7 +177,7 @@ class FXRateService:
         从 CoinGecko 获取汇率
         
         Args:
-            asset_code: 资产代码 (e.g., 'SOL', 'USDT_TRC20')
+            asset_code: 资产代码 (e.g., 'SOL', 'USDT_TRC20', 'SPL_TOKEN')
             
         Returns:
             Decimal: 汇率，失败返回 None
@@ -223,7 +225,7 @@ class FXRateService:
         从 Binance 获取汇率
         
         Args:
-            asset_code: 资产代码 (e.g., 'SOL', 'USDT_TRC20')
+            asset_code: 资产代码 (e.g., 'SOL', 'USDT_TRC20', 'SPL_TOKEN')
             
         Returns:
             Decimal: 汇率，失败返回 None
@@ -256,11 +258,16 @@ class FXRateService:
             logger.warning(f"FXRateService: Binance 请求超时")
             return None
         except httpx.HTTPStatusError as e:
-            # 如果 symbol 不存在，尝试替代方案
-            if e.response.status_code == 400 and asset_code == "USDT_TRC20":
-                # USDT 对 USD 通常是 1:1
-                logger.info(f"FXRateService: Binance 无 USDT/USD，使用默认值 1.0")
-                return Decimal("1.0")
+            # If symbol not found, try fallback
+            if e.response.status_code == 400:
+                if asset_code in ["USDT_TRC20", "USDT"]:
+                    # USDT to USD is typically 1:1
+                    logger.info(f"FXRateService: Binance 无 USDT/USD，使用默认值 1.0")
+                    return Decimal("1.0")
+                elif asset_code == "SPL_TOKEN":
+                    # For SPL tokens, default to 1.0 (assuming stablecoin)
+                    logger.info(f"FXRateService: Binance 无 SPL_TOKEN/USD，使用默认值 1.0")
+                    return Decimal("1.0")
             logger.warning(f"FXRateService: Binance HTTP 错误: {e.response.status_code}")
             return None
         except Exception as e:
@@ -293,7 +300,7 @@ class FXRateService:
         获取指定资产的 USD 汇率
         
         Args:
-            asset_code: 资产代码 (e.g., 'SOL', 'USDT_TRC20')
+            asset_code: 资产代码 (e.g., 'SOL', 'USDT_TRC20', 'SPL_TOKEN')
             
         Returns:
             Decimal: 汇率，失败返回 None
@@ -346,6 +353,29 @@ class FXRateService:
             logger.warning("FXRateService: 无法获取 USDT/USD，使用默认值 1.0")
             return Decimal("1.0")
         return rate
+    
+    async def get_spl_token_usd_rate(self) -> Optional[Decimal]:
+        """
+        获取 SPL Token/USD 汇率
+        
+        如果 SPL Token 是稳定币（如 USDC），通常返回 1.0
+        否则需要配置正确的 CoinGecko ID
+        
+        Returns:
+            Decimal: SPL Token 对 USD 的汇率
+        """
+        settings = get_settings()
+        
+        # 如果 SPL_TOKEN 是稳定币，直接使用 1.0
+        if settings.spl_token_symbol.upper() in ["USDC", "USDT"]:
+            return Decimal("1.0")
+        
+        rate = await self.get_rate("SPL_TOKEN")
+        if rate is None:
+            # 如果无法获取，返回默认值 1.0
+            logger.warning(f"FXRateService: 无法获取 {settings.spl_token_symbol}/USD，使用默认值 1.0")
+            return Decimal("1.0")
+        return rate
 
 
 async def convert_usd_to_crypto(amount_usd: Decimal, asset_code: str) -> tuple[Optional[Decimal], Optional[str]]:
@@ -354,7 +384,7 @@ async def convert_usd_to_crypto(amount_usd: Decimal, asset_code: str) -> tuple[O
     
     Args:
         amount_usd: USD 金额
-        asset_code: 目标资产代码 (e.g., 'SOL', 'USDT_TRC20')
+        asset_code: 目标资产代码 (e.g., 'SOL', 'USDT_TRC20', 'SPL_TOKEN')
         
     Returns:
         tuple: (加密货币金额, 错误信息)
@@ -369,6 +399,7 @@ async def convert_usd_to_crypto(amount_usd: Decimal, asset_code: str) -> tuple[O
         ...     print(f"需支付 {amount} SOL")
     """
     service = FXRateService()
+    settings = get_settings()
     
     try:
         # 获取汇率
@@ -389,6 +420,10 @@ async def convert_usd_to_crypto(amount_usd: Decimal, asset_code: str) -> tuple[O
         if asset_code in ["USDT_TRC20", "USDT"]:
             # USDT 通常保留 6 位小数
             precision = Decimal("0.000001")
+        elif asset_code == "SPL_TOKEN":
+            # SPL Token 使用配置的精度
+            decimals = settings.spl_token_decimals
+            precision = Decimal("0.1") ** decimals
         else:
             # SOL 等保留 9 位小数
             precision = Decimal("0.000000001")
@@ -420,3 +455,10 @@ async def get_usdt_usd_rate() -> Optional[Decimal]:
     """获取 USDT/USD 汇率"""
     service = FXRateService()
     return await service.get_usdt_usd_rate()
+
+
+# 便捷函数：获取 SPL Token/USD 汇率
+async def get_spl_token_usd_rate() -> Optional[Decimal]:
+    """获取 SPL Token/USD 汇率"""
+    service = FXRateService()
+    return await service.get_spl_token_usd_rate()

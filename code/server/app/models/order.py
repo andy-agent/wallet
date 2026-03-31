@@ -19,6 +19,7 @@ class Order(Base):
     
     # 关联
     plan_id = Column(String(32), ForeignKey("plans.id"), nullable=False)
+    user_id = Column(String(32), ForeignKey("users.id"), nullable=False)  # 关联用户
     client_user_id = Column(String(32), nullable=True)  # 续费时关联
     marzban_username = Column(String(64), nullable=True, index=True)
     
@@ -43,7 +44,6 @@ class Order(Base):
     fulfilled_at = Column(DateTime(timezone=True), nullable=True)
     
     # 客户端信息
-    client_device_id = Column(String(64), nullable=False, index=True)
     client_version = Column(String(16), nullable=False)
     
     # 错误信息
@@ -56,14 +56,15 @@ class Order(Base):
     
     # 关系
     plan = relationship("Plan", back_populates="orders")
+    user = relationship("User", back_populates="orders")
     
     def __repr__(self):
         return f"<Order {self.order_no}: {self.status}>"
 
 
 # 复合索引
-Index("idx_orders_device_plan_created", 
-      Order.client_device_id, Order.plan_id, Order.created_at,
+Index("idx_orders_user_plan_created", 
+      Order.user_id, Order.plan_id, Order.created_at,
       postgresql_where=Order.status.in_(["pending_payment"]))
 
 Index("idx_orders_status_created",

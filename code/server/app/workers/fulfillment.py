@@ -166,9 +166,9 @@ class FulfillmentService:
         Returns:
             str: 用户名
         """
-        device_prefix = order.client_device_id[:8] if order.client_device_id else "user"
+        user_prefix = order.user_id[:8] if order.user_id else "user"
         time_suffix = str(int(datetime.utcnow().timestamp()))[-6:]
-        return f"{device_prefix}_{time_suffix}"
+        return f"{user_prefix}_{time_suffix}"
     
     def _calculate_expire_timestamp(self, duration_days: int) -> int:
         """

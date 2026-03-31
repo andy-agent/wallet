@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.jaredsburrows.license")
+    id("kotlin-kapt")
 }
 
 android {
@@ -165,6 +166,11 @@ dependencies {
     // Payment Module - Retrofit HTTP Client
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // Room Database
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
 
     // Reactive and Utility Libraries
     implementation(libs.kotlinx.coroutines.android)

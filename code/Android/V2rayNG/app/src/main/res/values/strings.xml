@@ -455,6 +455,42 @@
     <string name="refresh_status">Refresh Status</string>
     <string name="copy">Copy</string>
     <string name="status_pending">Pending Payment</string>
+    <string name="status_paid">Paid</string>
+    <string name="status_fulfilled">Completed</string>
+    <string name="status_cancelled">Cancelled</string>
     <string name="no_plans_available">No plans available</string>
+
+    <!-- User Profile -->
+    <string name="user_profile">User Profile</string>
+    <string name="user_info">User Information</string>
+    <string name="username">Username</string>
+    <string name="email">Email</string>
+    <string name="not_set">Not Set</string>
+    <string name="login_time">Login Time</string>
+    <string name="subscription_status">Subscription Status</string>
+    <string name="expiry_time">Expiry Time</string>
+    <string name="no_active_subscription">No active subscription</string>
+    <string name="days_remaining">Remaining %d days</string>
+    <string name="order_history">Order History</string>
+    <string name="no_orders_yet">No orders yet</string>
+    <string name="order_detail">Order Detail</string>
+    <string name="plan_name">Plan</string>
+    <string name="amount">Amount</string>
+    <string name="status">Status</string>
+    <string name="created_at">Created At</string>
+    <string name="paid_at">Paid At</string>
+    <string name="expired_at">Expired At</string>
+    <string name="tx_hash">Transaction Hash</string>
+    <string name="logout">Logout</string>
+    <string name="confirm_logout">Confirm Logout</string>
+    <string name="logout_message">Are you sure you want to logout? Local data will be cleared.</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="refresh">Refresh</string>
+    <string name="refresh_failed">Refresh failed</string>
+    <string name="not_logged_in">Not logged in</string>
+    <string name="go_to_login">Go to Login</string>
+    <string name="login">Login</string>
 
 </resources>

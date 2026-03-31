@@ -37,12 +37,13 @@ logger = logging.getLogger(__name__)
 
 # ==================== Helper Functions ====================
 
-def _get_chain_client(chain: str):
+def _get_chain_client(chain: str, asset_code: str = None):
     """
-    根据链名称获取对应的区块链客户端
+    根据链名称和资产代码获取对应的区块链客户端
     
     Args:
         chain: 链名称 (solana, tron)
+        asset_code: 资产代码 (SOL, SPL_TOKEN, USDT_TRC20)
         
     Returns:
         区块链客户端实例
@@ -50,10 +51,19 @@ def _get_chain_client(chain: str):
     settings = get_settings()
     
     if chain == "solana":
-        return SolanaClient(
-            rpc_url=settings.solana_rpc_url,
-            mock_mode=settings.solana_mock_mode
-        )
+        # For SPL_TOKEN, include mint and decimals
+        if asset_code == "SPL_TOKEN":
+            return SolanaClient(
+                rpc_url=settings.solana_rpc_url,
+                mock_mode=settings.solana_mock_mode,
+                spl_token_mint=settings.spl_token_mint,
+                spl_token_decimals=settings.spl_token_decimals
+            )
+        else:
+            return SolanaClient(
+                rpc_url=settings.solana_rpc_url,
+                mock_mode=settings.solana_mock_mode
+            )
     elif chain == "tron":
         return TronClient(
             rpc_url=settings.tron_rpc_url,
@@ -122,19 +132,19 @@ async def scan_pending_orders():
             
             logger.info(f"Found {len(orders)} pending payment orders to scan")
             
-            # 按链分组订单，减少客户端创建开销
-            orders_by_chain: dict = {}
+            # 按链和资产分组订单，减少客户端创建开销
+            orders_by_chain_asset: dict = {}
             for order in orders:
-                chain = order.chain
-                if chain not in orders_by_chain:
-                    orders_by_chain[chain] = []
-                orders_by_chain[chain].append(order)
+                key = (order.chain, order.asset_code)
+                if key not in orders_by_chain_asset:
+                    orders_by_chain_asset[key] = []
+                orders_by_chain_asset[key].append(order)
             
-            # 对每个链的订单进行检测
-            for chain, chain_orders in orders_by_chain.items():
+            # 对每个链和资产组合的订单进行检测
+            for (chain, asset_code), chain_orders in orders_by_chain_asset.items():
                 client = None
                 try:
-                    client = _get_chain_client(chain)
+                    client = _get_chain_client(chain, asset_code)
                     
                     for order in chain_orders:
                         try:
@@ -148,7 +158,7 @@ async def scan_pending_orders():
                             continue
                     
                 except Exception as e:
-                    logger.error(f"Error processing chain {chain}: {e}")
+                    logger.error(f"Error processing chain {chain} asset {asset_code}: {e}")
                     continue
                 finally:
                     if client:
@@ -170,6 +180,29 @@ async def _detect_payment_for_order(
 ) -> bool:
     """
     检测单个订单的支付
+    
+    Args:
+        session: 数据库会话
+        order: 订单对象
+        client: 区块链客户端
+        
+    Returns:
+        bool: 是否检测到支付
+    """
+    # 根据资产代码选择检测方法
+    if order.asset_code == "SPL_TOKEN":
+        return await _detect_spl_token_payment(session, order, client)
+    else:
+        return await _detect_native_payment(session, order, client)
+
+
+async def _detect_native_payment(
+    session: AsyncSession,
+    order: Order,
+    client
+) -> bool:
+    """
+    检测原生代币（SOL/TRX）支付
     
     Args:
         session: 数据库会话
@@ -210,6 +243,66 @@ async def _detect_payment_for_order(
     # 更新订单信息
     order.status = OrderStatus.SEEN_ONCHAIN.value
     order.tx_hash = detection_result.tx_hash
+    order.tx_from = detection_result.from_address
+    order.confirm_count = detection_result.confirmations
+    order.paid_at = datetime.now(timezone.utc)
+    
+    await session.flush()
+    return True
+
+
+async def _detect_spl_token_payment(
+    session: AsyncSession,
+    order: Order,
+    client: SolanaClient
+) -> bool:
+    """
+    检测SPL代币支付
+    
+    Args:
+        session: 数据库会话
+        order: 订单对象
+        client: Solana客户端（已配置SPL代币参数）
+        
+    Returns:
+        bool: 是否检测到支付
+    """
+    settings = get_settings()
+    
+    # 使用SPL代币检测方法
+    expected_amount = float(order.amount_crypto)
+    detection_result = await client.detect_spl_token_payment(
+        wallet_address=order.receive_address,
+        mint=settings.spl_token_mint,
+        expected_amount=expected_amount,
+        min_confirmations=1,
+        amount_tolerance=0.01  # 1% tolerance
+    )
+    
+    if not detection_result or not detection_result.found:
+        return False
+    
+    # 检测到支付，执行状态转换
+    logger.info(
+        f"SPL Token payment detected for order {order.order_no}: "
+        f"tx={detection_result.tx_hash}, "
+        f"amount={detection_result.amount}, "
+        f"confirmations={detection_result.confirmations}"
+    )
+    
+    # 使用状态机执行转换
+    transition_to_seen_onchain(
+        order_id=order.id,
+        current_status=OrderStatus(order.status),
+        tx_hash=detection_result.tx_hash,
+        tx_from=detection_result.from_address,
+        amount=str(detection_result.amount),
+        triggered_by="worker"
+    )
+    
+    # 更新订单信息
+    order.status = OrderStatus.SEEN_ONCHAIN.value
+    order.tx_hash =detection_result.tx_hash
     order.tx_from = detection_result.from_address
     order.confirm_count = detection_result.confirmations
     order.paid_at = datetime.now(timezone.utc)
@@ -262,19 +355,19 @@ async def confirm_seen_transactions():
             
             logger.info(f"Found {len(orders)} orders to confirm")
             
-            # 按链分组
-            orders_by_chain: dict = {}
+            # 按链和资产分组
+            orders_by_chain_asset: dict = {}
             for order in orders:
-                chain = order.chain
-                if chain not in orders_by_chain:
-                    orders_by_chain[chain] = []
-                orders_by_chain[chain].append(order)
+                key = (order.chain, order.asset_code)
+                if key not in orders_by_chain_asset:
+                    orders_by_chain_asset[key] = []
+                orders_by_chain_asset[key].append(order)
             
-            # 处理每个链的订单
-            for chain, chain_orders in orders_by_chain.items():
+            # 处理每个链和资产的订单
+            for (chain, asset_code), chain_orders in orders_by_chain_asset.items():
                 client = None
                 try:
-                    client = _get_chain_client(chain)
+                    client = _get_chain_client(chain, asset_code)
                     required_confirmations = _get_required_confirmations(chain)
                     
                     for order in chain_orders:
@@ -287,7 +380,7 @@ async def confirm_seen_transactions():
                             continue
                     
                 except Exception as e:
-                    logger.error(f"Error processing chain {chain}: {e}")
+                    logger.error(f"Error processing chain {chain} asset {asset_code}: {e}")
                     continue
                 finally:
                     if client:
@@ -325,12 +418,21 @@ async def _confirm_order(
     
     # 获取最新确认数
     if order.chain == "solana":
-        tx = await client.get_transaction(tx_hash)
-        if tx:
-            current_confirmations = tx.confirmations
+        if order.asset_code == "SPL_TOKEN":
+            # For SPL token, get transaction via client
+            tx = await client._get_spl_transaction(tx_hash, order.receive_address, client.spl_token_mint)
+            if tx:
+                current_confirmations = tx.confirmations
+            else:
+                logger.warning(f"SPL Token transaction {tx_hash} not found")
+                return
         else:
-            logger.warning(f"Transaction {tx_hash} not found on Solana")
-            return
+            tx = await client.get_transaction(tx_hash)
+            if tx:
+                current_confirmations = tx.confirmations
+            else:
+                logger.warning(f"Transaction {tx_hash} not found on Solana")
+                return
     elif order.chain == "tron":
         # TronClient 没有 get_transaction 方法，使用 detect_payment
         expected_amount = Decimal(str(order.amount_crypto))
@@ -374,10 +476,19 @@ async def _confirm_order(
     tolerance = Decimal(str(settings.order_amount_tolerance))
     
     # 获取实际支付金额（从链上重新查询或从记录中获取）
-    detection = await client.detect_payment(
-        address=order.receive_address,
-        expected_amount=expected_amount
-    )
+    if order.asset_code == "SPL_TOKEN":
+        # For SPL token, re-detect payment
+        detection = await client.detect_spl_token_payment(
+            wallet_address=order.receive_address,
+            mint=settings.spl_token_mint,
+            expected_amount=float(expected_amount),
+            min_confirmations=1
+        )
+    else:
+        detection = await client.detect_payment(
+            address=order.receive_address,
+            expected_amount=expected_amount
+        )
     
     if detection and detection.found:
         actual_amount = Decimal(str(detection.amount))
