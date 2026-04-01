@@ -30,6 +30,7 @@ from app.models.order import Order
 from app.models.client_session import ClientSession
 from app.models.audit_log import AuditLog, OperatorType
 from app.models.plan import Plan
+from app.services.websocket import notify_order_status_changed
 
 logger = logging.getLogger(__name__)
 
@@ -55,11 +56,12 @@ class FulfillmentError(Exception):
         super().__init__(f"[{error_code}] {error_message}")
 
 
-def generate_client_tokens(username: str) -> Tuple[str, str, datetime]:
+def generate_client_tokens(user_id: str, username: str) -> Tuple[str, str, datetime]:
     """
     生成客户端访问令牌
     
     Args:
+        user_id: 用户ID
         username: Marzban 用户名
         
     Returns:
@@ -72,6 +74,7 @@ def generate_client_tokens(username: str) -> Tuple[str, str, datetime]:
     access_expires = now + timedelta(minutes=settings.jwt_access_token_expire_minutes)
     access_payload = {
         "sub": username,
+        "user_id": user_id,
         "type": "access",
         "iat": now,
         "exp": access_expires,
@@ -87,6 +90,7 @@ def generate_client_tokens(username: str) -> Tuple[str, str, datetime]:
     refresh_expires = now + timedelta(days=settings.jwt_refresh_token_expire_days)
     refresh_payload = {
         "sub": username,
+        "user_id": user_id,
         "type": "refresh",
         "iat": now,
         "exp": refresh_expires,
@@ -321,7 +325,7 @@ async def fulfill_new_order(order_id: str) -> FulfillmentResult:
             subscription_url = marzban_user.subscription_url
             
             # 7. 创建 ClientSession (access_token + refresh_token)
-            access_token, refresh_token, expires_at = generate_client_tokens(username)
+            access_token, refresh_token, expires_at = generate_client_tokens(order.user_id, username)
             
             client_session = ClientSession(
                 id=str(ulid.new().str),
@@ -541,7 +545,7 @@ async def fulfill_renew_order(order_id: str, client_token: str) -> FulfillmentRe
                 )
             
             # 7. 刷新 ClientSession
-            access_token, refresh_token, expires_at = generate_client_tokens(username)
+            access_token, refresh_token, expires_at = generate_client_tokens(order.user_id, username)
             
             # 查找现有会话并更新，或创建新会话
             result = await session.execute(
@@ -703,7 +707,7 @@ async def refresh_session(
         client_session.revoked_at = now
         
         # 生成新令牌
-        new_access_token, new_refresh_token, new_expires_at = generate_client_tokens(username)
+        new_access_token, new_refresh_token, new_expires_at = generate_client_tokens(client_session.user_id, username)
         
         # 创建新会话
         new_session = ClientSession(

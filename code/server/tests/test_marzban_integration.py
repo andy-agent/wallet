@@ -21,6 +21,14 @@ import jwt
 from sqlalchemy import select
 import ulid
 
+
+@pytest.fixture(autouse=True)
+def mock_notify_order_status_changed():
+    """Auto-mock notify_order_status_changed for all fulfillment tests"""
+    with patch('app.services.fulfillment.notify_order_status_changed', new_callable=AsyncMock):
+        yield
+
+
 # 设置测试环境变量
 import os
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
@@ -324,7 +332,7 @@ class TestTokenGeneration:
     def test_generate_client_tokens(self):
         """测试生成客户端 token"""
         username = "test_user_123"
-        access_token, refresh_token, expires_at = generate_client_tokens(username)
+        access_token, refresh_token, expires_at = generate_client_tokens("user_test_123", username)
         
         # 验证 token 格式
         assert access_token is not None
@@ -339,6 +347,7 @@ class TestTokenGeneration:
         with patch('app.services.fulfillment.get_settings', return_value=settings):
             decoded = jwt.decode(access_token, os.environ["JWT_SECRET"], algorithms=["HS256"])
             assert decoded["sub"] == username
+            assert decoded["user_id"] == "user_test_123"
             assert decoded["type"] == "access"
     
     def test_verify_client_token_success(self):
@@ -353,7 +362,7 @@ class TestTokenGeneration:
         settings.jwt_refresh_token_expire_days = 90
         
         with patch('app.services.fulfillment.get_settings', return_value=settings):
-            access_token, _, _ = generate_client_tokens(username)
+            access_token, _, _ = generate_client_tokens("user_test_123", username)
             
             # 验证 token
             result = verify_client_token(access_token, expected_type="access")
@@ -370,7 +379,7 @@ class TestTokenGeneration:
         settings.jwt_refresh_token_expire_days = 90
         
         with patch('app.services.fulfillment.get_settings', return_value=settings):
-            access_token, _, _ = generate_client_tokens(username)
+            access_token, _, _ = generate_client_tokens("user_test_123", username)
             
             # 用 access token 验证 refresh 类型
             with pytest.raises(FulfillmentError) as exc_info:
@@ -415,6 +424,7 @@ class TestFulfillmentNewOrder:
         
         # 创建 mock 订单
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "new"
         mock_order.status = OrderStatus.PAID_SUCCESS.value
@@ -494,6 +504,7 @@ class TestFulfillmentNewOrder:
         plan_id = str(ulid.new().str)
         
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "new"
         mock_order.status = OrderStatus.PENDING_PAYMENT.value  # 错误的状态
@@ -522,6 +533,7 @@ class TestFulfillmentNewOrder:
         plan_id = str(ulid.new().str)
         
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "new"
         mock_order.status = OrderStatus.PAID_SUCCESS.value
@@ -564,6 +576,7 @@ class TestFulfillmentRenewOrder:
         
         # 创建 mock 订单
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "renew"
         mock_order.status = OrderStatus.PAID_SUCCESS.value
@@ -585,7 +598,7 @@ class TestFulfillmentRenewOrder:
         settings.jwt_refresh_token_expire_days = 90
         
         with patch('app.services.fulfillment.get_settings', return_value=settings):
-            access_token, _, _ = generate_client_tokens(username)
+            access_token, _, _ = generate_client_tokens("user_test_123", username)
         
         # 模拟现有用户数据
         current_expire = int((datetime.now(timezone.utc) + timedelta(days=10)).timestamp())
@@ -652,6 +665,7 @@ class TestFulfillmentRenewOrder:
         username = "nonexistent_user"
         
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "renew"
         mock_order.status = OrderStatus.PAID_SUCCESS.value
@@ -671,7 +685,7 @@ class TestFulfillmentRenewOrder:
         settings.jwt_refresh_token_expire_days = 90
         
         with patch('app.services.fulfillment.get_settings', return_value=settings):
-            access_token, _, _ = generate_client_tokens(username)
+            access_token, _, _ = generate_client_tokens("user_test_123", username)
         
         mock_session = AsyncMock()
         
@@ -695,6 +709,7 @@ class TestFulfillmentRenewOrder:
         username = "expired_user_123"
         
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "renew"
         mock_order.status = OrderStatus.PAID_SUCCESS.value
@@ -743,7 +758,7 @@ class TestFulfillmentRenewOrder:
         settings.jwt_refresh_token_expire_days = 90
         
         with patch('app.services.fulfillment.get_settings', return_value=settings):
-            access_token, _, _ = generate_client_tokens(username)
+            access_token, _, _ = generate_client_tokens("user_test_123", username)
         
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock(return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=None)))
@@ -784,6 +799,7 @@ class TestIdempotency:
         username = "user_concurrent_test"
         
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "new"
         mock_order.status = OrderStatus.PAID_SUCCESS.value
@@ -852,6 +868,7 @@ class TestAuditLog:
         username = "user_audit_test"
         
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "new"
         mock_order.status = OrderStatus.PAID_SUCCESS.value
@@ -906,6 +923,7 @@ class TestAuditLog:
         username = "user_audit_renew"
         
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "renew"
         mock_order.status = OrderStatus.PAID_SUCCESS.value
@@ -960,7 +978,7 @@ class TestAuditLog:
         settings.jwt_refresh_token_expire_days = 90
         
         with patch('app.services.fulfillment.get_settings', return_value=settings):
-            access_token, _, _ = generate_client_tokens(username)
+            access_token, _, _ = generate_client_tokens("user_test_123", username)
         
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock(return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=None)))
@@ -1010,12 +1028,13 @@ class TestRefreshSession:
         settings.jwt_refresh_token_expire_days = 90
         
         with patch('app.services.fulfillment.get_settings', return_value=settings):
-            access_token, refresh_token, expires_at = generate_client_tokens(username)
+            access_token, refresh_token, expires_at = generate_client_tokens("user_test_123", username)
         
         # 创建 mock 会话
         mock_session_record = MagicMock(spec=ClientSession)
         mock_session_record.id = str(ulid.new().str)
         mock_session_record.order_id = order_id
+        mock_session_record.user_id = "user_test_123"
         mock_session_record.marzban_username = username
         mock_session_record.refresh_token = refresh_token
         mock_session_record.expires_at = datetime.now(timezone.utc) + timedelta(days=30)
@@ -1079,7 +1098,7 @@ class TestRefreshSession:
         settings.jwt_refresh_token_expire_days = 90
         
         with patch('app.services.fulfillment.get_settings', return_value=settings):
-            _, refresh_token, _ = generate_client_tokens(username)
+            _, refresh_token, _ = generate_client_tokens("user_test_123", username)
         
         # 模拟会话不存在（已吊销或不存在）
         mock_session = AsyncMock()
@@ -1130,6 +1149,7 @@ class TestErrorHandling:
         username = "user_dup_test"
         
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "new"
         mock_order.status = OrderStatus.PAID_SUCCESS.value
@@ -1214,6 +1234,7 @@ class TestSelectForUpdate:
         plan_id = str(ulid.new().str)
         
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.status = OrderStatus.PAID_SUCCESS.value
         
@@ -1248,6 +1269,7 @@ class TestSelectForUpdate:
         username = "user_concurrent_sfu_test"
         
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "new"
         mock_order.status = OrderStatus.PAID_SUCCESS.value
@@ -1292,6 +1314,7 @@ class TestOrderFailedTransition:
         username = "user_fail_test"
         
         mock_order = MagicMock(spec=Order)
+        mock_order.user_id = "user_test_123"
         mock_order.id = order_id
         mock_order.purchase_type = "new"
         mock_order.status = OrderStatus.PAID_SUCCESS.value
