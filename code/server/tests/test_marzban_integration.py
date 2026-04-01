@@ -25,7 +25,7 @@ import ulid
 @pytest.fixture(autouse=True)
 def mock_notify_order_status_changed():
     """Auto-mock notify_order_status_changed for all fulfillment tests"""
-    with patch('app.services.fulfillment.notify_order_status_changed', new_callable=AsyncMock):
+    with patch('app.services.websocket.notify_order_status_changed', new_callable=AsyncMock):
         yield
 
 
@@ -1204,21 +1204,23 @@ class TestUsernameGeneration:
         """测试用户名格式"""
         from app.services.fulfillment import _generate_username
         
-        username = _generate_username()
+        user_id = "user_test_123"
+        username = _generate_username(user_id)
         
-        # 验证格式: user_{ulid}
-        assert username.startswith("user_")
-        assert len(username) == 31  # "user_" + 26 (ULID)
-        
-        # 验证小写
-        assert username == username.lower()
+        # 验证格式: {user_id前8位}_{时间戳后6位}
+        parts = username.split("_")
+        assert len(parts) == 2
+        assert parts[0] == user_id[:8]
+        assert len(parts[1]) == 6
+        assert parts[1].isdigit()
     
     def test_generate_username_uniqueness(self):
         """测试用户名唯一性（概率上）"""
         from app.services.fulfillment import _generate_username
         
+        user_id = "user_test_123"
         # 生成 100 个用户名，应该都是唯一的
-        usernames = [_generate_username() for _ in range(100)]
+        usernames = [_generate_username(user_id) for _ in range(100)]
         assert len(set(usernames)) == 100
 
 

@@ -17,7 +17,7 @@ from app.core.logging import get_logger
 from app.core.rate_limit import strict_rate_limit
 from app.models.order import Order
 from app.schemas.base import Response
-from app.services.fulfillment import FulfillmentService
+from app.services.fulfillment import fulfill_new_order, fulfill_renew_order
 from app.core.state_machine import state_machine, OrderStatus
 
 logger = get_logger(__name__)
@@ -234,11 +234,9 @@ async def retry_fulfill_order(
         )
     
     # 执行开通
-    fulfillment_service = FulfillmentService(db)
-    
     try:
         if order.purchase_type == "new":
-            result = await fulfillment_service.fulfill_new_order(order_id)
+            result = await fulfill_new_order(order_id)
         else:
             # 续费需要 client_token，从现有 session 获取
             from sqlalchemy import select
@@ -254,15 +252,15 @@ async def retry_fulfill_order(
             if not session:
                 raise ValidationException(message="未找到客户端会话，无法续费")
             
-            result = await fulfillment_service.fulfill_renew_order(
+            result = await fulfill_renew_order(
                 order_id, 
                 session.access_token
             )
         
         if result.success:
-            # 更新状态
-            await state_machine.transition_to_fulfilled(order)
-            await db.commit()
+            # fulfill_new_order / fulfill_renew_order 内部已处理状态转换和 commit
+            # 只需要刷新当前会话中的 order 对象
+            await db.refresh(order)
             
             logger.info(
                 "order_fulfill_retried",

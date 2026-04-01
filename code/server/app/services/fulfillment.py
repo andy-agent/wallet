@@ -30,7 +30,6 @@ from app.models.order import Order
 from app.models.client_session import ClientSession
 from app.models.audit_log import AuditLog, OperatorType
 from app.models.plan import Plan
-from app.services.websocket import notify_order_status_changed
 
 logger = logging.getLogger(__name__)
 
@@ -246,13 +245,15 @@ async def _record_audit_log(
     session.add(audit_log)
 
 
-def _generate_username() -> str:
+def _generate_username(user_id: str) -> str:
     """
     生成唯一的 Marzban 用户名
     
-    格式: user_{ulid}
+    格式: {user_id前8位}_{时间戳后6位}
     """
-    return f"user_{ulid.new().str.lower()}"
+    user_prefix = user_id[:8] if user_id else "user"
+    time_suffix = str(int(datetime.now(timezone.utc).timestamp()))[-6:]
+    return f"{user_prefix}_{time_suffix}"
 
 
 async def fulfill_new_order(order_id: str) -> FulfillmentResult:
@@ -296,7 +297,7 @@ async def fulfill_new_order(order_id: str) -> FulfillmentResult:
                 )
             
             # 3. 生成唯一用户名
-            username = _generate_username()
+            username = _generate_username(order.user_id)
             
             # 4. 计算到期时间: now + plan.duration_days
             now = datetime.now(timezone.utc)
@@ -352,6 +353,7 @@ async def fulfill_new_order(order_id: str) -> FulfillmentResult:
             order.status = OrderStatus.FULFILLED.value
             
             # WebSocket 通知：订单已履行
+            from app.services.websocket import notify_order_status_changed
             await notify_order_status_changed(
                 order_id=order_id,
                 status="fulfilled",
@@ -597,6 +599,7 @@ async def fulfill_renew_order(order_id: str, client_token: str) -> FulfillmentRe
             order.status = OrderStatus.FULFILLED.value
             
             # WebSocket 通知：订单已履行
+            from app.services.websocket import notify_order_status_changed
             await notify_order_status_changed(
                 order_id=order_id,
                 status="fulfilled",
