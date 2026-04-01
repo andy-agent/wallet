@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-01T13:06:53Z",
+  "generated_at": "2026-04-01T13:40:12Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": null,
   "next_task_title": null,
@@ -7,7 +7,7 @@
   "ready_count": 0,
   "open_count": 0,
   "closed_count": 0,
-  "dirty_count": 3,
+  "dirty_count": 2,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
