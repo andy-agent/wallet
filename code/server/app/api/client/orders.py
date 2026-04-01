@@ -100,8 +100,8 @@ class OrderResponseData(BaseModel):
     created_at: datetime = Field(..., description="创建时间")
     
     # 续费信息（仅续费订单）
-    client_user_id: str = Field(default=None, description="客户端用户ID")
-    marzban_username: str = Field(default=None, description="Marzban 用户名")
+    client_user_id: Optional[str] = Field(default=None, description="客户端用户ID")
+    marzban_username: Optional[str] = Field(default=None, description="Marzban 用户名")
 
 
 class OrderDetailResponse(BaseModel):
@@ -190,10 +190,13 @@ async def create_order(
             status_code=500
         )
     
-    # 5. 分配收款地址
+    # 5. 先生成订单ID（地址分配需要使用相同的ID）
+    order_id = str(ulid.new().str)
+    
+    # 6. 分配收款地址
     address_service = AddressPoolService(db)
     try:
-        address = await address_service.allocate_address(chain, asset_code, str(ulid.new().str))
+        address = await address_service.allocate_address(chain, asset_code, order_id)
     except AppException as e:
         if e.code == ErrorCode.ADDRESS_POOL_EMPTY:
             raise AppException(
@@ -203,7 +206,7 @@ async def create_order(
             )
         raise
     
-    # 6. 续费验证
+    # 7. 续费验证
     if request.purchase_type == "renew":
         # 查询当前用户的已履行订单
         result = await db.execute(
@@ -234,8 +237,7 @@ async def create_order(
         client_user_id = request.client_user_id
         marzban_username = request.marzban_username
     
-    # 7. 创建订单
-    order_id = str(ulid.new().str)
+    # 8. 创建订单
     order_no = _generate_order_no()
     expires_at = datetime.now(timezone.utc) + timedelta(
         minutes=settings.order_expire_minutes

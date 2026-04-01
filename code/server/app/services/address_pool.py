@@ -91,7 +91,8 @@ class AddressPoolService:
         address.allocated_order_id = order_id
         address.allocated_at = datetime.now(timezone.utc)
         
-        await self.session.flush()
+        # 注意: 不在此处 flush，让调用方控制事务提交
+        # 避免在订单创建前触发外键约束
         
         return address
     
