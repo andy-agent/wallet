@@ -1207,12 +1207,12 @@ class TestUsernameGeneration:
         user_id = "user_test_123"
         username = _generate_username(user_id)
         
-        # 验证格式: {user_id前8位}_{时间戳后6位}
-        parts = username.split("_")
-        assert len(parts) == 2
-        assert parts[0] == user_id[:8]
-        assert len(parts[1]) == 6
-        assert parts[1].isdigit()
+        # 验证格式: {user_id前8位}_{ulid后缀}
+        prefix = user_id[:8]
+        assert username.startswith(prefix + "_")
+        suffix = username[len(prefix) + 1:]
+        assert len(suffix) == 8
+        assert suffix == suffix.lower()
     
     def test_generate_username_uniqueness(self):
         """测试用户名唯一性（概率上）"""

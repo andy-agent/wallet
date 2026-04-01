@@ -249,11 +249,11 @@ def _generate_username(user_id: str) -> str:
     """
     生成唯一的 Marzban 用户名
     
-    格式: {user_id前8位}_{时间戳后6位}
+    格式: {user_id前8位}_{ulid后缀}
     """
     user_prefix = user_id[:8] if user_id else "user"
-    time_suffix = str(int(datetime.now(timezone.utc).timestamp()))[-6:]
-    return f"{user_prefix}_{time_suffix}"
+    suffix = str(ulid.new().str.lower())[-8:]
+    return f"{user_prefix}_{suffix}"
 
 
 async def fulfill_new_order(order_id: str) -> FulfillmentResult:
