@@ -20,6 +20,7 @@ from app.core.state_machine import (
 from app.core.config import get_settings
 from app.models.order import Order
 from app.models.plan import Plan
+from app.models.user import User  # noqa: F401 - 用于 SQLAlchemy mapper 初始化
 from app.integrations.marzban import MarzbanClient, get_marzban_client, MarzbanAPIError
 
 logger = logging.getLogger(__name__)
@@ -78,7 +79,8 @@ class FulfillmentService:
         expire_timestamp = self._calculate_expire_timestamp(plan.duration_days)
         
         # 转换流量限制为字节
-        data_limit_bytes = plan.data_limit_gb * (1024 ** 3) if plan.data_limit_gb else None
+        # Plan 使用 traffic_bytes 存储流量限制
+data_limit_bytes = plan.traffic_bytes if hasattr(plan, 'traffic_bytes') else None
         
         logger.info(f"Creating new Marzban user: {username}")
         
@@ -133,8 +135,9 @@ class FulfillmentService:
         # 计算新的流量限制
         current_limit = existing_user.data_limit or 0
         new_data_limit = None
-        if plan.data_limit_gb:
-            additional_bytes = plan.data_limit_gb * (1024 ** 3)
+        # Plan 使用 traffic_bytes 存储流量限制
+        if hasattr(plan, 'traffic_bytes') and plan.traffic_bytes:
+            additional_bytes = plan.traffic_bytes
             new_data_limit = current_limit + additional_bytes
         
         logger.info(f"Renewing Marzban user: {username}")

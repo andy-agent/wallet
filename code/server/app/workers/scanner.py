@@ -28,6 +28,7 @@ from app.core.state_machine import (
 from app.core.config import get_settings
 from app.models.order import Order
 from app.models.payment_address import PaymentAddress
+from app.models.user import User  # noqa: F401 - 用于 SQLAlchemy mapper 初始化
 from app.services.address_pool import AddressPoolService
 from app.integrations.solana import SolanaClient
 from app.integrations.tron import TronClient
