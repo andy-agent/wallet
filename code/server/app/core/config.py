@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     marzban_base_url: str = Field(alias="MARZBAN_BASE_URL")
     marzban_admin_username: str = Field(alias="MARZBAN_ADMIN_USERNAME")
     marzban_admin_password: str = Field(alias="MARZBAN_ADMIN_PASSWORD")
+    marzban_mock_mode: bool = Field(default=False, alias="MARZBAN_MOCK_MODE")
     
     # Solana
     solana_rpc_url: str = Field(

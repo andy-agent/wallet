@@ -46,7 +46,8 @@ class MarzbanClient:
         self,
         base_url: str,
         username: str,
-        password: str
+        password: str,
+        mock_mode: bool = False
     ):
         """
         初始化 Marzban 客户端
@@ -55,13 +56,16 @@ class MarzbanClient:
             base_url: Marzban 面板地址，如 https://marzban.example.com
             username: 管理员用户名
             password: 管理员密码
+            mock_mode: 是否使用模拟模式（用于测试）
         """
         self.base_url = base_url.rstrip('/')
         self.username = username
         self.password = password
+        self.mock_mode = mock_mode
         self._token: Optional[str] = None
         self._token_lock = asyncio.Lock()
         self._client: Optional[httpx.AsyncClient] = None
+        self._mock_users: dict[str, User] = {}
     
     async def _get_client(self) -> httpx.AsyncClient:
         """获取或创建 HTTP 客户端"""
@@ -273,6 +277,24 @@ class MarzbanClient:
         
         if data_limit is not None:
             payload["data_limit"] = data_limit
+        
+        # Mock 模式：模拟创建用户
+        if self.mock_mode:
+            logger.info(f"[MOCK] Creating Marzban user: {username}")
+            import secrets
+            mock_token = secrets.token_urlsafe(32)
+            user = User(
+                username=username,
+                status="active",
+                expire=expire,
+                data_limit=data_limit,
+                used_traffic=0,
+                subscription_url=f"{self.base_url}/sub/{mock_token}",
+                created_at=datetime.utcnow()
+            )
+            self._mock_users[username] = user
+            logger.info(f"[MOCK] Marzban user created: {username}")
+            return user
         
         logger.info(f"Creating Marzban user: {username}")
         data = await self._request("POST", "/api/user", json=payload)
@@ -492,7 +514,8 @@ class MarzbanClient:
 async def get_marzban_client(
     base_url: Optional[str] = None,
     username: Optional[str] = None,
-    password: Optional[str] = None
+    password: Optional[str] = None,
+    mock_mode: Optional[bool] = None
 ) -> MarzbanClient:
     """
     从配置创建 Marzban 客户端
@@ -503,6 +526,7 @@ async def get_marzban_client(
         base_url: Marzban 面板地址
         username: 管理员用户名
         password: 管理员密码
+        mock_mode: 是否使用模拟模式，None 则从配置读取
         
     Returns:
         配置好的 MarzbanClient 实例
@@ -515,5 +539,6 @@ async def get_marzban_client(
     return MarzbanClient(
         base_url=base_url or settings.marzban_base_url,
         username=username or settings.marzban_admin_username,
-        password=password or settings.marzban_admin_password
+        password=password or settings.marzban_admin_password,
+        mock_mode=mock_mode if mock_mode is not None else settings.marzban_mock_mode
     )
