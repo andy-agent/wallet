@@ -79,13 +79,41 @@ class Settings(BaseSettings):
     )
     tron_mock_mode: bool = Field(default=False, alias="TRON_MOCK_MODE")
     
+    # Ethereum
+    eth_rpc_url: str = Field(
+        default="https://eth-sepolia.g.alchemy.com/v2/demo",
+        alias="ETH_RPC_URL"
+    )
+    eth_confirmations: int = 12
+    eth_mock_mode: bool = Field(default=False, alias="ETH_MOCK_MODE")
+    
+    # USDT ERC20 Contract
+    usdt_contract_address: str = Field(
+        default="0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0",  # Sepolia testnet USDT
+        alias="USDT_CONTRACT_ADDRESS"
+    )
+    
     # Order
     order_expire_minutes: int = 15
     order_amount_tolerance: float = 0.001  # 0.1%
+    eth_required_confirmations: int = 12  # ETH 链所需确认数
     
     # Worker
     worker_enabled: bool = True
     worker_scan_interval_seconds: int = 10
+    
+    # Sweeper - 资金归集配置
+    sweeper_enabled: bool = Field(default=True, alias="SWEEPER_ENABLED")
+    sweeper_interval_minutes: int = Field(default=5, alias="SWEEPER_INTERVAL_MINUTES")
+    sweep_threshold_usd: Decimal = Field(default=Decimal("1.0"), alias="SWEEP_THRESHOLD_USD")
+    sweep_reserve_amount_sol: Decimal = Field(default=Decimal("0.005"), alias="SWEEP_RESERVE_AMOUNT_SOL")
+    sweep_reserve_amount_trx: Decimal = Field(default=Decimal("1.0"), alias="SWEEP_RESERVE_AMOUNT_TRX")
+    sweep_max_retry_count: int = Field(default=3, alias="SWEEP_MAX_RETRY_COUNT")
+    sweep_retry_delay_minutes: int = Field(default=10, alias="SWEEP_RETRY_DELAY_MINUTES")
+    
+    # 主钱包地址（归集目标地址）
+    solana_master_wallet: Optional[str] = Field(default=None, alias="SOLANA_MASTER_WALLET")
+    tron_master_wallet: Optional[str] = Field(default=None, alias="TRON_MASTER_WALLET")
     
     # Admin
     admin_token: Optional[str] = Field(default=None, alias="ADMIN_TOKEN")

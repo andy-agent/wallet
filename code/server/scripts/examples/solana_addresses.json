@@ -1,0 +1,27 @@
+{
+  "addresses": [
+    {
+      "address": "HN7cABqL2RSry3pneR7EJ4q1Wn5r3YFQG8y9kLmP2QxV",
+      "asset_code": "SOL",
+      "encrypted_private_key": "enc:AES256:GCM:base64encrypteddata1"
+    },
+    {
+      "address": "8zJzQ5K2LMN4pQrStUvWxYzAbCdEfGhIjKlMnOpQrSt",
+      "asset_code": "SOL",
+      "encrypted_private_key": "enc:AES256:GCM:base64encrypteddata2"
+    },
+    {
+      "address": "3xYzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKlM",
+      "asset_code": "SOL"
+    },
+    {
+      "address": "9aBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoP",
+      "asset_code": "SOL",
+      "encrypted_private_key": "enc:AES256:GCM:base64encrypteddata4"
+    },
+    {
+      "address": "5QrStUvWxYzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEf",
+      "asset_code": "SOL"
+    }
+  ]
+}

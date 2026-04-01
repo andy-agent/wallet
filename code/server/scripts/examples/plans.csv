@@ -1,0 +1,5 @@
+code,name,description,traffic_bytes,duration_days,price_usd,supported_assets,enabled,sort_order
+basic-30d-50gb,基础版 - 30天 50GB,适合轻度用户的基础套餐,53687091200,30,5.99,"SOL,USDT_TRC20",true,1
+pro-90d-200gb,专业版 - 90天 200GB,适合中度使用的专业套餐,214748364800,90,15.99,"SOL,USDT_TRC20",true,2
+unlimited-365d,无限版 - 365天 不限流量,不限流量的年度套餐,1099511627776,365,49.99,"SOL,USDT_TRC20",true,3
+trial-7d-10gb,试用版 - 7天 10GB,新用户试用套餐,10737418240,7,1.99,SOL,true,0

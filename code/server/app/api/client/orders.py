@@ -38,6 +38,7 @@ from app.services.fx_rate import (
     get_usdt_usd_rate,
     get_spl_token_usd_rate
 )
+from app.services.websocket import notify_order_status_changed
 from app.api.client.auth import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -73,7 +74,7 @@ class CreateOrderRequest(BaseModel):
     @field_validator('asset_code')
     @classmethod
     def validate_asset_code(cls, v: str) -> str:
-        supported = ['SOL', 'USDT_TRC20', 'SPL_TOKEN']
+        supported = ['SOL', 'USDT_TRC20', 'SPL_TOKEN', 'USDT_ERC20']
         if v not in supported:
             raise ValueError(f'asset_code 必须是 {supported} 之一')
         return v
@@ -480,6 +481,12 @@ async def cancel_order(
     # 更新状态
     order.status = "cancelled"
     
+    # WebSocket 通知：订单已取消
+    await notify_order_status_changed(
+        order_id=order_id,
+        status="cancelled"
+    )
+    
     # 释放地址
     address_service = AddressPoolService(db)
     result = await db.execute(
@@ -516,6 +523,7 @@ def _resolve_chain_and_asset(asset_code: str) -> tuple[str, str]:
         "SOL": ("solana", "SOL"),
         "SPL_TOKEN": ("solana", "SPL_TOKEN"),
         "USDT_TRC20": ("tron", "USDT_TRC20"),
+        "USDT_ERC20": ("ethereum", "USDT_ERC20"),
     }
     return mapping.get(asset_code, ("solana", asset_code))
 
@@ -574,7 +582,7 @@ async def _convert_amount_safe(
             # SPL Token 使用配置的精度
             decimals = settings.spl_token_decimals
             precision = Decimal("0.1") ** decimals
-        elif asset_code in ["USDT_TRC20", "USDT"]:
+        elif asset_code in ["USDT_TRC20", "USDT", "USDT_ERC20"]:
             precision = Decimal("0.000001")  # USDT 6位小数
         else:
             precision = Decimal("0.000000001")  # SOL 9位小数

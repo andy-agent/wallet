@@ -1,0 +1,49 @@
+{
+  "plans": [
+    {
+      "id": "01HQ1234567890ABCDEF123456",
+      "code": "basic-30d-50gb",
+      "name": "基础版 - 30天 50GB",
+      "description": "适合轻度用户的基础套餐",
+      "traffic_bytes": 53687091200,
+      "duration_days": 30,
+      "price_usd": "5.99",
+      "supported_assets": ["SOL", "USDT_TRC20"],
+      "enabled": true,
+      "sort_order": 1
+    },
+    {
+      "code": "pro-90d-200gb",
+      "name": "专业版 - 90天 200GB",
+      "description": "适合中度使用的专业套餐",
+      "traffic_bytes": 214748364800,
+      "duration_days": 90,
+      "price_usd": "15.99",
+      "supported_assets": ["SOL", "USDT_TRC20"],
+      "enabled": true,
+      "sort_order": 2
+    },
+    {
+      "code": "unlimited-365d",
+      "name": "无限版 - 365天 不限流量",
+      "description": "不限流量的年度套餐",
+      "traffic_bytes": 1099511627776,
+      "duration_days": 365,
+      "price_usd": "49.99",
+      "supported_assets": ["SOL", "USDT_TRC20"],
+      "enabled": true,
+      "sort_order": 3
+    },
+    {
+      "code": "trial-7d-10gb",
+      "name": "试用版 - 7天 10GB",
+      "description": "新用户试用套餐",
+      "traffic_bytes": 10737418240,
+      "duration_days": 7,
+      "price_usd": "1.99",
+      "supported_assets": ["SOL"],
+      "enabled": true,
+      "sort_order": 0
+    }
+  ]
+}

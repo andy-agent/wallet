@@ -64,6 +64,7 @@ class FXRateService:
     ASSET_MAPPING = {
         "SOL": {"coingecko_id": "solana", "binance_symbol": "SOLUSDT"},
         "USDT_TRC20": {"coingecko_id": "tether", "binance_symbol": "USDTUSD"},
+        "USDT_ERC20": {"coingecko_id": "tether", "binance_symbol": "USDTUSD"},
         "USDT": {"coingecko_id": "tether", "binance_symbol": "USDTUSD"},
         "SPL_TOKEN": {"coingecko_id": "usd-coin", "binance_symbol": "USDCUSDT"},
     }
@@ -260,7 +261,7 @@ class FXRateService:
         except httpx.HTTPStatusError as e:
             # If symbol not found, try fallback
             if e.response.status_code == 400:
-                if asset_code in ["USDT_TRC20", "USDT"]:
+                if asset_code in ["USDT_TRC20", "USDT_ERC20", "USDT"]:
                     # USDT to USD is typically 1:1
                     logger.info(f"FXRateService: Binance 无 USDT/USD，使用默认值 1.0")
                     return Decimal("1.0")
@@ -417,7 +418,7 @@ async def convert_usd_to_crypto(amount_usd: Decimal, asset_code: str) -> tuple[O
         
         # 计算加密货币金额: crypto = usd / rate
         # 使用适当的精度
-        if asset_code in ["USDT_TRC20", "USDT"]:
+        if asset_code in ["USDT_TRC20", "USDT_ERC20", "USDT"]:
             # USDT 通常保留 6 位小数
             precision = Decimal("0.000001")
         elif asset_code == "SPL_TOKEN":

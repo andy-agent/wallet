@@ -28,6 +28,10 @@ from typing import Dict, Set, Optional, Callable, Any, List
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.services.websocket import notify_order_status_changed
 
 logger = logging.getLogger(__name__)
 

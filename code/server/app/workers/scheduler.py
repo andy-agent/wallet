@@ -128,6 +128,17 @@ async def start_scheduler() -> AsyncIOScheduler:
         replace_existing=True,
     )
     
+    # 6. 资金归集 (每 sweeper_interval_minutes 分钟)
+    from app.workers.sweeper import run_sweeper_cycle
+    sweep_interval = max(60, settings.sweeper_interval_minutes * 60)  # 至少60秒
+    _scheduler.add_job(
+        run_sweeper_cycle,
+        trigger=IntervalTrigger(seconds=sweep_interval),
+        id="sweep_funds",
+        name="Sweep Fulfilled Order Funds",
+        replace_existing=True,
+    )
+    
     # 注册事件监听
     _scheduler.add_listener(_on_job_executed, EVENT_JOB_EXECUTED)
     _scheduler.add_listener(_on_job_error, EVENT_JOB_ERROR)

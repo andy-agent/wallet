@@ -347,6 +347,15 @@ async def fulfill_new_order(order_id: str) -> FulfillmentResult:
             )
             order.status = OrderStatus.FULFILLED.value
             
+            # WebSocket 通知：订单已履行
+            await notify_order_status_changed(
+                order_id=order_id,
+                status="fulfilled",
+                tx_hash=order.tx_hash,
+                marzban_username=username,
+                subscription_url=subscription_url
+            )
+            
             # 9. 记录审计日志
             await _record_audit_log(
                 session=session,
@@ -582,6 +591,15 @@ async def fulfill_renew_order(order_id: str, client_token: str) -> FulfillmentRe
                 subscription_url=updated_user.subscription_url,
             )
             order.status = OrderStatus.FULFILLED.value
+            
+            # WebSocket 通知：订单已履行
+            await notify_order_status_changed(
+                order_id=order_id,
+                status="fulfilled",
+                tx_hash=order.tx_hash,
+                marzban_username=username,
+                subscription_url=updated_user.subscription_url
+            )
             
             # 9. 记录审计日志
             await _record_audit_log(

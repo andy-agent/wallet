@@ -72,7 +72,7 @@ async def health_check():
 
 
 # Import and register routers
-from app.api.client import plans_router, auth_router, orders_router, subscription_router
+from app.api.client import plans_router, auth_router, orders_router, subscription_router, ws_router
 from app.api.admin import router as admin_router
 
 # Client APIs (public)
@@ -80,6 +80,7 @@ app.include_router(plans_router, prefix="/client/v1", tags=["client-plans"])
 app.include_router(auth_router, prefix="/client/v1", tags=["client-auth"])
 app.include_router(orders_router, prefix="/client/v1", tags=["client-orders"])
 app.include_router(subscription_router, prefix="/client/v1", tags=["client-subscription"])
+app.include_router(ws_router, prefix="/client/v1", tags=["client-websocket"])
 
 # Admin APIs (protected)
 app.include_router(admin_router)

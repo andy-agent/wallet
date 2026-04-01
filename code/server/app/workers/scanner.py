@@ -30,8 +30,10 @@ from app.models.order import Order
 from app.models.payment_address import PaymentAddress
 from app.models.user import User  # noqa: F401 - 用于 SQLAlchemy mapper 初始化
 from app.services.address_pool import AddressPoolService
+from app.services.websocket import notify_order_status_changed
 from app.integrations.solana import SolanaClient
 from app.integrations.tron import TronClient
+from app.integrations.ethereum import EthereumClient
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +45,8 @@ def _get_chain_client(chain: str, asset_code: str = None):
     根据链名称和资产代码获取对应的区块链客户端
     
     Args:
-        chain: 链名称 (solana, tron)
-        asset_code: 资产代码 (SOL, SPL_TOKEN, USDT_TRC20)
+        chain: 链名称 (solana, tron, ethereum)
+        asset_code: 资产代码 (SOL, SPL_TOKEN, USDT_TRC20, USDT_ERC20)
         
     Returns:
         区块链客户端实例
@@ -71,6 +73,12 @@ def _get_chain_client(chain: str, asset_code: str = None):
             usdt_contract=settings.tron_usdt_contract,
             mock_mode=settings.tron_mock_mode
         )
+    elif chain == "ethereum":
+        return EthereumClient(
+            rpc_url=settings.eth_rpc_url,
+            usdt_contract=settings.usdt_contract_address,
+            mock_mode=settings.eth_mock_mode
+        )
     else:
         raise ValueError(f"Unsupported chain: {chain}")
 
@@ -91,6 +99,8 @@ def _get_required_confirmations(chain: str) -> int:
         return settings.solana_confirmations
     elif chain == "tron":
         return settings.tron_confirmations
+    elif chain == "ethereum":
+        return settings.eth_confirmations
     else:
         return 12  # 默认值
 
@@ -193,6 +203,8 @@ async def _detect_payment_for_order(
     # 根据资产代码选择检测方法
     if order.asset_code == "SPL_TOKEN":
         return await _detect_spl_token_payment(session, order, client)
+    elif order.asset_code == "USDT_ERC20":
+        return await _detect_erc20_payment(session, order, client)
     else:
         return await _detect_native_payment(session, order, client)
 
@@ -249,6 +261,16 @@ async def _detect_native_payment(
     order.paid_at = datetime.now(timezone.utc)
     
     await session.flush()
+    
+    # WebSocket 通知：检测到支付
+    await notify_order_status_changed(
+        order_id=order.id,
+        status="seen_onchain",
+        tx_hash=detection_result.tx_hash,
+        confirm_count=detection_result.confirmations,
+        paid_at=order.paid_at.isoformat()
+    )
+    
     return True
 
 
@@ -309,6 +331,16 @@ async def _detect_spl_token_payment(
     order.paid_at = datetime.now(timezone.utc)
     
     await session.flush()
+    
+    # WebSocket 通知：检测到支付
+    await notify_order_status_changed(
+        order_id=order.id,
+        status="seen_onchain",
+        tx_hash=detection_result.tx_hash,
+        confirm_count=detection_result.confirmations,
+        paid_at=order.paid_at.isoformat()
+    )
+    
     return True
 
 
@@ -446,6 +478,9 @@ async def _confirm_order(
         else:
             # 如果没找到相同交易，使用现有确认数
             current_confirmations = order.confirm_count
+    elif order.chain == "ethereum":
+        # EthereumClient 使用 get_transaction_confirmations
+        current_confirmations = await client.get_transaction_confirmations(tx_hash)
     else:
         return
     
@@ -466,6 +501,14 @@ async def _confirm_order(
                 order.status = OrderStatus.CONFIRMING.value
                 await session.flush()
                 logger.debug(f"Order {order.order_no} updated to confirming ({current_confirmations}/{required_confirmations})")
+                
+                # WebSocket 通知：确认中
+                await notify_order_status_changed(
+                    order_id=order.id,
+                    status="confirming",
+                    tx_hash=order.tx_hash,
+                    confirm_count=current_confirmations
+                )
             except StateTransitionError:
                 # 状态转换不允许，忽略
                 pass
@@ -482,6 +525,13 @@ async def _confirm_order(
         detection = await client.detect_spl_token_payment(
             wallet_address=order.receive_address,
             mint=settings.spl_token_mint,
+            expected_amount=float(expected_amount),
+            min_confirmations=1
+        )
+    elif order.asset_code == "USDT_ERC20":
+        # For ERC20, re-detect payment
+        detection = await client.detect_payment(
+            address=order.receive_address,
             expected_amount=float(expected_amount),
             min_confirmations=1
         )
@@ -513,6 +563,16 @@ async def _confirm_order(
             order.confirmed_at = datetime.now(timezone.utc)
             logger.info(f"Order {order.order_no} confirmed as paid_success")
             
+            # WebSocket 通知：支付成功已确认
+            await notify_order_status_changed(
+                order_id=order.id,
+                status="paid_success",
+                tx_hash=order.tx_hash,
+                confirm_count=current_confirmations,
+                paid_at=order.paid_at.isoformat() if order.paid_at else None,
+                confirmed_at=order.confirmed_at.isoformat()
+            )
+            
         elif actual_amount < min_acceptable:
             # 少付
             transition_to_underpaid(
@@ -525,6 +585,15 @@ async def _confirm_order(
             order.status = OrderStatus.UNDERPAID.value
             logger.warning(f"Order {order.order_no} underpaid: expected={expected_amount}, actual={actual_amount}")
             
+            # WebSocket 通知：少付
+            await notify_order_status_changed(
+                order_id=order.id,
+                status="underpaid",
+                tx_hash=order.tx_hash,
+                expected_amount=str(expected_amount),
+                actual_amount=str(actual_amount)
+            )
+            
         else:
             # 多付
             transition_to_overpaid(
@@ -536,6 +605,15 @@ async def _confirm_order(
             )
             order.status = OrderStatus.OVERPAID.value
             logger.warning(f"Order {order.order_no} overpaid: expected={expected_amount}, actual={actual_amount}")
+            
+            # WebSocket 通知：多付
+            await notify_order_status_changed(
+                order_id=order.id,
+                status="overpaid",
+                tx_hash=order.tx_hash,
+                expected_amount=str(expected_amount),
+                actual_amount=str(actual_amount)
+            )
         
         await session.flush()
 
@@ -589,6 +667,13 @@ async def expire_orders():
                     )
                     order.status = OrderStatus.EXPIRED.value
                     logger.info(f"Order {order.order_no} expired")
+                    
+                    # WebSocket 通知：订单过期
+                    await notify_order_status_changed(
+                        order_id=order.id,
+                        status="expired",
+                        reason="timeout"
+                    )
                     
                 except DuplicateTransitionError:
                     logger.debug(f"Order {order.id} already expired")

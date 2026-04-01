@@ -80,7 +80,7 @@ class FulfillmentService:
         
         # 转换流量限制为字节
         # Plan 使用 traffic_bytes 存储流量限制
-data_limit_bytes = plan.traffic_bytes if hasattr(plan, 'traffic_bytes') else None
+        data_limit_bytes = plan.traffic_bytes if hasattr(plan, 'traffic_bytes') else None
         
         logger.info(f"Creating new Marzban user: {username}")
         

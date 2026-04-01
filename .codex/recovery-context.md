@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-01T12:04:08Z
+Generated: 2026-04-01T12:36:50Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-tta
-- next_task_title: 【J-1+J-3】管理端审计日志接口
+- next_task_id: none
+- next_task_title: none
 
 ## Counters
 - in_progress: 0
-- ready: 6
-- open: 6
-- closed: 15
-- dirty: 4
+- ready: 0
+- open: 0
+- closed: 0
+- dirty: 60
 
 ## Next Milestone
 - Continue the next task and complete one milestone
