@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-02T21:43:13Z
+Generated: 2026-04-02T22:14:12Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-d4z
-- next_task_title: S1 Database Migration and Seed
+- next_task_id: liaojiang-7av
+- next_task_title: S6 Deployment and CICD
 
 ## Counters
-- in_progress: 1
+- in_progress: 2
 - ready: 3
-- open: 15
-- closed: 31
-- dirty: 16
+- open: 8
+- closed: 38
+- dirty: 7
 
 ## Next Milestone
 - Continue the next task and complete one milestone

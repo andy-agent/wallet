@@ -1,0 +1,61 @@
+services:
+  cryptovpn-postgres:
+    image: postgres:16-alpine
+    container_name: cryptovpn-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-cryptovpn}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-cryptovpn}
+      POSTGRES_DB: ${DB_NAME:-cryptovpn}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - cryptovpn_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-cryptovpn} -d ${DB_NAME:-cryptovpn}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  cryptovpn-redis:
+    image: redis:7-alpine
+    container_name: cryptovpn-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - cryptovpn_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  cryptovpn-backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: cryptovpn-backend
+    restart: unless-stopped
+    depends_on:
+      cryptovpn-postgres:
+        condition: service_healthy
+      cryptovpn-redis:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      NODE_ENV: ${NODE_ENV:-production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://${DB_USER:-cryptovpn}:${DB_PASSWORD:-cryptovpn}@cryptovpn-postgres:5432/${DB_NAME:-cryptovpn}
+      REDIS_URL: redis://cryptovpn-redis:6379/0
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  cryptovpn_postgres_data:
+  cryptovpn_redis_data:
