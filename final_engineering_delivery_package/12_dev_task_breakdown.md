@@ -3,9 +3,9 @@
 ## 1. 阶段划分与依赖
 | 阶段 | 任务包 | 依赖 | 可并行 | 输入 | 输出 | 完成标准 |
 |---|---|---|---|---|---|---|
-| S0 | 契约冻结 | 无 | 否 | 00/02/03/06/07/09/10 | 冻结版状态机、DDL、OpenAPI | 不得再修改表名、主状态、接口前缀 |
+| S0 | 契约冻结 | 无 | 否 | 00/02/03/06/07/09/10 | 冻结版状态机、DDL、OpenAPI | 不得再修改表名、主状态、接口前缀；幂等键统一为 X-Idempotency-Key header |
 | S1 | Backend Foundation | S0 | 部分 | 10_postgresql_core_ddl.sql、08_openapi_v1.yaml | NestJS 工程骨架、鉴权中间件、错误码、日志、配置 | 服务可启动，健康检查通过 |
-| S1 | Database Migration | S0 | 是 | 10_postgresql_core_ddl.sql | SQL migration、seed template、回滚说明 | staging 可执行迁移 |
+| S1 | Database Migration | S0 | 是 | 10_postgresql_core_ddl.sql | SQL migration、10_postgresql_bootstrap_seed.sql、回滚说明 | staging 可执行迁移且 seed 模板就位 |
 | S2 | Auth/Account Domain | S1 | 是 | 03/06/07/08/09/10 | 注册、登录、refresh、logout、me、session 接口 | 单活跃 session 测试通过 |
 | S2 | Plan/Subscription/VPN Domain | S1 | 是 | 03/05/06/07/08/09/10 | 套餐、订阅、区域列表、配置签发接口 | 订阅 ACTIVE 时可签发配置 |
 | S2 | Order/Payment Domain | S1 | 否 | 03/06/07/08/09/10 | 订单、payment target、scanner、confirm worker | 订单可从 AWAITING 到 PAID |

@@ -4,7 +4,7 @@
 | 假设内容 | 适用范围 | 原因 | 风险等级 | 影响 |
 |---|---|---|---|---|
 | 客户端 Access Token TTL = 2 小时，Refresh Token TTL = 30 天 | Client 鉴权 | 实现单活跃 session 且降低频繁登录 | 中 | API/Android/测试 |
-| 管理员 Access Token TTL = 2 小时，Refresh Token TTL = 12 小时 | Admin 鉴权 | 后台风险高，缩短会话时长 | 中 | API/Admin/测试 |
+| 管理员 Access Token TTL = 2 小时，无 Refresh Token，过期后重新登录 | Admin 鉴权 | 后台使用频率低，简化实现并降低会话模型复杂度 | 中 | API/Admin/测试 |
 | 订单锁价时长默认 900 秒 | 订单与支付页 | 兼顾链上支付操作时间与资金风险 | 低 | DDL/API/页面/测试 |
 | 佣金冷静期默认 7 天 | 分佣与提现 | 给异常订单和风控留缓冲 | 中 | DDL/API/测试 |
 | 提现手续费默认 0，由平台承担 | 提现 | 原始材料未冻结具体手续费策略 | 中 | DDL/API/财务 |

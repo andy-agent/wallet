@@ -45,6 +45,7 @@ components:
   schemas:
     ApiError:
       type: object
+      description: 统一错误响应。requestId 必须与本次请求的结构化日志关联；若该请求产生审计记录，则应能通过审计表或日志系统按 requestId 回查。
       properties:
         requestId:
           type: string
@@ -117,6 +118,7 @@ components:
       - email
       - code
       - password
+      description: 需配合 X-Idempotency-Key header 使用，按 email + idempotencyKey 防重
     LoginPasswordRequest:
       type: object
       properties:
@@ -174,6 +176,7 @@ components:
       - email
       - code
       - newPassword
+      description: 需配合 X-Idempotency-Key header 使用，按 email + idempotencyKey 防重
     IssueVpnConfigRequest:
       type: object
       properties:
@@ -212,6 +215,7 @@ components:
       - orderType
       - quoteAssetCode
       - quoteNetworkCode
+      description: 需配合 X-Idempotency-Key header 使用，必须幂等
     SubmitClientTxRequest:
       type: object
       properties:
@@ -338,6 +342,7 @@ components:
       - payoutAddress
       - assetCode
       - networkCode
+      description: 需配合 X-Idempotency-Key header 使用，必须幂等
     AdminLoginRequest:
       type: object
       properties:
@@ -683,17 +688,12 @@ components:
       - refreshTokenExpiresAt
       - accountId
       - accountStatus
-    AdminTokenPairData:
+    AdminLoginData:
       type: object
       properties:
         accessToken:
           type: string
-        refreshToken:
-          type: string
         accessTokenExpiresAt:
-          type: string
-          format: date-time
-        refreshTokenExpiresAt:
           type: string
           format: date-time
         adminId:
@@ -708,9 +708,7 @@ components:
           - SUPPORT_ADMIN
       required:
       - accessToken
-      - refreshToken
       - accessTokenExpiresAt
-      - refreshTokenExpiresAt
       - adminId
       - role
     SubscriptionData:
@@ -1926,7 +1924,7 @@ components:
       - code
       - message
       - data
-    AdminTokenPairResponse:
+    AdminLoginResponse:
       type: object
       properties:
         requestId:
@@ -1939,7 +1937,7 @@ components:
           type: string
           example: ok
         data:
-          $ref: '#/components/schemas/AdminTokenPairData'
+          $ref: '#/components/schemas/AdminLoginData'
       required:
       - requestId
       - code
@@ -3059,8 +3057,15 @@ paths:
       tags:
       - ClientAuth
       summary: 邮箱注册
-      description: 创建账号并签发会话。角色：public_guest。页面：注册页。表：accounts,verification_codes,client_sessions,account_installations
+      description: 创建账号并签发会话。角色：public_guest。页面：注册页。表：accounts,verification_codes,client_sessions,account_installations。幂等：按 email + X-Idempotency-Key 防重
       operationId: op_post
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+        description: 客户端生成的幂等键，用于防止重复注册
       responses:
         '200':
           description: Success
@@ -3311,8 +3316,15 @@ paths:
       tags:
       - ClientAuth
       summary: 重置密码
-      description: 重置密码并使旧 session 失效。角色：public_guest。页面：重置密码页。表：accounts,verification_codes,client_sessions
+      description: 重置密码并使旧 session 失效。角色：public_guest。页面：重置密码页。表：accounts,verification_codes,client_sessions。幂等：按 email + X-Idempotency-Key 防重
       operationId: op_post
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+        description: 客户端生成的幂等键，用于防止重复重置密码
       responses:
         '200':
           description: Success
@@ -3494,6 +3506,12 @@ paths:
                 $ref: '#/components/schemas/ApiError'
       security:
       - ClientBearer: []
+      parameters:
+      - name: channel
+        in: query
+        schema:
+          type: string
+        required: false
   /api/client/v1/subscriptions/current:
     get:
       tags:
@@ -3689,8 +3707,15 @@ paths:
       tags:
       - Orders
       summary: 创建订单
-      description: 新购/续费下单。角色：user。页面：套餐页。表：orders,order_payment_targets,payment_addresses,plans
+      description: 新购/续费下单。角色：user。页面：套餐页。表：orders,order_payment_targets,payment_addresses,plans。幂等：必须带 X-Idempotency-Key
       operationId: op_post
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+        description: 客户端生成的幂等键，同一 key 重复请求返回同一订单
       responses:
         '200':
           description: Success
@@ -4495,8 +4520,15 @@ paths:
       tags:
       - Withdrawals
       summary: 创建提现申请
-      description: 提交佣金提现申请。角色：user。页面：提现申请页。表：commission_balances,commission_withdraw_requests,commission_ledger
+      description: 提交佣金提现申请。角色：user。页面：提现申请页。表：commission_balances,commission_withdraw_requests,commission_ledger。幂等：必须带 X-Idempotency-Key
       operationId: op_post
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+        description: 客户端生成的幂等键，同一 key 重复请求返回同一提现申请
       responses:
         '200':
           description: Success
@@ -4536,22 +4568,6 @@ paths:
                 $ref: '#/components/schemas/ApiError'
       security:
       - ClientBearer: []
-      parameters:
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - SUBMITTED
-          - UNDER_REVIEW
-          - APPROVED
-          - REJECTED
-          - BROADCASTING
-          - CHAIN_CONFIRMING
-          - COMPLETED
-          - FAILED
-          - CANCELED
-        required: false
       requestBody:
         required: true
         content:
@@ -4696,7 +4712,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminTokenPairResponse'
+                $ref: '#/components/schemas/AdminLoginResponse'
         '400':
           description: Bad Request
           content:
@@ -4831,6 +4847,12 @@ paths:
                 $ref: '#/components/schemas/ApiError'
       security:
       - AdminBearer: []
+      parameters:
+      - name: dateRange
+        in: query
+        schema:
+          type: string
+        required: false
   /api/admin/v1/accounts:
     get:
       tags:

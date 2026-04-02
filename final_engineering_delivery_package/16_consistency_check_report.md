@@ -10,7 +10,7 @@
 | 权限矩阵与接口鉴权是否一致 | 通过 | Client / Admin / Public 三域已统一，Admin 角色四分 |
 | 错误码是否冲突 | 通过 | 07 中按通用/鉴权/业务/后台分层，不存在同码多义 |
 | 状态枚举是否闭环 | 基本通过 | 主状态闭环；`expiring_soon` 明确为页面派生状态，不落库 |
-| DDL 是否支撑首版启动 | 通过 | 核心表、索引、唯一约束、审计表已齐备 |
+| DDL 是否支撑首版启动 | 有条件通过 | 核心表、索引、唯一约束、审计表已齐备；首启仍需同目录 `10_postgresql_bootstrap_seed.sql` 中的最小 seed 数据 |
 | Android 联调任务是否覆盖核心页面 | 通过 | 登录、收银台、VPN、钱包、邀请、提现、强更均覆盖 |
 | Admin 任务是否覆盖配置/审核/查询/详情/操作 | 通过 | 用户、订单、套餐、节点、提现、版本、法务、配置、审计均覆盖 |
 | CI/CD 与部署步骤是否可落地 | 基本通过 | 基于 Docker Compose 的 provider-agnostic 模板已给出，具体仓库/Runner 待确认 |
@@ -23,6 +23,20 @@
 5. **expiring_soon 落库问题**：已改为页面派生状态，不再落库。
 6. **钱包服务端持久化范围不一致**：已统一为仅保存可选公开地址，不保存普通钱包交易历史。
 7. **API 前缀不一致**：已统一为 `/api/public/v1`、`/api/client/v1`、`/api/admin/v1`。
+8. **Admin Refresh Token 口径断裂**：原假设包含 admin refresh token，但 API 和 DDL 未实现。已统一移除 admin refresh token，改为短期 access token，过期后重新登录。
+9. **幂等键契约断裂**：注册、重置密码、创建订单、创建提现已统一为 `X-Idempotency-Key` header；OpenAPI 中可机器读取。
+10. **OpenAPI 查询参数漂移**：
+   - `/api/client/v1/plans` 已补 `channel` 查询参数
+   - `/api/admin/v1/dashboard/summary` 已补 `dateRange` 查询参数
+   - `/api/client/v1/withdrawals` 已移除 POST 方法误挂的 `status` 查询参数
+11. **数据模型与 DDL 字段语义漂移**：
+   - `chain_configs` 统一为 `public_rpc_url` / `proxy_rpc_url` / `direct_broadcast_enabled` / `proxy_broadcast_enabled` / `is_active`
+   - `payment_addresses` 统一为 `is_active`
+   - `asset_catalog` 统一为 `is_active` 并补齐 `display_name`、`symbol`
+   - `vpn_nodes` 补齐协议与心跳字段
+12. **首启 bootstrap seed 缺失**：已补充最小 seed 模板，并将首启执行要求写入迁移和部署基线。
+13. **requestId 审计回查链路补齐**：统一为“所有请求写结构化日志；所有会落审计的敏感操作把 requestId 持久化到 `audit_logs.request_id`”，避免全表扩散。
+14. **错误码总表补齐**：已将 07 中实际使用但未登记的错误码补入统一错误码字典，减少实现与测试各自补码的风险。
 
 ## 3. 仍需人工关注但不阻塞当前收敛的点
 - RPC 提供商与确认阈值

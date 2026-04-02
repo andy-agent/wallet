@@ -86,14 +86,16 @@
 - DDL 以 `10_postgresql_core_ddl.sql` 为起点
 - 迁移采用 **expand / backfill / contract** 思路
 - 首发版本只允许增量迁移，不允许上线同批次做破坏性 drop
+- 首启 schema 就绪后，必须执行 `10_postgresql_bootstrap_seed.sql` 注入最小运营数据（链配置、资产目录、管理员、套餐、区域、节点、佣金规则、系统配置、法务文档、版本占位）
 
 ### 7.2 发布时序
 1. 先备份数据库
-2. 执行 migration
-3. 验证 schema version
-4. 发布 API / Worker
-5. 运行冒烟测试
-6. 再切换流量
+2. 执行 schema migration
+3. 首版或新环境执行 `10_postgresql_bootstrap_seed.sql`
+4. 验证 schema version
+5. 发布 API / Worker
+6. 运行冒烟测试
+7. 再切换流量
 
 ### 7.3 回滚
 - 代码回滚：回退到上一稳定镜像
@@ -119,6 +121,8 @@
 ## 10. 监控与日志要求
 - API / Worker / Admin / Site 都输出 requestId
 - 订单、提现、配置变更、审计类日志必须结构化
+- 会写入 `audit_logs` 的敏感操作必须同时写入 `audit_logs.request_id`
+- 后台检索 requestId 时，应可通过日志系统或审计表回查到对应动作
 - 监控指标最少包括：
   - 登录成功率
   - 订单创建成功率
@@ -164,6 +168,7 @@ deploy_staging:
   script:
     - backup-db
     - apply-migrations
+    - apply-bootstrap-seed-if-first-deploy
     - deploy-api
     - deploy-worker
     - deploy-admin
@@ -176,3 +181,9 @@ deploy_staging:
 - APK、镜像、数据库备份都要有权限隔离
 - 管理员与生产数据库访问应受网络和身份限制
 - 提现出款密钥不纳入应用容器镜像
+
+## 13. requestId 回查约束
+- requestId 由入口层统一生成并透传
+- 结构化日志必须以 requestId 为主检索键
+- 对有审计记录的操作，requestId 必须持久化到 `audit_logs.request_id`
+- 后台若提供 requestId 检索，优先从 `audit_logs` 命中，再结合日志系统补全上下文

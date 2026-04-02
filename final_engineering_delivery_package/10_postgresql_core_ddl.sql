@@ -3,6 +3,7 @@
 -- 1. 本 DDL 是首版开发基线，配合 OpenAPI 与状态机使用。
 -- 2. 业务冻结项已固化；未冻结参数（确认数、冷静期、订单时长等）通过 system_configs 和 chain_configs 配置。
 -- 3. 钱包私钥/助记词不入库；服务端仅可选保存公开地址元数据。
+-- 4. 首启所需最小 seed / bootstrap 数据见同目录 10_postgresql_bootstrap_seed.sql。
 
 BEGIN;
 
@@ -152,6 +153,7 @@ CREATE TRIGGER trg_admin_users_updated_at BEFORE UPDATE ON admin_users FOR EACH 
 
 CREATE TABLE IF NOT EXISTS audit_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  request_id uuid NULL,
   actor_type audit_actor_type_enum NOT NULL,
   actor_id uuid NULL,
   module varchar(64) NOT NULL,
@@ -165,6 +167,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   user_agent varchar(255) NULL,
   created_at timestamptz NOT NULL DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS idx_audit_logs_request_id ON audit_logs(request_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_module_action ON audit_logs(module, action);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_target ON audit_logs(target_type, target_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);

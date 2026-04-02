@@ -13,11 +13,13 @@
 ## 2. 用例清单
 | 编号 | 模块 | 前置条件 | 步骤 | 预期结果 | 优先级 |
 |---|---|---|---|---|---|
-| TC-001 | Auth | 无账号 | 发送注册验证码并完成邮箱注册 | 账号创建成功，返回 token pair，session 为 ACTIVE | P0 |
+| TC-001 | Auth | 无账号 | 发送注册验证码并完成邮箱注册（带 X-Idempotency-Key） | 账号创建成功，返回 token pair，session 为 ACTIVE | P0 |
+| TC-001A | Auth | 同请求已注册成功 | 使用相同 X-Idempotency-Key 再次注册 | 返回相同结果（幂等），不重复创建账号 | P0 |
 | TC-002 | Auth | 已有账号 | 邮箱+密码登录 | 登录成功，新 session 生效 | P0 |
 | TC-003 | Auth | 同账号已在旧设备登录 | 新设备再次登录 | 旧 session 变 EVICTED，旧端 refresh 失败 | P0 |
 | TC-004 | Plans | 已登录 | 查询套餐列表 | 仅返回 ACTIVE 且可售套餐 | P1 |
-| TC-005 | Orders | 已登录且存在可售套餐 | 创建新购订单 | 生成 orderNo、payment target、expiresAt | P0 |
+| TC-005 | Orders | 已登录且存在可售套餐 | 创建新购订单（带 X-Idempotency-Key） | 生成 orderNo、payment target、expiresAt | P0 |
+| TC-005A | Orders | 已使用某 idempotencyKey 创建订单 | 使用相同 X-Idempotency-Key 再次下单 | 返回相同订单（幂等），不创建新订单 | P0 |
 | TC-006 | Payment | 存在待支付订单 | 外部钱包按正确网络和金额转账 | 订单从 AWAITING_PAYMENT -> PAYMENT_DETECTED -> CONFIRMING -> PAID | P0 |
 | TC-007 | Provision | 订单已 PAID | 触发开通 worker | 订阅 ACTIVE，订单 COMPLETED，VPN identity 就绪 | P0 |
 | TC-008 | VPN | 订阅 ACTIVE | 请求区域列表并签发配置 | 仅返回可用且有权限区域；配置签发成功 | P0 |
@@ -27,7 +29,8 @@
 | TC-012 | Referral | 新用户首单前 | 绑定邀请码 | 绑定成功，首单后关系锁定 | P1 |
 | TC-013 | Commission | 来源订单 COMPLETED 且存在邀请关系 | 运行佣金生成任务 | 生成一级/二级账本，状态 FROZEN | P0 |
 | TC-014 | Commission | 佣金 FROZEN 且已过冷静期 | 运行释放任务 | 账本转 AVAILABLE，余额汇总更新 | P0 |
-| TC-015 | Withdrawal | 可提余额 >= 10 USDT | 提交提现申请 | 申请状态 SUBMITTED，账本锁定 | P0 |
+| TC-015 | Withdrawal | 可提余额 >= 10 USDT | 提交提现申请（带 X-Idempotency-Key） | 申请状态 SUBMITTED，账本锁定 | P0 |
+| TC-015A | Withdrawal | 已使用某 idempotencyKey 提交提现 | 使用相同 X-Idempotency-Key 再次提交 | 返回相同提现申请（幂等），不重复扣减余额 | P0 |
 | TC-016 | Withdrawal | 存在提现申请 | 财务审核通过并录入 txHash | 状态 APPROVED -> BROADCASTING/CHAIN_CONFIRMING -> COMPLETED | P0 |
 | TC-017 | Version | 当前版本低于最小支持版本 | 启动 App | 命中 force update，阻断进入首页 | P0 |
 | TC-018 | Auth | 账号被冻结 | 尝试登录 | 返回 AUTH_ACCOUNT_FROZEN | P0 |
