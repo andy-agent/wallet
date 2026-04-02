@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-01T20:45:21Z
+Generated: 2026-04-02T02:25:27Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: none
-- next_task_title: none
+- next_task_id: liaojiang-92m
+- next_task_title: AUTO: Resume unfinished work
 
 ## Counters
-- in_progress: 0
+- in_progress: 1
 - ready: 0
-- open: 0
-- closed: 0
-- dirty: 12
+- open: 1
+- closed: 21
+- dirty: 2
 
 ## Next Milestone
 - Continue the next task and complete one milestone
