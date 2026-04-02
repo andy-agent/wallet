@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import { Layout, Menu, Button, Dropdown, Avatar, Space } from 'antd';
 import {
+  AppstoreOutlined,
+  AuditOutlined,
+  ClusterOutlined,
   DashboardOutlined,
+  FileProtectOutlined,
+  NodeIndexOutlined,
+  SafetyOutlined,
   ShoppingOutlined,
   TagsOutlined,
-  FileTextOutlined,
   UserOutlined,
+  WalletOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -26,6 +32,11 @@ const MainLayout: React.FC = () => {
       label: '数据概览',
     },
     {
+      key: '/accounts',
+      icon: <UserOutlined />,
+      label: '用户管理',
+    },
+    {
       key: '/orders',
       icon: <ShoppingOutlined />,
       label: '订单管理',
@@ -36,8 +47,38 @@ const MainLayout: React.FC = () => {
       label: '套餐管理',
     },
     {
+      key: '/regions',
+      icon: <ClusterOutlined />,
+      label: '区域管理',
+    },
+    {
+      key: '/nodes',
+      icon: <NodeIndexOutlined />,
+      label: '节点管理',
+    },
+    {
+      key: '/withdrawals',
+      icon: <WalletOutlined />,
+      label: '提现审核',
+    },
+    {
+      key: '/versions',
+      icon: <AppstoreOutlined />,
+      label: '版本管理',
+    },
+    {
+      key: '/legal-docs',
+      icon: <FileProtectOutlined />,
+      label: '法务文档',
+    },
+    {
+      key: '/system-configs',
+      icon: <SafetyOutlined />,
+      label: '系统配置',
+    },
+    {
       key: '/audit-logs',
-      icon: <FileTextOutlined />,
+      icon: <AuditOutlined />,
       label: '审计日志',
     },
   ];

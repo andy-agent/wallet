@@ -170,6 +170,21 @@
             android:name=".payment.ui.activity.LoginActivity"
             android:label="@string/login"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
+        <activity
+            android:name=".payment.ui.activity.InvitationCenterActivity"
+            android:label="@string/title_invitation_center"
+            android:parentActivityName=".ui.MainActivity"
+            android:theme="@style/AppThemeDayNight.NoActionBar" />
+        <activity
+            android:name=".payment.ui.activity.CommissionLedgerActivity"
+            android:label="@string/title_commission_ledger"
+            android:parentActivityName=".ui.MainActivity"
+            android:theme="@style/AppThemeDayNight.NoActionBar" />
+        <activity
+            android:name=".payment.ui.activity.WithdrawalActivity"
+            android:label="@string/title_withdrawal"
+            android:parentActivityName=".ui.MainActivity"
+            android:theme="@style/AppThemeDayNight.NoActionBar" />
 
         <service
             android:name=".service.V2RayVpnService"

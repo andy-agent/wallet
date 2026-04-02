@@ -518,5 +518,11 @@
     <string name="error_operation_failed">Operation failed: %s</string>
     <string name="login_success">Login successful</string>
     <string name="register_success">Registration successful</string>
+    <string name="title_invitation_center">Invitation Center</string>
+    <string name="title_commission_ledger">Commission Ledger</string>
+    <string name="title_withdrawal">Withdrawal</string>
+    <string name="placeholder_invitation_center">Invitation code, invite stats, and referral binding status will appear here after API integration.</string>
+    <string name="placeholder_commission_ledger">Commission summary and ledger records will appear here after API integration.</string>
+    <string name="placeholder_withdrawal">Available balance, withdrawal form, and withdrawal history will appear here after API integration.</string>
 
 </resources>

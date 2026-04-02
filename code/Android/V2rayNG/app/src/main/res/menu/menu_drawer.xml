@@ -13,6 +13,18 @@
             android:icon="@drawable/ic_person_24dp"
             android:title="@string/title_user_profile" />
         <item
+            android:id="@+id/nav_invitation_center"
+            android:icon="@drawable/ic_share_24dp"
+            android:title="@string/title_invitation_center" />
+        <item
+            android:id="@+id/nav_commission_ledger"
+            android:icon="@drawable/ic_description_24dp"
+            android:title="@string/title_commission_ledger" />
+        <item
+            android:id="@+id/nav_withdrawal"
+            android:icon="@drawable/ic_cloud_download_24dp"
+            android:title="@string/title_withdrawal" />
+        <item
             android:id="@+id/sub_setting"
             android:icon="@drawable/ic_subscriptions_24dp"
             android:title="@string/title_sub_setting" />

@@ -37,7 +37,10 @@ import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.MainViewModel
 import com.v2ray.ang.plans.PlansActivity
 import com.v2ray.ang.payment.data.repository.PaymentRepository
+import com.v2ray.ang.payment.ui.activity.CommissionLedgerActivity
+import com.v2ray.ang.payment.ui.activity.InvitationCenterActivity
 import com.v2ray.ang.payment.ui.activity.LoginActivity
+import com.v2ray.ang.payment.ui.activity.WithdrawalActivity
 import com.v2ray.ang.payment.ui.activity.UserProfileActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -673,6 +676,9 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         when (item.itemId) {
             R.id.nav_purchase -> checkLoginAndProceed(Intent(this, PlansActivity::class.java))
             R.id.nav_user_profile -> checkLoginAndProceed(Intent(this, UserProfileActivity::class.java))
+            R.id.nav_invitation_center -> checkLoginAndProceed(Intent(this, InvitationCenterActivity::class.java))
+            R.id.nav_commission_ledger -> checkLoginAndProceed(Intent(this, CommissionLedgerActivity::class.java))
+            R.id.nav_withdrawal -> checkLoginAndProceed(Intent(this, WithdrawalActivity::class.java))
             R.id.sub_setting -> requestActivityLauncher.launch(Intent(this, SubSettingActivity::class.java))
             R.id.per_app_proxy_settings -> requestActivityLauncher.launch(Intent(this, PerAppProxyActivity::class.java))
             R.id.routing_setting -> requestActivityLauncher.launch(Intent(this, RoutingSettingActivity::class.java))
