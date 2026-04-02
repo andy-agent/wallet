@@ -8,12 +8,12 @@ object PaymentConfig {
     /**
      * API 基础 URL
      */
-    const val API_BASE_URL = "https://154.36.173.184:8080"
+    const val API_BASE_URL = "http://154.37.208.72:3000/"
     
     /**
      * 客户端 API 版本
      */
-    const val API_VERSION = "/client/v1"
+    const val API_VERSION = "api/client/v1"
     
     /**
      * 完整 API 基础 URL
@@ -65,30 +65,30 @@ object PaymentConfig {
      */
     object AssetCode {
         const val SOL = "SOL"
-        const val USDT_TRC20 = "USDT_TRC20"
+        const val USDT_TRC20 = "USDT"
     }
     
     /**
      * 订单状态
      */
     object OrderStatus {
-        const val PENDING_PAYMENT = "pending_payment"
-        const val SEEN_ONCHAIN = "seen_onchain"
-        const val CONFIRMING = "confirming"
-        const val PAID_SUCCESS = "paid_success"
-        const val FULFILLED = "fulfilled"
-        const val EXPIRED = "expired"
-        const val UNDERPAID = "underpaid"
-        const val OVERPAID = "overpaid"
-        const val FAILED = "failed"
-        const val LATE_PAID = "late_paid"
+        const val PENDING_PAYMENT = "AWAITING_PAYMENT"
+        const val SEEN_ONCHAIN = "PAYMENT_DETECTED"
+        const val CONFIRMING = "CONFIRMING"
+        const val PAID_SUCCESS = "PAID"
+        const val FULFILLED = "COMPLETED"
+        const val EXPIRED = "EXPIRED"
+        const val UNDERPAID = "UNDERPAID_REVIEW"
+        const val OVERPAID = "OVERPAID_REVIEW"
+        const val FAILED = "FAILED"
+        const val LATE_PAID = "CANCELED"
     }
     
     /**
      * 购买类型
      */
     object PurchaseType {
-        const val NEW = "new"
-        const val RENEW = "renew"
+        const val NEW = "NEW"
+        const val RENEW = "RENEWAL"
     }
 }

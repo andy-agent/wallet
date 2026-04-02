@@ -1,6 +1,6 @@
 # Recovery Context
 
-Generated: 2026-04-02T22:46:19Z
+Generated: 2026-04-02T23:16:57Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
@@ -8,11 +8,11 @@ Repository: /Users/cnyirui/git/projects/liaojiang
 - next_task_title: S5 Android Integration
 
 ## Counters
-- in_progress: 1
-- ready: 1
+- in_progress: 2
+- ready: 0
 - open: 4
 - closed: 42
-- dirty: 23
+- dirty: 12
 
 ## Next Milestone
 - Continue the next task and complete one milestone

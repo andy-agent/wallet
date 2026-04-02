@@ -4,8 +4,16 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.payment.PaymentConfig
+import com.v2ray.ang.payment.data.api.CommissionLedgerPageData
+import com.v2ray.ang.payment.data.api.CommissionSummaryData
+import com.v2ray.ang.payment.data.api.CurrentSubscriptionData
+import com.v2ray.ang.payment.data.api.MeData
 import com.v2ray.ang.payment.data.api.PaymentApi
-import com.v2ray.ang.payment.data.api.SubscriptionData
+import com.v2ray.ang.payment.data.api.RegisterEmailCodeRequest
+import com.v2ray.ang.payment.data.api.ReferralBindRequest
+import com.v2ray.ang.payment.data.api.ReferralOverviewData
+import com.v2ray.ang.payment.data.api.WithdrawalItem
+import com.v2ray.ang.payment.data.api.WithdrawalPageData
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
 import com.v2ray.ang.payment.data.local.entity.PaymentHistoryEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
@@ -126,10 +134,10 @@ class PaymentRepository(context: Context) {
             status = order.status,
             createdAt = parseDate(order.createdAt) ?: System.currentTimeMillis(),
             paidAt = order.payment.confirmedAt?.let { parseDate(it) },
-            fulfilledAt = order.fulfillment?.let { parseDate(order.createdAt) },
-            expiredAt = order.fulfillment?.expiredAt?.let { parseDate(it) },
-            subscriptionUrl = order.fulfillment?.subscriptionUrl,
-            marzbanUsername = order.fulfillment?.marzbanUsername,
+            fulfilledAt = order.completedAt?.let { parseDate(it) },
+            expiredAt = parseDate(order.expiresAt),
+            subscriptionUrl = order.subscriptionUrl,
+            marzbanUsername = null,
             userId = userId
         )
         localRepository.saveOrder(orderEntity)
@@ -156,10 +164,10 @@ class PaymentRepository(context: Context) {
             val updatedOrder = existingOrder.copy(
                 status = order.status,
                 paidAt = order.payment.confirmedAt?.let { parseDate(it) } ?: existingOrder.paidAt,
-                fulfilledAt = if (order.status == PaymentConfig.OrderStatus.FULFILLED) System.currentTimeMillis() else existingOrder.fulfilledAt,
-                expiredAt = order.fulfillment?.expiredAt?.let { parseDate(it) } ?: existingOrder.expiredAt,
-                subscriptionUrl = order.fulfillment?.subscriptionUrl ?: existingOrder.subscriptionUrl,
-                marzbanUsername = order.fulfillment?.marzbanUsername ?: existingOrder.marzbanUsername
+                fulfilledAt = order.completedAt?.let { parseDate(it) } ?: existingOrder.fulfilledAt,
+                expiredAt = parseDate(order.expiresAt) ?: existingOrder.expiredAt,
+                subscriptionUrl = order.subscriptionUrl ?: existingOrder.subscriptionUrl,
+                marzbanUsername = existingOrder.marzbanUsername
             )
             localRepository.updateOrder(updatedOrder)
 
@@ -295,9 +303,11 @@ class PaymentRepository(context: Context) {
      */
     suspend fun getPlans(): Result<List<Plan>> = withContext(Dispatchers.IO) {
         try {
-            val response = api.getPlans()
-            if (response.isSuccessful && response.body()?.code == "SUCCESS") {
-                val plans = response.body()?.data?.plans ?: emptyList()
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getPlans("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                val plans = response.body()?.data?.items ?: emptyList()
                 Result.success(plans)
             } else {
                 Result.failure(Exception(response.body()?.message ?: "获取套餐失败"))
@@ -317,27 +327,35 @@ class PaymentRepository(context: Context) {
         clientToken: String? = null
     ): Result<Order> = withContext(Dispatchers.IO) {
         try {
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val quoteNetworkCode = when (assetCode) {
+                PaymentConfig.AssetCode.SOL -> "SOLANA"
+                else -> "SOLANA"
+            }
             val request = CreateOrderRequest(
-                planId = planId,
-                purchaseType = purchaseType,
-                assetCode = assetCode,
-                clientDeviceId = getDeviceId(),
-                clientVersion = BuildConfig.VERSION_NAME,
-                clientToken = clientToken,
-                clientUserId = getCurrentUserId(),
-                marzbanUsername = prefs.getString(PaymentConfig.Prefs.MARZBAN_USERNAME, null)
+                planCode = planId,
+                orderType = purchaseType,
+                quoteAssetCode = assetCode,
+                quoteNetworkCode = quoteNetworkCode
             )
 
-            val response = api.createOrder(request)
-            if (response.isSuccessful && response.body()?.code == "SUCCESS") {
+            val response = api.createOrder(
+                authorization = "Bearer $token",
+                idempotencyKey = UUID.randomUUID().toString(),
+                request = request
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
                 val order = response.body()?.data
                 if (order != null) {
-                    saveCurrentOrderId(order.orderId)
+                    val paymentTarget = api.getPaymentTarget("Bearer $token", order.orderNo)
+                    val finalOrder = order.copy(paymentTarget = paymentTarget.body()?.data)
+                    saveCurrentOrderId(finalOrder.orderId)
                     // 缓存订单到本地
                     getCurrentUserId()?.let { userId ->
-                        cacheOrder(order, userId)
+                        cacheOrder(finalOrder, userId)
                     }
-                    Result.success(order)
+                    Result.success(finalOrder)
                 } else {
                     Result.failure(Exception("订单数据为空"))
                 }
@@ -354,22 +372,14 @@ class PaymentRepository(context: Context) {
      */
     suspend fun getOrder(orderId: String): Result<Order> = withContext(Dispatchers.IO) {
         try {
-            val response = api.getOrder(orderId)
-            if (response.isSuccessful && response.body()?.code == "SUCCESS") {
-                val order = response.body()?.data
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getOrder("Bearer $token", orderId)
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                val order = response.body()?.data?.copy(
+                    paymentTarget = api.getPaymentTarget("Bearer $token", orderId).body()?.data
+                )
                 if (order != null) {
-                    // 如果订单已完成，保存token
-                    if (order.status == PaymentConfig.OrderStatus.FULFILLED && order.fulfillment != null) {
-                        saveClientToken(
-                            order.fulfillment.clientToken,
-                            order.fulfillment.tokenExpiresAt
-                        )
-                        saveSubscription(
-                            order.fulfillment.subscriptionUrl,
-                            order.fulfillment.marzbanUsername
-                        )
-                        clearCurrentOrder()
-                    }
                     // 更新本地订单状态
                     getCurrentUserId()?.let { userId ->
                         updateOrderStatus(order)
@@ -389,7 +399,7 @@ class PaymentRepository(context: Context) {
     /**
      * 获取订阅信息
      */
-    suspend fun getSubscription(): Result<SubscriptionData> = withContext(Dispatchers.IO) {
+    suspend fun getSubscription(): Result<CurrentSubscriptionData> = withContext(Dispatchers.IO) {
         try {
             // 自动刷新 Token（如果需要）
             if (!refreshTokenIfNeeded()) {
@@ -400,11 +410,9 @@ class PaymentRepository(context: Context) {
                 ?: return@withContext Result.failure(Exception("未登录"))
 
             val response = api.getSubscription("Bearer $token")
-            if (response.isSuccessful && response.body()?.code == "SUCCESS") {
+            if (response.isSuccessful && response.body()?.code == "OK") {
                 val data = response.body()?.data
                 if (data != null) {
-                    // 缓存用户信息
-                    cacheUserInfo(data.user, token)
                     Result.success(data)
                 } else {
                     Result.failure(Exception("订阅数据为空"))
@@ -472,8 +480,13 @@ class PaymentRepository(context: Context) {
         val refreshToken = getRefreshToken() ?: return false
 
         return try {
-            val response = api.refreshToken("Bearer $refreshToken")
-            if (response.isSuccessful && response.body()?.code == "SUCCESS") {
+            val response = api.refreshToken(
+                RefreshTokenRequest(
+                    refreshToken = refreshToken,
+                    installationId = getDeviceId()
+                )
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
                 response.body()?.data?.let { data ->
                     // 保存新的 access_token，保留原有的 refresh_token
                     prefs.edit()
@@ -501,8 +514,13 @@ class PaymentRepository(context: Context) {
         val refreshToken = getRefreshToken() ?: return false
 
         return try {
-            val response = api.refreshToken("Bearer $refreshToken")
-            if (response.isSuccessful && response.body()?.code == "SUCCESS") {
+            val response = api.refreshToken(
+                RefreshTokenRequest(
+                    refreshToken = refreshToken,
+                    installationId = getDeviceId()
+                )
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
                 response.body()?.data?.let { data ->
                     prefs.edit()
                         .putString(PaymentConfig.Prefs.ACCESS_TOKEN, data.accessToken)
@@ -549,6 +567,167 @@ class PaymentRepository(context: Context) {
                 accessToken = newAccessToken
             )
             localRepository.saveUser(updatedUser)
+        }
+    }
+
+    suspend fun requestRegisterCode(email: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val response = api.requestRegisterCode(RegisterEmailCodeRequest(email))
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "发送验证码失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getMe(): Result<MeData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getMe("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                val data = response.body()?.data
+                if (data != null) {
+                    Result.success(data)
+                } else {
+                    Result.failure(Exception("用户数据为空"))
+                }
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取用户信息失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getReferralOverview(): Result<ReferralOverviewData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getReferralOverview("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("邀请概览为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取邀请概览失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun bindReferralCode(referralCode: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.bindReferralCode("Bearer $token", ReferralBindRequest(referralCode))
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "绑定邀请码失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getCommissionSummary(): Result<CommissionSummaryData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getCommissionSummary("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("佣金概览为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取佣金概览失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getCommissionLedger(status: String? = null): Result<CommissionLedgerPageData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getCommissionLedger("Bearer $token", status = status)
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("佣金账本为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取佣金账本失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createWithdrawal(
+        amount: String,
+        payoutAddress: String
+    ): Result<WithdrawalItem> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.createWithdrawal(
+                authorization = "Bearer $token",
+                idempotencyKey = UUID.randomUUID().toString(),
+                request = com.v2ray.ang.payment.data.api.CreateWithdrawalRequest(
+                    amount = amount,
+                    payoutAddress = payoutAddress,
+                    assetCode = "USDT",
+                    networkCode = "SOLANA"
+                )
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("提现结果为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "提交提现失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getWithdrawals(status: String? = null): Result<WithdrawalPageData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getWithdrawals("Bearer $token", status = status)
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("提现列表为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取提现列表失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

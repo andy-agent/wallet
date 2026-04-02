@@ -115,7 +115,11 @@ class OrderPollingUseCase(
                             getCallback()?.onPaymentFailed("支付金额不足，请联系客服")
                         }
                         PaymentConfig.OrderStatus.OVERPAID -> {
-                            // 多付但仍成功，继续轮询直到 fulfilled
+                            stopPolling()
+                            getCallback()?.onPaymentFailed("支付金额异常，请联系客服")
+                        }
+                        PaymentConfig.OrderStatus.PAID_SUCCESS,
+                        "PROVISIONING" -> {
                             scheduleNextPoll(orderId)
                         }
                         else -> {

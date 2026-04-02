@@ -2,25 +2,83 @@ package com.v2ray.ang.payment.data.model
 
 import com.google.gson.annotations.SerializedName
 
-/**
- * 订单数据模型
- */
 data class Order(
-    @SerializedName("order_id")
+    @SerializedName("orderId")
     val orderId: String,
-    @SerializedName("order_no")
+    @SerializedName("orderNo")
     val orderNo: String,
+    @SerializedName("planCode")
+    val planCode: String,
+    @SerializedName("planName")
+    val planName: String,
+    @SerializedName("orderType")
+    val orderType: String,
+    @SerializedName("quoteAssetCode")
+    val quoteAssetCode: String,
+    @SerializedName("quoteNetworkCode")
+    val quoteNetworkCode: String,
+    @SerializedName("quoteUsdAmount")
+    val quoteUsdAmount: String,
+    @SerializedName("payableAmount")
+    val payableAmount: String,
     val status: String,
-    @SerializedName("status_text")
-    val statusText: String,
-    val plan: PlanInfo,
-    val payment: PaymentInfo,
-    @SerializedName("expires_at")
+    @SerializedName("expiresAt")
     val expiresAt: String,
-    @SerializedName("created_at")
-    val createdAt: String,
-    val fulfillment: FulfillmentInfo? = null
-)
+    @SerializedName("confirmedAt")
+    val confirmedAt: String? = null,
+    @SerializedName("completedAt")
+    val completedAt: String? = null,
+    @SerializedName("failureReason")
+    val failureReason: String? = null,
+    @SerializedName("submittedClientTxHash")
+    val submittedClientTxHash: String? = null,
+    @SerializedName("createdAt")
+    val createdAt: String = expiresAt,
+    val paymentTarget: PaymentTarget? = null,
+    val subscriptionUrl: String? = null
+) {
+    val statusText: String
+        get() = when (status) {
+            "AWAITING_PAYMENT" -> "待支付"
+            "PAYMENT_DETECTED" -> "已发现支付"
+            "CONFIRMING" -> "确认中"
+            "PAID" -> "已支付"
+            "PROVISIONING" -> "开通中"
+            "COMPLETED" -> "已完成"
+            "EXPIRED" -> "已过期"
+            "UNDERPAID_REVIEW" -> "少付待审核"
+            "OVERPAID_REVIEW" -> "多付待审核"
+            "FAILED" -> "失败"
+            "CANCELED" -> "已取消"
+            else -> status
+        }
+
+    val plan: PlanInfo
+        get() = PlanInfo(planCode, planName)
+
+    val payment: PaymentInfo
+        get() = PaymentInfo(
+            assetCode = quoteAssetCode,
+            amountCrypto = paymentTarget?.payableAmount ?: payableAmount,
+            receiveAddress = paymentTarget?.collectionAddress.orEmpty(),
+            qrText = paymentTarget?.qrText.orEmpty(),
+            txHash = submittedClientTxHash,
+            confirmedAt = confirmedAt
+        )
+
+    val fulfillment: FulfillmentInfo?
+        get() = if (subscriptionUrl.isNullOrBlank()) {
+            null
+        } else {
+            FulfillmentInfo(
+                marzbanUsername = "",
+                clientToken = "",
+                tokenExpiresAt = expiresAt,
+                subscriptionUrl = subscriptionUrl,
+                expiredAt = expiresAt
+            )
+        }
+}
 
 data class PlanInfo(
     val id: String,
@@ -28,148 +86,114 @@ data class PlanInfo(
 )
 
 data class PaymentInfo(
-    @SerializedName("asset_code")
     val assetCode: String,
-    @SerializedName("amount_crypto")
     val amountCrypto: String,
-    @SerializedName("receive_address")
     val receiveAddress: String,
-    @SerializedName("qr_text")
     val qrText: String,
-    @SerializedName("tx_hash")
     val txHash: String? = null,
-    @SerializedName("confirmed_at")
     val confirmedAt: String? = null
 )
 
 data class FulfillmentInfo(
-    @SerializedName("marzban_username")
     val marzbanUsername: String,
-    @SerializedName("client_token")
     val clientToken: String,
-    @SerializedName("token_expires_at")
     val tokenExpiresAt: String,
-    @SerializedName("subscription_url")
     val subscriptionUrl: String,
-    @SerializedName("expired_at")
     val expiredAt: String
 )
 
-/**
- * 创建订单请求
- */
-data class CreateOrderRequest(
-    @SerializedName("plan_id")
-    val planId: String,
-    @SerializedName("purchase_type")
-    val purchaseType: String,
-    @SerializedName("asset_code")
+data class PaymentTarget(
+    @SerializedName("orderNo")
+    val orderNo: String,
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
     val assetCode: String,
-    @SerializedName("client_device_id")
-    val clientDeviceId: String,
-    @SerializedName("client_version")
-    val clientVersion: String,
-    @SerializedName("client_token")
-    val clientToken: String? = null,
-    @SerializedName("client_user_id")
-    val clientUserId: String? = null,
-    @SerializedName("marzban_username")
-    val marzbanUsername: String? = null
+    @SerializedName("collectionAddress")
+    val collectionAddress: String,
+    @SerializedName("payableAmount")
+    val payableAmount: String,
+    @SerializedName("uniqueAmountDelta")
+    val uniqueAmountDelta: String,
+    @SerializedName("qrText")
+    val qrText: String,
+    @SerializedName("expiresAt")
+    val expiresAt: String
 )
 
-/**
- * 创建订单响应
- */
+data class CreateOrderRequest(
+    @SerializedName("planCode")
+    val planCode: String,
+    @SerializedName("orderType")
+    val orderType: String,
+    @SerializedName("quoteAssetCode")
+    val quoteAssetCode: String,
+    @SerializedName("quoteNetworkCode")
+    val quoteNetworkCode: String
+)
+
 data class CreateOrderResponse(
     val code: String,
     val message: String,
     val data: Order?
 )
 
-/**
- * 查询订单响应
- */
 data class GetOrderResponse(
     val code: String,
     val message: String,
     val data: Order?
 )
 
-// ==================== 认证相关数据类 ====================
-
-/**
- * 登录请求
- */
 data class LoginRequest(
-    val username: String,
+    val email: String,
     val password: String
 )
 
-/**
- * 注册请求
- */
 data class RegisterRequest(
-    val username: String,
+    val email: String,
+    val code: String,
     val password: String,
-    val email: String? = null
+    val installationId: String? = null
 )
 
-/**
- * 认证响应数据
- */
 data class AuthData(
-    @SerializedName("user_id")
+    @SerializedName("accountId")
     val userId: String,
-    val username: String,
-    @SerializedName("access_token")
     val accessToken: String,
-    @SerializedName("refresh_token")
     val refreshToken: String,
-    @SerializedName("expires_at")
-    val expiresAt: String
-)
+    @SerializedName("accessTokenExpiresAt")
+    val expiresAt: String,
+    @SerializedName("accountStatus")
+    val accountStatus: String
+) {
+    val username: String
+        get() = userId
+}
 
-/**
- * 登录响应
- */
 data class LoginResponse(
     val code: String,
     val message: String,
     val data: AuthData?
 )
 
-/**
- * 注册响应
- */
 data class RegisterResponse(
     val code: String,
     val message: String,
     val data: AuthData?
 )
 
-// ==================== Token 刷新相关数据类 ====================
-
-/**
- * Token 刷新请求
- * 实际使用 Header 传递 refresh_token，此请求体为空
- */
 data class RefreshTokenRequest(
-    val dummy: String? = null
+    val refreshToken: String,
+    val installationId: String? = null
 )
 
-/**
- * Token 刷新响应数据
- */
 data class RefreshTokenData(
-    @SerializedName("access_token")
+    @SerializedName("accessToken")
     val accessToken: String,
-    @SerializedName("expires_at")
+    @SerializedName("accessTokenExpiresAt")
     val expiresAt: String
 )
 
-/**
- * Token 刷新响应
- */
 data class RefreshTokenResponse(
     val code: String,
     val message: String,

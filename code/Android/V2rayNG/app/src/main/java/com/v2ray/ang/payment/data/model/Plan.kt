@@ -2,49 +2,47 @@ package com.v2ray.ang.payment.data.model
 
 import com.google.gson.annotations.SerializedName
 
-/**
- * 套餐数据模型
- */
 data class Plan(
+    @SerializedName("planId")
     val id: String,
+    @SerializedName("planCode")
+    val planCode: String,
     val name: String,
-    val description: String,
-    @SerializedName("traffic_bytes")
-    val trafficBytes: Long,
-    @SerializedName("duration_days")
-    val durationDays: Int,
-    @SerializedName("price_usd")
+    val description: String? = null,
+    @SerializedName("billingCycleMonths")
+    val billingCycleMonths: Int,
+    @SerializedName("priceUsd")
     val priceUsd: String,
-    @SerializedName("supported_assets")
-    val supportedAssets: List<String>,
-    val badge: String?
+    @SerializedName("maxActiveSessions")
+    val maxActiveSessions: Int,
+    @SerializedName("regionAccessPolicy")
+    val regionAccessPolicy: String,
+    @SerializedName("includesAdvancedRegions")
+    val includesAdvancedRegions: Boolean,
+    @SerializedName("allowedRegionIds")
+    val allowedRegionIds: List<String> = emptyList(),
+    @SerializedName("displayOrder")
+    val displayOrder: Int,
+    val status: String? = null
 ) {
-    fun getTrafficDisplay(): String {
-        return when {
-            trafficBytes >= 1099511627776 -> "${trafficBytes / 1099511627776}TB"
-            trafficBytes >= 1073741824 -> "${trafficBytes / 1073741824}GB"
-            else -> "${trafficBytes / 1048576}MB"
+    val badge: String?
+        get() = when (displayOrder) {
+            1 -> "HOT"
+            2 -> "NEW"
+            else -> null
         }
-    }
+
+    fun getTrafficDisplay(): String = "不限流量"
 
     fun getDurationDisplay(): String {
         return when {
-            durationDays >= 365 -> "${durationDays / 365}年"
-            durationDays >= 30 -> "${durationDays / 30}个月"
-            else -> "${durationDays}天"
+            billingCycleMonths >= 12 && billingCycleMonths % 12 == 0 -> "${billingCycleMonths / 12}年"
+            billingCycleMonths > 0 -> "${billingCycleMonths}个月"
+            else -> "未知"
         }
     }
 
-    fun supportsSol(): Boolean = supportedAssets.contains("SOL")
-    fun supportsUsdtTrc20(): Boolean = supportedAssets.contains("USDT_TRC20")
+    fun supportsSol(): Boolean = true
+
+    fun supportsUsdtTrc20(): Boolean = true
 }
-
-data class PlansResponse(
-    val code: String,
-    val message: String,
-    val data: PlansData?
-)
-
-data class PlansData(
-    val plans: List<Plan>
-)

@@ -163,13 +163,21 @@ class UserProfileActivity : BaseActivity() {
         lifecycleScope.launch {
             showLoading()
 
-            val result = paymentRepository.getSubscription()
-            result.onSuccess { data ->
-                // 刷新用户信息
-                paymentRepository.getClientToken()?.let { token ->
-                    paymentRepository.cacheUserInfo(data.user, token)
+            val meResult = paymentRepository.getMe()
+            meResult.onSuccess { data ->
+                lifecycleScope.launch {
+                    val userEntity = com.v2ray.ang.payment.data.local.entity.UserEntity(
+                        userId = data.accountId,
+                        username = data.email,
+                        email = data.email,
+                        accessToken = paymentRepository.getAccessToken(),
+                        refreshToken = paymentRepository.getRefreshToken(),
+                        loginAt = System.currentTimeMillis()
+                    )
+                    paymentRepository.getLocalRepository().saveUser(userEntity)
+                    paymentRepository.saveCurrentUserId(data.accountId)
+                    loadUserData()
                 }
-                loadUserData()
             }.onFailure { error ->
                 showError(error.message ?: getString(R.string.refresh_failed))
             }
@@ -243,10 +251,10 @@ class UserProfileActivity : BaseActivity() {
 
     private fun getStatusText(status: String): String {
         return when (status) {
-            "PENDING" -> getString(R.string.status_pending)
+            "AWAITING_PAYMENT" -> getString(R.string.status_pending)
             "PAID" -> getString(R.string.status_paid)
-            "FULFILLED" -> getString(R.string.status_fulfilled)
-            "CANCELLED" -> getString(R.string.status_cancelled)
+            "COMPLETED" -> getString(R.string.status_fulfilled)
+            "CANCELED" -> getString(R.string.status_cancelled)
             else -> status
         }
     }
