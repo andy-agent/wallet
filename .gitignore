@@ -3,3 +3,9 @@
 .dolt/
 *.db
 .beads-credential-key
+
+# Backend build artifacts
+code/backend/node_modules/
+code/backend/dist/
+code/backend/coverage/
+code/backend/.env

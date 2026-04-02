@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ReferralModule } from '../referral/referral.module';
 import { VpnModule } from '../vpn/vpn.module';
 import { ProvisioningService } from './provisioning.service';
 
 @Module({
-  imports: [VpnModule],
+  imports: [VpnModule, ReferralModule],
   providers: [ProvisioningService],
   exports: [ProvisioningService],
 })

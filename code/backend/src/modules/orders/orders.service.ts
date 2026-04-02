@@ -119,6 +119,9 @@ export class OrdersService {
       this.provisioningService.provisionPaidOrder({
         accountId: order.accountId,
         planCode: order.planCode,
+        orderNo: order.orderNo,
+        sourceAssetCode: order.quoteAssetCode,
+        sourceAmount: order.quoteUsdAmount,
       });
       order.status = 'COMPLETED';
       order.completedAt = new Date().toISOString();

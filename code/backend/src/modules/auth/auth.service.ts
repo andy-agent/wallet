@@ -165,6 +165,30 @@ export class AuthService {
     };
   }
 
+  findAccountByReferralCode(referralCode: string) {
+    for (const account of this.accounts.values()) {
+      if (account.referralCode === referralCode) {
+        return account;
+      }
+    }
+    return null;
+  }
+
+  getAccountById(accountId: string) {
+    return this.accounts.get(accountId) ?? null;
+  }
+
+  maskEmail(accountId: string) {
+    const account = this.accounts.get(accountId);
+    if (!account) {
+      return 'unknown';
+    }
+    const [name, domain] = account.email.split('@');
+    const safeName =
+      name.length <= 2 ? `${name[0] ?? '*'}*` : `${name.slice(0, 2)}***`;
+    return `${safeName}@${domain}`;
+  }
+
   private issueSession(account: AuthAccount, installationId?: string) {
     const previous = this.sessionsByAccountId.get(account.accountId);
     if (previous && previous.status === 'ACTIVE') {
