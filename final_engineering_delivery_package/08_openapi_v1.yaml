@@ -1,0 +1,7065 @@
+openapi: 3.0.3
+info:
+  title: CryptoVPN OpenAPI v1
+  version: 1.0.0
+  description: 最终开发启动包唯一 API 契约。技术实现推荐 NestJS，契约独立于具体框架。
+servers:
+- url: https://{publicHost}
+  variables:
+    publicHost:
+      default: api.example.com
+tags:
+- name: Public
+- name: ClientAuth
+- name: ClientAccount
+- name: Plans
+- name: Subscription
+- name: VPN
+- name: Orders
+- name: Wallet
+- name: Referral
+- name: Commissions
+- name: Withdrawals
+- name: AdminAuth
+- name: AdminDashboard
+- name: AdminAccounts
+- name: AdminPlans
+- name: AdminVPN
+- name: AdminOrders
+- name: AdminCommissions
+- name: AdminWithdrawals
+- name: AdminVersions
+- name: AdminLegal
+- name: AdminConfig
+- name: AdminAudit
+components:
+  securitySchemes:
+    ClientBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    AdminBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ApiError:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+      - requestId
+      - code
+      - message
+    PageMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        sortBy:
+          type: string
+          nullable: true
+        sortOrder:
+          type: string
+          enum:
+          - asc
+          - desc
+          nullable: true
+      required:
+      - page
+      - pageSize
+      - total
+    EmptyData:
+      type: object
+      additionalProperties: false
+    RegisterEmailCodeRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: user@example.com
+      required:
+      - email
+    RegisterEmailRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: user@example.com
+        code:
+          type: string
+          example: '123456'
+        password:
+          type: string
+          example: Passw0rd!
+        installationId:
+          type: string
+          nullable: true
+          example: ins_123
+      required:
+      - email
+      - code
+      - password
+    LoginPasswordRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: user@example.com
+        password:
+          type: string
+          example: Passw0rd!
+        installationId:
+          type: string
+          nullable: true
+          example: ins_123
+      required:
+      - email
+      - password
+    RefreshTokenRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+        installationId:
+          type: string
+          nullable: true
+      required:
+      - refreshToken
+    LogoutRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          nullable: true
+      required: []
+    PasswordResetCodeRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: user@example.com
+      required:
+      - email
+    PasswordResetRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: user@example.com
+        code:
+          type: string
+          example: '123456'
+        newPassword:
+          type: string
+          example: Passw0rd!
+      required:
+      - email
+      - code
+      - newPassword
+    IssueVpnConfigRequest:
+      type: object
+      properties:
+        regionCode:
+          type: string
+        connectionMode:
+          type: string
+          enum:
+          - global
+          - rule
+      required:
+      - regionCode
+      - connectionMode
+    CreateOrderRequest:
+      type: object
+      properties:
+        planCode:
+          type: string
+        orderType:
+          type: string
+          enum:
+          - NEW
+          - RENEWAL
+        quoteAssetCode:
+          type: string
+          enum:
+          - SOL
+          - USDT
+        quoteNetworkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+      required:
+      - planCode
+      - orderType
+      - quoteAssetCode
+      - quoteNetworkCode
+    SubmitClientTxRequest:
+      type: object
+      properties:
+        txHash:
+          type: string
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        signedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - txHash
+      - networkCode
+    RefreshOrderStatusRequest:
+      type: object
+      properties:
+        clientObservedStatus:
+          type: string
+          nullable: true
+      required: []
+    UpsertWalletPublicAddressRequest:
+      type: object
+      properties:
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        assetCode:
+          type: string
+          enum:
+          - SOL
+          - TRX
+          - USDT
+        address:
+          type: string
+        isDefault:
+          type: boolean
+      required:
+      - networkCode
+      - assetCode
+      - address
+    TransferPrecheckRequest:
+      type: object
+      properties:
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        assetCode:
+          type: string
+          enum:
+          - SOL
+          - TRX
+          - USDT
+        toAddress:
+          type: string
+        amount:
+          type: string
+          description: decimal string
+          example: '10.5'
+        orderNo:
+          type: string
+          nullable: true
+      required:
+      - networkCode
+      - assetCode
+      - toAddress
+      - amount
+    ProxyBroadcastRequest:
+      type: object
+      properties:
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        assetCode:
+          type: string
+          enum:
+          - SOL
+          - TRX
+          - USDT
+        signedPayload:
+          type: string
+        clientTxHash:
+          type: string
+          nullable: true
+      required:
+      - networkCode
+      - assetCode
+      - signedPayload
+    ReferralBindRequest:
+      type: object
+      properties:
+        referralCode:
+          type: string
+      required:
+      - referralCode
+    CreateWithdrawalRequest:
+      type: object
+      properties:
+        amount:
+          type: string
+          description: decimal string
+          example: '12.5'
+        payoutAddress:
+          type: string
+        assetCode:
+          type: string
+          enum:
+          - USDT
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+      required:
+      - amount
+      - payoutAddress
+      - assetCode
+      - networkCode
+    AdminLoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+      - username
+      - password
+    AdminLogoutRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          nullable: true
+      required: []
+    AdminAccountStatusChangeRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+      required:
+      - reason
+    AdminEvictSessionsRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+      required:
+      - reason
+    AdminPlanUpsertRequest:
+      type: object
+      properties:
+        planCode:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        billingCycleMonths:
+          type: integer
+        priceUsd:
+          type: string
+          description: decimal string
+        maxActiveSessions:
+          type: integer
+        regionAccessPolicy:
+          type: string
+          enum:
+          - BASIC_ONLY
+          - INCLUDE_ADVANCED
+          - CUSTOM
+        includesAdvancedRegions:
+          type: boolean
+        allowedRegionIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - ACTIVE
+          - DISABLED
+          nullable: true
+        displayOrder:
+          type: integer
+      required:
+      - planCode
+      - name
+      - billingCycleMonths
+      - priceUsd
+      - maxActiveSessions
+      - regionAccessPolicy
+      - includesAdvancedRegions
+      - allowedRegionIds
+      - displayOrder
+    AdminPublishPlanRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          nullable: true
+      required: []
+    AdminDisablePlanRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+      required:
+      - reason
+    AdminRegionUpsertRequest:
+      type: object
+      properties:
+        regionCode:
+          type: string
+        displayName:
+          type: string
+        tier:
+          type: string
+          enum:
+          - BASIC
+          - ADVANCED
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - MAINTENANCE
+          - DISABLED
+        sortOrder:
+          type: integer
+        remark:
+          type: string
+          nullable: true
+      required:
+      - regionCode
+      - displayName
+      - tier
+      - status
+      - sortOrder
+    AdminNodeUpsertRequest:
+      type: object
+      properties:
+        regionId:
+          type: string
+          format: uuid
+        nodeCode:
+          type: string
+        host:
+          type: string
+        port:
+          type: integer
+        realityPublicKey:
+          type: string
+          nullable: true
+        serverName:
+          type: string
+          nullable: true
+        shortId:
+          type: string
+          nullable: true
+        flow:
+          type: string
+          nullable: true
+        weight:
+          type: integer
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - MAINTENANCE
+          - DISABLED
+        healthStatus:
+          type: string
+          enum:
+          - UNKNOWN
+          - HEALTHY
+          - DEGRADED
+          - OFFLINE
+          nullable: true
+      required:
+      - regionId
+      - nodeCode
+      - host
+      - port
+      - weight
+      - status
+    AdminDisableNodeRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+      required:
+      - reason
+    AdminMarkOrderExceptionRequest:
+      type: object
+      properties:
+        exceptionCode:
+          type: string
+          enum:
+          - UNDERPAID
+          - OVERPAID
+          - WRONG_ASSET
+          - WRONG_NETWORK
+          - LATE_PAYMENT
+          - MANUAL_REVIEW
+        note:
+          type: string
+          nullable: true
+      required:
+      - exceptionCode
+    AdminRetryProvisionRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          nullable: true
+      required: []
+    AdminApproveWithdrawalRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          nullable: true
+      required: []
+    AdminRejectWithdrawalRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+      required:
+      - reason
+    AdminRecordPayoutRequest:
+      type: object
+      properties:
+        txHash:
+          type: string
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+        note:
+          type: string
+          nullable: true
+      required:
+      - txHash
+      - networkCode
+    AdminRetryBroadcastRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          nullable: true
+      required: []
+    AdminAppVersionCreateRequest:
+      type: object
+      properties:
+        platform:
+          type: string
+          enum:
+          - android
+        channel:
+          type: string
+          enum:
+          - official
+        versionName:
+          type: string
+        versionCode:
+          type: integer
+        minSupportedCode:
+          type: integer
+        forceUpdate:
+          type: boolean
+        downloadUrl:
+          type: string
+        sha256:
+          type: string
+        releaseNotes:
+          type: string
+      required:
+      - platform
+      - channel
+      - versionName
+      - versionCode
+      - minSupportedCode
+      - forceUpdate
+      - downloadUrl
+      - sha256
+      - releaseNotes
+    AdminAppVersionPublishRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          nullable: true
+      required: []
+    AdminLegalDocumentUpsertRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        versionNo:
+          type: integer
+        markdownContent:
+          type: string
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - PUBLISHED
+          - DEPRECATED
+          nullable: true
+      required:
+      - title
+      - versionNo
+      - markdownContent
+    AdminPublishLegalDocumentRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          nullable: true
+      required: []
+    AdminSystemConfigUpdateRequest:
+      type: object
+      properties:
+        configValue:
+          type: string
+        note:
+          type: string
+          nullable: true
+      required:
+      - configValue
+    TokenPairData:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        accessTokenExpiresAt:
+          type: string
+          format: date-time
+        refreshTokenExpiresAt:
+          type: string
+          format: date-time
+        accountId:
+          type: string
+          format: uuid
+        accountStatus:
+          type: string
+          enum:
+          - ACTIVE
+          - FROZEN
+          - CLOSED
+      required:
+      - accessToken
+      - refreshToken
+      - accessTokenExpiresAt
+      - refreshTokenExpiresAt
+      - accountId
+      - accountStatus
+    AdminTokenPairData:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        accessTokenExpiresAt:
+          type: string
+          format: date-time
+        refreshTokenExpiresAt:
+          type: string
+          format: date-time
+        adminId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+          - SUPER_ADMIN
+          - OPS_ADMIN
+          - FINANCE_ADMIN
+          - SUPPORT_ADMIN
+      required:
+      - accessToken
+      - refreshToken
+      - accessTokenExpiresAt
+      - refreshTokenExpiresAt
+      - adminId
+      - role
+    SubscriptionData:
+      type: object
+      properties:
+        subscriptionId:
+          type: string
+          format: uuid
+          nullable: true
+        planCode:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - PENDING_ACTIVATION
+          - ACTIVE
+          - EXPIRED
+          - SUSPENDED
+          - CANCELED
+          - NONE
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        expireAt:
+          type: string
+          format: date-time
+          nullable: true
+        daysRemaining:
+          type: integer
+          nullable: true
+        isUnlimitedTraffic:
+          type: boolean
+        maxActiveSessions:
+          type: integer
+      required:
+      - status
+      - isUnlimitedTraffic
+      - maxActiveSessions
+    MeData:
+      type: object
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        email:
+          type: string
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - FROZEN
+          - CLOSED
+        referralCode:
+          type: string
+        subscription:
+          $ref: '#/components/schemas/SubscriptionData'
+      required:
+      - accountId
+      - email
+      - status
+      - referralCode
+    SessionSummaryData:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - EVICTED
+          - REVOKED
+          - EXPIRED
+        installationId:
+          type: string
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+      - sessionId
+      - status
+      - expiresAt
+    PlanItem:
+      type: object
+      properties:
+        planId:
+          type: string
+          format: uuid
+        planCode:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        billingCycleMonths:
+          type: integer
+        priceUsd:
+          type: string
+          description: decimal string
+        maxActiveSessions:
+          type: integer
+        regionAccessPolicy:
+          type: string
+          enum:
+          - BASIC_ONLY
+          - INCLUDE_ADVANCED
+          - CUSTOM
+        includesAdvancedRegions:
+          type: boolean
+        allowedRegionIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        displayOrder:
+          type: integer
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - ACTIVE
+          - DISABLED
+          nullable: true
+      required:
+      - planId
+      - planCode
+      - name
+      - billingCycleMonths
+      - priceUsd
+      - maxActiveSessions
+      - regionAccessPolicy
+      - includesAdvancedRegions
+      - allowedRegionIds
+      - displayOrder
+    RegionItem:
+      type: object
+      properties:
+        regionId:
+          type: string
+          format: uuid
+        regionCode:
+          type: string
+        displayName:
+          type: string
+        tier:
+          type: string
+          enum:
+          - BASIC
+          - ADVANCED
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - MAINTENANCE
+          - DISABLED
+        isAllowed:
+          type: boolean
+        remark:
+          type: string
+          nullable: true
+      required:
+      - regionId
+      - regionCode
+      - displayName
+      - tier
+      - status
+      - isAllowed
+    IssueVpnConfigData:
+      type: object
+      properties:
+        regionCode:
+          type: string
+        connectionMode:
+          type: string
+          enum:
+          - global
+          - rule
+        configPayload:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+        expireAt:
+          type: string
+          format: date-time
+      required:
+      - regionCode
+      - connectionMode
+      - configPayload
+      - issuedAt
+      - expireAt
+    VpnStatusData:
+      type: object
+      properties:
+        subscriptionStatus:
+          type: string
+          enum:
+          - PENDING_ACTIVATION
+          - ACTIVE
+          - EXPIRED
+          - SUSPENDED
+          - CANCELED
+          - NONE
+        currentRegionCode:
+          type: string
+          nullable: true
+        connectionMode:
+          type: string
+          enum:
+          - global
+          - rule
+          nullable: true
+        canIssueConfig:
+          type: boolean
+        sessionStatus:
+          type: string
+          enum:
+          - ACTIVE
+          - EVICTED
+          - REVOKED
+          - EXPIRED
+      required:
+      - subscriptionStatus
+      - canIssueConfig
+      - sessionStatus
+    OrderData:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        orderNo:
+          type: string
+        planCode:
+          type: string
+        planName:
+          type: string
+        orderType:
+          type: string
+          enum:
+          - NEW
+          - RENEWAL
+        quoteAssetCode:
+          type: string
+          enum:
+          - SOL
+          - USDT
+        quoteNetworkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        quoteUsdAmount:
+          type: string
+          description: decimal string
+        payableAmount:
+          type: string
+          description: decimal string
+        status:
+          type: string
+          enum:
+          - AWAITING_PAYMENT
+          - PAYMENT_DETECTED
+          - CONFIRMING
+          - PAID
+          - PROVISIONING
+          - COMPLETED
+          - EXPIRED
+          - UNDERPAID_REVIEW
+          - OVERPAID_REVIEW
+          - FAILED
+          - CANCELED
+        expiresAt:
+          type: string
+          format: date-time
+        confirmedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        failureReason:
+          type: string
+          nullable: true
+        submittedClientTxHash:
+          type: string
+          nullable: true
+      required:
+      - orderId
+      - orderNo
+      - planCode
+      - planName
+      - orderType
+      - quoteAssetCode
+      - quoteNetworkCode
+      - quoteUsdAmount
+      - payableAmount
+      - status
+      - expiresAt
+    PaymentTargetData:
+      type: object
+      properties:
+        orderNo:
+          type: string
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        assetCode:
+          type: string
+          enum:
+          - SOL
+          - USDT
+        collectionAddress:
+          type: string
+        payableAmount:
+          type: string
+          description: decimal string
+        uniqueAmountDelta:
+          type: string
+          description: decimal string
+        qrText:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+      - orderNo
+      - networkCode
+      - assetCode
+      - collectionAddress
+      - payableAmount
+      - uniqueAmountDelta
+      - qrText
+      - expiresAt
+    ChainInfo:
+      type: object
+      properties:
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        displayName:
+          type: string
+        nativeAssetCode:
+          type: string
+          enum:
+          - SOL
+          - TRX
+        directBroadcastEnabled:
+          type: boolean
+        proxyBroadcastEnabled:
+          type: boolean
+        requiredConfirmations:
+          type: integer
+        publicRpcUrl:
+          type: string
+          nullable: true
+      required:
+      - networkCode
+      - displayName
+      - nativeAssetCode
+      - directBroadcastEnabled
+      - proxyBroadcastEnabled
+      - requiredConfirmations
+    AssetCatalogItem:
+      type: object
+      properties:
+        assetId:
+          type: string
+          format: uuid
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        assetCode:
+          type: string
+          enum:
+          - SOL
+          - TRX
+          - USDT
+        displayName:
+          type: string
+        symbol:
+          type: string
+        decimals:
+          type: integer
+        isNative:
+          type: boolean
+        contractAddress:
+          type: string
+          nullable: true
+        walletVisible:
+          type: boolean
+        orderPayable:
+          type: boolean
+      required:
+      - assetId
+      - networkCode
+      - assetCode
+      - displayName
+      - symbol
+      - decimals
+      - isNative
+      - walletVisible
+      - orderPayable
+    WalletPublicAddressItem:
+      type: object
+      properties:
+        addressId:
+          type: string
+          format: uuid
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        assetCode:
+          type: string
+          enum:
+          - SOL
+          - TRX
+          - USDT
+        address:
+          type: string
+        isDefault:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - addressId
+      - networkCode
+      - assetCode
+      - address
+      - isDefault
+      - createdAt
+    TransferPrecheckData:
+      type: object
+      properties:
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        assetCode:
+          type: string
+          enum:
+          - SOL
+          - TRX
+          - USDT
+        toAddressNormalized:
+          type: string
+        amount:
+          type: string
+          description: decimal string
+        estimatedFee:
+          type: string
+          description: decimal string
+        directBroadcastEnabled:
+          type: boolean
+        proxyBroadcastEnabled:
+          type: boolean
+        warnings:
+          type: array
+          items:
+            type: string
+      required:
+      - networkCode
+      - assetCode
+      - toAddressNormalized
+      - amount
+      - estimatedFee
+      - directBroadcastEnabled
+      - proxyBroadcastEnabled
+      - warnings
+    ProxyBroadcastData:
+      type: object
+      properties:
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        broadcasted:
+          type: boolean
+        txHash:
+          type: string
+          nullable: true
+        acceptedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - networkCode
+      - broadcasted
+    ReferralOverviewData:
+      type: object
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        referralCode:
+          type: string
+        hasBinding:
+          type: boolean
+        level1InviteCount:
+          type: integer
+        level2InviteCount:
+          type: integer
+        level1IncomeUsdt:
+          type: string
+          description: decimal string
+        level2IncomeUsdt:
+          type: string
+          description: decimal string
+        availableAmountUsdt:
+          type: string
+          description: decimal string
+        frozenAmountUsdt:
+          type: string
+          description: decimal string
+        minWithdrawAmountUsdt:
+          type: string
+          description: decimal string
+      required:
+      - accountId
+      - referralCode
+      - hasBinding
+      - level1InviteCount
+      - level2InviteCount
+      - level1IncomeUsdt
+      - level2IncomeUsdt
+      - availableAmountUsdt
+      - frozenAmountUsdt
+      - minWithdrawAmountUsdt
+    CommissionSummaryData:
+      type: object
+      properties:
+        settlementAssetCode:
+          type: string
+          enum:
+          - USDT
+        settlementNetworkCode:
+          type: string
+          enum:
+          - SOLANA
+        availableAmount:
+          type: string
+          description: decimal string
+        frozenAmount:
+          type: string
+          description: decimal string
+        withdrawingAmount:
+          type: string
+          description: decimal string
+        withdrawnTotal:
+          type: string
+          description: decimal string
+      required:
+      - settlementAssetCode
+      - settlementNetworkCode
+      - availableAmount
+      - frozenAmount
+      - withdrawingAmount
+      - withdrawnTotal
+    CommissionLedgerItem:
+      type: object
+      properties:
+        entryNo:
+          type: string
+        sourceOrderNo:
+          type: string
+        sourceAccountMasked:
+          type: string
+        commissionLevel:
+          type: string
+          enum:
+          - LEVEL1
+          - LEVEL2
+        sourceAssetCode:
+          type: string
+          enum:
+          - SOL
+          - USDT
+        sourceAmount:
+          type: string
+          description: decimal string
+        fxRateSnapshot:
+          type: string
+          description: decimal string
+        settlementAmountUsdt:
+          type: string
+          description: decimal string
+        status:
+          type: string
+          enum:
+          - FROZEN
+          - AVAILABLE
+          - LOCKED_WITHDRAWAL
+          - WITHDRAWN
+          - REVERSED
+        createdAt:
+          type: string
+          format: date-time
+        availableAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - entryNo
+      - sourceOrderNo
+      - sourceAccountMasked
+      - commissionLevel
+      - sourceAssetCode
+      - sourceAmount
+      - fxRateSnapshot
+      - settlementAmountUsdt
+      - status
+      - createdAt
+    WithdrawalItem:
+      type: object
+      properties:
+        requestNo:
+          type: string
+        amount:
+          type: string
+          description: decimal string
+        assetCode:
+          type: string
+          enum:
+          - USDT
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+        payoutAddress:
+          type: string
+        status:
+          type: string
+          enum:
+          - SUBMITTED
+          - UNDER_REVIEW
+          - APPROVED
+          - REJECTED
+          - BROADCASTING
+          - CHAIN_CONFIRMING
+          - COMPLETED
+          - FAILED
+          - CANCELED
+        failReason:
+          type: string
+          nullable: true
+        txHash:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        reviewedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - requestNo
+      - amount
+      - assetCode
+      - networkCode
+      - payoutAddress
+      - status
+      - createdAt
+    VersionCheckData:
+      type: object
+      properties:
+        platform:
+          type: string
+          enum:
+          - android
+        channel:
+          type: string
+          enum:
+          - official
+        latestVersionName:
+          type: string
+        latestVersionCode:
+          type: integer
+        minSupportedCode:
+          type: integer
+        forceUpdate:
+          type: boolean
+        downloadUrl:
+          type: string
+        sha256:
+          type: string
+        releaseNotes:
+          type: string
+      required:
+      - platform
+      - channel
+      - latestVersionName
+      - latestVersionCode
+      - minSupportedCode
+      - forceUpdate
+      - downloadUrl
+      - sha256
+      - releaseNotes
+    LegalDocumentData:
+      type: object
+      properties:
+        docType:
+          type: string
+        title:
+          type: string
+        versionNo:
+          type: integer
+        markdownContent:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - docType
+      - title
+      - versionNo
+      - markdownContent
+    AdminDashboardSummaryData:
+      type: object
+      properties:
+        activeAccounts:
+          type: integer
+        activeSubscriptions:
+          type: integer
+        awaitingOrders:
+          type: integer
+        reviewOrders:
+          type: integer
+        pendingWithdrawals:
+          type: integer
+        todayPaidOrders:
+          type: integer
+      required:
+      - activeAccounts
+      - activeSubscriptions
+      - awaitingOrders
+      - reviewOrders
+      - pendingWithdrawals
+      - todayPaidOrders
+    AdminAccountItem:
+      type: object
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        accountNo:
+          type: string
+          nullable: true
+        email:
+          type: string
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - FROZEN
+          - CLOSED
+          - PENDING_VERIFY
+        planCode:
+          type: string
+          nullable: true
+        expireAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - accountId
+      - email
+      - status
+    AdminAccountDetail:
+      type: object
+      properties:
+        account:
+          $ref: '#/components/schemas/AdminAccountItem'
+        sessionStatus:
+          type: string
+          enum:
+          - ACTIVE
+          - EVICTED
+          - REVOKED
+          - EXPIRED
+          nullable: true
+        referralCode:
+          type: string
+        inviterLevel1Email:
+          type: string
+          nullable: true
+        subscription:
+          $ref: '#/components/schemas/SubscriptionData'
+        commissionBalance:
+          $ref: '#/components/schemas/CommissionSummaryData'
+      required:
+      - account
+      - referralCode
+    AdminPlanItem:
+      $ref: '#/components/schemas/PlanItem'
+    AdminRegionItem:
+      $ref: '#/components/schemas/RegionItem'
+    AdminNodeItem:
+      type: object
+      properties:
+        nodeId:
+          type: string
+          format: uuid
+        regionId:
+          type: string
+          format: uuid
+        regionCode:
+          type: string
+          nullable: true
+        nodeCode:
+          type: string
+        host:
+          type: string
+        port:
+          type: integer
+        realityPublicKey:
+          type: string
+          nullable: true
+        serverName:
+          type: string
+          nullable: true
+        shortId:
+          type: string
+          nullable: true
+        flow:
+          type: string
+          nullable: true
+        weight:
+          type: integer
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - MAINTENANCE
+          - DISABLED
+          - OFFLINE
+        healthStatus:
+          type: string
+          enum:
+          - UNKNOWN
+          - HEALTHY
+          - DEGRADED
+          - OFFLINE
+        lastHeartbeatAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - nodeId
+      - regionId
+      - nodeCode
+      - host
+      - port
+      - weight
+      - status
+      - healthStatus
+    PaymentEventItem:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        chain:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        assetCode:
+          type: string
+          enum:
+          - SOL
+          - USDT
+        txHash:
+          type: string
+        amount:
+          type: string
+          description: decimal string
+        status:
+          type: string
+          enum:
+          - DETECTED
+          - MATCHED
+          - PENDING_CONFIRMATION
+          - CONFIRMED
+          - DUPLICATE_TX
+          - LATE_PAYMENT
+          - WRONG_ASSET
+          - WRONG_NETWORK
+          - PARSE_FAILED
+        confirmations:
+          type: integer
+        detectedAt:
+          type: string
+          format: date-time
+      required:
+      - eventId
+      - chain
+      - assetCode
+      - txHash
+      - amount
+      - status
+      - confirmations
+      - detectedAt
+    AdminOrderItem:
+      type: object
+      properties:
+        orderNo:
+          type: string
+        accountEmail:
+          type: string
+        planCode:
+          type: string
+        quoteAssetCode:
+          type: string
+        quoteNetworkCode:
+          type: string
+        payableAmount:
+          type: string
+          description: decimal string
+        status:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+      - orderNo
+      - accountEmail
+      - planCode
+      - quoteAssetCode
+      - quoteNetworkCode
+      - payableAmount
+      - status
+      - expiresAt
+    AdminOrderDetail:
+      type: object
+      properties:
+        order:
+          $ref: '#/components/schemas/OrderData'
+        paymentTarget:
+          $ref: '#/components/schemas/PaymentTargetData'
+        paymentEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentEventItem'
+        reviewNote:
+          type: string
+          nullable: true
+      required:
+      - order
+      - paymentTarget
+      - paymentEvents
+    AdminCommissionLedgerItem:
+      type: object
+      properties:
+        entryNo:
+          type: string
+        beneficiaryEmail:
+          type: string
+        sourceOrderNo:
+          type: string
+        commissionLevel:
+          type: string
+          enum:
+          - LEVEL1
+          - LEVEL2
+        settlementAmountUsdt:
+          type: string
+          description: decimal string
+        status:
+          type: string
+        availableAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - entryNo
+      - beneficiaryEmail
+      - sourceOrderNo
+      - commissionLevel
+      - settlementAmountUsdt
+      - status
+    AdminWithdrawalItem:
+      type: object
+      properties:
+        requestNo:
+          type: string
+        accountEmail:
+          type: string
+        amount:
+          type: string
+          description: decimal string
+        assetCode:
+          type: string
+          enum:
+          - USDT
+        networkCode:
+          type: string
+          enum:
+          - SOLANA
+        payoutAddress:
+          type: string
+        status:
+          type: string
+        txHash:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - requestNo
+      - accountEmail
+      - amount
+      - assetCode
+      - networkCode
+      - payoutAddress
+      - status
+      - createdAt
+    AdminAppVersionItem:
+      type: object
+      properties:
+        versionId:
+          type: string
+          format: uuid
+        platform:
+          type: string
+          enum:
+          - android
+        channel:
+          type: string
+          enum:
+          - official
+        versionName:
+          type: string
+        versionCode:
+          type: integer
+        minSupportedCode:
+          type: integer
+        forceUpdate:
+          type: boolean
+        downloadUrl:
+          type: string
+        sha256:
+          type: string
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - PUBLISHED
+          - DEPRECATED
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - versionId
+      - platform
+      - channel
+      - versionName
+      - versionCode
+      - minSupportedCode
+      - forceUpdate
+      - downloadUrl
+      - sha256
+      - status
+    AdminLegalDocumentItem:
+      type: object
+      properties:
+        docType:
+          type: string
+        title:
+          type: string
+        versionNo:
+          type: integer
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - PUBLISHED
+          - DEPRECATED
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - docType
+      - title
+      - versionNo
+      - status
+    AdminSystemConfigItem:
+      type: object
+      properties:
+        configId:
+          type: string
+          format: uuid
+        scope:
+          type: string
+        configKey:
+          type: string
+        configValue:
+          type: string
+        description:
+          type: string
+          nullable: true
+        mutableInProd:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - configId
+      - scope
+      - configKey
+      - configValue
+      - mutableInProd
+    AuditLogItem:
+      type: object
+      properties:
+        auditId:
+          type: string
+          format: uuid
+        actorType:
+          type: string
+          enum:
+          - admin
+          - system
+          - account
+        actorId:
+          type: string
+          nullable: true
+        module:
+          type: string
+        action:
+          type: string
+        targetType:
+          type: string
+          nullable: true
+        targetId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - auditId
+      - actorType
+      - module
+      - action
+      - createdAt
+    OperationResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/EmptyData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    TokenPairResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/TokenPairData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminTokenPairResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/AdminTokenPairData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    MeResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/MeData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    SessionSummaryResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/SessionSummaryData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    PlanListResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/PlanItem'
+          required:
+          - items
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    SubscriptionResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/SubscriptionData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    RegionListResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/RegionItem'
+          required:
+          - items
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    IssueVpnConfigResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/IssueVpnConfigData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    VpnStatusResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/VpnStatusData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    OrderResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/OrderData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    PaymentTargetResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/PaymentTargetData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    ChainListResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChainInfo'
+          required:
+          - items
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AssetCatalogResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AssetCatalogItem'
+          required:
+          - items
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    WalletPublicAddressResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/WalletPublicAddressItem'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    WalletPublicAddressListResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/WalletPublicAddressItem'
+          required:
+          - items
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    TransferPrecheckResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/TransferPrecheckData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    ProxyBroadcastResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/ProxyBroadcastData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    ReferralOverviewResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/ReferralOverviewData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    CommissionSummaryResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/CommissionSummaryData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    CommissionLedgerPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/CommissionLedgerItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    WithdrawalResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/WithdrawalItem'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    WithdrawalPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/WithdrawalItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    VersionCheckResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/VersionCheckData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    LegalDocumentResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/LegalDocumentData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminDashboardSummaryResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/AdminDashboardSummaryData'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminAccountPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminAccountItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminAccountDetailResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/AdminAccountDetail'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminPlanResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/AdminPlanItem'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminPlanPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminPlanItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminRegionResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/AdminRegionItem'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminRegionPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminRegionItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminNodeResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/AdminNodeItem'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminNodePageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminNodeItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminOrderPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminOrderItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminOrderDetailResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/AdminOrderDetail'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminCommissionLedgerPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminCommissionLedgerItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminWithdrawalPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminWithdrawalItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminAppVersionResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/AdminAppVersionItem'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminAppVersionPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminAppVersionItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminLegalDocumentResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          $ref: '#/components/schemas/AdminLegalDocumentItem'
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminLegalDocumentPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminLegalDocumentItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminSystemConfigPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminSystemConfigItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+    AdminAuditLogPageResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: ok
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/AuditLogItem'
+            page:
+              $ref: '#/components/schemas/PageMeta'
+          required:
+          - items
+          - page
+      required:
+      - requestId
+      - code
+      - message
+      - data
+paths:
+  /api/public/v1/app/version/latest:
+    get:
+      tags:
+      - Public
+      summary: 获取最新版本
+      description: 启动页版本检查与强更。角色：public_guest。页面：启动页/强更页。表：app_versions
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionCheckResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      parameters:
+      - name: platform
+        in: query
+        schema:
+          type: string
+          enum:
+          - android
+        required: true
+      - name: channel
+        in: query
+        schema:
+          type: string
+          enum:
+          - official
+        required: true
+      - name: currentVersionCode
+        in: query
+        schema:
+          type: integer
+        required: false
+  /api/public/v1/legal/{docType}:
+    get:
+      tags:
+      - Public
+      summary: 获取法务文档
+      description: 展示官网/App 法务文档。角色：public_guest。页面：法务文档页。表：legal_documents
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalDocumentResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      parameters:
+      - name: docType
+        in: path
+        schema:
+          type: string
+        required: true
+  /api/client/v1/auth/register/email/request-code:
+    post:
+      tags:
+      - ClientAuth
+      summary: 发送注册验证码
+      description: 邮箱注册验证码。角色：public_guest。页面：注册页。表：verification_codes,accounts
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterEmailCodeRequest'
+  /api/client/v1/auth/register/email:
+    post:
+      tags:
+      - ClientAuth
+      summary: 邮箱注册
+      description: 创建账号并签发会话。角色：public_guest。页面：注册页。表：accounts,verification_codes,client_sessions,account_installations
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPairResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterEmailRequest'
+  /api/client/v1/auth/login/password:
+    post:
+      tags:
+      - ClientAuth
+      summary: 邮箱密码登录
+      description: 登录并挤掉旧 session。角色：public_guest。页面：登录页。表：accounts,client_sessions,account_installations
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPairResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginPasswordRequest'
+  /api/client/v1/auth/refresh:
+    post:
+      tags:
+      - ClientAuth
+      summary: 刷新会话
+      description: 用 refresh token 换新 token pair。角色：user。页面：启动页/全局拦截。表：client_sessions,accounts
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPairResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+  /api/client/v1/auth/logout:
+    post:
+      tags:
+      - ClientAuth
+      summary: 退出登录
+      description: 撤销当前 session。角色：user。页面：我的页。表：client_sessions
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+  /api/client/v1/auth/password/forgot/request-code:
+    post:
+      tags:
+      - ClientAuth
+      summary: 发送重置密码验证码
+      description: 重置密码前发送验证码。角色：public_guest。页面：重置密码页。表：verification_codes,accounts
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetCodeRequest'
+  /api/client/v1/auth/password/reset:
+    post:
+      tags:
+      - ClientAuth
+      summary: 重置密码
+      description: 重置密码并使旧 session 失效。角色：public_guest。页面：重置密码页。表：accounts,verification_codes,client_sessions
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+  /api/client/v1/me:
+    get:
+      tags:
+      - ClientAccount
+      summary: 获取当前用户概要
+      description: 我的页基础信息。角色：user。页面：我的页。表：accounts,vpn_subscriptions,plans
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+  /api/client/v1/me/session:
+    get:
+      tags:
+      - ClientAccount
+      summary: 获取当前 session 摘要
+      description: 启动页与全局拦截读取 session 状态。角色：user。页面：启动页。表：client_sessions
+      operationId: session_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionSummaryResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+  /api/client/v1/plans:
+    get:
+      tags:
+      - Plans
+      summary: 获取套餐列表
+      description: 套餐页展示可售套餐。角色：user。页面：套餐页。表：plans,plan_region_permissions
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanListResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+  /api/client/v1/subscriptions/current:
+    get:
+      tags:
+      - Subscription
+      summary: 获取当前订阅
+      description: VPN 首页展示订阅。角色：user。页面：VPN 首页。表：vpn_subscriptions,plans
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+  /api/client/v1/vpn/regions:
+    get:
+      tags:
+      - VPN
+      summary: 获取区域列表
+      description: 区域选择页展示可用区域。角色：subscribed_user。页面：区域选择页。表：vpn_regions,plans,vpn_subscriptions
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegionListResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+  /api/client/v1/vpn/config/issue:
+    post:
+      tags:
+      - VPN
+      summary: 签发 VPN 配置
+      description: 为当前账号+区域生成短时效配置。角色：subscribed_user。页面：区域选择页/VPN 首页。表：vpn_access_identities,vpn_nodes,vpn_regions,vpn_subscriptions
+      operationId: vPN_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueVpnConfigResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueVpnConfigRequest'
+  /api/client/v1/vpn/status:
+    get:
+      tags:
+      - VPN
+      summary: 获取 VPN 连接状态摘要
+      description: 客户端显示连接授权状态。角色：user。页面：VPN 首页。表：vpn_subscriptions,vpn_access_identities
+      operationId: vPN_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VpnStatusResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+  /api/client/v1/orders:
+    post:
+      tags:
+      - Orders
+      summary: 创建订单
+      description: 新购/续费下单。角色：user。页面：套餐页。表：orders,order_payment_targets,payment_addresses,plans
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+  /api/client/v1/orders/{orderNo}:
+    get:
+      tags:
+      - Orders
+      summary: 获取订单详情
+      description: 订单详情与支付状态查询。角色：user。页面：订单收银台/订单结果页。表：orders,order_payment_targets
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      parameters:
+      - name: orderNo
+        in: path
+        schema:
+          type: string
+        required: true
+  /api/client/v1/orders/{orderNo}/payment-target:
+    get:
+      tags:
+      - Orders
+      summary: 获取订单支付目标
+      description: 收银台展示支付地址、金额、二维码。角色：user。页面：订单收银台。表：order_payment_targets,payment_addresses
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentTargetResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      parameters:
+      - name: orderNo
+        in: path
+        schema:
+          type: string
+        required: true
+  /api/client/v1/orders/{orderNo}/submit-client-tx:
+    post:
+      tags:
+      - Orders
+      summary: 提交客户端广播 txHash
+      description: 辅助支付扫描定位 tx。角色：user。页面：发送页/订单收银台。表：orders,order_payment_events
+      operationId: txHash_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      parameters:
+      - name: orderNo
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitClientTxRequest'
+  /api/client/v1/orders/{orderNo}/refresh-status:
+    post:
+      tags:
+      - Orders
+      summary: 刷新订单状态
+      description: 主动触发最新状态读取。角色：user。页面：订单收银台。表：orders,order_payment_events
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      parameters:
+      - name: orderNo
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshOrderStatusRequest'
+  /api/client/v1/wallet/chains:
+    get:
+      tags:
+      - Wallet
+      summary: 获取链配置目录
+      description: 客户端展示支持链及直连/代理广播策略。角色：user。页面：钱包首页/发送页。表：chain_configs
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChainListResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+  /api/client/v1/wallet/assets/catalog:
+    get:
+      tags:
+      - Wallet
+      summary: 获取资产目录
+      description: 展示可见资产与精度。角色：user。页面：钱包首页/发送页/收银台。表：asset_catalog
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetCatalogResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      parameters:
+      - name: networkCode
+        in: query
+        schema:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        required: false
+  /api/client/v1/wallet/public-addresses:
+    post:
+      tags:
+      - Wallet
+      summary: 同步公开地址
+      description: 将本地公开地址同步到服务端作为默认收款/提现候选。角色：user。页面：收款页。表：account_wallet_public_addresses
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletPublicAddressResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      parameters:
+      - name: networkCode
+        in: query
+        schema:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertWalletPublicAddressRequest'
+    get:
+      tags:
+      - Wallet
+      summary: 获取已同步公开地址
+      description: 提现页预填与钱包首页展示。角色：user。页面：钱包首页/提现页。表：account_wallet_public_addresses
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletPublicAddressListResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      parameters:
+      - name: networkCode
+        in: query
+        schema:
+          type: string
+          enum:
+          - SOLANA
+          - TRON
+        required: false
+  /api/client/v1/wallet/transfer/precheck:
+    post:
+      tags:
+      - Wallet
+      summary: 转账预检查
+      description: 校验地址、资产、网络、手续费与可广播能力。角色：user。页面：发送页。表：chain_configs,asset_catalog
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferPrecheckResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferPrecheckRequest'
+  /api/client/v1/wallet/transfer/proxy-broadcast:
+    post:
+      tags:
+      - Wallet
+      summary: 代理广播（兜底）
+      description: 仅在 direct broadcast 失败且链配置允许时兜底广播。角色：user。页面：发送页。表：chain_configs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProxyBroadcastResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProxyBroadcastRequest'
+  /api/client/v1/referral/overview:
+    get:
+      tags:
+      - Referral
+      summary: 获取邀请概览
+      description: 邀请中心页显示邀请码和邀请概况。角色：user。页面：邀请中心页。表：accounts,referral_bindings,commission_balances
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralOverviewResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+  /api/client/v1/referral/bind:
+    post:
+      tags:
+      - Referral
+      summary: 绑定邀请码
+      description: 首单前绑定邀请关系。角色：user。页面：邀请中心页。表：referral_bindings,accounts,orders
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReferralBindRequest'
+  /api/client/v1/commissions/summary:
+    get:
+      tags:
+      - Commissions
+      summary: 获取佣金汇总
+      description: 邀请页余额概览。角色：user。页面：邀请中心页。表：commission_balances,commission_rules
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommissionSummaryResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+  /api/client/v1/commissions/ledger:
+    get:
+      tags:
+      - Commissions
+      summary: 获取佣金账本
+      description: 查看账本明细。角色：user。页面：佣金账本页。表：commission_ledger
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommissionLedgerPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - FROZEN
+          - AVAILABLE
+          - LOCKED_WITHDRAWAL
+          - WITHDRAWN
+          - REVERSED
+        required: false
+  /api/client/v1/withdrawals:
+    post:
+      tags:
+      - Withdrawals
+      summary: 创建提现申请
+      description: 提交佣金提现申请。角色：user。页面：提现申请页。表：commission_balances,commission_withdraw_requests,commission_ledger
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawalResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - SUBMITTED
+          - UNDER_REVIEW
+          - APPROVED
+          - REJECTED
+          - BROADCASTING
+          - CHAIN_CONFIRMING
+          - COMPLETED
+          - FAILED
+          - CANCELED
+        required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWithdrawalRequest'
+    get:
+      tags:
+      - Withdrawals
+      summary: 获取提现列表
+      description: 提现历史分页。角色：user。页面：提现申请页。表：commission_withdraw_requests
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawalPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - SUBMITTED
+          - UNDER_REVIEW
+          - APPROVED
+          - REJECTED
+          - BROADCASTING
+          - CHAIN_CONFIRMING
+          - COMPLETED
+          - FAILED
+          - CANCELED
+        required: false
+  /api/client/v1/withdrawals/{requestNo}:
+    get:
+      tags:
+      - Withdrawals
+      summary: 获取提现详情
+      description: 查看某笔提现详情。角色：user。页面：提现申请页。表：commission_withdraw_requests
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawalResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - ClientBearer: []
+      parameters:
+      - name: requestNo
+        in: path
+        schema:
+          type: string
+        required: true
+  /api/admin/v1/auth/login:
+    post:
+      tags:
+      - AdminAuth
+      summary: 管理员登录
+      description: 后台登录。角色：public_guest。页面：后台登录页。表：admin_users
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminTokenPairResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+  /api/admin/v1/auth/logout:
+    post:
+      tags:
+      - AdminAuth
+      summary: 管理员登出
+      description: 后台登出。角色：support_admin/ops_admin/finance_admin/super_admin。页面：后台全局。表：audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLogoutRequest'
+  /api/admin/v1/dashboard/summary:
+    get:
+      tags:
+      - AdminDashboard
+      summary: 获取仪表盘摘要
+      description: 运营概览。角色：ops_admin/finance_admin/super_admin。页面：仪表盘。表：accounts,vpn_subscriptions,orders,commission_withdraw_requests
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboardSummaryResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+  /api/admin/v1/accounts:
+    get:
+      tags:
+      - AdminAccounts
+      summary: 账号列表
+      description: 后台查账号。角色：support_admin/ops_admin/super_admin。页面：用户列表。表：accounts,vpn_subscriptions
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAccountPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+  /api/admin/v1/accounts/{accountId}:
+    get:
+      tags:
+      - AdminAccounts
+      summary: 账号详情
+      description: 账号详情。角色：support_admin/ops_admin/finance_admin/super_admin。页面：用户详情。表：accounts,client_sessions,vpn_subscriptions,commission_balances,referral_bindings
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAccountDetailResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+  /api/admin/v1/accounts/{accountId}/freeze:
+    post:
+      tags:
+      - AdminAccounts
+      summary: 冻结账号
+      description: 冻结用户。角色：ops_admin/super_admin。页面：用户详情。表：accounts,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminAccountStatusChangeRequest'
+  /api/admin/v1/accounts/{accountId}/unfreeze:
+    post:
+      tags:
+      - AdminAccounts
+      summary: 解冻账号
+      description: 解冻用户。角色：ops_admin/super_admin。页面：用户详情。表：accounts,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminAccountStatusChangeRequest'
+  /api/admin/v1/accounts/{accountId}/evict-sessions:
+    post:
+      tags:
+      - AdminAccounts
+      summary: 驱逐会话
+      description: 强制用户重新登录。角色：ops_admin/super_admin。页面：用户详情。表：client_sessions,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminEvictSessionsRequest'
+  /api/admin/v1/plans:
+    get:
+      tags:
+      - AdminPlans
+      summary: 套餐列表
+      description: 套餐管理。角色：ops_admin/super_admin。页面：套餐管理。表：plans
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPlanPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - DRAFT
+          - ACTIVE
+          - DISABLED
+        required: false
+    post:
+      tags:
+      - AdminPlans
+      summary: 创建套餐
+      description: 新建套餐。角色：ops_admin/super_admin。页面：套餐管理。表：plans,plan_region_permissions,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPlanResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - DRAFT
+          - ACTIVE
+          - DISABLED
+        required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminPlanUpsertRequest'
+  /api/admin/v1/plans/{planId}:
+    put:
+      tags:
+      - AdminPlans
+      summary: 更新套餐
+      description: 编辑套餐。角色：ops_admin/super_admin。页面：套餐管理。表：plans,plan_region_permissions,audit_logs
+      operationId: op_put
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPlanResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: planId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminPlanUpsertRequest'
+  /api/admin/v1/plans/{planId}/publish:
+    post:
+      tags:
+      - AdminPlans
+      summary: 发布套餐
+      description: 将套餐状态改为 active。角色：ops_admin/super_admin。页面：套餐管理。表：plans,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: planId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminPublishPlanRequest'
+  /api/admin/v1/plans/{planId}/disable:
+    post:
+      tags:
+      - AdminPlans
+      summary: 禁用套餐
+      description: 下架套餐。角色：ops_admin/super_admin。页面：套餐管理。表：plans,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: planId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDisablePlanRequest'
+  /api/admin/v1/vpn/regions:
+    get:
+      tags:
+      - AdminVPN
+      summary: 区域列表
+      description: 查区域。角色：ops_admin/super_admin。页面：区域管理。表：vpn_regions
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRegionPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+      - name: tier
+        in: query
+        schema:
+          type: string
+          enum:
+          - BASIC
+          - ADVANCED
+        required: false
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - MAINTENANCE
+          - DISABLED
+        required: false
+    post:
+      tags:
+      - AdminVPN
+      summary: 创建区域
+      description: 新建区域。角色：ops_admin/super_admin。页面：区域管理。表：vpn_regions,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRegionResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: tier
+        in: query
+        schema:
+          type: string
+          enum:
+          - BASIC
+          - ADVANCED
+        required: false
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - MAINTENANCE
+          - DISABLED
+        required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRegionUpsertRequest'
+  /api/admin/v1/vpn/regions/{regionId}:
+    put:
+      tags:
+      - AdminVPN
+      summary: 更新区域
+      description: 编辑区域。角色：ops_admin/super_admin。页面：区域管理。表：vpn_regions,audit_logs
+      operationId: op_put
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRegionResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: regionId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRegionUpsertRequest'
+  /api/admin/v1/vpn/nodes:
+    get:
+      tags:
+      - AdminVPN
+      summary: 节点列表
+      description: 查节点。角色：ops_admin/super_admin。页面：节点管理。表：vpn_nodes
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminNodePageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+      - name: regionId
+        in: query
+        schema:
+          type: string
+          format: uuid
+        required: false
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - MAINTENANCE
+          - DISABLED
+          - OFFLINE
+        required: false
+      - name: healthStatus
+        in: query
+        schema:
+          type: string
+          enum:
+          - UNKNOWN
+          - HEALTHY
+          - DEGRADED
+          - OFFLINE
+        required: false
+    post:
+      tags:
+      - AdminVPN
+      summary: 创建节点
+      description: 新建节点。角色：ops_admin/super_admin。页面：节点管理。表：vpn_nodes,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminNodeResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: regionId
+        in: query
+        schema:
+          type: string
+          format: uuid
+        required: false
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - MAINTENANCE
+          - DISABLED
+          - OFFLINE
+        required: false
+      - name: healthStatus
+        in: query
+        schema:
+          type: string
+          enum:
+          - UNKNOWN
+          - HEALTHY
+          - DEGRADED
+          - OFFLINE
+        required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminNodeUpsertRequest'
+  /api/admin/v1/vpn/nodes/{nodeId}:
+    put:
+      tags:
+      - AdminVPN
+      summary: 更新节点
+      description: 编辑节点。角色：ops_admin/super_admin。页面：节点管理。表：vpn_nodes,audit_logs
+      operationId: op_put
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminNodeResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: nodeId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminNodeUpsertRequest'
+  /api/admin/v1/vpn/nodes/{nodeId}/disable:
+    post:
+      tags:
+      - AdminVPN
+      summary: 禁用节点
+      description: 下线节点。角色：ops_admin/super_admin。页面：节点管理。表：vpn_nodes,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: nodeId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDisableNodeRequest'
+  /api/admin/v1/orders:
+    get:
+      tags:
+      - AdminOrders
+      summary: 订单列表
+      description: 查询订单。角色：support_admin/ops_admin/finance_admin/super_admin。页面：订单中心。表：orders,order_payment_targets
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrderPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+      - name: orderNo
+        in: query
+        schema:
+          type: string
+        required: false
+      - name: email
+        in: query
+        schema:
+          type: string
+        required: false
+      - name: status
+        in: query
+        schema:
+          type: string
+        required: false
+  /api/admin/v1/orders/{orderNo}:
+    get:
+      tags:
+      - AdminOrders
+      summary: 订单详情
+      description: 查看订单详情与支付事件。角色：support_admin/ops_admin/finance_admin/super_admin。页面：订单中心。表：orders,order_payment_events
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrderDetailResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: orderNo
+        in: path
+        schema:
+          type: string
+        required: true
+  /api/admin/v1/orders/{orderNo}/mark-exception:
+    post:
+      tags:
+      - AdminOrders
+      summary: 标记异常/人工备注
+      description: 记录异常订单处置。角色：ops_admin/finance_admin/super_admin。页面：订单中心。表：orders,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: orderNo
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminMarkOrderExceptionRequest'
+  /api/admin/v1/orders/{orderNo}/retry-provision:
+    post:
+      tags:
+      - AdminOrders
+      summary: 重试开通
+      description: 对 failed/provisioning 异常单重试开通。角色：ops_admin/super_admin。页面：订单中心。表：orders,vpn_subscriptions,vpn_access_identities
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: orderNo
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRetryProvisionRequest'
+  /api/admin/v1/commissions/ledger:
+    get:
+      tags:
+      - AdminCommissions
+      summary: 佣金账本列表
+      description: 查一级/二级佣金明细。角色：finance_admin/super_admin。页面：佣金账本页。表：commission_ledger,accounts
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCommissionLedgerPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+  /api/admin/v1/withdrawals:
+    get:
+      tags:
+      - AdminWithdrawals
+      summary: 提现列表
+      description: 提现审核列表。角色：finance_admin/super_admin。页面：提现审核页。表：commission_withdraw_requests,accounts
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminWithdrawalPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+      - name: status
+        in: query
+        schema:
+          type: string
+        required: false
+      - name: accountEmail
+        in: query
+        schema:
+          type: string
+        required: false
+  /api/admin/v1/withdrawals/{requestNo}/approve:
+    post:
+      tags:
+      - AdminWithdrawals
+      summary: 通过提现
+      description: 审核通过。角色：finance_admin/super_admin。页面：提现审核页。表：commission_withdraw_requests,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: requestNo
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminApproveWithdrawalRequest'
+  /api/admin/v1/withdrawals/{requestNo}/reject:
+    post:
+      tags:
+      - AdminWithdrawals
+      summary: 拒绝提现
+      description: 审核拒绝。角色：finance_admin/super_admin。页面：提现审核页。表：commission_withdraw_requests,commission_ledger,commission_balances,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: requestNo
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRejectWithdrawalRequest'
+  /api/admin/v1/withdrawals/{requestNo}/record-payout:
+    post:
+      tags:
+      - AdminWithdrawals
+      summary: 录入打款哈希
+      description: 记录打款 txHash 并进入确认。角色：finance_admin/super_admin。页面：提现审核页。表：commission_withdraw_requests,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: requestNo
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRecordPayoutRequest'
+  /api/admin/v1/withdrawals/{requestNo}/retry-broadcast:
+    post:
+      tags:
+      - AdminWithdrawals
+      summary: 重试打款
+      description: 对 failed 提现重试打款流程。角色：finance_admin/super_admin。页面：提现审核页。表：commission_withdraw_requests,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: requestNo
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRetryBroadcastRequest'
+  /api/admin/v1/app-versions:
+    get:
+      tags:
+      - AdminVersions
+      summary: 版本列表
+      description: 版本管理列表。角色：ops_admin/super_admin。页面：版本管理。表：app_versions
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAppVersionPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+    post:
+      tags:
+      - AdminVersions
+      summary: 创建版本
+      description: 创建版本元数据。角色：ops_admin/super_admin。页面：版本管理。表：app_versions,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAppVersionResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminAppVersionCreateRequest'
+  /api/admin/v1/app-versions/{versionId}/publish:
+    post:
+      tags:
+      - AdminVersions
+      summary: 发布版本
+      description: 发布版本/强更策略。角色：ops_admin/super_admin。页面：版本管理。表：app_versions,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: versionId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminAppVersionPublishRequest'
+  /api/admin/v1/legal-documents:
+    get:
+      tags:
+      - AdminLegal
+      summary: 法务文档列表
+      description: 法务文档管理列表。角色：ops_admin/super_admin。页面：法务文档管理。表：legal_documents
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLegalDocumentPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+      - name: docType
+        in: query
+        schema:
+          type: string
+        required: false
+      - name: status
+        in: query
+        schema:
+          type: string
+        required: false
+  /api/admin/v1/legal-documents/{docType}:
+    put:
+      tags:
+      - AdminLegal
+      summary: 更新法务文档草稿
+      description: 保存草稿。角色：ops_admin/super_admin。页面：法务文档管理。表：legal_documents,audit_logs
+      operationId: op_put
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLegalDocumentResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: docType
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLegalDocumentUpsertRequest'
+  /api/admin/v1/legal-documents/{docType}/publish:
+    post:
+      tags:
+      - AdminLegal
+      summary: 发布法务文档
+      description: 发布法务文档。角色：ops_admin/super_admin。页面：法务文档管理。表：legal_documents,audit_logs
+      operationId: op_post
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: docType
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminPublishLegalDocumentRequest'
+  /api/admin/v1/system-configs:
+    get:
+      tags:
+      - AdminConfig
+      summary: 系统配置列表
+      description: 查看运行配置。角色：ops_admin/super_admin。页面：系统配置页。表：system_configs
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSystemConfigPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+      - name: scope
+        in: query
+        schema:
+          type: string
+        required: false
+  /api/admin/v1/system-configs/{configKey}:
+    put:
+      tags:
+      - AdminConfig
+      summary: 更新系统配置
+      description: 更新运行配置。角色：ops_admin/super_admin。页面：系统配置页。表：system_configs,audit_logs
+      operationId: op_put
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: configKey
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminSystemConfigUpdateRequest'
+  /api/admin/v1/audit-logs:
+    get:
+      tags:
+      - AdminAudit
+      summary: 审计日志列表
+      description: 查看审计日志。角色：ops_admin/finance_admin/super_admin。页面：审计日志页。表：audit_logs
+      operationId: op_get
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAuditLogPageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+      - AdminBearer: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+        required: false
+      - name: module
+        in: query
+        schema:
+          type: string
+        required: false
+      - name: actorType
+        in: query
+        schema:
+          type: string
+        required: false
+      - name: targetType
+        in: query
+        schema:
+          type: string
+        required: false

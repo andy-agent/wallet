@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-02T20:40:27Z
+Generated: 2026-04-02T21:11:11Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-92m
-- next_task_title: AUTO: Resume unfinished work
+- next_task_id: liaojiang-cce
+- next_task_title: 补齐 bootstrap seed 与首启前置数据策略
 
 ## Counters
 - in_progress: 1
-- ready: 0
-- open: 1
-- closed: 22
-- dirty: 2
+- ready: 7
+- open: 23
+- closed: 23
+- dirty: 6
 
 ## Next Milestone
 - Continue the next task and complete one milestone
