@@ -5,12 +5,12 @@ on:
     paths:
       - 'code/backend/**'
       - 'final_engineering_delivery_package/**'
-      - '.github/workflows/backend-ci.yml'
+      - 'code/deploy/backend-ci.github-actions.yml'
   pull_request:
     paths:
       - 'code/backend/**'
       - 'final_engineering_delivery_package/**'
-      - '.github/workflows/backend-ci.yml'
+      - 'code/deploy/backend-ci.github-actions.yml'
 
 jobs:
   backend:

@@ -6,6 +6,7 @@
 
 - `docker-compose.backend.yml`
 - `.env.backend.example`
+- `backend-ci.github-actions.yml`
 
 ## 启动
 
@@ -26,6 +27,7 @@ curl http://localhost:3000/api/healthz
 - 当前 compose 只覆盖 backend + postgres + redis
 - worker / admin / android 分发 / nginx 还未接入这套新栈
 - 数据库 baseline / seed 执行仍需在真实环境阶段接 PostgreSQL 客户端完成
+- GitHub 当前推送凭证未开放 `workflow` scope，因此 CI 配置先以模板文件 `backend-ci.github-actions.yml` 形式保留，待具备权限后再落到 `.github/workflows/`
 
 ## 当前真实环境临时方案
 
