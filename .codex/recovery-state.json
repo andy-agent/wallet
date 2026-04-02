@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-02T14:56:06Z",
+  "generated_at": "2026-04-02T15:27:15Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-92m",
   "next_task_title": "AUTO: Resume unfinished work",
@@ -7,7 +7,7 @@
   "ready_count": 0,
   "open_count": 1,
   "closed_count": 22,
-  "dirty_count": 5,
+  "dirty_count": 3,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
