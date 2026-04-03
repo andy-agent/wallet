@@ -10,19 +10,19 @@ public final class PaymentConfig {
      * API 基础 URL
      */
     @org.jetbrains.annotations.NotNull()
-    public static final java.lang.String API_BASE_URL = "https://154.36.173.184:8080";
+    public static final java.lang.String API_BASE_URL = "http://154.37.208.72:3000/";
     
     /**
      * 客户端 API 版本
      */
     @org.jetbrains.annotations.NotNull()
-    public static final java.lang.String API_VERSION = "/client/v1";
+    public static final java.lang.String API_VERSION = "api/client/v1";
     
     /**
      * 完整 API 基础 URL
      */
     @org.jetbrains.annotations.NotNull()
-    public static final java.lang.String FULL_API_URL = "https://154.36.173.184:8080/client/v1";
+    public static final java.lang.String FULL_API_URL = "http://154.37.208.72:3000/api/client/v1";
     
     /**
      * 订单过期时间（毫秒）
@@ -62,7 +62,7 @@ public final class PaymentConfig {
         @org.jetbrains.annotations.NotNull()
         public static final java.lang.String SOL = "SOL";
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String USDT_TRC20 = "USDT_TRC20";
+        public static final java.lang.String USDT_TRC20 = "USDT";
         @org.jetbrains.annotations.NotNull()
         public static final com.v2ray.ang.payment.PaymentConfig.AssetCode INSTANCE = null;
         
@@ -77,25 +77,25 @@ public final class PaymentConfig {
     @kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\u0014\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\n\b\u00c6\u0002\u0018\u00002\u00020\u0001B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0007\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\b\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\t\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\n\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u000b\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\f\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\r\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u000e\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u000f"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig$OrderStatus;", "", "<init>", "()V", "PENDING_PAYMENT", "", "SEEN_ONCHAIN", "CONFIRMING", "PAID_SUCCESS", "FULFILLED", "EXPIRED", "UNDERPAID", "OVERPAID", "FAILED", "LATE_PAID", "app_fdroidDebug"})
     public static final class OrderStatus {
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String PENDING_PAYMENT = "pending_payment";
+        public static final java.lang.String PENDING_PAYMENT = "AWAITING_PAYMENT";
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String SEEN_ONCHAIN = "seen_onchain";
+        public static final java.lang.String SEEN_ONCHAIN = "PAYMENT_DETECTED";
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String CONFIRMING = "confirming";
+        public static final java.lang.String CONFIRMING = "CONFIRMING";
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String PAID_SUCCESS = "paid_success";
+        public static final java.lang.String PAID_SUCCESS = "PAID";
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String FULFILLED = "fulfilled";
+        public static final java.lang.String FULFILLED = "COMPLETED";
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String EXPIRED = "expired";
+        public static final java.lang.String EXPIRED = "EXPIRED";
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String UNDERPAID = "underpaid";
+        public static final java.lang.String UNDERPAID = "UNDERPAID_REVIEW";
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String OVERPAID = "overpaid";
+        public static final java.lang.String OVERPAID = "OVERPAID_REVIEW";
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String FAILED = "failed";
+        public static final java.lang.String FAILED = "FAILED";
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String LATE_PAID = "late_paid";
+        public static final java.lang.String LATE_PAID = "CANCELED";
         @org.jetbrains.annotations.NotNull()
         public static final com.v2ray.ang.payment.PaymentConfig.OrderStatus INSTANCE = null;
         
@@ -141,9 +141,9 @@ public final class PaymentConfig {
     @kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\u0014\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\u0002\b\u00c6\u0002\u0018\u00002\u00020\u0001B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u0007"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig$PurchaseType;", "", "<init>", "()V", "NEW", "", "RENEW", "app_fdroidDebug"})
     public static final class PurchaseType {
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String NEW = "new";
+        public static final java.lang.String NEW = "NEW";
         @org.jetbrains.annotations.NotNull()
-        public static final java.lang.String RENEW = "renew";
+        public static final java.lang.String RENEW = "RENEWAL";
         @org.jetbrains.annotations.NotNull()
         public static final com.v2ray.ang.payment.PaymentConfig.PurchaseType INSTANCE = null;
         

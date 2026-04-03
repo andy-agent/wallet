@@ -47,6 +47,20 @@ interface PaymentApi {
         @Path("orderNo") orderNo: String
     ): Response<PaymentTargetResponse>
 
+    @POST("${PaymentConfig.API_VERSION}/orders/{orderNo}/submit-client-tx")
+    suspend fun submitClientTx(
+        @Header("Authorization") authorization: String,
+        @Path("orderNo") orderNo: String,
+        @Body request: SubmitClientTxRequest
+    ): Response<OperationResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/orders/{orderNo}/refresh-status")
+    suspend fun refreshOrderStatus(
+        @Header("Authorization") authorization: String,
+        @Path("orderNo") orderNo: String,
+        @Body request: RefreshOrderStatusRequest = RefreshOrderStatusRequest()
+    ): Response<GetOrderResponse>
+
     @GET("${PaymentConfig.API_VERSION}/subscriptions/current")
     suspend fun getSubscription(
         @Header("Authorization") authorization: String
@@ -150,6 +164,19 @@ data class PaymentTargetResponse(
     val code: String,
     val message: String,
     val data: PaymentTarget?
+)
+
+data class SubmitClientTxRequest(
+    val txHash: String,
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("signedAt")
+    val signedAt: String? = null
+)
+
+data class RefreshOrderStatusRequest(
+    @SerializedName("clientObservedStatus")
+    val clientObservedStatus: String? = null
 )
 
 data class CurrentSubscriptionResponse(

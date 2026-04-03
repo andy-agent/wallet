@@ -339,11 +339,11 @@
     <string name="error_password_requirements">Password must contain uppercase, lowercase and numbers</string>
     <string name="error_password_too_short">Password must be at least 8 characters</string>
     <string name="error_passwords_not_match">Passwords do not match</string>
-    <string name="error_unauthorized">Invalid username or password</string>
+    <string name="error_unauthorized">Invalid email or password</string>
     <string name="error_user_exists">Username already exists</string>
-    <string name="error_username_invalid">Username can only contain letters, numbers and underscores</string>
-    <string name="error_username_too_long">Username must be at most 64 characters</string>
-    <string name="error_username_too_short">Username must be at least 3 characters</string>
+    <string name="error_username_invalid">Invalid email format</string>
+    <string name="error_username_too_long">Email is too long</string>
+    <string name="error_username_too_short">Email is required</string>
     <string name="expired_at">Expired At</string>
     <string name="expiry_time">Expiry Time</string>
     <string name="filter_config_all">All</string>
@@ -352,7 +352,7 @@
     <string name="hint_confirm_password">Confirm Password</string>
     <string name="hint_email_optional">Email (Optional)</string>
     <string name="hint_password">Password</string>
-    <string name="hint_username">Username</string>
+    <string name="hint_username">Email</string>
     <string name="import_subscription_failure">Import subscription failed</string>
     <string name="import_subscription_success">Subscription imported Successfully</string>
     <string name="logcat_clear">Clear</string>
@@ -421,6 +421,9 @@
     <string name="payment_usdt_trc20">USDT-TRC20</string>
     <string name="per_app_proxy_settings">Per-app settings</string>
     <string name="per_app_proxy_settings_enable">Enable per-app</string>
+    <string name="placeholder_commission_ledger">Commission summary and ledger records will appear here after API integration.</string>
+    <string name="placeholder_invitation_center">Invitation code, invite stats, and referral binding status will appear here after API integration.</string>
+    <string name="placeholder_withdrawal">Available balance, withdrawal form, and withdrawal history will appear here after API integration.</string>
     <string name="plan_name">Plan</string>
     <string name="pull_down_to_refresh">Please pull down to refresh!</string>
     <string name="receiving_address">Receiving Address:</string>
@@ -567,6 +570,7 @@
     <string name="tasker_start_service">Start Service</string>
     <string name="title_about">About</string>
     <string name="title_advanced">Advanced Settings</string>
+    <string name="title_commission_ledger">Commission Ledger</string>
     <string name="title_configuration_backup">Backup config</string>
     <string name="title_configuration_backup_restore">Backup &amp; Restore</string>
     <string name="title_configuration_restore">Restore config</string>
@@ -584,6 +588,7 @@
     <string name="title_filter_config">Filter config</string>
     <string name="title_fragment_settings">Fragment Settings</string>
     <string name="title_import_config_count">Import %d configs</string>
+    <string name="title_invitation_center">Invitation Center</string>
     <string name="title_language">Language</string>
     <string name="title_locate_selected_config">Locate the selected config</string>
     <string name="title_logcat">Logcat</string>
@@ -668,6 +673,7 @@
     <string name="title_webdav_remote_path">Remote directory (optional)</string>
     <string name="title_webdav_url">WebDAV server URL</string>
     <string name="title_webdav_user">Username</string>
+    <string name="title_withdrawal">Withdrawal</string>
     <string name="toast_action_not_allowed">Action not allowed</string>
     <string name="toast_asset_copy_failed">File copy failed, please use File Manager</string>
     <string name="toast_config_file_invalid">Invalid config</string>

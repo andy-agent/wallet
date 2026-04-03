@@ -317,21 +317,19 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
             lifecycleScope.launch {
                 pollingUseCase.stopPolling()
                 repository.clearAuth()
-                
-                withContext(Dispatchers.Main) {
-                    AlertDialog.Builder(this@PaymentActivity)
-                        .setTitle("需要登录")
-                        .setMessage("您的登录已过期，请重新登录后查看订单状态。")
-                        .setPositiveButton("去登录") { _, _ ->
-                            val intent = Intent(this@PaymentActivity, LoginActivity::class.java)
-                            loginLauncher.launch(intent)
-                        }
-                        .setNegativeButton("取消") { _, _ ->
-                            finish()
-                        }
-                        .setCancelable(false)
-                        .show()
-                }
+
+                AlertDialog.Builder(this@PaymentActivity)
+                    .setTitle("需要登录")
+                    .setMessage("您的登录已过期，请重新登录后查看订单状态。")
+                    .setPositiveButton("去登录") { _, _ ->
+                        val intent = Intent(this@PaymentActivity, LoginActivity::class.java)
+                        loginLauncher.launch(intent)
+                    }
+                    .setNegativeButton("取消") { _, _ ->
+                        finish()
+                    }
+                    .setCancelable(false)
+                    .show()
             }
         } else {
             // 其他错误，继续轮询

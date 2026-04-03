@@ -195,6 +195,21 @@
             android:name="com.v2ray.ang.payment.ui.activity.LoginActivity"
             android:label="@string/login"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
+        <activity
+            android:name="com.v2ray.ang.payment.ui.activity.InvitationCenterActivity"
+            android:label="@string/title_invitation_center"
+            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
+            android:theme="@style/AppThemeDayNight.NoActionBar" />
+        <activity
+            android:name="com.v2ray.ang.payment.ui.activity.CommissionLedgerActivity"
+            android:label="@string/title_commission_ledger"
+            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
+            android:theme="@style/AppThemeDayNight.NoActionBar" />
+        <activity
+            android:name="com.v2ray.ang.payment.ui.activity.WithdrawalActivity"
+            android:label="@string/title_withdrawal"
+            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
+            android:theme="@style/AppThemeDayNight.NoActionBar" />
 
         <service
             android:name="com.v2ray.ang.service.V2RayVpnService"

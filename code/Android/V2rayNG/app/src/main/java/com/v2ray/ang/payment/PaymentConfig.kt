@@ -65,7 +65,16 @@ object PaymentConfig {
      */
     object AssetCode {
         const val SOL = "SOL"
-        const val USDT_TRC20 = "USDT"
+        const val USDT = "USDT"
+        const val USDT_TRC20 = USDT
+    }
+
+    /**
+     * 支持的支付网络
+     */
+    object NetworkCode {
+        const val SOLANA = "SOLANA"
+        const val TRON = "TRON"
     }
     
     /**

@@ -166,11 +166,14 @@ class UserProfileActivity : BaseActivity() {
             val meResult = paymentRepository.getMe()
             meResult.onSuccess { data ->
                 lifecycleScope.launch {
+                    val accessToken = paymentRepository.getAccessToken()
+                        ?: currentUser?.accessToken
+                        ?: return@launch showError(getString(R.string.not_logged_in))
                     val userEntity = com.v2ray.ang.payment.data.local.entity.UserEntity(
                         userId = data.accountId,
                         username = data.email,
                         email = data.email,
-                        accessToken = paymentRepository.getAccessToken(),
+                        accessToken = accessToken,
                         refreshToken = paymentRepository.getRefreshToken(),
                         loginAt = System.currentTimeMillis()
                     )
