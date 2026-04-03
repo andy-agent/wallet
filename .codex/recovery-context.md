@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-03T10:03:54Z
+Generated: 2026-04-03T10:36:41Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-6ag
-- next_task_title: S5 QA Contract and Regression
+- next_task_id: liaojiang-rcb.7
+- next_task_title: 实现 usdt.residential-agent.com 最小服务骨架
 
 ## Counters
-- in_progress: 0
-- ready: 1
-- open: 2
-- closed: 55
-- dirty: 2
+- in_progress: 4
+- ready: 0
+- open: 4
+- closed: 66
+- dirty: 6
 
 ## Next Milestone
 - Continue the next task and complete one milestone

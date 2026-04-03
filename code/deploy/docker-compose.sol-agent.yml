@@ -1,0 +1,18 @@
+services:
+  sol-agent:
+    build:
+      context: ../sol-agent
+      dockerfile: Dockerfile
+    container_name: cryptovpn-sol-agent
+    ports:
+      - "${PORT:-4000}:4000"
+    environment:
+      - PORT=${PORT:-4000}
+      - INTERNAL_AUTH_TOKEN=${INTERNAL_AUTH_TOKEN}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/api/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
