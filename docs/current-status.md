@@ -11,10 +11,10 @@
 | Android 集成 | 🟢 已完成 | `liaojiang-7da` 已关闭 |
 | Android 编译/构建 | 🟢 通过 | `compileFdroidDebugSources` 与 `assembleFdroidDebug` 均通过 |
 | Android 运行验证 | 🟢 已拿到证据 | 模拟器安装 APK 成功，`MainActivity` 启动成功 |
-| 真实业务 smoke | 🟢 已推进 | `request-code / register / me / plans / orders / payment-target / referral / commissions` 已通过，提现拿到预期业务拒绝 |
+| 真实业务 smoke | 🟢 已推进 | 基础接口 smoke 已通过，订单最小链路已通过远程 Solana 服务完成真实 smoke |
 | Sol 链侧服务 | 🟢 可用 | `sol.residential-agent.com` 内外健康检查均通过 |
 | USDT/TRON 链侧服务 | 🟢 可用 | `usdt.residential-agent.com` 已接真实 TRON RPC，健康/区块/交易查询通过 |
-| 链侧客户端接线 | 🟡 进行中 | `liaojiang-rcb.14.1` 已完成，下一步进入 `liaojiang-rcb.14.2` |
+| 链侧客户端接线 | 🟢 已完成最小链路 | `liaojiang-rcb.14` 已关闭，订单最小链路已接远程链侧 |
 
 ## 本轮完成
 
@@ -38,6 +38,20 @@
   - 本地 `pnpm --dir code/backend typecheck`
   - 本地 `pnpm --dir code/backend build`
   - 均通过
+- 完成 `liaojiang-rcb.14.2`
+  - `sol-agent` 新增最小交易状态查询端点
+  - `SolanaClientService` 已对齐 internal auth header
+  - `SolanaClientService` 已兼容解包 sol-agent response envelope
+  - 服务器一 `sol/usdt` Nginx 已暴露 `/api/` 路由
+  - 服务器三 backend 已开启 `SOLANA_SERVICE_ENABLED=true`
+  - 真实订单 smoke 已完成:
+    - `payment-target.serviceEnabled = true`
+    - 订单 `ORD-1775219239579` 最终状态为 `COMPLETED`
+- 完成 `liaojiang-4j0.1`
+  - Android 最终构建通过
+  - APK 已重新安装到模拟器
+  - launcher 启动成功
+  - 最近 logcat 未见 immediate crash
 
 ## 当前真实环境结论
 
@@ -56,11 +70,17 @@
 - `GET /api/client/v1/plans`
 - `POST /api/client/v1/orders`
 - `GET /api/client/v1/orders/{orderNo}/payment-target`
+- `POST /api/client/v1/orders/{orderNo}/submit-client-tx`
+- `POST /api/client/v1/orders/{orderNo}/refresh-status`
 - `GET /api/client/v1/referral/overview`
 - `GET /api/client/v1/commissions/summary`
 - `POST /api/client/v1/withdrawals`
   - 当前返回 `WITHDRAW_INSUFFICIENT_AVAILABLE_BALANCE`
   - 这是预期业务拒绝，不是网络或路由错误
+- 真实订单链路证据:
+  - SOLANA 订单 `ORD-1775219239579`
+  - `payment-target.serviceEnabled = true`
+  - 提交真实主网签名后状态推进到 `COMPLETED`
 
 ### 三机拆分现状
 
@@ -81,10 +101,13 @@
 
 - `sol.residential-agent.com`
   - 外网 `/health` 返回 `200`
+  - 外网 `/api/healthz` 返回 `200`
   - 服务器一内网 `http://127.0.0.1:4000/api/healthz` 返回 `healthy`
   - `sol-agent` systemd 服务为 `active`
+  - 外网交易状态查询端点可返回真实签名状态
 - `usdt.residential-agent.com`
   - 外网 `/health` 返回 `200`
+  - 外网 `/api/healthz` 返回 `200`
   - 服务器一内网 `/api/healthz` 返回 `healthy + connected`
   - 受保护接口验证通过：
     - `/api/v1/chain/capabilities`
@@ -93,14 +116,14 @@
 
 ## 当前主线任务
 
-- 当前主线已从 Android/QA 切换到二期链侧收口：
-  - `liaojiang-rcb.14.2`
+- 当前主线已进入最后阶段：
+  - `liaojiang-4j0.2`
 - 该任务目标是：
-  - 让 API 的订单支付检测最小链路真正接入远程链侧服务
-  - 在 `api.residential-agent.com` 上完成一次真实环境 smoke
+  - 在最新 Android APK 上验证登录、下单、支付页与真实 API 的联通
+  - 完成最后一轮真实环境页面级回归
 
 ## 下一步
 
-1. 进入 `liaojiang-rcb.14.2`，把订单支付检测最小链路切到远程链侧服务。
-2. 在 `api.residential-agent.com` 上完成远程链侧真实 smoke。
-3. Android 构建与最终回归继续放在最后阶段，不提前拉回主线。
+1. 进入 `liaojiang-4j0.2`，做 Android 真实环境登录/下单/支付页回归。
+2. 复核模拟器权限弹窗后的主页面与关键导航。
+3. 完成最终验收结论，并决定是否收口剩余长期拓扑任务 `liaojiang-rcb`。

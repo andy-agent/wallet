@@ -1,14 +1,13 @@
 # Task State
 
-- Updated At: 2026-04-03 19:56 +08:00
+- Updated At: 2026-04-03 20:34 +08:00
 - Repository: /Users/cnyirui/git/projects/liaojiang
-- Next Task: `liaojiang-rcb.14.2.1` 实现订单支付检测最小链路接入远程链侧服务
-- Counts: `open=2` `in_progress=3` `closed=78` `ready=1`
+- Next Task: `liaojiang-4j0.2` Android 真实环境登录/下单/支付页回归
+- Counts: `open=2` `in_progress=2` `closed=89` `ready=2`
 - Dirty Files:
   - `.codex/recovery-state.json`
   - `docs/current-status.md`
   - `handoff/task-state.md`
-  - `docs/current-status.md`
   - `环境测试服务器.md`
 
 ## Resume Commands
@@ -17,9 +16,9 @@ bd ready --json
 bd list --status=open --json
 git status --short
 curl -ksS https://api.residential-agent.com/api/healthz
-curl -ksS https://sol.residential-agent.com/health
-curl -ksS https://usdt.residential-agent.com/health
-bd show liaojiang-rcb.14.2
+curl -ksS https://sol.residential-agent.com/api/healthz
+curl -ksS https://usdt.residential-agent.com/api/healthz
+bd show liaojiang-4j0.2
 ```
 
 ## Current Verification
@@ -31,17 +30,27 @@ bd show liaojiang-rcb.14.2
   - plans
   - orders
   - payment-target
+  - submit-client-tx
+  - refresh-status
   - referral overview
   - commissions summary
   - withdrawals returns expected insufficient-balance business rejection
 - Sol chain-side:
-  - `sol.residential-agent.com/health` returns `healthy`
+  - `sol.residential-agent.com/api/healthz` returns `healthy`
+  - real signature query returns confirmed status
 - USDT/TRON chain-side:
   - server1 internal `health/capabilities/block/current/tx` verified
-  - `usdt.residential-agent.com/health` returns `healthy + connected`
+  - `usdt.residential-agent.com/api/healthz` returns `healthy + connected`
+- Real order-chain smoke:
+  - order `ORD-1775219239579` reached `COMPLETED` via remote Solana service
+- Android:
+  - final `compileFdroidDebugSources` passed
+  - final `assembleFdroidDebug` passed
+  - fresh APK reinstall succeeded on emulator
+  - launcher start succeeded, no immediate crash in recent logcat
 
 ## Remaining Work
 
-- `liaojiang-rcb.14.2.1`: implement backend order-chain minimal path integration
-- `liaojiang-rcb.14.2.2`: deploy backend and run real order-chain smoke on `api.residential-agent.com`
-- Android final build/regression remains intentionally deferred to the last stage
+- `liaojiang-4j0.2`: Android real-environment login/order/payment-page regression
+- `liaojiang-4j0`: final Android build and real-environment regression feature
+- `liaojiang-rcb`: phase-2 chain-side/infra feature remains open for longer-term topology cleanup
