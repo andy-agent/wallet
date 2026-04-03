@@ -32,6 +32,10 @@ import type {
 } from './solana-client.types';
 import type { AxiosResponse } from 'axios';
 
+interface EnvelopeResponse<T> {
+  data?: T;
+}
+
 @Injectable()
 export class SolanaClientService {
   private readonly logger = new Logger(SolanaClientService.name);
@@ -69,7 +73,9 @@ export class SolanaClientService {
           headers: this.getAuthHeaders(),
         }),
       );
-      return (response as AxiosResponse<SolanaServiceHealth>).data;
+      return this.unwrapResponse<SolanaServiceHealth>(
+        response as AxiosResponse<SolanaServiceHealth | EnvelopeResponse<SolanaServiceHealth>>,
+      );
     } catch (error) {
       this.logger.error('Solana service health check failed', error);
       throw new ServiceUnavailableException({
@@ -118,7 +124,11 @@ export class SolanaClientService {
         ),
       );
 
-      return (response as AxiosResponse<BroadcastTransactionResponse>).data;
+      return this.unwrapResponse<BroadcastTransactionResponse>(
+        response as AxiosResponse<
+          BroadcastTransactionResponse | EnvelopeResponse<BroadcastTransactionResponse>
+        >,
+      );
     } catch (error) {
       this.logger.error('Broadcast transaction failed', error);
       throw new ServiceUnavailableException({
@@ -159,7 +169,11 @@ export class SolanaClientService {
         }),
       );
 
-      return (response as AxiosResponse<GetTransactionStatusResponse>).data;
+      return this.unwrapResponse<GetTransactionStatusResponse>(
+        response as AxiosResponse<
+          GetTransactionStatusResponse | EnvelopeResponse<GetTransactionStatusResponse>
+        >,
+      );
     } catch (error) {
       this.logger.error('Get transaction status failed', error);
       throw new ServiceUnavailableException({
@@ -207,7 +221,9 @@ export class SolanaClientService {
         }),
       );
 
-      return (response as AxiosResponse<GetBalanceResponse>).data;
+      return this.unwrapResponse<GetBalanceResponse>(
+        response as AxiosResponse<GetBalanceResponse | EnvelopeResponse<GetBalanceResponse>>,
+      );
     } catch (error) {
       this.logger.error('Get balance failed', error);
       throw new ServiceUnavailableException({
@@ -266,7 +282,11 @@ export class SolanaClientService {
         ),
       );
 
-      return (response as AxiosResponse<TransferPrecheckResponse>).data;
+      return this.unwrapResponse<TransferPrecheckResponse>(
+        response as AxiosResponse<
+          TransferPrecheckResponse | EnvelopeResponse<TransferPrecheckResponse>
+        >,
+      );
     } catch (error) {
       this.logger.error('Transfer precheck failed', error);
       // Return invalid response on error (graceful degradation)
@@ -336,5 +356,20 @@ export class SolanaClientService {
       return requested;
     }
     return this.config.useDevnet() ? 'devnet' : 'mainnet';
+  }
+
+  private unwrapResponse<T>(
+    response: AxiosResponse<T | EnvelopeResponse<T>>,
+  ): T {
+    const payload = response.data;
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      'data' in payload &&
+      payload.data !== undefined
+    ) {
+      return payload.data;
+    }
+    return payload as T;
   }
 }
