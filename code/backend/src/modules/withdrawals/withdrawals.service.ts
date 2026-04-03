@@ -123,6 +123,18 @@ export class WithdrawalsService {
     return this.mustGet(account.accountId, requestNo);
   }
 
+  getPendingWithdrawalCount() {
+    let count = 0;
+    for (const items of this.withdrawalsByAccountId.values()) {
+      for (const item of items) {
+        if (item.status === 'SUBMITTED' || item.status === 'UNDER_REVIEW') {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
   private mustGet(accountId: string, requestNo: string) {
     const items = this.withdrawalsByAccountId.get(accountId) ?? [];
     const record = items.find((item) => item.requestNo === requestNo);

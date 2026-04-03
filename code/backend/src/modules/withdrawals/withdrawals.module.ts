@@ -8,5 +8,6 @@ import { WithdrawalsService } from './withdrawals.service';
   imports: [AuthModule, ReferralModule],
   controllers: [WithdrawalsController],
   providers: [WithdrawalsService],
+  exports: [WithdrawalsService],
 })
 export class WithdrawalsModule {}

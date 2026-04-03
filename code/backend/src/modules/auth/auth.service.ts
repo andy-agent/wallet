@@ -178,6 +178,10 @@ export class AuthService {
     return this.accounts.get(accountId) ?? null;
   }
 
+  getTotalAccounts() {
+    return this.accounts.size;
+  }
+
   maskEmail(accountId: string) {
     const account = this.accounts.get(accountId);
     if (!account) {

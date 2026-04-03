@@ -196,6 +196,43 @@ export class OrdersService {
     return order;
   }
 
+  getAwaitingOrderCount() {
+    let count = 0;
+    for (const order of this.ordersByNo.values()) {
+      if (order.status === 'AWAITING_PAYMENT') {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  getReviewOrderCount() {
+    let count = 0;
+    for (const order of this.ordersByNo.values()) {
+      if (order.status === 'UNDERPAID_REVIEW' || order.status === 'OVERPAID_REVIEW') {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  getTodayPaidOrderCount() {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const startTime = startOfDay.getTime();
+    let count = 0;
+    for (const order of this.ordersByNo.values()) {
+      if (
+        (order.status === 'PAID' || order.status === 'PROVISIONING' || order.status === 'COMPLETED') &&
+        order.confirmedAt &&
+        new Date(order.confirmedAt).getTime() >= startTime
+      ) {
+        count++;
+      }
+    }
+    return count;
+  }
+
   private mustGet(orderNo: string) {
     const order = this.ordersByNo.get(orderNo);
     if (!order) {

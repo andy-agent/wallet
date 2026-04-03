@@ -130,6 +130,16 @@ export class VpnService {
     };
   }
 
+  getActiveSubscriptionCount() {
+    let count = 0;
+    for (const sub of this.subscriptionsByAccountId.values()) {
+      if (sub.status === 'ACTIVE') {
+        count++;
+      }
+    }
+    return count;
+  }
+
   activateSubscription(accountId: string, planCode: string) {
     const subscription: SubscriptionState = {
       subscriptionId: randomUUID(),
