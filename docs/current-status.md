@@ -6,7 +6,8 @@
 
 | 组件 | 状态 | 备注 |
 |------|------|------|
-| Backend API | 🟢 可用 | `api.residential-agent.com` 已返回新 backend 的 `/api/healthz` |
+| Backend API | 🟢 可用 | `api.residential-agent.com` 已固化为唯一 API 入口 |
+| DB / Redis | 🟢 已剥离 | 状态服务物理落在服务器二，API 机通过本地隧道端口访问 |
 | Android 集成 | 🟢 已完成 | `liaojiang-7da` 已关闭 |
 | Android 编译/构建 | 🟢 通过 | `compileFdroidDebugSources` 与 `assembleFdroidDebug` 均通过 |
 | Android 运行验证 | 🟢 已拿到证据 | 模拟器安装 APK 成功，`MainActivity` 启动成功 |
@@ -30,6 +31,8 @@
   - 真实 backend smoke 已推进到业务接口级
 - 关闭 `liaojiang-7da`
   - Android 集成主特性完成
+- 关闭 `liaojiang-2f0.1`
+  - `api / sol / usdt` 子域与三机角色拆分基础已完成
 
 ## 当前真实环境结论
 
@@ -53,6 +56,20 @@
 - `POST /api/client/v1/withdrawals`
   - 当前返回 `WITHDRAW_INSUFFICIENT_AVAILABLE_BALANCE`
   - 这是预期业务拒绝，不是网络或路由错误
+
+### 三机拆分现状
+
+- 服务器三 `154.37.208.72`
+  - `api.residential-agent.com`
+  - backend / nginx / 对外 API 接入
+- 服务器二 `38.58.59.142`
+  - PostgreSQL / Redis 物理落点
+- 服务器一 `38.58.59.119`
+  - 预留 `sol.residential-agent.com`
+- 规划边界已明确：
+  - `sol.residential-agent.com` = Solana 链侧服务
+  - `usdt.residential-agent.com` = TRON / TRC20 链侧服务
+  - 通用账本与结算仍留在 API 层
 
 ## 新增部署任务
 
