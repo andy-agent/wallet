@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-03T05:33:37Z",
+  "generated_at": "2026-04-03T10:03:54Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-6ag",
   "next_task_title": "S5 QA Contract and Regression",
@@ -7,7 +7,7 @@
   "ready_count": 1,
   "open_count": 2,
   "closed_count": 55,
-  "dirty_count": 4,
+  "dirty_count": 2,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
