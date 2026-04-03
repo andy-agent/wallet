@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-03T15:45:02Z
+Generated: 2026-04-03T16:17:03Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.7
-- next_task_title: 裁决 vpnui 唯一页面目录与参考目录
+- next_task_id: liaojiang-f93.5
+- next_task_title: 部署 admin-web 并完成后台真实 smoke
 
 ## Counters
-- in_progress: 4
+- in_progress: 3
 - ready: 3
-- open: 9
-- closed: 97
-- dirty: 4
+- open: 8
+- closed: 99
+- dirty: 2
 
 ## Next Milestone
 - Continue the next task and complete one milestone
