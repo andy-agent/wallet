@@ -159,7 +159,12 @@ export class OrdersService {
           return order;
         }
 
-        // pending: do not advance via remote, fall through to in-memory progression
+        if (remoteStatus.status === 'pending') {
+          return order;
+        }
+
+        // Unknown remote status: do not advance order implicitly.
+        return order;
       } catch (error) {
         this.logger.warn(
           `Solana chain-side status check failed for order ${orderNo}, falling back to in-memory progression`,
