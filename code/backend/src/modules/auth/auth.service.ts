@@ -182,6 +182,60 @@ export class AuthService {
     return this.accounts.size;
   }
 
+  listAccounts(params: { page?: number; pageSize?: number; email?: string; status?: string }) {
+    const page = Math.max(1, params.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
+    
+    let items = Array.from(this.accounts.values());
+    
+    if (params.email) {
+      const emailLower = params.email.toLowerCase();
+      items = items.filter((a) => a.email.toLowerCase().includes(emailLower));
+    }
+    
+    if (params.status) {
+      items = items.filter((a) => a.status === params.status);
+    }
+    
+    // Sort by createdAt desc (using accountId as proxy since we don't have createdAt)
+    items = items.sort((a, b) => b.accountId.localeCompare(a.accountId));
+    
+    const total = items.length;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const paginatedItems = items.slice(start, end);
+    
+    return {
+      items: paginatedItems.map((account) => ({
+        accountId: account.accountId,
+        email: account.email,
+        status: account.status,
+        referralCode: account.referralCode,
+      })),
+      page: {
+        page,
+        pageSize,
+        total,
+      },
+    };
+  }
+
+  getAccountDetail(accountId: string) {
+    const account = this.accounts.get(accountId);
+    if (!account) {
+      throw new NotFoundException({
+        code: 'ACCOUNT_NOT_FOUND',
+        message: 'Account not found',
+      });
+    }
+    return {
+      accountId: account.accountId,
+      email: account.email,
+      status: account.status,
+      referralCode: account.referralCode,
+    };
+  }
+
   maskEmail(accountId: string) {
     const account = this.accounts.get(accountId);
     if (!account) {

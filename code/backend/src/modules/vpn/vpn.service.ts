@@ -169,4 +169,12 @@ export class VpnService {
       }
     );
   }
+
+  getSubscriptionByAccountIdForAdmin(accountId: string): SubscriptionState | null {
+    const sub = this.subscriptionsByAccountId.get(accountId);
+    if (!sub || sub.status === 'NONE') {
+      return null;
+    }
+    return sub;
+  }
 }

@@ -243,4 +243,50 @@ export class OrdersService {
     }
     return order;
   }
+
+  listOrders(params: {
+    page?: number;
+    pageSize?: number;
+    orderNo?: string;
+    status?: string;
+    accountId?: string;
+  }) {
+    const page = Math.max(1, params.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
+
+    let items = Array.from(this.ordersByNo.values());
+
+    if (params.orderNo) {
+      items = items.filter((o) => o.orderNo.toLowerCase().includes(params.orderNo!.toLowerCase()));
+    }
+
+    if (params.status) {
+      items = items.filter((o) => o.status === params.status);
+    }
+
+    if (params.accountId) {
+      items = items.filter((o) => o.accountId === params.accountId);
+    }
+
+    // Sort by createdAt desc (orderNo contains timestamp)
+    items = items.sort((a, b) => b.orderNo.localeCompare(a.orderNo));
+
+    const total = items.length;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const paginatedItems = items.slice(start, end);
+
+    return {
+      items: paginatedItems,
+      page: {
+        page,
+        pageSize,
+        total,
+      },
+    };
+  }
+
+  getOrderByNo(orderNo: string) {
+    return this.mustGet(orderNo);
+  }
 }

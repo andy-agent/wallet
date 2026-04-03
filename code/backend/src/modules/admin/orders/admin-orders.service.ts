@@ -1,0 +1,76 @@
+import { Injectable } from '@nestjs/common';
+import { AuthService } from '../../auth/auth.service';
+import { OrdersService } from '../../orders/orders.service';
+
+@Injectable()
+export class AdminOrdersService {
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly authService: AuthService,
+  ) {}
+
+  listOrders(params: {
+    page?: number;
+    pageSize?: number;
+    orderNo?: string;
+    status?: string;
+    email?: string;
+  }) {
+    // Find accountId by email if provided
+    let accountId: string | undefined;
+    if (params.email) {
+      // Search through all accounts to find matching email
+      const accountsResult = this.authService.listAccounts({
+        email: params.email,
+        page: 1,
+        pageSize: 100,
+      });
+      if (accountsResult.items.length > 0) {
+        // Use the first matching account
+        accountId = accountsResult.items[0].accountId;
+      } else {
+        // No matching accounts, return empty result
+        return {
+          items: [],
+          page: {
+            page: params.page ?? 1,
+            pageSize: params.pageSize ?? 20,
+            total: 0,
+          },
+        };
+      }
+    }
+
+    const result = this.ordersService.listOrders({
+      page: params.page,
+      pageSize: params.pageSize,
+      orderNo: params.orderNo,
+      status: params.status,
+      accountId,
+    });
+
+    // Enrich with account email
+    const enrichedItems = result.items.map((order) => {
+      const email = this.authService.maskEmail(order.accountId);
+      return {
+        ...order,
+        accountEmail: email,
+      };
+    });
+
+    return {
+      items: enrichedItems,
+      page: result.page,
+    };
+  }
+
+  getOrderDetail(orderNo: string) {
+    const order = this.ordersService.getOrderByNo(orderNo);
+    const email = this.authService.maskEmail(order.accountId);
+
+    return {
+      ...order,
+      accountEmail: email,
+    };
+  }
+}
