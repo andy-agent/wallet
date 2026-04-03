@@ -318,7 +318,10 @@ export class SolanaClientService {
   private getAuthHeaders(): Record<string, string> {
     const apiKey = this.config.getApiKey();
     if (apiKey) {
-      return { 'X-API-Key': apiKey };
+      return {
+        'X-API-Key': apiKey,
+        'X-Internal-Auth': `Bearer ${apiKey}`,
+      };
     }
     return {};
   }
