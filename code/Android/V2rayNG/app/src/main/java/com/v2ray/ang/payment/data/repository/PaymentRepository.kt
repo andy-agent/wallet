@@ -323,21 +323,22 @@ class PaymentRepository(context: Context) {
     suspend fun createOrder(
         planId: String,
         assetCode: String,
+        networkCode: String = if (assetCode == PaymentConfig.AssetCode.SOL) {
+            PaymentConfig.NetworkCode.SOLANA
+        } else {
+            PaymentConfig.NetworkCode.TRON
+        },
         purchaseType: String = PaymentConfig.PurchaseType.NEW,
         clientToken: String? = null
     ): Result<Order> = withContext(Dispatchers.IO) {
         try {
             val token = getAccessToken()
                 ?: return@withContext Result.failure(Exception("未登录"))
-            val quoteNetworkCode = when (assetCode) {
-                PaymentConfig.AssetCode.SOL -> "SOLANA"
-                else -> "SOLANA"
-            }
             val request = CreateOrderRequest(
                 planCode = planId,
                 orderType = purchaseType,
                 quoteAssetCode = assetCode,
-                quoteNetworkCode = quoteNetworkCode
+                quoteNetworkCode = networkCode
             )
 
             val response = api.createOrder(
@@ -350,7 +351,7 @@ class PaymentRepository(context: Context) {
                 if (order != null) {
                     val paymentTarget = api.getPaymentTarget("Bearer $token", order.orderNo)
                     val finalOrder = order.copy(paymentTarget = paymentTarget.body()?.data)
-                    saveCurrentOrderId(finalOrder.orderId)
+                    saveCurrentOrderId(finalOrder.orderNo)
                     // 缓存订单到本地
                     getCurrentUserId()?.let { userId ->
                         cacheOrder(finalOrder, userId)
@@ -370,14 +371,14 @@ class PaymentRepository(context: Context) {
     /**
      * 查询订单状态
      */
-    suspend fun getOrder(orderId: String): Result<Order> = withContext(Dispatchers.IO) {
+    suspend fun getOrder(orderNo: String): Result<Order> = withContext(Dispatchers.IO) {
         try {
             val token = getAccessToken()
                 ?: return@withContext Result.failure(Exception("未登录"))
-            val response = api.getOrder("Bearer $token", orderId)
+            val response = api.refreshOrderStatus("Bearer $token", orderNo)
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val order = response.body()?.data?.copy(
-                    paymentTarget = api.getPaymentTarget("Bearer $token", orderId).body()?.data
+                    paymentTarget = api.getPaymentTarget("Bearer $token", orderNo).body()?.data
                 )
                 if (order != null) {
                     // 更新本地订单状态

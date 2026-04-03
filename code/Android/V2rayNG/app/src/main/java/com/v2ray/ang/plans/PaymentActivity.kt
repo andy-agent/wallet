@@ -39,18 +39,19 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
     private var currentOrder: Order? = null
     private var countDownTimer: CountDownTimer? = null
 
+    private data class QuoteSelection(
+        val assetCode: String,
+        val networkCode: String
+    )
+
     private val loginLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
             // 登录成功，重新尝试创建订单
             val planId = intent.getStringExtra("plan_id") ?: return@registerForActivityResult
-            val assetCode = when (binding.radioGroupPaymentMethod.checkedRadioButtonId) {
-                com.v2ray.ang.R.id.radioSol -> PaymentConfig.AssetCode.SOL
-                com.v2ray.ang.R.id.radioUsdt -> PaymentConfig.AssetCode.USDT_TRC20
-                else -> PaymentConfig.AssetCode.SOL
-            }
-            createOrder(planId, assetCode)
+            val quote = getSelectedQuote()
+            createOrder(planId, quote.assetCode, quote.networkCode)
         } else {
             // 登录取消或失败，返回上一页
             Toast.makeText(this, "登录已取消", Toast.LENGTH_SHORT).show()
@@ -77,8 +78,8 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
         setupPaymentMethodSelection(supportsSol, supportsUsdt)
 
-        // 默认选择 SOL 创建订单
-        createOrder(planId, PaymentConfig.AssetCode.SOL)
+        val initialQuote = getSelectedQuote()
+        createOrder(planId, initialQuote.assetCode, initialQuote.networkCode)
 
         // 复制地址按钮
         binding.buttonCopyAddress.setOnClickListener {
@@ -93,35 +94,57 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
         // 刷新状态按钮
         binding.buttonRefresh.setOnClickListener {
             currentOrder?.let { order ->
-                pollingUseCase.pollImmediately(order.orderId)
+                pollingUseCase.pollImmediately(order.orderNo)
             }
         }
     }
 
     private fun setupPaymentMethodSelection(supportsSol: Boolean, supportsUsdt: Boolean) {
+        if (!supportsSol && supportsUsdt) {
+            binding.radioUsdtSolana.isChecked = true
+        }
+
         // 支付方式选择
         binding.radioGroupPaymentMethod.setOnCheckedChangeListener { _, checkedId ->
-            val assetCode = when (checkedId) {
-                com.v2ray.ang.R.id.radioSol -> PaymentConfig.AssetCode.SOL
-                com.v2ray.ang.R.id.radioUsdt -> PaymentConfig.AssetCode.USDT_TRC20
-                else -> PaymentConfig.AssetCode.SOL
-            }
+            val quote = getQuoteForButton(checkedId)
             currentOrder?.let { order ->
-                createOrder(order.plan.id, assetCode)
+                createOrder(order.plan.id, quote.assetCode, quote.networkCode)
             }
         }
 
         // 显示/隐藏支付方式选项
         binding.radioSol.visibility = if (supportsSol) View.VISIBLE else View.GONE
+        binding.radioUsdtSolana.visibility = if (supportsUsdt) View.VISIBLE else View.GONE
         binding.radioUsdt.visibility = if (supportsUsdt) View.VISIBLE else View.GONE
     }
 
-    private fun createOrder(planId: String, assetCode: String) {
+    private fun getSelectedQuote(): QuoteSelection {
+        return getQuoteForButton(binding.radioGroupPaymentMethod.checkedRadioButtonId)
+    }
+
+    private fun getQuoteForButton(checkedId: Int): QuoteSelection {
+        return when (checkedId) {
+            com.v2ray.ang.R.id.radioUsdtSolana -> QuoteSelection(
+                assetCode = PaymentConfig.AssetCode.USDT,
+                networkCode = PaymentConfig.NetworkCode.SOLANA
+            )
+            com.v2ray.ang.R.id.radioUsdt -> QuoteSelection(
+                assetCode = PaymentConfig.AssetCode.USDT,
+                networkCode = PaymentConfig.NetworkCode.TRON
+            )
+            else -> QuoteSelection(
+                assetCode = PaymentConfig.AssetCode.SOL,
+                networkCode = PaymentConfig.NetworkCode.SOLANA
+            )
+        }
+    }
+
+    private fun createOrder(planId: String, assetCode: String, networkCode: String) {
         lifecycleScope.launch {
             binding.progressBar.visibility = View.VISIBLE
             binding.layoutPaymentDetails.visibility = View.GONE
 
-            val result = repository.createOrder(planId, assetCode)
+            val result = repository.createOrder(planId, assetCode, networkCode)
 
             binding.progressBar.visibility = View.GONE
 
@@ -168,7 +191,7 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
         // 显示支付信息
         binding.textOrderNo.text = "订单号: ${order.orderNo}"
-        binding.textAssetCode.text = "支付方式: ${getPaymentMethodDisplay(order.payment.assetCode)}"
+        binding.textAssetCode.text = "支付方式: ${getPaymentMethodDisplay(order.payment.assetCode, order.paymentTarget?.networkCode)}"
         
         // 格式化金额显示，添加等值信息
         val amountDisplay = formatAmountDisplay(order.payment.assetCode, order.payment.amountCrypto)
@@ -184,10 +207,10 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
         startCountdown(order)
     }
     
-    private fun getPaymentMethodDisplay(assetCode: String): String {
+    private fun getPaymentMethodDisplay(assetCode: String, networkCode: String?): String {
         return when (assetCode) {
             "SOL" -> "SOL (Solana)"
-            "USDT" -> "USDT (默认 Solana)"
+            "USDT" -> if (networkCode == PaymentConfig.NetworkCode.TRON) "USDT (TRC20)" else "USDT (Solana)"
             else -> assetCode
         }
     }
@@ -226,7 +249,7 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
     }
 
     private fun startPolling(order: Order) {
-        pollingUseCase.startPolling(order.orderId)
+        pollingUseCase.startPolling(order.orderNo)
     }
 
     private fun generateQRCode(content: String): Bitmap? {

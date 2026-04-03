@@ -117,7 +117,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/padding_spacing_dp8"
-                android:hint="@string/hint_email_optional"
+                android:hint="@string/hint_verification_code"
                 android:visibility="gone"
                 app:startIconDrawable="@drawable/ic_description_24dp"
                 app:errorEnabled="true">
@@ -126,7 +126,7 @@
                     android:id="@+id/et_email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textEmailAddress"
+                    android:inputType="number"
                     android:maxLines="1" />
 
             </com.google.android.material.textfield.TextInputLayout>

@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-04-03T03:59:21Z",
+  "generated_at": "2026-04-03T04:10:06Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-7da.3",
   "next_task_title": "Android 邀请佣金提现页面接入真实接口",
-  "in_progress_count": 4,
-  "ready_count": 1,
-  "open_count": 7,
-  "closed_count": 44,
-  "dirty_count": 727,
+  "in_progress_count": 3,
+  "ready_count": 0,
+  "open_count": 5,
+  "closed_count": 46,
+  "dirty_count": 9,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
@@ -15,7 +15,7 @@
     "handoff_progress": "handoff/progress.md",
     "task_state": "handoff/task-state.md",
     "development_log": "docs/development-log.md",
-    "status_docs_written": false,
+    "status_docs_written": true,
     "development_log_appended": false
   },
   "auto_created_task_id": null,

@@ -88,6 +88,9 @@ class LoginActivity : AppCompatActivity() {
         binding.etConfirmPassword.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) binding.tilConfirmPassword.error = null
         }
+        binding.etEmail.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) binding.tilEmail.error = null
+        }
     }
 
     private fun toggleMode() {
@@ -99,12 +102,12 @@ class LoginActivity : AppCompatActivity() {
         binding.tilUsername.error = null
         binding.tilPassword.error = null
         binding.tilConfirmPassword.error = null
+        binding.tilEmail.error = null
         updateUIForCurrentMode()
     }
 
     private fun updateUIForCurrentMode() {
         binding.tilUsername.hint = getString(R.string.email)
-        binding.tilEmail.visibility = View.GONE
         if (isRegisterMode) {
             binding.tvTitle.text = getString(R.string.register)
             binding.tvSubtitle.text = getString(R.string.register_subtitle)
@@ -112,6 +115,8 @@ class LoginActivity : AppCompatActivity() {
             binding.tvToggleHint.text = getString(R.string.has_account_hint)
             binding.tvToggleAction.text = getString(R.string.login_now)
             binding.tilConfirmPassword.visibility = View.VISIBLE
+            binding.tilEmail.visibility = View.VISIBLE
+            binding.tilEmail.hint = getString(R.string.hint_verification_code)
         } else {
             binding.tvTitle.text = getString(R.string.login)
             binding.tvSubtitle.text = getString(R.string.login_subtitle)
@@ -119,6 +124,7 @@ class LoginActivity : AppCompatActivity() {
             binding.tvToggleHint.text = getString(R.string.no_account_hint)
             binding.tvToggleAction.text = getString(R.string.register_now)
             binding.tilConfirmPassword.visibility = View.GONE
+            binding.tilEmail.visibility = View.GONE
         }
     }
 
@@ -149,14 +155,19 @@ class LoginActivity : AppCompatActivity() {
         val email = binding.etUsername.text.toString().trim()
         val password = binding.etPassword.text.toString()
         val confirmPassword = binding.etConfirmPassword.text.toString()
+        val verificationCode = binding.etEmail.text.toString().trim()
         if (!validateRegisterInput(email, password, confirmPassword)) return
 
         showLoading(true)
         lifecycleScope.launch {
             try {
-                val codeResult = repository.requestRegisterCode(email)
-                if (codeResult.isFailure) {
-                    showError(codeResult.exceptionOrNull()?.message ?: getString(R.string.error_operation_failed, "Send code failed"))
+                if (verificationCode.isBlank()) {
+                    val codeResult = repository.requestRegisterCode(email)
+                    if (codeResult.isFailure) {
+                        showError(codeResult.exceptionOrNull()?.message ?: getString(R.string.error_operation_failed, "Send code failed"))
+                    } else {
+                        Snackbar.make(binding.root, getString(R.string.register_code_sent), Snackbar.LENGTH_LONG).show()
+                    }
                     return@launch
                 }
 
@@ -164,7 +175,7 @@ class LoginActivity : AppCompatActivity() {
                     UUID.randomUUID().toString(),
                     RegisterRequest(
                         email = email,
-                        code = "123456",
+                        code = verificationCode,
                         password = password,
                         installationId = repository.getDeviceId()
                     )
