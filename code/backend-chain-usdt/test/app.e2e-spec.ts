@@ -84,5 +84,47 @@ describe('Chain-USDT E2E', () => {
         .get('/api/v1/chain/capabilities')
         .expect(401);
     });
+
+    it('/v1/chain/capabilities (GET) - should return mockMode=true when MOCK_CHAIN=true', () => {
+      return request(app.getHttpServer())
+        .get('/api/v1/chain/capabilities')
+        .set('x-api-key', 'test-internal-key')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.code).toBe('OK');
+          expect(res.body.data.network).toBe('tron');
+          expect(res.body.data.mockMode).toBe(true);
+          expect(res.body.data.capabilities.query).toBe(true);
+          expect(res.body.data.capabilities.broadcast).toBe(true);
+        });
+    });
+
+    it('/v1/chain/block/current (GET) - should return mock block data in mock mode', () => {
+      return request(app.getHttpServer())
+        .get('/api/v1/chain/block/current')
+        .set('x-api-key', 'test-internal-key')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.code).toBe('OK');
+          expect(res.body.data.height).toBeDefined();
+          expect(res.body.data.hash).toBeDefined();
+          expect(res.body.data.timestamp).toBeDefined();
+          expect(res.body.data.txCount).toBeDefined();
+        });
+    });
+
+    it('/v1/chain/tx/:hash (GET) - should return mock transaction in mock mode', () => {
+      return request(app.getHttpServer())
+        .get('/api/v1/chain/tx/test123')
+        .set('x-api-key', 'test-internal-key')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.code).toBe('OK');
+          expect(res.body.data.found).toBe(true);
+          expect(res.body.data.transaction).toBeDefined();
+          expect(res.body.data.transaction.txHash).toBe('test123');
+          expect(res.body.data.transaction.status).toBe('confirmed');
+        });
+    });
   });
 });

@@ -89,3 +89,29 @@ export interface SolanaServiceHealth {
   /** Version info */
   version?: string;
 }
+
+/** Transfer precheck request */
+export interface TransferPrecheckRequest {
+  /** Target network */
+  network: 'mainnet' | 'devnet';
+  /** Token mint address (null for SOL) */
+  mint: string | null;
+  /** Recipient address */
+  toAddress: string;
+  /** Amount in smallest unit */
+  amount: string;
+}
+
+/** Transfer precheck response */
+export interface TransferPrecheckResponse {
+  /** Whether the transfer is valid */
+  valid: boolean;
+  /** Normalized address */
+  toAddressNormalized: string;
+  /** Estimated fee in smallest unit */
+  estimatedFee: string;
+  /** Error code if invalid */
+  errorCode?: string;
+  /** Error message if invalid */
+  errorMessage?: string;
+}

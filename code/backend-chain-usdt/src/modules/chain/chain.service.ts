@@ -306,6 +306,15 @@ export class ChainService {
     };
   }
 
+  /**
+   * Check if service is running in mock mode.
+   * 
+   * @returns Whether mock mode is enabled
+   */
+  isMockMode(): boolean {
+    return this.mockMode;
+  }
+
   // Mock data generators for mock mode
 
   private getMockTransaction(txHash: string): TransactionQueryResult {

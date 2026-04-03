@@ -1,12 +1,16 @@
 # Solana/USDT Service Client Wiring
 
-**Issue:** liaojiang-rcb.11 - 实现 API 层到 sol/usdt 服务的真实客户端接线
+**Issue:** liaojiang-rcb.11 / liaojiang-rcb.14.1 - 实现 API 层到 sol/usdt 服务的真实客户端接线
 
 **Date:** 2026-04-03
 
 ## Summary
 
-Implemented minimal client wiring for sol/usdt chain-side service integration. This is a skeleton implementation that prepares the codebase for real chain integration while maintaining safety defaults.
+Implemented remote chain-side client abstraction with real service integration for wallet paths. The implementation supports:
+- **Transfer precheck** via remote service with graceful fallback
+- **Proxy broadcast** via remote service with graceful fallback
+- **Address validation** via client-side logic
+- **Configurable service toggle** with safety defaults (disabled by default)
 
 ## Files Added
 
@@ -40,11 +44,13 @@ SOLANA_SERVICE_MAX_RETRIES=3
 
 ### 4. `code/backend/src/modules/wallet/wallet.service.ts`
 - Injected `SolanaClientService`
-- Updated `proxyBroadcast()` to use Solana client for SOLANA network
+- Updated `transferPrecheck()` to use remote service when enabled (async, with fallback)
+- Updated `proxyBroadcast()` to call real `broadcastTransaction()` when enabled (with fallback)
 - Updated `isAddressValid()` to use Solana client validation
 
 ### 5. `code/backend/src/modules/wallet/wallet.controller.ts`
 - Made `proxyBroadcast()` async to support async service calls
+- Made `transferPrecheck()` async to support async service calls
 
 ### 6. `code/backend/src/modules/wallet/dto/proxy-broadcast.request.ts`
 - Added optional `toAddress` field (for validation)
@@ -61,10 +67,11 @@ SOLANA_SERVICE_MAX_RETRIES=3
 | Method | Description | Status |
 |--------|-------------|--------|
 | `isEnabled()` | Check if real chain calls enabled | ✅ Implemented |
-| `health()` | Service health check | ✅ Skeleton (mock when disabled) |
-| `broadcastTransaction()` | Broadcast signed tx | ✅ Skeleton (mock when disabled) |
-| `getTransactionStatus()` | Check tx status | ✅ Skeleton (mock when disabled) |
-| `getBalance()` | Get SOL/USDT balance | ✅ Skeleton (mock when disabled) |
+| `health()` | Service health check | ✅ Implemented (with mock fallback) |
+| `broadcastTransaction()` | Broadcast signed tx | ✅ Implemented (with mock fallback) |
+| `precheckTransfer()` | Transfer precheck via remote | ✅ Implemented (with mock fallback) |
+| `getTransactionStatus()` | Check tx status | ✅ Implemented (with mock fallback) |
+| `getBalance()` | Get SOL/USDT balance | ✅ Implemented (with mock fallback) |
 | `validateAddress()` | Validate Solana address format | ✅ Implemented |
 | `getUsdtMint()` | Get USDT mint address | ✅ Implemented |
 
@@ -84,9 +91,10 @@ SOLANA_SERVICE_MAX_RETRIES=3
 ## Integration Points
 
 ### WalletModule Integration
-- `proxyBroadcast()` now checks `SolanaClientService.isEnabled()`
-- Uses `validateAddress()` for Solana address validation
-- Returns service status in response (`serviceEnabled` field)
+- `transferPrecheck()` - Calls remote precheck service when enabled, falls back to local calculation on failure
+- `proxyBroadcast()` - Calls `broadcastTransaction()` when service enabled and `serializedTx` provided, falls back to mock on failure
+- `isAddressValid()` - Uses `validateAddress()` for Solana address validation
+- All responses include `serviceEnabled` field to indicate if remote service was used
 
 ### Future Integration Points (TODO)
 - **OrdersModule**: Verify payment transactions via `getTransactionStatus()`
@@ -105,27 +113,36 @@ pnpm run build      # ✅ Passed
 
 ## What Works Now
 
-1. ✅ Configuration skeleton with env vars
+1. ✅ Configuration with env vars and safety defaults
 2. ✅ Module structure following NestJS patterns
 3. ✅ Service injection and wiring
-4. ✅ Address validation for Solana
-5. ✅ Mock responses when service disabled
-6. ✅ Type safety throughout
+4. ✅ Address validation for Solana (client-side)
+5. ✅ **Transfer precheck with remote service integration** (liaojiang-rcb.14.1)
+6. ✅ **Proxy broadcast with remote service integration** (liaojiang-rcb.14.1)
+7. ✅ **Graceful degradation** - Falls back to mock behavior when service disabled/unavailable
+8. ✅ Type safety throughout
 
-## What's Still Skeleton (Not Real Chain)
+## Service Behavior
 
-1. ❌ `broadcastTransaction()` - Returns mock signature
-2. ❌ `getTransactionStatus()` - Returns mock status
-3. ❌ `getBalance()` - Returns mock balance
-4. ❌ `health()` - Returns mock health when disabled
-5. ❌ Real HTTP calls to sol/usdt service
+### When `SOLANA_SERVICE_ENABLED=true`
+- `transferPrecheck()` calls remote `/v1/transfers/precheck` endpoint
+- `proxyBroadcast()` calls remote `/v1/transactions/broadcast` endpoint (if `serializedTx` provided)
+- On remote service failure, falls back to mock behavior (does not crash)
 
-## Next Steps (Future Issues)
+### When `SOLANA_SERVICE_ENABLED=false` (default)
+- All operations return mock responses
+- No external HTTP calls made
+- Safe for development and testing
 
-1. **Deploy sol/usdt service** - Service needs to be running
-2. **Implement real HTTP calls** - Remove mock responses when enabled
-3. **Add error handling** - Circuit breaker, retries, timeouts
-4. **Add metrics/logging** - Monitor service health and performance
-5. **Integration tests** - E2E tests with real/devnet service
-6. **Order payment verification** - Wire into order lifecycle
-7. **Withdrawal broadcasting** - Wire into withdrawal lifecycle
+## TRON Network
+- TRON network still uses mock behavior (no remote client yet)
+- Only Solana network has remote service integration
+
+## Future Work
+
+1. **OrdersModule**: Verify payment transactions via `getTransactionStatus()`
+2. **WithdrawalsModule**: Broadcast withdrawal transactions via `broadcastTransaction()`
+3. **HealthModule**: Add sol/usdt service health check endpoint
+4. **TRON client**: Implement similar remote client for TRON network
+5. **Circuit breaker**: Add resilience patterns for remote calls
+6. **Metrics/logging**: Enhanced observability for service calls

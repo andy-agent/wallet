@@ -14,4 +14,6 @@ export type {
   GetBalanceRequest,
   GetBalanceResponse,
   SolanaServiceHealth,
+  TransferPrecheckRequest,
+  TransferPrecheckResponse,
 } from './solana-client.types';

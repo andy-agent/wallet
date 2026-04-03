@@ -27,7 +27,10 @@ import type {
   GetTransactionStatusRequest,
   GetTransactionStatusResponse,
   SolanaServiceHealth,
+  TransferPrecheckRequest,
+  TransferPrecheckResponse,
 } from './solana-client.types';
+import type { AxiosResponse } from 'axios';
 
 @Injectable()
 export class SolanaClientService {
@@ -66,7 +69,7 @@ export class SolanaClientService {
           headers: this.getAuthHeaders(),
         }),
       );
-      return response.data as SolanaServiceHealth;
+      return (response as AxiosResponse<SolanaServiceHealth>).data;
     } catch (error) {
       this.logger.error('Solana service health check failed', error);
       throw new ServiceUnavailableException({
@@ -115,7 +118,7 @@ export class SolanaClientService {
         ),
       );
 
-      return response.data as BroadcastTransactionResponse;
+      return (response as AxiosResponse<BroadcastTransactionResponse>).data;
     } catch (error) {
       this.logger.error('Broadcast transaction failed', error);
       throw new ServiceUnavailableException({
@@ -156,7 +159,7 @@ export class SolanaClientService {
         }),
       );
 
-      return response.data as GetTransactionStatusResponse;
+      return (response as AxiosResponse<GetTransactionStatusResponse>).data;
     } catch (error) {
       this.logger.error('Get transaction status failed', error);
       throw new ServiceUnavailableException({
@@ -204,13 +207,76 @@ export class SolanaClientService {
         }),
       );
 
-      return response.data as GetBalanceResponse;
+      return (response as AxiosResponse<GetBalanceResponse>).data;
     } catch (error) {
       this.logger.error('Get balance failed', error);
       throw new ServiceUnavailableException({
         code: 'SOLANA_BALANCE_CHECK_FAILED',
         message: 'Failed to get balance',
       });
+    }
+  }
+
+  /**
+   * Perform transfer precheck via remote service
+   * Returns mock response when service is disabled
+   */
+  async precheckTransfer(
+    request: TransferPrecheckRequest,
+  ): Promise<TransferPrecheckResponse> {
+    // Always perform basic address validation first
+    if (!this.validateAddress(request.toAddress)) {
+      return {
+        valid: false,
+        toAddressNormalized: request.toAddress.trim(),
+        estimatedFee: '0',
+        errorCode: 'INVALID_ADDRESS',
+        errorMessage: 'Invalid Solana address format',
+      };
+    }
+
+    if (!this.isEnabled()) {
+      this.logger.debug('Solana service disabled, returning mock precheck', {
+        address: request.toAddress,
+      });
+      // Mock response for wiring phase - simulate success
+      return {
+        valid: true,
+        toAddressNormalized: request.toAddress.trim(),
+        estimatedFee: '5000', // 0.000005 SOL in lamports
+      };
+    }
+
+    try {
+      const baseUrl = this.config.getBaseUrl();
+
+      const response = await firstValueFrom(
+        this.httpService.post(
+          `${baseUrl}/v1/transfers/precheck`,
+          {
+            network: request.network,
+            mint: request.mint,
+            toAddress: request.toAddress,
+            amount: request.amount,
+          },
+          {
+            timeout: this.config.getTimeoutMs(),
+            headers: this.getAuthHeaders(),
+          },
+        ),
+      );
+
+      return (response as AxiosResponse<TransferPrecheckResponse>).data;
+    } catch (error) {
+      this.logger.error('Transfer precheck failed', error);
+      // Return invalid response on error (graceful degradation)
+      return {
+        valid: false,
+        toAddressNormalized: request.toAddress.trim(),
+        estimatedFee: '0',
+        errorCode: 'PRECHECK_FAILED',
+        errorMessage: 'Failed to perform transfer precheck',
+      };
     }
   }
 

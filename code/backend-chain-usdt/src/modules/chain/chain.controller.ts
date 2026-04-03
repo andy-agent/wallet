@@ -176,7 +176,7 @@ export class ChainController {
         maxBatchSize: 100,
         rateLimitPerMinute: 1000,
       },
-      mockMode: true, // Indicates this is skeleton/placeholder
+      mockMode: this.chainService.isMockMode(),
     };
   }
 }

@@ -46,7 +46,7 @@ export class WalletController {
   }
 
   @Post('transfer/precheck')
-  transferPrecheck(
+  async transferPrecheck(
     @Headers('authorization') authorization: string | undefined,
     @Body() body: TransferPrecheckRequestDto,
   ) {
