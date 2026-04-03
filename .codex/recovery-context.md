@@ -1,17 +1,17 @@
 # Recovery Context
 
-Generated: 2026-04-03T14:00:33Z
+Generated: 2026-04-03T14:37:46Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-f93.3
-- next_task_title: 实现 backend admin 财务与治理域：withdrawals/audit/system-configs/legal/versions/regions/nodes
+- next_task_id: liaojiang-f93.4
+- next_task_title: 对齐 admin-web API 契约并移除 mock 登录
 
 ## Counters
 - in_progress: 3
 - ready: 3
-- open: 10
-- closed: 95
+- open: 9
+- closed: 96
 - dirty: 2
 
 ## Next Milestone
