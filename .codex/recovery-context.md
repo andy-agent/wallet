@@ -1,17 +1,17 @@
 # Recovery Context
 
-Generated: 2026-04-03T12:50:25Z
+Generated: 2026-04-03T13:26:13Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.2
-- next_task_title: Android 真实环境登录/下单/支付页回归
+- next_task_id: liaojiang-ios
+- next_task_title: 梳理 admin-web 与 backend admin 契约差异
 
 ## Counters
-- in_progress: 2
-- ready: 1
-- open: 3
-- closed: 90
+- in_progress: 4
+- ready: 2
+- open: 8
+- closed: 91
 - dirty: 3
 
 ## Next Milestone
