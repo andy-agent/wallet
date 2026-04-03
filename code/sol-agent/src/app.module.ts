@@ -5,6 +5,7 @@ import { RequestContextMiddleware } from './common/middleware/request-context.mi
 import { HealthModule } from './modules/health/health.module';
 import { AddressModule } from './modules/address/address.module';
 import { PaymentModule } from './modules/payment/payment.module';
+import { SolanaModule } from './modules/solana/solana.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { PaymentModule } from './modules/payment/payment.module';
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
     }),
+    SolanaModule,
     HealthModule,
     AddressModule,
     PaymentModule,

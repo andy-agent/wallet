@@ -11,9 +11,7 @@ const common_1 = require("@nestjs/common");
 const operators_1 = require("rxjs/operators");
 let ResponseEnvelopeInterceptor = class ResponseEnvelopeInterceptor {
     intercept(context, next) {
-        const request = context
-            .switchToHttp()
-            .getRequest();
+        const request = context.switchToHttp().getRequest();
         return next.handle().pipe((0, operators_1.map)((data) => {
             if (data &&
                 typeof data === 'object' &&

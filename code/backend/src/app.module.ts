@@ -12,6 +12,7 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { ProvisioningModule } from './modules/provisioning/provisioning.module';
 import { ReferralModule } from './modules/referral/referral.module';
+import { SolanaClientModule } from './modules/solana-client/solana-client.module';
 import { VpnModule } from './modules/vpn/vpn.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
@@ -41,6 +42,7 @@ import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
     ProvisioningModule,
     VpnModule,
     WalletModule,
+    SolanaClientModule,
     ReferralModule,
     WithdrawalsModule,
     AdminModule,

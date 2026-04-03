@@ -7,16 +7,8 @@ export declare class AddressController {
         accountId: string;
         networkCode: string;
         address: string;
-        publicKey: null;
+        publicKey: string;
         createdAt: string;
-        note: string;
     };
-    getAddress(accountId: string): {
-        accountId: string;
-        networkCode: string;
-        address: string;
-        publicKey: null;
-        createdAt: string;
-        note: string;
-    };
+    getAddress(accountId: string): any;
 }

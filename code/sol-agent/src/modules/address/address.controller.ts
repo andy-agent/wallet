@@ -2,8 +2,10 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -19,13 +21,14 @@ export class AddressController {
   constructor(private readonly addressService: AddressService) {}
 
   @Post()
-  @ApiOperation({ summary: '生成 Solana 地址（占位）' })
+  @HttpCode(200)
+  @ApiOperation({ summary: '生成 Solana 地址' })
   generateAddress(@Body() body: GenerateAddressRequestDto) {
     return this.addressService.generateAddress(body);
   }
 
   @Get(':accountId')
-  @ApiOperation({ summary: '查询指定账户的 Solana 地址（占位）' })
+  @ApiOperation({ summary: '查询指定账户的 Solana 地址' })
   getAddress(@Param('accountId') accountId: string) {
     return this.addressService.getAddress(accountId);
   }

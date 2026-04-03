@@ -9,3 +9,15 @@ code/backend/node_modules/
 code/backend/dist/
 code/backend/coverage/
 code/backend/.env
+
+# Chain-side service build artifacts
+code/sol-agent/node_modules/
+code/sol-agent/dist/
+code/sol-agent/coverage/
+code/sol-agent/.env
+code/sol-agent/.env.local
+
+code/backend-chain-usdt/node_modules/
+code/backend-chain-usdt/dist/
+code/backend-chain-usdt/coverage/
+code/backend-chain-usdt/.env

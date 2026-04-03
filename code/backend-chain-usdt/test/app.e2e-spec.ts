@@ -1,17 +1,31 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
+import { ResponseEnvelopeInterceptor } from '../src/common/interceptors/response-envelope.interceptor';
 
 describe('Chain-USDT E2E', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
+    process.env.INTERNAL_API_KEY = 'test-internal-key';
+    process.env.MOCK_CHAIN = 'true';
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
     app = moduleRef.createNestApplication();
+    app.setGlobalPrefix('api');
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidUnknownValues: false,
+      }),
+    );
+    app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
+    app.useGlobalFilters(new AllExceptionsFilter());
     await app.init();
   });
 
@@ -61,7 +75,7 @@ describe('Chain-USDT E2E', () => {
         .get('/api/v1/chain/tx/test123')
         .expect(401)
         .expect((res) => {
-          expect(res.body.code).toBe('INTERNAL_AUTH_NOT_CONFIGURED');
+          expect(res.body.code).toBe('INTERNAL_AUTH_MISSING_KEY');
         });
     });
 

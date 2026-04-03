@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-03T10:36:41Z
+Generated: 2026-04-03T11:11:48Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-rcb.7
-- next_task_title: 实现 usdt.residential-agent.com 最小服务骨架
+- next_task_id: liaojiang-rcb.14
+- next_task_title: 将 API 订单/钱包流程切到远程链侧服务
 
 ## Counters
-- in_progress: 4
+- in_progress: 3
 - ready: 0
-- open: 4
-- closed: 66
-- dirty: 6
+- open: 3
+- closed: 73
+- dirty: 62
 
 ## Next Milestone
 - Continue the next task and complete one milestone

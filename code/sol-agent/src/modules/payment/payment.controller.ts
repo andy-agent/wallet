@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   Post,
   Query,
@@ -20,8 +21,8 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Get(':address/status')
-  @ApiOperation({ summary: '查询地址收款状态（占位）' })
-  getPaymentStatus(
+  @ApiOperation({ summary: '查询地址收款状态（调用 Solana RPC）' })
+  async getPaymentStatus(
     @Param('address') address: string,
     @Query('networkCode') networkCode?: string,
   ) {
@@ -29,8 +30,9 @@ export class PaymentController {
   }
 
   @Post('detect')
-  @ApiOperation({ summary: '主动检测指定地址收款（占位）' })
-  detectPayment(@Body() body: DetectPaymentRequestDto) {
+  @HttpCode(200)
+  @ApiOperation({ summary: '主动检测指定地址收款（调用 Solana RPC）' })
+  async detectPayment(@Body() body: DetectPaymentRequestDto) {
     return this.paymentService.detectPayment(body);
   }
 }

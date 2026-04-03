@@ -14,6 +14,7 @@ const request_context_middleware_1 = require("./common/middleware/request-contex
 const health_module_1 = require("./modules/health/health.module");
 const address_module_1 = require("./modules/address/address.module");
 const payment_module_1 = require("./modules/payment/payment.module");
+const solana_module_1 = require("./modules/solana/solana.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(request_context_middleware_1.RequestContextMiddleware).forRoutes('*');
@@ -27,6 +28,7 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
                 envFilePath: ['.env.local', '.env'],
             }),
+            solana_module_1.SolanaModule,
             health_module_1.HealthModule,
             address_module_1.AddressModule,
             payment_module_1.PaymentModule,

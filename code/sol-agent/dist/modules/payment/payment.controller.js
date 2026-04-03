@@ -22,30 +22,31 @@ let PaymentController = class PaymentController {
     constructor(paymentService) {
         this.paymentService = paymentService;
     }
-    getPaymentStatus(address, networkCode) {
+    async getPaymentStatus(address, networkCode) {
         return this.paymentService.getPaymentStatus(address, networkCode);
     }
-    detectPayment(body) {
+    async detectPayment(body) {
         return this.paymentService.detectPayment(body);
     }
 };
 exports.PaymentController = PaymentController;
 __decorate([
     (0, common_1.Get)(':address/status'),
-    (0, swagger_1.ApiOperation)({ summary: '查询地址收款状态（占位）' }),
+    (0, swagger_1.ApiOperation)({ summary: '查询地址收款状态（调用 Solana RPC）' }),
     __param(0, (0, common_1.Param)('address')),
     __param(1, (0, common_1.Query)('networkCode')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], PaymentController.prototype, "getPaymentStatus", null);
 __decorate([
     (0, common_1.Post)('detect'),
-    (0, swagger_1.ApiOperation)({ summary: '主动检测指定地址收款（占位）' }),
+    (0, common_1.HttpCode)(200),
+    (0, swagger_1.ApiOperation)({ summary: '主动检测指定地址收款（调用 Solana RPC）' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [detect_payment_request_1.DetectPaymentRequestDto]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], PaymentController.prototype, "detectPayment", null);
 exports.PaymentController = PaymentController = __decorate([
     (0, swagger_1.ApiTags)('Payment'),

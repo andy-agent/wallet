@@ -5,33 +5,58 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var AddressService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AddressService = void 0;
 const common_1 = require("@nestjs/common");
-let AddressService = class AddressService {
+const solana_rpc_service_1 = require("../solana/solana.rpc.service");
+let AddressService = AddressService_1 = class AddressService {
+    constructor(solanaRpc) {
+        this.solanaRpc = solanaRpc;
+        this.logger = new common_1.Logger(AddressService_1.name);
+        this.addressStore = new Map();
+    }
     generateAddress(body) {
-        return {
+        const keypair = this.solanaRpc.generateKeypair();
+        const networkCode = body.networkCode ?? 'solana-mainnet';
+        const addressData = {
             accountId: body.accountId,
-            networkCode: body.networkCode ?? 'solana-mainnet',
-            address: `sol_placeholder_${body.accountId}_${Date.now()}`,
-            publicKey: null,
+            networkCode,
+            address: keypair.address,
+            publicKey: keypair.publicKey,
+            secretKey: keypair.secretKey,
             createdAt: new Date().toISOString(),
-            note: 'PLACEHOLDER: not a real on-chain address yet',
         };
+        this.addressStore.set(body.accountId, addressData);
+        this.logger.log(`Generated Solana address for account ${body.accountId}: ${keypair.address}`);
+        const { secretKey, ...result } = addressData;
+        return result;
     }
     getAddress(accountId) {
+        const stored = this.addressStore.get(accountId);
+        if (stored) {
+            const { secretKey, ...result } = stored;
+            return result;
+        }
         return {
             accountId,
             networkCode: 'solana-mainnet',
-            address: `sol_placeholder_${accountId}`,
+            address: null,
             publicKey: null,
-            createdAt: new Date().toISOString(),
-            note: 'PLACEHOLDER: not a real on-chain address yet',
+            createdAt: null,
+            note: 'Address not found for this account',
         };
+    }
+    getAddressInternal(accountId) {
+        return this.addressStore.get(accountId) || null;
     }
 };
 exports.AddressService = AddressService;
-exports.AddressService = AddressService = __decorate([
-    (0, common_1.Injectable)()
+exports.AddressService = AddressService = AddressService_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [solana_rpc_service_1.SolanaRpcService])
 ], AddressService);
 //# sourceMappingURL=address.service.js.map

@@ -54,7 +54,7 @@ export class WalletController {
   }
 
   @Post('transfer/proxy-broadcast')
-  proxyBroadcast(
+  async proxyBroadcast(
     @Headers('authorization') authorization: string | undefined,
     @Body() body: ProxyBroadcastRequestDto,
   ) {

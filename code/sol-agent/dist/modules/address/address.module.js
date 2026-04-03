@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AddressModule = void 0;
 const common_1 = require("@nestjs/common");
+const solana_module_1 = require("../solana/solana.module");
 const address_controller_1 = require("./address.controller");
 const address_service_1 = require("./address.service");
 let AddressModule = class AddressModule {
@@ -15,6 +16,7 @@ let AddressModule = class AddressModule {
 exports.AddressModule = AddressModule;
 exports.AddressModule = AddressModule = __decorate([
     (0, common_1.Module)({
+        imports: [solana_module_1.SolanaModule],
         controllers: [address_controller_1.AddressController],
         providers: [address_service_1.AddressService],
         exports: [address_service_1.AddressService],

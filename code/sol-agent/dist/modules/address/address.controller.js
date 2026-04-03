@@ -32,7 +32,8 @@ let AddressController = class AddressController {
 exports.AddressController = AddressController;
 __decorate([
     (0, common_1.Post)(),
-    (0, swagger_1.ApiOperation)({ summary: '生成 Solana 地址（占位）' }),
+    (0, common_1.HttpCode)(200),
+    (0, swagger_1.ApiOperation)({ summary: '生成 Solana 地址' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [generate_address_request_1.GenerateAddressRequestDto]),
@@ -40,7 +41,7 @@ __decorate([
 ], AddressController.prototype, "generateAddress", null);
 __decorate([
     (0, common_1.Get)(':accountId'),
-    (0, swagger_1.ApiOperation)({ summary: '查询指定账户的 Solana 地址（占位）' }),
+    (0, swagger_1.ApiOperation)({ summary: '查询指定账户的 Solana 地址' }),
     __param(0, (0, common_1.Param)('accountId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

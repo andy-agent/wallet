@@ -2,9 +2,11 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
+import { SolanaClientService } from '../solana-client/solana-client.service';
 import { ProxyBroadcastRequestDto } from './dto/proxy-broadcast.request';
 import { TransferPrecheckRequestDto } from './dto/transfer-precheck.request';
 import { UpsertWalletPublicAddressRequestDto } from './dto/upsert-wallet-public-address.request';
@@ -21,9 +23,13 @@ export interface WalletPublicAddressItem {
 
 @Injectable()
 export class WalletService {
+  private readonly logger = new Logger(WalletService.name);
   private readonly publicAddresses = new Map<string, WalletPublicAddressItem[]>();
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly solanaClient: SolanaClientService,
+  ) {}
 
   getChains(accessToken: string) {
     this.authService.getMe(accessToken);
@@ -199,7 +205,7 @@ export class WalletService {
     };
   }
 
-  proxyBroadcast(accessToken: string, dto: ProxyBroadcastRequestDto) {
+  async proxyBroadcast(accessToken: string, dto: ProxyBroadcastRequestDto) {
     this.authService.getMe(accessToken);
     const chain = this.getChains(accessToken).items.find(
       (item) => item.networkCode === dto.networkCode,
@@ -212,6 +218,50 @@ export class WalletService {
       });
     }
 
+    // Use SolanaClientService for SOLANA network
+    if (dto.networkCode === 'SOLANA') {
+      this.logger.debug('Using SolanaClientService for proxy broadcast');
+
+      // Check if real service is enabled
+      if (!this.solanaClient.isEnabled()) {
+        this.logger.warn(
+          'Solana service is disabled, using mock broadcast. ' +
+            'Set SOLANA_SERVICE_ENABLED=true to enable real chain calls.',
+        );
+      }
+
+      // Validate address using SolanaClientService
+      if (
+        dto.toAddress &&
+        !this.solanaClient.validateAddress(dto.toAddress)
+      ) {
+        throw new BadRequestException({
+          code: 'WALLET_INVALID_ADDRESS',
+          message: 'Invalid Solana address format',
+        });
+      }
+
+      // TODO (liaojiang-rcb.11 follow-up):
+      // When service is fully implemented, call:
+      // const result = await this.solanaClient.broadcastTransaction({
+      //   serializedTx: dto.serializedTx!, // client-signed transaction
+      //   network: this.solanaClient['config'].useDevnet() ? 'devnet' : 'mainnet',
+      // });
+
+      // For now, return mock response that simulates service behavior
+      return {
+        networkCode: dto.networkCode,
+        broadcasted: true,
+        txHash: dto.clientTxHash ?? `sol_proxy_${randomUUID().slice(0, 16)}`,
+        acceptedAt: new Date().toISOString(),
+        serviceEnabled: this.solanaClient.isEnabled(),
+        note: this.solanaClient.isEnabled()
+          ? 'Real service enabled but not yet implemented'
+          : 'Mock mode - set SOLANA_SERVICE_ENABLED=true for real calls',
+      };
+    }
+
+    // TRON and other networks - use existing mock behavior
     return {
       networkCode: dto.networkCode,
       broadcasted: true,
@@ -223,7 +273,8 @@ export class WalletService {
   private isAddressValid(networkCode: 'SOLANA' | 'TRON', address: string) {
     const trimmed = address.trim();
     if (networkCode === 'SOLANA') {
-      return trimmed.length >= 32;
+      // Use SolanaClientService for validation if available
+      return this.solanaClient.validateAddress(trimmed);
     }
     return trimmed.startsWith('T') && trimmed.length >= 20;
   }

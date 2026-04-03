@@ -12,11 +12,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HealthController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const solana_rpc_service_1 = require("../solana/solana.rpc.service");
 let HealthController = class HealthController {
-    getHealth() {
+    constructor(solanaRpc) {
+        this.solanaRpc = solanaRpc;
+    }
+    async getHealth() {
+        const rpcHealth = await this.solanaRpc.checkHealth();
         return {
-            status: 'healthy',
+            status: rpcHealth.healthy ? 'healthy' : 'degraded',
             service: 'sol-agent',
+            rpc: rpcHealth,
         };
     }
 };
@@ -26,10 +32,11 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: '服务健康检查' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], HealthController.prototype, "getHealth", null);
 exports.HealthController = HealthController = __decorate([
     (0, swagger_1.ApiTags)('Health'),
-    (0, common_1.Controller)('healthz')
+    (0, common_1.Controller)('healthz'),
+    __metadata("design:paramtypes", [solana_rpc_service_1.SolanaRpcService])
 ], HealthController);
 //# sourceMappingURL=health.controller.js.map
