@@ -51,7 +51,7 @@ export class OrdersController {
   }
 
   @Post(':orderNo/refresh-status')
-  refreshStatus(
+  async refreshStatus(
     @Headers('authorization') authorization: string | undefined,
     @Param('orderNo') orderNo: string,
     @Body() body: RefreshOrderStatusRequestDto,

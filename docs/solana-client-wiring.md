@@ -96,8 +96,16 @@ SOLANA_SERVICE_MAX_RETRIES=3
 - `isAddressValid()` - Uses `validateAddress()` for Solana address validation
 - All responses include `serviceEnabled` field to indicate if remote service was used
 
+### OrdersModule Integration (liaojiang-rcb.14.2.1)
+- `getPaymentTarget()` - Returns `serviceEnabled` flag to indicate chain-side service availability
+- `refreshStatus()` - Calls `getTransactionStatus()` for SOLANA orders when `submittedClientTxHash` is present
+  - On `confirmed`/`finalized`: advances order to `PAID` → `PROVISIONING` → `COMPLETED`
+  - On `failed`: marks order as `FAILED` with on-chain error reason
+  - On `pending`: preserves current state
+  - On remote service exception: falls back to existing in-memory state machine progression (graceful degradation)
+- Terminal states (`COMPLETED`, `FAILED`, `EXPIRED`, `CANCELED`) are guarded against repeated progression
+
 ### Future Integration Points (TODO)
-- **OrdersModule**: Verify payment transactions via `getTransactionStatus()`
 - **WithdrawalsModule**: Broadcast withdrawal transactions via `broadcastTransaction()`
 - **HealthModule**: Add sol/usdt service health check
 
@@ -140,7 +148,7 @@ pnpm run build      # ✅ Passed
 
 ## Future Work
 
-1. **OrdersModule**: Verify payment transactions via `getTransactionStatus()`
+1. ✅ **OrdersModule**: Verify payment transactions via `getTransactionStatus()` (liaojiang-rcb.14.2.1)
 2. **WithdrawalsModule**: Broadcast withdrawal transactions via `broadcastTransaction()`
 3. **HealthModule**: Add sol/usdt service health check endpoint
 4. **TRON client**: Implement similar remote client for TRON network

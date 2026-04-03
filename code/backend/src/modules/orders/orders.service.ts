@@ -1,11 +1,13 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
 import { ProvisioningService } from '../provisioning/provisioning.service';
+import { SolanaClientService } from '../solana-client/solana-client.service';
 import { CreateOrderRequestDto } from './dto/create-order.request';
 import { RefreshOrderStatusRequestDto } from './dto/refresh-order-status.request';
 import { SubmitClientTxRequestDto } from './dto/submit-client-tx.request';
@@ -13,12 +15,14 @@ import { OrderRecord } from './orders.types';
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
   private readonly ordersByNo = new Map<string, OrderRecord>();
   private readonly idempotencyIndex = new Map<string, string>();
 
   constructor(
     private readonly authService: AuthService,
     private readonly provisioningService: ProvisioningService,
+    private readonly solanaClient: SolanaClientService,
   ) {}
 
   createOrder(accessToken: string, dto: CreateOrderRequestDto, idempotencyKey: string) {
@@ -87,6 +91,8 @@ export class OrdersService {
       uniqueAmountDelta: '0.000001',
       qrText: `${order.quoteNetworkCode}:${order.orderNo}:${order.payableAmount}`,
       expiresAt: order.expiresAt,
+      serviceEnabled:
+        order.quoteNetworkCode === 'SOLANA' ? this.solanaClient.isEnabled() : false,
     };
   }
 
@@ -97,18 +103,73 @@ export class OrdersService {
     return {};
   }
 
-  refreshStatus(
+  async refreshStatus(
     accessToken: string,
     orderNo: string,
     _dto: RefreshOrderStatusRequestDto,
   ) {
     const order = this.getOrder(accessToken, orderNo);
 
+    // Terminal states: no further progression
+    if (
+      order.status === 'COMPLETED' ||
+      order.status === 'FAILED' ||
+      order.status === 'EXPIRED' ||
+      order.status === 'CANCELED'
+    ) {
+      return order;
+    }
+
     if (new Date(order.expiresAt).getTime() <= Date.now() && order.status === 'AWAITING_PAYMENT') {
       order.status = 'EXPIRED';
       return order;
     }
 
+    // Try remote chain-side status for SOLANA orders with a submitted transaction
+    if (order.quoteNetworkCode === 'SOLANA' && order.submittedClientTxHash && this.solanaClient.isEnabled()) {
+      try {
+        const remoteStatus = await this.solanaClient.getTransactionStatus({
+          signature: order.submittedClientTxHash,
+        });
+
+        if (remoteStatus.status === 'confirmed' || remoteStatus.status === 'finalized') {
+          if (order.status !== 'PAID' && order.status !== 'PROVISIONING') {
+            order.status = 'PAID';
+            order.confirmedAt = new Date().toISOString();
+          }
+          // Auto-advance provisioning when reaching PAID
+          if (order.status === 'PAID') {
+            order.status = 'PROVISIONING';
+            this.provisioningService.provisionPaidOrder({
+              accountId: order.accountId,
+              planCode: order.planCode,
+              orderNo: order.orderNo,
+              sourceAssetCode: order.quoteAssetCode,
+              sourceAmount: order.quoteUsdAmount,
+            });
+            order.status = 'COMPLETED';
+            order.completedAt = new Date().toISOString();
+          }
+          return order;
+        }
+
+        if (remoteStatus.status === 'failed') {
+          order.status = 'FAILED';
+          order.failureReason = remoteStatus.error ?? 'Transaction failed on chain';
+          return order;
+        }
+
+        // pending: do not advance via remote, fall through to in-memory progression
+      } catch (error) {
+        this.logger.warn(
+          `Solana chain-side status check failed for order ${orderNo}, falling back to in-memory progression`,
+          error instanceof Error ? error.message : error,
+        );
+        // Graceful degradation: fall through to in-memory state machine
+      }
+    }
+
+    // In-memory state machine progression (fallback or for non-SOLANA orders)
     if (order.submittedClientTxHash && order.status === 'PAYMENT_DETECTED') {
       order.status = 'CONFIRMING';
     } else if (order.submittedClientTxHash && order.status === 'CONFIRMING') {
