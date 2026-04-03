@@ -3,14 +3,14 @@ package com.v2ray.ang.payment;
 /**
  * 支付模块配置
  */
-@kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\"\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\u0003\n\u0002\u0010\t\n\u0000\n\u0002\u0010 \n\u0002\b\t\b\u00c6\u0002\u0018\u00002\u00020\u0001:\u0005\u000f\u0010\u0011\u0012\u0013B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0007\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\b\u001a\u00020\tX\u0086T\u00a2\u0006\u0002\n\u0000R\u0017\u0010\n\u001a\b\u0012\u0004\u0012\u00020\t0\u000b\u00a2\u0006\b\n\u0000\u001a\u0004\b\f\u0010\rR\u000e\u0010\u000e\u001a\u00020\tX\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u0014"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig;", "", "<init>", "()V", "API_BASE_URL", "", "API_VERSION", "FULL_API_URL", "ORDER_EXPIRE_TIME_MS", "", "POLLING_INTERVALS", "", "getPOLLING_INTERVALS", "()Ljava/util/List;", "MAX_POLLING_TIME_MS", "Prefs", "TokenConfig", "AssetCode", "OrderStatus", "PurchaseType", "app_fdroidDebug"})
+@kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\"\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\u0003\n\u0002\u0010\t\n\u0000\n\u0002\u0010 \n\u0002\b\n\b\u00c6\u0002\u0018\u00002\u00020\u0001:\u0006\u000f\u0010\u0011\u0012\u0013\u0014B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0007\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\b\u001a\u00020\tX\u0086T\u00a2\u0006\u0002\n\u0000R\u0017\u0010\n\u001a\b\u0012\u0004\u0012\u00020\t0\u000b\u00a2\u0006\b\n\u0000\u001a\u0004\b\f\u0010\rR\u000e\u0010\u000e\u001a\u00020\tX\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u0015"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig;", "", "<init>", "()V", "API_BASE_URL", "", "API_VERSION", "FULL_API_URL", "ORDER_EXPIRE_TIME_MS", "", "POLLING_INTERVALS", "", "getPOLLING_INTERVALS", "()Ljava/util/List;", "MAX_POLLING_TIME_MS", "Prefs", "TokenConfig", "AssetCode", "NetworkCode", "OrderStatus", "PurchaseType", "app_fdroidDebug"})
 public final class PaymentConfig {
     
     /**
      * API 基础 URL
      */
     @org.jetbrains.annotations.NotNull()
-    public static final java.lang.String API_BASE_URL = "http://154.37.208.72:3000/";
+    public static final java.lang.String API_BASE_URL = "https://api.residential-agent.com/";
     
     /**
      * 客户端 API 版本
@@ -22,7 +22,7 @@ public final class PaymentConfig {
      * 完整 API 基础 URL
      */
     @org.jetbrains.annotations.NotNull()
-    public static final java.lang.String FULL_API_URL = "http://154.37.208.72:3000/api/client/v1";
+    public static final java.lang.String FULL_API_URL = "https://api.residential-agent.com/api/client/v1";
     
     /**
      * 订单过期时间（毫秒）
@@ -57,16 +57,35 @@ public final class PaymentConfig {
     /**
      * 支持的支付资产
      */
-    @kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\u0014\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\u0002\b\u00c6\u0002\u0018\u00002\u00020\u0001B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u0007"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig$AssetCode;", "", "<init>", "()V", "SOL", "", "USDT_TRC20", "app_fdroidDebug"})
+    @kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\u0014\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\u0003\b\u00c6\u0002\u0018\u00002\u00020\u0001B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0007\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\b"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig$AssetCode;", "", "<init>", "()V", "SOL", "", "USDT", "USDT_TRC20", "app_fdroidDebug"})
     public static final class AssetCode {
         @org.jetbrains.annotations.NotNull()
         public static final java.lang.String SOL = "SOL";
+        @org.jetbrains.annotations.NotNull()
+        public static final java.lang.String USDT = "USDT";
         @org.jetbrains.annotations.NotNull()
         public static final java.lang.String USDT_TRC20 = "USDT";
         @org.jetbrains.annotations.NotNull()
         public static final com.v2ray.ang.payment.PaymentConfig.AssetCode INSTANCE = null;
         
         private AssetCode() {
+            super();
+        }
+    }
+    
+    /**
+     * 支持的支付网络
+     */
+    @kotlin.Metadata(mv = {2, 2, 0}, k = 1, xi = 48, d1 = {"\u0000\u0014\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0003\n\u0002\u0010\u000e\n\u0002\b\u0002\b\u00c6\u0002\u0018\u00002\u00020\u0001B\t\b\u0002\u00a2\u0006\u0004\b\u0002\u0010\u0003R\u000e\u0010\u0004\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0005X\u0086T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u0007"}, d2 = {"Lcom/v2ray/ang/payment/PaymentConfig$NetworkCode;", "", "<init>", "()V", "SOLANA", "", "TRON", "app_fdroidDebug"})
+    public static final class NetworkCode {
+        @org.jetbrains.annotations.NotNull()
+        public static final java.lang.String SOLANA = "SOLANA";
+        @org.jetbrains.annotations.NotNull()
+        public static final java.lang.String TRON = "TRON";
+        @org.jetbrains.annotations.NotNull()
+        public static final com.v2ray.ang.payment.PaymentConfig.NetworkCode INSTANCE = null;
+        
+        private NetworkCode() {
             super();
         }
     }

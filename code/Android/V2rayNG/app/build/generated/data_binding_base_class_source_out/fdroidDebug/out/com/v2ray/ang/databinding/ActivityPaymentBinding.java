@@ -54,6 +54,9 @@ public final class ActivityPaymentBinding implements ViewBinding {
   public final RadioButton radioUsdt;
 
   @NonNull
+  public final RadioButton radioUsdtSolana;
+
+  @NonNull
   public final TextView textAmount;
 
   @NonNull
@@ -79,7 +82,8 @@ public final class ActivityPaymentBinding implements ViewBinding {
       @NonNull MaterialButton buttonRefresh, @NonNull ImageView imageViewQR,
       @NonNull MaterialCardView layoutPaymentDetails, @NonNull ProgressBar progressBar,
       @NonNull RadioGroup radioGroupPaymentMethod, @NonNull RadioButton radioSol,
-      @NonNull RadioButton radioUsdt, @NonNull TextView textAmount, @NonNull TextView textAssetCode,
+      @NonNull RadioButton radioUsdt, @NonNull RadioButton radioUsdtSolana,
+      @NonNull TextView textAmount, @NonNull TextView textAssetCode,
       @NonNull TextView textCountdown, @NonNull TextView textOrderNo,
       @NonNull TextView textReceiveAddress, @NonNull TextView textStatus,
       @NonNull Toolbar toolbar) {
@@ -93,6 +97,7 @@ public final class ActivityPaymentBinding implements ViewBinding {
     this.radioGroupPaymentMethod = radioGroupPaymentMethod;
     this.radioSol = radioSol;
     this.radioUsdt = radioUsdt;
+    this.radioUsdtSolana = radioUsdtSolana;
     this.textAmount = textAmount;
     this.textAssetCode = textAssetCode;
     this.textCountdown = textCountdown;
@@ -183,6 +188,12 @@ public final class ActivityPaymentBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.radioUsdtSolana;
+      RadioButton radioUsdtSolana = ViewBindings.findChildViewById(rootView, id);
+      if (radioUsdtSolana == null) {
+        break missingId;
+      }
+
       id = R.id.textAmount;
       TextView textAmount = ViewBindings.findChildViewById(rootView, id);
       if (textAmount == null) {
@@ -227,8 +238,8 @@ public final class ActivityPaymentBinding implements ViewBinding {
 
       return new ActivityPaymentBinding((LinearLayout) rootView, buttonCopyAddress,
           buttonCopyAmount, buttonRefresh, imageViewQR, layoutPaymentDetails, progressBar,
-          radioGroupPaymentMethod, radioSol, radioUsdt, textAmount, textAssetCode, textCountdown,
-          textOrderNo, textReceiveAddress, textStatus, toolbar);
+          radioGroupPaymentMethod, radioSol, radioUsdt, radioUsdtSolana, textAmount, textAssetCode,
+          textCountdown, textOrderNo, textReceiveAddress, textStatus, toolbar);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

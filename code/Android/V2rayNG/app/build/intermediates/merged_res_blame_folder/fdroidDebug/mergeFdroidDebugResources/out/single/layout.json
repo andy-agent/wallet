@@ -64,6 +64,10 @@
         "source": "com.v2ray.ang.app-main-71:/layout/activity_routing_setting.xml"
     },
     {
+        "merged": "com.v2ray.ang.app-mergeFdroidDebugResources-66:/layout/item_withdrawal.xml",
+        "source": "com.v2ray.ang.app-main-71:/layout/item_withdrawal.xml"
+    },
+    {
         "merged": "com.v2ray.ang.app-mergeFdroidDebugResources-66:/layout/activity_plans.xml",
         "source": "com.v2ray.ang.app-main-71:/layout/activity_plans.xml"
     },
@@ -106,6 +110,10 @@
     {
         "merged": "com.v2ray.ang.app-mergeFdroidDebugResources-66:/layout/activity_backup.xml",
         "source": "com.v2ray.ang.app-main-71:/layout/activity_backup.xml"
+    },
+    {
+        "merged": "com.v2ray.ang.app-mergeFdroidDebugResources-66:/layout/item_commission_ledger.xml",
+        "source": "com.v2ray.ang.app-main-71:/layout/item_commission_ledger.xml"
     },
     {
         "merged": "com.v2ray.ang.app-mergeFdroidDebugResources-66:/layout/layout_address_port.xml",

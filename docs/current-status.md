@@ -6,43 +6,64 @@
 
 | 组件 | 状态 | 备注 |
 |------|------|------|
-| Backend API | 🟢 可用 | NestJS backend 已在 `154.37.208.72:3000` 真实环境跑通 `healthz` |
-| PostgreSQL | 🟢 可用 | `cryptovpn_test` 已执行 baseline + seed |
-| Android 编译 | 🟢 通过 | 本机 `compileFdroidDebugSources` 与 `assembleFdroidDebug` 已通过 |
-| Android 运行 | 🟡 部分验证 | 模拟器安装 APK 成功，`MainActivity` 启动成功，尚未完成登录/下单/邀请/提现全链路 |
-| Admin Web | 🟢 可构建 | 骨架已存在，后续由 QA 统一回归 |
+| Backend API | 🟢 可用 | `api.residential-agent.com` 已返回新 backend 的 `/api/healthz` |
+| Android 集成 | 🟢 已完成 | `liaojiang-7da` 已关闭 |
+| Android 编译/构建 | 🟢 通过 | `compileFdroidDebugSources` 与 `assembleFdroidDebug` 均通过 |
+| Android 运行验证 | 🟢 已拿到证据 | 模拟器安装 APK 成功，`MainActivity` 启动成功 |
+| 真实业务 smoke | 🟢 已推进 | `request-code / register / me / plans / orders / payment-target / referral / commissions` 已通过，提现拿到预期业务拒绝 |
+| QA 回归 | 🟡 待推进 | `liaojiang-6ag` 已成为下一主线 ready 任务 |
 
 ## 本轮完成
 
-- `liaojiang-92m` 已关闭，仓库恢复占位任务已回收。
-- `liaojiang-7da.1` 已关闭，Android 集成差距复盘与子任务拆解已完成。
-- `liaojiang-7da.2` 已关闭，Android 登录/收银台/支付网络契约已收敛：
-  - 注册流程不再写死 `123456`，改为真实验证码输入
-  - 创建订单可区分 `SOLANA` / `TRON`
-  - 订单轮询改为使用 `orderNo + refresh-status`
-- 本机 Android 验证已拿到真实证据：
-  - `env JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home /bin/sh ./gradlew :app:compileFdroidDebugSources`
-  - `env JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home /bin/sh ./gradlew :app:assembleFdroidDebug`
-  - 模拟器 `Medium_Phone_API_36.1` 启动成功
-  - `v2rayNG_2.0.17-fdroid_universal.apk` 安装成功
-  - `com.v2ray.ang.fdroid/com.v2ray.ang.ui.MainActivity` 启动后成为 resumed activity
+- 关闭 `liaojiang-7da.3`
+  - Kimi 产出已回收
+  - 邀请中心、佣金账本、提现页面接入真实 repository 方法
+  - 新增 `item_commission_ledger.xml`、`item_withdrawal.xml`
+- 关闭 `liaojiang-7da.4.1`
+  - 修复公网 API 暴露
+  - 服务器三新增并启用 `api.residential-agent.com / vpn.residential-agent.com` Nginx API 网关
+  - Cloudflare 删除了 `vpn.residential-agent.com -> 38.58.59.142` 的错误 A 记录
+  - 新增 `api.residential-agent.com -> 154.37.208.72`
+- 关闭 `liaojiang-7da.4`
+  - Android compile / assemble 通过
+  - 模拟器运行证据已取得
+  - 真实 backend smoke 已推进到业务接口级
+- 关闭 `liaojiang-7da`
+  - Android 集成主特性完成
 
-## 当前阻塞
+## 当前真实环境结论
 
-### P1 主线
+### API 域名
 
-1. `liaojiang-7da.3` Android 邀请/佣金/提现页面仍未接入真实数据加载与交互。
-2. `liaojiang-7da.4` 仍缺真实登录、下单、邀请、提现 smoke 验证。
-3. `liaojiang-6ag` QA Contract and Regression 仍被 `liaojiang-7da` 阻塞。
+- API 主入口已切为：
+  - `https://api.residential-agent.com/`
+- Android 代码已同步切换到 `api` 子域：
+  - [PaymentConfig.kt](/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/payment/PaymentConfig.kt)
 
-### 已知限制
+### 已验证通过的真实链路
 
-- `gradlew` 在当前环境下直接执行会报 Java runtime 异常，需要显式使用：
-  - `env JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home /bin/sh ./gradlew ...`
-- Android 的 `.gradle/` 和 `build/` 目录当前仍会污染 `git status`，每次验证后需要手动清理生成物。
+- `POST /api/client/v1/auth/register/email/request-code`
+- `POST /api/client/v1/auth/register/email`
+- `GET /api/client/v1/me`
+- `GET /api/client/v1/plans`
+- `POST /api/client/v1/orders`
+- `GET /api/client/v1/orders/{orderNo}/payment-target`
+- `GET /api/client/v1/referral/overview`
+- `GET /api/client/v1/commissions/summary`
+- `POST /api/client/v1/withdrawals`
+  - 当前返回 `WITHDRAW_INSUFFICIENT_AVAILABLE_BALANCE`
+  - 这是预期业务拒绝，不是网络或路由错误
+
+## 新增部署任务
+
+- 已新增：
+  - `liaojiang-2f0.1` 三机角色拆分与 `api/sol/usdt` 子域编排
+- 当前实际运行仍偏临时集中：
+  - API 面已在服务器三跑通
+  - 多机角色拆分将在后续任务中收敛为正式拓扑
 
 ## 下一步
 
-1. 实现 `InvitationCenterActivity / CommissionLedgerActivity / WithdrawalActivity` 的真实接口绑定，关闭 `liaojiang-7da.3`。
-2. 在模拟器上完成登录、下单、邀请、提现最小 smoke，推进 `liaojiang-7da.4`。
-3. 关闭 `liaojiang-7da` 后，进入 `liaojiang-6ag` QA 回归。
+1. 进入 `liaojiang-6ag`，做 QA Contract and Regression。
+2. 同步整理三机角色拆分方案，推进 `liaojiang-2f0.1`。
+3. 清理 Android 构建产物后提交本轮集成与环境变更。

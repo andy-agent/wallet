@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-03T04:30:35Z
+Generated: 2026-04-03T05:02:39Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-7da.3
-- next_task_title: Android 邀请佣金提现页面接入真实接口
+- next_task_id: liaojiang-6ag
+- next_task_title: S5 QA Contract and Regression
 
 ## Counters
-- in_progress: 3
-- ready: 0
-- open: 5
-- closed: 46
-- dirty: 2
+- in_progress: 0
+- ready: 1
+- open: 3
+- closed: 50
+- dirty: 650
 
 ## Next Milestone
 - Continue the next task and complete one milestone

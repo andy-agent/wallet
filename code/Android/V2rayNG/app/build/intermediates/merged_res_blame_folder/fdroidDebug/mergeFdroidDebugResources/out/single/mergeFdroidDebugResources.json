@@ -68,6 +68,10 @@
         "source": "com.v2ray.ang.app-main-71:/layout/layout_tls_hysteria2.xml"
     },
     {
+        "merged": "com.v2ray.ang.app-fdroidDebug-67:/layout_item_commission_ledger.xml.flat",
+        "source": "com.v2ray.ang.app-main-71:/layout/item_commission_ledger.xml"
+    },
+    {
         "merged": "com.v2ray.ang.app-fdroidDebug-67:/drawable_ic_save_24dp.xml.flat",
         "source": "com.v2ray.ang.app-main-71:/drawable/ic_save_24dp.xml"
     },
@@ -726,6 +730,10 @@
     {
         "merged": "com.v2ray.ang.app-fdroidDebug-67:/menu_menu_scanner.xml.flat",
         "source": "com.v2ray.ang.app-main-71:/menu/menu_scanner.xml"
+    },
+    {
+        "merged": "com.v2ray.ang.app-fdroidDebug-67:/layout_item_withdrawal.xml.flat",
+        "source": "com.v2ray.ang.app-main-71:/layout/item_withdrawal.xml"
     },
     {
         "merged": "com.v2ray.ang.app-fdroidDebug-67:/drawable_ic_edit_24dp.xml.flat",

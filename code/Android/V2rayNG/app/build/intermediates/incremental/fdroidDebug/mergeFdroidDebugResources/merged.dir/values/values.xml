@@ -2819,6 +2819,15 @@
     <string name="app_widget_name">Switch</string>
     <string name="appbar_scrolling_view_behavior" translatable="false">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
     <string name="asset_geo_files_sources">Geo files source (optional)</string>
+    <string name="available">Available</string>
+    <string name="available_amount">Available</string>
+    <string name="available_balance">Available Balance</string>
+    <string name="balance_info">Balance</string>
+    <string name="bind">Bind</string>
+    <string name="bind_invitation_code">Bind Invitation Code</string>
+    <string name="bind_referral_code">Bind Referral Code</string>
+    <string name="bind_referral_failed">Bind referral code failed</string>
+    <string name="bind_referral_success">Bind referral code success</string>
     <string name="bottom_sheet_behavior" translatable="false">com.google.android.material.bottomsheet.BottomSheetBehavior</string>
     <string description="A description of an accessibility action to collapse the bottom sheet [CHAR LIMIT=NONE]" name="bottomsheet_action_collapse">Collapse the bottom sheet</string>
     <string description="A description of an accessibility action to expand the bottom sheet [CHAR LIMIT=NONE]" name="bottomsheet_action_expand">Expand the bottom sheet</string>
@@ -2836,8 +2845,12 @@
     <string name="character_counter_overflowed_content_description">Character limit exceeded %1$d of %2$d</string>
     <string name="character_counter_pattern" translatable="false">%1$d/%2$d</string>
     <string name="clear_text_end_icon_content_description">Clear text</string>
+    <string name="commission_balance">Commission Balance</string>
+    <string name="commission_ledger">Commission Ledger</string>
+    <string name="commission_summary">Commission Summary</string>
     <string name="confirm">Confirm</string>
     <string name="confirm_logout">Confirm Logout</string>
+    <string name="confirm_withdrawal">Confirm Withdrawal</string>
     <string name="connection_connected">Connected, tap to check connection</string>
     <string name="connection_not_connected">Not connected</string>
     <string name="connection_runing_task_left">Number of running test tasks: %s</string>
@@ -2859,14 +2872,20 @@
     <string description="Screen reader announcement for when a checkbox is on error. [CHAR LIMIT=NONE]" name="error_a11y_label">
     Error: invalid
   </string>
+    <string name="error_address_required">Please enter payout address</string>
+    <string name="error_amount_required">Please enter amount</string>
+    <string name="error_amount_too_large">Amount exceeds available balance</string>
+    <string name="error_amount_too_small">Minimum withdrawal is %s</string>
     <string name="error_email_invalid">Invalid email format</string>
     <string name="error_icon_content_description">Error</string>
+    <string name="error_invalid_amount">Invalid amount</string>
     <string name="error_invalid_input">Invalid input: %s</string>
     <string name="error_network">Network connection failed, please check your network</string>
     <string name="error_operation_failed">Operation failed: %s</string>
     <string name="error_password_requirements">Password must contain uppercase, lowercase and numbers</string>
     <string name="error_password_too_short">Password must be at least 8 characters</string>
     <string name="error_passwords_not_match">Passwords do not match</string>
+    <string name="error_referral_code_empty">Please enter referral code</string>
     <string name="error_unauthorized">Invalid email or password</string>
     <string name="error_user_exists">Username already exists</string>
     <string name="error_username_invalid">Invalid email format</string>
@@ -2878,18 +2897,31 @@
     <string name="exposed_dropdown_menu_content_description">Show dropdown menu</string>
     <string name="fab_transformation_scrim_behavior" translatable="false">com.google.android.material.transformation.FabTransformationScrimBehavior</string>
     <string name="fab_transformation_sheet_behavior" translatable="false">com.google.android.material.transformation.FabTransformationSheetBehavior</string>
+    <string name="fail_reason">Fail Reason</string>
     <string name="filter_config_all">All</string>
+    <string name="frozen">Frozen</string>
+    <string name="frozen_amount">Frozen</string>
     <string name="go_to_login">Go to Login</string>
     <string name="has_account_hint">Already have an account?</string>
     <string name="hide_bottom_view_on_scroll_behavior" translatable="false">com.google.android.material.behavior.HideBottomViewOnScrollBehavior</string>
     <string name="hint_confirm_password">Confirm Password</string>
     <string name="hint_email_optional">Email (Optional)</string>
     <string name="hint_password">Password</string>
+    <string name="hint_referral_code">Referral Code</string>
     <string name="hint_username">Email</string>
+    <string name="hint_verification_code">Verification Code</string>
     <string description="Content description for an icon that appears in the title area of a dialog" name="icon_content_description">Dialog Icon</string>
     <string name="import_subscription_failure">Import subscription failed</string>
     <string name="import_subscription_success">Subscription imported Successfully</string>
+    <string name="income_stats">Income Stats</string>
+    <string name="invite_stats">Invite Stats</string>
     <string name="item_view_role_description">Tab</string>
+    <string name="level1">Level 1</string>
+    <string name="level1_income">Level 1 Income</string>
+    <string name="level1_invites">Level 1 Invites</string>
+    <string name="level2">Level 2</string>
+    <string name="level2_income">Level 2 Income</string>
+    <string name="level2_invites">Level 2 Invites</string>
     <string name="library_zxingandroidembedded_author" translatable="false">JourneyApps</string>
     <string name="library_zxingandroidembedded_authorWebsite" translatable="false">https://journeyapps.com/</string>
     <string name="library_zxingandroidembedded_isOpenSource" translatable="false">true</string>
@@ -2978,6 +3010,8 @@
     <string name="menu_item_select_proxy_app">Auto select proxy app</string>
     <string name="migration_fail">Data migration failed!</string>
     <string name="migration_success">Data migration success!</string>
+    <string name="min_withdraw_amount">Min Withdraw</string>
+    <string name="minimum">Minimum</string>
     <string name="msg_dialog_progress">Loading</string>
     <string name="msg_downloading_content">Downloading content</string>
     <string name="msg_enter_keywords">Enter keywords</string>
@@ -3055,6 +3089,7 @@
     <string name="mtrl_switch_track_path" translatable="false">M0,16 A16,16 0 0,1 16,0 H36 A16,16 0 0,1 36,32 H16 A16,16 0 0,1 0,16</string>
     <string description="Button text to indicate that the widget will ignore the user&apos;s selection [CHAR_LIMIT=16]" name="mtrl_timepicker_cancel">Cancel</string>
     <string description="Button text to indicate that the widget will save the user&apos;s selection [CHAR_LIMIT=16]" name="mtrl_timepicker_confirm">OK</string>
+    <string name="my_referral_code">My Referral Code</string>
     <string name="nav_purchase">Purchase Plan</string>
     <string description="Screen reader announcement for when navigation rail is collapsed [CHAR LIMIT=NONE]" name="nav_rail_collapsed_a11y_label">
     Collapsed
@@ -3064,10 +3099,13 @@
   </string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="new_withdrawal">New Withdrawal</string>
     <string name="no_account_hint">Don\'t have an account?</string>
     <string name="no_active_subscription">No active subscription</string>
+    <string name="no_ledger_records">No ledger records</string>
     <string name="no_orders_yet">No orders yet</string>
     <string name="no_plans_available">No plans available</string>
+    <string name="no_withdrawals">No withdrawals yet</string>
     <string name="not_logged_in">Not logged in</string>
     <string name="not_set">Not Set</string>
     <string name="notification_action_more">Click for more</string>
@@ -3086,7 +3124,10 @@
     <string name="payment_amount">Amount:</string>
     <string name="payment_sol">SOL</string>
     <string name="payment_status">Status:</string>
+    <string name="payment_usdt_solana">USDT-Solana</string>
     <string name="payment_usdt_trc20">USDT-TRC20</string>
+    <string name="payout_address">Payout Address</string>
+    <string name="payout_address_hint">SOL/USDT address</string>
     <string name="per_app_proxy_settings">Per-app settings</string>
     <string name="per_app_proxy_settings_enable">Enable per-app</string>
     <string name="placeholder_commission_ledger">Commission summary and ledger records will appear here after API integration.</string>
@@ -3100,13 +3141,17 @@
     <string name="quickie_please_wait">Please wait…</string>
     <string name="quickie_scan_qr_code">Scan QR code</string>
     <string name="receiving_address">Receiving Address:</string>
+    <string name="referral_bound">Bound</string>
+    <string name="referral_not_bound">Not Bound</string>
     <string name="refresh">Refresh</string>
     <string name="refresh_failed">Refresh failed</string>
     <string name="refresh_status">Refresh Status</string>
     <string name="register">Register</string>
+    <string name="register_code_sent">Verification code requested. Please check your email and enter the code to complete registration.</string>
     <string name="register_now">Register now</string>
     <string name="register_subtitle">Create a new account</string>
     <string name="register_success">Registration successful</string>
+    <string name="request_no">Request No</string>
     <string name="routing_settings_add_rule">Add rule</string>
     <string name="routing_settings_delete">Clear</string>
     <string name="routing_settings_domain" translatable="false">domain</string>
@@ -3198,14 +3243,21 @@
     <string name="server_lab_xhttp_extra">XHTTP Extra raw JSON, format: { XHTTPObject }</string>
     <string name="server_lab_xhttp_mode">XHTTP Mode</string>
     <string name="server_obfs_password">Obfs password</string>
+    <string name="settlement_asset">Settlement Asset</string>
     <string description="Title of the side sheet&apos;s accessibility pane that is spoken by TalkBack when the side sheet appears on screen. [CHAR_LIMIT=NONE]" name="side_sheet_accessibility_pane_title">Side Sheet</string>
     <string name="side_sheet_behavior" translatable="false">com.google.android.material.sidesheet.SideSheetBehavior</string>
     <string name="status">Status</string>
+    <string name="status_available">Available</string>
     <string name="status_bar_notification_info_overflow">999+</string>
     <string name="status_cancelled">Cancelled</string>
+    <string name="status_failed">Failed</string>
+    <string name="status_frozen">Frozen</string>
     <string name="status_fulfilled">Completed</string>
     <string name="status_paid">Paid</string>
     <string name="status_pending">Pending Payment</string>
+    <string name="status_rejected">Rejected</string>
+    <string name="status_reviewing">Reviewing</string>
+    <string name="status_settled">Settled</string>
     <string name="sub_allow_insecure_url">Allow insecure HTTP address</string>
     <string name="sub_auto_update">Enable automatic update</string>
     <string name="sub_setting_enable">Enable update</string>
@@ -3216,6 +3268,7 @@
     <string name="sub_setting_remarks">remarks</string>
     <string name="sub_setting_url">Optional URL</string>
     <string name="sub_setting_user_agent">User Agent</string>
+    <string name="submit_withdrawal">Submit</string>
     <string name="subscription_status">Subscription Status</string>
     <string name="summary_collapsed_preference_list"><ns2:g id="current_items">%1$s</ns2:g>, <ns2:g id="added_items">%2$s</ns2:g></string>
     <string name="summary_pref_allow_insecure">When TLS is selected, allow insecure connections by default</string>
@@ -3393,6 +3446,14 @@
     <string name="username">Username</string>
     <string name="v7_preference_off">OFF</string>
     <string name="v7_preference_on">ON</string>
+    <string name="withdrawal_amount">Amount</string>
+    <string name="withdrawal_confirm_message">Withdraw %1$s to address:\n%2$s</string>
+    <string name="withdrawal_detail">Withdrawal Detail</string>
+    <string name="withdrawal_failed">Withdrawal failed</string>
+    <string name="withdrawal_history">Withdrawal History</string>
+    <string name="withdrawal_submitted">Withdrawal submitted</string>
+    <string name="withdrawing_amount">Withdrawing</string>
+    <string name="withdrawn_total">Total Withdrawn</string>
     <string name="zxing_app_name">Barcode Scanner</string>
     <string name="zxing_button_ok">OK</string>
     <string name="zxing_msg_camera_framework_bug">Sorry, the Android camera encountered a problem. You may need to restart the device.</string>

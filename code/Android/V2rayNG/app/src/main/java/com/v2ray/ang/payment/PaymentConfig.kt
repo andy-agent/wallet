@@ -8,7 +8,7 @@ object PaymentConfig {
     /**
      * API 基础 URL
      */
-    const val API_BASE_URL = "http://154.37.208.72:3000/"
+    const val API_BASE_URL = "https://api.residential-agent.com/"
     
     /**
      * 客户端 API 版本

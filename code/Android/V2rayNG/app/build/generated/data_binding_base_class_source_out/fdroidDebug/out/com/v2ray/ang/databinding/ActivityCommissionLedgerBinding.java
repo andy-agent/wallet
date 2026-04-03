@@ -5,19 +5,60 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
+import androidx.viewbinding.ViewBindings;
+import com.google.android.material.button.MaterialButton;
 import com.v2ray.ang.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
+import java.lang.String;
 
 public final class ActivityCommissionLedgerBinding implements ViewBinding {
   @NonNull
   private final LinearLayout rootView;
 
-  private ActivityCommissionLedgerBinding(@NonNull LinearLayout rootView) {
+  @NonNull
+  public final MaterialButton buttonRefresh;
+
+  @NonNull
+  public final RecyclerView recyclerViewLedger;
+
+  @NonNull
+  public final TextView textAvailableAmount;
+
+  @NonNull
+  public final TextView textEmptyLedger;
+
+  @NonNull
+  public final TextView textFrozenAmount;
+
+  @NonNull
+  public final TextView textSettlementAsset;
+
+  @NonNull
+  public final TextView textWithdrawingAmount;
+
+  @NonNull
+  public final TextView textWithdrawnTotal;
+
+  private ActivityCommissionLedgerBinding(@NonNull LinearLayout rootView,
+      @NonNull MaterialButton buttonRefresh, @NonNull RecyclerView recyclerViewLedger,
+      @NonNull TextView textAvailableAmount, @NonNull TextView textEmptyLedger,
+      @NonNull TextView textFrozenAmount, @NonNull TextView textSettlementAsset,
+      @NonNull TextView textWithdrawingAmount, @NonNull TextView textWithdrawnTotal) {
     this.rootView = rootView;
+    this.buttonRefresh = buttonRefresh;
+    this.recyclerViewLedger = recyclerViewLedger;
+    this.textAvailableAmount = textAvailableAmount;
+    this.textEmptyLedger = textEmptyLedger;
+    this.textFrozenAmount = textFrozenAmount;
+    this.textSettlementAsset = textSettlementAsset;
+    this.textWithdrawingAmount = textWithdrawingAmount;
+    this.textWithdrawnTotal = textWithdrawnTotal;
   }
 
   @Override
@@ -43,10 +84,63 @@ public final class ActivityCommissionLedgerBinding implements ViewBinding {
 
   @NonNull
   public static ActivityCommissionLedgerBinding bind(@NonNull View rootView) {
-    if (rootView == null) {
-      throw new NullPointerException("rootView");
-    }
+    // The body of this method is generated in a way you would not otherwise write.
+    // This is done to optimize the compiled bytecode for size and performance.
+    int id;
+    missingId: {
+      id = R.id.buttonRefresh;
+      MaterialButton buttonRefresh = ViewBindings.findChildViewById(rootView, id);
+      if (buttonRefresh == null) {
+        break missingId;
+      }
 
-    return new ActivityCommissionLedgerBinding((LinearLayout) rootView);
+      id = R.id.recyclerViewLedger;
+      RecyclerView recyclerViewLedger = ViewBindings.findChildViewById(rootView, id);
+      if (recyclerViewLedger == null) {
+        break missingId;
+      }
+
+      id = R.id.textAvailableAmount;
+      TextView textAvailableAmount = ViewBindings.findChildViewById(rootView, id);
+      if (textAvailableAmount == null) {
+        break missingId;
+      }
+
+      id = R.id.textEmptyLedger;
+      TextView textEmptyLedger = ViewBindings.findChildViewById(rootView, id);
+      if (textEmptyLedger == null) {
+        break missingId;
+      }
+
+      id = R.id.textFrozenAmount;
+      TextView textFrozenAmount = ViewBindings.findChildViewById(rootView, id);
+      if (textFrozenAmount == null) {
+        break missingId;
+      }
+
+      id = R.id.textSettlementAsset;
+      TextView textSettlementAsset = ViewBindings.findChildViewById(rootView, id);
+      if (textSettlementAsset == null) {
+        break missingId;
+      }
+
+      id = R.id.textWithdrawingAmount;
+      TextView textWithdrawingAmount = ViewBindings.findChildViewById(rootView, id);
+      if (textWithdrawingAmount == null) {
+        break missingId;
+      }
+
+      id = R.id.textWithdrawnTotal;
+      TextView textWithdrawnTotal = ViewBindings.findChildViewById(rootView, id);
+      if (textWithdrawnTotal == null) {
+        break missingId;
+      }
+
+      return new ActivityCommissionLedgerBinding((LinearLayout) rootView, buttonRefresh,
+          recyclerViewLedger, textAvailableAmount, textEmptyLedger, textFrozenAmount,
+          textSettlementAsset, textWithdrawingAmount, textWithdrawnTotal);
+    }
+    String missingId = rootView.getResources().getResourceName(id);
+    throw new NullPointerException("Missing required view with ID: ".concat(missingId));
   }
 }

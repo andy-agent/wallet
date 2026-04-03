@@ -5,19 +5,61 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ScrollView;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
+import androidx.viewbinding.ViewBindings;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 import com.v2ray.ang.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
+import java.lang.String;
 
 public final class ActivityWithdrawalBinding implements ViewBinding {
   @NonNull
   private final ScrollView rootView;
 
-  private ActivityWithdrawalBinding(@NonNull ScrollView rootView) {
+  @NonNull
+  public final MaterialButton buttonRefresh;
+
+  @NonNull
+  public final MaterialButton buttonSubmitWithdrawal;
+
+  @NonNull
+  public final TextInputEditText editAmount;
+
+  @NonNull
+  public final TextInputEditText editPayoutAddress;
+
+  @NonNull
+  public final RecyclerView recyclerViewWithdrawals;
+
+  @NonNull
+  public final TextView textAvailableAmount;
+
+  @NonNull
+  public final TextView textEmptyWithdrawals;
+
+  @NonNull
+  public final TextView textMinWithdrawAmount;
+
+  private ActivityWithdrawalBinding(@NonNull ScrollView rootView,
+      @NonNull MaterialButton buttonRefresh, @NonNull MaterialButton buttonSubmitWithdrawal,
+      @NonNull TextInputEditText editAmount, @NonNull TextInputEditText editPayoutAddress,
+      @NonNull RecyclerView recyclerViewWithdrawals, @NonNull TextView textAvailableAmount,
+      @NonNull TextView textEmptyWithdrawals, @NonNull TextView textMinWithdrawAmount) {
     this.rootView = rootView;
+    this.buttonRefresh = buttonRefresh;
+    this.buttonSubmitWithdrawal = buttonSubmitWithdrawal;
+    this.editAmount = editAmount;
+    this.editPayoutAddress = editPayoutAddress;
+    this.recyclerViewWithdrawals = recyclerViewWithdrawals;
+    this.textAvailableAmount = textAvailableAmount;
+    this.textEmptyWithdrawals = textEmptyWithdrawals;
+    this.textMinWithdrawAmount = textMinWithdrawAmount;
   }
 
   @Override
@@ -43,10 +85,63 @@ public final class ActivityWithdrawalBinding implements ViewBinding {
 
   @NonNull
   public static ActivityWithdrawalBinding bind(@NonNull View rootView) {
-    if (rootView == null) {
-      throw new NullPointerException("rootView");
-    }
+    // The body of this method is generated in a way you would not otherwise write.
+    // This is done to optimize the compiled bytecode for size and performance.
+    int id;
+    missingId: {
+      id = R.id.buttonRefresh;
+      MaterialButton buttonRefresh = ViewBindings.findChildViewById(rootView, id);
+      if (buttonRefresh == null) {
+        break missingId;
+      }
 
-    return new ActivityWithdrawalBinding((ScrollView) rootView);
+      id = R.id.buttonSubmitWithdrawal;
+      MaterialButton buttonSubmitWithdrawal = ViewBindings.findChildViewById(rootView, id);
+      if (buttonSubmitWithdrawal == null) {
+        break missingId;
+      }
+
+      id = R.id.editAmount;
+      TextInputEditText editAmount = ViewBindings.findChildViewById(rootView, id);
+      if (editAmount == null) {
+        break missingId;
+      }
+
+      id = R.id.editPayoutAddress;
+      TextInputEditText editPayoutAddress = ViewBindings.findChildViewById(rootView, id);
+      if (editPayoutAddress == null) {
+        break missingId;
+      }
+
+      id = R.id.recyclerViewWithdrawals;
+      RecyclerView recyclerViewWithdrawals = ViewBindings.findChildViewById(rootView, id);
+      if (recyclerViewWithdrawals == null) {
+        break missingId;
+      }
+
+      id = R.id.textAvailableAmount;
+      TextView textAvailableAmount = ViewBindings.findChildViewById(rootView, id);
+      if (textAvailableAmount == null) {
+        break missingId;
+      }
+
+      id = R.id.textEmptyWithdrawals;
+      TextView textEmptyWithdrawals = ViewBindings.findChildViewById(rootView, id);
+      if (textEmptyWithdrawals == null) {
+        break missingId;
+      }
+
+      id = R.id.textMinWithdrawAmount;
+      TextView textMinWithdrawAmount = ViewBindings.findChildViewById(rootView, id);
+      if (textMinWithdrawAmount == null) {
+        break missingId;
+      }
+
+      return new ActivityWithdrawalBinding((ScrollView) rootView, buttonRefresh,
+          buttonSubmitWithdrawal, editAmount, editPayoutAddress, recyclerViewWithdrawals,
+          textAvailableAmount, textEmptyWithdrawals, textMinWithdrawAmount);
+    }
+    String missingId = rootView.getResources().getResourceName(id);
+    throw new NullPointerException("Missing required view with ID: ".concat(missingId));
   }
 }
