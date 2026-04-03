@@ -8,8 +8,8 @@
 |------|------|------|
 | Backend API | 🟢 可用 | `api.residential-agent.com` 已固化为唯一 API 入口 |
 | DB / Redis | 🟢 已剥离 | 状态服务物理落在服务器二，API 机通过本地隧道端口访问 |
-| Android 集成 | 🟡 进入 Compose 并入阶段 | 现有 XML App 保持可用，`vpnui` 并入方案已冻结 |
-| Android 编译/构建 | 🟡 Compose 接入中 | `4j0.9` 正在接入 Compose runtime 与容器入口 |
+| Android 集成 | 🟡 进入 Compose 并入阶段 | 现有 XML App 保持可用，`vpnui` 并入方案与目录裁决均已冻结 |
+| Android 编译/构建 | 🟡 第一棒接入中 | `4j0.9` 只负责 Compose runtime 与容器入口，不代表整个迁移完成 |
 | Android 运行验证 | 🟢 已有旧链路证据 | 旧 APK 安装与启动证据已拿到，新的 Compose 容器仍在接入中 |
 | 真实业务 smoke | 🟢 已推进 | 基础接口 smoke 已通过，订单最小链路已通过远程 Solana 服务完成真实 smoke |
 | Sol 链侧服务 | 🟢 可用 | `sol.residential-agent.com` 内外健康检查均通过 |
@@ -136,9 +136,33 @@
 
 ## 当前主线任务
 
-- 当前主线已切到 App Compose 并入第一棒：
-  - `liaojiang-4j0.9`
-- 该任务目标是：
+### App 主线顺序
+
+1. `liaojiang-4j0.7`
+   - `vpnui` 唯一页面目录裁决
+   - 已完成
+2. `liaojiang-4j0.8`
+   - `vpnui` 并入现有 `V2rayNG` 的组合方案
+   - 已完成
+3. `liaojiang-4j0.9`
+   - 接入 Compose runtime 与 `ComposeContainerActivity`
+   - 当前进行中
+4. `liaojiang-4j0.10`
+   - 迁移 `vpnui` 最终保留目录到 `com.v2ray.ang.composeui` 骨架
+5. `liaojiang-4j0.11`
+   - 桥接 Splash/Auth Compose 页面到现有登录与版本检查逻辑
+6. `liaojiang-4j0.12`
+   - 桥接 VPN/订单 Compose 页面到现有订阅与订单逻辑
+7. `liaojiang-4j0.13`
+   - 桥接钱包/增长/个人/法务 Compose 页面到现有数据层
+8. `liaojiang-4j0.5`
+   - 基于上述桥接结果形成可回归的 Android 页面改造落地
+9. `liaojiang-4j0.2`
+   - 最终 Android 真实环境登录/下单/支付页回归
+
+### 当前唯一活跃实现任务
+
+- `liaojiang-4j0.9`
   - 在现有 `V2rayNG` 工程中接入 Compose runtime
   - 新增 `ComposeContainerActivity`
   - 为后续 `vpnui` 页面并入提供运行容器
@@ -147,4 +171,5 @@
 
 1. 等 `liaojiang-4j0.9` 完成并验收。
 2. 完成后进入 `liaojiang-4j0.10`，迁移 `vpnui` 最终保留目录到 `com.v2ray.ang.composeui` 骨架。
-3. 后续再按 `4j0.11/4j0.12/4j0.13` 分阶段桥接页面到现有数据层。
+3. 再按 `4j0.11 / 4j0.12 / 4j0.13` 分域桥接页面到现有数据层。
+4. 最后进入 `4j0.5` 和 `4j0.2`，做完整 UI 落地与最终真实环境回归。

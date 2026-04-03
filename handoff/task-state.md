@@ -1,9 +1,9 @@
 # Task State
 
-- Updated At: 2026-04-04 01:20 +08:00
+- Updated At: 2026-04-04 01:49 +08:00
 - Repository: /Users/cnyirui/git/projects/liaojiang
 - Next Task: `liaojiang-4j0.9` 接入 Compose 运行时与 ComposeContainerActivity
-- Counts: `open=6` `in_progress=3` `closed=103` `ready=0`
+- Counts: `open=6` `in_progress=3` `closed=103` `ready=1`
 - Dirty Files:
   - `.codex/recovery-state.json`
   - `docs/current-status.md`
