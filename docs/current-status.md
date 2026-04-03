@@ -8,13 +8,14 @@
 |------|------|------|
 | Backend API | 🟢 可用 | `api.residential-agent.com` 已固化为唯一 API 入口 |
 | DB / Redis | 🟢 已剥离 | 状态服务物理落在服务器二，API 机通过本地隧道端口访问 |
-| Android 集成 | 🟢 已完成 | `liaojiang-7da` 已关闭 |
-| Android 编译/构建 | 🟢 通过 | `compileFdroidDebugSources` 与 `assembleFdroidDebug` 均通过 |
-| Android 运行验证 | 🟢 已拿到证据 | 模拟器安装 APK 成功，`MainActivity` 启动成功 |
+| Android 集成 | 🟡 进入 Compose 并入阶段 | 现有 XML App 保持可用，`vpnui` 并入方案已冻结 |
+| Android 编译/构建 | 🟡 Compose 接入中 | `4j0.9` 正在接入 Compose runtime 与容器入口 |
+| Android 运行验证 | 🟢 已有旧链路证据 | 旧 APK 安装与启动证据已拿到，新的 Compose 容器仍在接入中 |
 | 真实业务 smoke | 🟢 已推进 | 基础接口 smoke 已通过，订单最小链路已通过远程 Solana 服务完成真实 smoke |
 | Sol 链侧服务 | 🟢 可用 | `sol.residential-agent.com` 内外健康检查均通过 |
 | USDT/TRON 链侧服务 | 🟢 可用 | `usdt.residential-agent.com` 已接真实 TRON RPC，健康/区块/交易查询通过 |
 | 链侧客户端接线 | 🟢 已完成最小链路 | `liaojiang-rcb.14` 已关闭，订单最小链路已接远程链侧 |
+| Admin 后台 | 🟢 已完成最小真实部署 | `liaojiang-f93` 已关闭，后台可从 `/admin/` 访问并联调最小 admin API |
 
 ## 本轮完成
 
@@ -52,6 +53,21 @@
   - APK 已重新安装到模拟器
   - launcher 启动成功
   - 最近 logcat 未见 immediate crash
+- 完成 `liaojiang-f93`
+  - backend admin 最小域已补齐
+  - admin-web 已对齐现有 backend admin 契约
+  - 后台已部署到 `https://api.residential-agent.com/admin/`
+  - 真实环境已验证：
+    - `POST /api/admin/v1/auth/login`
+    - `GET /api/admin/v1/dashboard/summary`
+    - `GET /api/admin/v1/orders`
+    - `GET /api/admin/v1/withdrawals`
+- 完成 `liaojiang-4j0.7`
+  - [VPNUI_DIRECTORY_DECISION.md](/Users/cnyirui/git/projects/liaojiang/docs/VPNUI_DIRECTORY_DECISION.md) 已生成
+  - 已明确 `batch1~5` 逻辑废弃/仅参考，业务域目录为最终并入源
+- 完成 `liaojiang-4j0.8`
+  - [VPNUI_INTEGRATION_PLAN.md](/Users/cnyirui/git/projects/liaojiang/docs/VPNUI_INTEGRATION_PLAN.md) 已生成
+  - 已冻结 `vpnui` 作为 Compose UI 资产包并入现有 `V2rayNG` 的推荐方案
 
 ## 当前真实环境结论
 
@@ -81,6 +97,10 @@
   - SOLANA 订单 `ORD-1775219239579`
   - `payment-target.serviceEnabled = true`
   - 提交真实主网签名后状态推进到 `COMPLETED`
+- 后台真实链路证据:
+  - `https://api.residential-agent.com/admin/` 可访问
+  - admin login 返回真实 token
+  - dashboard / orders / withdrawals admin API 返回 200
 
 ### 三机拆分现状
 
@@ -116,14 +136,15 @@
 
 ## 当前主线任务
 
-- 当前主线已进入最后阶段：
-  - `liaojiang-4j0.2`
+- 当前主线已切到 App Compose 并入第一棒：
+  - `liaojiang-4j0.9`
 - 该任务目标是：
-  - 在最新 Android APK 上验证登录、下单、支付页与真实 API 的联通
-  - 完成最后一轮真实环境页面级回归
+  - 在现有 `V2rayNG` 工程中接入 Compose runtime
+  - 新增 `ComposeContainerActivity`
+  - 为后续 `vpnui` 页面并入提供运行容器
 
 ## 下一步
 
-1. 进入 `liaojiang-4j0.2`，做 Android 真实环境登录/下单/支付页回归。
-2. 复核模拟器权限弹窗后的主页面与关键导航。
-3. 完成最终验收结论，并决定是否收口剩余长期拓扑任务 `liaojiang-rcb`。
+1. 等 `liaojiang-4j0.9` 完成并验收。
+2. 完成后进入 `liaojiang-4j0.10`，迁移 `vpnui` 最终保留目录到 `com.v2ray.ang.composeui` 骨架。
+3. 后续再按 `4j0.11/4j0.12/4j0.13` 分阶段桥接页面到现有数据层。
