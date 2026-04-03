@@ -218,7 +218,9 @@ export class SolanaRpcService {
     
     // 添加 10 秒超时
     const transaction = await Promise.race([
-      connection.getTransaction(signature),
+      connection.getTransaction(signature, {
+        maxSupportedTransactionVersion: 0,
+      }),
       new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('RPC timeout')), 10000)
       ),
