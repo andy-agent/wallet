@@ -4,23 +4,18 @@ import {
   Card,
   Input,
   Select,
-  DatePicker,
   Button,
   Space,
   Tag,
   Modal,
   Descriptions,
-  message,
-  Popconfirm,
   Row,
   Col,
 } from 'antd';
-import { SearchOutlined, ReloadOutlined, EyeOutlined, CheckOutlined, RedoOutlined, StopOutlined } from '@ant-design/icons';
-import { getOrders, getOrderDetail, manualFulfillOrder, retryFulfillOrder, ignoreOrder } from '../api';
+import { SearchOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
+import { getOrders, getOrderDetail } from '../api';
 import { formatDateTime, formatAmount, getOrderStatusText } from '../utils/format';
 import type { Order, OrderListResponse, OrderQueryParams } from '../types';
-
-const { RangePicker } = DatePicker;
 
 const Orders: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -30,13 +25,13 @@ const Orders: React.FC = () => {
     page: 1,
     page_size: 20,
   });
+  // NOTE: 对齐后端参数命名: page, pageSize, orderNo, status, email
   const [queryParams, setQueryParams] = useState<OrderQueryParams>({
     page: 1,
-    page_size: 20,
+    pageSize: 20,
   });
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -62,7 +57,7 @@ const Orders: React.FC = () => {
   const handleReset = () => {
     setQueryParams({
       page: 1,
-      page_size: 20,
+      pageSize: 20,
     });
   };
 
@@ -70,58 +65,24 @@ const Orders: React.FC = () => {
     setQueryParams(prev => ({
       ...prev,
       page: pagination.current,
-      page_size: pagination.pageSize,
+      pageSize: pagination.pageSize,
     }));
   };
 
-  const showDetail = async (id: string) => {
+  const showDetail = async (orderNo: string) => {
     try {
-      const order = await getOrderDetail(id);
+      const order = await getOrderDetail(orderNo);
       setSelectedOrder(order);
       setDetailModalVisible(true);
     } catch (error) {
-      message.error('获取订单详情失败');
+      console.error('获取订单详情失败:', error);
     }
   };
 
-  const handleManualFulfill = async (id: string) => {
-    setActionLoading(true);
-    try {
-      await manualFulfillOrder(id);
-      message.success('人工确认成功');
-      fetchOrders();
-    } catch (error) {
-      message.error('操作失败');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleRetryFulfill = async (id: string) => {
-    setActionLoading(true);
-    try {
-      await retryFulfillOrder(id);
-      message.success('重试发货成功');
-      fetchOrders();
-    } catch (error) {
-      message.error('操作失败');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleIgnore = async (id: string) => {
-    setActionLoading(true);
-    try {
-      await ignoreOrder(id);
-      message.success('已标记为忽略');
-      fetchOrders();
-    } catch (error) {
-      message.error('操作失败');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+  // NOTE: 以下写操作后端暂未提供，暂时注释掉
+  // const handleManualFulfill = async (id: string) => { ... }
+  // const handleRetryFulfill = async (id: string) => { ... }
+  // const handleIgnore = async (id: string) => { ... }
 
   const columns = [
     {
@@ -165,7 +126,7 @@ const Orders: React.FC = () => {
       dataIndex: 'paid_at',
       key: 'paid_at',
       width: 170,
-      render: (paid_at: string) => formatDateTime(paid_at),
+      render: (paid_at: string) => paid_at ? formatDateTime(paid_at) : '-',
     },
     {
       title: '创建时间',
@@ -177,55 +138,21 @@ const Orders: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 250,
+      width: 100,
       fixed: 'right' as const,
       render: (_: any, record: Order) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => showDetail(record.id)}
-          >
-            详情
-          </Button>
-          {record.status === 'paid' && (
-            <Popconfirm
-              title="确认人工发货"
-              description="确定要人工确认此订单吗？"
-              onConfirm={() => handleManualFulfill(record.id)}
-              okButtonProps={{ loading: actionLoading }}
-            >
-              <Button type="link" size="small" icon={<CheckOutlined />}>
-                确认
-              </Button>
-            </Popconfirm>
-          )}
-          {record.status === 'failed' && (
-            <Popconfirm
-              title="确认重试"
-              description="确定要重试发货此订单吗？"
-              onConfirm={() => handleRetryFulfill(record.id)}
-              okButtonProps={{ loading: actionLoading }}
-            >
-              <Button type="link" size="small" icon={<RedoOutlined />}>
-                重试
-              </Button>
-            </Popconfirm>
-          )}
-          {(record.status === 'pending' || record.status === 'failed') && (
-            <Popconfirm
-              title="确认忽略"
-              description="确定要忽略此订单吗？"
-              onConfirm={() => handleIgnore(record.id)}
-              okButtonProps={{ loading: actionLoading, danger: true }}
-            >
-              <Button type="link" size="small" danger icon={<StopOutlined />}>
-                忽略
-              </Button>
-            </Popconfirm>
-          )}
-        </Space>
+        <Button
+          type="link"
+          size="small"
+          icon={<EyeOutlined />}
+          onClick={() => showDetail(record.out_trade_no)}
+        >
+          详情
+        </Button>
+        /*
+          NOTE: 人工确认、重试发货、标记忽略等写操作后端暂未提供
+          待后端实现后再开启以下功能
+        */
       ),
     },
   ];
@@ -234,19 +161,28 @@ const Orders: React.FC = () => {
     <div>
       <h2 style={{ marginBottom: 24 }}>订单管理</h2>
 
-      {/* 筛选区域 */}
+      {/* 筛选区域 - 对齐后端参数: orderNo, status, email */}
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={16}>
-          <Col xs={24} sm={12} lg={6}>
+          <Col xs={24} sm={12} lg={8}>
             <Input
-              placeholder="搜索订单号/邮箱"
-              value={queryParams.keyword}
-              onChange={(e) => setQueryParams(prev => ({ ...prev, keyword: e.target.value }))}
+              placeholder="搜索订单号"
+              value={queryParams.orderNo}
+              onChange={(e) => setQueryParams(prev => ({ ...prev, orderNo: e.target.value }))}
               onPressEnter={handleSearch}
               allowClear
             />
           </Col>
-          <Col xs={24} sm={12} lg={6}>
+          <Col xs={24} sm={12} lg={8}>
+            <Input
+              placeholder="搜索用户邮箱"
+              value={queryParams.email}
+              onChange={(e) => setQueryParams(prev => ({ ...prev, email: e.target.value }))}
+              onPressEnter={handleSearch}
+              allowClear
+            />
+          </Col>
+          <Col xs={24} sm={12} lg={8}>
             <Select
               placeholder="订单状态"
               style={{ width: '100%' }}
@@ -261,27 +197,9 @@ const Orders: React.FC = () => {
               <Select.Option value="ignored">已忽略</Select.Option>
             </Select>
           </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <RangePicker
-              style={{ width: '100%' }}
-              onChange={(dates) => {
-                if (dates) {
-                  setQueryParams(prev => ({
-                    ...prev,
-                    start_date: dates[0]?.format('YYYY-MM-DD'),
-                    end_date: dates[1]?.format('YYYY-MM-DD'),
-                  }));
-                } else {
-                  setQueryParams(prev => ({
-                    ...prev,
-                    start_date: undefined,
-                    end_date: undefined,
-                  }));
-                }
-              }}
-            />
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
+        </Row>
+        <Row gutter={16} style={{ marginTop: 16 }}>
+          <Col xs={24} sm={12} lg={8}>
             <Space>
               <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
                 搜索
@@ -310,7 +228,7 @@ const Orders: React.FC = () => {
             showTotal: (total) => `共 ${total} 条`,
           }}
           onChange={handleTableChange}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 1100 }}
         />
       </Card>
 

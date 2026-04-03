@@ -33,9 +33,15 @@ request.interceptors.response.use(
   (response: AxiosResponse) => {
     const { data } = response;
     
-    // 如果响应格式是 { code, message, data }
-    if (data && typeof data.code === 'number') {
-      if (data.code !== 0 && data.code !== 200) {
+    // 后端返回格式: { requestId, code: "OK", message, data }
+    // 支持字符串 code (如 "OK") 或数字 code (如 0, 200)
+    if (data && (typeof data.code === 'string' || typeof data.code === 'number')) {
+      const code = data.code;
+      const isSuccess = 
+        (typeof code === 'string' && code === 'OK') ||
+        (typeof code === 'number' && (code === 0 || code === 200));
+      
+      if (!isSuccess) {
         message.error(data.message || '请求失败');
         return Promise.reject(new Error(data.message));
       }

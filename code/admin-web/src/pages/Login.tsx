@@ -2,21 +2,27 @@ import React, { useState } from 'react';
 import { Form, Input, Button, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { adminLogin } from '../api';
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (_values: { username: string; password: string }) => {
+  const handleSubmit = async (values: { username: string; password: string }) => {
     setLoading(true);
     try {
-      // 这里应该调用登录 API
-      // 临时模拟登录成功
-      localStorage.setItem('admin_token', 'mock_token_' + Date.now());
+      const response = await adminLogin({
+        username: values.username,
+        password: values.password,
+      });
+      
+      // 保存 token
+      localStorage.setItem('admin_token', response.accessToken);
       message.success('登录成功');
       navigate('/');
-    } catch (error) {
-      message.error('登录失败');
+    } catch (error: any) {
+      console.error('登录失败:', error);
+      message.error(error?.message || '登录失败，请检查用户名和密码');
     } finally {
       setLoading(false);
     }

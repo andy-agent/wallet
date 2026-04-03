@@ -7,18 +7,14 @@ import {
   Button,
   Space,
   Tag,
-  Modal,
-  Timeline,
-  Empty,
-  message,
   Row,
   Col,
   Input,
 } from 'antd';
-import { SearchOutlined, ReloadOutlined, HistoryOutlined } from '@ant-design/icons';
-import { getAuditLogs, getEntityAuditLogs } from '../api';
+import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { getAuditLogs } from '../api';
 import { formatDateTime, getActionText } from '../utils/format';
-import type { AuditLog, AuditLogListResponse, AuditLogQueryParams } from '../types';
+import type { AuditLogListResponse, AuditLogQueryParams } from '../types';
 
 const { RangePicker } = DatePicker;
 
@@ -30,14 +26,11 @@ const AuditLogs: React.FC = () => {
     page: 1,
     page_size: 20,
   });
+  // NOTE: 对齐后端参数命名: page, pageSize, module, actorType, targetType, dateRange
   const [queryParams, setQueryParams] = useState<AuditLogQueryParams>({
     page: 1,
-    page_size: 20,
+    pageSize: 20,
   });
-  const [traceModalVisible, setTraceModalVisible] = useState(false);
-  const [traceLogs, setTraceLogs] = useState<AuditLog[]>([]);
-  const [traceLoading, setTraceLoading] = useState(false);
-  const [traceEntity, setTraceEntity] = useState<{ type: string; id: string } | null>(null);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -63,7 +56,7 @@ const AuditLogs: React.FC = () => {
   const handleReset = () => {
     setQueryParams({
       page: 1,
-      page_size: 20,
+      pageSize: 20,
     });
   };
 
@@ -71,22 +64,8 @@ const AuditLogs: React.FC = () => {
     setQueryParams(prev => ({
       ...prev,
       page: pagination.current,
-      page_size: pagination.pageSize,
+      pageSize: pagination.pageSize,
     }));
-  };
-
-  const handleTrace = async (entityType: string, entityId: string) => {
-    setTraceEntity({ type: entityType, id: entityId });
-    setTraceModalVisible(true);
-    setTraceLoading(true);
-    try {
-      const logs = await getEntityAuditLogs(entityType, entityId);
-      setTraceLogs(logs);
-    } catch (error) {
-      message.error('获取实体追踪失败');
-    } finally {
-      setTraceLoading(false);
-    }
   };
 
   const getActionColor = (action: string): string => {
@@ -152,28 +131,20 @@ const AuditLogs: React.FC = () => {
       width: 170,
       render: (created_at: string) => formatDateTime(created_at),
     },
-    {
-      title: '操作',
-      key: 'action_col',
-      width: 120,
-      render: (_: any, record: AuditLog) => (
-        <Button
-          type="link"
-          size="small"
-          icon={<HistoryOutlined />}
-          onClick={() => handleTrace(record.entity_type, record.entity_id)}
-        >
-          追踪
-        </Button>
-      ),
-    },
+    // NOTE: 实体追踪功能后端暂未提供
+    // {
+    //   title: '操作',
+    //   key: 'action_col',
+    //   width: 120,
+    //   render: (_: any, record: AuditLog) => (...),
+    // },
   ];
 
   return (
     <div>
       <h2 style={{ marginBottom: 24 }}>审计日志</h2>
 
-      {/* 筛选区域 */}
+      {/* 筛选区域 - 对齐后端参数: module, actorType, targetType, dateRange */}
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={12} lg={6}>
@@ -194,6 +165,32 @@ const AuditLogs: React.FC = () => {
               <Select.Option value="logout">登出</Select.Option>
             </Select>
           </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <Input
+              placeholder="模块 (module)"
+              value={queryParams.module}
+              onChange={(e) => setQueryParams(prev => ({ ...prev, module: e.target.value }))}
+              allowClear
+            />
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <Input
+              placeholder="操作者类型 (actorType)"
+              value={queryParams.actorType}
+              onChange={(e) => setQueryParams(prev => ({ ...prev, actorType: e.target.value }))}
+              allowClear
+            />
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <Input
+              placeholder="目标类型 (targetType)"
+              value={queryParams.targetType}
+              onChange={(e) => setQueryParams(prev => ({ ...prev, targetType: e.target.value }))}
+              allowClear
+            />
+          </Col>
+        </Row>
+        <Row gutter={16} style={{ marginTop: 16 }}>
           <Col xs={24} sm={12} lg={6}>
             <Input
               placeholder="实体类型"
@@ -254,59 +251,10 @@ const AuditLogs: React.FC = () => {
         />
       </Card>
 
-      {/* 实体追踪弹窗 */}
-      <Modal
-        title={`实体追踪 - ${traceEntity?.type} #${traceEntity?.id}`}
-        open={traceModalVisible}
-        onCancel={() => setTraceModalVisible(false)}
-        footer={null}
-        width={700}
-      >
-        {traceLoading ? (
-          <div style={{ textAlign: 'center', padding: 40 }}>加载中...</div>
-        ) : traceLogs.length === 0 ? (
-          <Empty description="暂无追踪记录" />
-        ) : (
-          <Timeline mode="left">
-            {traceLogs.map((log) => (
-              <Timeline.Item
-                key={log.id}
-                color={getActionColor(log.action)}
-                label={formatDateTime(log.created_at)}
-              >
-                <div>
-                  <Tag color={getActionColor(log.action)}>
-                    {getActionText(log.action)}
-                  </Tag>
-                  <span style={{ marginLeft: 8, color: '#666' }}>
-                    操作人: {log.operator}
-                  </span>
-                </div>
-                {(log.old_value || log.new_value) && (
-                  <div style={{ marginTop: 8, padding: 8, background: '#f5f5f5', borderRadius: 4 }}>
-                    {log.old_value && (
-                      <div>
-                        <span style={{ color: '#999' }}>变更前:</span>
-                        <pre style={{ margin: '4px 0', fontSize: 12 }}>
-                          {JSON.stringify(JSON.parse(log.old_value), null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                    {log.new_value && (
-                      <div>
-                        <span style={{ color: '#999' }}>变更后:</span>
-                        <pre style={{ margin: '4px 0', fontSize: 12 }}>
-                          {JSON.stringify(JSON.parse(log.new_value), null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </Timeline.Item>
-            ))}
-          </Timeline>
-        )}
-      </Modal>
+      {/* 
+        NOTE: 实体追踪弹窗功能后端暂未提供
+        待后端实现 /admin/v1/audit-logs/:entityType/:entityId 后再开启
+      */}
     </div>
   );
 };
