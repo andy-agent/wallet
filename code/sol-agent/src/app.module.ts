@@ -6,6 +6,7 @@ import { HealthModule } from './modules/health/health.module';
 import { AddressModule } from './modules/address/address.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { SolanaModule } from './modules/solana/solana.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { SolanaModule } from './modules/solana/solana.module';
     HealthModule,
     AddressModule,
     PaymentModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [],
