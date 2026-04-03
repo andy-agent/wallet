@@ -1,20 +1,13 @@
 # Task State
 
-- Updated At: 2026-04-03 12:50 +08:00
+- Updated At: 2026-04-03 19:56 +08:00
 - Repository: /Users/cnyirui/git/projects/liaojiang
-- Next Task: `liaojiang-6ag` S5 QA Contract and Regression
-- Counts: `open=5` `in_progress=0` `closed=49` `ready=1`
+- Next Task: `liaojiang-rcb.14.2.1` 实现订单支付检测最小链路接入远程链侧服务
+- Counts: `open=2` `in_progress=3` `closed=78` `ready=1`
 - Dirty Files:
   - `.codex/recovery-state.json`
-  - `code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/payment/PaymentConfig.kt`
-  - `code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/payment/ui/activity/InvitationCenterActivity.kt`
-  - `code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/payment/ui/activity/CommissionLedgerActivity.kt`
-  - `code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/payment/ui/activity/WithdrawalActivity.kt`
-  - `code/Android/V2rayNG/app/src/main/res/layout/activity_commission_ledger.xml`
-  - `code/Android/V2rayNG/app/src/main/res/layout/activity_withdrawal.xml`
-  - `code/Android/V2rayNG/app/src/main/res/layout/item_commission_ledger.xml`
-  - `code/Android/V2rayNG/app/src/main/res/layout/item_withdrawal.xml`
-  - `code/Android/V2rayNG/app/src/main/res/values/strings.xml`
+  - `docs/current-status.md`
+  - `handoff/task-state.md`
   - `docs/current-status.md`
   - `环境测试服务器.md`
 
@@ -23,19 +16,15 @@
 bd ready --json
 bd list --status=open --json
 git status --short
-env JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home /bin/sh code/Android/V2rayNG/gradlew :app:compileFdroidDebugSources
-curl -k https://api.residential-agent.com/api/healthz
+curl -ksS https://api.residential-agent.com/api/healthz
+curl -ksS https://sol.residential-agent.com/health
+curl -ksS https://usdt.residential-agent.com/health
+bd show liaojiang-rcb.14.2
 ```
 
 ## Current Verification
 
-- Android:
-  - `:app:compileFdroidDebugSources` passed
-  - `:app:assembleFdroidDebug` passed
-- Emulator:
-  - APK installed
-  - `MainActivity` launched
-- Real API smoke via `api.residential-agent.com`:
+- API:
   - request-code
   - register
   - me
@@ -45,9 +34,14 @@ curl -k https://api.residential-agent.com/api/healthz
   - referral overview
   - commissions summary
   - withdrawals returns expected insufficient-balance business rejection
+- Sol chain-side:
+  - `sol.residential-agent.com/health` returns `healthy`
+- USDT/TRON chain-side:
+  - server1 internal `health/capabilities/block/current/tx` verified
+  - `usdt.residential-agent.com/health` returns `healthy + connected`
 
 ## Remaining Work
 
-- `liaojiang-6ag`: QA contract and regression
-- `liaojiang-2f0.1`: three-server role split plus `api/sol/usdt/wallet` subdomain planning
-- `liaojiang-2f0`: top-level first-release delivery
+- `liaojiang-rcb.14.2.1`: implement backend order-chain minimal path integration
+- `liaojiang-rcb.14.2.2`: deploy backend and run real order-chain smoke on `api.residential-agent.com`
+- Android final build/regression remains intentionally deferred to the last stage

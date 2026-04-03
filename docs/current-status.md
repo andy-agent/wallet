@@ -12,27 +12,32 @@
 | Android 编译/构建 | 🟢 通过 | `compileFdroidDebugSources` 与 `assembleFdroidDebug` 均通过 |
 | Android 运行验证 | 🟢 已拿到证据 | 模拟器安装 APK 成功，`MainActivity` 启动成功 |
 | 真实业务 smoke | 🟢 已推进 | `request-code / register / me / plans / orders / payment-target / referral / commissions` 已通过，提现拿到预期业务拒绝 |
-| QA 回归 | 🟡 待推进 | `liaojiang-6ag` 已成为下一主线 ready 任务 |
+| Sol 链侧服务 | 🟢 可用 | `sol.residential-agent.com` 内外健康检查均通过 |
+| USDT/TRON 链侧服务 | 🟢 可用 | `usdt.residential-agent.com` 已接真实 TRON RPC，健康/区块/交易查询通过 |
+| 链侧客户端接线 | 🟡 进行中 | `liaojiang-rcb.14.1` 已完成，下一步进入 `liaojiang-rcb.14.2` |
 
 ## 本轮完成
 
-- 关闭 `liaojiang-7da.3`
-  - Kimi 产出已回收
-  - 邀请中心、佣金账本、提现页面接入真实 repository 方法
-  - 新增 `item_commission_ledger.xml`、`item_withdrawal.xml`
-- 关闭 `liaojiang-7da.4.1`
-  - 修复公网 API 暴露
-  - 服务器三新增并启用 `api.residential-agent.com / vpn.residential-agent.com` Nginx API 网关
-  - Cloudflare 删除了 `vpn.residential-agent.com -> 38.58.59.142` 的错误 A 记录
-  - 新增 `api.residential-agent.com -> 154.37.208.72`
-- 关闭 `liaojiang-7da.4`
-  - Android compile / assemble 通过
-  - 模拟器运行证据已取得
-  - 真实 backend smoke 已推进到业务接口级
-- 关闭 `liaojiang-7da`
-  - Android 集成主特性完成
-- 关闭 `liaojiang-2f0.1`
-  - `api / sol / usdt` 子域与三机角色拆分基础已完成
+- 完成 `liaojiang-rcb.13.1`
+  - 回收 Kimi 产出并并入主线
+  - `backend-chain-usdt` 增补 `mockMode` 真实语义与 e2e 覆盖
+  - 本地 `typecheck / build / test:e2e` 通过
+  - 非 mock 模式下本地 `block/current` 与 `tx/:hash` 已验证不再走占位逻辑
+- 完成 `liaojiang-rcb.13.2`
+  - 服务器一 `/opt/usdt-agent` 已同步最新代码并重建
+  - `usdt-agent` systemd 服务重启成功
+  - 内网 `health / capabilities / block/current / tx` 均返回 200
+- 完成 `liaojiang-rcb.13.3`
+  - 服务器一 `TRON_API_KEY` 已补齐
+  - `Trongrid 401` 已消失
+  - `usdt.residential-agent.com/health` 已恢复为 `connected`
+- 完成 `liaojiang-rcb.14.1`
+  - 回收 Kimi 产出并并入主线
+  - `code/backend` 已补齐 wallet 相关远程链侧客户端接线
+  - `transferPrecheck / proxyBroadcast` 已具备 Solana 远程调用与降级行为
+  - 本地 `pnpm --dir code/backend typecheck`
+  - 本地 `pnpm --dir code/backend build`
+  - 均通过
 
 ## 当前真实环境结论
 
@@ -65,22 +70,37 @@
 - 服务器二 `38.58.59.142`
   - PostgreSQL / Redis 物理落点
 - 服务器一 `38.58.59.119`
-  - 预留 `sol.residential-agent.com`
+  - `sol.residential-agent.com`
+  - `usdt.residential-agent.com`
 - 规划边界已明确：
   - `sol.residential-agent.com` = Solana 链侧服务
   - `usdt.residential-agent.com` = TRON / TRC20 链侧服务
   - 通用账本与结算仍留在 API 层
 
-## 新增部署任务
+### 链侧服务现状
 
-- 已新增：
-  - `liaojiang-2f0.1` 三机角色拆分与 `api/sol/usdt` 子域编排
-- 当前实际运行仍偏临时集中：
-  - API 面已在服务器三跑通
-  - 多机角色拆分将在后续任务中收敛为正式拓扑
+- `sol.residential-agent.com`
+  - 外网 `/health` 返回 `200`
+  - 服务器一内网 `http://127.0.0.1:4000/api/healthz` 返回 `healthy`
+  - `sol-agent` systemd 服务为 `active`
+- `usdt.residential-agent.com`
+  - 外网 `/health` 返回 `200`
+  - 服务器一内网 `/api/healthz` 返回 `healthy + connected`
+  - 受保护接口验证通过：
+    - `/api/v1/chain/capabilities`
+    - `/api/v1/chain/block/current`
+    - `/api/v1/chain/tx/{hash}`
+
+## 当前主线任务
+
+- 当前主线已从 Android/QA 切换到二期链侧收口：
+  - `liaojiang-rcb.14.2`
+- 该任务目标是：
+  - 让 API 的订单支付检测最小链路真正接入远程链侧服务
+  - 在 `api.residential-agent.com` 上完成一次真实环境 smoke
 
 ## 下一步
 
-1. 进入 `liaojiang-6ag`，做 QA Contract and Regression。
-2. 同步整理三机角色拆分方案，推进 `liaojiang-2f0.1`。
-3. 清理 Android 构建产物后提交本轮集成与环境变更。
+1. 进入 `liaojiang-rcb.14.2`，把订单支付检测最小链路切到远程链侧服务。
+2. 在 `api.residential-agent.com` 上完成远程链侧真实 smoke。
+3. Android 构建与最终回归继续放在最后阶段，不提前拉回主线。
