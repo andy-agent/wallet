@@ -1,21 +1,32 @@
 {
-  "generated_at": "2026-04-04T20:07:52Z",
+  "generated_at": "2026-04-04T20:09:10Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-4j0.2",
-  "next_task_title": "Android 真实环境登录/下单/支付页回归",
+  "next_task_title": "Android 真实环境登录/下单/支付页回归（等待测试账号/验证码来源）",
   "in_progress_count": 3,
   "ready_count": 0,
-  "open_count": 3,
+  "open_count": 0,
   "closed_count": 117,
-  "dirty_count": 2,
+  "dirty_count": 3,
   "milestone_reached": false,
-  "write_human_docs": false,
+  "write_human_docs": true,
+  "blocked_by_human": true,
+  "blocker": {
+    "issue_id": "liaojiang-4j0.2",
+    "reason": "Final Android real-environment regression is blocked by missing reusable client test credentials or accessible verification mailbox.",
+    "evidence": [
+      "emulator-5554 online; com.v2ray.ang.fdroid versionCode 5071701 installed",
+      "MainActivity drawer Purchase Plan path opens LoginActivity",
+      "UI dump confirms reachable email/password login form",
+      "local app state has no payment token/session or cached payment user data"
+    ]
+  },
   "docs": {
     "current_status": "docs/current-status.md",
     "handoff_progress": "handoff/progress.md",
     "task_state": "handoff/task-state.md",
     "development_log": "docs/development-log.md",
-    "status_docs_written": false,
+    "status_docs_written": true,
     "development_log_appended": false
   },
   "auto_created_task_id": null,
