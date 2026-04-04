@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 sealed class EmailRegisterState {
     object Idle : EmailRegisterState()
     object Loading : EmailRegisterState()
-    data class Success(val message: String) : EmailRegisterState()
+    data class Success(val message: String, val isRegistered: Boolean) : EmailRegisterState()
     data class Error(val message: String) : EmailRegisterState()
 }
 
@@ -57,6 +57,8 @@ class EmailRegisterViewModel : ViewModel() {
 
     private val _confirmPassword = MutableStateFlow("")
     val confirmPassword: StateFlow<String> = _confirmPassword
+    private val _verificationCode = MutableStateFlow("")
+    val verificationCode: StateFlow<String> = _verificationCode
 
     private val _passwordVisible = MutableStateFlow(false)
     val passwordVisible: StateFlow<Boolean> = _passwordVisible
@@ -78,6 +80,9 @@ class EmailRegisterViewModel : ViewModel() {
     fun onConfirmPasswordChange(value: String) {
         _confirmPassword.value = value
     }
+    fun onVerificationCodeChange(value: String) {
+        _verificationCode.value = value
+    }
 
     fun togglePasswordVisibility() {
         _passwordVisible.value = !_passwordVisible.value
@@ -91,7 +96,9 @@ class EmailRegisterViewModel : ViewModel() {
         _agreeTerms.value = value
     }
 
-    fun register() {
+    fun register(
+        onRequest: suspend (String, String, String) -> Result<Unit>,
+    ) {
         when {
             _email.value.isBlank() -> {
                 _state.value = EmailRegisterState.Error("请输入邮箱地址")
@@ -109,6 +116,10 @@ class EmailRegisterViewModel : ViewModel() {
                 _state.value = EmailRegisterState.Error("两次输入的密码不一致")
                 return
             }
+            _verificationCode.value.isBlank() -> {
+                _state.value = EmailRegisterState.Error("请输入验证码")
+                return
+            }
             !_agreeTerms.value -> {
                 _state.value = EmailRegisterState.Error("请同意用户协议和隐私政策")
                 return
@@ -117,8 +128,30 @@ class EmailRegisterViewModel : ViewModel() {
 
         viewModelScope.launch {
             _state.value = EmailRegisterState.Loading
-            delay(1500) // 模拟网络请求
-            _state.value = EmailRegisterState.Success("注册成功，请登录")
+            val result = onRequest(_email.value, _verificationCode.value, _password.value)
+            if (result.isSuccess) {
+                _state.value = EmailRegisterState.Success("注册成功", isRegistered = true)
+            } else {
+                _state.value = EmailRegisterState.Error(result.exceptionOrNull()?.message ?: "注册失败")
+            }
+        }
+    }
+
+    fun requestCode(
+        onRequest: suspend (String) -> Result<Unit>,
+    ) {
+        if (_email.value.isBlank() || !_email.value.contains("@")) {
+            _state.value = EmailRegisterState.Error("请输入有效的邮箱地址")
+            return
+        }
+        viewModelScope.launch {
+            _state.value = EmailRegisterState.Loading
+            val result = onRequest(_email.value)
+            _state.value = if (result.isSuccess) {
+                EmailRegisterState.Success("验证码已发送", isRegistered = false)
+            } else {
+                EmailRegisterState.Error(result.exceptionOrNull()?.message ?: "验证码发送失败")
+            }
         }
     }
 
@@ -136,6 +169,14 @@ class EmailRegisterViewModel : ViewModel() {
 @Composable
 fun EmailRegisterPage(
     viewModel: EmailRegisterViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onRequestCode: suspend (email: String) -> Result<Unit> = {
+        delay(800)
+        Result.success(Unit)
+    },
+    onRegisterRequest: suspend (email: String, code: String, password: String) -> Result<Unit> = { _, _, _ ->
+        delay(1200)
+        Result.success(Unit)
+    },
     onRegisterSuccess: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {},
     onNavigateToTerms: () -> Unit = {},
@@ -145,6 +186,7 @@ fun EmailRegisterPage(
     val email by viewModel.email.collectAsState()
     val password by viewModel.password.collectAsState()
     val confirmPassword by viewModel.confirmPassword.collectAsState()
+    val verificationCode by viewModel.verificationCode.collectAsState()
     val passwordVisible by viewModel.passwordVisible.collectAsState()
     val confirmPasswordVisible by viewModel.confirmPasswordVisible.collectAsState()
     val agreeTerms by viewModel.agreeTerms.collectAsState()
@@ -153,7 +195,11 @@ fun EmailRegisterPage(
     // 监听注册状态
     LaunchedEffect(state) {
         when (state) {
-            is EmailRegisterState.Success -> onRegisterSuccess()
+            is EmailRegisterState.Success -> {
+                if ((state as EmailRegisterState.Success).isRegistered) {
+                    onRegisterSuccess()
+                }
+            }
             else -> {}
         }
     }
@@ -285,13 +331,10 @@ fun EmailRegisterPage(
                 visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done
+                    imeAction = ImeAction.Next
                 ),
                 keyboardActions = KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                        viewModel.register()
-                    }
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
                 ),
                 singleLine = true,
                 shape = MaterialTheme.shapes.medium,
@@ -311,6 +354,36 @@ fun EmailRegisterPage(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = verificationCode,
+                onValueChange = {
+                    viewModel.onVerificationCodeChange(it)
+                    viewModel.clearError()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("验证码") },
+                placeholder = { Text("请输入邮箱验证码") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                        viewModel.register(onRegisterRequest)
+                    }
+                ),
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium,
+                trailingIcon = {
+                    TextButton(onClick = { viewModel.requestCode(onRequestCode) }) {
+                        Text("发送")
+                    }
+                },
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             // 用户协议
             Row(
@@ -353,7 +426,7 @@ fun EmailRegisterPage(
             Button(
                 onClick = { 
                     focusManager.clearFocus()
-                    viewModel.register() 
+                    viewModel.register(onRegisterRequest) 
                 },
                 modifier = Modifier
                     .fillMaxWidth()

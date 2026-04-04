@@ -97,7 +97,7 @@ class ResetPasswordViewModel : ViewModel() {
         _passwordVisible.value = !_passwordVisible.value
     }
 
-    fun sendVerificationCode() {
+    fun sendVerificationCode(onRequest: suspend (String) -> Result<Unit>) {
         if (_email.value.isBlank() || !_email.value.contains("@")) {
             _state.value = ResetPasswordState.Error("请输入有效的邮箱地址")
             return
@@ -105,10 +105,14 @@ class ResetPasswordViewModel : ViewModel() {
 
         viewModelScope.launch {
             _state.value = ResetPasswordState.Loading
-            delay(1000)
-            _state.value = ResetPasswordState.Idle
-            _currentStep.value = ResetPasswordStep.VERIFY
-            startCountdown()
+            val result = onRequest(_email.value)
+            if (result.isSuccess) {
+                _state.value = ResetPasswordState.Idle
+                _currentStep.value = ResetPasswordStep.VERIFY
+                startCountdown()
+            } else {
+                _state.value = ResetPasswordState.Error(result.exceptionOrNull()?.message ?: "验证码发送失败")
+            }
         }
     }
 
@@ -142,7 +146,7 @@ class ResetPasswordViewModel : ViewModel() {
         }
     }
 
-    fun resetPassword() {
+    fun resetPassword(onRequest: suspend (String, String, String) -> Result<Unit>) {
         when {
             _newPassword.value.length < 6 -> {
                 _state.value = ResetPasswordState.Error("密码长度至少6位")
@@ -156,8 +160,12 @@ class ResetPasswordViewModel : ViewModel() {
 
         viewModelScope.launch {
             _state.value = ResetPasswordState.Loading
-            delay(1500)
-            _state.value = ResetPasswordState.Success("密码重置成功")
+            val result = onRequest(_email.value, _verificationCode.value, _newPassword.value)
+            _state.value = if (result.isSuccess) {
+                ResetPasswordState.Success("密码重置成功")
+            } else {
+                ResetPasswordState.Error(result.exceptionOrNull()?.message ?: "密码重置失败")
+            }
         }
     }
 
@@ -184,6 +192,14 @@ class ResetPasswordViewModel : ViewModel() {
 @Composable
 fun ResetPasswordPage(
     viewModel: ResetPasswordViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onSendCodeRequest: suspend (String) -> Result<Unit> = {
+        delay(1000)
+        Result.success(Unit)
+    },
+    onResetRequest: suspend (String, String, String) -> Result<Unit> = { _, _, _ ->
+        delay(1200)
+        Result.success(Unit)
+    },
     onResetSuccess: () -> Unit = {},
     onNavigateBack: () -> Unit = {}
 ) {
@@ -246,7 +262,7 @@ fun ResetPasswordPage(
                         viewModel.onEmailChange(it)
                         viewModel.clearError()
                     },
-                    onSendCode = { viewModel.sendVerificationCode() },
+                    onSendCode = { viewModel.sendVerificationCode(onSendCodeRequest) },
                     isLoading = state is ResetPasswordState.Loading,
                     focusManager = focusManager
                 )
@@ -276,7 +292,7 @@ fun ResetPasswordPage(
                         viewModel.clearError()
                     },
                     onToggleVisibility = { viewModel.togglePasswordVisibility() },
-                    onReset = { viewModel.resetPassword() },
+                    onReset = { viewModel.resetPassword(onResetRequest) },
                     isLoading = state is ResetPasswordState.Loading,
                     focusManager = focusManager
                 )

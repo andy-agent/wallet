@@ -1,10 +1,10 @@
 package com.v2ray.ang.ui.compose
 
 import android.os.Bundle
+import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -18,11 +18,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.v2ray.ang.R
+import com.v2ray.ang.composeui.bridge.auth.ComposeAuthBridge
+import com.v2ray.ang.composeui.navigation.AppNavGraph
+import com.v2ray.ang.composeui.pages.splash.ComposeUpdateBridge
+import com.v2ray.ang.util.Utils
 
 /**
  * ComposeContainerActivity serves as a container for Jetpack Compose screens.
@@ -33,11 +35,20 @@ import com.v2ray.ang.R
  * Currently displays a placeholder content and can be extended to host actual Compose screens.
  */
 class ComposeContainerActivity : ComponentActivity() {
+    companion object {
+        const val EXTRA_START_ROUTE = "compose_start_route"
+        const val EXTRA_FORCE_UPDATE = "compose_force_update"
+    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val startRoute = intent.getStringExtra(EXTRA_START_ROUTE)
+        val forceUpdate = intent.getBooleanExtra(EXTRA_FORCE_UPDATE, false)
+        val authBridge = ComposeAuthBridge(this)
+        val updateBridge = ComposeUpdateBridge(forceUpdateFromIntent = forceUpdate)
 
         setContent {
             MaterialTheme {
@@ -64,32 +75,18 @@ class ComposeContainerActivity : ComponentActivity() {
                             )
                         }
                     ) { innerPadding ->
-                        PlaceholderContent(
-                            modifier = Modifier.padding(innerPadding)
+                        BackHandler { finish() }
+                        AppNavGraph(
+                            authBridge = authBridge,
+                            updateBridge = updateBridge,
+                            startDestination = startRoute ?: com.v2ray.ang.composeui.navigation.Routes.SPLASH,
+                            onOpenUrl = { url -> Utils.openUri(this@ComposeContainerActivity, url) },
+                            onExitApp = { finish() },
+                            onAuthSuccess = { finish() },
                         )
                     }
                 }
             }
         }
-    }
-}
-
-/**
- * Placeholder content for the Compose container.
- *
- * This composable displays a minimal placeholder indicating that Compose runtime
- * is properly set up and ready for actual content migration.
- */
-@Composable
-private fun PlaceholderContent(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "Compose Container Ready",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
     }
 }

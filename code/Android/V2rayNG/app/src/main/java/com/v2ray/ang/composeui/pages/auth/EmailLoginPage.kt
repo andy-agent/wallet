@@ -70,7 +70,7 @@ class EmailLoginViewModel : ViewModel() {
         _passwordVisible.value = !_passwordVisible.value
     }
 
-    fun login() {
+    fun login(onRequest: suspend (String, String) -> Result<Unit>) {
         if (_email.value.isBlank() || _password.value.isBlank()) {
             _state.value = EmailLoginState.Error("请填写邮箱和密码")
             return
@@ -78,13 +78,11 @@ class EmailLoginViewModel : ViewModel() {
         
         viewModelScope.launch {
             _state.value = EmailLoginState.Loading
-            delay(1500) // 模拟网络请求
-            
-            // 模拟登录成功
-            if (_email.value.contains("@") && _password.value.length >= 6) {
-                _state.value = EmailLoginState.Success("mock_token_12345")
+            val result = onRequest(_email.value, _password.value)
+            if (result.isSuccess) {
+                _state.value = EmailLoginState.Success("token")
             } else {
-                _state.value = EmailLoginState.Error("邮箱或密码错误")
+                _state.value = EmailLoginState.Error(result.exceptionOrNull()?.message ?: "登录失败")
             }
         }
     }
@@ -103,6 +101,14 @@ class EmailLoginViewModel : ViewModel() {
 @Composable
 fun EmailLoginPage(
     viewModel: EmailLoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onLoginRequest: suspend (email: String, password: String) -> Result<Unit> = { email, password ->
+        delay(1500)
+        if (email.contains("@") && password.length >= 6) {
+            Result.success(Unit)
+        } else {
+            Result.failure(Exception("邮箱或密码错误"))
+        }
+    },
     onLoginSuccess: () -> Unit = {},
     onNavigateToRegister: () -> Unit = {},
     onNavigateToResetPassword: () -> Unit = {}
@@ -214,7 +220,7 @@ fun EmailLoginPage(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        viewModel.login()
+                        viewModel.login(onLoginRequest)
                     }
                 ),
                 singleLine = true,
@@ -252,7 +258,7 @@ fun EmailLoginPage(
             Button(
                 onClick = { 
                     focusManager.clearFocus()
-                    viewModel.login() 
+                    viewModel.login(onLoginRequest) 
                 },
                 modifier = Modifier
                     .fillMaxWidth()

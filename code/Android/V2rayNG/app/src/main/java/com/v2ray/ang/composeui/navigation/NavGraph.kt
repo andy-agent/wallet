@@ -1,16 +1,26 @@
 package com.v2ray.ang.composeui.navigation
 
 import androidx.compose.runtime.Composable
+import com.v2ray.ang.composeui.bridge.auth.ComposeAuthBridge
+import com.v2ray.ang.composeui.pages.splash.ComposeUpdateBridge
 
 @Composable
 fun CryptoVPNNavGraph(
-    navController: Any? = null,
+    authBridge: ComposeAuthBridge,
+    updateBridge: ComposeUpdateBridge,
+    onOpenUrl: (String) -> Unit,
+    onExitApp: () -> Unit,
+    onAuthSuccess: () -> Unit,
     startDestination: String = Routes.SPLASH,
     onNavigationManagerReady: ((NavigationManager) -> Unit)? = null,
 ) {
-    onNavigationManagerReady?.invoke(NavigationManager(navController))
+    onNavigationManagerReady?.invoke(NavigationManager(null))
     AppNavGraph(
-        navController = navController,
+        authBridge = authBridge,
+        updateBridge = updateBridge,
+        onOpenUrl = onOpenUrl,
+        onExitApp = onExitApp,
+        onAuthSuccess = onAuthSuccess,
         startDestination = startDestination,
     )
 }
