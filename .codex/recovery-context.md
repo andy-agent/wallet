@@ -1,6 +1,6 @@
 # Recovery Context
 
-Generated: 2026-04-04T16:05:27Z
+Generated: 2026-04-04T16:06:52Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
@@ -12,7 +12,7 @@ Repository: /Users/cnyirui/git/projects/liaojiang
 - ready: 0
 - open: 7
 - closed: 108
-- dirty: 2
+- dirty: 0
 
 ## Next Milestone
 - Continue the next task and complete one milestone

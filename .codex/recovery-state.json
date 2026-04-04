@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-04T16:05:27Z",
+  "generated_at": "2026-04-04T16:06:52Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-b4m",
   "next_task_title": "liaojiang-4j0.5.1 集成全量 Compose 路由图与容器入口",
@@ -7,7 +7,7 @@
   "ready_count": 0,
   "open_count": 7,
   "closed_count": 108,
-  "dirty_count": 2,
+  "dirty_count": 0,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
