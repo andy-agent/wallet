@@ -1,5 +1,6 @@
 package com.v2ray.ang.composeui.pages.vpn
 
+import android.app.Application
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -20,8 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.payment.data.repository.PaymentRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -66,9 +68,10 @@ data class RegionInfo(
 /**
  * VPN首页ViewModel
  */
-class VPNHomeViewModel : ViewModel() {
+class VPNHomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<VPNHomeState>(VPNHomeState.Idle)
     val state: StateFlow<VPNHomeState> = _state
+    private val repository = PaymentRepository(application)
 
     private val _selectedRegion = MutableStateFlow(
         RegionInfo("us", "美国", "US", 45)
@@ -86,13 +89,28 @@ class VPNHomeViewModel : ViewModel() {
     }
 
     private fun loadInitialData() {
-        _state.value = VPNHomeState.Loaded(
-            status = VPNConnectionStatus.DISCONNECTED,
-            selectedRegion = _selectedRegion.value,
-            connectionDuration = "00:00:00",
-            uploadSpeed = "0 KB/s",
-            downloadSpeed = "0 KB/s"
-        )
+        _state.value = VPNHomeState.Loading
+        viewModelScope.launch {
+            val subscription = repository.getSubscription()
+            if (subscription.isSuccess) {
+                val data = subscription.getOrNull()
+                val active = data?.status.equals("ACTIVE", ignoreCase = true)
+                _connectionStatus.value = if (active) {
+                    VPNConnectionStatus.CONNECTED
+                } else {
+                    VPNConnectionStatus.DISCONNECTED
+                }
+                _connectionDuration.value = if (active) {
+                    "剩余${data?.daysRemaining ?: 0}天"
+                } else {
+                    "00:00:00"
+                }
+                updateState()
+            } else {
+                _connectionStatus.value = VPNConnectionStatus.DISCONNECTED
+                updateState()
+            }
+        }
     }
 
     fun toggleConnection() {

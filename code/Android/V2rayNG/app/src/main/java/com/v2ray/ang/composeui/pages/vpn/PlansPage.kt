@@ -1,5 +1,6 @@
 package com.v2ray.ang.composeui.pages.vpn
 
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,9 +22,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 /**
  * 套餐信息
@@ -52,68 +56,43 @@ sealed class PlansState {
 /**
  * 套餐页ViewModel
  */
-class PlansViewModel : ViewModel() {
+class PlansViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<PlansState>(PlansState.Idle)
     val state: StateFlow<PlansState> = _state
 
     private val _selectedPlanId = MutableStateFlow<String?>(null)
     val selectedPlanId: StateFlow<String?> = _selectedPlanId
+    private val bridge = VpnOrderBridge(application)
 
     init {
         loadPlans()
     }
 
     private fun loadPlans() {
-        val plans = listOf(
-            PlanInfo(
-                id = "monthly",
-                name = "月度套餐",
-                duration = "1个月",
-                price = "$9.99",
-                originalPrice = null,
-                isRecommended = false,
-                features = listOf(
-                    "无限流量",
-                    "50+ 服务器节点",
-                    "5 设备同时连接",
-                    "24/7 客服支持"
-                )
-            ),
-            PlanInfo(
-                id = "quarterly",
-                name = "季度套餐",
-                duration = "3个月",
-                price = "$26.99",
-                originalPrice = "$29.97",
-                isRecommended = true,
-                features = listOf(
-                    "无限流量",
-                    "100+ 服务器节点",
-                    "10 设备同时连接",
-                    "24/7 优先客服",
-                    "专属高速线路"
-                ),
-                badge = "省10%"
-            ),
-            PlanInfo(
-                id = "yearly",
-                name = "年度套餐",
-                duration = "12个月",
-                price = "$89.99",
-                originalPrice = "$119.88",
-                isRecommended = false,
-                features = listOf(
-                    "无限流量",
-                    "200+ 服务器节点",
-                    "无限设备连接",
-                    "24/7 VIP客服",
-                    "专属高速线路",
-                    "静态IP选项"
-                ),
-                badge = "省25%"
-            )
-        )
-        _state.value = PlansState.Loaded(plans, null)
+        _state.value = PlansState.Loading
+        viewModelScope.launch {
+            bridge.loadPlans()
+                .onSuccess { plans ->
+                    _state.value = PlansState.Loaded(
+                        plans = plans.map {
+                            PlanInfo(
+                                id = it.id,
+                                name = it.name,
+                                duration = it.duration,
+                                price = it.price,
+                                originalPrice = it.originalPrice,
+                                isRecommended = it.isRecommended,
+                                features = it.features,
+                                badge = it.badge,
+                            )
+                        },
+                        selectedPlanId = null,
+                    )
+                }
+                .onFailure { error ->
+                    _state.value = PlansState.Error(error.message ?: "加载套餐失败")
+                }
+        }
     }
 
     fun selectPlan(planId: String) {
@@ -206,6 +185,13 @@ fun PlansPage(
                     ) {
                         CircularProgressIndicator()
                     }
+                }
+                is PlansState.Error -> {
+                    Text(
+                        text = (state as PlansState.Error).message,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 14.sp,
+                    )
                 }
                 else -> {}
             }

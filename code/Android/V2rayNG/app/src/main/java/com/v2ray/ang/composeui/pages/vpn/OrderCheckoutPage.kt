@@ -1,5 +1,6 @@
 package com.v2ray.ang.composeui.pages.vpn
 
+import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,13 +20,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
 
 /**
  * 支付方式
@@ -58,32 +62,52 @@ sealed class OrderCheckoutState {
 /**
  * 订单收银台ViewModel
  */
-class OrderCheckoutViewModel : ViewModel() {
+class OrderCheckoutViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<OrderCheckoutState>(OrderCheckoutState.Idle)
     val state: StateFlow<OrderCheckoutState> = _state
+    private val bridge = VpnOrderBridge(application)
+    private var currentPlanCode: String = ""
 
-    init {
-        loadOrderDetails()
-    }
-
-    private fun loadOrderDetails() {
-        _state.value = OrderCheckoutState.Loaded(
-            orderId = "ORD-20240115-001",
-            planName = "季度套餐",
-            duration = "3个月",
-            amount = "$26.99",
-            discount = "省 $2.98",
-            totalAmount = "$26.99",
-            selectedPaymentMethod = PaymentMethod.WALLET,
-            walletAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-            expiresIn = 900  // 15分钟
-        )
+    fun loadOrderDetails(planCode: String) {
+        if (planCode.isBlank()) {
+            _state.value = OrderCheckoutState.Error("缺少套餐参数")
+            return
+        }
+        currentPlanCode = planCode
+        createOrderWithCurrentMethod()
     }
 
     fun selectPaymentMethod(method: PaymentMethod) {
         val currentState = _state.value
         if (currentState is OrderCheckoutState.Loaded) {
             _state.value = currentState.copy(selectedPaymentMethod = method)
+            createOrderWithCurrentMethod()
+        }
+    }
+
+    private fun createOrderWithCurrentMethod() {
+        val selected = (state.value as? OrderCheckoutState.Loaded)?.selectedPaymentMethod
+            ?: PaymentMethod.WALLET
+        _state.value = OrderCheckoutState.Loading
+        viewModelScope.launch {
+            bridge.createOrder(
+                planCode = currentPlanCode,
+                useWalletPath = selected == PaymentMethod.WALLET,
+            ).onSuccess { data ->
+                _state.value = OrderCheckoutState.Loaded(
+                    orderId = data.orderNo,
+                    planName = data.planName,
+                    duration = data.duration,
+                    amount = data.amount,
+                    discount = null,
+                    totalAmount = data.totalAmount,
+                    selectedPaymentMethod = selected,
+                    walletAddress = data.receiveAddress,
+                    expiresIn = data.expiresInSeconds,
+                )
+            }.onFailure { error ->
+                _state.value = OrderCheckoutState.Error(error.message ?: "创建订单失败")
+            }
         }
     }
 }
@@ -124,6 +148,9 @@ fun OrderCheckoutPage(
     onPayWithCrypto: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
+    LaunchedEffect(planId) {
+        viewModel.loadOrderDetails(planId)
+    }
 
     Scaffold(
         topBar = {
@@ -203,7 +230,14 @@ fun OrderCheckoutPage(
                         CircularProgressIndicator()
                     }
                 }
-                else -> {}
+                is OrderCheckoutState.Error -> {
+                    Text(
+                        text = (state as OrderCheckoutState.Error).message,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+                else -> Unit
             }
         }
     }

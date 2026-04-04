@@ -1,5 +1,6 @@
 package com.v2ray.ang.composeui.pages.vpn
 
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,12 +17,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
+import com.v2ray.ang.payment.PaymentConfig
+import com.v2ray.ang.payment.data.model.Order
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.launch
+
+enum class DetailOrderStatus {
+    PENDING,
+    PAID,
+    COMPLETED,
+    CANCELLED,
+    REFUNDED,
+}
 
 /**
  * 订单详情数据
@@ -33,7 +46,7 @@ data class OrderDetailData(
     val amount: String,
     val discount: String?,
     val totalAmount: String,
-    val status: OrderStatus,
+    val status: DetailOrderStatus,
     val paymentMethod: String,
     val createdAt: Date,
     val paidAt: Date?,
@@ -55,32 +68,69 @@ sealed class OrderDetailState {
 /**
  * 订单详情页ViewModel
  */
-class OrderDetailViewModel : ViewModel() {
+class OrderDetailViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<OrderDetailState>(OrderDetailState.Idle)
     val state: StateFlow<OrderDetailState> = _state
+    private val bridge = VpnOrderBridge(application)
 
     fun loadOrderDetail(orderId: String) {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        
-        // 模拟加载订单详情
-        val order = OrderDetailData(
-            id = orderId,
-            planName = "季度套餐",
-            duration = "3个月",
-            amount = "$29.97",
-            discount = "$2.98",
-            totalAmount = "$26.99",
-            status = OrderStatus.COMPLETED,
-            paymentMethod = "钱包支付",
-            createdAt = dateFormat.parse("2024-01-15 10:30:00") ?: Date(),
-            paidAt = dateFormat.parse("2024-01-15 10:32:15"),
-            expiresAt = dateFormat.parse("2024-04-15 10:30:00"),
-            txHash = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-            email = "user@example.com"
-        )
-        
-        _state.value = OrderDetailState.Loaded(order)
+        _state.value = OrderDetailState.Loading
+        viewModelScope.launch {
+            bridge.refreshOrder(orderId)
+                .onSuccess { order ->
+                    _state.value = OrderDetailState.Loaded(order.toOrderDetailData())
+                }
+                .onFailure { error ->
+                    _state.value = OrderDetailState.Error(error.message ?: "加载订单详情失败")
+                }
+        }
     }
+}
+
+private fun Order.toOrderDetailData(): OrderDetailData {
+    return OrderDetailData(
+        id = orderNo,
+        planName = planName,
+        duration = planCode,
+        amount = "$$quoteUsdAmount",
+        discount = null,
+        totalAmount = "${payment.amountCrypto} ${payment.assetCode}",
+        status = when (status) {
+            PaymentConfig.OrderStatus.PENDING_PAYMENT,
+            PaymentConfig.OrderStatus.SEEN_ONCHAIN,
+            PaymentConfig.OrderStatus.CONFIRMING -> DetailOrderStatus.PENDING
+            PaymentConfig.OrderStatus.PAID_SUCCESS -> DetailOrderStatus.PAID
+            PaymentConfig.OrderStatus.FULFILLED -> DetailOrderStatus.COMPLETED
+            PaymentConfig.OrderStatus.EXPIRED,
+            PaymentConfig.OrderStatus.LATE_PAID -> DetailOrderStatus.CANCELLED
+            else -> DetailOrderStatus.REFUNDED
+        },
+        paymentMethod = "${quoteAssetCode}/${quoteNetworkCode}",
+        createdAt = createdAt.toDateOrNow(),
+        paidAt = confirmedAt?.toDateOrNull(),
+        expiresAt = expiresAt.toDateOrNull(),
+        txHash = submittedClientTxHash,
+        email = "",
+    )
+}
+
+private fun String.toDateOrNow(): Date = toDateOrNull() ?: Date()
+
+private fun String.toDateOrNull(): Date? {
+    val formats = listOf(
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        },
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        },
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US),
+    )
+    for (format in formats) {
+        val date = runCatching { format.parse(this) }.getOrNull()
+        if (date != null) return date
+    }
+    return null
 }
 
 /**
@@ -121,7 +171,7 @@ fun OrderDetailPage(
         bottomBar = {
             if (state is OrderDetailState.Loaded) {
                 val order = (state as OrderDetailState.Loaded).order
-                if (order.status == OrderStatus.PENDING) {
+                if (order.status == DetailOrderStatus.PENDING) {
                     OrderDetailBottomBar(
                         onPay = { onPayOrder(order.id) },
                         onContactSupport = onContactSupport
@@ -190,33 +240,33 @@ private fun OrderDetailContent(order: OrderDetailData) {
 }
 
 @Composable
-private fun OrderStatusCard(status: OrderStatus) {
+private fun OrderStatusCard(status: DetailOrderStatus) {
     val (icon, title, description, color) = when (status) {
-        OrderStatus.PENDING -> Quad(
+        DetailOrderStatus.PENDING -> Quad(
             Icons.Default.Schedule,
             "待支付",
             "请在30分钟内完成支付",
             Color(0xFFF59E0B)
         )
-        OrderStatus.PAID -> Quad(
+        DetailOrderStatus.PAID -> Quad(
             Icons.Default.Payment,
             "已支付",
             "订单正在处理中",
             Color(0xFF1D4ED8)
         )
-        OrderStatus.COMPLETED -> Quad(
+        DetailOrderStatus.COMPLETED -> Quad(
             Icons.Default.CheckCircle,
             "已完成",
             "套餐已激活，可以使用了",
             Color(0xFF22C55E)
         )
-        OrderStatus.CANCELLED -> Quad(
+        DetailOrderStatus.CANCELLED -> Quad(
             Icons.Default.Cancel,
             "已取消",
             "订单已取消",
             Color(0xFF94A3B8)
         )
-        OrderStatus.REFUNDED -> Quad(
+        DetailOrderStatus.REFUNDED -> Quad(
             Icons.Default.Replay,
             "已退款",
             "款项已原路退回",
