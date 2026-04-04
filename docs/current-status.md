@@ -9,8 +9,8 @@
 | Backend API | 🟢 可用 | `api.residential-agent.com` 已固化为唯一 API 入口 |
 | DB / Redis | 🟢 已剥离 | 状态服务物理落在服务器二，API 机通过本地隧道端口访问 |
 | Android 集成 | 🟡 进入 Compose 并入阶段 | 现有 XML App 保持可用，`vpnui` 并入方案与目录裁决均已冻结 |
-| Android 编译/构建 | 🟡 第一棒接入中 | `4j0.9` 只负责 Compose runtime 与容器入口，不代表整个迁移完成 |
-| Android 运行验证 | 🟢 已有旧链路证据 | 旧 APK 安装与启动证据已拿到，新的 Compose 容器仍在接入中 |
+| Android 编译/构建 | 🟢 Compose APK 构建已恢复 | `7x4.2` 已修复 Kotlin/AGP 冲突，`assembleFdroidDebug` 可在主线通过 |
+| Android 运行验证 | 🟡 Compose 容器安装已验证 | `7x4.3` 已把新 APK 安装到 `emulator-5554`，但页面级真实回归仍待后续 UI 迁移完成 |
 | 真实业务 smoke | 🟢 已推进 | 基础接口 smoke 已通过，订单最小链路已通过远程 Solana 服务完成真实 smoke |
 | Sol 链侧服务 | 🟢 可用 | `sol.residential-agent.com` 内外健康检查均通过 |
 | USDT/TRON 链侧服务 | 🟢 可用 | `usdt.residential-agent.com` 已接真实 TRON RPC，健康/区块/交易查询通过 |
@@ -74,7 +74,7 @@
   - 已恢复可产出最新 `fdroidDebug` APK 的本地构建能力
 - 完成 `liaojiang-7x4.3`
   - `v2rayNG_2.0.17-fdroid_arm64-v8a.apk` 已安装到 `emulator-5554`
-  - `resolve-activity` 可解析 `com.v2ray.ang.ui.compose.ComposeContainerActivity`
+  - `am start -W -n com.v2ray.ang.fdroid/com.v2ray.ang.ui.compose.ComposeContainerActivity` 不再返回 “Activity class does not exist”，而是按非导出 Activity 预期返回 `not exported`
   - `am start` 的 `not exported` 拒绝为非导出 Activity 预期行为，作为“组件存在”证据不构成失败
 
 ## 当前真实环境结论
@@ -154,7 +154,7 @@
    - 已完成
 3. `liaojiang-4j0.9`
    - 接入 Compose runtime 与 `ComposeContainerActivity`
-   - 当前进行中
+   - 已完成
 4. `liaojiang-4j0.10`
    - 迁移 `vpnui` 最终保留目录到 `com.v2ray.ang.composeui` 骨架
 5. `liaojiang-4j0.11`
@@ -168,16 +168,14 @@
 9. `liaojiang-4j0.2`
    - 最终 Android 真实环境登录/下单/支付页回归
 
-### 当前唯一活跃实现任务
+### 当前 beads 状态
 
-- `liaojiang-4j0.9`
-  - 在现有 `V2rayNG` 工程中接入 Compose runtime
-  - 新增 `ComposeContainerActivity`
-  - 为后续 `vpnui` 页面并入提供运行容器
+- 当前没有 `ready` 的 bd 任务
+- `liaojiang-4j0` 与 `liaojiang-4j0.2` 仍为 `in_progress` 父项/末端回归项
+- 下一次自动推进应从新的 Android UI 迁移 ready 子任务开始，而不是重复 `7x4`
 
 ## 下一步
 
-1. 等 `liaojiang-4j0.9` 完成并验收。
-2. 完成后进入 `liaojiang-4j0.10`，迁移 `vpnui` 最终保留目录到 `com.v2ray.ang.composeui` 骨架。
-3. 再按 `4j0.11 / 4j0.12 / 4j0.13` 分域桥接页面到现有数据层。
-4. 最后进入 `4j0.5` 和 `4j0.2`，做完整 UI 落地与最终真实环境回归。
+1. 等新的 Android UI 迁移子任务重新进入 `bd ready`。
+2. 继续 `4j0.10 / 4j0.11 / 4j0.12 / 4j0.13` 的 Compose 资产迁移与桥接。
+3. 完成后进入 `4j0.5` 和 `4j0.2`，做完整 UI 落地与最终真实环境回归。
