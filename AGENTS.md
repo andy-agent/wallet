@@ -56,6 +56,42 @@ bd close <id>         # Complete work
 - Run `bd prime` for detailed command reference and session close protocol
 - Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
 
+## BD Orchestrator Policy
+
+- Main agent is the orchestrator and acceptance lead, not a status reporter.
+- Use `bd` as the task source of truth for task state, dependencies, and next-task selection.
+- Within the current active run, do not stop after dispatching work or posting a progress summary if unblocked `bd` tasks still remain.
+- "Ready for acceptance" is not a terminal state. The main agent must perform acceptance itself.
+- Acceptance must include:
+  - checking the task requirements against the implementation
+  - inspecting the diff or commit range
+  - running required verification or tests
+  - updating `bd` state based on the result
+- After accepting a task, immediately select the highest-priority unblocked `bd` task and continue in the same run when safe.
+- Prefer brief milestone updates, but do not treat a milestone update as completion.
+
+## Worker Observation Policy
+
+- If the worker is a native child agent, monitor child-agent status directly and continue automatically.
+- If the worker is external, do not infer completion from chat alone; use explicit observable state such as worktree status, commit markers, handoff files, or a status command.
+
+## Stop Conditions
+
+- Stop only when one of the following is true:
+  1. no unblocked `bd` tasks remain
+  2. a real blocker requires user product or priority input
+  3. a dangerous action requires user approval
+  4. the current run cannot safely continue with the available execution state
+
+## Reporting Contract
+
+- When reporting progress, include only:
+  - current accepted task
+  - current active worker task
+  - next unblocked `bd` task
+  - blockers if any
+- Do not stop merely because a worker finished, a handoff was produced, or a task became "ready for acceptance".
+
 ## Session Completion
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
