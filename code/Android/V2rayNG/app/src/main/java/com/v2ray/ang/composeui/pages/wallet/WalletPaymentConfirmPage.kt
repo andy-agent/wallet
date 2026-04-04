@@ -21,9 +21,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -41,7 +42,8 @@ sealed class WalletPaymentConfirmState2 {
 /**
  * 钱包支付确认页ViewModel（用于订单支付）
  */
-class WalletPaymentConfirmViewModel2 : ViewModel() {
+class WalletPaymentConfirmViewModel2(application: Application) : AndroidViewModel(application) {
+    private val walletBridgeRepository = WalletBridgeRepository(application)
     private val _state = MutableStateFlow<WalletPaymentConfirmState2>(WalletPaymentConfirmState2.Idle)
     val state: StateFlow<WalletPaymentConfirmState2> = _state
 
@@ -67,8 +69,19 @@ class WalletPaymentConfirmViewModel2 : ViewModel() {
 
         viewModelScope.launch {
             _state.value = WalletPaymentConfirmState2.Confirming
-            delay(2000) // 模拟交易处理
-            _state.value = WalletPaymentConfirmState2.Confirmed("0x742d35...5f0bEb")
+            val currentOrderId = walletBridgeRepository.getCurrentOrderId()
+            if (currentOrderId.isNullOrBlank()) {
+                _state.value = WalletPaymentConfirmState2.Error("缺少当前订单")
+                return@launch
+            }
+            walletBridgeRepository.getOrder(currentOrderId)
+                .onSuccess { order ->
+                    val txOrOrder = order.payment.txHash ?: order.orderNo
+                    _state.value = WalletPaymentConfirmState2.Confirmed(txOrOrder)
+                }
+                .onFailure {
+                    _state.value = WalletPaymentConfirmState2.Error(it.message ?: "订单状态刷新失败")
+                }
         }
     }
 

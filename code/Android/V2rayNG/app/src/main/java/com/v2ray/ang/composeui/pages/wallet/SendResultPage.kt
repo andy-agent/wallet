@@ -17,9 +17,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 /**
  * 发送结果类型
@@ -48,26 +52,42 @@ sealed class SendResultState {
 /**
  * 发送结果页ViewModel
  */
-class SendResultViewModel : ViewModel() {
+class SendResultViewModel(application: Application) : AndroidViewModel(application) {
+    private val walletBridgeRepository = WalletBridgeRepository(application)
     private val _state = MutableStateFlow<SendResultState>(SendResultState.Idle)
     val state: StateFlow<SendResultState> = _state
 
-    fun loadResult(
-        resultType: SendResultType = SendResultType.SUCCESS,
-        amount: String = "0.5",
-        symbol: String = "ETH",
-        recipient: String = "0x1234...5678",
-        txHash: String? = "0xabcd...efgh",
-        fee: String = "0.002 ETH"
-    ) {
-        _state.value = SendResultState.Loaded(
-            resultType = resultType,
-            amount = amount,
-            symbol = symbol,
-            recipient = recipient,
-            txHash = txHash,
-            fee = fee
-        )
+    fun loadResult(fallbackResultType: SendResultType = SendResultType.PENDING) {
+        viewModelScope.launch {
+            val currentOrderId = walletBridgeRepository.getCurrentOrderId()
+            if (currentOrderId.isNullOrBlank()) {
+                _state.value = SendResultState.Loaded(
+                    resultType = SendResultType.FAILED,
+                    amount = "--",
+                    symbol = "USDT",
+                    recipient = "unknown",
+                    txHash = null,
+                    fee = "--",
+                )
+                return@launch
+            }
+            val cachedOrder = walletBridgeRepository.getCachedOrder(currentOrderId)
+            val orderResult = walletBridgeRepository.getOrder(currentOrderId)
+            val order = orderResult.getOrNull()
+            val resolvedType = when ((order?.status ?: cachedOrder?.status).orEmpty().uppercase()) {
+                "COMPLETED", "FULFILLED", "PAID" -> SendResultType.SUCCESS
+                "CANCELED", "CANCELLED", "FAILED" -> SendResultType.FAILED
+                else -> fallbackResultType
+            }
+            _state.value = SendResultState.Loaded(
+                resultType = resolvedType,
+                amount = order?.payment?.amountCrypto ?: cachedOrder?.amount ?: "--",
+                symbol = order?.payment?.assetCode ?: cachedOrder?.assetCode ?: "USDT",
+                recipient = order?.payment?.receiveAddress ?: cachedOrder?.planName ?: currentOrderId,
+                txHash = order?.payment?.txHash,
+                fee = "network fee by chain",
+            )
+        }
     }
 }
 
@@ -86,8 +106,8 @@ fun SendResultPage(
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.loadResult(resultType = resultType)
+    LaunchedEffect(resultType) {
+        viewModel.loadResult(fallbackResultType = resultType)
     }
 
     Box(

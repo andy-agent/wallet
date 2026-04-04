@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
+import com.v2ray.ang.composeui.bridge.legal.LegalBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -44,46 +45,21 @@ sealed class LegalDocumentDetailState {
  * 法务文档详情页ViewModel
  */
 class LegalDocumentDetailViewModel : ViewModel() {
+    private val legalBridgeRepository = LegalBridgeRepository()
     private val _state = MutableStateFlow<LegalDocumentDetailState>(LegalDocumentDetailState.Idle)
     val state: StateFlow<LegalDocumentDetailState> = _state
 
     fun loadDocument(documentId: String) {
-        val document = when (documentId) {
-            "terms" -> LegalDocumentDetail(
-                id = "terms",
-                title = "用户协议",
-                lastUpdated = "2024-01-01",
-                content = TERMS_CONTENT
+        val doc = legalBridgeRepository.getDocument(documentId)
+        _state.value = if (doc != null) {
+            LegalDocumentDetailState.Loaded(
+                LegalDocumentDetail(
+                    id = doc.id,
+                    title = doc.title,
+                    lastUpdated = doc.lastUpdated,
+                    content = doc.content
+                )
             )
-            "privacy" -> LegalDocumentDetail(
-                id = "privacy",
-                title = "隐私政策",
-                lastUpdated = "2024-01-01",
-                content = PRIVACY_CONTENT
-            )
-            "refund" -> LegalDocumentDetail(
-                id = "refund",
-                title = "退款政策",
-                lastUpdated = "2024-01-01",
-                content = REFUND_CONTENT
-            )
-            "affiliate" -> LegalDocumentDetail(
-                id = "affiliate",
-                title = "推广协议",
-                lastUpdated = "2024-01-01",
-                content = AFFILIATE_CONTENT
-            )
-            "cookies" -> LegalDocumentDetail(
-                id = "cookies",
-                title = "Cookie政策",
-                lastUpdated = "2024-01-01",
-                content = COOKIES_CONTENT
-            )
-            else -> null
-        }
-        
-        _state.value = if (document != null) {
-            LegalDocumentDetailState.Loaded(document)
         } else {
             LegalDocumentDetailState.Error("文档不存在")
         }

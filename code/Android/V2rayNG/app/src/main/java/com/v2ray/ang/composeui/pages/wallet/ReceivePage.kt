@@ -20,7 +20,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -33,23 +36,48 @@ import com.google.zxing.qrcode.QRCodeWriter
  * 收款页状态
  */
 sealed class ReceivePageState {
-    object Idle : ReceivePageState()
+    object Loading : ReceivePageState()
+    data class Loaded(
+        val symbol: String,
+        val walletAddress: String,
+    ) : ReceivePageState()
+    data class Error(val message: String) : ReceivePageState()
     data class AddressCopied(val address: String) : ReceivePageState()
 }
 
 /**
  * 收款页ViewModel
  */
-class ReceivePageViewModel : ViewModel() {
-    private val _state = MutableStateFlow<ReceivePageState>(ReceivePageState.Idle)
+class ReceivePageViewModel(application: Application) : AndroidViewModel(application) {
+    private val walletBridgeRepository = WalletBridgeRepository(application)
+    private val _state = MutableStateFlow<ReceivePageState>(ReceivePageState.Loading)
     val state: StateFlow<ReceivePageState> = _state
+    private var loadedSnapshot: ReceivePageState.Loaded? = null
+
+    init {
+        viewModelScope.launch {
+            val userId = walletBridgeRepository.getCurrentUserId()
+            if (userId.isNullOrBlank()) {
+                _state.value = ReceivePageState.Error("当前未登录")
+                return@launch
+            }
+            val orders = walletBridgeRepository.getCachedOrders(userId)
+            val symbol = orders.firstOrNull()?.assetCode?.uppercase() ?: "USDT"
+            val loaded = ReceivePageState.Loaded(
+                symbol = symbol,
+                walletAddress = walletBridgeRepository.currentWalletAddressFallback(userId)
+            )
+            loadedSnapshot = loaded
+            _state.value = loaded
+        }
+    }
 
     fun onAddressCopied(address: String) {
         _state.value = ReceivePageState.AddressCopied(address)
     }
 
     fun resetState() {
-        _state.value = ReceivePageState.Idle
+        loadedSnapshot?.let { _state.value = it }
     }
 }
 
@@ -83,8 +111,6 @@ fun generateReceiveQRCode(content: String, size: Int = 512): Bitmap? {
 @Composable
 fun ReceivePage(
     viewModel: ReceivePageViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-    symbol: String = "ETH",
-    walletAddress: String = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
     onNavigateBack: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
@@ -92,10 +118,6 @@ fun ReceivePage(
     val snackbarHostState = remember { SnackbarHostState() }
 
     // 生成二维码
-    val qrBitmap = remember(walletAddress) {
-        generateReceiveQRCode(walletAddress)
-    }
-
     // 监听复制状态
     LaunchedEffect(state) {
         when (state) {
@@ -110,7 +132,14 @@ fun ReceivePage(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("接收 $symbol") },
+                title = {
+                    Text(
+                        text = when (val s = state) {
+                            is ReceivePageState.Loaded -> "接收 ${s.symbol}"
+                            else -> "接收"
+                        }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -118,18 +147,47 @@ fun ReceivePage(
                             contentDescription = "Back"
                         )
                     }
-                }
+                },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        when (val currentState = state) {
+            is ReceivePageState.Loaded -> ReceivePageContent(
+                symbol = currentState.symbol,
+                walletAddress = currentState.walletAddress,
+                paddingValues = paddingValues,
+                onCopy = {
+                    clipboardManager.setText(AnnotatedString(currentState.walletAddress))
+                    viewModel.onAddressCopied(currentState.walletAddress)
+                }
+            )
+            is ReceivePageState.Error -> ErrorView(message = currentState.message)
+            is ReceivePageState.Loading, is ReceivePageState.AddressCopied -> Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator() }
+        }
+    }
+}
+
+@Composable
+private fun ReceivePageContent(
+    symbol: String,
+    walletAddress: String,
+    paddingValues: PaddingValues,
+    onCopy: () -> Unit,
+) {
+    val qrBitmap = remember(walletAddress) { generateReceiveQRCode(walletAddress) }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // 提示文字
@@ -185,8 +243,7 @@ fun ReceivePage(
                             Spacer(modifier = Modifier.width(8.dp))
                             IconButton(
                                 onClick = {
-                                    clipboardManager.setText(AnnotatedString(walletAddress))
-                                    viewModel.onAddressCopied(walletAddress)
+                                    onCopy()
                                 },
                                 modifier = Modifier.size(32.dp)
                             ) {
@@ -231,7 +288,6 @@ fun ReceivePage(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-        }
     }
 }
 
@@ -287,6 +343,13 @@ private fun InfoRow(label: String, value: String) {
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
         )
+    }
+}
+
+@Composable
+private fun ErrorView(message: String) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(text = message, color = MaterialTheme.colorScheme.error)
     }
 }
 

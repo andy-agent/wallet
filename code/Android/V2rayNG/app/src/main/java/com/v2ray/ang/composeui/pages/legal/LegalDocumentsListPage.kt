@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
+import com.v2ray.ang.composeui.bridge.legal.LegalBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -46,6 +47,7 @@ sealed class LegalDocumentsListState {
  * 法务文档列表页ViewModel
  */
 class LegalDocumentsListViewModel : ViewModel() {
+    private val legalBridgeRepository = LegalBridgeRepository()
     private val _state = MutableStateFlow<LegalDocumentsListState>(LegalDocumentsListState.Idle)
     val state: StateFlow<LegalDocumentsListState> = _state
 
@@ -54,44 +56,21 @@ class LegalDocumentsListViewModel : ViewModel() {
     }
 
     private fun loadDocuments() {
-        val documents = listOf(
+        val documents = legalBridgeRepository.listDocuments().map {
             LegalDocument(
-                id = "terms",
-                title = "用户协议",
-                description = "使用CryptoVPN服务的条款和条件",
-                icon = Icons.Default.Description,
-                lastUpdated = "2024-01-01"
-            ),
-            LegalDocument(
-                id = "privacy",
-                title = "隐私政策",
-                description = "我们如何收集、使用和保护您的个人信息",
-                icon = Icons.Default.Security,
-                lastUpdated = "2024-01-01"
-            ),
-            LegalDocument(
-                id = "refund",
-                title = "退款政策",
-                description = "关于订单退款的规则和流程",
-                icon = Icons.Default.Replay,
-                lastUpdated = "2024-01-01"
-            ),
-            LegalDocument(
-                id = "affiliate",
-                title = "推广协议",
-                description = "邀请推广计划的规则和佣金说明",
-                icon = Icons.Default.People,
-                lastUpdated = "2024-01-01"
-            ),
-            LegalDocument(
-                id = "cookies",
-                title = "Cookie政策",
-                description = "我们如何使用Cookie和类似技术",
-                icon = Icons.Default.Cookie,
-                lastUpdated = "2024-01-01"
+                id = it.id,
+                title = it.title,
+                description = it.description,
+                icon = when (it.id) {
+                    "terms" -> Icons.Default.Description
+                    "privacy" -> Icons.Default.Security
+                    "refund" -> Icons.Default.Replay
+                    "affiliate" -> Icons.Default.People
+                    else -> Icons.Default.Cookie
+                },
+                lastUpdated = it.lastUpdated
             )
-        )
-        
+        }
         _state.value = LegalDocumentsListState.Loaded(documents)
     }
 }
