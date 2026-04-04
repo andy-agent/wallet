@@ -93,6 +93,7 @@
     <string name="app_tile_name">開關</string>
     <string name="app_widget_name">開關</string>
     <string name="asset_geo_files_sources">Geo 檔案來源 (可選)</string>
+    <string msgid="389117264260014992" name="autofill">"自動填入"</string>
     <string name="bottomsheet_action_collapse">收合底部功能表</string>
     <string name="bottomsheet_action_expand">展開底部功能表</string>
     <string name="bottomsheet_action_expand_halfway">展開一半</string>
@@ -107,6 +108,8 @@
     <string name="character_counter_content_description">已輸入 %1$d 個字元 (上限為 %2$d 個字元)</string>
     <string name="character_counter_overflowed_content_description">超過字元限制 (共 %1$d 字元，上限 %2$d 字元)</string>
     <string name="clear_text_end_icon_content_description">清除文字</string>
+    <string msgid="406453423630273620" name="close_drawer">"關閉導覽選單"</string>
+    <string msgid="7573152094250666567" name="close_sheet">"關閉功能表"</string>
     <string name="connection_connected">"已連線，輕觸以檢查連線能力"</string>
     <string name="connection_not_connected">"未連線"</string>
     <string name="connection_runing_task_left">運行中的測試任務數：%s</string>
@@ -118,8 +121,11 @@
     <string name="connection_test_testing">"測試中……"</string>
     <string name="connection_test_testing_count">測試 %d 個配置中…</string>
     <string msgid="6083905920877235314" name="copy">"複製"</string>
+    <string msgid="8038256446254964252" name="default_error_message">"輸入內容無效"</string>
+    <string msgid="6312721426453364202" name="default_popup_window_title">"彈出式視窗"</string>
     <string name="del_config_comfirm">確定刪除？</string>
     <string name="del_invalid_config_comfirm">刪除前請先測試！確認刪除？</string>
+    <string msgid="1890207353314751437" name="dropdown_menu">"下拉式選單"</string>
     <string name="error_a11y_label">錯誤：無效</string>
     <string name="error_icon_content_description">錯誤</string>
     <string msgid="2427401033573778270" name="expand_button_title">"進階"</string>
@@ -128,10 +134,69 @@
     <string name="icon_content_description">對話方塊圖示</string>
     <string name="import_subscription_failure">匯入訂閱失敗</string>
     <string name="import_subscription_success">匯入訂閱成功</string>
+    <string msgid="6827826412747255547" name="in_progress">"處理中"</string>
+    <string msgid="7933458017204019916" name="indeterminate">"部分檢查"</string>
     <string name="item_view_role_description">分頁標籤</string>
     <string name="logcat_clear">清除</string>
     <string name="logcat_copy">複製</string>
     <string name="m3_loading_indicator_content_description">載入中</string>
+    <string msgid="2988463736136100848" name="m3c_bottom_sheet_collapse_description">"收合底部功能表"</string>
+    <string msgid="1555567894577437024" name="m3c_bottom_sheet_dismiss_description">"關閉底部功能表"</string>
+    <string msgid="8403354765404029791" name="m3c_bottom_sheet_drag_handle_description">"拖曳控點"</string>
+    <string msgid="6670819569745899763" name="m3c_bottom_sheet_expand_description">"展開底部功能表"</string>
+    <string msgid="3010635850035863127" name="m3c_bottom_sheet_pane_title">"底部功能表"</string>
+    <string msgid="8166741421776570875" name="m3c_date_input_headline">"輸入的日期"</string>
+    <string msgid="229313757840775812" name="m3c_date_input_headline_description">"輸入的日期：%1$s"</string>
+    <string msgid="6116910750161463197" name="m3c_date_input_invalid_for_pattern">"日期格式不符：%1$s"</string>
+    <string msgid="2521768508935305279" name="m3c_date_input_invalid_not_allowed">"不允許的日期：%1$s"</string>
+    <string msgid="7052898923934555305" name="m3c_date_input_invalid_year_range">"日期超出預期的年份範圍：%1$s - %2$s"</string>
+    <string msgid="2895559812010326913" name="m3c_date_input_label">"日期"</string>
+    <string msgid="1237013946323089826" name="m3c_date_input_no_input_description">"無"</string>
+    <string msgid="7306227249789210568" name="m3c_date_input_title">"選取日期"</string>
+    <string msgid="7605002211875882969" name="m3c_date_picker_headline">"所選日期"</string>
+    <string msgid="3664277305226978227" name="m3c_date_picker_headline_description">"目前選項：%1$s"</string>
+    <string msgid="8436650776581492840" name="m3c_date_picker_navigate_to_year_description">"前往 %1$s 年"</string>
+    <string msgid="5811000998184572395" name="m3c_date_picker_no_selection_description">"無"</string>
+    <string msgid="7813882352367152251" name="m3c_date_picker_scroll_to_earlier_years">"捲動即可顯示先前年分"</string>
+    <string msgid="5727367015496556177" name="m3c_date_picker_scroll_to_later_years">"捲動即可顯示之後年分"</string>
+    <string msgid="1804346892470238807" name="m3c_date_picker_switch_to_calendar_mode">"切換至日曆輸入模式"</string>
+    <string msgid="395627960681594326" name="m3c_date_picker_switch_to_day_selection">"滑動即可選取年分，也可輕觸返回選取日期"</string>
+    <string msgid="2219746470065162704" name="m3c_date_picker_switch_to_input_mode">"切換至文字輸入模式"</string>
+    <string msgid="7142101321095356500" name="m3c_date_picker_switch_to_next_month">"改成下個月"</string>
+    <string msgid="228438865139394590" name="m3c_date_picker_switch_to_previous_month">"改成上個月"</string>
+    <string msgid="791651718641787594" name="m3c_date_picker_switch_to_year_selection">"改為選取年份"</string>
+    <string msgid="7430790972741451689" name="m3c_date_picker_title">"選取日期"</string>
+    <string msgid="3199387177749801575" name="m3c_date_picker_today_description">"今天"</string>
+    <string msgid="2068382232816991922" name="m3c_date_picker_year_picker_pane_title">"顯示年份挑選器"</string>
+    <string msgid="3190049423327661366" name="m3c_date_range_input_invalid_range_input">"輸入的日期範圍無效"</string>
+    <string msgid="3148384720560189467" name="m3c_date_range_input_title">"輸入日期"</string>
+    <string msgid="2138321128465719402" name="m3c_date_range_picker_day_in_range">"在有效範圍內"</string>
+    <string msgid="4947636797751277713" name="m3c_date_range_picker_end_headline">"結束日期"</string>
+    <string msgid="602077859540990149" name="m3c_date_range_picker_scroll_to_next_month">"捲動即可顯示下一個月"</string>
+    <string msgid="4592174524846109496" name="m3c_date_range_picker_scroll_to_previous_month">"捲動即可顯示上一個月"</string>
+    <string msgid="4665981448952749820" name="m3c_date_range_picker_start_headline">"開始日期"</string>
+    <string msgid="3134165431120340385" name="m3c_date_range_picker_title">"選取日期"</string>
+    <string msgid="7617233117134790350" name="m3c_dialog">"對話方塊"</string>
+    <string msgid="3177828188723359358" name="m3c_dropdown_menu_collapsed">"已收合"</string>
+    <string msgid="2360841780724299882" name="m3c_dropdown_menu_expanded">"已展開"</string>
+    <string msgid="8687821690726149911" name="m3c_dropdown_menu_toggle">"切換鈕下拉式選單"</string>
+    <string msgid="6152806324422087846" name="m3c_search_bar_search">"搜尋"</string>
+    <string msgid="6152755701819882931" name="m3c_snackbar_dismiss">"關閉"</string>
+    <string msgid="7655536806087401899" name="m3c_suggestions_available">"建議如下"</string>
+    <string msgid="2786685010796619560" name="m3c_time_picker_am">"上午"</string>
+    <string msgid="2349193472625211372" name="m3c_time_picker_hour">"小時"</string>
+    <string msgid="9179527532316922345" name="m3c_time_picker_hour_24h_suffix">"%1$d 時"</string>
+    <string msgid="8876759303332837035" name="m3c_time_picker_hour_selection">"選取小時"</string>
+    <string msgid="3458167507790628988" name="m3c_time_picker_hour_suffix">"%1$d 點"</string>
+    <string msgid="6973808109666874069" name="m3c_time_picker_hour_text_field">"小時"</string>
+    <string msgid="4313071914266462005" name="m3c_time_picker_minute">"分鐘"</string>
+    <string msgid="4699133535056739733" name="m3c_time_picker_minute_selection">"選取分鐘數"</string>
+    <string msgid="5064177921781937179" name="m3c_time_picker_minute_suffix">"%1$d 分鐘"</string>
+    <string msgid="7661234488295443182" name="m3c_time_picker_minute_text_field">"分鐘"</string>
+    <string msgid="5865171949528594571" name="m3c_time_picker_period_toggle_description">"選取上午或下午"</string>
+    <string msgid="6616362054113087709" name="m3c_time_picker_pm">"下午"</string>
+    <string msgid="1805687647081129904" name="m3c_tooltip_long_press_label">"顯示工具提示"</string>
+    <string msgid="5460405025248574620" name="m3c_tooltip_pane_description">"工具提示"</string>
     <string name="material_clock_toggle_content_description">選取上午或下午</string>
     <string name="material_hour_24h_suffix">%1$s 小時</string>
     <string name="material_hour_selection">請選取時段</string>
@@ -231,6 +296,8 @@
     <string name="mtrl_timepicker_confirm">確定</string>
     <string name="navigation_drawer_close">關閉導覽匣</string>
     <string name="navigation_drawer_open">開啟導覽匣</string>
+    <string msgid="542007171693138492" name="navigation_menu">"導覽選單"</string>
+    <string msgid="6610465462668679431" name="not_selected">"未選取"</string>
     <string msgid="6573031135582639649" name="not_set">"未設定"</string>
     <string name="notification_action_more">瞭解更多</string>
     <string name="notification_action_stop_v2ray">停止</string>
@@ -241,6 +308,8 @@
     <string name="pull_down_to_refresh">請下拉刷新!</string>
     <string name="quickie_please_wait">"請稍候…"</string>
     <string name="quickie_scan_qr_code">"掃描 QR 圖碼"</string>
+    <string msgid="5941395253238309765" name="range_end">"範圍終點"</string>
+    <string msgid="7097486360902471446" name="range_start">"範圍起點"</string>
     <string name="routing_settings_add_rule">新增規則</string>
     <string name="routing_settings_delete">清除</string>
     <string name="routing_settings_domain_strategy">網域策略</string>
@@ -257,6 +326,7 @@
     <string msgid="6264217191555673260" name="search_menu_title">"搜尋"</string>
     <string name="searchview_clear_text_content_description">清除文字</string>
     <string name="searchview_navigation_content_description">返回</string>
+    <string msgid="6043586758067023" name="selected">"已選取"</string>
     <string name="server_customize_config">自訂設定</string>
     <string name="server_lab_address">位址</string>
     <string name="server_lab_address3">伺服器位址</string>
@@ -320,6 +390,10 @@
     <string name="server_lab_xhttp_mode">XHTTP 模式</string>
     <string name="server_obfs_password">混淆密碼</string>
     <string name="side_sheet_accessibility_pane_title">側邊功能表</string>
+    <string msgid="2792228137354697160" name="snackbar_pane_title">"快訊"</string>
+    <string msgid="4139871816613051306" name="state_empty">"空白"</string>
+    <string msgid="5834637030682409883" name="state_off">"已關閉"</string>
+    <string msgid="1490883874751719580" name="state_on">"已開啟"</string>
     <string msgid="6277540029070332960" name="status_bar_notification_info_overflow">"999+"</string>
     <string name="sub_allow_insecure_url">允許不安全的 HTTP 位址</string>
     <string name="sub_auto_update">啟用自動更新</string>
@@ -362,8 +436,11 @@
     <string name="summary_pref_tg_group">加入 Telegram 群組</string>
     <string name="summary_pref_use_hev_tunnel">選擇啟用後 TUN 將使用 hev-socks5-tunnel 否則使用 xray-core</string>
     <string name="switch_bypass_apps_mode">略過模式</string>
+    <string msgid="2561197295334830845" name="switch_role">"切換鈕"</string>
+    <string msgid="1672349317127674378" name="tab">"Tab 鍵"</string>
     <string name="tasker_setting_confirm">確定</string>
     <string name="tasker_start_service">啟動服務</string>
+    <string msgid="5946805113151406391" name="template_percent">"百分之 <ns1:g id="PERCENTAGE">%1$d</ns1:g>。"</string>
     <string name="title_about">關於</string>
     <string name="title_advanced">進階</string>
     <string name="title_configuration_backup">備份設定</string>
@@ -486,6 +563,8 @@
     <string name="toast_success">成功</string>
     <string name="toast_tg_app_not_found">未找到 Telegram 應用程式</string>
     <string name="toast_warning_pref_proxysharing_short">允許來自區域網路的連線，請確保處於受信網路</string>
+    <string msgid="3765533235322692011" name="tooltip_description">"工具提示"</string>
+    <string msgid="3124740595719787496" name="tooltip_label">"顯示工具提示"</string>
     <string name="update_already_latest_version">当前已是最新版本</string>
     <string name="update_check_for_update">檢查更新</string>
     <string name="update_check_pre_release">檢查 Pre-release</string>
