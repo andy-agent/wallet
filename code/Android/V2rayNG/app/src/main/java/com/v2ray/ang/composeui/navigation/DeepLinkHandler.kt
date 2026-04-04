@@ -10,13 +10,21 @@ class DeepLinkHandler {
     }
 
     fun parse(uri: Uri): DeepLinkType {
-        val first = uri.pathSegments.firstOrNull()
+        val segments = uri.pathSegments.filter { it.isNotBlank() }
+        val first = segments.firstOrNull()
         return when (first) {
             null -> DeepLinkType.Invalid("Empty deep link path")
             "vpn" -> DeepLinkType.Navigation(Routes.VPN_HOME)
-            "wallet" -> DeepLinkType.Navigation(Routes.WALLET_HOME)
+            "wallet" -> {
+                val assetId = segments.getOrNull(1)
+                if (assetId.isNullOrBlank()) {
+                    DeepLinkType.Navigation(Routes.WALLET_HOME)
+                } else {
+                    DeepLinkType.Navigation(Routes.assetDetail(assetId))
+                }
+            }
             "order" -> {
-                val orderId = uri.pathSegments.getOrNull(1)
+                val orderId = segments.getOrNull(1)
                 if (orderId.isNullOrBlank()) {
                     DeepLinkType.Navigation(Routes.ORDER_LIST)
                 } else {
@@ -24,6 +32,14 @@ class DeepLinkHandler {
                 }
             }
             "invite" -> DeepLinkType.Navigation(Routes.INVITE_CENTER)
+            "legal" -> {
+                val documentId = segments.getOrNull(1)
+                if (documentId.isNullOrBlank()) {
+                    DeepLinkType.Navigation(Routes.LEGAL_DOCUMENTS)
+                } else {
+                    DeepLinkType.Navigation(Routes.legalDocumentDetail(documentId))
+                }
+            }
             else -> DeepLinkType.Invalid("Unsupported path: $first")
         }
     }
@@ -34,5 +50,5 @@ class DeepLinkHandler {
     }
 
     fun buildDeepLink(route: String): Uri =
-        Uri.parse("${Routes.DeepLinks.BASE_URI}/$route")
+        Uri.parse("${Routes.DeepLinks.BASE_URI}/${Routes.normalize(route)}")
 }

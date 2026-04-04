@@ -14,7 +14,7 @@ fun CryptoVPNNavGraph(
     startDestination: String = Routes.SPLASH,
     onNavigationManagerReady: ((NavigationManager) -> Unit)? = null,
 ) {
-    onNavigationManagerReady?.invoke(NavigationManager(null))
+    onNavigationManagerReady?.invoke(NavigationManager(startDestination))
     AppNavGraph(
         authBridge = authBridge,
         updateBridge = updateBridge,
