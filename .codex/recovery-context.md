@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-04T15:16:41Z
+Generated: 2026-04-04T15:49:33Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.10
-- next_task_title: 迁移 vpnui 最终保留目录到 com.v2ray.ang.composeui 骨架
+- next_task_id: liaojiang-4j0.13
+- next_task_title: 桥接钱包/增长/个人/法务 Compose 页面到现有数据层
 
 ## Counters
-- in_progress: 3
-- ready: 1
-- open: 8
-- closed: 104
-- dirty: 3
+- in_progress: 6
+- ready: 0
+- open: 7
+- closed: 105
+- dirty: 2
 
 ## Next Milestone
 - Continue the next task and complete one milestone
