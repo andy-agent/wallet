@@ -1,6 +1,6 @@
 # 当前状态
 
-**最后更新**: 2026-04-03
+**最后更新**: 2026-04-05
 
 ## 系统状态概览
 
@@ -68,6 +68,14 @@
 - 完成 `liaojiang-4j0.8`
   - [VPNUI_INTEGRATION_PLAN.md](/Users/cnyirui/git/projects/liaojiang/docs/VPNUI_INTEGRATION_PLAN.md) 已生成
   - 已冻结 `vpnui` 作为 Compose UI 资产包并入现有 `V2rayNG` 的推荐方案
+- 完成 `liaojiang-7x4.2`
+  - 主线已并入 `fix(android): disable built-in kotlin to unblock fdroid debug assemble`（`96b960e1`）
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./gradlew :app:assembleFdroidDebug` 在主线通过
+  - 已恢复可产出最新 `fdroidDebug` APK 的本地构建能力
+- 完成 `liaojiang-7x4.3`
+  - `v2rayNG_2.0.17-fdroid_arm64-v8a.apk` 已安装到 `emulator-5554`
+  - `resolve-activity` 可解析 `com.v2ray.ang.ui.compose.ComposeContainerActivity`
+  - `am start` 的 `not exported` 拒绝为非导出 Activity 预期行为，作为“组件存在”证据不构成失败
 
 ## 当前真实环境结论
 
