@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-65:/values-he/values-he.xml",
+            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-76:/values-he/values-he.xml",
             "map": [
                 {
                     "source": "/Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/res/values-he/values-he.xml",

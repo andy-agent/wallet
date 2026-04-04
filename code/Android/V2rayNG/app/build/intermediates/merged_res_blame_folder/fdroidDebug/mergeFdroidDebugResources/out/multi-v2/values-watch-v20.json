@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-65:/values-watch-v20/values-watch-v20.xml",
+            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-76:/values-watch-v20/values-watch-v20.xml",
             "map": [
                 {
                     "source": "/Users/cnyirui/.gradle/caches/9.3.1/transforms/76d7b6983696bcdc38d33c20b3ce684f/transformed/appcompat-1.7.1/res/values-watch-v20/values-watch-v20.xml",

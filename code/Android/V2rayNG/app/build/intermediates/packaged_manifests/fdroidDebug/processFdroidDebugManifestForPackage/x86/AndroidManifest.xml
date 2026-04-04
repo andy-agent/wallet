@@ -210,6 +210,12 @@
             android:label="@string/title_withdrawal"
             android:parentActivityName="com.v2ray.ang.ui.MainActivity"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
+        <activity
+            android:name="com.v2ray.ang.ui.compose.ComposeContainerActivity"
+            android:exported="false"
+            android:label="Compose Container"
+            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
+            android:theme="@style/AppThemeDayNight.NoActionBar" />
 
         <service
             android:name="com.v2ray.ang.service.V2RayVpnService"
@@ -393,6 +399,14 @@
         <uses-library
             android:name="androidx.window.sidecar"
             android:required="false" />
+
+        <activity
+            android:name="androidx.compose.ui.tooling.PreviewActivity"
+            android:exported="true" />
+        <activity
+            android:name="androidx.activity.ComponentActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
         <receiver
             android:name="androidx.profileinstaller.ProfileInstallReceiver"

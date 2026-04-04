@@ -15,7 +15,15 @@ class DeepLinkHandler {
             null -> DeepLinkType.Invalid("Empty deep link path")
             "vpn" -> DeepLinkType.Navigation(Routes.VPN_HOME)
             "wallet" -> DeepLinkType.Navigation(Routes.WALLET_HOME)
-            "order" -> DeepLinkType.Navigation(Routes.ORDER_LIST)
+            "order" -> {
+                val orderId = uri.pathSegments.getOrNull(1)
+                if (orderId.isNullOrBlank()) {
+                    DeepLinkType.Navigation(Routes.ORDER_LIST)
+                } else {
+                    DeepLinkType.Navigation(Routes.orderDetail(orderId))
+                }
+            }
+            "invite" -> DeepLinkType.Navigation(Routes.INVITE_CENTER)
             else -> DeepLinkType.Invalid("Unsupported path: $first")
         }
     }

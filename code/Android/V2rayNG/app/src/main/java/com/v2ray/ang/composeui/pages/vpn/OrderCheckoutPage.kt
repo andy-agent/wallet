@@ -144,8 +144,8 @@ fun OrderCheckoutPage(
     viewModel: OrderCheckoutViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     planId: String = "",
     onNavigateBack: () -> Unit = {},
-    onPayWithWallet: () -> Unit = {},
-    onPayWithCrypto: () -> Unit = {}
+    onPayWithWallet: (String, String) -> Unit = { _, _ -> },
+    onPayWithCrypto: (String) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     LaunchedEffect(planId) {
@@ -171,10 +171,13 @@ fun OrderCheckoutPage(
                 CheckoutBottomBar(
                     totalAmount = (state as OrderCheckoutState.Loaded).totalAmount,
                     onPay = {
-                        val paymentMethod = (state as OrderCheckoutState.Loaded).selectedPaymentMethod
-                        when (paymentMethod) {
-                            PaymentMethod.WALLET -> onPayWithWallet()
-                            PaymentMethod.CRYPTO -> onPayWithCrypto()
+                        val loadedState = state as OrderCheckoutState.Loaded
+                        when (loadedState.selectedPaymentMethod) {
+                            PaymentMethod.WALLET -> onPayWithWallet(
+                                loadedState.orderId,
+                                loadedState.totalAmount,
+                            )
+                            PaymentMethod.CRYPTO -> onPayWithCrypto(loadedState.orderId)
                         }
                     }
                 )

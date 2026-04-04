@@ -12,6 +12,11 @@ import java.util.UUID
 class ComposeAuthBridge(context: Context) {
     private val repository = PaymentRepository(context.applicationContext)
 
+    fun hasActiveSession(): Boolean {
+        val currentUserId = repository.getCurrentUserId()
+        return !currentUserId.isNullOrBlank() && repository.isTokenValid()
+    }
+
     suspend fun login(email: String, password: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val response = repository.api.login(LoginRequest(email = email, password = password))

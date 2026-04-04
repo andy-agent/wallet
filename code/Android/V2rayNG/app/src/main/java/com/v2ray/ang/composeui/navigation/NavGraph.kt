@@ -19,6 +19,7 @@ fun CryptoVPNNavGraph(
         authBridge = authBridge,
         updateBridge = updateBridge,
         onOpenUrl = onOpenUrl,
+        onOpenLegacyDestination = {},
         onExitApp = onExitApp,
         onAuthSuccess = onAuthSuccess,
         startDestination = startDestination,
