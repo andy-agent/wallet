@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-04-04T19:10:57Z",
+  "generated_at": "2026-04-04T19:35:57Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "next_task_id": "none-ready",
-  "next_task_title": "No ready bd task; remaining parent items stay in progress",
+  "next_task_id": "liaojiang-4j0.2",
+  "next_task_title": "Android 真实环境登录/下单/支付页回归",
   "in_progress_count": 3,
   "ready_count": 0,
-  "open_count": 0,
+  "open_count": 3,
   "closed_count": 117,
-  "dirty_count": 0,
-  "milestone_reached": true,
+  "dirty_count": 2,
+  "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
     "current_status": "docs/current-status.md",
@@ -21,7 +21,7 @@
   "auto_created_task_id": null,
   "dispatch": {
     "requested": true,
-    "mode": "idle",
+    "mode": "simulate",
     "dispatched_count": 0,
     "max_workers": 3
   }
