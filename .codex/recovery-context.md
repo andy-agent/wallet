@@ -1,17 +1,17 @@
 # Recovery Context
 
-Generated: 2026-04-04T13:41:29Z
+Generated: 2026-04-04T14:14:38Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.9
-- next_task_title: 接入 Compose 运行时与 ComposeContainerActivity
+- next_task_id: liaojiang-4j0.10
+- next_task_title: 迁移 vpnui 最终保留目录到 com.v2ray.ang.composeui 骨架
 
 ## Counters
 - in_progress: 3
 - ready: 1
-- open: 9
-- closed: 103
+- open: 8
+- closed: 104
 - dirty: 2
 
 ## Next Milestone
