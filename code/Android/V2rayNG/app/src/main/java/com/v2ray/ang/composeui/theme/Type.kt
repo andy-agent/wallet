@@ -145,3 +145,5 @@ val NumberLargeTypography = TextStyle(
     lineHeight = 40.sp,
     color = TextPrimary
 )
+// Alias for backward compatibility with component files
+val AppTypography = CryptoVPNTypography
