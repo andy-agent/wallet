@@ -1,20 +1,20 @@
 -- Merging decision tree log ---
 action#com.v2ray.ang.fdroid.action.widget.click
-INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:240:17-79
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:234:17-79
 	android:name
-		INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:240:25-76
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:234:25-76
 action#com.v2ray.ang.fdroid.action.activity
-INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:241:17-75
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:235:17-75
 	android:name
-		INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:241:25-72
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:235:25-72
 provider#androidx.startup.InitializationProvider
-INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:288:9-299:20
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:282:9-293:20
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f485beb036799a6d6bf1eb7c9a84033b/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f485beb036799a6d6bf1eb7c9a84033b/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:29:9-37:20
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:29:9-37:20
-MERGED from [androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:24:9-32:20
@@ -24,30 +24,30 @@ MERGED from [com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/c
 MERGED from [androidx.startup:startup-runtime:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/545258f823e45de20f3c4835673049b3/transformed/startup-runtime-1.2.0/AndroidManifest.xml:24:9-28:34
 MERGED from [androidx.startup:startup-runtime:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/545258f823e45de20f3c4835673049b3/transformed/startup-runtime-1.2.0/AndroidManifest.xml:24:9-28:34
 	tools:node
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:292:13-31
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:286:13-31
 	android:authorities
-		INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:290:13-68
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:284:13-68
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:291:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:285:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:289:13-67
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:283:13-67
 provider#androidx.core.content.FileProvider
-INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:301:9-309:20
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:295:9-303:20
 	android:grantUriPermissions
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:305:13-47
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:299:13-47
 	android:authorities
-		INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:303:13-57
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:297:13-57
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:304:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:298:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:302:13-62
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:296:13-62
 manifest
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-313:12
-INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-313:12
-INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-313:12
-INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-313:12
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-307:12
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-307:12
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-307:12
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-307:12
 MERGED from [libv2ray.aar] /Users/cnyirui/.gradle/caches/9.3.1/transforms/600036bff801234e051cffd539b38369/transformed/libv2ray/AndroidManifest.xml:1:1-2:50
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:2:1-22:12
 MERGED from [androidx.databinding:viewbinding:9.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3d54b4b7b03ea69c20d466ec6d395088/transformed/viewbinding-9.1.0/AndroidManifest.xml:2:1-7:12
@@ -67,83 +67,55 @@ MERGED from [androidx.camera:camera-view:1.4.1] /Users/cnyirui/.gradle/caches/9.
 MERGED from [androidx.appcompat:appcompat:1.7.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/76d7b6983696bcdc38d33c20b3ce684f/transformed/appcompat-1.7.1/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.recyclerview:recyclerview:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0862d77a609d48be21a3b4ba503c6a6d/transformed/recyclerview-1.4.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.viewpager2:viewpager2:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1b8a6e9d261a4a3913be211b903f48a5/transformed/viewpager2-1.1.0/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.fragment:fragment:1.8.9] /Users/cnyirui/.gradle/caches/9.3.1/transforms/80816f79efe14a3ed646aa1ab34c3cd7/transformed/fragment-1.8.9/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.fragment:fragment-ktx:1.8.9] /Users/cnyirui/.gradle/caches/9.3.1/transforms/484f14621a42db75f9465d84d634ac12/transformed/fragment-ktx-1.8.9/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.loader:loader:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/af699dd7e0e19ff6c78bccb319932c43/transformed/loader-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.fragment:fragment:1.8.9] /Users/cnyirui/.gradle/caches/9.3.1/transforms/80816f79efe14a3ed646aa1ab34c3cd7/transformed/fragment-1.8.9/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.activity:activity-ktx:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3dc470df100edf67d966482c1f26e9f3/transformed/activity-ktx-1.12.4/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.activity:activity:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/530f8f93a89d8ae211e3545d74ae8415/transformed/activity-1.12.4/AndroidManifest.xml:17:1-22:12
+MERGED from [com.blacksquircle.ui:editorkit:2.9.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3979b866ca232c81c8a57bfdd503534/transformed/editorkit-2.9.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/8ccb8553bd96f87c935dbae79aeefda6/transformed/swiperefreshlayout-1.2.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7b6cf3508595a66843e8b687b1f89872/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f485beb036799a6d6bf1eb7c9a84033b/transformed/emoji2-1.3.0/AndroidManifest.xml:17:1-35:12
 MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/78bbcf2caa9cb94cc0461201b3955b51/transformed/drawerlayout-1.1.1/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4b70d51028bca7167b5f4255b1c890fe/transformed/coordinatorlayout-1.1.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.slidingpanelayout:slidingpanelayout:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/9c8ff50e54b0898db5798b97be674a34/transformed/slidingpanelayout-1.2.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.transition:transition:1.5.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/24ca7eb48227903785bcccd60f63138a/transformed/transition-1.5.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.dynamicanimation:dynamicanimation:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6f19211b24724315de9f0bf21b038a49/transformed/dynamicanimation-1.1.0/AndroidManifest.xml:2:1-7:12
-MERGED from [com.blacksquircle.ui:editorkit:2.9.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3979b866ca232c81c8a57bfdd503534/transformed/editorkit-2.9.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d4991e486bad775a7a74f958dd9fc915/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/43e75ec277623103d283e398a39aba20/transformed/vectordrawable-1.1.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.work:work-multiprocess:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab3a2fac5118aa4f741a1bb57b617c5/transformed/work-multiprocess-2.11.1/AndroidManifest.xml:17:1-30:12
 MERGED from [androidx.work:work-runtime-ktx:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/37c401b5f97ec25711c1ef9e57d13cc4/transformed/work-runtime-ktx-2.11.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:17:1-83:12
+MERGED from [androidx.loader:loader:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/af699dd7e0e19ff6c78bccb319932c43/transformed/loader-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4af6114926a5e958fb9b977ee3950931/transformed/viewpager-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.customview:customview:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f95b0e62af0d86c973e4723c05c43b83/transformed/customview-1.1.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:17:1-33:12
-MERGED from [androidx.autofill:autofill:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3c685381aac183c76da4f0ad2d4e8110/transformed/autofill-1.0.0/AndroidManifest.xml:17:1-24:12
-MERGED from [androidx.compose.material3:material3-android:1.3.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e0e9d89090908a7e4fe86b96e3440e78/transformed/material3-release/AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.compose.ui:ui-tooling-data-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/26a5eb6fd1894bed688c1b8021b081cb/transformed/ui-tooling-data/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/01c351e6076a5fb9d3ef820acba69dcf/transformed/ui-tooling-preview/AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:17:1-28:12
-MERGED from [androidx.compose.material:material-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/591592e69221cf8fd53d678cd68f93c0/transformed/material-release/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.material:material-ripple-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/bf5578633a8e07586a21ea979aa04563/transformed/material-ripple-release/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.foundation:foundation-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d3383d5d231e825fbdb2dee4410a435c/transformed/foundation-release/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.foundation:foundation-layout-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/5d4b5996b91488a125ddd7c097aafdb2/transformed/foundation-layout/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.animation:animation-core-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/81f36026ab54db3b6a2c2b7d2256ee36/transformed/animation-core/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.animation:animation-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dd4c1d852f38bb764245942a116c3f24/transformed/animation/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-util-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4454a8546c50ac233ee0a034eacc47c7/transformed/ui-util/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-unit-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2977757a4c9382164ab4bcdf41c6691c/transformed/ui-unit/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-text-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/8a10f94aa12febd2769673213bdcfd72/transformed/ui-text/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-geometry-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d1624bbd10c177ce4fef2d3ddbf1e3a9/transformed/ui-geometry/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:17:1-29:12
-MERGED from [androidx.compose.ui:ui-graphics-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/b8de7482353a4db4f67a6b9aceff8019/transformed/ui-graphics-release/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.graphics:graphics-path:1.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/5ad2b33e69a0781d0fe6a0dec42b6736/transformed/graphics-path-1.0.1/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.emoji2:emoji2-views-helper:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3fca119e3de0c116ebcd3f1335efcfd1/transformed/emoji2-views-helper-1.4.0/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:17:1-35:12
 MERGED from [androidx.core:core:1.17.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dbf91cfc6ebc0c9781aa28e78b55dfc1/transformed/core-1.17.0/AndroidManifest.xml:17:1-30:12
-MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2ecebc5ffc9be788e97c7c164c232612/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:17:1-23:12
+MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/94f33663394fe52a9c32d59db8fe8574/transformed/graphics-shapes-release/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.lifecycle:lifecycle-service:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/269e0598e25b47a417e8b869bd633b7d/transformed/lifecycle-service-2.10.0/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3937c3c94043617f645b30b9bb182c2/transformed/lifecycle-viewmodel-savedstate/AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.navigationevent:navigationevent-android:1.0.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0a05fc0bb7cea451d099a21017ce8688/transformed/navigationevent/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.navigationevent:navigationevent-compose-android:1.0.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a8bd970f9fee366d5767f55b693c3faa/transformed/navigationevent-compose/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.runtime:runtime-annotation-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/8501f0e18a071242da70d0b3c108d797/transformed/runtime-annotation/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/24aaaf9eeb138cb72dbb81a008e2e045/transformed/lifecycle-runtime/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.savedstate:savedstate-ktx:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3038210a61bb5f225c738a346b23ea26/transformed/savedstate-ktx-1.4.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.savedstate:savedstate-android:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/91247cc0b847fb54ed93016b0abb85cf/transformed/savedstate/AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.savedstate:savedstate-compose-android:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2c2e4e2275f7033a5b339af35cfff5b1/transformed/savedstate-compose/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.runtime:runtime-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f489988e03453744bbda5c9b69f89abb/transformed/runtime/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.runtime:runtime-saveable-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/cc2e1d49634cfd99a225ef825e742309/transformed/runtime-saveable/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.lifecycle:lifecycle-runtime-compose-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/eec78152354630e590c1696114db1a80/transformed/lifecycle-runtime-compose/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/24aaaf9eeb138cb72dbb81a008e2e045/transformed/lifecycle-runtime/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4691fb6dcffe3e78ac1b79bdf8a1e242/transformed/lifecycle-viewmodel-2.10.0/AndroidManifest.xml:2:1-5:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d4a48a150431274c7ceda4925c848332/transformed/lifecycle-viewmodel/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/958b31130f12461264d44d442c328da3/transformed/lifecycle-livedata-core-2.10.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:17:1-35:12
 MERGED from [androidx.lifecycle:lifecycle-runtime-ktx-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/ffc852402587c5e374285edaccd6ddf9/transformed/lifecycle-runtime-ktx/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.lifecycle:lifecycle-livedata:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/396d99b21a06212820e63e1320de734c/transformed/lifecycle-livedata-2.10.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7818535d31f08a5c983a80482e7d8939/transformed/lifecycle-livedata-core-ktx-2.10.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.lifecycle:lifecycle-livedata-ktx:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/ace3e0400b7fd12d57493188cd55bb6f/transformed/lifecycle-livedata-ktx-2.10.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4bae33a8e3766aafd1e40680a4cfbf89/transformed/lifecycle-viewmodel-ktx-2.10.0/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/22d7e16f792df831047d359d6c8f247b/transformed/lifecycle-viewmodel-compose/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.material:material-icons-extended-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dd3f94fb5a121a8a4df4fc70bcf15ae0/transformed/material-icons-extended-release/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.material:material-icons-core-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a1e30e771c3d0e6682194e15144b15c8/transformed/material-icons-core-release/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.compose.ui:ui-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7e363e8c36b8e3ca1dfd47eb8f6765ef/transformed/ui-release/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.activity:activity-ktx:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3dc470df100edf67d966482c1f26e9f3/transformed/activity-ktx-1.12.4/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.activity:activity-compose:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1df8af1bd9155467475ddcba17555a51/transformed/activity-compose-1.12.4/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.activity:activity:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/530f8f93a89d8ae211e3545d74ae8415/transformed/activity-1.12.4/AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2ecebc5ffc9be788e97c7c164c232612/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:17:1-23:12
-MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/94f33663394fe52a9c32d59db8fe8574/transformed/graphics-shapes-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3937c3c94043617f645b30b9bb182c2/transformed/lifecycle-viewmodel-savedstate/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.core:core-ktx:1.17.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0c7ec7e92cda18dbe4f65b8945fa6c1d/transformed/core-ktx-1.17.0/AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.flexbox:flexbox:3.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/30971c0ae2f4cacb7ede6cd7c589b983/transformed/flexbox-3.0.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.navigationevent:navigationevent-android:1.0.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0a05fc0bb7cea451d099a21017ce8688/transformed/navigationevent/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.room:room-ktx:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d59838f5ca3dac0c03abb7e43ad947c/transformed/room-ktx-2.7.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/95fab1e1e8a39ff5150c289e8cac4256/transformed/room-runtime-release/AndroidManifest.xml:17:1-31:12
 MERGED from [androidx.core:core-viewtree:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d659402e951e5c7506d27be83526369c/transformed/core-viewtree-1.0.0/AndroidManifest.xml:2:1-7:12
 MERGED from [com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:2:1-22:12
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab23709b7de673a71ecb669727f0ac8/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0308d13f9585f0a6d35c015f35f45512/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
 MERGED from [com.tencent:mmkv-static:1.3.16] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0d080eaf5abaac3f38a1c8c24c640833/transformed/mmkv-static-1.3.16/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/b094cef12c86ac7f70372cf309c4cdb4/transformed/cursoradapter-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/86987eeba6093cf00ce3ce035eeca282/transformed/interpolator-1.0.0/AndroidManifest.xml:17:1-22:12
@@ -151,130 +123,130 @@ MERGED from [androidx.cardview:cardview:1.0.0] /Users/cnyirui/.gradle/caches/9.3
 MERGED from [androidx.startup:startup-runtime:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/545258f823e45de20f3c4835673049b3/transformed/startup-runtime-1.2.0/AndroidManifest.xml:17:1-31:12
 MERGED from [androidx.tracing:tracing-ktx:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/621401204ddf38a5980a81521849f767/transformed/tracing-ktx-1.2.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.tracing:tracing:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7dd8dcc503b0192c351d360fd09e3d/transformed/tracing-1.2.0/AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0308d13f9585f0a6d35c015f35f45512/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/be5092626eaf7e35ab1c8ba4977a311e/transformed/core-runtime-2.2.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.sqlite:sqlite-framework-android:2.5.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/cd405e5942c0384a83fb3d809fb21836/transformed/sqlite-framework-release/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.sqlite:sqlite-android:2.5.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/57d7920711a8b4bb4b2da72127375ab0/transformed/sqlite-release/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.exifinterface:exifinterface:1.3.7] /Users/cnyirui/.gradle/caches/9.3.1/transforms/02879a3d70b5ca36bf203dab96855a46/transformed/exifinterface-1.3.7/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.compose.runtime:runtime-annotation-android:1.9.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/bc4b77c5ced04148011365f9390777f3/transformed/runtime-annotation/AndroidManifest.xml:2:1-7:12
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:17:1-56:12
 MERGED from [androidx.multidex:multidex:2.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7193c0f649a0a0976cb6bbb625287c4e/transformed/multidex-2.0.1/AndroidManifest.xml:17:1-22:12
 	package
-		INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
 	android:versionName
-		INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
 	xmlns:tools
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:3:5-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:3:5-51
 	android:versionCode
-		INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
 	xmlns:android
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:11-69
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:11-69
 	tools:ignore
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:4:5-43
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:4:5-43
 supports-screens
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:6:5-11:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:6:5-11:40
 	android:largeScreens
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:8:9-36
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:8:9-36
 	android:smallScreens
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:10:9-36
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:10:9-36
 	android:normalScreens
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:9:9-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:9:9-37
 	android:xlargeScreens
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:11:9-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:11:9-37
 	android:anyDensity
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:7:9-34
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:7:9-34
 uses-feature#android.hardware.camera
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:13:5-15:36
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:13:5-15:36
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:8:5-10:36
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:8:5-10:36
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:25:5-27:36
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:25:5-27:36
 	android:required
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:15:9-33
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:15:9-33
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:14:9-47
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:14:9-47
 uses-feature#android.hardware.camera.autofocus
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:16:5-18:36
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:16:5-18:36
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:33:5-35:36
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:33:5-35:36
 	android:required
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:18:9-33
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:18:9-33
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:17:9-57
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:17:9-57
 uses-feature#android.software.leanback
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:19:5-21:36
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:19:5-21:36
 	android:required
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:21:9-33
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:21:9-33
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:20:9-49
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:20:9-49
 uses-feature#android.hardware.touchscreen
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:22:5-24:36
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:22:5-24:36
 	android:required
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:24:9-33
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:24:9-33
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:23:9-52
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:23:9-52
 uses-permission#android.permission.QUERY_ALL_PACKAGES
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:27:5-29:77
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:27:5-29:77
 	tools:ignore
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:29:9-74
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:29:9-74
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:28:9-61
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:28:9-61
 uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:30:5-79
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:30:5-79
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:24:5-79
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:24:5-79
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:30:22-76
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:30:22-76
 uses-permission#android.permission.CHANGE_NETWORK_STATE
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:31:5-79
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:31:5-79
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:31:22-76
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:31:22-76
 uses-permission#android.permission.INTERNET
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:32:5-67
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:32:5-67
 MERGED from [com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:8:5-67
 MERGED from [com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:8:5-67
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:32:22-64
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:32:22-64
 uses-permission#android.permission.READ_EXTERNAL_STORAGE
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:33:5-80
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:33:5-80
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:33:22-77
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:33:22-77
 uses-permission#android.permission.CAMERA
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:34:5-65
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:34:5-65
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:12:5-65
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:12:5-65
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:22:5-65
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:22:5-65
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:34:22-62
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:34:22-62
 uses-permission#android.permission.FOREGROUND_SERVICE
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:35:5-77
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:35:5-77
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:26:5-77
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:26:5-77
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:35:22-74
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:35:22-74
 uses-permission#android.permission.FOREGROUND_SERVICE_SPECIAL_USE
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:36:5-38:38
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:36:5-38:38
 	android:minSdkVersion
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:38:9-35
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:38:9-35
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:37:9-73
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:37:9-73
 uses-permission#android.permission.POST_NOTIFICATIONS
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:40:5-77
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:40:5-77
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:40:22-74
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:40:22-74
 uses-permission#android.permission.READ_MEDIA_IMAGES
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:41:5-76
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:41:5-76
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:41:22-73
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:41:22-73
 uses-permission#android.permission.RECEIVE_BOOT_COMPLETED
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:42:5-81
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:42:5-81
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:25:5-81
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:25:5-81
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:42:22-78
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:42:22-78
 application
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:44:5-311:19
-INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:44:5-311:19
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:44:5-305:19
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:44:5-305:19
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:14:5-20:19
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:14:5-20:19
 MERGED from [com.google.android.material:material:1.13.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6bf2437b324d4fd198247962e46d81de/transformed/material-1.13.0/AndroidManifest.xml:22:5-20
@@ -285,18 +257,14 @@ MERGED from [androidx.camera:camera-core:1.4.1] /Users/cnyirui/.gradle/caches/9.
 MERGED from [androidx.camera:camera-core:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6e70fe418f29cee5d5d98a1dce6f918a/transformed/camera-core-1.4.1/AndroidManifest.xml:23:5-34:19
 MERGED from [androidx.camera:camera-camera2:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4d2d1fb851750af13d0ae111cf56fdeb/transformed/camera-camera2-1.4.1/AndroidManifest.xml:23:5-34:19
 MERGED from [androidx.camera:camera-camera2:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4d2d1fb851750af13d0ae111cf56fdeb/transformed/camera-camera2-1.4.1/AndroidManifest.xml:23:5-34:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f485beb036799a6d6bf1eb7c9a84033b/transformed/emoji2-1.3.0/AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f485beb036799a6d6bf1eb7c9a84033b/transformed/emoji2-1.3.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.work:work-multiprocess:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab3a2fac5118aa4f741a1bb57b617c5/transformed/work-multiprocess-2.11.1/AndroidManifest.xml:23:5-28:19
 MERGED from [androidx.work:work-multiprocess:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab3a2fac5118aa4f741a1bb57b617c5/transformed/work-multiprocess-2.11.1/AndroidManifest.xml:23:5-28:19
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:28:5-81:19
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:28:5-81:19
 MERGED from [androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:24:5-31:19
 MERGED from [androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:24:5-31:19
-MERGED from [androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:22:5-26:19
-MERGED from [androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:22:5-26:19
-MERGED from [androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:22:5-27:19
-MERGED from [androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:22:5-27:19
-MERGED from [androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.core:core:1.17.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dbf91cfc6ebc0c9781aa28e78b55dfc1/transformed/core-1.17.0/AndroidManifest.xml:28:5-89
 MERGED from [androidx.core:core:1.17.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dbf91cfc6ebc0c9781aa28e78b55dfc1/transformed/core-1.17.0/AndroidManifest.xml:28:5-89
 MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:23:5-33:19
@@ -307,463 +275,451 @@ MERGED from [androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/ca
 MERGED from [androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/95fab1e1e8a39ff5150c289e8cac4256/transformed/room-runtime-release/AndroidManifest.xml:23:5-29:19
 MERGED from [com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:10:5-20:19
 MERGED from [com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:10:5-20:19
-MERGED from [androidx.startup:startup-runtime:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/545258f823e45de20f3c4835673049b3/transformed/startup-runtime-1.2.0/AndroidManifest.xml:23:5-29:19
-MERGED from [androidx.startup:startup-runtime:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/545258f823e45de20f3c4835673049b3/transformed/startup-runtime-1.2.0/AndroidManifest.xml:23:5-29:19
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0308d13f9585f0a6d35c015f35f45512/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:24:5-25:19
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0308d13f9585f0a6d35c015f35f45512/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.startup:startup-runtime:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/545258f823e45de20f3c4835673049b3/transformed/startup-runtime-1.2.0/AndroidManifest.xml:23:5-29:19
+MERGED from [androidx.startup:startup-runtime:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/545258f823e45de20f3c4835673049b3/transformed/startup-runtime-1.2.0/AndroidManifest.xml:23:5-29:19
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:46:5-54:19
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:46:5-54:19
 	android:extractNativeLibs
-		INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.17.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dbf91cfc6ebc0c9781aa28e78b55dfc1/transformed/core-1.17.0/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:51:9-35
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:51:9-35
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:49:9-41
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:49:9-41
 	android:icon
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:48:9-43
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:48:9-43
 	android:allowBackup
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:46:9-35
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:46:9-35
 	android:banner
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:47:9-43
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:47:9-43
 	android:theme
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:52:9-60
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:52:9-60
 	android:networkSecurityConfig
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:50:9-69
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:50:9-69
 	android:usesCleartextTraffic
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:53:9-44
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:53:9-44
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:45:9-39
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:45:9-39
 activity#com.v2ray.ang.ui.MainActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:55:9-72:20
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:55:9-72:20
 	android:launchMode
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:58:13-44
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:58:13-44
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:57:13-36
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:57:13-36
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:56:13-44
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:56:13-44
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER+category:name:android.intent.category.LEANBACK_LAUNCHER
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:59:13-64:29
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:59:13-64:29
 action#android.intent.action.MAIN
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:60:17-69
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:60:17-69
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:60:25-66
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:60:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:62:17-77
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:62:17-77
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:62:27-74
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:62:27-74
 category#android.intent.category.LEANBACK_LAUNCHER
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:63:17-86
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:63:17-86
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:63:27-83
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:63:27-83
 intent-filter#action:name:android.service.quicksettings.action.QS_TILE_PREFERENCES
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:65:13-67:29
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:65:13-67:29
 action#android.service.quicksettings.action.QS_TILE_PREFERENCES
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:66:17-99
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:66:17-99
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:66:25-96
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:66:25-96
 meta-data#android.app.shortcuts
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:69:13-71:53
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:69:13-71:53
 	android:resource
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:71:17-50
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:71:17-50
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:70:17-53
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:70:17-53
 activity#com.v2ray.ang.ui.ServerActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:73:9-76:60
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:73:9-76:60
 	android:windowSoftInputMode
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:76:13-57
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:76:13-57
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:75:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:75:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:74:13-46
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:74:13-46
 activity#com.v2ray.ang.ui.ServerCustomConfigActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:77:9-80:60
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:77:9-80:60
 	android:windowSoftInputMode
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:80:13-57
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:80:13-57
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:79:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:79:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:78:13-58
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:78:13-58
 activity#com.v2ray.ang.ui.ServerGroupActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:81:9-84:60
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:81:9-84:60
 	android:windowSoftInputMode
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:84:13-57
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:84:13-57
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:83:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:83:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:82:13-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:82:13-51
 activity#com.v2ray.ang.ui.SettingsActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:85:9-87:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:85:9-87:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:87:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:87:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:86:13-48
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:86:13-48
 activity#com.v2ray.ang.ui.PerAppProxyActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:88:9-90:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:88:9-90:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:90:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:90:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:89:13-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:89:13-51
 activity#com.v2ray.ang.ui.ScannerActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:91:9-93:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:91:9-93:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:93:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:93:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:92:13-47
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:92:13-47
 activity#com.v2ray.ang.ui.LogcatActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:94:9-96:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:94:9-96:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:96:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:96:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:95:13-46
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:95:13-46
 activity#com.v2ray.ang.ui.RoutingSettingActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:97:9-99:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:97:9-99:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:99:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:99:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:98:13-54
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:98:13-54
 activity#com.v2ray.ang.ui.RoutingEditActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:100:9-102:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:100:9-102:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:102:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:102:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:101:13-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:101:13-51
 activity#com.v2ray.ang.ui.SubSettingActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:103:9-105:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:103:9-105:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:105:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:105:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:104:13-50
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:104:13-50
 activity#com.v2ray.ang.ui.UserAssetActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:106:9-108:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:106:9-108:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:108:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:108:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:107:13-49
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:107:13-49
 activity#com.v2ray.ang.ui.UserAssetUrlActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:109:9-111:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:109:9-111:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:111:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:111:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:110:13-52
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:110:13-52
 activity#com.v2ray.ang.ui.SubEditActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:113:9-115:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:113:9-115:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:115:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:115:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:114:13-47
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:114:13-47
 activity#com.v2ray.ang.ui.ScScannerActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:116:9-118:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:116:9-118:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:118:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:118:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:117:13-49
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:117:13-49
 activity#com.v2ray.ang.ui.ScSwitchActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:119:9-124:79
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:119:9-124:79
 	android:process
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:123:13-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:123:13-51
 	android:excludeFromRecents
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:121:13-46
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:121:13-46
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:122:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:122:13-37
 	android:theme
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:124:13-76
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:124:13-76
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:120:13-48
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:120:13-48
 activity#com.v2ray.ang.ui.UrlSchemeActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:126:9-144:20
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:126:9-144:20
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:128:13-36
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:128:13-36
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:127:13-49
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:127:13-49
 intent-filter#action:name:android.intent.action.SEND+category:name:android.intent.category.DEFAULT+data:mimeType:text/plain
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:129:13-133:29
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:129:13-133:29
 action#android.intent.action.SEND
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:130:17-69
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:130:17-69
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:130:25-66
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:130:25-66
 category#android.intent.category.DEFAULT
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:131:17-76
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:131:17-76
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:131:27-73
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:131:27-73
 data
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:132:17-55
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:132:17-55
 	android:host
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:141:23-52
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:141:23-52
 	android:scheme
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:140:23-47
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:140:23-47
 	android:mimeType
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:132:23-52
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:132:23-52
 intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:install-config+data:host:install-sub+data:scheme:v2rayng
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:134:13-143:29
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:134:13-143:29
 action#android.intent.action.VIEW
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:135:17-69
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:135:17-69
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:135:25-66
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:135:25-66
 category#android.intent.category.BROWSABLE
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:137:17-78
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:137:17-78
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:137:27-75
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:137:27-75
 activity#com.v2ray.ang.ui.CheckUpdateActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:145:9-147:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:145:9-147:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:147:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:147:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:146:13-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:146:13-51
 activity#com.v2ray.ang.ui.BackupActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:148:9-150:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:148:9-150:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:150:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:150:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:149:13-46
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:149:13-46
 activity#com.v2ray.ang.ui.AboutActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:151:9-153:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:151:9-153:40
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:153:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:153:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:152:13-45
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:152:13-45
 activity#com.v2ray.ang.plans.PlansActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:154:9-158:67
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:154:9-158:67
 	android:parentActivityName
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:157:13-58
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:157:13-58
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:156:13-48
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:156:13-48
 	android:theme
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:158:13-64
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:158:13-64
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:155:13-48
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:155:13-48
 activity#com.v2ray.ang.plans.PaymentActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:159:9-163:67
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:159:9-163:67
 	android:parentActivityName
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:162:13-62
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:162:13-62
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:161:13-50
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:161:13-50
 	android:theme
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:163:13-64
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:163:13-64
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:160:13-50
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:160:13-50
 activity#com.v2ray.ang.payment.ui.activity.UserProfileActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:164:9-168:67
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:164:9-168:67
 	android:parentActivityName
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:167:13-58
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:167:13-58
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:166:13-49
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:166:13-49
 	android:theme
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:168:13-64
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:168:13-64
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:165:13-68
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:165:13-68
 activity#com.v2ray.ang.payment.ui.activity.LoginActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:169:9-172:67
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:169:9-172:67
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:171:13-42
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:171:13-42
 	android:theme
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:172:13-64
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:172:13-64
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:170:13-62
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:170:13-62
 activity#com.v2ray.ang.payment.ui.activity.InvitationCenterActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:173:9-177:67
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:173:9-177:67
 	android:parentActivityName
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:176:13-58
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:176:13-58
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:175:13-60
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:175:13-60
 	android:theme
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:177:13-64
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:177:13-64
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:174:13-73
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:174:13-73
 activity#com.v2ray.ang.payment.ui.activity.CommissionLedgerActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:178:9-182:67
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:178:9-182:67
 	android:parentActivityName
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:181:13-58
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:181:13-58
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:180:13-60
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:180:13-60
 	android:theme
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:182:13-64
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:182:13-64
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:179:13-73
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:179:13-73
 activity#com.v2ray.ang.payment.ui.activity.WithdrawalActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:183:9-187:67
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:183:9-187:67
 	android:parentActivityName
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:186:13-58
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:186:13-58
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:185:13-53
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:185:13-53
 	android:theme
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:187:13-64
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:187:13-64
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:184:13-67
-activity#com.v2ray.ang.ui.compose.ComposeContainerActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:188:9-193:67
-	android:parentActivityName
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:192:13-58
-	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:191:13-46
-	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:190:13-37
-	android:theme
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:193:13-64
-	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:189:13-64
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:184:13-67
 service#com.v2ray.ang.service.V2RayVpnService
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:195:9-213:19
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:189:9-207:19
 	android:process
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:202:13-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:196:13-51
 	android:enabled
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:197:13-35
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:191:13-35
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:200:13-45
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:194:13-45
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:198:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:192:13-37
 	tools:ignore
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:203:13-44
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:197:13-44
 	android:permission
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:201:13-69
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:195:13-69
 	android:foregroundServiceType
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:199:13-55
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:193:13-55
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:196:13-52
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:190:13-52
 intent-filter#action:name:android.net.VpnService
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:204:13-206:29
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:198:13-200:29
 action#android.net.VpnService
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:205:17-65
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:199:17-65
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:205:25-62
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:199:25-62
 meta-data#android.net.VpnService.SUPPORTS_ALWAYS_ON
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:207:13-209:40
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:201:13-203:40
 	android:value
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:209:17-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:203:17-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:208:17-73
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:202:17-73
 property#android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:210:13-212:39
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:204:13-206:39
 	android:value
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:212:17-36
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:206:17-36
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:211:17-76
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:205:17-76
 service#com.v2ray.ang.service.V2RayProxyOnlyService
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:215:9-224:19
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:209:9-218:19
 	android:process
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:220:13-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:214:13-51
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:219:13-45
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:213:13-45
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:217:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:211:13-37
 	android:foregroundServiceType
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:218:13-55
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:212:13-55
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:216:13-58
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:210:13-58
 service#com.v2ray.ang.service.V2RayTestService
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:226:9-229:54
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:220:9-223:54
 	android:process
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:229:13-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:223:13-51
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:228:13-37
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:222:13-37
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:227:13-53
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:221:13-53
 receiver#com.v2ray.ang.receiver.WidgetProvider
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:231:9-243:20
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:225:9-237:20
 	android:process
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:234:13-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:228:13-51
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:233:13-36
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:227:13-36
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:232:13-52
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:226:13-52
 meta-data#android.appwidget.provider
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:235:13-237:63
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:229:13-231:63
 	android:resource
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:237:17-60
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:231:17-60
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:236:17-58
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:230:17-58
 intent-filter#action:name:android.appwidget.action.APPWIDGET_UPDATE+action:name:com.v2ray.ang.fdroid.action.activity+action:name:com.v2ray.ang.fdroid.action.widget.click
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:238:13-242:29
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:232:13-236:29
 action#android.appwidget.action.APPWIDGET_UPDATE
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:239:17-84
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:233:17-84
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:239:25-81
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:233:25-81
 receiver#com.v2ray.ang.receiver.BootReceiver
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:244:9-251:20
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:238:9-245:20
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:247:13-41
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:241:13-41
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:246:13-36
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:240:13-36
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:245:13-50
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:239:13-50
 intent-filter#action:name:android.intent.action.BOOT_COMPLETED
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:248:13-250:29
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:242:13-244:29
 action#android.intent.action.BOOT_COMPLETED
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:249:17-79
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:243:17-79
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:249:25-76
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:243:25-76
 service#com.v2ray.ang.service.QSTileService
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:253:9-267:19
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:247:9-261:19
 	android:process
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:260:13-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:254:13-51
 	android:label
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:258:13-50
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:252:13-50
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:255:13-36
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:249:13-36
 	android:permission
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:259:13-77
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:253:13-77
 	android:icon
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:257:13-50
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:251:13-50
 	android:foregroundServiceType
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:256:13-55
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:250:13-55
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:254:13-50
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:248:13-50
 intent-filter#action:name:android.service.quicksettings.action.QS_TILE
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:261:13-263:29
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:255:13-257:29
 action#android.service.quicksettings.action.QS_TILE
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:262:17-87
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:256:17-87
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:262:25-84
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:256:25-84
 activity#com.v2ray.ang.ui.TaskerActivity
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:269:9-276:20
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:263:9-270:20
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:271:13-36
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:265:13-36
 	android:icon
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:272:13-47
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:266:13-47
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:270:13-46
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:264:13-46
 intent-filter#action:name:com.twofortyfouram.locale.intent.action.EDIT_SETTING
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:273:13-275:29
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:267:13-269:29
 action#com.twofortyfouram.locale.intent.action.EDIT_SETTING
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:274:17-95
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:268:17-95
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:274:25-92
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:268:25-92
 receiver#com.v2ray.ang.receiver.TaskerReceiver
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:278:9-286:20
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:272:9-280:20
 	android:process
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:281:13-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:275:13-51
 	android:exported
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:280:13-36
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:274:13-36
 	tools:ignore
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:282:13-44
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:276:13-44
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:279:13-52
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:273:13-52
 intent-filter#action:name:com.twofortyfouram.locale.intent.action.FIRE_SETTING
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:283:13-285:29
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:277:13-279:29
 action#com.twofortyfouram.locale.intent.action.FIRE_SETTING
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:284:17-95
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:278:17-95
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:284:25-92
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:278:25-92
 meta-data#androidx.work.WorkManagerInitializer
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:294:13-297:39
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:288:13-291:39
 REJECTED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:34:13-36:52
 	tools:node
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:297:17-36
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:291:17-36
 	android:value
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:296:17-49
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:290:17-49
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:295:17-68
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:289:17-68
 meta-data#android.support.FILE_PROVIDER_PATHS
-ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:306:13-308:55
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:300:13-302:55
 	android:resource
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:308:17-52
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:302:17-52
 	android:name
-		ADDED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:307:17-67
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:301:17-67
 uses-sdk
-INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
-INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
-INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
 MERGED from [libv2ray.aar] /Users/cnyirui/.gradle/caches/9.3.1/transforms/600036bff801234e051cffd539b38369/transformed/libv2ray/AndroidManifest.xml:2:1-39
 MERGED from [libv2ray.aar] /Users/cnyirui/.gradle/caches/9.3.1/transforms/600036bff801234e051cffd539b38369/transformed/libv2ray/AndroidManifest.xml:2:1-39
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:6:5-44
@@ -802,14 +758,22 @@ MERGED from [androidx.recyclerview:recyclerview:1.4.0] /Users/cnyirui/.gradle/ca
 MERGED from [androidx.recyclerview:recyclerview:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0862d77a609d48be21a3b4ba503c6a6d/transformed/recyclerview-1.4.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.viewpager2:viewpager2:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1b8a6e9d261a4a3913be211b903f48a5/transformed/viewpager2-1.1.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.viewpager2:viewpager2:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1b8a6e9d261a4a3913be211b903f48a5/transformed/viewpager2-1.1.0/AndroidManifest.xml:5:5-44
-MERGED from [androidx.fragment:fragment:1.8.9] /Users/cnyirui/.gradle/caches/9.3.1/transforms/80816f79efe14a3ed646aa1ab34c3cd7/transformed/fragment-1.8.9/AndroidManifest.xml:5:5-44
-MERGED from [androidx.fragment:fragment:1.8.9] /Users/cnyirui/.gradle/caches/9.3.1/transforms/80816f79efe14a3ed646aa1ab34c3cd7/transformed/fragment-1.8.9/AndroidManifest.xml:5:5-44
 MERGED from [androidx.fragment:fragment-ktx:1.8.9] /Users/cnyirui/.gradle/caches/9.3.1/transforms/484f14621a42db75f9465d84d634ac12/transformed/fragment-ktx-1.8.9/AndroidManifest.xml:5:5-44
 MERGED from [androidx.fragment:fragment-ktx:1.8.9] /Users/cnyirui/.gradle/caches/9.3.1/transforms/484f14621a42db75f9465d84d634ac12/transformed/fragment-ktx-1.8.9/AndroidManifest.xml:5:5-44
-MERGED from [androidx.loader:loader:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/af699dd7e0e19ff6c78bccb319932c43/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
-MERGED from [androidx.loader:loader:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/af699dd7e0e19ff6c78bccb319932c43/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.fragment:fragment:1.8.9] /Users/cnyirui/.gradle/caches/9.3.1/transforms/80816f79efe14a3ed646aa1ab34c3cd7/transformed/fragment-1.8.9/AndroidManifest.xml:5:5-44
+MERGED from [androidx.fragment:fragment:1.8.9] /Users/cnyirui/.gradle/caches/9.3.1/transforms/80816f79efe14a3ed646aa1ab34c3cd7/transformed/fragment-1.8.9/AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-ktx:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3dc470df100edf67d966482c1f26e9f3/transformed/activity-ktx-1.12.4/AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-ktx:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3dc470df100edf67d966482c1f26e9f3/transformed/activity-ktx-1.12.4/AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/530f8f93a89d8ae211e3545d74ae8415/transformed/activity-1.12.4/AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/530f8f93a89d8ae211e3545d74ae8415/transformed/activity-1.12.4/AndroidManifest.xml:20:5-44
+MERGED from [com.blacksquircle.ui:editorkit:2.9.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3979b866ca232c81c8a57bfdd503534/transformed/editorkit-2.9.0/AndroidManifest.xml:20:5-44
+MERGED from [com.blacksquircle.ui:editorkit:2.9.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3979b866ca232c81c8a57bfdd503534/transformed/editorkit-2.9.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/8ccb8553bd96f87c935dbae79aeefda6/transformed/swiperefreshlayout-1.2.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/8ccb8553bd96f87c935dbae79aeefda6/transformed/swiperefreshlayout-1.2.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7b6cf3508595a66843e8b687b1f89872/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7b6cf3508595a66843e8b687b1f89872/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f485beb036799a6d6bf1eb7c9a84033b/transformed/emoji2-1.3.0/AndroidManifest.xml:21:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f485beb036799a6d6bf1eb7c9a84033b/transformed/emoji2-1.3.0/AndroidManifest.xml:21:5-44
 MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/78bbcf2caa9cb94cc0461201b3955b51/transformed/drawerlayout-1.1.1/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/78bbcf2caa9cb94cc0461201b3955b51/transformed/drawerlayout-1.1.1/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4b70d51028bca7167b5f4255b1c890fe/transformed/coordinatorlayout-1.1.0/AndroidManifest.xml:20:5-22:41
@@ -820,8 +784,6 @@ MERGED from [androidx.transition:transition:1.5.0] /Users/cnyirui/.gradle/caches
 MERGED from [androidx.transition:transition:1.5.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/24ca7eb48227903785bcccd60f63138a/transformed/transition-1.5.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.dynamicanimation:dynamicanimation:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6f19211b24724315de9f0bf21b038a49/transformed/dynamicanimation-1.1.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.dynamicanimation:dynamicanimation:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6f19211b24724315de9f0bf21b038a49/transformed/dynamicanimation-1.1.0/AndroidManifest.xml:5:5-44
-MERGED from [com.blacksquircle.ui:editorkit:2.9.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3979b866ca232c81c8a57bfdd503534/transformed/editorkit-2.9.0/AndroidManifest.xml:20:5-44
-MERGED from [com.blacksquircle.ui:editorkit:2.9.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3979b866ca232c81c8a57bfdd503534/transformed/editorkit-2.9.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d4991e486bad775a7a74f958dd9fc915/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d4991e486bad775a7a74f958dd9fc915/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/43e75ec277623103d283e398a39aba20/transformed/vectordrawable-1.1.0/AndroidManifest.xml:20:5-22:41
@@ -832,86 +794,36 @@ MERGED from [androidx.work:work-runtime-ktx:2.11.1] /Users/cnyirui/.gradle/cache
 MERGED from [androidx.work:work-runtime-ktx:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/37c401b5f97ec25711c1ef9e57d13cc4/transformed/work-runtime-ktx-2.11.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:21:5-44
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.loader:loader:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/af699dd7e0e19ff6c78bccb319932c43/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/af699dd7e0e19ff6c78bccb319932c43/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4af6114926a5e958fb9b977ee3950931/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4af6114926a5e958fb9b977ee3950931/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.customview:customview:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f95b0e62af0d86c973e4723c05c43b83/transformed/customview-1.1.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.customview:customview:1.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f95b0e62af0d86c973e4723c05c43b83/transformed/customview-1.1.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.autofill:autofill:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3c685381aac183c76da4f0ad2d4e8110/transformed/autofill-1.0.0/AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.autofill:autofill:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3c685381aac183c76da4f0ad2d4e8110/transformed/autofill-1.0.0/AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.compose.material3:material3-android:1.3.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e0e9d89090908a7e4fe86b96e3440e78/transformed/material3-release/AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.material3:material3-android:1.3.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e0e9d89090908a7e4fe86b96e3440e78/transformed/material3-release/AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.ui:ui-tooling-data-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/26a5eb6fd1894bed688c1b8021b081cb/transformed/ui-tooling-data/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-tooling-data-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/26a5eb6fd1894bed688c1b8021b081cb/transformed/ui-tooling-data/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/01c351e6076a5fb9d3ef820acba69dcf/transformed/ui-tooling-preview/AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/01c351e6076a5fb9d3ef820acba69dcf/transformed/ui-tooling-preview/AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.material:material-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/591592e69221cf8fd53d678cd68f93c0/transformed/material-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/591592e69221cf8fd53d678cd68f93c0/transformed/material-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-ripple-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/bf5578633a8e07586a21ea979aa04563/transformed/material-ripple-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-ripple-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/bf5578633a8e07586a21ea979aa04563/transformed/material-ripple-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.foundation:foundation-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d3383d5d231e825fbdb2dee4410a435c/transformed/foundation-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.foundation:foundation-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d3383d5d231e825fbdb2dee4410a435c/transformed/foundation-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.foundation:foundation-layout-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/5d4b5996b91488a125ddd7c097aafdb2/transformed/foundation-layout/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.foundation:foundation-layout-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/5d4b5996b91488a125ddd7c097aafdb2/transformed/foundation-layout/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.animation:animation-core-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/81f36026ab54db3b6a2c2b7d2256ee36/transformed/animation-core/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.animation:animation-core-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/81f36026ab54db3b6a2c2b7d2256ee36/transformed/animation-core/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.animation:animation-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dd4c1d852f38bb764245942a116c3f24/transformed/animation/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.animation:animation-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dd4c1d852f38bb764245942a116c3f24/transformed/animation/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-util-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4454a8546c50ac233ee0a034eacc47c7/transformed/ui-util/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-util-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4454a8546c50ac233ee0a034eacc47c7/transformed/ui-util/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-unit-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2977757a4c9382164ab4bcdf41c6691c/transformed/ui-unit/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-unit-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2977757a4c9382164ab4bcdf41c6691c/transformed/ui-unit/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-text-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/8a10f94aa12febd2769673213bdcfd72/transformed/ui-text/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-text-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/8a10f94aa12febd2769673213bdcfd72/transformed/ui-text/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-geometry-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d1624bbd10c177ce4fef2d3ddbf1e3a9/transformed/ui-geometry/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-geometry-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d1624bbd10c177ce4fef2d3ddbf1e3a9/transformed/ui-geometry/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:20:5-44
-MERGED from [androidx.compose.ui:ui-graphics-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/b8de7482353a4db4f67a6b9aceff8019/transformed/ui-graphics-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-graphics-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/b8de7482353a4db4f67a6b9aceff8019/transformed/ui-graphics-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.graphics:graphics-path:1.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/5ad2b33e69a0781d0fe6a0dec42b6736/transformed/graphics-path-1.0.1/AndroidManifest.xml:5:5-44
-MERGED from [androidx.graphics:graphics-path:1.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/5ad2b33e69a0781d0fe6a0dec42b6736/transformed/graphics-path-1.0.1/AndroidManifest.xml:5:5-44
-MERGED from [androidx.emoji2:emoji2-views-helper:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3fca119e3de0c116ebcd3f1335efcfd1/transformed/emoji2-views-helper-1.4.0/AndroidManifest.xml:5:5-44
-MERGED from [androidx.emoji2:emoji2-views-helper:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3fca119e3de0c116ebcd3f1335efcfd1/transformed/emoji2-views-helper-1.4.0/AndroidManifest.xml:5:5-44
-MERGED from [androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:21:5-44
-MERGED from [androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:21:5-44
 MERGED from [androidx.core:core:1.17.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dbf91cfc6ebc0c9781aa28e78b55dfc1/transformed/core-1.17.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.core:core:1.17.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dbf91cfc6ebc0c9781aa28e78b55dfc1/transformed/core-1.17.0/AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:21:5-44
-MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:21:5-44
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2ecebc5ffc9be788e97c7c164c232612/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2ecebc5ffc9be788e97c7c164c232612/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/94f33663394fe52a9c32d59db8fe8574/transformed/graphics-shapes-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/94f33663394fe52a9c32d59db8fe8574/transformed/graphics-shapes-release/AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-service:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/269e0598e25b47a417e8b869bd633b7d/transformed/lifecycle-service-2.10.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-service:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/269e0598e25b47a417e8b869bd633b7d/transformed/lifecycle-service-2.10.0/AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3937c3c94043617f645b30b9bb182c2/transformed/lifecycle-viewmodel-savedstate/AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3937c3c94043617f645b30b9bb182c2/transformed/lifecycle-viewmodel-savedstate/AndroidManifest.xml:20:5-44
-MERGED from [androidx.navigationevent:navigationevent-android:1.0.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0a05fc0bb7cea451d099a21017ce8688/transformed/navigationevent/AndroidManifest.xml:5:5-44
-MERGED from [androidx.navigationevent:navigationevent-android:1.0.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0a05fc0bb7cea451d099a21017ce8688/transformed/navigationevent/AndroidManifest.xml:5:5-44
-MERGED from [androidx.navigationevent:navigationevent-compose-android:1.0.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a8bd970f9fee366d5767f55b693c3faa/transformed/navigationevent-compose/AndroidManifest.xml:5:5-44
-MERGED from [androidx.navigationevent:navigationevent-compose-android:1.0.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a8bd970f9fee366d5767f55b693c3faa/transformed/navigationevent-compose/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-annotation-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/8501f0e18a071242da70d0b3c108d797/transformed/runtime-annotation/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-annotation-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/8501f0e18a071242da70d0b3c108d797/transformed/runtime-annotation/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/24aaaf9eeb138cb72dbb81a008e2e045/transformed/lifecycle-runtime/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/24aaaf9eeb138cb72dbb81a008e2e045/transformed/lifecycle-runtime/AndroidManifest.xml:20:5-44
 MERGED from [androidx.savedstate:savedstate-ktx:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3038210a61bb5f225c738a346b23ea26/transformed/savedstate-ktx-1.4.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.savedstate:savedstate-ktx:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3038210a61bb5f225c738a346b23ea26/transformed/savedstate-ktx-1.4.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.savedstate:savedstate-android:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/91247cc0b847fb54ed93016b0abb85cf/transformed/savedstate/AndroidManifest.xml:20:5-44
 MERGED from [androidx.savedstate:savedstate-android:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/91247cc0b847fb54ed93016b0abb85cf/transformed/savedstate/AndroidManifest.xml:20:5-44
-MERGED from [androidx.savedstate:savedstate-compose-android:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2c2e4e2275f7033a5b339af35cfff5b1/transformed/savedstate-compose/AndroidManifest.xml:5:5-44
-MERGED from [androidx.savedstate:savedstate-compose-android:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2c2e4e2275f7033a5b339af35cfff5b1/transformed/savedstate-compose/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f489988e03453744bbda5c9b69f89abb/transformed/runtime/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f489988e03453744bbda5c9b69f89abb/transformed/runtime/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-saveable-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/cc2e1d49634cfd99a225ef825e742309/transformed/runtime-saveable/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.runtime:runtime-saveable-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/cc2e1d49634cfd99a225ef825e742309/transformed/runtime-saveable/AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-runtime-compose-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/eec78152354630e590c1696114db1a80/transformed/lifecycle-runtime-compose/AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-runtime-compose-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/eec78152354630e590c1696114db1a80/transformed/lifecycle-runtime-compose/AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/24aaaf9eeb138cb72dbb81a008e2e045/transformed/lifecycle-runtime/AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/24aaaf9eeb138cb72dbb81a008e2e045/transformed/lifecycle-runtime/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4691fb6dcffe3e78ac1b79bdf8a1e242/transformed/lifecycle-viewmodel-2.10.0/AndroidManifest.xml:4:5-43
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4691fb6dcffe3e78ac1b79bdf8a1e242/transformed/lifecycle-viewmodel-2.10.0/AndroidManifest.xml:4:5-43
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d4a48a150431274c7ceda4925c848332/transformed/lifecycle-viewmodel/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d4a48a150431274c7ceda4925c848332/transformed/lifecycle-viewmodel/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/958b31130f12461264d44d442c328da3/transformed/lifecycle-livedata-core-2.10.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/958b31130f12461264d44d442c328da3/transformed/lifecycle-livedata-core-2.10.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:21:5-44
 MERGED from [androidx.lifecycle:lifecycle-runtime-ktx-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/ffc852402587c5e374285edaccd6ddf9/transformed/lifecycle-runtime-ktx/AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-runtime-ktx-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/ffc852402587c5e374285edaccd6ddf9/transformed/lifecycle-runtime-ktx/AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-livedata:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/396d99b21a06212820e63e1320de734c/transformed/lifecycle-livedata-2.10.0/AndroidManifest.xml:20:5-44
@@ -922,30 +834,16 @@ MERGED from [androidx.lifecycle:lifecycle-livedata-ktx:2.10.0] /Users/cnyirui/.g
 MERGED from [androidx.lifecycle:lifecycle-livedata-ktx:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/ace3e0400b7fd12d57493188cd55bb6f/transformed/lifecycle-livedata-ktx-2.10.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4bae33a8e3766aafd1e40680a4cfbf89/transformed/lifecycle-viewmodel-ktx-2.10.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4bae33a8e3766aafd1e40680a4cfbf89/transformed/lifecycle-viewmodel-ktx-2.10.0/AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/22d7e16f792df831047d359d6c8f247b/transformed/lifecycle-viewmodel-compose/AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/22d7e16f792df831047d359d6c8f247b/transformed/lifecycle-viewmodel-compose/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-icons-extended-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dd3f94fb5a121a8a4df4fc70bcf15ae0/transformed/material-icons-extended-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-icons-extended-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dd3f94fb5a121a8a4df4fc70bcf15ae0/transformed/material-icons-extended-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-icons-core-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a1e30e771c3d0e6682194e15144b15c8/transformed/material-icons-core-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.material:material-icons-core-android:1.7.8] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a1e30e771c3d0e6682194e15144b15c8/transformed/material-icons-core-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7e363e8c36b8e3ca1dfd47eb8f6765ef/transformed/ui-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.compose.ui:ui-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7e363e8c36b8e3ca1dfd47eb8f6765ef/transformed/ui-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.activity:activity-ktx:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3dc470df100edf67d966482c1f26e9f3/transformed/activity-ktx-1.12.4/AndroidManifest.xml:5:5-44
-MERGED from [androidx.activity:activity-ktx:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3dc470df100edf67d966482c1f26e9f3/transformed/activity-ktx-1.12.4/AndroidManifest.xml:5:5-44
-MERGED from [androidx.activity:activity-compose:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1df8af1bd9155467475ddcba17555a51/transformed/activity-compose-1.12.4/AndroidManifest.xml:5:5-44
-MERGED from [androidx.activity:activity-compose:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1df8af1bd9155467475ddcba17555a51/transformed/activity-compose-1.12.4/AndroidManifest.xml:5:5-44
-MERGED from [androidx.activity:activity:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/530f8f93a89d8ae211e3545d74ae8415/transformed/activity-1.12.4/AndroidManifest.xml:20:5-44
-MERGED from [androidx.activity:activity:1.12.4] /Users/cnyirui/.gradle/caches/9.3.1/transforms/530f8f93a89d8ae211e3545d74ae8415/transformed/activity-1.12.4/AndroidManifest.xml:20:5-44
-MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2ecebc5ffc9be788e97c7c164c232612/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:20:5-21:38
-MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2ecebc5ffc9be788e97c7c164c232612/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:20:5-21:38
-MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/94f33663394fe52a9c32d59db8fe8574/transformed/graphics-shapes-release/AndroidManifest.xml:5:5-44
-MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/94f33663394fe52a9c32d59db8fe8574/transformed/graphics-shapes-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3937c3c94043617f645b30b9bb182c2/transformed/lifecycle-viewmodel-savedstate/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/e3937c3c94043617f645b30b9bb182c2/transformed/lifecycle-viewmodel-savedstate/AndroidManifest.xml:20:5-44
 MERGED from [androidx.core:core-ktx:1.17.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0c7ec7e92cda18dbe4f65b8945fa6c1d/transformed/core-ktx-1.17.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.core:core-ktx:1.17.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0c7ec7e92cda18dbe4f65b8945fa6c1d/transformed/core-ktx-1.17.0/AndroidManifest.xml:5:5-44
 MERGED from [com.google.android.flexbox:flexbox:3.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/30971c0ae2f4cacb7ede6cd7c589b983/transformed/flexbox-3.0.0/AndroidManifest.xml:20:5-22:41
 MERGED from [com.google.android.flexbox:flexbox:3.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/30971c0ae2f4cacb7ede6cd7c589b983/transformed/flexbox-3.0.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:21:5-44
 MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.navigationevent:navigationevent-android:1.0.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0a05fc0bb7cea451d099a21017ce8688/transformed/navigationevent/AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigationevent:navigationevent-android:1.0.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0a05fc0bb7cea451d099a21017ce8688/transformed/navigationevent/AndroidManifest.xml:5:5-44
 MERGED from [androidx.room:room-ktx:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d59838f5ca3dac0c03abb7e43ad947c/transformed/room-ktx-2.7.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.room:room-ktx:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d59838f5ca3dac0c03abb7e43ad947c/transformed/room-ktx-2.7.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/95fab1e1e8a39ff5150c289e8cac4256/transformed/room-runtime-release/AndroidManifest.xml:21:5-44
@@ -956,6 +854,8 @@ MERGED from [com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/c
 MERGED from [com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:6:5-44
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab23709b7de673a71ecb669727f0ac8/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:5:5-44
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab23709b7de673a71ecb669727f0ac8/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0308d13f9585f0a6d35c015f35f45512/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0308d13f9585f0a6d35c015f35f45512/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
 MERGED from [com.tencent:mmkv-static:1.3.16] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0d080eaf5abaac3f38a1c8c24c640833/transformed/mmkv-static-1.3.16/AndroidManifest.xml:5:5-44
 MERGED from [com.tencent:mmkv-static:1.3.16] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0d080eaf5abaac3f38a1c8c24c640833/transformed/mmkv-static-1.3.16/AndroidManifest.xml:5:5-44
 MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/b094cef12c86ac7f70372cf309c4cdb4/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
@@ -970,8 +870,6 @@ MERGED from [androidx.tracing:tracing-ktx:1.2.0] /Users/cnyirui/.gradle/caches/9
 MERGED from [androidx.tracing:tracing-ktx:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/621401204ddf38a5980a81521849f767/transformed/tracing-ktx-1.2.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.tracing:tracing:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7dd8dcc503b0192c351d360fd09e3d/transformed/tracing-1.2.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.tracing:tracing:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7dd8dcc503b0192c351d360fd09e3d/transformed/tracing-1.2.0/AndroidManifest.xml:20:5-44
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0308d13f9585f0a6d35c015f35f45512/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/0308d13f9585f0a6d35c015f35f45512/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/be5092626eaf7e35ab1c8ba4977a311e/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/be5092626eaf7e35ab1c8ba4977a311e/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.sqlite:sqlite-framework-android:2.5.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/cd405e5942c0384a83fb3d809fb21836/transformed/sqlite-framework-release/AndroidManifest.xml:20:5-44
@@ -980,14 +878,16 @@ MERGED from [androidx.sqlite:sqlite-android:2.5.0] /Users/cnyirui/.gradle/caches
 MERGED from [androidx.sqlite:sqlite-android:2.5.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/57d7920711a8b4bb4b2da72127375ab0/transformed/sqlite-release/AndroidManifest.xml:20:5-44
 MERGED from [androidx.exifinterface:exifinterface:1.3.7] /Users/cnyirui/.gradle/caches/9.3.1/transforms/02879a3d70b5ca36bf203dab96855a46/transformed/exifinterface-1.3.7/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.exifinterface:exifinterface:1.3.7] /Users/cnyirui/.gradle/caches/9.3.1/transforms/02879a3d70b5ca36bf203dab96855a46/transformed/exifinterface-1.3.7/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.compose.runtime:runtime-annotation-android:1.9.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/bc4b77c5ced04148011365f9390777f3/transformed/runtime-annotation/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-annotation-android:1.9.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/bc4b77c5ced04148011365f9390777f3/transformed/runtime-annotation/AndroidManifest.xml:5:5-44
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:20:5-44
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.multidex:multidex:2.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7193c0f649a0a0976cb6bbb625287c4e/transformed/multidex-2.0.1/AndroidManifest.xml:20:5-43
 MERGED from [androidx.multidex:multidex:2.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7193c0f649a0a0976cb6bbb625287c4e/transformed/multidex-2.0.1/AndroidManifest.xml:20:5-43
 	android:targetSdkVersion
-		INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
 	android:minSdkVersion
-		INJECTED from /Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-9-kimi/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
 activity#io.github.g00fy2.quickie.QRScannerActivity
 ADDED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:15:9-19:45
 	android:screenOrientation
@@ -1016,6 +916,12 @@ ADDED from [androidx.camera:camera-camera2:1.4.1] /Users/cnyirui/.gradle/caches/
 		ADDED from [androidx.camera:camera-camera2:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4d2d1fb851750af13d0ae111cf56fdeb/transformed/camera-camera2-1.4.1/AndroidManifest.xml:32:17-86
 	android:name
 		ADDED from [androidx.camera:camera-camera2:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4d2d1fb851750af13d0ae111cf56fdeb/transformed/camera-camera2-1.4.1/AndroidManifest.xml:31:17-103
+meta-data#androidx.emoji2.text.EmojiCompatInitializer
+ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f485beb036799a6d6bf1eb7c9a84033b/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f485beb036799a6d6bf1eb7c9a84033b/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/f485beb036799a6d6bf1eb7c9a84033b/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
 service#androidx.work.multiprocess.RemoteWorkManagerService
 ADDED from [androidx.work:work-multiprocess:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab3a2fac5118aa4f741a1bb57b617c5/transformed/work-multiprocess-2.11.1/AndroidManifest.xml:24:9-27:63
 	android:exported
@@ -1112,26 +1018,6 @@ ADDED from [androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/tr
 		ADDED from [androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:30:13-37
 	android:name
 		ADDED from [androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:29:13-51
-activity#androidx.compose.ui.tooling.PreviewActivity
-ADDED from [androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:23:9-25:39
-	android:exported
-		ADDED from [androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:25:13-36
-	android:name
-		ADDED from [androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:24:13-71
-activity#androidx.activity.ComponentActivity
-ADDED from [androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:23:9-26:79
-	android:exported
-		ADDED from [androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:25:13-36
-	android:theme
-		ADDED from [androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:26:13-76
-	android:name
-		ADDED from [androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:24:13-63
-meta-data#androidx.emoji2.text.EmojiCompatInitializer
-ADDED from [androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:29:13-31:52
-	android:value
-		ADDED from [androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:31:17-49
-	android:name
-		ADDED from [androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:30:17-75
 permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.17.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dbf91cfc6ebc0c9781aa28e78b55dfc1/transformed/core-1.17.0/AndroidManifest.xml:22:5-24:47
 	android:protectionLevel
