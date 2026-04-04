@@ -1,5 +1,8 @@
 package com.v2ray.ang.composeui.components.buttons
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -53,7 +56,7 @@ fun BackButton(
     enabled: Boolean = true,
 ) {
     IconButton(
-        icon = androidx.compose.material.icons.Icons.Default.ArrowBack,
+        icon = Icons.Default.ArrowBack,
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
@@ -67,7 +70,7 @@ fun CloseButton(
     enabled: Boolean = true,
 ) {
     IconButton(
-        icon = androidx.compose.material.icons.Icons.Default.Close,
+        icon = Icons.Default.Close,
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,

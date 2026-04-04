@@ -1,31 +1,22 @@
 package com.v2ray.ang.composeui.navigation
 
-import androidx.navigation.NavController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class NavigationManager(private val navController: NavController) {
-    private val _currentRoute = MutableStateFlow<String?>(navController.currentDestination?.route)
+class NavigationManager(private val navController: Any? = null) {
+    private val _currentRoute = MutableStateFlow<String?>(null)
     val currentRoute: StateFlow<String?> = _currentRoute.asStateFlow()
 
-    init {
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            _currentRoute.value = destination.route
-        }
-    }
-
     fun navigateTo(route: String) {
-        navController.navigate(route)
+        _currentRoute.value = route
     }
 
     fun navigateAndClearStack(route: String) {
-        navController.navigate(route) {
-            popUpTo(0) { inclusive = true }
-        }
+        _currentRoute.value = route
     }
 
-    fun goBack(): Boolean = navController.popBackStack()
+    fun goBack(): Boolean = false
 
     fun navigateToSplash() = navigateAndClearStack(Routes.SPLASH)
 

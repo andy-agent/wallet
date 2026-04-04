@@ -6,29 +6,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 
 @Composable
 fun AppNavGraph(
-    navController: NavHostController,
+    navController: Any? = null,
     startDestination: String = Routes.SPLASH,
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = startDestination,
-    ) {
-        composable(Routes.SPLASH) {
-            PlaceholderRoute(label = "Splash")
-        }
-        composable(Routes.EMAIL_LOGIN) {
-            PlaceholderRoute(label = "Email Login")
-        }
-        composable(Routes.VPN_HOME) {
-            PlaceholderRoute(label = "VPN Home")
-        }
-    }
+    PlaceholderRoute(label = startDestination)
 }
 
 @Composable
