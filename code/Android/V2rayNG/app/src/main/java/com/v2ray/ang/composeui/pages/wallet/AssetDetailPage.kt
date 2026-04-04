@@ -19,9 +19,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -68,57 +72,43 @@ sealed class AssetDetailState {
 /**
  * 资产详情页ViewModel
  */
-class AssetDetailViewModel : ViewModel() {
+class AssetDetailViewModel(application: Application) : AndroidViewModel(application) {
+    private val walletBridgeRepository = WalletBridgeRepository(application)
     private val _state = MutableStateFlow<AssetDetailState>(AssetDetailState.Idle)
     val state: StateFlow<AssetDetailState> = _state
 
     fun loadAssetDetail(symbol: String) {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        
-        val transactions = listOf(
-            TransactionRecord(
-                id = "tx1",
-                type = TransactionType.RECEIVE,
-                amount = "+0.5",
+        viewModelScope.launch {
+            _state.value = AssetDetailState.Loading
+            val userId = walletBridgeRepository.getCurrentUserId()
+            if (userId.isNullOrBlank()) {
+                _state.value = AssetDetailState.Error("当前未登录")
+                return@launch
+            }
+            val orders = walletBridgeRepository.getCachedOrders(userId)
+                .filter { it.assetCode.equals(symbol, true) }
+            val transactions = orders.map {
+                TransactionRecord(
+                    id = it.orderNo,
+                    type = if (it.status == "COMPLETED" || it.status == "PAID" || it.status == "FULFILLED") TransactionType.RECEIVE else TransactionType.SEND,
+                    amount = it.amount,
+                    symbol = it.assetCode,
+                    fromTo = it.planName,
+                    timestamp = Date(it.createdAt),
+                    status = it.status
+                )
+            }
+            val balance = orders.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
+            _state.value = AssetDetailState.Loaded(
                 symbol = symbol,
-                fromTo = "0x742d...5f0bEb",
-                timestamp = dateFormat.parse("2024-01-15 10:30:00") ?: Date(),
-                status = "已完成"
-            ),
-            TransactionRecord(
-                id = "tx2",
-                type = TransactionType.SEND,
-                amount = "-0.25",
-                symbol = symbol,
-                fromTo = "0x1234...5678",
-                timestamp = dateFormat.parse("2024-01-14 15:20:00") ?: Date(),
-                status = "已完成"
-            ),
-            TransactionRecord(
-                id = "tx3",
-                type = TransactionType.RECEIVE,
-                amount = "+1.0",
-                symbol = symbol,
-                fromTo = "0xabcd...efgh",
-                timestamp = dateFormat.parse("2024-01-10 09:15:00") ?: Date(),
-                status = "已完成"
+                name = symbol,
+                balance = String.format("%.4f", balance),
+                value = "$${String.format("%.2f", balance)}",
+                price = "--",
+                priceChange = "--",
+                transactions = transactions
             )
-        )
-
-        _state.value = AssetDetailState.Loaded(
-            symbol = symbol,
-            name = when (symbol) {
-                "ETH" -> "Ethereum"
-                "USDT" -> "Tether USD"
-                "BNB" -> "BNB"
-                else -> symbol
-            },
-            balance = "1.25",
-            value = "$2,850.00",
-            price = "$2,280.00",
-            priceChange = "+5.23%",
-            transactions = transactions
-        )
+        }
     }
 }
 

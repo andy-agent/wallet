@@ -22,7 +22,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.composeui.bridge.growth.GrowthBridgeRepository
+import android.app.Application
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -47,7 +50,8 @@ sealed class InviteCenterState {
 /**
  * 邀请中心页ViewModel
  */
-class InviteCenterViewModel : ViewModel() {
+class InviteCenterViewModel(application: Application) : AndroidViewModel(application) {
+    private val growthBridgeRepository = GrowthBridgeRepository(application)
     private val _state = MutableStateFlow<InviteCenterState>(InviteCenterState.Idle)
     val state: StateFlow<InviteCenterState> = _state
 
@@ -56,14 +60,47 @@ class InviteCenterViewModel : ViewModel() {
     }
 
     private fun loadInviteData() {
-        _state.value = InviteCenterState.Loaded(
-            inviteCode = "CRYPTO2024",
-            inviteLink = "https://cryptovpn.app/invite/CRYPTO2024",
-            totalInvited = 15,
-            totalCommission = "$156.80",
-            pendingCommission = "$23.50",
-            commissionRate = "20%"
-        )
+        viewModelScope.launch {
+            _state.value = InviteCenterState.Loading
+
+            val referral = growthBridgeRepository.getReferralOverview()
+            val summary = growthBridgeRepository.getCommissionSummary()
+            if (referral.isFailure) {
+                _state.value = InviteCenterState.Error(referral.exceptionOrNull()?.message ?: "加载邀请信息失败")
+                return@launch
+            }
+            if (summary.isFailure) {
+                _state.value = InviteCenterState.Error(summary.exceptionOrNull()?.message ?: "加载佣金信息失败")
+                return@launch
+            }
+
+            val referralData = referral.getOrNull() ?: run {
+                _state.value = InviteCenterState.Error("邀请数据为空")
+                return@launch
+            }
+            val summaryData = summary.getOrNull() ?: run {
+                _state.value = InviteCenterState.Error("佣金数据为空")
+                return@launch
+            }
+
+            val inviteCode = referralData.referralCode
+            _state.value = InviteCenterState.Loaded(
+                inviteCode = inviteCode,
+                inviteLink = "https://api.residential-agent.com/invite/$inviteCode",
+                totalInvited = referralData.level1InviteCount + referralData.level2InviteCount,
+                totalCommission = "$${summaryData.withdrawnTotal}",
+                pendingCommission = "$${summaryData.availableAmount}",
+                commissionRate = "L1 20% / L2 10%"
+            )
+        }
+    }
+
+    fun bindReferralCode(code: String) {
+        if (code.isBlank()) return
+        viewModelScope.launch {
+            growthBridgeRepository.bindReferralCode(code)
+            loadInviteData()
+        }
     }
 }
 

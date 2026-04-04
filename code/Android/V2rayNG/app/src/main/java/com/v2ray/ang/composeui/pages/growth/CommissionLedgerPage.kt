@@ -17,9 +17,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.composeui.bridge.growth.GrowthBridgeRepository
+import android.app.Application
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -63,7 +67,8 @@ sealed class CommissionLedgerState {
 /**
  * 佣金账本页ViewModel
  */
-class CommissionLedgerViewModel : ViewModel() {
+class CommissionLedgerViewModel(application: Application) : AndroidViewModel(application) {
+    private val growthBridgeRepository = GrowthBridgeRepository(application)
     private val _state = MutableStateFlow<CommissionLedgerState>(CommissionLedgerState.Idle)
     val state: StateFlow<CommissionLedgerState> = _state
 
@@ -72,61 +77,50 @@ class CommissionLedgerViewModel : ViewModel() {
     }
 
     private fun loadCommissionData() {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        
-        val records = listOf(
-            CommissionRecord(
-                id = "COM-001",
-                type = CommissionType.INVITE,
-                amount = "+$5.40",
-                description = "邀请奖励 - 季度套餐",
-                fromUser = "user***123",
-                timestamp = dateFormat.parse("2024-01-15 10:30:00") ?: Date(),
-                status = "已到账"
-            ),
-            CommissionRecord(
-                id = "COM-002",
-                type = CommissionType.INVITE,
-                amount = "+$2.00",
-                description = "邀请奖励 - 月度套餐",
-                fromUser = "user***456",
-                timestamp = dateFormat.parse("2024-01-14 15:20:00") ?: Date(),
-                status = "已到账"
-            ),
-            CommissionRecord(
-                id = "COM-003",
-                type = CommissionType.WITHDRAW,
-                amount = "-$50.00",
-                description = "提现至钱包",
-                fromUser = null,
-                timestamp = dateFormat.parse("2024-01-10 09:15:00") ?: Date(),
-                status = "已完成"
-            ),
-            CommissionRecord(
-                id = "COM-004",
-                type = CommissionType.INVITE,
-                amount = "+$18.00",
-                description = "邀请奖励 - 年度套餐",
-                fromUser = "user***789",
-                timestamp = dateFormat.parse("2024-01-08 14:00:00") ?: Date(),
-                status = "已到账"
-            ),
-            CommissionRecord(
-                id = "COM-005",
-                type = CommissionType.REBATE,
-                amount = "+$1.00",
-                description = "续费返利",
-                fromUser = "user***123",
-                timestamp = dateFormat.parse("2024-01-05 11:30:00") ?: Date(),
-                status = "已到账"
-            )
-        )
-        
-        _state.value = CommissionLedgerState.Loaded(
-            totalCommission = "$156.80",
-            availableCommission = "$23.50",
-            records = records
-        )
+        viewModelScope.launch {
+            _state.value = CommissionLedgerState.Loading
+
+            val summaryResult = growthBridgeRepository.getCommissionSummary()
+            val ledgerResult = growthBridgeRepository.getCommissionLedger()
+            if (summaryResult.isFailure) {
+                _state.value = CommissionLedgerState.Error(summaryResult.exceptionOrNull()?.message ?: "加载佣金概览失败")
+                return@launch
+            }
+            if (ledgerResult.isFailure) {
+                _state.value = CommissionLedgerState.Error(ledgerResult.exceptionOrNull()?.message ?: "加载佣金账本失败")
+                return@launch
+            }
+
+            val summary = summaryResult.getOrNull() ?: run {
+                _state.value = CommissionLedgerState.Error("佣金概览为空")
+                return@launch
+            }
+            val records = (ledgerResult.getOrNull() ?: emptyList()).map {
+                CommissionRecord(
+                    id = it.entryNo,
+                    type = when {
+                        it.status.equals("SETTLED", true) -> CommissionType.WITHDRAW
+                        it.commissionLevel.equals("LEVEL2", true) -> CommissionType.REBATE
+                        else -> CommissionType.INVITE
+                    },
+                    amount = "+$${it.settlementAmountUsdt}",
+                    description = "来源订单 ${it.sourceOrderNo}",
+                    fromUser = it.sourceAccountMasked,
+                    timestamp = Date(),
+                    status = it.status
+                )
+            }
+
+            _state.value = if (records.isEmpty()) {
+                CommissionLedgerState.Empty
+            } else {
+                CommissionLedgerState.Loaded(
+                    totalCommission = "$${summary.withdrawnTotal}",
+                    availableCommission = "$${summary.availableAmount}",
+                    records = records
+                )
+            }
+        }
     }
 }
 

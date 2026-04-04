@@ -20,9 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.composeui.bridge.profile.ProfileBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 /**
  * 用户信息
@@ -59,7 +63,8 @@ sealed class ProfileState {
 /**
  * 我的页ViewModel
  */
-class ProfileViewModel : ViewModel() {
+class ProfileViewModel(application: Application) : AndroidViewModel(application) {
+    private val profileBridgeRepository = ProfileBridgeRepository(application)
     private val _state = MutableStateFlow<ProfileState>(ProfileState.Idle)
     val state: StateFlow<ProfileState> = _state
 
@@ -68,18 +73,33 @@ class ProfileViewModel : ViewModel() {
     }
 
     private fun loadUserData() {
-        val user = UserInfo(
-            email = "user@example.com",
-            nickname = "CryptoUser",
-            avatarUrl = null,
-            memberLevel = "VIP会员",
-            memberExpiry = "2024-12-31"
-        )
-        _state.value = ProfileState.Loaded(user)
+        viewModelScope.launch {
+            _state.value = ProfileState.Loading
+            val user = profileBridgeRepository.getCachedCurrentUser()
+            if (user == null) {
+                _state.value = ProfileState.Error("当前未登录")
+                return@launch
+            }
+
+            val orders = profileBridgeRepository.getCachedOrders(user.userId)
+            val activeOrder = orders.firstOrNull { it.expiredAt != null && it.expiredAt > System.currentTimeMillis() }
+            _state.value = ProfileState.Loaded(
+                user = UserInfo(
+                    email = user.email ?: user.username,
+                    nickname = user.username.substringBefore("@"),
+                    avatarUrl = null,
+                    memberLevel = if (activeOrder != null) "已订阅" else "基础用户",
+                    memberExpiry = activeOrder?.expiredAt?.toString()
+                )
+            )
+        }
     }
 
     fun logout() {
-        // 处理登出逻辑
+        viewModelScope.launch {
+            profileBridgeRepository.logout()
+            _state.value = ProfileState.Error("已退出登录")
+        }
     }
 }
 

@@ -16,9 +16,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 /**
  * 资产信息
@@ -48,7 +52,8 @@ sealed class WalletHomeState {
 /**
  * 钱包首页ViewModel
  */
-class WalletHomeViewModel : ViewModel() {
+class WalletHomeViewModel(application: Application) : AndroidViewModel(application) {
+    private val walletBridgeRepository = WalletBridgeRepository(application)
     private val _state = MutableStateFlow<WalletHomeState>(WalletHomeState.Idle)
     val state: StateFlow<WalletHomeState> = _state
 
@@ -60,38 +65,36 @@ class WalletHomeViewModel : ViewModel() {
     }
 
     private fun loadWalletData() {
-        val assets = listOf(
-            AssetInfo(
-                symbol = "ETH",
-                name = "Ethereum",
-                balance = "1.25",
-                value = "$2,850.00"
-            ),
-            AssetInfo(
-                symbol = "USDT",
-                name = "Tether USD",
-                balance = "1,500.00",
-                value = "$1,500.00"
-            ),
-            AssetInfo(
-                symbol = "BNB",
-                name = "BNB",
-                balance = "5.5",
-                value = "$1,375.00"
-            ),
-            AssetInfo(
-                symbol = "MATIC",
-                name = "Polygon",
-                balance = "2,000",
-                value = "$1,200.00"
+        viewModelScope.launch {
+            _state.value = WalletHomeState.Loading
+            val userId = walletBridgeRepository.getCurrentUserId()
+            if (userId.isNullOrBlank()) {
+                _state.value = WalletHomeState.Error("当前未登录")
+                return@launch
+            }
+            val orders = walletBridgeRepository.getCachedOrders(userId)
+            val paidOrders = orders.filter { it.status == "COMPLETED" || it.status == "PAID" || it.status == "FULFILLED" }
+            val assets = mutableListOf<AssetInfo>()
+            val assetGroups = paidOrders.groupBy { it.assetCode.uppercase() }
+            assetGroups.forEach { (symbol, assetOrders) ->
+                val amount = assetOrders.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
+                assets += AssetInfo(
+                    symbol = symbol,
+                    name = symbol,
+                    balance = String.format("%.4f", amount),
+                    value = "$${String.format("%.2f", amount)}"
+                )
+            }
+            if (assets.isEmpty()) {
+                assets += AssetInfo(symbol = "USDT", name = "Tether USD", balance = "0.0000", value = "$0.00")
+            }
+            val total = assets.sumOf { it.balance.toDoubleOrNull() ?: 0.0 }
+            _state.value = WalletHomeState.Loaded(
+                walletAddress = walletBridgeRepository.currentWalletAddressFallback(userId),
+                totalValue = "$${String.format("%.2f", total)}",
+                assets = assets
             )
-        )
-
-        _state.value = WalletHomeState.Loaded(
-            walletAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-            totalValue = "$6,925.00",
-            assets = assets
-        )
+        }
     }
 
     fun toggleBalanceVisibility() {
@@ -99,8 +102,6 @@ class WalletHomeViewModel : ViewModel() {
     }
 
     fun refreshData() {
-        _state.value = WalletHomeState.Loading
-        // 模拟刷新
         loadWalletData()
     }
 }

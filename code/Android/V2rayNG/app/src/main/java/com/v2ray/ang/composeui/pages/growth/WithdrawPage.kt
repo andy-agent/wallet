@@ -20,9 +20,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.v2ray.ang.composeui.bridge.growth.GrowthBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -41,12 +42,16 @@ sealed class WithdrawState {
 /**
  * 提现页ViewModel
  */
-class WithdrawViewModel : ViewModel() {
+class WithdrawViewModel(application: Application) : AndroidViewModel(application) {
+    private val growthBridgeRepository = GrowthBridgeRepository(application)
     private val _state = MutableStateFlow<WithdrawState>(WithdrawState.Idle)
     val state: StateFlow<WithdrawState> = _state
 
-    private val _availableAmount = MutableStateFlow("23.50")
+    private val _availableAmount = MutableStateFlow("0.00")
     val availableAmount: StateFlow<String> = _availableAmount
+
+    private val _minWithdrawAmount = MutableStateFlow("0.00")
+    val minWithdrawAmount: StateFlow<String> = _minWithdrawAmount
 
     private val _withdrawAmount = MutableStateFlow("")
     val withdrawAmount: StateFlow<String> = _withdrawAmount
@@ -59,6 +64,21 @@ class WithdrawViewModel : ViewModel() {
 
     private val _passwordVisible = MutableStateFlow(false)
     val passwordVisible: StateFlow<Boolean> = _passwordVisible
+
+    init {
+        refreshBalance()
+    }
+
+    private fun refreshBalance() {
+        viewModelScope.launch {
+            growthBridgeRepository.getCommissionSummary().onSuccess {
+                _availableAmount.value = it.availableAmount
+            }
+            growthBridgeRepository.getReferralOverview().onSuccess {
+                _minWithdrawAmount.value = it.minWithdrawAmountUsdt
+            }
+        }
+    }
 
     fun onWithdrawAmountChange(value: String) {
         if (value.isEmpty() || value.matches(Regex("^\\d*\\.?\\d*$"))) {
@@ -92,6 +112,10 @@ class WithdrawViewModel : ViewModel() {
                 _state.value = WithdrawState.Error("提现金额超过可用余额")
                 return
             }
+            (_withdrawAmount.value.toDoubleOrNull() ?: 0.0) < (_minWithdrawAmount.value.toDoubleOrNull() ?: 0.0) -> {
+                _state.value = WithdrawState.Error("低于最小提现金额 ${_minWithdrawAmount.value}")
+                return
+            }
             _walletAddress.value.isBlank() -> {
                 _state.value = WithdrawState.Error("请输入钱包地址")
                 return
@@ -108,8 +132,15 @@ class WithdrawViewModel : ViewModel() {
 
         viewModelScope.launch {
             _state.value = WithdrawState.Submitting
-            delay(2000) // 模拟提交
-            _state.value = WithdrawState.Success("0x742d35...5f0bEb")
+            growthBridgeRepository.createWithdrawal(
+                amount = _withdrawAmount.value,
+                payoutAddress = _walletAddress.value
+            ).onSuccess {
+                _state.value = WithdrawState.Success(it.requestNo)
+                refreshBalance()
+            }.onFailure {
+                _state.value = WithdrawState.Error(it.message ?: "提现失败")
+            }
         }
     }
 

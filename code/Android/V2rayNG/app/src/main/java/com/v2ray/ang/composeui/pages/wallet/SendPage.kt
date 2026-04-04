@@ -20,9 +20,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -40,7 +41,8 @@ sealed class SendPageState {
 /**
  * 发送页ViewModel
  */
-class SendPageViewModel : ViewModel() {
+class SendPageViewModel(application: Application) : AndroidViewModel(application) {
+    private val walletBridgeRepository = WalletBridgeRepository(application)
     private val _state = MutableStateFlow<SendPageState>(SendPageState.Idle)
     val state: StateFlow<SendPageState> = _state
 
@@ -50,11 +52,15 @@ class SendPageViewModel : ViewModel() {
     private val _amount = MutableStateFlow("")
     val amount: StateFlow<String> = _amount
 
-    private val _selectedAsset = MutableStateFlow("ETH")
+    private val _selectedAsset = MutableStateFlow("USDT")
     val selectedAsset: StateFlow<String> = _selectedAsset
 
-    private val _balance = MutableStateFlow("1.25")
+    private val _balance = MutableStateFlow("0.00")
     val balance: StateFlow<String> = _balance
+
+    init {
+        refreshBalance()
+    }
 
     fun onRecipientAddressChange(value: String) {
         _recipientAddress.value = value
@@ -69,13 +75,7 @@ class SendPageViewModel : ViewModel() {
 
     fun onAssetSelected(asset: String) {
         _selectedAsset.value = asset
-        // 更新余额
-        _balance.value = when (asset) {
-            "ETH" -> "1.25"
-            "USDT" -> "1500.00"
-            "BNB" -> "5.5"
-            else -> "0.00"
-        }
+        refreshBalance()
     }
 
     fun setMaxAmount() {
@@ -104,14 +104,25 @@ class SendPageViewModel : ViewModel() {
 
         viewModelScope.launch {
             _state.value = SendPageState.Validating
-            delay(500)
-            _state.value = SendPageState.Validated(fee = "0.002 ETH")
+            _state.value = SendPageState.Validated(fee = "network fee by chain")
         }
     }
 
     fun clearError() {
         if (_state.value is SendPageState.Error) {
             _state.value = SendPageState.Idle
+        }
+    }
+
+    private fun refreshBalance() {
+        viewModelScope.launch {
+            val userId = walletBridgeRepository.getCurrentUserId() ?: return@launch
+            val orders = walletBridgeRepository.getCachedOrders(userId)
+            val symbol = _selectedAsset.value
+            val amount = orders
+                .filter { it.assetCode.equals(symbol, true) }
+                .sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
+            _balance.value = String.format("%.4f", amount)
         }
     }
 }
