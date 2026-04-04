@@ -1,17 +1,17 @@
 # Recovery Context
 
-Generated: 2026-04-04T15:49:33Z
+Generated: 2026-04-04T16:05:27Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.13
-- next_task_title: 桥接钱包/增长/个人/法务 Compose 页面到现有数据层
+- next_task_id: liaojiang-b4m
+- next_task_title: liaojiang-4j0.5.1 集成全量 Compose 路由图与容器入口
 
 ## Counters
-- in_progress: 6
+- in_progress: 4
 - ready: 0
 - open: 7
-- closed: 105
+- closed: 108
 - dirty: 2
 
 ## Next Milestone
