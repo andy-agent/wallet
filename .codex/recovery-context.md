@@ -1,17 +1,17 @@
 # Recovery Context
 
-Generated: 2026-04-04T18:27:15Z
+Generated: 2026-04-04T19:04:32Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.2
-- next_task_title: Android 真实环境登录/下单/支付页回归
+- next_task_id: liaojiang-7x4.2
+- next_task_title: 7x4 implementation: restore fdroidDebug APK build with Compose container
 
 ## Counters
-- in_progress: 3
-- ready: 1
-- open: 4
-- closed: 112
+- in_progress: 5
+- ready: 0
+- open: 7
+- closed: 113
 - dirty: 2
 
 ## Next Milestone
