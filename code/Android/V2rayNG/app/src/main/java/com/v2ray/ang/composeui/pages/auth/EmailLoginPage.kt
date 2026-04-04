@@ -258,7 +258,7 @@ fun EmailLoginPage(
             Button(
                 onClick = { 
                     focusManager.clearFocus()
-                    viewModel.login(onLoginRequest) 
+                    viewModel.login(onLoginRequest)
                 },
                 modifier = Modifier
                     .fillMaxWidth()

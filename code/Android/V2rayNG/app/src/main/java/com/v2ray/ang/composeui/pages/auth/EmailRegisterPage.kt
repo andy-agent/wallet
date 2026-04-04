@@ -426,7 +426,7 @@ fun EmailRegisterPage(
             Button(
                 onClick = { 
                     focusManager.clearFocus()
-                    viewModel.register(onRegisterRequest) 
+                    viewModel.register(onRegisterRequest)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
