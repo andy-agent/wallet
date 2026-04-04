@@ -1,5 +1,6 @@
 package com.v2ray.ang.composeui.pages.vpn
 
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -14,9 +15,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
+import com.v2ray.ang.payment.PaymentConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -34,7 +36,7 @@ sealed class WalletPaymentConfirmState {
 /**
  * 钱包支付确认页ViewModel
  */
-class WalletPaymentConfirmViewModel : ViewModel() {
+class WalletPaymentConfirmViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<WalletPaymentConfirmState>(WalletPaymentConfirmState.Idle)
     val state: StateFlow<WalletPaymentConfirmState> = _state
 
@@ -43,6 +45,7 @@ class WalletPaymentConfirmViewModel : ViewModel() {
 
     private val _passwordVisible = MutableStateFlow(false)
     val passwordVisible: StateFlow<Boolean> = _passwordVisible
+    private val bridge = VpnOrderBridge(application)
 
     fun onPasswordChange(value: String) {
         _password.value = value
@@ -52,16 +55,37 @@ class WalletPaymentConfirmViewModel : ViewModel() {
         _passwordVisible.value = !_passwordVisible.value
     }
 
-    fun confirmPayment() {
+    fun confirmPayment(orderId: String) {
         if (_password.value.isBlank()) {
             _state.value = WalletPaymentConfirmState.Error("请输入钱包密码")
+            return
+        }
+        if (orderId.isBlank()) {
+            _state.value = WalletPaymentConfirmState.Error("缺少订单号")
             return
         }
 
         viewModelScope.launch {
             _state.value = WalletPaymentConfirmState.Confirming
-            delay(2000) // 模拟交易处理
-            _state.value = WalletPaymentConfirmState.Confirmed("0x742d35...5f0bEb")
+            bridge.refreshOrder(orderId)
+                .onSuccess { order ->
+                    when (order.status) {
+                        PaymentConfig.OrderStatus.PAID_SUCCESS,
+                        PaymentConfig.OrderStatus.FULFILLED -> {
+                            _state.value = WalletPaymentConfirmState.Confirmed(
+                                order.submittedClientTxHash ?: order.payment.txHash ?: "N/A"
+                            )
+                        }
+                        else -> {
+                            _state.value = WalletPaymentConfirmState.Error(
+                                "订单当前状态为${order.statusText}，请完成链上支付后重试"
+                            )
+                        }
+                    }
+                }
+                .onFailure { err ->
+                    _state.value = WalletPaymentConfirmState.Error(err.message ?: "确认支付失败")
+                }
         }
     }
 }
@@ -205,7 +229,7 @@ fun WalletPaymentConfirmPage(
 
             // 确认按钮
             Button(
-                onClick = { viewModel.confirmPayment() },
+                onClick = { viewModel.confirmPayment(orderId) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),

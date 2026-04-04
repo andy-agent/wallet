@@ -33,6 +33,13 @@ data class CheckoutBridgeData(
     val expiresInSeconds: Int,
 )
 
+data class OrderResultBridgeData(
+    val orderNo: String,
+    val amount: String,
+    val txHash: String?,
+    val status: String,
+)
+
 class VpnOrderBridge(application: Application) {
     private val repository = PaymentRepository(application)
 
@@ -64,6 +71,17 @@ class VpnOrderBridge(application: Application) {
 
     suspend fun refreshOrder(orderNo: String): Result<Order> {
         return repository.getOrder(orderNo)
+    }
+
+    suspend fun loadOrderResult(orderNo: String): Result<OrderResultBridgeData> {
+        return repository.getOrder(orderNo).map { order ->
+            OrderResultBridgeData(
+                orderNo = order.orderNo,
+                amount = "${order.payment.amountCrypto} ${order.payment.assetCode}",
+                txHash = order.submittedClientTxHash ?: order.payment.txHash,
+                status = order.status,
+            )
+        }
     }
 
     suspend fun loadCachedOrders(): Result<List<OrderEntity>> {

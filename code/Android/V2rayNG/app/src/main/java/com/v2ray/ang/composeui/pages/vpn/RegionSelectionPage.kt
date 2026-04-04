@@ -1,5 +1,6 @@
 package com.v2ray.ang.composeui.pages.vpn
 
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,9 +18,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.composeui.bridge.vpn.RegionSelectionProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 /**
  * 区域详细信息
@@ -51,7 +55,7 @@ sealed class RegionSelectionState {
 /**
  * 区域选择页ViewModel
  */
-class RegionSelectionViewModel : ViewModel() {
+class RegionSelectionViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<RegionSelectionState>(RegionSelectionState.Idle)
     val state: StateFlow<RegionSelectionState> = _state
 
@@ -60,21 +64,21 @@ class RegionSelectionViewModel : ViewModel() {
     }
 
     private fun loadRegions() {
-        val regions = listOf(
-            RegionDetail("us-la", "美国 - 洛杉矶", "US", "洛杉矶", 45, 35),
-            RegionDetail("us-ny", "美国 - 纽约", "US", "纽约", 68, 42),
-            RegionDetail("us-sf", "美国 - 旧金山", "US", "旧金山", 52, 28, true),
-            RegionDetail("uk-lon", "英国 - 伦敦", "UK", "伦敦", 85, 55),
-            RegionDetail("de-ber", "德国 - 柏林", "DE", "柏林", 78, 48),
-            RegionDetail("jp-tok", "日本 - 东京", "JP", "东京", 35, 62, true),
-            RegionDetail("sg-sin", "新加坡", "SG", "新加坡", 25, 70),
-            RegionDetail("hk-hk", "中国香港", "HK", "香港", 15, 85),
-            RegionDetail("kr-seo", "韩国 - 首尔", "KR", "首尔", 42, 38),
-            RegionDetail("au-syd", "澳大利亚 - 悉尼", "AU", "悉尼", 95, 25),
-            RegionDetail("ca-tor", "加拿大 - 多伦多", "CA", "多伦多", 72, 33),
-            RegionDetail("fr-par", "法国 - 巴黎", "FR", "巴黎", 80, 45)
-        )
-        _state.value = RegionSelectionState.Loaded(regions, null, "")
+        _state.value = RegionSelectionState.Loading
+        viewModelScope.launch {
+            val regions = RegionSelectionProvider.getRegions().map {
+                RegionDetail(
+                    id = it.id,
+                    name = it.name,
+                    countryCode = it.countryCode,
+                    city = it.city,
+                    latency = it.latency,
+                    load = it.load,
+                    isPremium = it.isPremium
+                )
+            }
+            _state.value = RegionSelectionState.Loaded(regions, null, "")
+        }
     }
 
     fun selectRegion(regionId: String) {
@@ -153,45 +157,59 @@ fun RegionSelectionPage(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            // 区域列表
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                // 推荐区域
-                val recommendedRegions = filteredRegions.filter { it.isPremium }
-                if (recommendedRegions.isNotEmpty()) {
-                    item {
-                        SectionHeader(title = "推荐节点")
+            when (state) {
+                is RegionSelectionState.Loading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
                     }
-                    items(recommendedRegions) { region ->
-                        RegionItem(
-                            region = region,
-                            isSelected = (state as? RegionSelectionState.Loaded)?.selectedRegionId == region.id,
-                            onSelect = {
-                                viewModel.selectRegion(region.id)
-                                onRegionSelected(region)
-                            }
+                }
+                is RegionSelectionState.Error -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = (state as RegionSelectionState.Error).message,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
                 }
-
-                // 所有区域
-                item {
-                    SectionHeader(title = "所有节点")
-                }
-                items(filteredRegions.filter { !it.isPremium }) { region ->
-                    RegionItem(
-                        region = region,
-                        isSelected = (state as? RegionSelectionState.Loaded)?.selectedRegionId == region.id,
-                        onSelect = {
-                            viewModel.selectRegion(region.id)
-                            onRegionSelected(region)
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        val recommendedRegions = filteredRegions.filter { it.isPremium }
+                        if (recommendedRegions.isNotEmpty()) {
+                            item {
+                                SectionHeader(title = "推荐节点")
+                            }
+                            items(recommendedRegions) { region ->
+                                RegionItem(
+                                    region = region,
+                                    isSelected = (state as? RegionSelectionState.Loaded)?.selectedRegionId == region.id,
+                                    onSelect = {
+                                        viewModel.selectRegion(region.id)
+                                        onRegionSelected(region)
+                                    }
+                                )
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
                         }
-                    )
+
+                        item {
+                            SectionHeader(title = "所有节点")
+                        }
+                        items(filteredRegions.filter { !it.isPremium }) { region ->
+                            RegionItem(
+                                region = region,
+                                isSelected = (state as? RegionSelectionState.Loaded)?.selectedRegionId == region.id,
+                                onSelect = {
+                                    viewModel.selectRegion(region.id)
+                                    onRegionSelected(region)
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }

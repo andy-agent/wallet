@@ -1,5 +1,6 @@
 package com.v2ray.ang.composeui.pages.vpn
 
+import android.app.Application
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -18,9 +19,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
+import com.v2ray.ang.payment.PaymentConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 /**
  * 订单结果类型
@@ -48,29 +53,47 @@ sealed class OrderResultState {
 /**
  * 订单结果页ViewModel
  */
-class OrderResultViewModel : ViewModel() {
+class OrderResultViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<OrderResultState>(OrderResultState.Idle)
     val state: StateFlow<OrderResultState> = _state
+    private val bridge = VpnOrderBridge(application)
 
-    fun loadResult(
-        resultType: OrderResultType = OrderResultType.SUCCESS,
-        orderId: String = "ORD-20240115-001",
-        amount: String = "$26.99",
-        txHash: String? = "0x742d35...5f0bEb"
-    ) {
+    fun loadResult(orderId: String, fallbackType: OrderResultType) {
+        if (orderId.isBlank()) {
+            _state.value = fallbackLoaded(fallbackType, "", "未知")
+            return
+        }
+        viewModelScope.launch {
+            bridge.loadOrderResult(orderId)
+                .onSuccess { data ->
+                    val type = when (data.status) {
+                        PaymentConfig.OrderStatus.PAID_SUCCESS,
+                        PaymentConfig.OrderStatus.FULFILLED -> OrderResultType.SUCCESS
+                        PaymentConfig.OrderStatus.PENDING_PAYMENT,
+                        PaymentConfig.OrderStatus.SEEN_ONCHAIN,
+                        PaymentConfig.OrderStatus.CONFIRMING -> OrderResultType.PENDING
+                        else -> OrderResultType.FAILED
+                    }
+                    _state.value = fallbackLoaded(type, data.orderNo, data.amount, data.txHash)
+                }
+                .onFailure {
+                    _state.value = fallbackLoaded(fallbackType, orderId, "未知")
+                }
+        }
+    }
+
+    private fun fallbackLoaded(
+        resultType: OrderResultType,
+        orderId: String,
+        amount: String,
+        txHash: String? = null
+    ): OrderResultState.Loaded {
         val message = when (resultType) {
             OrderResultType.SUCCESS -> "支付成功！您的套餐已激活。"
             OrderResultType.FAILED -> "支付失败，请重试或联系客服。"
             OrderResultType.PENDING -> "订单处理中，请稍后查看。"
         }
-        
-        _state.value = OrderResultState.Loaded(
-            resultType = resultType,
-            orderId = orderId,
-            amount = amount,
-            message = message,
-            txHash = txHash
-        )
+        return OrderResultState.Loaded(resultType, orderId, amount, message, txHash)
     }
 }
 
@@ -81,6 +104,7 @@ class OrderResultViewModel : ViewModel() {
 @Composable
 fun OrderResultPage(
     viewModel: OrderResultViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    orderId: String = "",
     resultType: OrderResultType = OrderResultType.SUCCESS,
     onNavigateToHome: () -> Unit = {},
     onNavigateToOrders: () -> Unit = {},
@@ -88,8 +112,8 @@ fun OrderResultPage(
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.loadResult(resultType = resultType)
+    LaunchedEffect(orderId, resultType) {
+        viewModel.loadResult(orderId = orderId, fallbackType = resultType)
     }
 
     Box(
