@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-04-05T01:12:24Z",
+  "repo_root": "/Users/cnyirui/git/projects/liaojiang",
+  "active_task_id": "liaojiang-4j0.2",
+  "accepted_task_id": "liaojiang-a8m",
+  "next_task_id": "liaojiang-4j0.2",
+  "blockers": [
+    {
+      "task_id": "liaojiang-4j0.2",
+      "type": "human",
+      "blocked_by": "client test credentials or accessible verification mailbox"
+    }
+  ],
+  "workers": [
+    {
+      "name": "kimi-impl",
+      "task_id": "liaojiang-a8m",
+      "role": "implementation",
+      "branch": "codex/liaojiang-a8m-kimi",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-a8m-kimi",
+      "prompt_file": "/Users/cnyirui/git/projects/liaojiang/.codex/kimi-prompts/liaojiang-a8m-impl.md",
+      "status": "completed",
+      "session_id": 92468,
+      "result_commit": "c44761af4bcd3cef288a7f5be122b4e652ec2502",
+      "accepted_commit": "f401bcb45ac9e0a332659a52bd44abad3564f49c"
+    },
+    {
+      "name": "kimi-verify",
+      "task_id": "liaojiang-a8m",
+      "role": "preacceptance",
+      "branch": "codex/liaojiang-a8m-verify-kimi",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-a8m-verify-kimi",
+      "prompt_file": "/Users/cnyirui/git/projects/liaojiang/.codex/kimi-prompts/liaojiang-a8m-verify.md",
+      "status": "completed",
+      "session_id": 8032
+    }
+  ]
+}
