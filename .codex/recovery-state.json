@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-05T02:23:46Z",
+  "generated_at": "2026-04-05T02:56:06Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-rcb.17.2",
   "next_task_title": "实现 backend TRON 远程客户端接线",
@@ -7,7 +7,7 @@
   "ready_count": 0,
   "open_count": 8,
   "closed_count": 119,
-  "dirty_count": 6,
+  "dirty_count": 2,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
