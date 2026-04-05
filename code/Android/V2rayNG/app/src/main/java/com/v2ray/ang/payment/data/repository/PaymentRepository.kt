@@ -82,6 +82,28 @@ class PaymentRepository(context: Context) {
         private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
             timeZone = java.util.TimeZone.getTimeZone("UTC")
         }
+        private val isoDateFormatWithMs = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }
+
+        /**
+         * 解析 ISO 8601 日期字符串（支持带毫秒和不带毫秒格式）
+         * 用于单元测试，internal visibility
+         */
+        internal fun parseIsoDateInternal(dateString: String?): Long? {
+            if (dateString.isNullOrBlank()) return null
+            return try {
+                // 先尝试带毫秒的格式 (e.g., 2026-04-04T22:12:11.788Z)
+                isoDateFormatWithMs.parse(dateString)?.time
+            } catch (e: Exception) {
+                try {
+                    // 再尝试不带毫秒的格式 (e.g., 2026-04-04T22:12:11Z)
+                    isoDateFormat.parse(dateString)?.time
+                } catch (e2: Exception) {
+                    null
+                }
+            }
+        }
     }
 
     // ==================== 本地数据库操作 ====================
@@ -735,11 +757,5 @@ class PaymentRepository(context: Context) {
     /**
      * 解析 ISO 8601 日期字符串
      */
-    private fun parseIsoDate(dateString: String): Long? {
-        return try {
-            isoDateFormat.parse(dateString)?.time
-        } catch (e: Exception) {
-            null
-        }
-    }
+    private fun parseIsoDate(dateString: String): Long? = parseIsoDateInternal(dateString)
 }
