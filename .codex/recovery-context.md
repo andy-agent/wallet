@@ -1,17 +1,17 @@
 # Recovery Context
 
-Generated: 2026-04-05T00:50:44Z
+Generated: 2026-04-05T01:21:38Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-a8m
-- next_task_title: 修复 Android token 过期时间解析
+- next_task_id: liaojiang-4j0.2
+- next_task_title: Android 真实环境登录/下单/支付页回归
 
 ## Counters
-- in_progress: 4
+- in_progress: 3
 - ready: 0
-- open: 4
-- closed: 117
+- open: 3
+- closed: 118
 - dirty: 2
 
 ## Next Milestone
