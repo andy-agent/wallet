@@ -1,17 +1,51 @@
 package com.v2ray.ang.composeui.pages.growth
 
+import android.app.Application
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowCircleUp
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,20 +54,29 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.growth.GrowthBridgeRepository
-import android.app.Application
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
+
+private val LedgerBg = Color(0xFF0A101A)
+private val LedgerSurface = Color(0xFF121A28)
+private val LedgerSurfaceSoft = Color(0xFF1A2638)
+private val LedgerPrimary = Color(0xFF00E5A8)
+private val LedgerPrimarySoft = Color(0x3313F1B2)
+private val LedgerText = Color(0xFFEAF0F7)
+private val LedgerMuted = Color(0xFF8D9AB0)
+private val LedgerDanger = Color(0xFFF45B69)
 
 /**
  * 佣金记录类型
  */
 enum class CommissionType {
-    INVITE,     // 邀请奖励
-    REBATE,     // 返利
-    WITHDRAW    // 提现
+    INVITE,
+    REBATE,
+    WITHDRAW
 }
 
 /**
@@ -60,6 +103,7 @@ sealed class CommissionLedgerState {
         val availableCommission: String,
         val records: List<CommissionRecord>
     ) : CommissionLedgerState()
+
     data class Error(val message: String) : CommissionLedgerState()
     object Empty : CommissionLedgerState()
 }
@@ -138,48 +182,62 @@ fun CommissionLedgerPage(
     val state by viewModel.state.collectAsState()
 
     Scaffold(
+        containerColor = LedgerBg,
         topBar = {
             TopAppBar(
-                title = { Text("佣金账本") },
+                title = {
+                    Text(
+                        text = "Growth Ledger",
+                        color = LedgerText,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = LedgerText
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = LedgerBg,
+                    titleContentColor = LedgerText,
+                    navigationIconContentColor = LedgerText
+                )
             )
         }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(LedgerBg)
                 .padding(paddingValues)
         ) {
-            when (state) {
+            when (val current = state) {
                 is CommissionLedgerState.Loaded -> {
-                    val loadedState = state as CommissionLedgerState.Loaded
                     CommissionLedgerContent(
-                        state = loadedState,
+                        state = current,
                         onNavigateToWithdraw = onNavigateToWithdraw
                     )
                 }
+
                 is CommissionLedgerState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = LedgerPrimary)
                     }
                 }
+
                 is CommissionLedgerState.Empty -> {
                     EmptyCommissionView()
                 }
+
                 is CommissionLedgerState.Error -> {
-                    ErrorView(message = (state as CommissionLedgerState.Error).message)
+                    LedgerErrorView(message = current.message)
                 }
-                else -> {}
+
+                else -> Unit
             }
         }
     }
@@ -190,44 +248,45 @@ private fun CommissionLedgerContent(
     state: CommissionLedgerState.Loaded,
     onNavigateToWithdraw: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // 佣金统计卡片
+    Column(modifier = Modifier.fillMaxSize()) {
         CommissionStatsCard(
             totalCommission = state.totalCommission,
             availableCommission = state.availableCommission,
             onNavigateToWithdraw = onNavigateToWithdraw
         )
 
-        // 记录列表标题
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "收支明细",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
+                text = "流水明细",
+                color = LedgerText,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
             )
-            Text(
-                text = "${state.records.size} 条记录",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = LedgerSurface
+            ) {
+                Text(
+                    text = "${state.records.size} 条",
+                    color = LedgerMuted,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
         }
 
-        // 记录列表
         LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp)
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(state.records) { record ->
                 CommissionRecordItem(record = record)
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
@@ -242,74 +301,55 @@ private fun CommissionStatsCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary
-        )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = LedgerSurface),
+        border = BorderStroke(1.dp, LedgerPrimarySoft)
     ) {
         Column(
-            modifier = Modifier.padding(24.dp)
+            modifier = Modifier
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(Color(0x3322F5C6), Color.Transparent, Color(0x202D3E58))
+                    )
+                )
+                .padding(18.dp)
         ) {
-            // 可用佣金
+            Text(text = "可提现余额", color = LedgerMuted, fontSize = 12.sp)
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "可提现佣金",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                text = availableCommission,
+                fontSize = 38.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = LedgerText
             )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = availableCommission,
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-                
+                Column {
+                    Text(text = "累计已结算", color = LedgerMuted, fontSize = 11.sp)
+                    Text(
+                        text = totalCommission,
+                        color = LedgerText,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
                 Button(
                     onClick = onNavigateToWithdraw,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.onPrimary,
-                        contentColor = MaterialTheme.colorScheme.primary
+                        containerColor = LedgerPrimary,
+                        contentColor = Color(0xFF072117)
                     ),
-                    shape = MaterialTheme.shapes.medium
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(
-                        text = "提现",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Text(text = "提现", fontWeight = FontWeight.Bold)
                 }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Divider(color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f))
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // 累计佣金
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "累计佣金",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                )
-                Text(
-                    text = totalCommission,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
             }
         }
     }
@@ -318,93 +358,83 @@ private fun CommissionStatsCard(
 @Composable
 private fun CommissionRecordItem(record: CommissionRecord) {
     val dateFormat = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
-    
-    val (icon, iconColor, amountColor) = when (record.type) {
-        CommissionType.INVITE, CommissionType.REBATE -> Triple(
-            Icons.Default.PersonAdd,
-            Color(0xFF22C55E),
-            Color(0xFF22C55E)
-        )
-        CommissionType.WITHDRAW -> Triple(
-            Icons.Default.ArrowUpward,
-            Color(0xFFEF4444),
-            Color(0xFFEF4444)
-        )
+
+    val (icon, accentColor, amountPrefix) = when (record.type) {
+        CommissionType.INVITE -> Triple(Icons.Default.People, LedgerPrimary, "+")
+        CommissionType.REBATE -> Triple(Icons.Default.Savings, Color(0xFF60C2FF), "+")
+        CommissionType.WITHDRAW -> Triple(Icons.Default.ArrowCircleUp, LedgerDanger, "")
     }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = LedgerSurface)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 类型图标
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                color = iconColor.copy(alpha = 0.1f),
-                modifier = Modifier.size(44.dp)
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(accentColor.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = record.type.name,
-                        tint = iconColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                Icon(
+                    imageVector = icon,
+                    contentDescription = record.type.name,
+                    tint = accentColor,
+                    modifier = Modifier.size(20.dp)
+                )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.size(12.dp))
 
-            // 记录信息
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = record.description,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = LedgerText,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
-                
                 Spacer(modifier = Modifier.height(4.dp))
-                
-                Row {
+                Text(
+                    text = dateFormat.format(record.timestamp),
+                    color = LedgerMuted,
+                    fontSize = 11.sp
+                )
+                record.fromUser?.let { user ->
+                    Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = dateFormat.format(record.timestamp),
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "账号: $user",
+                        color = LedgerMuted,
+                        fontSize = 11.sp
                     )
-                    record.fromUser?.let { user ->
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "来自: $user",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
             }
 
-            // 金额和状态
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = record.amount,
+                    text = "$amountPrefix${record.amount.removePrefix("+")}",
+                    color = accentColor,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = amountColor
+                    fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = record.status,
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Surface(
+                    color = LedgerSurfaceSoft,
+                    shape = RoundedCornerShape(999.dp)
+                ) {
+                    Text(
+                        text = record.status,
+                        color = LedgerMuted,
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
             }
         }
     }
@@ -413,66 +443,44 @@ private fun CommissionRecordItem(record: CommissionRecord) {
 @Composable
 private fun EmptyCommissionView() {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Default.AccountBalance,
+            imageVector = Icons.Default.Savings,
             contentDescription = null,
-            modifier = Modifier.size(80.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            tint = LedgerPrimary,
+            modifier = Modifier.size(54.dp)
         )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = "暂无记录",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = "邀请好友即可获得佣金",
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(text = "暂无账本记录", color = LedgerText, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(text = "邀请好友并完成首单后，会在这里显示返佣流水", color = LedgerMuted, fontSize = 12.sp)
     }
 }
 
 @Composable
-private fun ErrorView(message: String) {
+private fun LedgerErrorView(message: String) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Default.Error,
+            imageVector = Icons.Default.Warning,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
+            tint = LedgerDanger,
+            modifier = Modifier.size(50.dp)
         )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = "加载失败",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.error
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = message,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(text = "账本加载失败", color = LedgerDanger, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(text = message, color = LedgerMuted, fontSize = 12.sp)
     }
 }
 
