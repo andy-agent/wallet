@@ -49,6 +49,7 @@ import com.v2ray.ang.composeui.pages.wallet.SendResultType
 import com.v2ray.ang.composeui.pages.wallet.WalletHomePage
 import com.v2ray.ang.composeui.pages.wallet.WalletOnboardingPage
 import com.v2ray.ang.composeui.pages.wallet.WalletPaymentConfirmPage2
+import com.v2ray.ang.ui.compose.BitgetAppShell
 import kotlinx.coroutines.launch
 
 enum class LegacyDestination {
@@ -74,6 +75,8 @@ fun AppNavGraph(
     var backStack by rememberSaveable {
         mutableStateOf(listOf(Routes.normalize(startDestination)))
     }
+    var hasActiveSession by rememberSaveable { mutableStateOf(authBridge.hasActiveSession()) }
+    var pendingPostAuthRoute by rememberSaveable { mutableStateOf<String?>(null) }
     var showOptionalUpdate by rememberSaveable { mutableStateOf(false) }
     var optionalUpdateVersion by rememberSaveable { mutableStateOf("新版本") }
     var optionalUpdateUrl by rememberSaveable { mutableStateOf<String?>(null) }
@@ -99,11 +102,33 @@ fun AppNavGraph(
     }
 
     fun resolvePostSplashRoute(): String {
-        return if (authBridge.hasActiveSession()) {
-            Routes.VPN_HOME
+        return Routes.appShell()
+    }
+
+    fun navigateToShell(
+        tab: ShellTab = ShellTab.HOME,
+        clearStack: Boolean = false,
+    ) {
+        navigateTo(Routes.appShell(tab), clearStack = clearStack)
+    }
+
+    fun navigateAuthenticated(
+        route: String,
+        clearStack: Boolean = false,
+    ) {
+        if (hasActiveSession) {
+            pendingPostAuthRoute = null
+            navigateTo(route, clearStack = clearStack)
         } else {
-            Routes.EMAIL_LOGIN
+            pendingPostAuthRoute = route
+            navigateTo(Routes.EMAIL_LOGIN)
         }
+    }
+
+    fun consumePostAuthRoute(): String {
+        val route = pendingPostAuthRoute ?: Routes.appShell()
+        pendingPostAuthRoute = null
+        return route
     }
 
     BackHandler {
@@ -173,11 +198,38 @@ fun AppNavGraph(
                 )
             }
 
+            Routes.APP_SHELL -> {
+                val selectedTab = ShellTab.fromKey(routeMatch.args["tab"])
+                BitgetAppShell(
+                    selectedTab = selectedTab,
+                    isAuthenticated = hasActiveSession,
+                    onTabSelected = { tab -> navigateToShell(tab = tab, clearStack = true) },
+                    onOpenLogin = { navigateTo(Routes.EMAIL_LOGIN) },
+                    onOpenVpnConsole = { navigateAuthenticated(Routes.VPN_HOME) },
+                    onOpenPlans = { navigateTo(Routes.PLANS) },
+                    onOpenRegions = { navigateAuthenticated(Routes.REGION_SELECTION) },
+                    onOpenOrders = { navigateAuthenticated(Routes.ORDER_LIST) },
+                    onOpenWalletHome = { navigateAuthenticated(Routes.WALLET_HOME) },
+                    onOpenReceive = { navigateAuthenticated(Routes.RECEIVE) },
+                    onOpenSend = { navigateAuthenticated(Routes.send(symbol = "USDT")) },
+                    onOpenAssetBook = { navigateAuthenticated(Routes.WALLET_HOME) },
+                    onOpenInviteCenter = { navigateAuthenticated(Routes.INVITE_CENTER) },
+                    onOpenCommission = { navigateAuthenticated(Routes.COMMISSION_LEDGER) },
+                    onOpenWithdraw = { navigateAuthenticated(Routes.WITHDRAW) },
+                    onOpenProfile = { navigateAuthenticated(Routes.PROFILE) },
+                    onOpenLegal = { navigateTo(Routes.LEGAL_DOCUMENTS) },
+                    onOpenSettings = { onOpenLegacyDestination(LegacyDestination.SETTINGS) },
+                    onOpenAbout = { onOpenLegacyDestination(LegacyDestination.ABOUT) },
+                    onOpenSupport = { onOpenUrl(AppConfig.APP_ISSUES_URL) },
+                )
+            }
+
             Routes.EMAIL_LOGIN -> {
                 EmailLoginPage(
                     onLoginRequest = { email, password -> authBridge.login(email, password) },
                     onLoginSuccess = {
-                        navigateTo(Routes.VPN_HOME, clearStack = true)
+                        hasActiveSession = true
+                        navigateTo(consumePostAuthRoute(), clearStack = true)
                         onAuthSuccess()
                     },
                     onNavigateToRegister = { navigateTo(Routes.EMAIL_REGISTER) },
@@ -190,7 +242,8 @@ fun AppNavGraph(
                     onRequestCode = { email -> authBridge.requestRegisterCode(email) },
                     onRegisterRequest = { email, code, password -> authBridge.register(email, code, password) },
                     onRegisterSuccess = {
-                        navigateTo(Routes.VPN_HOME, clearStack = true)
+                        hasActiveSession = true
+                        navigateTo(consumePostAuthRoute(), clearStack = true)
                         onAuthSuccess()
                     },
                     onNavigateToLogin = { navigateBack() },
@@ -286,7 +339,7 @@ fun AppNavGraph(
                     orderId = routeMatch.args["orderId"].orEmpty(),
                     resultType = routeMatch.args["resultType"]?.toOrderResultType()
                         ?: OrderResultType.PENDING,
-                    onNavigateToHome = { navigateTo(Routes.VPN_HOME, clearStack = true) },
+                    onNavigateToHome = { navigateToShell(tab = ShellTab.HOME, clearStack = true) },
                     onNavigateToOrders = { navigateTo(Routes.ORDER_LIST) },
                     onRetry = {
                         val orderId = routeMatch.args["orderId"]
@@ -322,9 +375,9 @@ fun AppNavGraph(
 
             Routes.WALLET_ONBOARDING -> {
                 WalletOnboardingPage(
-                    onNavigateToCreate = { navigateTo(Routes.WALLET_HOME, clearStack = true) },
-                    onNavigateToImport = { navigateTo(Routes.WALLET_HOME, clearStack = true) },
-                    onSkip = { navigateTo(Routes.WALLET_HOME, clearStack = true) },
+                    onNavigateToCreate = { navigateToShell(tab = ShellTab.WALLET, clearStack = true) },
+                    onNavigateToImport = { navigateToShell(tab = ShellTab.WALLET, clearStack = true) },
+                    onSkip = { navigateToShell(tab = ShellTab.WALLET, clearStack = true) },
                 )
             }
 
@@ -397,8 +450,8 @@ fun AppNavGraph(
                 SendResultPage(
                     resultType = routeMatch.args["resultType"]?.toSendResultType()
                         ?: SendResultType.PENDING,
-                    onNavigateToHome = { navigateTo(Routes.VPN_HOME, clearStack = true) },
-                    onNavigateToWallet = { navigateTo(Routes.WALLET_HOME, clearStack = true) },
+                    onNavigateToHome = { navigateToShell(tab = ShellTab.HOME, clearStack = true) },
+                    onNavigateToWallet = { navigateToShell(tab = ShellTab.WALLET, clearStack = true) },
                     onRetry = { navigateTo(Routes.send(symbol = routeMatch.args["symbol"])) },
                     onViewExplorer = {},
                 )
@@ -439,7 +492,11 @@ fun AppNavGraph(
                         onOpenUrl(AppConfig.APP_ISSUES_URL)
                     },
                     onNavigateToAbout = { onOpenLegacyDestination(LegacyDestination.ABOUT) },
-                    onLogout = { navigateTo(Routes.EMAIL_LOGIN, clearStack = true) },
+                    onLogout = {
+                        hasActiveSession = false
+                        pendingPostAuthRoute = null
+                        navigateToShell(tab = ShellTab.PROFILE, clearStack = true)
+                    },
                 )
             }
 
