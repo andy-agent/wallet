@@ -3,38 +3,46 @@ package com.v2ray.ang.composeui.theme
 import androidx.compose.ui.graphics.Color
 
 // Background Colors
-val BackgroundDeepest = Color(0xFF0B1020)
-val BackgroundPrimary = Color(0xFF111827)
-val BackgroundSecondary = Color(0xFF1F2937)
-val BackgroundTertiary = Color(0xFF374151)
+val BackgroundDeepest = Color(0xFF05080F)
+val BackgroundPrimary = Color(0xFF0B0F17)
+val BackgroundSecondary = Color(0xFF121926)
+val BackgroundTertiary = Color(0xFF1A2333)
+val BackgroundOverlay = Color(0xFF0E1522)
 
 // Brand Colors
-val Primary = Color(0xFF1D4ED8)
-val PrimaryHover = Color(0xFF2563EB)
-val PrimaryDisabled = Color(0x801D4ED8)
+val Primary = Color(0xFF00E599)
+val PrimaryHover = Color(0xFF44F4B7)
+val PrimaryDisabled = Color(0x6600E599)
+val PrimaryContainerTint = Color(0x2200E599)
 
 // Functional Colors
-val Success = Color(0xFF22C55E)
-val Warning = Color(0xFFF59E0B)
-val Error = Color(0xFFEF4444)
-val Info = Color(0xFF3B82F6)
+val Success = Color(0xFF3CF2AD)
+val Warning = Color(0xFFFFB14A)
+val Error = Color(0xFFFF6B7A)
+val Info = Color(0xFF5AC8FA)
 
 // VPN Status Colors
-val VPNConnected = Color(0xFF22C55E)
-val VPNConnecting = Color(0xFF3B82F6)
-val VPNDisconnected = Color(0xFF64748B)
+val VPNConnected = Success
+val VPNConnecting = Info
+val VPNDisconnected = Color(0xFF6D7B91)
 
 // Text Colors
-val TextPrimary = Color(0xFFF8FAFC)
-val TextSecondary = Color(0xFF94A3B8)
-val TextTertiary = Color(0xFF64748B)
-val TextDisabled = Color(0xFF475569)
+val TextPrimary = Color(0xFFF5F7FA)
+val TextSecondary = Color(0xFFB6C2D1)
+val TextTertiary = Color(0xFF8090A8)
+val TextDisabled = Color(0xFF5F6C80)
 
 // Border & Divider Colors
-val BorderDefault = Color(0xFF374151)
-val BorderFocus = Color(0xFF1D4ED8)
-val BorderError = Color(0xFFEF4444)
-val DividerColor = Color(0xFF1F2937)
+val BorderDefault = Color(0xFF243041)
+val BorderFocus = Primary
+val BorderError = Error
+val DividerColor = Color(0xFF1B2533)
+
+// Accent Surfaces
+val AccentSurface = Color(0x1F00E599)
+val AccentSurfaceStrong = Color(0x3300E599)
+val AccentSurfaceInfo = Color(0x225AC8FA)
+val AccentSurfaceWarm = Color(0x22FFB14A)
 
 // Chain Colors
 val SolanaPurple = Color(0xFF9945FF)
@@ -42,9 +50,9 @@ val TronRed = Color(0xFFFF060A)
 val USDTGreen = Color(0xFF26A17B)
 
 // Glow Colors
-val GlowBlue = Color(0x401D4ED8)
-val GlowGreen = Color(0x4022C55E)
-val GlowYellow = Color(0x40F59E0B)
+val GlowBlue = Color(0x405AC8FA)
+val GlowGreen = Color(0x4000E599)
+val GlowYellow = Color(0x40FFB14A)
 
 // Legacy color aliases for backward compatibility
 val TextPrimaryWhite = TextPrimary
