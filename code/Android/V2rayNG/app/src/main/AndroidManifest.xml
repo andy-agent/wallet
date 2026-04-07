@@ -191,20 +191,6 @@
             android:label="Compose Container"
             android:parentActivityName=".ui.MainActivity"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
-        <activity-alias
-            android:name=".ui.ComposePreviewAlias"
-            android:enabled="true"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher"
-            android:label="@string/title_compose_preview"
-            android:targetActivity=".ui.compose.ComposeContainerActivity"
-            android:theme="@style/AppThemeDayNight.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
 
         <service
             android:name=".service.V2RayVpnService"

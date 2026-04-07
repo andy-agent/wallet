@@ -42,6 +42,7 @@ import com.v2ray.ang.payment.ui.activity.InvitationCenterActivity
 import com.v2ray.ang.payment.ui.activity.LoginActivity
 import com.v2ray.ang.payment.ui.activity.WithdrawalActivity
 import com.v2ray.ang.payment.ui.activity.UserProfileActivity
+import com.v2ray.ang.ui.compose.ComposeContainerActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -89,6 +90,13 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (shouldLaunchComposeHome()) {
+            startActivity(ComposeContainerActivity.createIntent(this))
+            finish()
+            return
+        }
+
         setContentView(binding.root)
         setupToolbar(binding.toolbar, false, getString(R.string.title_server))
 
@@ -127,6 +135,16 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
 
         checkAndRequestPermission(PermissionType.POST_NOTIFICATIONS) {
         }
+    }
+
+    private fun shouldLaunchComposeHome(): Boolean {
+        val currentIntent = intent ?: return false
+        if (currentIntent.action != Intent.ACTION_MAIN) {
+            return false
+        }
+        val categories = currentIntent.categories ?: return false
+        return categories.contains(Intent.CATEGORY_LAUNCHER) ||
+            categories.contains(Intent.CATEGORY_LEANBACK_LAUNCHER)
     }
 
     private fun setupViewModel() {
