@@ -1,32 +1,81 @@
 package com.v2ray.ang.composeui.pages.profile
 
+import android.app.Application
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Help
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.profile.ProfileBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
+private val ProfileBg = Color(0xFF0A101A)
+private val ProfileSurface = Color(0xFF121A28)
+private val ProfileSurfaceSoft = Color(0xFF1A2638)
+private val ProfilePrimary = Color(0xFF00E5A8)
+private val ProfilePrimarySoft = Color(0x3313F1B2)
+private val ProfileText = Color(0xFFEAF0F7)
+private val ProfileMuted = Color(0xFF8D9AB0)
+private val ProfileDanger = Color(0xFFF45B69)
 
 /**
  * 用户信息
@@ -125,30 +174,43 @@ fun ProfilePage(
     val showLogoutDialog = remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = ProfileBg,
         topBar = {
             TopAppBar(
-                title = { Text("我的") },
+                title = {
+                    Text(
+                        text = "Profile",
+                        color = ProfileText,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
+                            contentDescription = "Settings",
+                            tint = ProfileText
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = ProfileBg,
+                    titleContentColor = ProfileText,
+                    actionIconContentColor = ProfileText
+                )
             )
         }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(ProfileBg)
                 .padding(paddingValues)
         ) {
-            when (state) {
+            when (val current = state) {
                 is ProfileState.Loaded -> {
-                    val user = (state as ProfileState.Loaded).user
                     ProfileContent(
-                        user = user,
+                        user = current.user,
                         onNavigateToOrders = onNavigateToOrders,
                         onNavigateToWallet = onNavigateToWallet,
                         onNavigateToInvite = onNavigateToInvite,
@@ -159,26 +221,28 @@ fun ProfilePage(
                         onLogoutClick = { showLogoutDialog.value = true }
                     )
                 }
+
                 is ProfileState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = ProfilePrimary)
                     }
                 }
+
                 is ProfileState.Error -> {
-                    ErrorView(message = (state as ProfileState.Error).message)
+                    ProfileErrorView(message = current.message)
                 }
-                else -> {}
+
+                else -> Unit
             }
         }
     }
 
-    // 登出确认对话框
     if (showLogoutDialog.value) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog.value = false },
+            containerColor = ProfileSurface,
+            titleContentColor = ProfileText,
+            textContentColor = ProfileMuted,
             title = { Text("确认登出") },
             text = { Text("确定要退出登录吗？") },
             confirmButton = {
@@ -189,12 +253,12 @@ fun ProfilePage(
                         onLogout()
                     }
                 ) {
-                    Text("确认", color = Color(0xFFEF4444))
+                    Text("确认", color = ProfileDanger)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog.value = false }) {
-                    Text("取消")
+                    Text("取消", color = ProfileMuted)
                 }
             }
         )
@@ -217,117 +281,114 @@ private fun ProfileContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // 用户信息卡片
         UserInfoCard(user = user)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // 快捷入口
-        QuickAccessRow(
+        QuickAccessGrid(
             onNavigateToOrders = onNavigateToOrders,
             onNavigateToWallet = onNavigateToWallet,
             onNavigateToInvite = onNavigateToInvite,
             onNavigateToCommission = onNavigateToCommission
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // 设置列表
         SettingsList(
             onNavigateToLegal = onNavigateToLegal,
             onNavigateToSupport = onNavigateToSupport,
             onNavigateToAbout = onNavigateToAbout
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // 登出按钮
         LogoutButton(onClick = onLogoutClick)
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
-        // 版本号
         Text(
             text = "CryptoVPN v1.0.0",
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            fontSize = 11.sp,
+            color = ProfileMuted,
             modifier = Modifier.fillMaxWidth(),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
     }
 }
 
 @Composable
 private fun UserInfoCard(user: UserInfo) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary
-        )
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = ProfileSurface),
+        border = BorderStroke(1.dp, ProfilePrimarySoft)
     ) {
         Row(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(Color(0x3322F5C6), Color.Transparent, Color(0x202D3E58))
+                    )
+                )
+                .padding(18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 头像
             Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
-                modifier = Modifier.size(64.dp)
+                color = ProfileSurfaceSoft,
+                modifier = Modifier.size(62.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = user.nickname?.take(1) ?: user.email.take(1).uppercase(),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        text = user.nickname?.take(1)?.uppercase() ?: user.email.take(1).uppercase(),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = ProfilePrimary
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.size(14.dp))
 
-            // 用户信息
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = user.nickname ?: user.email.substringBefore("@"),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = ProfileText
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = user.email,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    fontSize = 12.sp,
+                    color = ProfileMuted
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Surface(
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
-                    shape = MaterialTheme.shapes.small
+                    color = ProfilePrimarySoft,
+                    shape = RoundedCornerShape(999.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Star,
                             contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.onPrimary
+                            modifier = Modifier.size(12.dp),
+                            tint = ProfilePrimary
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.size(4.dp))
                         Text(
                             text = user.memberLevel,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onPrimary
+                            fontSize = 11.sp,
+                            color = ProfilePrimary,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
@@ -337,81 +398,80 @@ private fun UserInfoCard(user: UserInfo) {
 }
 
 @Composable
-private fun QuickAccessRow(
+private fun QuickAccessGrid(
     onNavigateToOrders: () -> Unit,
     onNavigateToWallet: () -> Unit,
     onNavigateToInvite: () -> Unit,
     onNavigateToCommission: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = ProfileSurface)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            QuickAccessItem(
-                icon = Icons.Default.ReceiptLong,
-                label = "我的订单",
-                onClick = onNavigateToOrders
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = "快捷入口",
+                color = ProfileText,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 4.dp)
             )
-            QuickAccessItem(
-                icon = Icons.Default.AccountBalanceWallet,
-                label = "我的钱包",
-                onClick = onNavigateToWallet
-            )
-            QuickAccessItem(
-                icon = Icons.Default.People,
-                label = "邀请好友",
-                onClick = onNavigateToInvite
-            )
-            QuickAccessItem(
-                icon = Icons.Default.AttachMoney,
-                label = "佣金收益",
-                onClick = onNavigateToCommission
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                QuickAccessItem(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.ReceiptLong,
+                    label = "我的订单",
+                    onClick = onNavigateToOrders
+                )
+                QuickAccessItem(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.AccountBalanceWallet,
+                    label = "我的钱包",
+                    onClick = onNavigateToWallet
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                QuickAccessItem(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.People,
+                    label = "邀请好友",
+                    onClick = onNavigateToInvite
+                )
+                QuickAccessItem(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.AttachMoney,
+                    label = "佣金收益",
+                    onClick = onNavigateToCommission
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun QuickAccessItem(
+    modifier: Modifier,
     icon: ImageVector,
     label: String,
     onClick: () -> Unit
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick)
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(ProfileSurfaceSoft)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Surface(
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-            modifier = Modifier.size(48.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurface
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = ProfilePrimary,
+            modifier = Modifier.size(18.dp)
         )
+        Spacer(modifier = Modifier.size(8.dp))
+        Text(text = label, color = ProfileText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -440,16 +500,12 @@ private fun SettingsList(
     )
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = ProfileSurface)
     ) {
-        Column {
-            settings.forEachIndexed { index, item ->
+        Column(modifier = Modifier.padding(vertical = 6.dp)) {
+            settings.forEach { item ->
                 SettingListItem(
                     item = item,
                     onClick = {
@@ -460,12 +516,6 @@ private fun SettingsList(
                         }
                     }
                 )
-                if (index < settings.size - 1) {
-                    Divider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
-                }
             }
         }
     }
@@ -480,40 +530,48 @@ private fun SettingListItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = item.title,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp)
-        )
-        
-        Spacer(modifier = Modifier.width(16.dp))
-        
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(ProfileSurfaceSoft),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = item.icon,
+                contentDescription = item.title,
+                tint = ProfilePrimary,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.size(12.dp))
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = item.title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = ProfileText
             )
             item.subtitle?.let {
-                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = it,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontSize = 11.sp,
+                    color = ProfileMuted,
+                    modifier = Modifier.padding(top = 2.dp)
                 )
             }
         }
-        
+
         if (item.showArrow) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = ProfileMuted
             )
         }
     }
@@ -524,67 +582,53 @@ private fun LogoutButton(onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
             .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = ProfileSurface)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Logout,
                 contentDescription = "Logout",
-                tint = Color(0xFFEF4444),
-                modifier = Modifier.size(24.dp)
+                tint = ProfileDanger,
+                modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.size(8.dp))
             Text(
                 text = "退出登录",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFFEF4444)
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = ProfileDanger
             )
         }
     }
 }
 
 @Composable
-private fun ErrorView(message: String) {
+private fun ProfileErrorView(message: String) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = Icons.Default.Error,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
+            modifier = Modifier.size(54.dp),
+            tint = ProfileDanger
         )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = "加载失败",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.error
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = message,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(text = "加载失败", color = ProfileDanger, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(text = message, color = ProfileMuted, fontSize = 12.sp)
     }
 }
 

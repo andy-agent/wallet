@@ -1,17 +1,50 @@
 package com.v2ray.ang.composeui.pages.legal
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Cookie
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,6 +54,15 @@ import androidx.lifecycle.ViewModel
 import com.v2ray.ang.composeui.bridge.legal.LegalBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+
+private val LegalBg = Color(0xFF0A101A)
+private val LegalSurface = Color(0xFF121A28)
+private val LegalSurfaceSoft = Color(0xFF1A2638)
+private val LegalPrimary = Color(0xFF00E5A8)
+private val LegalPrimarySoft = Color(0x3313F1B2)
+private val LegalText = Color(0xFFEAF0F7)
+private val LegalMuted = Color(0xFF8D9AB0)
+private val LegalDanger = Color(0xFFF45B69)
 
 /**
  * 法务文档
@@ -89,52 +131,120 @@ fun LegalDocumentsListPage(
     val state by viewModel.state.collectAsState()
 
     Scaffold(
+        containerColor = LegalBg,
         topBar = {
             TopAppBar(
-                title = { Text("法务文档") },
+                title = {
+                    Text(
+                        text = "Legal Center",
+                        color = LegalText,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = LegalText
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = LegalBg,
+                    titleContentColor = LegalText,
+                    navigationIconContentColor = LegalText
+                )
             )
         }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(LegalBg)
                 .padding(paddingValues)
         ) {
-            when (state) {
+            when (val current = state) {
                 is LegalDocumentsListState.Loaded -> {
-                    val documents = (state as LegalDocumentsListState.Loaded).documents
-                    LazyColumn(
-                        contentPadding = PaddingValues(16.dp)
-                    ) {
-                        items(documents) { document ->
-                            LegalDocumentItem(
-                                document = document,
-                                onClick = { onDocumentClick(document.id) }
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                        }
-                    }
+                    LegalDocumentsContent(
+                        documents = current.documents,
+                        onDocumentClick = onDocumentClick
+                    )
                 }
+
                 is LegalDocumentsListState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = LegalPrimary)
                     }
                 }
+
                 is LegalDocumentsListState.Error -> {
-                    ErrorView(message = (state as LegalDocumentsListState.Error).message)
+                    LegalErrorView(message = current.message)
                 }
-                else -> {}
+
+                else -> Unit
+            }
+        }
+    }
+}
+
+@Composable
+private fun LegalDocumentsContent(
+    documents: List<LegalDocument>,
+    onDocumentClick: (String) -> Unit
+) {
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        item {
+            LegalHeroCard(count = documents.size)
+        }
+        items(documents) { document ->
+            LegalDocumentItem(
+                document = document,
+                onClick = { onDocumentClick(document.id) }
+            )
+        }
+        item { Spacer(modifier = Modifier.height(8.dp)) }
+    }
+}
+
+@Composable
+private fun LegalHeroCard(count: Int) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = LegalSurface),
+        border = BorderStroke(1.dp, LegalPrimarySoft)
+    ) {
+        Column(
+            modifier = Modifier
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(Color(0x3322F5C6), Color.Transparent, Color(0x202D3E58))
+                    )
+                )
+                .padding(18.dp)
+        ) {
+            Text(text = "Legal & Compliance", color = LegalText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "平台协议、隐私和推广规则均在此公开。",
+                color = LegalMuted,
+                fontSize = 12.sp
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = LegalPrimarySoft
+            ) {
+                Text(
+                    text = "共 $count 份文档",
+                    color = LegalPrimary,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
             }
         }
     }
@@ -149,97 +259,94 @@ private fun LegalDocumentItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = LegalSurface)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 图标
             Surface(
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                modifier = Modifier.size(48.dp)
+                shape = RoundedCornerShape(12.dp),
+                color = LegalSurfaceSoft,
+                modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = document.icon,
                         contentDescription = document.title,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
+                        tint = LegalPrimary,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.size(12.dp))
 
-            // 文档信息
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = document.title,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = LegalText
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = document.description,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 18.sp
+                    fontSize = 12.sp,
+                    color = LegalMuted,
+                    lineHeight = 17.sp
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "更新于: ${document.lastUpdated}",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    text = "更新于 ${document.lastUpdated}",
+                    fontSize = 10.sp,
+                    color = LegalMuted
                 )
             }
 
-            // 箭头
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = LegalMuted
             )
         }
     }
 }
 
 @Composable
-private fun ErrorView(message: String) {
+private fun LegalErrorView(message: String) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = Icons.Default.Error,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
+            modifier = Modifier.size(54.dp),
+            tint = LegalDanger
         )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
+
+        Spacer(modifier = Modifier.height(10.dp))
+
         Text(
             text = "加载失败",
             fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.error
+            fontWeight = FontWeight.Bold,
+            color = LegalDanger
         )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
+
+        Spacer(modifier = Modifier.height(6.dp))
+
         Text(
             text = message,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            fontSize = 12.sp,
+            color = LegalMuted
         )
     }
 }
