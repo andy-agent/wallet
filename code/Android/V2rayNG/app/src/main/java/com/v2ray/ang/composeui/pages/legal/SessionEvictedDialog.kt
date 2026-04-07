@@ -1,12 +1,14 @@
 package com.v2ray.ang.composeui.pages.legal
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -99,43 +101,49 @@ fun SessionEvictedDialog(
                 },
                 text = {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
                             text = currentState.message,
                             fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = LegalTextSecondary,
                             textAlign = TextAlign.Center,
-                            lineHeight = 20.sp
+                            lineHeight = 21.sp
                         )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // 根据原因显示额外信息
+
                         AdditionalInfo(reason = currentState.reason)
                     }
                 },
                 confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.dismissDialog()
-                            onConfirm()
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Text(
-                            text = getConfirmButtonText(currentState.reason),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Button(
+                            onClick = {
+                                viewModel.dismissDialog()
+                                onConfirm()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(
+                                text = getConfirmButtonText(currentState.reason),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        TextButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("稍后处理", color = LegalTextSecondary)
+                        }
                     }
                 },
-                shape = MaterialTheme.shapes.large,
-                containerColor = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(28.dp),
+                containerColor = LegalCardBackground,
                 iconContentColor = MaterialTheme.colorScheme.primary,
-                titleContentColor = MaterialTheme.colorScheme.onSurface,
-                textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                titleContentColor = Color(0xFF101828),
+                textContentColor = LegalTextSecondary,
                 properties = androidx.compose.ui.window.DialogProperties(
                     dismissOnBackPress = false,
                     dismissOnClickOutside = false
@@ -159,7 +167,7 @@ private fun SessionEvictedIcon(reason: SessionEvictedReason) {
         )
         SessionEvictedReason.ACCOUNT_DISABLED -> Pair(
             Icons.Default.Block,
-            androidx.compose.ui.graphics.Color(0xFFEF4444)
+            Color(0xFFEF4444)
         )
         SessionEvictedReason.PASSWORD_CHANGED -> Pair(
             Icons.Default.Lock,
@@ -167,21 +175,21 @@ private fun SessionEvictedIcon(reason: SessionEvictedReason) {
         )
         SessionEvictedReason.SECURITY_CONCERN -> Pair(
             Icons.Default.Security,
-            androidx.compose.ui.graphics.Color(0xFFF59E0B)
+            Color(0xFFF59E0B)
         )
     }
 
     Surface(
-        shape = MaterialTheme.shapes.medium,
+        shape = RoundedCornerShape(20.dp),
         color = color.copy(alpha = 0.1f),
-        modifier = Modifier.size(64.dp)
+        modifier = Modifier.size(72.dp)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = color,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(34.dp)
             )
         }
     }
@@ -192,13 +200,13 @@ private fun AdditionalInfo(reason: SessionEvictedReason) {
     when (reason) {
         SessionEvictedReason.LOGIN_ELSEWHERE -> {
             Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = MaterialTheme.shapes.small
+                color = Color(0xFFF2F4F7),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
                     text = "如果这不是您的操作，建议立即修改密码",
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LegalTextSecondary,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     textAlign = TextAlign.Center
                 )
@@ -206,13 +214,13 @@ private fun AdditionalInfo(reason: SessionEvictedReason) {
         }
         SessionEvictedReason.ACCOUNT_DISABLED -> {
             Surface(
-                color = androidx.compose.ui.graphics.Color(0xFFEF4444).copy(alpha = 0.1f),
-                shape = MaterialTheme.shapes.small
+                color = Color(0xFFEF4444).copy(alpha = 0.1f),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
                     text = "客服邮箱: support@cryptovpn.app",
                     fontSize = 12.sp,
-                    color = androidx.compose.ui.graphics.Color(0xFFEF4444),
+                    color = Color(0xFFEF4444),
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     textAlign = TextAlign.Center
                 )
@@ -220,13 +228,13 @@ private fun AdditionalInfo(reason: SessionEvictedReason) {
         }
         SessionEvictedReason.SECURITY_CONCERN -> {
             Surface(
-                color = androidx.compose.ui.graphics.Color(0xFFF59E0B).copy(alpha = 0.1f),
-                shape = MaterialTheme.shapes.small
+                color = Color(0xFFF59E0B).copy(alpha = 0.1f),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
                     text = "为了您的账户安全，请重新登录",
                     fontSize = 12.sp,
-                    color = androidx.compose.ui.graphics.Color(0xFFF59E0B),
+                    color = Color(0xFFF59E0B),
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     textAlign = TextAlign.Center
                 )

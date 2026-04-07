@@ -1,10 +1,8 @@
 package com.v2ray.ang.composeui.pages.growth
 
 import android.app.Application
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,41 +12,27 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.IosShare
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
@@ -64,18 +48,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-private val GrowthBg = Color(0xFF0A101A)
-private val GrowthSurface = Color(0xFF121A28)
-private val GrowthSurfaceSoft = Color(0xFF1A2638)
-private val GrowthPrimary = Color(0xFF00E5A8)
-private val GrowthPrimarySoft = Color(0x3313F1B2)
-private val GrowthText = Color(0xFFEAF0F7)
-private val GrowthMuted = Color(0xFF8D9AB0)
-private val GrowthDanger = Color(0xFFF45B69)
-
-/**
- * 邀请中心页状态
- */
 sealed class InviteCenterState {
     object Idle : InviteCenterState()
     object Loading : InviteCenterState()
@@ -87,13 +59,9 @@ sealed class InviteCenterState {
         val pendingCommission: String,
         val commissionRate: String
     ) : InviteCenterState()
-
     data class Error(val message: String) : InviteCenterState()
 }
 
-/**
- * 邀请中心页ViewModel
- */
 class InviteCenterViewModel(application: Application) : AndroidViewModel(application) {
     private val growthBridgeRepository = GrowthBridgeRepository(application)
     private val _state = MutableStateFlow<InviteCenterState>(InviteCenterState.Idle)
@@ -132,27 +100,14 @@ class InviteCenterViewModel(application: Application) : AndroidViewModel(applica
                 inviteCode = inviteCode,
                 inviteLink = "https://api.residential-agent.com/invite/$inviteCode",
                 totalInvited = referralData.level1InviteCount + referralData.level2InviteCount,
-                totalCommission = "${summaryData.withdrawnTotal} USDT",
-                pendingCommission = "${summaryData.availableAmount} USDT",
-                commissionRate = "L1 25% / L2 5%"
+                totalCommission = "$${summaryData.withdrawnTotal}",
+                pendingCommission = "$${summaryData.availableAmount}",
+                commissionRate = "L1 20% / L2 10%"
             )
-        }
-    }
-
-    fun bindReferralCode(code: String) {
-        if (code.isBlank()) return
-        viewModelScope.launch {
-            growthBridgeRepository.bindReferralCode(code)
-            loadInviteData()
         }
     }
 }
 
-/**
- * 邀请中心页
- * 显示邀请码、邀请链接和邀请统计数据
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InviteCenterPage(
     viewModel: InviteCenterViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
@@ -162,54 +117,28 @@ fun InviteCenterPage(
 ) {
     val state by viewModel.state.collectAsState()
     val clipboardManager = LocalClipboardManager.current
-    val snackbarHostState = remember { SnackbarHostState() }
 
-    Scaffold(
-        containerColor = GrowthBg,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Discover Growth",
-                        color = GrowthText,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = GrowthText
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = GrowthBg,
-                    titleContentColor = GrowthText,
-                    navigationIconContentColor = GrowthText
-                )
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+    GrowthPageScaffold(
+        title = "邀请中心",
+        onNavigateBack = onNavigateBack
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(GrowthBg)
+                .background(GrowthPageBackground)
                 .padding(paddingValues)
         ) {
-            when (val current = state) {
+            when (val currentState = state) {
                 is InviteCenterState.Loaded -> {
                     InviteCenterContent(
-                        state = current,
+                        state = currentState,
                         onCopyCode = {
-                            clipboardManager.setText(AnnotatedString(current.inviteCode))
+                            clipboardManager.setText(AnnotatedString(currentState.inviteCode))
                         },
                         onCopyLink = {
-                            clipboardManager.setText(AnnotatedString(current.inviteLink))
+                            clipboardManager.setText(AnnotatedString(currentState.inviteLink))
                         },
-                        onShare = { },
+                        onShare = {},
                         onNavigateToCommission = onNavigateToCommission,
                         onNavigateToWithdraw = onNavigateToWithdraw
                     )
@@ -217,23 +146,19 @@ fun InviteCenterPage(
 
                 is InviteCenterState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = GrowthPrimary)
+                        CircularProgressIndicator(color = GrowthAccent)
                     }
                 }
 
                 is InviteCenterState.Error -> {
-                    InviteErrorView(message = current.message)
+                    GrowthStatusView(
+                        title = "邀请加载失败",
+                        message = currentState.message
+                    )
                 }
 
-                else -> Unit
+                InviteCenterState.Idle -> Unit
             }
-        }
-    }
-
-    LaunchedEffect(state) {
-        when (state) {
-            is InviteCenterState.Loaded -> snackbarHostState.currentSnackbarData?.dismiss()
-            else -> Unit
         }
     }
 }
@@ -251,144 +176,111 @@ private fun InviteCenterContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        GrowthHeroCard(
-            totalInvited = state.totalInvited,
-            totalCommission = state.totalCommission,
-            pendingCommission = state.pendingCommission,
-            commissionRate = state.commissionRate,
+        InviteHeroCard(
+            state = state,
             onNavigateToCommission = onNavigateToCommission,
             onNavigateToWithdraw = onNavigateToWithdraw
         )
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        InviteCodeCard(inviteCode = state.inviteCode, onCopyCode = onCopyCode)
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        InviteLinkCard(
+        InviteChannelCard(
+            inviteCode = state.inviteCode,
             inviteLink = state.inviteLink,
+            onCopyCode = onCopyCode,
             onCopyLink = onCopyLink,
             onShare = onShare
         )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
         InviteRulesCard()
-
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 
 @Composable
-private fun GrowthHeroCard(
-    totalInvited: Int,
-    totalCommission: String,
-    pendingCommission: String,
-    commissionRate: String,
+private fun InviteHeroCard(
+    state: InviteCenterState.Loaded,
     onNavigateToCommission: () -> Unit,
     onNavigateToWithdraw: () -> Unit
 ) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = GrowthSurface),
-        border = BorderStroke(1.dp, GrowthPrimarySoft)
+        shape = RoundedCornerShape(28.dp),
+        color = Color.Transparent
     ) {
         Column(
             modifier = Modifier
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(Color(0x3322F5C6), Color.Transparent, Color(0x26284259))
-                    )
-                )
-                .padding(18.dp)
+                .clip(RoundedCornerShape(28.dp))
+                .background(GrowthHeroGradient)
+                .padding(22.dp)
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                Text(
-                    text = "Growth Hub",
-                    color = GrowthText,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Surface(
-                    color = GrowthPrimarySoft,
-                    shape = RoundedCornerShape(999.dp)
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = commissionRate,
-                        color = GrowthPrimary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        text = "Discover Growth",
+                        color = Color(0xFF5E4300),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = state.pendingCommission,
+                        color = Color(0xFF161A1E),
+                        fontSize = 34.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "当前可提收益",
+                        color = Color(0xFF5E4300),
+                        fontSize = 13.sp
                     )
                 }
+                GrowthBadge(text = state.commissionRate)
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            Text(
-                text = pendingCommission,
-                color = GrowthText,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-            Text(
-                text = "可提现收益",
-                color = GrowthMuted,
-                fontSize = 12.sp
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                StatPill(
-                    modifier = Modifier.weight(1f),
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                GrowthStatChip(
                     label = "已邀请",
-                    value = totalInvited.toString(),
-                    onClick = onNavigateToCommission
+                    value = state.totalInvited.toString(),
+                    modifier = Modifier.weight(1f)
                 )
-                StatPill(
-                    modifier = Modifier.weight(1f),
-                    label = "累计收益",
-                    value = totalCommission,
-                    onClick = onNavigateToCommission
+                GrowthStatChip(
+                    label = "累计到账",
+                    value = state.totalCommission,
+                    modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                ActionOutlineButton(
-                    modifier = Modifier.weight(1f),
-                    label = "佣金明细",
-                    icon = Icons.Default.TrendingUp,
-                    onClick = onNavigateToCommission
-                )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     onClick = onNavigateToWithdraw,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = GrowthPrimary,
-                        contentColor = Color(0xFF072117)
+                        containerColor = Color(0xFF161A1E),
+                        contentColor = GrowthTextPrimary
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(18.dp)
                 ) {
-                    Text(
-                        text = "立即提现",
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("去提现", fontWeight = FontWeight.SemiBold)
+                }
+                Button(
+                    onClick = onNavigateToCommission,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(alpha = 0.18f),
+                        contentColor = Color(0xFF161A1E)
+                    ),
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Text("查看账本", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -396,150 +288,96 @@ private fun GrowthHeroCard(
 }
 
 @Composable
-private fun StatPill(
-    modifier: Modifier,
-    label: String,
-    value: String,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(GrowthSurfaceSoft)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 10.dp)
-    ) {
-        Text(text = value, color = GrowthText, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Text(text = label, color = GrowthMuted, fontSize = 11.sp)
-    }
-}
-
-@Composable
-private fun ActionOutlineButton(
-    modifier: Modifier,
-    label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, GrowthPrimarySoft, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 11.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Icon(imageVector = icon, contentDescription = label, tint = GrowthPrimary, modifier = Modifier.size(16.dp))
-        Spacer(modifier = Modifier.size(6.dp))
-        Text(text = label, color = GrowthPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun InviteCodeCard(
+private fun InviteChannelCard(
     inviteCode: String,
-    onCopyCode: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = GrowthSurface)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "邀请码", color = GrowthMuted, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(GrowthSurfaceSoft)
-                    .padding(start = 14.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = inviteCode,
-                    color = GrowthText,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(onClick = onCopyCode) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Copy",
-                        tint = GrowthPrimary
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun InviteLinkCard(
     inviteLink: String,
+    onCopyCode: () -> Unit,
     onCopyLink: () -> Unit,
     onShare: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = GrowthSurface)
+    GrowthSectionCard {
+        GrowthSectionTitle(
+            title = "推广素材",
+            subtitle = "使用邀请码或专属链接分发给好友，延续 Bitget Discover 风格的信息密度。"
+        )
+        Spacer(modifier = Modifier.height(18.dp))
+
+        InviteInfoPanel(
+            title = "邀请码",
+            value = inviteCode,
+            actionText = "复制",
+            actionIcon = Icons.Default.ContentCopy,
+            onAction = onCopyCode
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        InviteInfoPanel(
+            title = "专属链接",
+            value = inviteLink,
+            actionText = "复制",
+            actionIcon = Icons.Default.ContentCopy,
+            singleLine = true,
+            onAction = onCopyLink
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Button(
+            onClick = onShare,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = GrowthAccent,
+                contentColor = Color(0xFF161A1E)
+            ),
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Share,
+                contentDescription = null,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Text("分享邀请素材", fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+private fun InviteInfoPanel(
+    title: String,
+    value: String,
+    actionText: String,
+    actionIcon: androidx.compose.ui.graphics.vector.ImageVector,
+    singleLine: Boolean = false,
+    onAction: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(GrowthSurfaceRaised)
+            .padding(16.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "专属邀请链接", color = GrowthMuted, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(GrowthSurfaceSoft)
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = inviteLink,
-                    color = GrowthText,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(onClick = onCopyLink) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Copy",
-                        tint = GrowthPrimary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ActionOutlineButton(
-                    modifier = Modifier.weight(1f),
-                    label = "复制链接",
-                    icon = Icons.Default.ContentCopy,
-                    onClick = onCopyLink
-                )
-                Button(
-                    onClick = onShare,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF243146),
-                        contentColor = GrowthText
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.IosShare,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.size(6.dp))
-                    Text(text = "分享", fontWeight = FontWeight.SemiBold)
+        Text(text = title, color = GrowthTextSecondary, fontSize = 12.sp)
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = value,
+                color = GrowthTextPrimary,
+                fontSize = if (singleLine) 13.sp else 28.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            IconButton(onClick = onAction) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(actionIcon, contentDescription = actionText, tint = GrowthAccent)
                 }
             }
         }
@@ -549,84 +387,57 @@ private fun InviteLinkCard(
 @Composable
 private fun InviteRulesCard() {
     val rules = listOf(
-        "邀请好友注册并完成首单，可获一级返佣 25%",
-        "二级关系订单按 5% 结算，自动计入可提现余额（USDT）",
-        "达到最低门槛后可发起链上提现申请",
-        "平台会对异常邀请行为进行风控审核"
+        "一级邀请返佣 20%，二级邀请返佣 10%，结算后会直接进入可提现余额。",
+        "订单完成后自动入账，无需手动确认；账本页面可查看每条来源与结算状态。",
+        "推广链路优先突出邀请码和专属链接，保持 Discover 页的入口清晰度。",
+        "邀请人数不限，收益可累计后统一提现到绑定的钱包地址。"
     )
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = GrowthSurface)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.ArrowOutward,
-                    contentDescription = null,
-                    tint = GrowthPrimary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.size(6.dp))
-                Text(
-                    text = "计划规则",
-                    color = GrowthText,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold
-                )
+    GrowthSectionCard {
+        GrowthSectionTitle(
+            title = "活动规则",
+            subtitle = "文案与排版采用 Bitget Discover/Growth 的导购节奏：先收益，再入口，最后规则。"
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            listOf("收益导向", "入口前置", "即时提现").forEach {
+                GrowthBadge(text = it)
+                Spacer(modifier = Modifier.width(0.dp))
             }
+        }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            rules.forEachIndexed { index, item ->
-                Row(verticalAlignment = Alignment.Top) {
-                    Text(
-                        text = "${index + 1}",
-                        color = GrowthPrimary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(GrowthPrimarySoft)
-                            .padding(horizontal = 7.dp, vertical = 3.dp)
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = item,
-                        color = GrowthMuted,
-                        fontSize = 12.sp,
-                        lineHeight = 18.sp,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                if (index != rules.lastIndex) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+        Spacer(modifier = Modifier.height(16.dp))
+        rules.forEachIndexed { index, rule ->
+            GrowthBulletItem(text = "${index + 1}. $rule")
+            if (index != rules.lastIndex) {
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     }
 }
 
-@Composable
-private fun InviteErrorView(message: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "加载失败", color = GrowthDanger, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = message, color = GrowthMuted, fontSize = 13.sp)
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
-fun InviteCenterPagePreview() {
+private fun InviteCenterPagePreview() {
     MaterialTheme {
-        InviteCenterPage()
+        InviteCenterContent(
+            state = InviteCenterState.Loaded(
+                inviteCode = "LJ8888",
+                inviteLink = "https://api.residential-agent.com/invite/LJ8888",
+                totalInvited = 24,
+                totalCommission = "$328.12",
+                pendingCommission = "$81.60",
+                commissionRate = "L1 20% / L2 10%"
+            ),
+            onCopyCode = {},
+            onCopyLink = {},
+            onShare = {},
+            onNavigateToCommission = {},
+            onNavigateToWithdraw = {}
+        )
     }
 }

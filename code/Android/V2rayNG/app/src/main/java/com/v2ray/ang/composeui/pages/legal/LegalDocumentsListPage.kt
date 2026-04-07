@@ -1,6 +1,5 @@
 package com.v2ray.ang.composeui.pages.legal
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,16 +37,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,18 +55,12 @@ import com.v2ray.ang.composeui.bridge.legal.LegalBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-private val LegalBg = Color(0xFF0A101A)
-private val LegalSurface = Color(0xFF121A28)
-private val LegalSurfaceSoft = Color(0xFF1A2638)
-private val LegalPrimary = Color(0xFF00E5A8)
-private val LegalPrimarySoft = Color(0x3313F1B2)
-private val LegalText = Color(0xFFEAF0F7)
-private val LegalMuted = Color(0xFF8D9AB0)
-private val LegalDanger = Color(0xFFF45B69)
+internal val LegalPageBackground = Color(0xFFF5F7FA)
+internal val LegalCardBackground = Color.White
+internal val LegalAccent = Color(0xFF00C2A8)
+internal val LegalAccentDeep = Color(0xFF0E8E7F)
+internal val LegalTextSecondary = Color(0xFF667085)
 
-/**
- * 法务文档
- */
 data class LegalDocument(
     val id: String,
     val title: String,
@@ -75,19 +69,13 @@ data class LegalDocument(
     val lastUpdated: String
 )
 
-/**
- * 法务文档列表页状态
- */
 sealed class LegalDocumentsListState {
-    object Idle : LegalDocumentsListState()
-    object Loading : LegalDocumentsListState()
+    data object Idle : LegalDocumentsListState()
+    data object Loading : LegalDocumentsListState()
     data class Loaded(val documents: List<LegalDocument>) : LegalDocumentsListState()
     data class Error(val message: String) : LegalDocumentsListState()
 }
 
-/**
- * 法务文档列表页ViewModel
- */
 class LegalDocumentsListViewModel : ViewModel() {
     private val legalBridgeRepository = LegalBridgeRepository()
     private val _state = MutableStateFlow<LegalDocumentsListState>(LegalDocumentsListState.Idle)
@@ -117,10 +105,6 @@ class LegalDocumentsListViewModel : ViewModel() {
     }
 }
 
-/**
- * 法务文档列表页
- * 显示所有法务文档的入口
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LegalDocumentsListPage(
@@ -131,13 +115,12 @@ fun LegalDocumentsListPage(
     val state by viewModel.state.collectAsState()
 
     Scaffold(
-        containerColor = LegalBg,
+        containerColor = LegalPageBackground,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Legal Center",
-                        color = LegalText,
+                        text = "Legal",
                         fontWeight = FontWeight.SemiBold
                     )
                 },
@@ -145,209 +128,229 @@ fun LegalDocumentsListPage(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = LegalText
+                            contentDescription = "Back"
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = LegalBg,
-                    titleContentColor = LegalText,
-                    navigationIconContentColor = LegalText
-                )
+                }
             )
         }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(LegalBg)
+                .background(LegalPageBackground)
                 .padding(paddingValues)
         ) {
-            when (val current = state) {
+            when (val currentState = state) {
                 is LegalDocumentsListState.Loaded -> {
-                    LegalDocumentsContent(
-                        documents = current.documents,
-                        onDocumentClick = onDocumentClick
-                    )
-                }
-
-                is LegalDocumentsListState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = LegalPrimary)
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        item {
+                            LegalHeroCard(documentCount = currentState.documents.size)
+                        }
+                        item {
+                            LegalSectionTitle(
+                                title = "法律文档",
+                                caption = "账户使用、隐私处理与退款等条款"
+                            )
+                        }
+                        items(currentState.documents) { document ->
+                            LegalDocumentItem(
+                                document = document,
+                                onClick = { onDocumentClick(document.id) }
+                            )
+                        }
                     }
                 }
 
-                is LegalDocumentsListState.Error -> {
-                    LegalErrorView(message = current.message)
+                LegalDocumentsListState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = LegalAccent)
+                    }
                 }
 
-                else -> Unit
+                is LegalDocumentsListState.Error -> ErrorView(currentState.message)
+                LegalDocumentsListState.Idle -> Unit
             }
         }
     }
 }
 
 @Composable
-private fun LegalDocumentsContent(
-    documents: List<LegalDocument>,
-    onDocumentClick: (String) -> Unit
-) {
-    LazyColumn(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        item {
-            LegalHeroCard(count = documents.size)
-        }
-        items(documents) { document ->
-            LegalDocumentItem(
-                document = document,
-                onClick = { onDocumentClick(document.id) }
-            )
-        }
-        item { Spacer(modifier = Modifier.height(8.dp)) }
-    }
-}
-
-@Composable
-private fun LegalHeroCard(count: Int) {
+private fun LegalHeroCard(documentCount: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = LegalSurface),
-        border = BorderStroke(1.dp, LegalPrimarySoft)
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = LegalCardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(Color(0x3322F5C6), Color.Transparent, Color(0x202D3E58))
-                    )
-                )
-                .padding(18.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(28.dp))
+                .background(Color(0xFF101828))
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(text = "Legal & Compliance", color = LegalText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "平台协议、隐私和推广规则均在此公开。",
-                color = LegalMuted,
-                fontSize = 12.sp
-            )
-            Spacer(modifier = Modifier.height(10.dp))
             Surface(
                 shape = RoundedCornerShape(999.dp),
-                color = LegalPrimarySoft
+                color = Color.White.copy(alpha = 0.14f)
             ) {
                 Text(
-                    text = "共 $count 份文档",
-                    color = LegalPrimary,
-                    fontSize = 11.sp,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    text = "Legal Center",
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    fontSize = 12.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium
                 )
             }
+            Text(
+                text = "统一查看协议、隐私与退款规则",
+                fontSize = 22.sp,
+                lineHeight = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Text(
+                text = "当前共 $documentCount 份文档，建议在购买服务或提交退款前先阅读对应条款。",
+                fontSize = 13.sp,
+                lineHeight = 19.sp,
+                color = Color.White.copy(alpha = 0.72f)
+            )
         }
     }
 }
 
 @Composable
-private fun LegalDocumentItem(
-    document: LegalDocument,
-    onClick: () -> Unit
-) {
+private fun LegalSectionTitle(title: String, caption: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = title,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF101828)
+        )
+        Text(
+            text = caption,
+            fontSize = 13.sp,
+            color = LegalTextSecondary
+        )
+    }
+}
+
+@Composable
+private fun LegalDocumentItem(document: LegalDocument, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = LegalSurface)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = LegalCardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = LegalSurfaceSoft,
-                modifier = Modifier.size(40.dp)
+                shape = RoundedCornerShape(16.dp),
+                color = LegalAccent.copy(alpha = 0.12f),
+                modifier = Modifier.size(52.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = document.icon,
                         contentDescription = document.title,
-                        tint = LegalPrimary,
-                        modifier = Modifier.size(20.dp)
+                        tint = LegalAccentDeep,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.size(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = document.title,
-                    fontSize = 14.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = LegalText
+                    color = Color(0xFF101828)
                 )
-                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = document.description,
-                    fontSize = 12.sp,
-                    color = LegalMuted,
-                    lineHeight = 17.sp
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    color = LegalTextSecondary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "更新于 ${document.lastUpdated}",
-                    fontSize = 10.sp,
-                    color = LegalMuted
-                )
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = Color(0xFFF2F4F7)
+                ) {
+                    Text(
+                        text = "更新于 ${document.lastUpdated}",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        fontSize = 11.sp,
+                        color = LegalTextSecondary
+                    )
+                }
             }
-
+            Spacer(modifier = Modifier.width(10.dp))
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = LegalMuted
+                tint = LegalTextSecondary
             )
         }
     }
 }
 
 @Composable
-private fun LegalErrorView(message: String) {
+private fun ErrorView(message: String) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 28.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.Error,
-            contentDescription = null,
-            modifier = Modifier.size(54.dp),
-            tint = LegalDanger
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Text(
-            text = "加载失败",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = LegalDanger
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Text(
-            text = message,
-            fontSize = 12.sp,
-            color = LegalMuted
-        )
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = Color.White
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Error,
+                    contentDescription = null,
+                    modifier = Modifier.size(44.dp),
+                    tint = MaterialTheme.colorScheme.error
+                )
+                Text(
+                    text = "无法加载 Legal 页面",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF101828)
+                )
+                Text(
+                    text = message,
+                    fontSize = 14.sp,
+                    color = LegalTextSecondary,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
     }
 }
 

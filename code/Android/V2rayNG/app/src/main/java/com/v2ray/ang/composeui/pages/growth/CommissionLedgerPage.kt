@@ -1,13 +1,10 @@
 package com.v2ray.ang.composeui.pages.growth
 
 import android.app.Application
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,34 +16,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowCircleUp
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.NorthEast
+import androidx.compose.material.icons.filled.PeopleAlt
+import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -61,27 +47,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private val LedgerBg = Color(0xFF0A101A)
-private val LedgerSurface = Color(0xFF121A28)
-private val LedgerSurfaceSoft = Color(0xFF1A2638)
-private val LedgerPrimary = Color(0xFF00E5A8)
-private val LedgerPrimarySoft = Color(0x3313F1B2)
-private val LedgerText = Color(0xFFEAF0F7)
-private val LedgerMuted = Color(0xFF8D9AB0)
-private val LedgerDanger = Color(0xFFF45B69)
-
-/**
- * 佣金记录类型
- */
 enum class CommissionType {
     INVITE,
     REBATE,
     WITHDRAW
 }
 
-/**
- * 佣金记录
- */
 data class CommissionRecord(
     val id: String,
     val type: CommissionType,
@@ -92,9 +63,6 @@ data class CommissionRecord(
     val status: String
 )
 
-/**
- * 佣金账本页状态
- */
 sealed class CommissionLedgerState {
     object Idle : CommissionLedgerState()
     object Loading : CommissionLedgerState()
@@ -103,14 +71,10 @@ sealed class CommissionLedgerState {
         val availableCommission: String,
         val records: List<CommissionRecord>
     ) : CommissionLedgerState()
-
     data class Error(val message: String) : CommissionLedgerState()
     object Empty : CommissionLedgerState()
 }
 
-/**
- * 佣金账本页ViewModel
- */
 class CommissionLedgerViewModel(application: Application) : AndroidViewModel(application) {
     private val growthBridgeRepository = GrowthBridgeRepository(application)
     private val _state = MutableStateFlow<CommissionLedgerState>(CommissionLedgerState.Idle)
@@ -147,11 +111,11 @@ class CommissionLedgerViewModel(application: Application) : AndroidViewModel(app
                         it.commissionLevel.equals("LEVEL2", true) -> CommissionType.REBATE
                         else -> CommissionType.INVITE
                     },
-                    amount = "${it.settlementAmountUsdt} USDT",
+                    amount = "+$${it.settlementAmountUsdt}",
                     description = "来源订单 ${it.sourceOrderNo}",
                     fromUser = it.sourceAccountMasked,
                     timestamp = Date(),
-                    status = it.status
+                    status = it.status,
                 )
             }
 
@@ -159,8 +123,8 @@ class CommissionLedgerViewModel(application: Application) : AndroidViewModel(app
                 CommissionLedgerState.Empty
             } else {
                 CommissionLedgerState.Loaded(
-                    totalCommission = "${summary.withdrawnTotal} USDT",
-                    availableCommission = "${summary.availableAmount} USDT",
+                    totalCommission = "$${summary.withdrawnTotal}",
+                    availableCommission = "$${summary.availableAmount}",
                     records = records
                 )
             }
@@ -168,11 +132,6 @@ class CommissionLedgerViewModel(application: Application) : AndroidViewModel(app
     }
 }
 
-/**
- * 佣金账本页
- * 显示佣金记录列表
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommissionLedgerPage(
     viewModel: CommissionLedgerViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
@@ -181,63 +140,45 @@ fun CommissionLedgerPage(
 ) {
     val state by viewModel.state.collectAsState()
 
-    Scaffold(
-        containerColor = LedgerBg,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Growth Ledger",
-                        color = LedgerText,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = LedgerText
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = LedgerBg,
-                    titleContentColor = LedgerText,
-                    navigationIconContentColor = LedgerText
-                )
-            )
-        }
+    GrowthPageScaffold(
+        title = "佣金账本",
+        onNavigateBack = onNavigateBack
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(LedgerBg)
+                .background(GrowthPageBackground)
                 .padding(paddingValues)
         ) {
-            when (val current = state) {
+            when (val currentState = state) {
                 is CommissionLedgerState.Loaded -> {
                     CommissionLedgerContent(
-                        state = current,
+                        state = currentState,
                         onNavigateToWithdraw = onNavigateToWithdraw
                     )
                 }
 
                 is CommissionLedgerState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = LedgerPrimary)
+                        CircularProgressIndicator(color = GrowthAccent)
                     }
                 }
 
                 is CommissionLedgerState.Empty -> {
-                    EmptyCommissionView()
+                    GrowthStatusView(
+                        title = "暂无账本",
+                        message = "邀请好友并完成订单后，收益记录会以 Discover 流式卡片形式出现在这里。"
+                    )
                 }
 
                 is CommissionLedgerState.Error -> {
-                    LedgerErrorView(message = current.message)
+                    GrowthStatusView(
+                        title = "账本加载失败",
+                        message = currentState.message
+                    )
                 }
 
-                else -> Unit
+                CommissionLedgerState.Idle -> Unit
             }
         }
     }
@@ -248,246 +189,193 @@ private fun CommissionLedgerContent(
     state: CommissionLedgerState.Loaded,
     onNavigateToWithdraw: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        CommissionStatsCard(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        CommissionOverviewCard(
             totalCommission = state.totalCommission,
             availableCommission = state.availableCommission,
+            recordCount = state.records.size,
             onNavigateToWithdraw = onNavigateToWithdraw
         )
 
+        GrowthSectionCard(modifier = Modifier.weight(1f), contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                GrowthSectionTitle(
+                    title = "收益流水",
+                    subtitle = "按 Discover feed 的节奏把账本主信息压缩进单卡：订单来源、账户掩码、状态与金额。",
+                    trailing = { GrowthBadge(text = "${state.records.size} 条") }
+                )
+            }
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 20.dp, end = 20.dp, bottom = 20.dp)
+            ) {
+                items(state.records) { record ->
+                    CommissionRecordRow(record = record)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommissionOverviewCard(
+    totalCommission: String,
+    availableCommission: String,
+    recordCount: Int,
+    onNavigateToWithdraw: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(GrowthHeroGradient)
+            .padding(22.dp)
+    ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column {
+                Text("Discover Ledger", color = Color(0xFF5E4300), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(availableCommission, color = Color(0xFF161A1E), fontSize = 34.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text("当前可提现佣金", color = Color(0xFF5E4300), fontSize = 13.sp)
+            }
+            GrowthBadge(text = "实时结算")
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            GrowthStatChip(label = "累计到账", value = totalCommission, modifier = Modifier.weight(1f))
+            GrowthStatChip(label = "流水数量", value = recordCount.toString(), modifier = Modifier.weight(1f))
+        }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Button(
+            onClick = onNavigateToWithdraw,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF161A1E),
+                contentColor = GrowthTextPrimary
+            ),
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Text("发起提现", fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+private fun CommissionRecordRow(record: CommissionRecord) {
+    val dateFormat = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
+    val (icon, iconTint, amountTint, badgeText) = when (record.type) {
+        CommissionType.INVITE -> LedgerVisual(Icons.Default.PeopleAlt, GrowthPositive, GrowthPositive, "邀请返佣")
+        CommissionType.REBATE -> LedgerVisual(Icons.Default.Wallet, GrowthAccent, GrowthAccent, "二级返利")
+        CommissionType.WITHDRAW -> LedgerVisual(Icons.Default.NorthEast, GrowthNegative, GrowthNegative, "提现支出")
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 6.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(GrowthSurfaceRaised)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "流水明细",
-                color = LedgerText,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Surface(
-                shape = RoundedCornerShape(999.dp),
-                color = LedgerSurface
-            ) {
-                Text(
-                    text = "${state.records.size} 条",
-                    color = LedgerMuted,
-                    fontSize = 11.sp,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                )
-            }
-        }
-
-        LazyColumn(
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            items(state.records) { record ->
-                CommissionRecordItem(record = record)
-            }
-        }
-    }
-}
-
-@Composable
-private fun CommissionStatsCard(
-    totalCommission: String,
-    availableCommission: String,
-    onNavigateToWithdraw: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = LedgerSurface),
-        border = BorderStroke(1.dp, LedgerPrimarySoft)
-    ) {
-        Column(
-            modifier = Modifier
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(Color(0x3322F5C6), Color.Transparent, Color(0x202D3E58))
-                    )
-                )
-                .padding(18.dp)
-        ) {
-            Text(text = "可提现余额", color = LedgerMuted, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = availableCommission,
-                fontSize = 38.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = LedgerText
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(text = "累计已结算", color = LedgerMuted, fontSize = 11.sp)
-                    Text(
-                        text = totalCommission,
-                        color = LedgerText,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
-                Button(
-                    onClick = onNavigateToWithdraw,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = LedgerPrimary,
-                        contentColor = Color(0xFF072117)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(iconTint.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "提现", fontWeight = FontWeight.Bold)
+                    Icon(icon, contentDescription = badgeText, tint = iconTint)
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CommissionRecordItem(record: CommissionRecord) {
-    val dateFormat = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
-
-    val (icon, accentColor, amountPrefix) = when (record.type) {
-        CommissionType.INVITE -> Triple(Icons.Default.People, LedgerPrimary, "+")
-        CommissionType.REBATE -> Triple(Icons.Default.Savings, Color(0xFF60C2FF), "+")
-        CommissionType.WITHDRAW -> Triple(Icons.Default.ArrowCircleUp, LedgerDanger, "")
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = LedgerSurface)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(accentColor.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = record.type.name,
-                    tint = accentColor,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.size(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = record.description,
-                    color = LedgerText,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = dateFormat.format(record.timestamp),
-                    color = LedgerMuted,
-                    fontSize = 11.sp
-                )
-                record.fromUser?.let { user ->
-                    Spacer(modifier = Modifier.height(3.dp))
+                Column(modifier = Modifier.padding(start = 12.dp)) {
+                    Text(record.description, color = GrowthTextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "账号: $user",
-                        color = LedgerMuted,
-                        fontSize = 11.sp
+                        text = buildString {
+                            append(dateFormat.format(record.timestamp))
+                            if (!record.fromUser.isNullOrBlank()) {
+                                append("  ·  ")
+                                append(record.fromUser)
+                            }
+                        },
+                        color = GrowthTextSecondary,
+                        fontSize = 12.sp
                     )
                 }
             }
-
             Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "$amountPrefix${record.amount.removePrefix("+")}",
-                    color = accentColor,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text(record.amount, color = amountTint, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Spacer(modifier = Modifier.height(4.dp))
-                Surface(
-                    color = LedgerSurfaceSoft,
-                    shape = RoundedCornerShape(999.dp)
-                ) {
-                    Text(
-                        text = record.status,
-                        color = LedgerMuted,
-                        fontSize = 10.sp,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
-                }
+                GrowthBadge(text = badgeText)
             }
         }
+
+        Spacer(modifier = Modifier.height(14.dp))
+        GrowthListDivider()
+        Spacer(modifier = Modifier.height(12.dp))
+
+        GrowthInfoRow(label = "状态", value = record.status, emphasize = true)
+        Spacer(modifier = Modifier.height(8.dp))
+        GrowthInfoRow(label = "流水号", value = record.id.takeLast(8))
     }
 }
 
-@Composable
-private fun EmptyCommissionView() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Savings,
-            contentDescription = null,
-            tint = LedgerPrimary,
-            modifier = Modifier.size(54.dp)
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(text = "暂无账本记录", color = LedgerText, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(text = "邀请好友并完成首单后，会在这里显示返佣流水", color = LedgerMuted, fontSize = 12.sp)
-    }
-}
-
-@Composable
-private fun LedgerErrorView(message: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Warning,
-            contentDescription = null,
-            tint = LedgerDanger,
-            modifier = Modifier.size(50.dp)
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(text = "账本加载失败", color = LedgerDanger, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(text = message, color = LedgerMuted, fontSize = 12.sp)
-    }
-}
+private data class LedgerVisual(
+    val icon: ImageVector,
+    val iconTint: Color,
+    val amountTint: Color,
+    val badgeText: String
+)
 
 @Preview(showBackground = true)
 @Composable
-fun CommissionLedgerPagePreview() {
+private fun CommissionLedgerPagePreview() {
     MaterialTheme {
-        CommissionLedgerPage()
+        CommissionLedgerContent(
+            state = CommissionLedgerState.Loaded(
+                totalCommission = "$512.30",
+                availableCommission = "$96.24",
+                records = listOf(
+                    CommissionRecord(
+                        id = "LEDGER-20260407-01",
+                        type = CommissionType.INVITE,
+                        amount = "+$12.00",
+                        description = "来源订单 ORD-1048",
+                        fromUser = "u***6",
+                        timestamp = Date(),
+                        status = "PENDING"
+                    ),
+                    CommissionRecord(
+                        id = "LEDGER-20260407-02",
+                        type = CommissionType.WITHDRAW,
+                        amount = "-$50.00",
+                        description = "提现申请 WD-88",
+                        fromUser = null,
+                        timestamp = Date(),
+                        status = "SETTLED"
+                    )
+                )
+            ),
+            onNavigateToWithdraw = {}
+        )
     }
 }
