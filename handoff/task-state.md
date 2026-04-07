@@ -1,9 +1,9 @@
 # Task State
 
-- Updated At: 2026-04-08 00:13 +08:00
+- Updated At: 2026-04-08 00:37 +08:00
 - Repository: /Users/cnyirui/git/projects/liaojiang
-- Next Task: `liaojiang-4j0.18`（Bitget 风格 VPN 与购买流程页面重构）
-- Counts: `open=5` `in_progress=4` `closed=139` `ready=0`
+- Next Task: `liaojiang-4j0.2`（真实账户登录 / 下单 / 支付页最终回归）
+- Counts: `open=3` `in_progress=3` `closed=141` `ready=0`
 - Dirty Files:
   - .codex/bd-orchestrator-state.json
   - .codex/recovery-context.md
@@ -98,10 +98,12 @@ git status --short
   - `4j0.17` 已验收关闭：
     - wallet/home Bitget 风格重构已并入主线
     - 主线 `:app:compileFdroidDebugSources` 已通过
-  - `4j0.18` 当前 active worker:
-    - 独立 worktree：`codex-liaojiang-4j0-18-codex`
-    - 当前状态：VPN/Plans/Region/Order/Payment 页面均进入 Bitget 风格重构中间态，尚未形成最终 commit
-  - `4j0.16` 现仅被 `4j0.18` 阻塞
+  - `4j0.18` 已验收关闭：
+    - VPN/Plans/Region/Order/Payment Bitget 风格重构已并入主线
+    - 隔离 worktree `:app:compileFdroidDebugSources` 通过
+  - `4j0.16` 已验收关闭：
+    - 真机默认图标、首页主壳、五 Tab、套餐入口均已验证
+    - 剩余 live 业务回归留给 `4j0.2`
   - Git 侧新增基础设施风险：
     - `git push` 被拒，因为历史里含有 `BitgetWallet9400_bgwapp.apk`（208MB）超出 GitHub 100MB 限制
     - 需要在主线任务收口后清理历史再恢复推送
@@ -109,7 +111,10 @@ git status --short
 ## Remaining Work
 
 - `liaojiang-4j0`: Android 最终阶段 feature 仍 in_progress
-- `liaojiang-4j0.18`: VPN/购买流程页面重构进行中
-- `liaojiang-4j0.16`: Bitget UI 主线验收，等待 `4j0.18`
-- `liaojiang-4j0.2`: 最终真实业务回归仍保留，但现在已被新 UI 重构主线前置
-- `liaojiang-rcb`: feature 仍 in_progress，但当前主线优先级低于 Android UI 重构
+- `liaojiang-4j0.2`: 最终真实业务回归仍未完成
+  - 真实 blocker：
+    - 测试账号已存在
+    - 真机已装最新主线 APK
+    - 但这台 OPlus 设备上安装确认与 Compose 输入焦点对自动化不稳定，无法可信地无人值守完成“登录 -> 下单 -> 支付页”最后一段
+    - 这已转为需要人类接手的真机交互 blocker
+- `liaojiang-rcb`: feature 仍 in_progress，但按用户要求需在主线完成后再推进二期 beads 拆解
