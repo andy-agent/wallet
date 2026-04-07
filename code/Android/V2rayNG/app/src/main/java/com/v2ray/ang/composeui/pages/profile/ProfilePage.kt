@@ -1,12 +1,12 @@
 package com.v2ray.ang.composeui.pages.profile
 
 import android.app.Application
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,28 +14,32 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.SupervisorAccount
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,8 +48,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,18 +72,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-private val ProfileBg = Color(0xFF0A101A)
-private val ProfileSurface = Color(0xFF121A28)
-private val ProfileSurfaceSoft = Color(0xFF1A2638)
-private val ProfilePrimary = Color(0xFF00E5A8)
-private val ProfilePrimarySoft = Color(0x3313F1B2)
-private val ProfileText = Color(0xFFEAF0F7)
-private val ProfileMuted = Color(0xFF8D9AB0)
-private val ProfileDanger = Color(0xFFF45B69)
+private val ProfilePageBackground = Color(0xFFF5F7FA)
+private val ProfileCardBackground = Color.White
+private val ProfileAccent = Color(0xFF00C2A8)
+private val ProfileAccentDeep = Color(0xFF0E8E7F)
+private val ProfileTextSecondary = Color(0xFF667085)
+private val ProfileDivider = Color(0xFFEAECEF)
 
-/**
- * 用户信息
- */
 data class UserInfo(
     val email: String,
     val nickname: String?,
@@ -88,9 +87,6 @@ data class UserInfo(
     val memberExpiry: String?
 )
 
-/**
- * 设置项
- */
 data class SettingItem(
     val icon: ImageVector,
     val title: String,
@@ -99,19 +95,13 @@ data class SettingItem(
     val showArrow: Boolean = true
 )
 
-/**
- * 我的页状态
- */
 sealed class ProfileState {
-    object Idle : ProfileState()
-    object Loading : ProfileState()
+    data object Idle : ProfileState()
+    data object Loading : ProfileState()
     data class Loaded(val user: UserInfo) : ProfileState()
     data class Error(val message: String) : ProfileState()
 }
 
-/**
- * 我的页ViewModel
- */
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
     private val profileBridgeRepository = ProfileBridgeRepository(application)
     private val _state = MutableStateFlow<ProfileState>(ProfileState.Idle)
@@ -131,7 +121,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             }
 
             val orders = profileBridgeRepository.getCachedOrders(user.userId)
-            val activeOrder = orders.firstOrNull { it.expiredAt != null && it.expiredAt > System.currentTimeMillis() }
+            val activeOrder =
+                orders.firstOrNull { it.expiredAt != null && it.expiredAt > System.currentTimeMillis() }
             _state.value = ProfileState.Loaded(
                 user = UserInfo(
                     email = user.email ?: user.username,
@@ -152,10 +143,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 }
 
-/**
- * 我的页
- * 显示用户信息和设置入口
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfilePage(
@@ -174,13 +161,12 @@ fun ProfilePage(
     val showLogoutDialog = remember { mutableStateOf(false) }
 
     Scaffold(
-        containerColor = ProfileBg,
+        containerColor = ProfilePageBackground,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = "Profile",
-                        color = ProfileText,
                         fontWeight = FontWeight.SemiBold
                     )
                 },
@@ -188,29 +174,23 @@ fun ProfilePage(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = ProfileText
+                            contentDescription = "Settings"
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = ProfileBg,
-                    titleContentColor = ProfileText,
-                    actionIconContentColor = ProfileText
-                )
+                }
             )
         }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(ProfileBg)
+                .background(ProfilePageBackground)
                 .padding(paddingValues)
         ) {
-            when (val current = state) {
+            when (val currentState = state) {
                 is ProfileState.Loaded -> {
                     ProfileContent(
-                        user = current.user,
+                        user = currentState.user,
                         onNavigateToOrders = onNavigateToOrders,
                         onNavigateToWallet = onNavigateToWallet,
                         onNavigateToInvite = onNavigateToInvite,
@@ -222,17 +202,17 @@ fun ProfilePage(
                     )
                 }
 
-                is ProfileState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = ProfilePrimary)
+                ProfileState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = ProfileAccent)
                     }
                 }
 
-                is ProfileState.Error -> {
-                    ProfileErrorView(message = current.message)
-                }
-
-                else -> Unit
+                is ProfileState.Error -> ErrorView(currentState.message)
+                ProfileState.Idle -> Unit
             }
         }
     }
@@ -240,11 +220,8 @@ fun ProfilePage(
     if (showLogoutDialog.value) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog.value = false },
-            containerColor = ProfileSurface,
-            titleContentColor = ProfileText,
-            textContentColor = ProfileMuted,
             title = { Text("确认登出") },
-            text = { Text("确定要退出登录吗？") },
+            text = { Text("确定要退出当前账号吗？") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -253,12 +230,12 @@ fun ProfilePage(
                         onLogout()
                     }
                 ) {
-                    Text("确认", color = ProfileDanger)
+                    Text("确认", color = Color(0xFFEF4444))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog.value = false }) {
-                    Text("取消", color = ProfileMuted)
+                    Text("取消")
                 }
             }
         )
@@ -281,42 +258,34 @@ private fun ProfileContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Spacer(modifier = Modifier.height(4.dp))
         UserInfoCard(user = user)
-
-        Spacer(modifier = Modifier.height(12.dp))
-
+        StatusOverviewCard(user = user)
+        SectionTitle(title = "快捷入口", caption = "常用功能集中管理")
         QuickAccessGrid(
             onNavigateToOrders = onNavigateToOrders,
             onNavigateToWallet = onNavigateToWallet,
             onNavigateToInvite = onNavigateToInvite,
             onNavigateToCommission = onNavigateToCommission
         )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
+        SectionTitle(title = "服务与支持", caption = "协议、帮助与应用信息")
         SettingsList(
             onNavigateToLegal = onNavigateToLegal,
             onNavigateToSupport = onNavigateToSupport,
             onNavigateToAbout = onNavigateToAbout
         )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        LogoutButton(onClick = onLogoutClick)
-
-        Spacer(modifier = Modifier.height(18.dp))
-
+        LogoutCard(onClick = onLogoutClick)
         Text(
             text = "CryptoVPN v1.0.0",
-            fontSize = 11.sp,
-            color = ProfileMuted,
+            fontSize = 12.sp,
+            color = ProfileTextSecondary,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
         )
-
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -324,76 +293,225 @@ private fun ProfileContent(
 private fun UserInfoCard(user: UserInfo) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileSurface),
-        border = BorderStroke(1.dp, ProfilePrimarySoft)
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = ProfileCardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Row(
+        Box(
             modifier = Modifier
+                .fillMaxWidth()
                 .background(
-                    Brush.linearGradient(
-                        colors = listOf(Color(0x3322F5C6), Color.Transparent, Color(0x202D3E58))
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color(0xFF103B43), Color(0xFF1C5C57), Color(0xFF00C2A8))
                     )
                 )
-                .padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(20.dp)
         ) {
-            Surface(
-                shape = CircleShape,
-                color = ProfileSurfaceSoft,
-                modifier = Modifier.size(62.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = user.nickname?.take(1)?.uppercase() ?: user.email.take(1).uppercase(),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = ProfilePrimary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.size(14.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = user.nickname ?: user.email.substringBefore("@"),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = ProfileText
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = user.email,
-                    fontSize = 12.sp,
-                    color = ProfileMuted
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Surface(
-                    color = ProfilePrimarySoft,
-                    shape = RoundedCornerShape(999.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.White.copy(alpha = 0.16f),
+                        modifier = Modifier.size(68.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = null,
-                            modifier = Modifier.size(12.dp),
-                            tint = ProfilePrimary
-                        )
-                        Spacer(modifier = Modifier.size(4.dp))
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = user.nickname?.take(1)?.uppercase()
+                                    ?: user.email.take(1).uppercase(),
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = user.memberLevel,
-                            fontSize = 11.sp,
-                            color = ProfilePrimary,
-                            fontWeight = FontWeight.SemiBold
+                            text = user.nickname ?: user.email.substringBefore("@"),
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = user.email,
+                            fontSize = 13.sp,
+                            color = Color.White.copy(alpha = 0.78f)
                         )
                     }
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = Color.White.copy(alpha = 0.14f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.VerifiedUser,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "安全",
+                                fontSize = 12.sp,
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ProfileBadge(
+                        icon = Icons.Default.Star,
+                        text = user.memberLevel
+                    )
+                    ProfileBadge(
+                        icon = Icons.Default.Shield,
+                        text = "账号中心"
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ProfileBadge(icon: ImageVector, text: String) {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = Color.White.copy(alpha = 0.14f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = text,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatusOverviewCard(user: UserInfo) {
+    val statusText = if (user.memberLevel == "已订阅") "服务有效" else "尚未激活"
+    val caption = if (user.memberLevel == "已订阅") {
+        "当前订阅状态正常，可继续使用全部线路与账户能力。"
+    } else {
+        "开通订阅后可解锁完整网络能力与更高优先级支持。"
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = ProfileCardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "账户概览",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF101828)
+                    )
+                    Text(
+                        text = caption,
+                        fontSize = 13.sp,
+                        color = ProfileTextSecondary,
+                        lineHeight = 18.sp
+                    )
+                }
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = ProfileAccent.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = statusText,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                        fontSize = 12.sp,
+                        color = ProfileAccentDeep,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                SummaryStat(
+                    modifier = Modifier.weight(1f),
+                    label = "会员",
+                    value = user.memberLevel
+                )
+                SummaryStat(
+                    modifier = Modifier.weight(1f),
+                    label = "身份",
+                    value = user.nickname ?: "访客"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SummaryStat(modifier: Modifier = Modifier, label: String, value: String) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xFFF8FAFB))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = ProfileTextSecondary
+        )
+        Text(
+            text = value,
+            fontSize = 15.sp,
+            color = Color(0xFF101828),
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun SectionTitle(title: String, caption: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = title,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF101828)
+        )
+        Text(
+            text = caption,
+            fontSize = 13.sp,
+            color = ProfileTextSecondary
+        )
     }
 }
 
@@ -406,42 +524,43 @@ private fun QuickAccessGrid(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileSurface)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = ProfileCardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(
-                text = "快捷入口",
-                color = ProfileText,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 QuickAccessItem(
                     modifier = Modifier.weight(1f),
-                    icon = Icons.Default.ReceiptLong,
+                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
                     label = "我的订单",
+                    accent = Color(0xFFE8FFF7),
                     onClick = onNavigateToOrders
                 )
                 QuickAccessItem(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.AccountBalanceWallet,
                     label = "我的钱包",
+                    accent = Color(0xFFEFF4FF),
                     onClick = onNavigateToWallet
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 QuickAccessItem(
                     modifier = Modifier.weight(1f),
-                    icon = Icons.Default.People,
+                    icon = Icons.Default.SupervisorAccount,
                     label = "邀请好友",
+                    accent = Color(0xFFFFF4EA),
                     onClick = onNavigateToInvite
                 )
                 QuickAccessItem(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.AttachMoney,
                     label = "佣金收益",
+                    accent = Color(0xFFFFF5F5),
                     onClick = onNavigateToCommission
                 )
             }
@@ -451,27 +570,40 @@ private fun QuickAccessGrid(
 
 @Composable
 private fun QuickAccessItem(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     icon: ImageVector,
     label: String,
+    accent: Color,
     onClick: () -> Unit
 ) {
-    Row(
+    Column(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(ProfileSurfaceSoft)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color(0xFFF8FAFB))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = ProfilePrimary,
-            modifier = Modifier.size(18.dp)
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = accent,
+            modifier = Modifier.size(46.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = Color(0xFF101828),
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            color = Color(0xFF101828),
+            fontWeight = FontWeight.Medium
         )
-        Spacer(modifier = Modifier.size(8.dp))
-        Text(text = label, color = ProfileText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -485,27 +617,31 @@ private fun SettingsList(
         SettingItem(
             icon = Icons.Default.Description,
             title = "法务文档",
-            subtitle = "用户协议、隐私政策"
+            subtitle = "用户协议、隐私政策与退款规则",
+            badge = "Legal"
         ),
         SettingItem(
-            icon = Icons.Default.Help,
+            icon = Icons.AutoMirrored.Filled.Help,
             title = "帮助与反馈",
-            subtitle = "常见问题、联系客服"
+            subtitle = "常见问题、联系客服",
+            badge = "Support"
         ),
         SettingItem(
             icon = Icons.Default.Info,
             title = "关于我们",
-            subtitle = "版本信息、更新日志"
+            subtitle = "版本信息、更新日志",
+            badge = "About"
         )
     )
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileSurface)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = ProfileCardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.padding(vertical = 6.dp)) {
-            settings.forEach { item ->
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            settings.forEachIndexed { index, item ->
                 SettingListItem(
                     item = item,
                     onClick = {
@@ -516,119 +652,146 @@ private fun SettingsList(
                         }
                     }
                 )
+                if (index < settings.lastIndex) {
+                    HorizontalDivider(color = ProfileDivider)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun SettingListItem(
-    item: SettingItem,
-    onClick: () -> Unit
-) {
+private fun SettingListItem(item: SettingItem, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(ProfileSurfaceSoft),
-            contentAlignment = Alignment.Center
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = ProfileAccent.copy(alpha = 0.12f),
+            modifier = Modifier.size(42.dp)
         ) {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = item.title,
-                tint = ProfilePrimary,
-                modifier = Modifier.size(18.dp)
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.title,
+                    tint = ProfileAccentDeep,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
-
-        Spacer(modifier = Modifier.size(12.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 text = item.title,
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = ProfileText
+                color = Color(0xFF101828)
             )
             item.subtitle?.let {
                 Text(
                     text = it,
-                    fontSize = 11.sp,
-                    color = ProfileMuted,
-                    modifier = Modifier.padding(top = 2.dp)
+                    fontSize = 12.sp,
+                    color = ProfileTextSecondary,
+                    lineHeight = 17.sp
                 )
             }
         }
-
+        item.badge?.let {
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = Color(0xFFF2F4F7)
+            ) {
+                Text(
+                    text = it,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    fontSize = 11.sp,
+                    color = ProfileTextSecondary,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+        }
         if (item.showArrow) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = ProfileMuted
+                tint = ProfileTextSecondary
             )
         }
     }
 }
 
 @Composable
-private fun LogoutButton(onClick: () -> Unit) {
+private fun LogoutCard(onClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileSurface)
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = ProfileCardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.Logout,
-                contentDescription = "Logout",
-                tint = ProfileDanger,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.size(8.dp))
             Text(
-                text = "退出登录",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = ProfileDanger
+                text = "会话管理",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF101828)
             )
+            Text(
+                text = "退出登录将清除当前会话，需要重新输入账号信息。",
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                color = ProfileTextSecondary
+            )
+            Button(
+                onClick = onClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text("退出登录")
+            }
         }
     }
 }
 
 @Composable
-private fun ProfileErrorView(message: String) {
+private fun ErrorView(message: String) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 28.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.Error,
-            contentDescription = null,
-            modifier = Modifier.size(54.dp),
-            tint = ProfileDanger
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(text = "加载失败", color = ProfileDanger, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(text = message, color = ProfileMuted, fontSize = 12.sp)
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = Color.White
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = "无法加载 Profile",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF101828)
+                )
+                Text(
+                    text = message,
+                    fontSize = 14.sp,
+                    color = ProfileTextSecondary,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
     }
 }
 
@@ -636,6 +799,22 @@ private fun ProfileErrorView(message: String) {
 @Composable
 fun ProfilePagePreview() {
     MaterialTheme {
-        ProfilePage()
+        ProfileContent(
+            user = UserInfo(
+                email = "hello@example.com",
+                nickname = "Alice",
+                avatarUrl = null,
+                memberLevel = "已订阅",
+                memberExpiry = null
+            ),
+            onNavigateToOrders = {},
+            onNavigateToWallet = {},
+            onNavigateToInvite = {},
+            onNavigateToCommission = {},
+            onNavigateToLegal = {},
+            onNavigateToSupport = {},
+            onNavigateToAbout = {},
+            onLogoutClick = {}
+        )
     }
 }
