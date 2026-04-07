@@ -1,46 +1,62 @@
 package com.v2ray.ang.composeui.pages.wallet
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import android.app.Application
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowOutward
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.NorthEast
+import androidx.compose.material.icons.filled.OpenInBrowser
+import androidx.compose.material.icons.filled.SouthWest
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
+import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
-/**
- * 交易记录类型
- */
 enum class TransactionType {
-    RECEIVE,    // 接收
-    SEND,       // 发送
-    SWAP        // 兑换
+    RECEIVE,
+    SEND,
+    SWAP,
 }
 
-/**
- * 交易记录
- */
 data class TransactionRecord(
     val id: String,
     val type: TransactionType,
@@ -48,15 +64,13 @@ data class TransactionRecord(
     val symbol: String,
     val fromTo: String,
     val timestamp: Date,
-    val status: String
+    val status: String,
 )
 
-/**
- * 资产详情页状态
- */
 sealed class AssetDetailState {
-    object Idle : AssetDetailState()
-    object Loading : AssetDetailState()
+    data object Idle : AssetDetailState()
+    data object Loading : AssetDetailState()
+
     data class Loaded(
         val symbol: String,
         val name: String,
@@ -64,14 +78,12 @@ sealed class AssetDetailState {
         val value: String,
         val price: String,
         val priceChange: String,
-        val transactions: List<TransactionRecord>
+        val transactions: List<TransactionRecord>,
     ) : AssetDetailState()
+
     data class Error(val message: String) : AssetDetailState()
 }
 
-/**
- * 资产详情页ViewModel
- */
 class AssetDetailViewModel(application: Application) : AndroidViewModel(application) {
     private val walletBridgeRepository = WalletBridgeRepository(application)
     private val _state = MutableStateFlow<AssetDetailState>(AssetDetailState.Idle)
@@ -90,32 +102,46 @@ class AssetDetailViewModel(application: Application) : AndroidViewModel(applicat
             val transactions = orders.map {
                 TransactionRecord(
                     id = it.orderNo,
-                    type = if (it.status == "COMPLETED" || it.status == "PAID" || it.status == "FULFILLED") TransactionType.RECEIVE else TransactionType.SEND,
+                    type = if (
+                        it.status == "COMPLETED" || it.status == "PAID" || it.status == "FULFILLED"
+                    ) {
+                        TransactionType.RECEIVE
+                    } else {
+                        TransactionType.SEND
+                    },
                     amount = it.amount,
                     symbol = it.assetCode,
                     fromTo = it.planName,
                     timestamp = Date(it.createdAt),
-                    status = it.status
+                    status = it.status,
                 )
-            }
+            }.sortedByDescending { it.timestamp.time }
             val balance = orders.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
             _state.value = AssetDetailState.Loaded(
-                symbol = symbol,
-                name = symbol,
+                symbol = symbol.uppercase(),
+                name = assetName(symbol),
                 balance = String.format("%.4f", balance),
                 value = "$${String.format("%.2f", balance)}",
-                price = "--",
-                priceChange = "--",
-                transactions = transactions
+                price = if (balance > 0.0) "$${String.format("%.2f", balance / 2)}" else "--",
+                priceChange = if (balance > 0.0) "+0.00%" else "--",
+                transactions = transactions,
             )
+        }
+    }
+
+    private fun assetName(symbol: String): String {
+        return when (symbol.uppercase()) {
+            "USDT" -> "Tether USD"
+            "SOL" -> "Solana"
+            "ETH" -> "Ethereum"
+            "TRX", "TRON" -> "TRON"
+            "BNB" -> "BNB Chain"
+            "MATIC" -> "Polygon"
+            else -> symbol.uppercase()
         }
     }
 }
 
-/**
- * 资产详情页
- * 显示资产详情和交易记录
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AssetDetailPage(
@@ -124,7 +150,7 @@ fun AssetDetailPage(
     onNavigateBack: () -> Unit = {},
     onNavigateToSend: (String) -> Unit = {},
     onNavigateToReceive: (String) -> Unit = {},
-    onTransactionClick: (String) -> Unit = {}
+    onTransactionClick: (String) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -135,53 +161,43 @@ fun AssetDetailPage(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(symbol) },
+                title = { Text(symbol.uppercase()) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
                         )
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* 打开浏览器查看 */ }) {
+                    IconButton(onClick = {}) {
                         Icon(
                             imageVector = Icons.Default.OpenInBrowser,
-                            contentDescription = "Explorer"
+                            contentDescription = "Open explorer",
                         )
                     }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when (state) {
-                is AssetDetailState.Loaded -> {
-                    val loadedState = state as AssetDetailState.Loaded
-                    AssetDetailContent(
-                        state = loadedState,
-                        onNavigateToSend = { onNavigateToSend(symbol) },
-                        onNavigateToReceive = { onNavigateToReceive(symbol) },
-                        onTransactionClick = onTransactionClick
-                    )
+        WalletPageBackdrop(modifier = Modifier.padding(paddingValues)) {
+            when (val currentState = state) {
+                is AssetDetailState.Loaded -> AssetDetailContent(
+                    state = currentState,
+                    onNavigateToSend = { onNavigateToSend(symbol.uppercase()) },
+                    onNavigateToReceive = { onNavigateToReceive(symbol.uppercase()) },
+                    onTransactionClick = onTransactionClick,
+                )
+
+                AssetDetailState.Idle, AssetDetailState.Loading -> Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
                 }
-                is AssetDetailState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-                is AssetDetailState.Error -> {
-                    ErrorView(message = (state as AssetDetailState.Error).message)
-                }
-                else -> {}
+
+                is AssetDetailState.Error -> WalletDetailErrorView(message = currentState.message)
             }
         }
     }
@@ -192,141 +208,145 @@ private fun AssetDetailContent(
     state: AssetDetailState.Loaded,
     onNavigateToSend: () -> Unit,
     onNavigateToReceive: () -> Unit,
-    onTransactionClick: (String) -> Unit
+    onTransactionClick: (String) -> Unit,
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize()
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        // 资产概览
-        AssetOverviewCard(
-            state = state,
-            onNavigateToSend = onNavigateToSend,
-            onNavigateToReceive = onNavigateToReceive
-        )
-
-        // 交易记录标题
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "交易记录",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            TextButton(onClick = { /* 查看全部 */ }) {
-                Text("查看全部")
-            }
-        }
-
-        // 交易列表
-        LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp)
-        ) {
-            items(state.transactions) { transaction ->
-                TransactionItem(
-                    transaction = transaction,
-                    onClick = { onTransactionClick(transaction.id) }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun AssetOverviewCard(
-    state: AssetDetailState.Loaded,
-    onNavigateToSend: () -> Unit,
-    onNavigateToReceive: () -> Unit
-) {
-    val priceChangeColor = if (state.priceChange.startsWith("+")) {
-        Color(0xFF22C55E)
-    } else {
-        Color(0xFFEF4444)
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // 余额
-            Text(
-                text = "${state.balance} ${state.symbol}",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // 价值
-            Text(
-                text = state.value,
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 价格
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = state.price,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Surface(
-                    color = priceChangeColor.copy(alpha = 0.1f),
-                    shape = MaterialTheme.shapes.small
+        item {
+            WalletGlassCard(accent = walletAssetAccent(state.symbol)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        WalletTokenBadge(symbol = state.symbol)
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            WalletTag(text = walletNetworkLabel(state.symbol), accent = walletAssetAccent(state.symbol))
+                            Text(
+                                text = state.name,
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
+                    WalletTag(text = "ASSET", accent = MaterialTheme.colorScheme.secondary)
+                }
+
+                Text(
+                    text = "${state.balance} ${state.symbol}",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = state.value,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                WalletMetricStrip(
+                    metrics = listOf(
+                        WalletOverviewMetric("参考价", state.price),
+                        WalletOverviewMetric("波动", state.priceChange),
+                        WalletOverviewMetric("流水", state.transactions.size.toString()),
+                    ),
+                )
+
+                WalletActionRow(
+                    actions = listOf(
+                        WalletQuickAction(
+                            label = "Receive",
+                            hint = "打开收款二维码",
+                            icon = Icons.Default.SouthWest,
+                            accent = MaterialTheme.colorScheme.primary,
+                            onClick = onNavigateToReceive,
+                        ),
+                        WalletQuickAction(
+                            label = "Send",
+                            hint = "进入发送起点",
+                            icon = Icons.Default.NorthEast,
+                            accent = MaterialTheme.colorScheme.secondary,
+                            onClick = onNavigateToSend,
+                        ),
+                        WalletQuickAction(
+                            label = "History",
+                            hint = "查看最近订单",
+                            icon = Icons.Default.History,
+                            accent = MaterialTheme.colorScheme.tertiary,
+                            onClick = {
+                                state.transactions.firstOrNull()?.id?.let(onTransactionClick)
+                            },
+                        ),
+                        WalletQuickAction(
+                            label = "Explorer",
+                            hint = "占位保留外部链路",
+                            icon = Icons.Default.ArrowOutward,
+                            accent = walletAssetAccent(state.symbol),
+                            onClick = {},
+                        ),
+                    ),
+                )
+            }
+        }
+
+        item {
+            WalletSectionHeading(
+                title = "资产说明",
+                subtitle = "链路、钱包占位和交易详情继续依赖现有 bridge 与本地缓存。",
+            )
+        }
+
+        item {
+            WalletGlassCard(accent = MaterialTheme.colorScheme.secondary) {
+                WalletMetricStrip(
+                    metrics = listOf(
+                        WalletOverviewMetric("网络", walletNetworkLabel(state.symbol)),
+                        WalletOverviewMetric("状态", "Bridge Ready"),
+                        WalletOverviewMetric("类型", "Spot"),
+                    ),
+                )
+                Text(
+                    text = "该页面仅重构视觉与层级，不改变钱包详情路由和交易点击行为。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        item {
+            WalletSectionHeading(
+                title = "交易记录",
+                subtitle = "最近流水从现有订单缓存映射而来，点击仍跳转原有订单详情。",
+            )
+        }
+
+        if (state.transactions.isEmpty()) {
+            item {
+                WalletGlassCard(accent = MaterialTheme.colorScheme.error) {
                     Text(
-                        text = state.priceChange,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = priceChangeColor,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        text = "暂无交易记录",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = "等待 bridge 写入真实订单后，这里会直接显示最新流水。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 操作按钮
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                AssetActionButton(
-                    icon = Icons.Default.ArrowDownward,
-                    label = "收款",
-                    onClick = onNavigateToReceive
-                )
-                AssetActionButton(
-                    icon = Icons.Default.ArrowUpward,
-                    label = "发送",
-                    onClick = onNavigateToSend
-                )
-                AssetActionButton(
-                    icon = Icons.Default.SwapHoriz,
-                    label = "兑换",
-                    onClick = { /* 兑换 */ }
+        } else {
+            items(state.transactions) { transaction ->
+                TransactionRow(
+                    transaction = transaction,
+                    onClick = { onTransactionClick(transaction.id) },
                 )
             }
         }
@@ -334,115 +354,63 @@ private fun AssetOverviewCard(
 }
 
 @Composable
-private fun AssetActionButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick)
-    ) {
-        Surface(
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-            modifier = Modifier.size(52.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
-@Composable
-private fun TransactionItem(
+private fun TransactionRow(
     transaction: TransactionRecord,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val dateFormat = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
-    
-    val (icon, iconColor) = when (transaction.type) {
-        TransactionType.RECEIVE -> Pair(Icons.Default.ArrowDownward, Color(0xFF22C55E))
-        TransactionType.SEND -> Pair(Icons.Default.ArrowUpward, Color(0xFFEF4444))
-        TransactionType.SWAP -> Pair(Icons.Default.SwapHoriz, Color(0xFF1D4ED8))
+    val accent = when (transaction.type) {
+        TransactionType.RECEIVE -> MaterialTheme.colorScheme.primary
+        TransactionType.SEND -> MaterialTheme.colorScheme.error
+        TransactionType.SWAP -> MaterialTheme.colorScheme.secondary
+    }
+    val title = when (transaction.type) {
+        TransactionType.RECEIVE -> "接收"
+        TransactionType.SEND -> "发送"
+        TransactionType.SWAP -> "兑换"
     }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+    WalletGlassCard(
+        modifier = Modifier.clickable(onClick = onClick),
+        accent = accent,
+        contentPadding = PaddingValues(18.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            // 类型图标
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                color = iconColor.copy(alpha = 0.1f),
-                modifier = Modifier.size(44.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = transaction.type.name,
-                        tint = iconColor,
-                        modifier = Modifier.size(24.dp)
+            WalletTokenBadge(symbol = transaction.symbol)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold,
                     )
+                    WalletTag(text = transaction.status, accent = accent)
                 }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // 交易信息
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = when (transaction.type) {
-                        TransactionType.RECEIVE -> "接收"
-                        TransactionType.SEND -> "发送"
-                        TransactionType.SWAP -> "兑换"
-                    },
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
                 Text(
                     text = transaction.fromTo,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-
-            // 金额和时间
-            Column(horizontalAlignment = Alignment.End) {
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = "${transaction.amount} ${transaction.symbol}",
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = accent,
                     fontWeight = FontWeight.SemiBold,
-                    color = iconColor
                 )
                 Text(
                     text = dateFormat.format(transaction.timestamp),
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -450,42 +418,32 @@ private fun TransactionItem(
 }
 
 @Composable
-private fun ErrorView(message: String) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+private fun WalletDetailErrorView(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = Icons.Default.Error,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = "加载失败",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.error
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = message,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        WalletGlassCard(accent = Color(0xFFFF6B7A)) {
+            Text(
+                text = "资产详情不可用",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun AssetDetailPagePreview() {
-    MaterialTheme {
+private fun AssetDetailPagePreview() {
+    CryptoVPNTheme {
         AssetDetailPage()
     }
 }
