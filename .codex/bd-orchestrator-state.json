@@ -1,16 +1,40 @@
 {
-  "generated_at": "2026-04-07T05:29:10Z",
+  "generated_at": "2026-04-07T15:07:30Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-4j0.2",
-  "accepted_task_id": "liaojiang-rcb.17",
-  "next_task_id": "liaojiang-4j0.2",
-  "active_worker_task_ids": [],
+  "active_task_id": "liaojiang-4j0.15",
+  "accepted_task_id": "liaojiang-4j0.14",
+  "next_task_id": "liaojiang-4j0.17",
+  "active_worker_task_ids": [
+    "liaojiang-4j0.15",
+    "liaojiang-4j0.19"
+  ],
   "blockers": [
     {
-      "task_id": "liaojiang-4j0.2",
-      "type": "human",
-      "blocked_by": "client test credentials or accessible verification mailbox"
+      "task_id": "liaojiang-4j0.17",
+      "type": "task",
+      "blocked_by": "liaojiang-4j0.15"
+    },
+    {
+      "task_id": "liaojiang-4j0.18",
+      "type": "task",
+      "blocked_by": "liaojiang-4j0.15"
+    },
+    {
+      "task_id": "liaojiang-4j0.16",
+      "type": "task",
+      "blocked_by": "liaojiang-4j0.15, liaojiang-4j0.17, liaojiang-4j0.18, liaojiang-4j0.19"
     }
   ],
-  "workers": []
+  "workers": [
+    {
+      "task_id": "liaojiang-4j0.15",
+      "agent_id": "019d6875-7515-7921-8c0d-309a1f355b71",
+      "status": "running"
+    },
+    {
+      "task_id": "liaojiang-4j0.19",
+      "agent_id": "019d6875-76de-7350-a899-d4f7ed00d89e",
+      "status": "running"
+    }
+  ]
 }

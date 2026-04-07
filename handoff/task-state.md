@@ -1,9 +1,9 @@
 # Task State
 
-- Updated At: 2026-04-07 13:29 +08:00
+- Updated At: 2026-04-07 23:11 +08:00
 - Repository: /Users/cnyirui/git/projects/liaojiang
-- Next Task: `liaojiang-4j0.2`（human-needed blocker：等待 Android 真实回归账号凭据或可取验证码邮箱）
-- Counts: `open=0` `in_progress=3` `closed=124` `ready=0`
+- Next Task: `liaojiang-4j0.15`（Bitget 风格主题与底部导航外壳）
+- Counts: `open=15` `in_progress=5` `closed=126` `ready=2`
 - Dirty Files:
   - .codex/bd-orchestrator-state.json
   - .codex/recovery-context.md
@@ -74,9 +74,26 @@ git status --short
     - `uiautomator dump` 已捕获登录页 email/password 表单，说明最终 APK 的登录入口可达
     - 设备内无 `payment_prefs` token/session，也无本地 payment 数据库用户缓存
     - 当前仓库/本地环境未提供可复用客户端测试账号或可取验证码邮箱，无法继续完成真实登录 -> 下单 -> 支付页回归
+  - `4j0.14` 已关闭：
+    - Bitget-like IA 已冻结
+    - VPN 作为一级底部 Tab，替换 Quote/Market 位
+    - Home 保留 dashboard，Wallet 保留资产/支付，Discover 承接增长内容
+  - `4j0.15` 已派发给实现子代理：
+    - 范围：theme/components/navigation/ui-compose 外壳
+  - `4j0.19` 已派发给实现子代理：
+    - 范围：growth/profile/legal 页面重构
+  - 下一批被上述任务阻塞：
+    - `4j0.17` Wallet/Home 页面重构
+    - `4j0.18` VPN/购买流程页面重构
+    - `4j0.16` UI 重构主线验收
 
 ## Remaining Work
 
-- `liaojiang-4j0`: Android 最终阶段 feature 仍 in_progress，当前实质阻塞仍是 `4j0.2`
-- `liaojiang-4j0.2`: 已验证到真实登录页入口，但仍阻塞于测试账号凭据/验证码邮箱来源
-- `liaojiang-rcb`: `17.x` 链侧接线与健康可观测性里程碑已完成并验收，当前没有新的 ready bead
+- `liaojiang-4j0`: Android 最终阶段 feature 仍 in_progress
+- `liaojiang-4j0.15`: Bitget 风格 shell/theme/nav 外壳实现中
+- `liaojiang-4j0.19`: Bitget 风格 Discover/Growth/Profile/Legal 页面实现中
+- `liaojiang-4j0.17`: Wallet/Home 页面重构，等待 `4j0.15`
+- `liaojiang-4j0.18`: VPN/购买流程页面重构，等待 `4j0.15`
+- `liaojiang-4j0.16`: Bitget UI 主线验收，等待 `4j0.15/17/18/19`
+- `liaojiang-4j0.2`: 最终真实业务回归仍保留，但现在已被新 UI 重构主线前置
+- `liaojiang-rcb`: feature 仍 in_progress，但当前主线优先级低于 Android UI 重构
