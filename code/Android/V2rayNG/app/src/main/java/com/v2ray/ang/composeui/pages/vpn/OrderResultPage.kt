@@ -1,44 +1,50 @@
 package com.v2ray.ang.composeui.pages.vpn
 
 import android.app.Application
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
+import com.v2ray.ang.composeui.theme.Error as AppError
+import com.v2ray.ang.composeui.theme.Primary
+import com.v2ray.ang.composeui.theme.TextPrimary
+import com.v2ray.ang.composeui.theme.TextSecondary
+import com.v2ray.ang.composeui.theme.Warning
 import com.v2ray.ang.payment.PaymentConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/**
- * 订单结果类型
- */
 enum class OrderResultType {
-    SUCCESS,    // 成功
-    FAILED,     // 失败
-    PENDING     // 处理中
+    SUCCESS,
+    FAILED,
+    PENDING,
 }
 
-/**
- * 订单结果页状态
- */
 sealed class OrderResultState {
     object Idle : OrderResultState()
     data class Loaded(
@@ -46,13 +52,10 @@ sealed class OrderResultState {
         val orderId: String,
         val amount: String,
         val message: String,
-        val txHash: String? = null
+        val txHash: String? = null,
     ) : OrderResultState()
 }
 
-/**
- * 订单结果页ViewModel
- */
 class OrderResultViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<OrderResultState>(OrderResultState.Idle)
     val state: StateFlow<OrderResultState> = _state
@@ -68,10 +71,14 @@ class OrderResultViewModel(application: Application) : AndroidViewModel(applicat
                 .onSuccess { data ->
                     val type = when (data.status) {
                         PaymentConfig.OrderStatus.PAID_SUCCESS,
-                        PaymentConfig.OrderStatus.FULFILLED -> OrderResultType.SUCCESS
+                        PaymentConfig.OrderStatus.FULFILLED,
+                        -> OrderResultType.SUCCESS
+
                         PaymentConfig.OrderStatus.PENDING_PAYMENT,
                         PaymentConfig.OrderStatus.SEEN_ONCHAIN,
-                        PaymentConfig.OrderStatus.CONFIRMING -> OrderResultType.PENDING
+                        PaymentConfig.OrderStatus.CONFIRMING,
+                        -> OrderResultType.PENDING
+
                         else -> OrderResultType.FAILED
                     }
                     _state.value = fallbackLoaded(type, data.orderNo, data.amount, data.txHash)
@@ -86,21 +93,17 @@ class OrderResultViewModel(application: Application) : AndroidViewModel(applicat
         resultType: OrderResultType,
         orderId: String,
         amount: String,
-        txHash: String? = null
+        txHash: String? = null,
     ): OrderResultState.Loaded {
         val message = when (resultType) {
-            OrderResultType.SUCCESS -> "支付成功！您的套餐已激活。"
+            OrderResultType.SUCCESS -> "支付成功，您的套餐已激活。"
             OrderResultType.FAILED -> "支付失败，请重试或联系客服。"
-            OrderResultType.PENDING -> "订单处理中，请稍后查看。"
+            OrderResultType.PENDING -> "订单处理中，请稍后查看结果。"
         }
         return OrderResultState.Loaded(resultType, orderId, amount, message, txHash)
     }
 }
 
-/**
- * 订单结果页
- * 显示订单支付成功/失败的结果
- */
 @Composable
 fun OrderResultPage(
     viewModel: OrderResultViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
@@ -108,7 +111,7 @@ fun OrderResultPage(
     resultType: OrderResultType = OrderResultType.SUCCESS,
     onNavigateToHome: () -> Unit = {},
     onNavigateToOrders: () -> Unit = {},
-    onRetry: () -> Unit = {}
+    onRetry: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -116,306 +119,227 @@ fun OrderResultPage(
         viewModel.loadResult(orderId = orderId, fallbackType = resultType)
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
-    ) {
-        when (val currentState = state) {
-            is OrderResultState.Loaded -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // 结果图标
-                    ResultIcon(resultType = currentState.resultType)
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // 结果标题
-                    Text(
-                        text = when (currentState.resultType) {
-                            OrderResultType.SUCCESS -> "支付成功"
-                            OrderResultType.FAILED -> "支付失败"
-                            OrderResultType.PENDING -> "处理中"
-                        },
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = when (currentState.resultType) {
-                            OrderResultType.SUCCESS -> Color(0xFF22C55E)
-                            OrderResultType.FAILED -> Color(0xFFEF4444)
-                            OrderResultType.PENDING -> Color(0xFFF59E0B)
-                        }
+    VpnBitgetBackground {
+        Scaffold(
+            containerColor = Color.Transparent,
+            contentColor = TextPrimary,
+            contentWindowInsets = WindowInsets.safeDrawing,
+        ) { innerPadding ->
+            androidx.compose.foundation.lazy.LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(
+                    start = VpnPageHorizontalPadding,
+                    end = VpnPageHorizontalPadding,
+                    top = VpnPageTopPadding,
+                    bottom = 32.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                item {
+                    VpnTopChrome(
+                        title = "Order Result",
+                        subtitle = "Clear post-payment state with actions grouped by outcome.",
                     )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // 结果消息
-                    Text(
-                        text = currentState.message,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // 订单详情
-                    OrderResultDetailsCard(state = currentState)
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // 操作按钮
-                    when (currentState.resultType) {
-                        OrderResultType.SUCCESS -> {
-                            SuccessActions(
-                                onNavigateToHome = onNavigateToHome,
-                                onNavigateToOrders = onNavigateToOrders
-                            )
-                        }
-                        OrderResultType.FAILED -> {
-                            FailedActions(
-                                onRetry = onRetry,
-                                onNavigateToHome = onNavigateToHome
-                            )
-                        }
-                        OrderResultType.PENDING -> {
-                            PendingActions(
-                                onNavigateToOrders = onNavigateToOrders
+                }
+                when (val current = state) {
+                    OrderResultState.Idle -> {
+                        item {
+                            VpnLoadingPanel(
+                                title = "Loading payment result",
+                                subtitle = "正在查询订单最终状态。",
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    is OrderResultState.Loaded -> {
+                        item {
+                            ResultHeroCard(state = current)
+                        }
+                        item {
+                            ResultDetailsCard(state = current)
+                        }
+                        item {
+                            ResultActionCard(
+                                resultType = current.resultType,
+                                onNavigateToHome = onNavigateToHome,
+                                onNavigateToOrders = onNavigateToOrders,
+                                onRetry = onRetry,
+                            )
+                        }
+                    }
                 }
             }
-            else -> {
-                CircularProgressIndicator()
-            }
         }
     }
 }
 
 @Composable
-private fun ResultIcon(resultType: OrderResultType) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = EaseInOutCubic),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scale"
-    )
-
-    val (icon, iconColor, bgColor) = when (resultType) {
-        OrderResultType.SUCCESS -> Triple(
-            Icons.Default.Check,
-            Color(0xFF22C55E),
-            Color(0xFF22C55E).copy(alpha = 0.1f)
+private fun ResultHeroCard(state: OrderResultState.Loaded) {
+    VpnGlassCard(accent = state.resultType.accent()) {
+        VpnStatusChip(
+            text = state.resultType.label(),
+            containerColor = state.resultType.accent().copy(alpha = 0.16f),
+            contentColor = state.resultType.accent(),
         )
-        OrderResultType.FAILED -> Triple(
-            Icons.Default.Close,
-            Color(0xFFEF4444),
-            Color(0xFFEF4444).copy(alpha = 0.1f)
-        )
-        OrderResultType.PENDING -> Triple(
-            Icons.Default.Schedule,
-            Color(0xFFF59E0B),
-            Color(0xFFF59E0B).copy(alpha = 0.1f)
-        )
-    }
-
-    Box(
-        modifier = Modifier
-            .size(120.dp)
-            .scale(if (resultType == OrderResultType.SUCCESS) scale else 1f)
-            .background(bgColor, CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
         Icon(
-            imageVector = icon,
+            imageVector = state.resultType.icon(),
             contentDescription = null,
-            modifier = Modifier.size(60.dp),
-            tint = iconColor
+            tint = state.resultType.accent(),
+            modifier = Modifier.fillMaxWidth(),
         )
+        Text(
+            text = state.resultType.title(),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary,
+        )
+        Text(
+            text = state.message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            VpnMetricPill(
+                modifier = Modifier.weight(1f),
+                label = "Order",
+                value = state.orderId.ifBlank { "Unknown" },
+            )
+            VpnMetricPill(
+                modifier = Modifier.weight(1f),
+                label = "Amount",
+                value = state.amount,
+            )
+        }
     }
 }
 
 @Composable
-private fun OrderResultDetailsCard(state: OrderResultState.Loaded) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+private fun ResultDetailsCard(state: OrderResultState.Loaded) {
+    VpnGlassCard(accent = state.resultType.accent()) {
+        Text(
+            text = "Settlement Details",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
         )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            // 订单号
-            ResultDetailRow(label = "订单号", value = state.orderId)
+        VpnLabelValueRow(label = "Order No.", value = state.orderId.ifBlank { "Unknown" })
+        VpnLabelValueRow(label = "Amount", value = state.amount)
+        VpnLabelValueRow(label = "Status", value = state.resultType.title(), valueColor = state.resultType.accent())
+        state.txHash?.let {
+            VpnLabelValueRow(label = "Transaction Hash", value = it)
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(12.dp))
+@Composable
+private fun ResultActionCard(
+    resultType: OrderResultType,
+    onNavigateToHome: () -> Unit,
+    onNavigateToOrders: () -> Unit,
+    onRetry: () -> Unit,
+) {
+    VpnGlassCard(accent = resultType.accent()) {
+        Text(
+            text = "Next Action",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
+        )
+        Text(
+            text = resultType.actionHint(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary,
+        )
+        when (resultType) {
+            OrderResultType.SUCCESS -> {
+                VpnPrimaryButton(
+                    text = "Return to Home",
+                    onClick = onNavigateToHome,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                VpnSecondaryButton(
+                    text = "Open Orders",
+                    onClick = onNavigateToOrders,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
 
-            // 支付金额
-            ResultDetailRow(label = "支付金额", value = state.amount)
+            OrderResultType.FAILED -> {
+                VpnPrimaryButton(
+                    text = "Retry Payment",
+                    onClick = onRetry,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                VpnSecondaryButton(
+                    text = "Back to Home",
+                    onClick = onNavigateToHome,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
 
-            // 交易哈希（仅成功时显示）
-            if (state.resultType == OrderResultType.SUCCESS && state.txHash != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                ResultDetailRow(label = "交易哈希", value = state.txHash)
+            OrderResultType.PENDING -> {
+                VpnPrimaryButton(
+                    text = "View Orders",
+                    onClick = onNavigateToOrders,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                VpnSecondaryButton(
+                    text = "Back to Home",
+                    onClick = onNavigateToHome,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }
 }
 
-@Composable
-private fun ResultDetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+private fun OrderResultType.title(): String {
+    return when (this) {
+        OrderResultType.SUCCESS -> "Payment Successful"
+        OrderResultType.FAILED -> "Payment Failed"
+        OrderResultType.PENDING -> "Processing"
     }
 }
 
-@Composable
-private fun SuccessActions(
-    onNavigateToHome: () -> Unit,
-    onNavigateToOrders: () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Button(
-            onClick = onNavigateToHome,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text(
-                text = "返回首页",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedButton(
-            onClick = onNavigateToOrders,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text(
-                text = "查看订单",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+private fun OrderResultType.label(): String {
+    return when (this) {
+        OrderResultType.SUCCESS -> "SUCCESS"
+        OrderResultType.FAILED -> "FAILED"
+        OrderResultType.PENDING -> "PENDING"
     }
 }
 
-@Composable
-private fun FailedActions(
-    onRetry: () -> Unit,
-    onNavigateToHome: () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Button(
-            onClick = onRetry,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text(
-                text = "重新支付",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedButton(
-            onClick = onNavigateToHome,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text(
-                text = "返回首页",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+private fun OrderResultType.actionHint(): String {
+    return when (this) {
+        OrderResultType.SUCCESS -> "资金已完成入账，可回首页继续使用 VPN，或去订单页查看完整明细。"
+        OrderResultType.FAILED -> "建议重新进入支付流程，必要时联系支持或改用其他支付轨道。"
+        OrderResultType.PENDING -> "链上状态仍在推进，订单页会承接后续确认与结果刷新。"
     }
 }
 
-@Composable
-private fun PendingActions(
-    onNavigateToOrders: () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Button(
-            onClick = onNavigateToOrders,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text(
-                text = "查看订单状态",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = "订单处理可能需要几分钟时间，请耐心等待。",
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
+private fun OrderResultType.accent(): Color {
+    return when (this) {
+        OrderResultType.SUCCESS -> Primary
+        OrderResultType.FAILED -> AppError
+        OrderResultType.PENDING -> Warning
     }
 }
 
-@Preview(showBackground = true)
+private fun OrderResultType.icon() = when (this) {
+    OrderResultType.SUCCESS -> Icons.Default.CheckCircle
+    OrderResultType.FAILED -> Icons.Default.Close
+    OrderResultType.PENDING -> Icons.Default.Schedule
+}
+
+@Preview
 @Composable
-fun OrderResultPageSuccessPreview() {
+private fun OrderResultPagePreview() {
     MaterialTheme {
-        OrderResultPage(resultType = OrderResultType.SUCCESS)
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun OrderResultPageFailedPreview() {
-    MaterialTheme {
-        OrderResultPage(resultType = OrderResultType.FAILED)
+        OrderResultPage()
     }
 }

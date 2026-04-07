@@ -1,60 +1,73 @@
 package com.v2ray.ang.composeui.pages.vpn
 
 import android.app.Application
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.vpn.RegionSelectionProvider
+import com.v2ray.ang.composeui.theme.Error
+import com.v2ray.ang.composeui.theme.GlowBlue
+import com.v2ray.ang.composeui.theme.Primary
+import com.v2ray.ang.composeui.theme.Success
+import com.v2ray.ang.composeui.theme.TextPrimary
+import com.v2ray.ang.composeui.theme.TextSecondary
+import com.v2ray.ang.composeui.theme.Warning
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/**
- * 区域详细信息
- */
 data class RegionDetail(
     val id: String,
     val name: String,
     val countryCode: String,
     val city: String,
     val latency: Int,
-    val load: Int,  // 负载百分比
-    val isPremium: Boolean = false
+    val load: Int,
+    val isPremium: Boolean = false,
 )
 
-/**
- * 区域选择页状态
- */
 sealed class RegionSelectionState {
     object Idle : RegionSelectionState()
     object Loading : RegionSelectionState()
     data class Loaded(
         val regions: List<RegionDetail>,
         val selectedRegionId: String?,
-        val searchQuery: String
+        val searchQuery: String,
     ) : RegionSelectionState()
     data class Error(val message: String) : RegionSelectionState()
 }
 
-/**
- * 区域选择页ViewModel
- */
 class RegionSelectionViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<RegionSelectionState>(RegionSelectionState.Idle)
     val state: StateFlow<RegionSelectionState> = _state
@@ -74,7 +87,7 @@ class RegionSelectionViewModel(application: Application) : AndroidViewModel(appl
                     city = it.city,
                     latency = it.latency,
                     load = it.load,
-                    isPremium = it.isPremium
+                    isPremium = it.isPremium,
                 )
             }
             _state.value = RegionSelectionState.Loaded(regions, null, "")
@@ -103,7 +116,7 @@ class RegionSelectionViewModel(application: Application) : AndroidViewModel(appl
             } else {
                 currentState.regions.filter {
                     it.name.contains(currentState.searchQuery, ignoreCase = true) ||
-                    it.city.contains(currentState.searchQuery, ignoreCase = true)
+                        it.city.contains(currentState.searchQuery, ignoreCase = true)
                 }
             }
         } else {
@@ -112,103 +125,137 @@ class RegionSelectionViewModel(application: Application) : AndroidViewModel(appl
     }
 }
 
-/**
- * 区域选择页
- * 显示可用区域列表和延迟信息
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegionSelectionPage(
     viewModel: RegionSelectionViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onNavigateBack: () -> Unit = {},
-    onRegionSelected: (RegionDetail) -> Unit = {}
+    onRegionSelected: (RegionDetail) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
-    val searchQuery = if (state is RegionSelectionState.Loaded) {
-        (state as RegionSelectionState.Loaded).searchQuery
-    } else ""
-
+    val loadedState = state as? RegionSelectionState.Loaded
+    val searchQuery = loadedState?.searchQuery.orEmpty()
     val filteredRegions = viewModel.getFilteredRegions()
+    val premiumRegions = filteredRegions.filter { it.isPremium }
+    val standardRegions = filteredRegions.filterNot { it.isPremium }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("选择区域") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
+    VpnBitgetBackground {
+        Scaffold(
+            containerColor = Color.Transparent,
+            contentColor = TextPrimary,
+            contentWindowInsets = WindowInsets.safeDrawing,
+        ) { innerPadding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(
+                    start = VpnPageHorizontalPadding,
+                    end = VpnPageHorizontalPadding,
+                    top = VpnPageTopPadding,
+                    bottom = 32.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                item {
+                    VpnTopChrome(
+                        title = "Regions",
+                        subtitle = "Top search, premium nodes, and clean latency hierarchy for the VPN desk.",
+                        onBack = onNavigateBack,
+                    )
                 }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // 搜索框
-            SearchBar(
-                query = searchQuery,
-                onQueryChange = { viewModel.onSearchQueryChange(it) },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+                item {
+                    VpnSearchField(
+                        value = searchQuery,
+                        onValueChange = viewModel::onSearchQueryChange,
+                        placeholder = "Search region or city",
+                        trailingIcon = if (searchQuery.isNotBlank()) Icons.Default.Clear else null,
+                        onTrailingClick = if (searchQuery.isNotBlank()) {
+                            { viewModel.onSearchQueryChange("") }
+                        } else {
+                            null
+                        },
+                    )
+                }
+                item {
+                    VpnHeroCard(
+                        eyebrow = "ROUTE MARKET",
+                        title = "Choose a server region with the clearest latency-to-load balance",
+                        subtitle = "保留现有 RegionSelectionProvider 数据，只重构为 Bitget 风格搜索和推荐节点层级。",
+                        accent = GlowBlue,
+                        metrics = listOf(
+                            VpnHeroMetric("Premium", premiumRegions.size.toString()),
+                            VpnHeroMetric("All Nodes", filteredRegions.size.toString()),
+                            VpnHeroMetric("Query", if (searchQuery.isBlank()) "All" else searchQuery),
+                        ),
+                    )
+                }
 
-            when (state) {
-                is RegionSelectionState.Loading -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                when (val current = state) {
+                    is RegionSelectionState.Loading,
+                    RegionSelectionState.Idle,
+                    -> {
+                        item {
+                            VpnLoadingPanel(
+                                title = "Loading region desk",
+                                subtitle = "正在聚合可选节点与区域标签。",
+                            )
+                        }
                     }
-                }
-                is RegionSelectionState.Error -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = (state as RegionSelectionState.Error).message,
-                            color = MaterialTheme.colorScheme.error
-                        )
+
+                    is RegionSelectionState.Error -> {
+                        item {
+                            VpnEmptyPanel(
+                                title = "Region list unavailable",
+                                subtitle = current.message,
+                            )
+                        }
                     }
-                }
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        val recommendedRegions = filteredRegions.filter { it.isPremium }
-                        if (recommendedRegions.isNotEmpty()) {
+
+                    is RegionSelectionState.Loaded -> {
+                        if (premiumRegions.isNotEmpty()) {
                             item {
-                                SectionHeader(title = "推荐节点")
+                                VpnSectionHeading(
+                                    title = "Premium Routes",
+                                    subtitle = "Prioritized nodes surfaced like a featured market panel.",
+                                )
                             }
-                            items(recommendedRegions) { region ->
-                                RegionItem(
+                            items(premiumRegions, key = { it.id }) { region ->
+                                RegionDeskCard(
                                     region = region,
-                                    isSelected = (state as? RegionSelectionState.Loaded)?.selectedRegionId == region.id,
+                                    isSelected = current.selectedRegionId == region.id,
                                     onSelect = {
                                         viewModel.selectRegion(region.id)
                                         onRegionSelected(region)
-                                    }
+                                    },
                                 )
-                            }
-                            item {
-                                Spacer(modifier = Modifier.height(16.dp))
                             }
                         }
 
                         item {
-                            SectionHeader(title = "所有节点")
-                        }
-                        items(filteredRegions.filter { !it.isPremium }) { region ->
-                            RegionItem(
-                                region = region,
-                                isSelected = (state as? RegionSelectionState.Loaded)?.selectedRegionId == region.id,
-                                onSelect = {
-                                    viewModel.selectRegion(region.id)
-                                    onRegionSelected(region)
-                                }
+                            VpnSectionHeading(
+                                title = "All Regions",
+                                subtitle = "Secondary inventory keeps detail rows clean and scannable.",
                             )
                         }
+                        if (standardRegions.isEmpty()) {
+                            item {
+                                VpnEmptyPanel(
+                                    title = "No region matched",
+                                    subtitle = "换一个关键词，或者清空搜索恢复完整节点列表。",
+                                )
+                            }
+                        } else {
+                            items(standardRegions, key = { it.id }) { region ->
+                                RegionDeskCard(
+                                    region = region,
+                                    isSelected = current.selectedRegionId == region.id,
+                                    onSelect = {
+                                        viewModel.selectRegion(region.id)
+                                        onRegionSelected(region)
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -216,189 +263,134 @@ fun RegionSelectionPage(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier.fillMaxWidth(),
-        placeholder = { Text("搜索区域或城市") },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search"
-            )
-        },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = "Clear"
-                    )
-                }
-            }
-        },
-        singleLine = true,
-        shape = MaterialTheme.shapes.medium
-    )
-}
-
-@Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(vertical = 8.dp)
-    )
-}
-
-@Composable
-private fun RegionItem(
+private fun RegionDeskCard(
     region: RegionDetail,
     isSelected: Boolean,
-    onSelect: () -> Unit
+    onSelect: () -> Unit,
 ) {
     val latencyColor = when {
-        region.latency < 50 -> Color(0xFF22C55E)
-        region.latency < 100 -> Color(0xFFF59E0B)
-        else -> Color(0xFFEF4444)
+        region.latency <= 40 -> Success
+        region.latency <= 80 -> Warning
+        else -> Error
     }
-
     val loadColor = when {
-        region.load < 50 -> Color(0xFF22C55E)
-        region.load < 80 -> Color(0xFFF59E0B)
-        else -> Color(0xFFEF4444)
+        region.load <= 45 -> Success
+        region.load <= 75 -> Warning
+        else -> Error
+    }
+    val accent = when {
+        isSelected -> Primary
+        region.isPremium -> Warning
+        else -> GlowBlue
     }
 
-    Card(
+    VpnGlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
             .clickable(onClick = onSelect),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) 
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) 
-            else 
-                MaterialTheme.colorScheme.surface
-        )
+        accent = accent,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            // 国家代码图标
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                modifier = Modifier.size(44.dp)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = region.countryCode,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // 区域信息
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = region.name,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    if (region.isPremium) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        PremiumBadge()
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    color = accent.copy(alpha = 0.16f),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = region.countryCode,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = accent,
+                        )
                     }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "负载: ${region.load}%",
-                    fontSize = 12.sp,
-                    color = loadColor
-                )
-            }
-
-            // 延迟
-            Column(horizontalAlignment = Alignment.End) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(latencyColor, MaterialTheme.shapes.small)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${region.latency}ms",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = latencyColor
-                    )
+                Box {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = region.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary,
+                        )
+                        Text(
+                            text = region.city,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                        )
+                    }
                 }
             }
+            if (region.isPremium) {
+                VpnStatusChip(
+                    text = "PREMIUM",
+                    containerColor = Warning.copy(alpha = 0.16f),
+                    contentColor = Warning,
+                )
+            } else if (isSelected) {
+                VpnStatusChip(text = "SELECTED")
+            }
+        }
 
-            // 选中标记
-            if (isSelected) {
-                Spacer(modifier = Modifier.width(12.dp))
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Selected",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            VpnMetricPill(
+                modifier = Modifier.weight(1f),
+                label = "Latency",
+                value = "${region.latency}ms",
+            )
+            VpnMetricPill(
+                modifier = Modifier.weight(1f),
+                label = "Load",
+                value = "${region.load}%",
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            VpnStatusChip(
+                text = if (region.latency <= 50) "Fast Lane" else "Stable Route",
+                containerColor = latencyColor.copy(alpha = 0.15f),
+                contentColor = latencyColor,
+            )
+            VpnStatusChip(
+                text = if (region.load <= 60) "Light Load" else "Busy Node",
+                containerColor = loadColor.copy(alpha = 0.15f),
+                contentColor = loadColor,
+            )
+            if (region.isPremium) {
+                VpnStatusChip(
+                    text = "Featured",
+                    containerColor = GlowBlue.copy(alpha = 0.18f),
+                    contentColor = GlowBlue,
                 )
             }
         }
+
+        VpnPrimaryButton(
+            text = if (isSelected) "Current Region" else "Select Region",
+            onClick = onSelect,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
+@Preview
 @Composable
-private fun PremiumBadge() {
-    Surface(
-        color = Color(0xFFF59E0B),
-        shape = MaterialTheme.shapes.small
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Star,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(12.dp)
-            )
-            Spacer(modifier = Modifier.width(2.dp))
-            Text(
-                text = "VIP",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun RegionSelectionPagePreview() {
+private fun RegionSelectionPagePreview() {
     MaterialTheme {
         RegionSelectionPage()
     }

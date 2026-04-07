@@ -1,31 +1,47 @@
 package com.v2ray.ang.composeui.pages.vpn
 
 import android.app.Application
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
+import com.v2ray.ang.composeui.theme.BackgroundSecondary
+import com.v2ray.ang.composeui.theme.BorderDefault
+import com.v2ray.ang.composeui.theme.Error as AppError
+import com.v2ray.ang.composeui.theme.GlowBlue
+import com.v2ray.ang.composeui.theme.Primary
+import com.v2ray.ang.composeui.theme.TextPrimary
+import com.v2ray.ang.composeui.theme.TextSecondary
+import com.v2ray.ang.composeui.theme.Warning
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.model.Order
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import kotlinx.coroutines.launch
 
 enum class DetailOrderStatus {
@@ -36,9 +52,6 @@ enum class DetailOrderStatus {
     REFUNDED,
 }
 
-/**
- * 订单详情数据
- */
 data class OrderDetailData(
     val id: String,
     val planName: String,
@@ -52,12 +65,9 @@ data class OrderDetailData(
     val paidAt: Date?,
     val expiresAt: Date?,
     val txHash: String?,
-    val email: String
+    val email: String,
 )
 
-/**
- * 订单详情页状态
- */
 sealed class OrderDetailState {
     object Idle : OrderDetailState()
     object Loading : OrderDetailState()
@@ -65,9 +75,6 @@ sealed class OrderDetailState {
     data class Error(val message: String) : OrderDetailState()
 }
 
-/**
- * 订单详情页ViewModel
- */
 class OrderDetailViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<OrderDetailState>(OrderDetailState.Idle)
     val state: StateFlow<OrderDetailState> = _state
@@ -98,11 +105,15 @@ private fun Order.toOrderDetailData(): OrderDetailData {
         status = when (status) {
             PaymentConfig.OrderStatus.PENDING_PAYMENT,
             PaymentConfig.OrderStatus.SEEN_ONCHAIN,
-            PaymentConfig.OrderStatus.CONFIRMING -> DetailOrderStatus.PENDING
+            PaymentConfig.OrderStatus.CONFIRMING,
+            -> DetailOrderStatus.PENDING
+
             PaymentConfig.OrderStatus.PAID_SUCCESS -> DetailOrderStatus.PAID
             PaymentConfig.OrderStatus.FULFILLED -> DetailOrderStatus.COMPLETED
             PaymentConfig.OrderStatus.EXPIRED,
-            PaymentConfig.OrderStatus.LATE_PAID -> DetailOrderStatus.CANCELLED
+            PaymentConfig.OrderStatus.LATE_PAID,
+            -> DetailOrderStatus.CANCELLED
+
             else -> DetailOrderStatus.REFUNDED
         },
         paymentMethod = "${quoteAssetCode}/${quoteNetworkCode}",
@@ -133,438 +144,243 @@ private fun String.toDateOrNull(): Date? {
     return null
 }
 
-/**
- * 订单详情页
- * 显示订单的详细信息和状态
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderDetailPage(
     viewModel: OrderDetailViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     orderId: String = "",
     onNavigateBack: () -> Unit = {},
     onPayOrder: (String) -> Unit = {},
-    onContactSupport: () -> Unit = {}
+    onContactSupport: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(orderId) {
-        if (orderId.isNotEmpty()) {
+        if (orderId.isNotBlank()) {
             viewModel.loadOrderDetail(orderId)
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("订单详情") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        },
-        bottomBar = {
-            if (state is OrderDetailState.Loaded) {
-                val order = (state as OrderDetailState.Loaded).order
-                if (order.status == DetailOrderStatus.PENDING) {
-                    OrderDetailBottomBar(
+    VpnBitgetBackground {
+        Scaffold(
+            containerColor = Color.Transparent,
+            contentColor = TextPrimary,
+            contentWindowInsets = WindowInsets.safeDrawing,
+            bottomBar = {
+                val order = (state as? OrderDetailState.Loaded)?.order
+                if (order?.status == DetailOrderStatus.PENDING) {
+                    OrderDetailActionBar(
                         onPay = { onPayOrder(order.id) },
-                        onContactSupport = onContactSupport
+                        onContactSupport = onContactSupport,
                     )
                 }
-            }
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when (state) {
-                is OrderDetailState.Loaded -> {
-                    val order = (state as OrderDetailState.Loaded).order
-                    OrderDetailContent(order = order)
+            },
+        ) { innerPadding ->
+            androidx.compose.foundation.lazy.LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(
+                    start = VpnPageHorizontalPadding,
+                    end = VpnPageHorizontalPadding,
+                    top = VpnPageTopPadding,
+                    bottom = VpnPageBottomPadding,
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                item {
+                    VpnTopChrome(
+                        title = "Order Detail",
+                        subtitle = "Status-first breakdown with clear payment and settlement hierarchy.",
+                        onBack = onNavigateBack,
+                    )
                 }
-                is OrderDetailState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                when (val current = state) {
+                    is OrderDetailState.Loading,
+                    OrderDetailState.Idle,
+                    -> {
+                        item {
+                            VpnLoadingPanel(
+                                title = "Loading order detail",
+                                subtitle = "正在同步订单详情与支付状态。",
+                            )
+                        }
+                    }
+
+                    is OrderDetailState.Error -> {
+                        item {
+                            VpnEmptyPanel(
+                                title = "Order detail unavailable",
+                                subtitle = current.message,
+                            )
+                        }
+                    }
+
+                    is OrderDetailState.Loaded -> {
+                        item {
+                            DetailHeroCard(order = current.order)
+                        }
+                        item {
+                            DetailPackageCard(order = current.order)
+                        }
+                        item {
+                            DetailPricingCard(order = current.order)
+                        }
+                        item {
+                            DetailMetaCard(order = current.order)
+                        }
                     }
                 }
-                is OrderDetailState.Error -> {
-                    ErrorView(message = (state as OrderDetailState.Error).message)
-                }
-                else -> {}
             }
         }
     }
 }
 
 @Composable
-private fun OrderDetailContent(order: OrderDetailData) {
+private fun DetailHeroCard(order: OrderDetailData) {
+    VpnHeroCard(
+        eyebrow = order.status.label(),
+        title = order.status.title(),
+        subtitle = order.status.description(),
+        accent = order.status.accent(),
+        metrics = listOf(
+            VpnHeroMetric("Amount", order.totalAmount),
+            VpnHeroMetric("Method", order.paymentMethod),
+            VpnHeroMetric("Order", order.id.takeLast(6)),
+        ),
+    )
+}
+
+@Composable
+private fun DetailPackageCard(order: OrderDetailData) {
+    VpnGlassCard(accent = GlowBlue) {
+        Text(
+            text = "Package",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
+        )
+        VpnLabelValueRow(label = "Plan", value = order.planName)
+        VpnLabelValueRow(label = "Duration", value = order.duration)
+        order.expiresAt?.let { expiresAt ->
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            VpnLabelValueRow(label = "Expires", value = dateFormat.format(expiresAt))
+        }
+    }
+}
+
+@Composable
+private fun DetailPricingCard(order: OrderDetailData) {
+    VpnGlassCard(accent = Warning) {
+        Text(
+            text = "Pricing",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
+        )
+        VpnLabelValueRow(label = "Listed", value = order.amount)
+        order.discount?.let {
+            VpnLabelValueRow(label = "Discount", value = it, valueColor = Primary)
+        }
+        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
+        VpnLabelValueRow(label = "Payable", value = order.totalAmount, valueColor = order.status.accent())
+    }
+}
+
+@Composable
+private fun DetailMetaCard(order: OrderDetailData) {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        // 状态卡片
-        OrderStatusCard(status = order.status)
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // 套餐信息
-        PlanInfoCard(order = order)
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // 价格详情
-        PriceDetailCard(order = order)
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // 订单信息
-        OrderInfoCard(order = order, dateFormat = dateFormat)
-        
-        Spacer(modifier = Modifier.height(80.dp))
-    }
-}
-
-@Composable
-private fun OrderStatusCard(status: DetailOrderStatus) {
-    val (icon, title, description, color) = when (status) {
-        DetailOrderStatus.PENDING -> Quad(
-            Icons.Default.Schedule,
-            "待支付",
-            "请在30分钟内完成支付",
-            Color(0xFFF59E0B)
-        )
-        DetailOrderStatus.PAID -> Quad(
-            Icons.Default.Payment,
-            "已支付",
-            "订单正在处理中",
-            Color(0xFF1D4ED8)
-        )
-        DetailOrderStatus.COMPLETED -> Quad(
-            Icons.Default.CheckCircle,
-            "已完成",
-            "套餐已激活，可以使用了",
-            Color(0xFF22C55E)
-        )
-        DetailOrderStatus.CANCELLED -> Quad(
-            Icons.Default.Cancel,
-            "已取消",
-            "订单已取消",
-            Color(0xFF94A3B8)
-        )
-        DetailOrderStatus.REFUNDED -> Quad(
-            Icons.Default.Replay,
-            "已退款",
-            "款项已原路退回",
-            Color(0xFFEF4444)
-        )
-    }
-    
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = color.copy(alpha = 0.1f)
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                shape = MaterialTheme.shapes.medium,
-                color = color.copy(alpha = 0.2f),
-                modifier = Modifier.size(56.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column {
-                Text(
-                    text = title,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = color
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = description,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PlanInfoCard(order: OrderDetailData) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            Text(
-                text = "套餐信息",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            DetailRow(label = "套餐名称", value = order.planName)
-            Spacer(modifier = Modifier.height(12.dp))
-            DetailRow(label = "有效期", value = order.duration)
-            
-            order.expiresAt?.let { expiresAt ->
-                Spacer(modifier = Modifier.height(12.dp))
-                DetailRow(
-                    label = "到期时间", 
-                    value = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(expiresAt)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PriceDetailCard(order: OrderDetailData) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            Text(
-                text = "价格详情",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            DetailRow(label = "套餐金额", value = order.amount)
-            
-            order.discount?.let { discount ->
-                Spacer(modifier = Modifier.height(12.dp))
-                DetailRow(
-                    label = "优惠", 
-                    value = "-$discount",
-                    valueColor = Color(0xFF22C55E)
-                )
-            }
-            
-            Divider(
-                modifier = Modifier.padding(vertical = 16.dp),
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-            )
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "实付金额",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = order.totalAmount,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun OrderInfoCard(order: OrderDetailData, dateFormat: SimpleDateFormat) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            Text(
-                text = "订单信息",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            DetailRow(label = "订单号", value = order.id)
-            Spacer(modifier = Modifier.height(12.dp))
-            DetailRow(label = "创建时间", value = dateFormat.format(order.createdAt))
-            Spacer(modifier = Modifier.height(12.dp))
-            DetailRow(label = "支付方式", value = order.paymentMethod)
-            Spacer(modifier = Modifier.height(12.dp))
-            DetailRow(label = "邮箱", value = order.email)
-            
-            order.paidAt?.let { paidAt ->
-                Spacer(modifier = Modifier.height(12.dp))
-                DetailRow(label = "支付时间", value = dateFormat.format(paidAt))
-            }
-            
-            order.txHash?.let { txHash ->
-                Spacer(modifier = Modifier.height(12.dp))
-                DetailRow(label = "交易哈希", value = txHash)
-            }
-        }
-    }
-}
-
-@Composable
-private fun DetailRow(
-    label: String, 
-    value: String,
-    valueColor: Color = MaterialTheme.colorScheme.onSurface
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+    VpnGlassCard(accent = order.status.accent()) {
         Text(
-            text = label,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = "Order Metadata",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
         )
-        Text(
-            text = value,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = valueColor
-        )
+        VpnLabelValueRow(label = "Order No.", value = order.id)
+        VpnLabelValueRow(label = "Created", value = dateFormat.format(order.createdAt))
+        VpnLabelValueRow(label = "Method", value = order.paymentMethod)
+        VpnLabelValueRow(label = "Email", value = if (order.email.isBlank()) "Current account" else order.email)
+        order.paidAt?.let {
+            VpnLabelValueRow(label = "Paid At", value = dateFormat.format(it))
+        }
+        order.txHash?.let {
+            VpnLabelValueRow(label = "Tx Hash", value = it)
+        }
     }
 }
 
 @Composable
-private fun OrderDetailBottomBar(
+private fun OrderDetailActionBar(
     onPay: () -> Unit,
-    onContactSupport: () -> Unit
+    onContactSupport: () -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 8.dp
+        color = BackgroundSecondary.copy(alpha = 0.98f),
+        border = BorderStroke(1.dp, BorderDefault.copy(alpha = 0.9f)),
     ) {
-        Row(
+        androidx.compose.foundation.layout.Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = VpnPageHorizontalPadding, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            OutlinedButton(
-                onClick = onContactSupport,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(
-                    text = "联系客服",
-                    fontSize = 14.sp
-                )
-            }
-            
-            Button(
+            VpnPrimaryButton(
+                text = "Continue Payment",
                 onClick = onPay,
-                modifier = Modifier
-                    .weight(2f)
-                    .height(48.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(
-                    text = "立即支付",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+                modifier = Modifier.fillMaxWidth(),
+            )
+            VpnSecondaryButton(
+                text = "Contact Support",
+                onClick = onContactSupport,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
 
-@Composable
-private fun ErrorView(message: String) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Error,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = "加载失败",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.error
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = message,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+private fun DetailOrderStatus.label(): String {
+    return when (this) {
+        DetailOrderStatus.PENDING -> "PENDING"
+        DetailOrderStatus.PAID -> "PAID"
+        DetailOrderStatus.COMPLETED -> "COMPLETED"
+        DetailOrderStatus.CANCELLED -> "CANCELLED"
+        DetailOrderStatus.REFUNDED -> "REFUNDED"
     }
 }
 
-// 辅助数据类
-private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+private fun DetailOrderStatus.title(): String {
+    return when (this) {
+        DetailOrderStatus.PENDING -> "Awaiting Settlement"
+        DetailOrderStatus.PAID -> "Paid, Activating"
+        DetailOrderStatus.COMPLETED -> "Package Fulfilled"
+        DetailOrderStatus.CANCELLED -> "Order Closed"
+        DetailOrderStatus.REFUNDED -> "Refunded"
+    }
+}
 
-@Preview(showBackground = true)
+private fun DetailOrderStatus.description(): String {
+    return when (this) {
+        DetailOrderStatus.PENDING -> "待支付订单保持底部强 CTA，方便直接回到支付确认流程。"
+        DetailOrderStatus.PAID -> "资金已到账，当前正在进行套餐激活。"
+        DetailOrderStatus.COMPLETED -> "订单已交付，VPN 业务链路已完成。"
+        DetailOrderStatus.CANCELLED -> "订单已取消或超过支付时效。"
+        DetailOrderStatus.REFUNDED -> "支付异常或退款已处理。"
+    }
+}
+
+private fun DetailOrderStatus.accent(): Color {
+    return when (this) {
+        DetailOrderStatus.PENDING -> Warning
+        DetailOrderStatus.PAID -> GlowBlue
+        DetailOrderStatus.COMPLETED -> Primary
+        DetailOrderStatus.CANCELLED -> Color(0xFF6D7B91)
+        DetailOrderStatus.REFUNDED -> AppError
+    }
+}
+
+@Preview
 @Composable
-fun OrderDetailPagePreview() {
+private fun OrderDetailPagePreview() {
     MaterialTheme {
         OrderDetailPage()
     }

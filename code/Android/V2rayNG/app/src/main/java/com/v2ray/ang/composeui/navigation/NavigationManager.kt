@@ -60,7 +60,7 @@ class NavigationManager(startRoute: String = Routes.SPLASH) {
 
     fun navigateToEmailLogin() = navigateTo(Routes.EMAIL_LOGIN)
 
-    fun navigateToVpnHome() = navigateAndClearStack(Routes.VPN_HOME)
+    fun navigateToVpnHome() = navigateAndClearStack(Routes.appShell(ShellTab.VPN))
 
     fun navigateToPlans() = navigateTo(Routes.PLANS)
 

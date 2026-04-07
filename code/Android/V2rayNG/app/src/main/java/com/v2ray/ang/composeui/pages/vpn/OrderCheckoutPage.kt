@@ -1,47 +1,72 @@
 package com.v2ray.ang.composeui.pages.vpn
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.Color as AndroidColor
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.CurrencyBitcoin
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import android.graphics.Bitmap
-import android.graphics.Color as AndroidColor
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
+import com.v2ray.ang.composeui.theme.BackgroundSecondary
+import com.v2ray.ang.composeui.theme.BorderDefault
+import com.v2ray.ang.composeui.theme.GlowBlue
+import com.v2ray.ang.composeui.theme.Info
+import com.v2ray.ang.composeui.theme.Primary
+import com.v2ray.ang.composeui.theme.TextPrimary
+import com.v2ray.ang.composeui.theme.TextSecondary
+import com.v2ray.ang.composeui.theme.Warning
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
-/**
- * 支付方式
- */
 enum class PaymentMethod {
-    WALLET,     // 钱包支付
-    CRYPTO      // 加密货币支付
+    WALLET,
+    CRYPTO,
 }
 
-/**
- * 订单收银台状态
- */
 sealed class OrderCheckoutState {
     object Idle : OrderCheckoutState()
     object Loading : OrderCheckoutState()
@@ -54,14 +79,11 @@ sealed class OrderCheckoutState {
         val totalAmount: String,
         val selectedPaymentMethod: PaymentMethod,
         val walletAddress: String?,
-        val expiresIn: Int  // 过期时间（秒）
+        val expiresIn: Int,
     ) : OrderCheckoutState()
     data class Error(val message: String) : OrderCheckoutState()
 }
 
-/**
- * 订单收银台ViewModel
- */
 class OrderCheckoutViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<OrderCheckoutState>(OrderCheckoutState.Idle)
     val state: StateFlow<OrderCheckoutState> = _state
@@ -112,9 +134,6 @@ class OrderCheckoutViewModel(application: Application) : AndroidViewModel(applic
     }
 }
 
-/**
- * 生成二维码Bitmap
- */
 fun generateQRCode(content: String, size: Int = 512): Bitmap? {
     return try {
         val writer = QRCodeWriter()
@@ -122,474 +141,357 @@ fun generateQRCode(content: String, size: Int = 512): Bitmap? {
         val width = bitMatrix.width
         val height = bitMatrix.height
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-        
+
         for (x in 0 until width) {
             for (y in 0 until height) {
                 bitmap.setPixel(x, y, if (bitMatrix.get(x, y)) AndroidColor.BLACK else AndroidColor.WHITE)
             }
         }
         bitmap
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         null
     }
 }
 
-/**
- * 订单收银台页
- * 显示订单信息和支付二维码
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderCheckoutPage(
     viewModel: OrderCheckoutViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     planId: String = "",
     onNavigateBack: () -> Unit = {},
     onPayWithWallet: (String, String) -> Unit = { _, _ -> },
-    onPayWithCrypto: (String) -> Unit = {}
+    onPayWithCrypto: (String) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
+
     LaunchedEffect(planId) {
         viewModel.loadOrderDetails(planId)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("订单确认") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        },
-        bottomBar = {
-            if (state is OrderCheckoutState.Loaded) {
-                CheckoutBottomBar(
-                    totalAmount = (state as OrderCheckoutState.Loaded).totalAmount,
-                    onPay = {
-                        val loadedState = state as OrderCheckoutState.Loaded
-                        when (loadedState.selectedPaymentMethod) {
-                            PaymentMethod.WALLET -> onPayWithWallet(
-                                loadedState.orderId,
-                                loadedState.totalAmount,
-                            )
-                            PaymentMethod.CRYPTO -> onPayWithCrypto(loadedState.orderId)
-                        }
-                    }
-                )
-            }
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-        ) {
-            when (state) {
-                is OrderCheckoutState.Loaded -> {
-                    val loadedState = state as OrderCheckoutState.Loaded
-                    
-                    // 订单信息卡片
-                    OrderInfoCard(state = loadedState)
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // 支付方式选择
-                    PaymentMethodSelector(
-                        selectedMethod = loadedState.selectedPaymentMethod,
-                        onMethodSelected = { viewModel.selectPaymentMethod(it) }
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // 支付详情
-                    when (loadedState.selectedPaymentMethod) {
-                        PaymentMethod.WALLET -> {
-                            WalletPaymentDetail(
-                                walletAddress = loadedState.walletAddress ?: "",
-                                amount = loadedState.totalAmount
-                            )
-                        }
-                        PaymentMethod.CRYPTO -> {
-                            CryptoPaymentDetail(
-                                walletAddress = loadedState.walletAddress ?: "",
-                                amount = loadedState.totalAmount
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(80.dp))
-                }
-                is OrderCheckoutState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-                is OrderCheckoutState.Error -> {
-                    Text(
-                        text = (state as OrderCheckoutState.Error).message,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(16.dp),
-                    )
-                }
-                else -> Unit
-            }
-        }
-    }
-}
+    VpnBitgetBackground {
+        Scaffold(
+            containerColor = Color.Transparent,
+            contentColor = TextPrimary,
+            contentWindowInsets = WindowInsets.safeDrawing,
+            bottomBar = {
+                val loadedState = state as? OrderCheckoutState.Loaded
+                if (loadedState != null) {
+                    CheckoutActionBar(
+                        totalAmount = loadedState.totalAmount,
+                        method = loadedState.selectedPaymentMethod,
+                        onPay = {
+                            when (loadedState.selectedPaymentMethod) {
+                                PaymentMethod.WALLET -> onPayWithWallet(
+                                    loadedState.orderId,
+                                    loadedState.totalAmount,
+                                )
 
-@Composable
-private fun OrderInfoCard(state: OrderCheckoutState.Loaded) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            // 订单号
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "订单号",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = state.orderId,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // 套餐信息
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = state.planName,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = state.duration,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                PaymentMethod.CRYPTO -> onPayWithCrypto(loadedState.orderId)
+                            }
+                        },
                     )
                 }
-                Text(
-                    text = state.amount,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            
-            // 优惠
-            state.discount?.let { discount ->
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "优惠",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = discount,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.primary
+            },
+        ) { innerPadding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(
+                    start = VpnPageHorizontalPadding,
+                    end = VpnPageHorizontalPadding,
+                    top = VpnPageTopPadding,
+                    bottom = VpnPageBottomPadding,
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                item {
+                    VpnTopChrome(
+                        title = "Checkout",
+                        subtitle = "Order desk with clear pay rail selection and strong call to action.",
+                        onBack = onNavigateBack,
                     )
                 }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // 总计
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "应付总额",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = state.totalAmount,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+
+                when (val current = state) {
+                    is OrderCheckoutState.Loading,
+                    OrderCheckoutState.Idle,
+                    -> {
+                        item {
+                            VpnLoadingPanel(
+                                title = "Preparing checkout desk",
+                                subtitle = "正在创建订单并拉取支付参数。",
+                            )
+                        }
+                    }
+
+                    is OrderCheckoutState.Error -> {
+                        item {
+                            VpnEmptyPanel(
+                                title = "Checkout unavailable",
+                                subtitle = current.message,
+                            )
+                        }
+                    }
+
+                    is OrderCheckoutState.Loaded -> {
+                        item {
+                            CheckoutHero(state = current)
+                        }
+                        item {
+                            VpnSectionHeading(
+                                title = "Payment Rail",
+                                subtitle = "Switch between wallet and on-chain settlement without changing the bridge behavior.",
+                            )
+                        }
+                        item {
+                            PaymentRailCard(
+                                icon = Icons.Default.AccountBalanceWallet,
+                                title = "Wallet Balance",
+                                subtitle = "Fast confirmation through the existing wallet confirmation step.",
+                                badge = "PRIMARY",
+                                accent = Primary,
+                                isSelected = current.selectedPaymentMethod == PaymentMethod.WALLET,
+                                onClick = { viewModel.selectPaymentMethod(PaymentMethod.WALLET) },
+                            )
+                        }
+                        item {
+                            PaymentRailCard(
+                                icon = Icons.Default.CurrencyBitcoin,
+                                title = "Crypto Address",
+                                subtitle = "TRON / USDT style on-chain payment with QR and address exposure.",
+                                badge = "ON-CHAIN",
+                                accent = Warning,
+                                isSelected = current.selectedPaymentMethod == PaymentMethod.CRYPTO,
+                                onClick = { viewModel.selectPaymentMethod(PaymentMethod.CRYPTO) },
+                            )
+                        }
+                        item {
+                            CheckoutSummaryCard(state = current)
+                        }
+                        item {
+                            if (current.selectedPaymentMethod == PaymentMethod.WALLET) {
+                                WalletRailDetail(amount = current.totalAmount)
+                            } else {
+                                CryptoRailDetail(
+                                    walletAddress = current.walletAddress.orEmpty(),
+                                    amount = current.totalAmount,
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun PaymentMethodSelector(
-    selectedMethod: PaymentMethod,
-    onMethodSelected: (PaymentMethod) -> Unit
-) {
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text(
-            text = "选择支付方式",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        // 钱包支付
-        PaymentMethodItem(
-            icon = Icons.Default.AccountBalanceWallet,
-            title = "钱包支付",
-            subtitle = "使用CryptoVPN钱包",
-            isSelected = selectedMethod == PaymentMethod.WALLET,
-            onClick = { onMethodSelected(PaymentMethod.WALLET) }
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // 加密货币支付
-        PaymentMethodItem(
-            icon = Icons.Default.CurrencyBitcoin,
-            title = "加密货币",
-            subtitle = "USDT / ETH / BTC",
-            isSelected = selectedMethod == PaymentMethod.CRYPTO,
-            onClick = { onMethodSelected(PaymentMethod.CRYPTO) }
-        )
-    }
+private fun CheckoutHero(state: OrderCheckoutState.Loaded) {
+    val countdown = rememberCountdownSeconds(state.expiresIn)
+    VpnHeroCard(
+        eyebrow = "ORDER ${state.orderId.takeLast(6)}",
+        title = "Confirm payment route for ${state.planName}",
+        subtitle = "收银台把订单、金额、支付轨道和过期时间抬到第一层，同时保持现有 createOrder 兼容。",
+        accent = if (state.selectedPaymentMethod == PaymentMethod.WALLET) Primary else Warning,
+        metrics = listOf(
+            VpnHeroMetric("Rail", state.selectedPaymentMethod.label()),
+            VpnHeroMetric("Amount", state.totalAmount),
+            VpnHeroMetric("Expires", countdown.toCountdownLabel()),
+        ),
+    )
 }
 
 @Composable
-private fun PaymentMethodItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+private fun PaymentRailCard(
+    icon: ImageVector,
     title: String,
     subtitle: String,
+    badge: String,
+    accent: Color,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
-    Card(
+    VpnGlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) 
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) 
-            else 
-                MaterialTheme.colorScheme.surface
-        ),
-        border = if (isSelected) {
-            androidx.compose.foundation.BorderStroke(
-                2.dp, 
-                MaterialTheme.colorScheme.primary
-            )
-        } else null
+        accent = accent,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                modifier = Modifier.size(44.dp)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = title,
-                        tint = MaterialTheme.colorScheme.primary
+                Surface(
+                    modifier = Modifier.size(46.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    color = accent.copy(alpha = 0.16f),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        androidx.compose.material3.Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = accent,
+                        )
+                    }
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary,
+                    )
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = subtitle,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            if (isSelected) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Selected",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun WalletPaymentDetail(
-    walletAddress: String,
-    amount: String
-) {
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text(
-            text = "钱包支付",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+            VpnStatusChip(
+                text = if (isSelected) "SELECTED" else badge,
+                containerColor = accent.copy(alpha = 0.16f),
+                contentColor = accent,
             )
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AccountBalanceWallet,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    text = "使用您的CryptoVPN钱包支付",
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = amount,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
         }
+        VpnPrimaryButton(
+            text = if (isSelected) "Current Payment Rail" else "Use This Rail",
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
 @Composable
-private fun CryptoPaymentDetail(
+private fun CheckoutSummaryCard(state: OrderCheckoutState.Loaded) {
+    VpnGlassCard(accent = GlowBlue) {
+        Text(
+            text = "Order Summary",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
+        )
+        VpnLabelValueRow(label = "Order No.", value = state.orderId)
+        VpnLabelValueRow(label = "Package", value = state.planName)
+        VpnLabelValueRow(label = "Duration", value = state.duration)
+        VpnLabelValueRow(label = "Listed Price", value = state.amount)
+        state.discount?.let {
+            VpnLabelValueRow(
+                label = "Discount",
+                value = it,
+                valueColor = Primary,
+            )
+        }
+        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
+        VpnLabelValueRow(
+            label = "Payable",
+            value = state.totalAmount,
+            valueColor = if (state.selectedPaymentMethod == PaymentMethod.WALLET) Primary else Warning,
+        )
+    }
+}
+
+@Composable
+private fun WalletRailDetail(amount: String) {
+    VpnGlassCard(accent = Primary) {
+        Text(
+            text = "Wallet Confirmation",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
+        )
+        Text(
+            text = "下一步会进入支付确认页，沿用现有 refreshOrder 结果判断和成功回跳。",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            VpnMetricPill(
+                modifier = Modifier.weight(1f),
+                label = "Settlement",
+                value = "Wallet",
+            )
+            VpnMetricPill(
+                modifier = Modifier.weight(1f),
+                label = "Amount",
+                value = amount,
+            )
+        }
+        VpnStatusChip(text = "Password confirmation required")
+    }
+}
+
+@Composable
+private fun CryptoRailDetail(
     walletAddress: String,
-    amount: String
+    amount: String,
 ) {
     val qrBitmap = remember(walletAddress) {
         generateQRCode(walletAddress)
     }
-    
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+
+    VpnGlassCard(accent = Warning) {
         Text(
-            text = "扫码支付",
-            fontSize = 16.sp,
+            text = "Crypto Address",
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
+            color = TextPrimary,
         )
-        
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+        Text(
+            text = "链上支付仍走既有订单桥接，只在视觉上切成更明确的扫码支付二级层。",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary,
+        )
+
+        qrBitmap?.let { bitmap ->
+            Surface(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White,
+                border = BorderStroke(1.dp, Warning.copy(alpha = 0.24f)),
             ) {
-                // 二维码
-                qrBitmap?.let { bitmap ->
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "QR Code",
-                        modifier = Modifier.size(200.dp)
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "QR Code",
+                    modifier = Modifier
+                        .size(220.dp)
+                        .padding(18.dp),
+                )
+            }
+        }
+
+        VpnLabelValueRow(label = "Payable", value = amount, valueColor = Warning)
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = BackgroundSecondary.copy(alpha = 0.92f),
+            border = BorderStroke(1.dp, BorderDefault.copy(alpha = 0.84f)),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = walletAddress.ifBlank { "Address unavailable" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextPrimary,
                     )
                 }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // 地址
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = walletAddress.take(20) + "...",
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = "Copy",
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Text(
-                    text = "请支付 $amount",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
+                androidx.compose.material3.Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = null,
+                    tint = Info,
                 )
             }
         }
@@ -597,52 +499,78 @@ private fun CryptoPaymentDetail(
 }
 
 @Composable
-private fun CheckoutBottomBar(
+private fun CheckoutActionBar(
     totalAmount: String,
-    onPay: () -> Unit
+    method: PaymentMethod,
+    onPay: () -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 8.dp
+        color = BackgroundSecondary.copy(alpha = 0.98f),
+        border = BorderStroke(1.dp, BorderDefault.copy(alpha = 0.9f)),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = VpnPageHorizontalPadding, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Text(
-                    text = "应付总额",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Payable",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
                 )
                 Text(
                     text = totalAmount,
-                    fontSize = 24.sp,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = if (method == PaymentMethod.WALLET) Primary else Warning,
                 )
             }
-            
-            Button(
+            VpnPrimaryButton(
+                text = if (method == PaymentMethod.WALLET) "Go to Wallet Confirm" else "I Have Sent Payment",
                 onClick = onPay,
-                modifier = Modifier.height(48.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(
-                    text = "立即支付",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+            )
         }
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun OrderCheckoutPagePreview() {
+private fun rememberCountdownSeconds(initialSeconds: Int): Int {
+    var remaining by remember(initialSeconds) {
+        mutableStateOf(initialSeconds.coerceAtLeast(0))
+    }
+    LaunchedEffect(initialSeconds) {
+        remaining = initialSeconds.coerceAtLeast(0)
+        while (remaining > 0) {
+            delay(1000)
+            remaining -= 1
+        }
+    }
+    return remaining
+}
+
+private fun Int.toCountdownLabel(): String {
+    val hours = this / 3600
+    val minutes = (this % 3600) / 60
+    val seconds = this % 60
+    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+}
+
+private fun PaymentMethod.label(): String {
+    return when (this) {
+        PaymentMethod.WALLET -> "Wallet"
+        PaymentMethod.CRYPTO -> "Crypto"
+    }
+}
+
+@Preview
+@Composable
+private fun OrderCheckoutPagePreview() {
     MaterialTheme {
         OrderCheckoutPage()
     }

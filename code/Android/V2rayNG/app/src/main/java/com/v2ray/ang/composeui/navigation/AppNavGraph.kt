@@ -268,6 +268,7 @@ fun AppNavGraph(
                     onNavigateToRegions = { navigateTo(Routes.REGION_SELECTION) },
                     onNavigateToPlans = { navigateTo(Routes.PLANS) },
                     onNavigateToProfile = { navigateTo(Routes.PROFILE) },
+                    onNavigateToOrders = { navigateTo(Routes.ORDER_LIST) },
                 )
             }
 
