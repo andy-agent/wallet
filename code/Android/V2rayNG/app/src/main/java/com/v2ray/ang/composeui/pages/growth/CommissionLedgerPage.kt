@@ -147,7 +147,7 @@ class CommissionLedgerViewModel(application: Application) : AndroidViewModel(app
                         it.commissionLevel.equals("LEVEL2", true) -> CommissionType.REBATE
                         else -> CommissionType.INVITE
                     },
-                    amount = "+$${it.settlementAmountUsdt}",
+                    amount = "${it.settlementAmountUsdt} USDT",
                     description = "来源订单 ${it.sourceOrderNo}",
                     fromUser = it.sourceAccountMasked,
                     timestamp = Date(),
@@ -159,8 +159,8 @@ class CommissionLedgerViewModel(application: Application) : AndroidViewModel(app
                 CommissionLedgerState.Empty
             } else {
                 CommissionLedgerState.Loaded(
-                    totalCommission = "$${summary.withdrawnTotal}",
-                    availableCommission = "$${summary.availableAmount}",
+                    totalCommission = "${summary.withdrawnTotal} USDT",
+                    availableCommission = "${summary.availableAmount} USDT",
                     records = records
                 )
             }
