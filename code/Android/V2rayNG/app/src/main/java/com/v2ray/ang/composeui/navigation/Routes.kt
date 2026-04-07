@@ -8,6 +8,9 @@ object Routes {
     const val FORCE_UPDATE = "force_update"
     const val OPTIONAL_UPDATE = "optional_update"
 
+    // Shell
+    const val APP_SHELL = "app_shell"
+
     // Auth
     const val EMAIL_LOGIN = "email_login"
     const val EMAIL_REGISTER = "email_register"
@@ -57,6 +60,7 @@ object Routes {
         SPLASH,
         FORCE_UPDATE,
         OPTIONAL_UPDATE,
+        APP_SHELL,
         EMAIL_LOGIN,
         EMAIL_REGISTER,
         RESET_PASSWORD,
@@ -110,6 +114,11 @@ object Routes {
         if (!route.contains('?')) return null
         return Uri.parse("${DeepLinks.BASE_URI}/$route").getQueryParameter(key)
     }
+
+    fun appShell(tab: ShellTab = ShellTab.HOME): String = withQuery(
+        APP_SHELL,
+        mapOf("tab" to tab.key),
+    )
 
     fun orderCheckout(planId: String): String = withPathArg(ORDER_CHECKOUT, planId)
     fun orderCheckoutRoute(planId: String): String = orderCheckout(planId)

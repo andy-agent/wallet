@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.v2ray.ang.composeui.bridge.auth.ComposeAuthBridge
@@ -16,6 +15,7 @@ import com.v2ray.ang.composeui.navigation.DeepLinkHandler
 import com.v2ray.ang.composeui.navigation.LegacyDestination
 import com.v2ray.ang.composeui.navigation.Routes
 import com.v2ray.ang.composeui.pages.splash.ComposeUpdateBridge
+import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import com.v2ray.ang.ui.AboutActivity
 import com.v2ray.ang.ui.SettingsActivity
 import com.v2ray.ang.util.Utils
@@ -54,10 +54,10 @@ class ComposeContainerActivity : ComponentActivity() {
         val updateBridge = ComposeUpdateBridge(forceUpdateFromIntent = forceUpdate)
 
         setContent {
-            MaterialTheme {
+            CryptoVPNTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.background,
                 ) {
                     AppNavGraph(
                         authBridge = authBridge,

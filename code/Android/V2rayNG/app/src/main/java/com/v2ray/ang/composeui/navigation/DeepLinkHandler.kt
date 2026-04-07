@@ -14,11 +14,11 @@ class DeepLinkHandler {
         val first = segments.firstOrNull()
         return when (first) {
             null -> DeepLinkType.Invalid("Empty deep link path")
-            "vpn" -> DeepLinkType.Navigation(Routes.VPN_HOME)
+            "vpn" -> DeepLinkType.Navigation(Routes.appShell(ShellTab.HOME))
             "wallet" -> {
                 val assetId = segments.getOrNull(1)
                 if (assetId.isNullOrBlank()) {
-                    DeepLinkType.Navigation(Routes.WALLET_HOME)
+                    DeepLinkType.Navigation(Routes.appShell(ShellTab.WALLET))
                 } else {
                     DeepLinkType.Navigation(Routes.assetDetail(assetId))
                 }
