@@ -72,6 +72,7 @@ data class LegalDocument(
     val title: String,
     val description: String,
     val icon: ImageVector,
+    val category: String,
     val lastUpdated: String
 )
 
@@ -110,6 +111,7 @@ class LegalDocumentsListViewModel : ViewModel() {
                     "affiliate" -> Icons.Default.People
                     else -> Icons.Default.Cookie
                 },
+                category = legalCategoryFor(it.id),
                 lastUpdated = it.lastUpdated
             )
         }
@@ -136,7 +138,7 @@ fun LegalDocumentsListPage(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Legal Center",
+                        text = "Profile / Legal",
                         color = LegalText,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -230,7 +232,7 @@ private fun LegalHeroCard(count: Int) {
             Text(text = "Legal & Compliance", color = LegalText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "平台协议、隐私和推广规则均在此公开。",
+                text = "平台协议、隐私、退款和推广规则统一归档，保持 Profile 模块下的合规入口一致。",
                 color = LegalMuted,
                 fontSize = 12.sp
             )
@@ -300,11 +302,27 @@ private fun LegalDocumentItem(
                     lineHeight = 17.sp
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "更新于 ${document.lastUpdated}",
-                    fontSize = 10.sp,
-                    color = LegalMuted
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = LegalPrimarySoft
+                    ) {
+                        Text(
+                            text = document.category,
+                            fontSize = 10.sp,
+                            color = LegalPrimary,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                    Text(
+                        text = "更新于 ${document.lastUpdated}",
+                        fontSize = 10.sp,
+                        color = LegalMuted
+                    )
+                }
             }
 
             Icon(
@@ -357,4 +375,12 @@ fun LegalDocumentsListPagePreview() {
     MaterialTheme {
         LegalDocumentsListPage()
     }
+}
+
+private fun legalCategoryFor(documentId: String): String = when (documentId) {
+    "terms" -> "核心协议"
+    "privacy" -> "隐私与数据"
+    "refund" -> "退款说明"
+    "affiliate" -> "推广计划"
+    else -> "Cookie 与偏好"
 }

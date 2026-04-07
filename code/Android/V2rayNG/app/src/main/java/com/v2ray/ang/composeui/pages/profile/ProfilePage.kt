@@ -19,16 +19,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
@@ -67,6 +67,9 @@ import com.v2ray.ang.composeui.bridge.profile.ProfileBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private val ProfileBg = Color(0xFF0A101A)
 private val ProfileSurface = Color(0xFF121A28)
@@ -138,7 +141,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     nickname = user.username.substringBefore("@"),
                     avatarUrl = null,
                     memberLevel = if (activeOrder != null) "已订阅" else "基础用户",
-                    memberExpiry = activeOrder?.expiredAt?.toString()
+                    memberExpiry = formatMemberExpiry(activeOrder?.expiredAt)
                 )
             )
         }
@@ -179,7 +182,7 @@ fun ProfilePage(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Profile",
+                        text = "Discover / Profile",
                         color = ProfileText,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -392,6 +395,20 @@ private fun UserInfoCard(user: UserInfo) {
                         )
                     }
                 }
+                user.memberExpiry?.let { expiry ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Surface(
+                        color = ProfileSurfaceSoft,
+                        shape = RoundedCornerShape(999.dp)
+                    ) {
+                        Text(
+                            text = "会员有效期至 $expiry",
+                            fontSize = 11.sp,
+                            color = ProfileText,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -420,7 +437,7 @@ private fun QuickAccessGrid(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 QuickAccessItem(
                     modifier = Modifier.weight(1f),
-                    icon = Icons.Default.ReceiptLong,
+                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
                     label = "我的订单",
                     onClick = onNavigateToOrders
                 )
@@ -488,7 +505,7 @@ private fun SettingsList(
             subtitle = "用户协议、隐私政策"
         ),
         SettingItem(
-            icon = Icons.Default.Help,
+            icon = Icons.AutoMirrored.Filled.Help,
             title = "帮助与反馈",
             subtitle = "常见问题、联系客服"
         ),
@@ -608,6 +625,11 @@ private fun LogoutButton(onClick: () -> Unit) {
             )
         }
     }
+}
+
+private fun formatMemberExpiry(expiryMillis: Long?): String? {
+    if (expiryMillis == null || expiryMillis <= 0L) return null
+    return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(expiryMillis))
 }
 
 @Composable

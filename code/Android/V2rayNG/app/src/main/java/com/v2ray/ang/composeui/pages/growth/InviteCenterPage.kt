@@ -20,10 +20,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.IosShare
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -170,7 +170,7 @@ fun InviteCenterPage(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Discover Growth",
+                        text = "Discover / Growth",
                         color = GrowthText,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -373,7 +373,7 @@ private fun GrowthHeroCard(
                 ActionOutlineButton(
                     modifier = Modifier.weight(1f),
                     label = "佣金明细",
-                    icon = Icons.Default.TrendingUp,
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
                     onClick = onNavigateToCommission
                 )
                 Button(

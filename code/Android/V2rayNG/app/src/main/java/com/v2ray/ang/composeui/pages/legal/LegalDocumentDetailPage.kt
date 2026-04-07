@@ -62,6 +62,7 @@ private val LegalDetailDanger = Color(0xFFF45B69)
 data class LegalDocumentDetail(
     val id: String,
     val title: String,
+    val category: String,
     val lastUpdated: String,
     val content: String
 )
@@ -91,6 +92,13 @@ class LegalDocumentDetailViewModel : ViewModel() {
                 LegalDocumentDetail(
                     id = doc.id,
                     title = doc.title,
+                    category = when (doc.id) {
+                        "terms" -> "核心协议"
+                        "privacy" -> "隐私与数据"
+                        "refund" -> "退款说明"
+                        "affiliate" -> "推广计划"
+                        else -> "Cookie 与偏好"
+                    },
                     lastUpdated = doc.lastUpdated,
                     content = doc.content
                 )
@@ -199,6 +207,20 @@ private fun DocumentContent(document: LegalDocumentDetail) {
                     )
                     .padding(18.dp)
             ) {
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = LegalDetailPrimarySoft
+                ) {
+                    Text(
+                        text = document.category,
+                        fontSize = 11.sp,
+                        color = LegalDetailPrimary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
                 Text(
                     text = document.title,
                     fontSize = 22.sp,

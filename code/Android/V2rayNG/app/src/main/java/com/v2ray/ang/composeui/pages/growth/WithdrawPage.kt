@@ -232,7 +232,7 @@ fun WithdrawPage(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Withdraw",
+                        text = "Growth / Withdraw",
                         color = WithdrawText,
                         fontWeight = FontWeight.SemiBold
                     )

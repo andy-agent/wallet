@@ -187,7 +187,7 @@ fun CommissionLedgerPage(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Growth Ledger",
+                        text = "Growth / Ledger",
                         color = LedgerText,
                         fontWeight = FontWeight.SemiBold
                     )
