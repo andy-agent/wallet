@@ -161,7 +161,7 @@ class WithdrawViewModel(application: Application) : AndroidViewModel(application
                 return
             }
             (_withdrawAmount.value.toDoubleOrNull() ?: 0.0) < (_minWithdrawAmount.value.toDoubleOrNull() ?: 0.0) -> {
-                _state.value = WithdrawState.Error("低于最小提现金额 ${_minWithdrawAmount.value}")
+                _state.value = WithdrawState.Error("低于最小提现金额 ${_minWithdrawAmount.value} USDT")
                 return
             }
             _walletAddress.value.isBlank() -> {
@@ -329,7 +329,7 @@ private fun AvailableBalanceCard(
             Text(text = "可提现余额", color = WithdrawMuted, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "$${availableAmount}",
+                text = "${availableAmount} USDT",
                 color = WithdrawText,
                 fontSize = 38.sp,
                 fontWeight = FontWeight.ExtraBold
@@ -340,7 +340,7 @@ private fun AvailableBalanceCard(
                 color = WithdrawPrimarySoft
             ) {
                 Text(
-                    text = "最低提现 $${minWithdrawAmount}",
+                    text = "最低提现 ${minWithdrawAmount} USDT",
                     color = WithdrawPrimary,
                     fontSize = 11.sp,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -373,7 +373,7 @@ private fun WithdrawInputCard(
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = "提现信息",
+                text = "提现信息（USDT）",
                 color = WithdrawText,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp
@@ -383,7 +383,7 @@ private fun WithdrawInputCard(
                 value = withdrawAmount,
                 onValueChange = onWithdrawAmountChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("提现金额") },
+                label = { Text("提现金额 (USDT)") },
                 placeholder = { Text("0.00") },
                 leadingIcon = {
                     Icon(
@@ -410,7 +410,7 @@ private fun WithdrawInputCard(
             )
 
             Text(
-                text = "当前可用: $${availableAmount}",
+                text = "当前可用: ${availableAmount} USDT",
                 color = WithdrawMuted,
                 fontSize = 11.sp,
                 modifier = Modifier.align(Alignment.End)
@@ -545,7 +545,7 @@ private fun WithdrawalInfoCard(minWithdrawAmount: String) {
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp
             )
-            InfoItem(text = "最低提现金额为 $${minWithdrawAmount}")
+            InfoItem(text = "最低提现金额为 ${minWithdrawAmount} USDT")
             InfoItem(text = "预计 1-3 个工作日到账")
             InfoItem(text = "链上手续费按实际网络费和平台规则收取")
             InfoItem(text = "请务必确认地址正确，错误地址无法追回")

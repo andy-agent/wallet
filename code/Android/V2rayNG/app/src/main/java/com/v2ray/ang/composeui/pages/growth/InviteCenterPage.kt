@@ -132,9 +132,9 @@ class InviteCenterViewModel(application: Application) : AndroidViewModel(applica
                 inviteCode = inviteCode,
                 inviteLink = "https://api.residential-agent.com/invite/$inviteCode",
                 totalInvited = referralData.level1InviteCount + referralData.level2InviteCount,
-                totalCommission = "$${summaryData.withdrawnTotal}",
-                pendingCommission = "$${summaryData.availableAmount}",
-                commissionRate = "L1 20% / L2 10%"
+                totalCommission = "${summaryData.withdrawnTotal} USDT",
+                pendingCommission = "${summaryData.availableAmount} USDT",
+                commissionRate = "L1 25% / L2 5%"
             )
         }
     }
@@ -549,8 +549,8 @@ private fun InviteLinkCard(
 @Composable
 private fun InviteRulesCard() {
     val rules = listOf(
-        "邀请好友注册并完成首单，可获一级返佣 20%",
-        "二级关系订单按 10% 结算，自动计入可提现余额",
+        "邀请好友注册并完成首单，可获一级返佣 25%",
+        "二级关系订单按 5% 结算，自动计入可提现余额（USDT）",
         "达到最低门槛后可发起链上提现申请",
         "平台会对异常邀请行为进行风控审核"
     )
