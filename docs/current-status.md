@@ -1,6 +1,6 @@
 # 当前状态
 
-**最后更新**: 2026-04-05
+**最后更新**: 2026-04-07
 
 ## 系统状态概览
 
@@ -48,6 +48,16 @@
   - 真实订单 smoke 已完成:
     - `payment-target.serviceEnabled = true`
     - 订单 `ORD-1775219239579` 最终状态为 `COMPLETED`
+- 完成 `liaojiang-rcb.17.2`
+  - `code/backend` 新增 `tron-client` 模块与 `TRON_SERVICE_*` 配置
+  - wallet TRON `transfer/precheck` / `transfer/proxy-broadcast` 已优先使用远程链侧服务
+  - 远程链侧不可用时保留明确 fallback 语义
+- 完成 `liaojiang-rcb.17.3`
+  - `/api/healthz` 现已聚合 Solana + TRON 链侧健康状态
+  - disabled / healthy / degraded 输出与 e2e 覆盖已补齐
+- 完成 `liaojiang-rcb.17.4`
+  - 主线已完成 diff 审核与 backend `typecheck / build / test:e2e` 验收
+  - `pnpm --dir code/backend test:e2e` 当前为 `6` suites / `11` tests 全绿
 - 完成 `liaojiang-4j0.1`
   - Android 最终构建通过
   - APK 已重新安装到模拟器
@@ -170,12 +180,12 @@
 
 ### 当前 beads 状态
 
-- 当前没有 `ready` 的 bd 任务
-- `liaojiang-4j0` 与 `liaojiang-4j0.2` 仍为 `in_progress` 父项/末端回归项
-- 下一次自动推进应从新的 Android UI 迁移 ready 子任务开始，而不是重复 `7x4`
+- `liaojiang-rcb.17` 已完成实现、验收与 continuity 刷新
+- 当前没有新的 `bd ready` 任务
+- 当前实质 blocker 为 `liaojiang-4j0.2`：仍缺 Android 真实回归账号凭据或可取验证码邮箱
 
 ## 下一步
 
-1. 等新的 Android UI 迁移子任务重新进入 `bd ready`。
-2. 继续 `4j0.10 / 4j0.11 / 4j0.12 / 4j0.13` 的 Compose 资产迁移与桥接。
-3. 完成后进入 `4j0.5` 和 `4j0.2`，做完整 UI 落地与最终真实环境回归。
+1. 如果提供可用测试账号或验证码邮箱，优先恢复 `liaojiang-4j0.2`，完成 Android 真实登录/下单/支付页回归。
+2. 若 `bd` 后续重新放出 Android UI 迁移子任务，则继续 `4j0.10 / 4j0.11 / 4j0.12 / 4j0.13` 的 Compose 桥接。
+3. `liaojiang-rcb.17` backend 链侧 follow-up 已完成，本轮无需重复回到链侧接线实现。

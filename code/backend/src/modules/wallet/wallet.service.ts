@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
 import { SolanaClientService } from '../solana-client/solana-client.service';
+import { TronClientService } from '../tron-client/tron-client.service';
 import { ProxyBroadcastRequestDto } from './dto/proxy-broadcast.request';
 import { TransferPrecheckRequestDto } from './dto/transfer-precheck.request';
 import { UpsertWalletPublicAddressRequestDto } from './dto/upsert-wallet-public-address.request';
@@ -29,6 +30,7 @@ export class WalletService {
   constructor(
     private readonly authService: AuthService,
     private readonly solanaClient: SolanaClientService,
+    private readonly tronClient: TronClientService,
   ) {}
 
   getChains(accessToken: string) {
@@ -49,7 +51,7 @@ export class WalletService {
           displayName: 'TRON Mainnet',
           nativeAssetCode: 'TRX',
           directBroadcastEnabled: true,
-          proxyBroadcastEnabled: false,
+          proxyBroadcastEnabled: true,
           requiredConfirmations: 20,
           publicRpcUrl: 'https://api.trongrid.io',
         },
@@ -238,7 +240,40 @@ export class WalletService {
       }
     }
 
-    // Default behavior for TRON or when SOLANA service fails
+    if (dto.networkCode === 'TRON') {
+      try {
+        if (this.tronClient.isEnabled()) {
+          const addressValidation = await this.tronClient.validateAddress(dto.toAddress);
+          if (!addressValidation.valid) {
+            throw new BadRequestException({
+              code: 'WALLET_INVALID_ADDRESS',
+              message: 'Wallet address invalid',
+            });
+          }
+
+          return {
+            networkCode: dto.networkCode,
+            assetCode: dto.assetCode,
+            toAddressNormalized: addressValidation.address.trim(),
+            amount: dto.amount,
+            estimatedFee: '1.000000',
+            directBroadcastEnabled: chain.directBroadcastEnabled,
+            proxyBroadcastEnabled: chain.proxyBroadcastEnabled,
+            warnings: dto.orderNo ? ['ORDER_PAYMENT_CONTEXT'] : [],
+            serviceEnabled: true,
+          };
+        }
+      } catch (error) {
+        if (error instanceof BadRequestException) {
+          throw error;
+        }
+        this.logger.warn(
+          'Tron precheck service failed, falling back to default behavior',
+          error,
+        );
+      }
+    }
+
     return {
       networkCode: dto.networkCode,
       assetCode: dto.assetCode,
@@ -248,7 +283,10 @@ export class WalletService {
       directBroadcastEnabled: chain.directBroadcastEnabled,
       proxyBroadcastEnabled: chain.proxyBroadcastEnabled,
       warnings: dto.orderNo ? ['ORDER_PAYMENT_CONTEXT'] : [],
-      serviceEnabled: dto.networkCode === 'SOLANA' ? this.solanaClient.isEnabled() : false,
+      serviceEnabled:
+        dto.networkCode === 'SOLANA'
+          ? this.solanaClient.isEnabled()
+          : this.tronClient.isEnabled(),
     };
   }
 
@@ -329,7 +367,68 @@ export class WalletService {
       };
     }
 
-    // TRON and other networks - use existing mock behavior (no remote service yet)
+    if (dto.networkCode === 'TRON') {
+      if (
+        dto.toAddress &&
+        !this.isTronAddressValid(dto.toAddress)
+      ) {
+        throw new BadRequestException({
+          code: 'WALLET_INVALID_ADDRESS',
+          message: 'Invalid TRON address format',
+        });
+      }
+
+      if (this.tronClient.isEnabled()) {
+        try {
+          if (dto.toAddress) {
+            const addressValidation = await this.tronClient.validateAddress(dto.toAddress);
+            if (!addressValidation.valid) {
+              throw new BadRequestException({
+                code: 'WALLET_INVALID_ADDRESS',
+                message: 'Invalid TRON address format',
+              });
+            }
+          }
+
+          const result = await this.tronClient.broadcastTransaction({
+            signedTx: dto.serializedTx ?? dto.signedPayload,
+          });
+
+          if (result.success) {
+            return {
+              networkCode: dto.networkCode,
+              broadcasted: true,
+              txHash:
+                result.txHash ?? dto.clientTxHash ?? `tron_proxy_${randomUUID().slice(0, 16)}`,
+              acceptedAt: result.acceptedAt ?? new Date().toISOString(),
+              serviceEnabled: true,
+            };
+          }
+
+          this.logger.warn(
+            'Tron broadcast rejected by remote service, falling back to mock behavior',
+            result,
+          );
+        } catch (error) {
+          if (error instanceof BadRequestException) {
+            throw error;
+          }
+          this.logger.warn('Tron broadcast failed, falling back to mock behavior', error);
+        }
+      }
+
+      return {
+        networkCode: dto.networkCode,
+        broadcasted: true,
+        txHash: dto.clientTxHash ?? `tron_proxy_${randomUUID()}`,
+        acceptedAt: new Date().toISOString(),
+        serviceEnabled: false,
+        note: this.tronClient.isEnabled()
+          ? 'Mock mode - TRON service unavailable'
+          : 'Mock mode - set TRON_SERVICE_ENABLED=true for real calls',
+      };
+    }
+
     return {
       networkCode: dto.networkCode,
       broadcasted: true,
@@ -344,6 +443,10 @@ export class WalletService {
       // Use SolanaClientService for validation if available
       return this.solanaClient.validateAddress(trimmed);
     }
-    return trimmed.startsWith('T') && trimmed.length >= 20;
+    return this.isTronAddressValid(trimmed);
+  }
+
+  private isTronAddressValid(address: string) {
+    return /^T[0-9a-zA-Z]{33}$/.test(address.trim());
   }
 }

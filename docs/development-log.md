@@ -28,3 +28,30 @@
 ### 下一步
 
 参考 [当前状态](current-status.md) 中的优先级进行修复。
+
+## 2026-04-07
+
+### 今日工作
+
+1. **完成 backend TRON 远程接线收尾**
+   - 新增 `code/backend/src/modules/tron-client/`，补齐 `TRON_SERVICE_*` 配置
+   - `wallet` TRON 主路径已支持远程地址校验与远程 proxy broadcast
+   - 远程服务不可用时保留明确 fallback，不破坏现有 SOLANA 路径
+
+2. **完成 backend 链侧聚合健康验收**
+   - `/api/healthz` 现聚合 Solana + TRON 两个链侧健康摘要
+   - 覆盖 disabled / healthy / degraded 三种可解释输出
+   - `app.e2e-spec.ts` 与 `wallet.e2e-spec.ts` 已补齐对应验收覆盖
+
+3. **完成 `liaojiang-rcb.17` 里程碑验收**
+   - `liaojiang-rcb.17.2` / `liaojiang-rcb.17.3` / `liaojiang-rcb.17.4` 已在主线验收
+   - 验证命令：
+     - `pnpm --dir code/backend typecheck`
+     - `pnpm --dir code/backend build`
+     - `pnpm --dir code/backend test:e2e`
+   - 均通过
+
+### 当前结论
+
+- `liaojiang-rcb.17` 的 backend follow-up 已完成，本轮没有新的 `bd ready` 工程任务
+- 当前剩余主阻塞回到 Android `liaojiang-4j0.2`，仍需要真实回归账号或可取验证码邮箱

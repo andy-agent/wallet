@@ -1,12 +1,24 @@
 # Task State
 
-- Updated At: 2026-04-05 04:09 +08:00
+- Updated At: 2026-04-07 13:29 +08:00
 - Repository: /Users/cnyirui/git/projects/liaojiang
 - Next Task: `liaojiang-4j0.2`（human-needed blocker：等待 Android 真实回归账号凭据或可取验证码邮箱）
-- Counts: `open=0` `in_progress=3` `closed=117` `ready=0`
+- Counts: `open=0` `in_progress=3` `closed=124` `ready=0`
 - Dirty Files:
+  - .codex/bd-orchestrator-state.json
   - .codex/recovery-context.md
   - .codex/recovery-state.json
+  - code/backend/.env.example
+  - code/backend/src/modules/health/health.module.ts
+  - code/backend/src/modules/health/health.service.ts
+  - code/backend/src/modules/tron-client/
+  - code/backend/src/modules/wallet/wallet.module.ts
+  - code/backend/src/modules/wallet/wallet.service.ts
+  - code/backend/test/app.e2e-spec.ts
+  - code/backend/test/wallet.e2e-spec.ts
+  - docs/current-status.md
+  - docs/development-log.md
+  - handoff/progress.md
   - handoff/task-state.md
 
 ## Resume Commands
@@ -37,6 +49,12 @@ git status --short
 - USDT/TRON chain-side:
   - server1 internal `health/capabilities/block/current/tx` verified
   - `usdt.residential-agent.com/api/healthz` returns `healthy + connected`
+- Backend chain-side client acceptance:
+  - `pnpm --dir code/backend typecheck` passed
+  - `pnpm --dir code/backend build` passed
+  - `pnpm --dir code/backend test:e2e` passed (`6` suites / `11` tests)
+  - backend now exposes aggregated Solana + TRON chain-side health from `/api/healthz`
+  - wallet TRON precheck / proxy-broadcast paths now prefer remote service when enabled and fall back explicitly when unavailable
 - Real order-chain smoke:
   - order `ORD-1775219239579` reached `COMPLETED` via remote Solana service
 - Admin:
@@ -59,6 +77,6 @@ git status --short
 
 ## Remaining Work
 
-- `liaojiang-4j0`: Android 最终阶段 feature 仍 in_progress，当前仅剩 `4j0.2` human blocker
+- `liaojiang-4j0`: Android 最终阶段 feature 仍 in_progress，当前实质阻塞仍是 `4j0.2`
 - `liaojiang-4j0.2`: 已验证到真实登录页入口，但仍阻塞于测试账号凭据/验证码邮箱来源
-- `liaojiang-rcb`: chain-side expansion feature remains in progress outside the Android acceptance path
+- `liaojiang-rcb`: `17.x` 链侧接线与健康可观测性里程碑已完成并验收，当前没有新的 ready bead

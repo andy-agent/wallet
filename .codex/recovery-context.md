@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-07T05:05:44Z
+Generated: 2026-04-07T05:35:49Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-rcb.17.2
-- next_task_title: 实现 backend TRON 远程客户端接线
+- next_task_id: liaojiang-4j0.2
+- next_task_title: Android 真实环境登录/下单/支付页回归
 
 ## Counters
-- in_progress: 6
+- in_progress: 3
 - ready: 0
-- open: 8
-- closed: 119
-- dirty: 2
+- open: 3
+- closed: 124
+- dirty: 15
 
 ## Next Milestone
 - Continue the next task and complete one milestone
