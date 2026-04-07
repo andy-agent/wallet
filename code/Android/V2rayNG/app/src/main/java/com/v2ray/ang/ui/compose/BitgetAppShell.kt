@@ -266,61 +266,61 @@ private fun buildShellModel(
     return when (selectedTab) {
         ShellTab.HOME -> ShellModel(
             badge = sessionBadge,
-            title = if (isAuthenticated) "Bitget 风格统一主壳已接管入口" else "先进入新壳，再按需解锁业务页",
+            title = if (isAuthenticated) "首页切到钱包优先的资产分发层" else "先浏览新首页，再按需解锁钱包与 VPN",
             subtitle = if (isAuthenticated) {
-                "Home 聚合 VPN、套餐、订单与钱包入口，底层页面与数据桥接保持原样。"
+                "Home 先展示资产总览、收发入口和账户概览，再把 VPN、订单与套餐分发到原有业务页。"
             } else {
-                "未登录也能浏览 Bitget 风格主壳；需要账户态的页面会按需引导登录。"
+                "未登录也能浏览 Bitget 风格首页层级；涉及钱包和订单的动作会按需引导登录。"
             },
             metrics = listOf(
-                ShellMetric("会话", if (isAuthenticated) "已同步" else "未登录"),
-                ShellMetric("布局", "Bitget Dark"),
-                ShellMetric("入口", "Launcher"),
+                ShellMetric("资产层", if (isAuthenticated) "Wallet Ready" else "Guest"),
+                ShellMetric("收付", "Receive / Send"),
+                ShellMetric("桥接", "Preserved"),
             ),
             tickers = listOf(
-                ShellTickerItem("HOME", "Ready"),
-                ShellTickerItem("VPN", "Direct"),
-                ShellTickerItem("ORDER", "Linked"),
+                ShellTickerItem("HOME", "Assets"),
+                ShellTickerItem("WALLET", "Live"),
+                ShellTickerItem("VPN", "Linked"),
             ),
-            sectionTitle = "主壳动作区",
-            sectionSubtitle = "这里负责把现有 VPN、Plans、Orders、Wallet 路由收敛成一个首页交易台式入口。",
+            sectionTitle = "首页快捷操作",
+            sectionSubtitle = "首页优先露出钱包资产动作，再把 VPN、订单等存量路由收敛进统一的 Bitget 风格入口。",
             actions = listOf(
-                ShellQuickAction("VPN 控制台", "进入原有连接页面", Icons.Default.VpnLock, Primary, onOpenVpnConsole),
-                ShellQuickAction("订阅套餐", "查看计划与下单", Icons.Default.CreditCard, Warning, onOpenPlans),
-                ShellQuickAction("订单中心", "跳转订单列表", Icons.Default.ReceiptLong, GlowBlue, onOpenOrders),
                 ShellQuickAction("钱包主页", "进入 Wallet Home", Icons.Default.AccountBalanceWallet, Info, onOpenWalletHome),
+                ShellQuickAction("收款地址", "直接打开 Receive", Icons.Default.SouthWest, Primary, onOpenReceive),
+                ShellQuickAction("发送资产", "进入 Send 流程", Icons.Default.Send, GlowBlue, onOpenSend),
+                ShellQuickAction("VPN 控制台", "保持原有连接页面", Icons.Default.VpnLock, Warning, onOpenVpnConsole),
             ),
-            primaryActionLabel = if (isAuthenticated) "打开 VPN" else "登录账户",
-            onPrimaryAction = if (isAuthenticated) onOpenVpnConsole else onOpenLogin,
-            secondaryActionLabel = if (isAuthenticated) "打开钱包" else "查看套餐",
-            onSecondaryAction = if (isAuthenticated) onOpenWalletHome else onOpenPlans,
-            showcaseEyebrow = "Home Shell",
-            showcaseTitle = "Launcher 已进入新壳层",
-            showcaseBody = "桌面入口先落到这个 Home 壳层，再从卡片和 quick actions 分发到原有业务页面，不侵入页面文件与数据层。",
-            showcaseActionLabel = if (isAuthenticated) "进入订单" else "前往登录",
-            onShowcaseAction = if (isAuthenticated) onOpenOrders else onOpenLogin,
+            primaryActionLabel = if (isAuthenticated) "打开钱包" else "登录账户",
+            onPrimaryAction = if (isAuthenticated) onOpenWalletHome else onOpenLogin,
+            secondaryActionLabel = if (isAuthenticated) "查看订单" else "查看套餐",
+            onSecondaryAction = if (isAuthenticated) onOpenOrders else onOpenPlans,
+            showcaseEyebrow = "Home Overview",
+            showcaseTitle = "首页先给出资产卡与收发起点",
+            showcaseBody = "Launcher 先落到新的 Home 资产分发层，再从快捷动作进入 Wallet、Receive、Send、VPN 等原有业务路由，不触碰 bridge 和数据层。",
+            showcaseActionLabel = if (isAuthenticated) "打开收款" else "前往登录",
+            onShowcaseAction = if (isAuthenticated) onOpenReceive else onOpenLogin,
             notes = listOf(
-                "Home 只做入口聚合，不直接重写 VPN、Wallet、Growth、Profile 页面内容。",
-                "壳层状态与业务状态解耦，避免因视觉改造触碰仓储与网络层。",
+                "Home 仍是壳层入口，但视觉顺序改成 Bitget Wallet 常见的资产总览 -> 快捷操作 -> 路由分发。",
+                "业务状态与视觉状态继续解耦，避免因改样式触碰仓储与网络层。",
             ),
         )
 
         ShellTab.WALLET -> ShellModel(
             badge = sessionBadge,
-            title = if (isAuthenticated) "钱包与收付壳层" else "登录后启用钱包收付与资产页",
-            subtitle = "Wallet 负责承接钱包主页、收款、转账与资产详情入口，页面实现仍复用原路由。",
+            title = if (isAuthenticated) "Wallet 作为资产中心与收付中枢" else "登录后启用钱包资产、收款与发送起点",
+            subtitle = "Wallet 负责承接钱包主页、资产详情、收款、发送等入口，底层页面继续复用原路由与 placeholder。",
             metrics = listOf(
-                ShellMetric("资产", if (isAuthenticated) "Wallet On" else "Sign In"),
-                ShellMetric("收款", "Receive"),
-                ShellMetric("转账", "Send"),
+                ShellMetric("资产", if (isAuthenticated) "Visible" else "Sign In"),
+                ShellMetric("明细", "Asset Detail"),
+                ShellMetric("收付", "Ready"),
             ),
             tickers = listOf(
-                ShellTickerItem("WALLET", "Ready"),
+                ShellTickerItem("WALLET", "Assets"),
                 ShellTickerItem("RECEIVE", "Direct"),
-                ShellTickerItem("SEND", "Ready"),
+                ShellTickerItem("SEND", "Bridge"),
             ),
-            sectionTitle = "资产动作区",
-            sectionSubtitle = "不改钱包页面源码，只在壳层上补齐钱包入口与 Bitget 风格视觉骨架。",
+            sectionTitle = "钱包快捷操作",
+            sectionSubtitle = "Wallet tab 直接承接资产主页、收付款与资产详情入口，同时保留原有页面与导航回调。",
             actions = listOf(
                 ShellQuickAction("打开钱包", "进入钱包主页", Icons.Default.Wallet, Primary, onOpenWalletHome),
                 ShellQuickAction("收款地址", "直接打开 Receive", Icons.Default.SouthWest, GlowGreen, onOpenReceive),
@@ -332,13 +332,13 @@ private fun buildShellModel(
             secondaryActionLabel = if (isAuthenticated) "收款" else "查看支持",
             onSecondaryAction = if (isAuthenticated) onOpenReceive else onOpenSupport,
             showcaseEyebrow = "Wallet Surface",
-            showcaseTitle = "资产入口已收敛到壳层导航",
-            showcaseBody = "钱包分区保留原有 `wallet_home / receive / send / asset_detail` 路由，只调整默认入口和外层视觉风格。",
+            showcaseTitle = "资产首页、详情与收发起点已并入统一风格",
+            showcaseBody = "钱包分区继续保留 `wallet_home / receive / send / asset_detail` 路由，只重构外层视觉、文案层级和默认入口顺序。",
             showcaseActionLabel = if (isAuthenticated) "打开资产页" else "前往登录",
             onShowcaseAction = if (isAuthenticated) onOpenAssetBook else onOpenLogin,
             notes = listOf(
-                "Guest 态下保留钱包外壳，但动作会引导登录。",
-                "底层支付与钱包仓储未做修改。",
+                "Guest 态下保留钱包外壳，但所有资产动作仍会引导登录。",
+                "底层支付与钱包仓储未做修改，只有 Compose 表层重排。",
             ),
         )
 
