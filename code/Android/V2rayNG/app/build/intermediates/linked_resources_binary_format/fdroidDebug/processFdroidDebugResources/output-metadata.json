@@ -20,6 +20,19 @@
       "filters": [
         {
           "filterType": "ABI",
+          "value": "x86"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 5071704,
+      "versionName": "2.0.17",
+      "outputFile": "linked-resources-binary-format-fdroidX86Debug.ap_"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
           "value": "x86_64"
         }
       ],
@@ -27,19 +40,6 @@
       "versionCode": 5071703,
       "versionName": "2.0.17",
       "outputFile": "linked-resources-binary-format-fdroidX86_64Debug.ap_"
-    },
-    {
-      "type": "ONE_OF_MANY",
-      "filters": [
-        {
-          "filterType": "ABI",
-          "value": "armeabi-v7a"
-        }
-      ],
-      "attributes": [],
-      "versionCode": 5071702,
-      "versionName": "2.0.17",
-      "outputFile": "linked-resources-binary-format-fdroidArmeabi-v7aDebug.ap_"
     },
     {
       "type": "ONE_OF_MANY",
@@ -59,13 +59,13 @@
       "filters": [
         {
           "filterType": "ABI",
-          "value": "x86"
+          "value": "armeabi-v7a"
         }
       ],
       "attributes": [],
-      "versionCode": 5071704,
+      "versionCode": 5071702,
       "versionName": "2.0.17",
-      "outputFile": "linked-resources-binary-format-fdroidX86Debug.ap_"
+      "outputFile": "linked-resources-binary-format-fdroidArmeabi-v7aDebug.ap_"
     }
   ],
   "elementType": "File"
