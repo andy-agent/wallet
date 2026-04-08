@@ -9,7 +9,7 @@ export class AdminAccountsService {
     private readonly vpnService: VpnService,
   ) {}
 
-  listAccounts(params: {
+  async listAccounts(params: {
     page?: number;
     pageSize?: number;
     email?: string;
@@ -18,13 +18,15 @@ export class AdminAccountsService {
     const result = this.authService.listAccounts(params);
 
     // Enrich with subscription info
-    const enrichedItems = result.items.map((account) => {
-      const subscription = this.vpnService.getSubscriptionByAccountIdForAdmin(account.accountId);
+    const enrichedItems = await Promise.all(result.items.map(async (account) => {
+      const subscription = await this.vpnService.getSubscriptionByAccountIdForAdmin(
+        account.accountId,
+      );
       return {
         ...account,
         subscription,
       };
-    });
+    }));
 
     return {
       items: enrichedItems,
@@ -32,9 +34,11 @@ export class AdminAccountsService {
     };
   }
 
-  getAccountDetail(accountId: string) {
+  async getAccountDetail(accountId: string) {
     const account = this.authService.getAccountDetail(accountId);
-    const subscription = this.vpnService.getSubscriptionByAccountIdForAdmin(accountId);
+    const subscription = await this.vpnService.getSubscriptionByAccountIdForAdmin(
+      accountId,
+    );
 
     return {
       ...account,

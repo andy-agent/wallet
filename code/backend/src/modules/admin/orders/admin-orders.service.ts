@@ -9,7 +9,7 @@ export class AdminOrdersService {
     private readonly authService: AuthService,
   ) {}
 
-  listOrders(params: {
+  async listOrders(params: {
     page?: number;
     pageSize?: number;
     orderNo?: string;
@@ -41,7 +41,7 @@ export class AdminOrdersService {
       }
     }
 
-    const result = this.ordersService.listOrders({
+    const result = await this.ordersService.listOrders({
       page: params.page,
       pageSize: params.pageSize,
       orderNo: params.orderNo,
@@ -64,8 +64,8 @@ export class AdminOrdersService {
     };
   }
 
-  getOrderDetail(orderNo: string) {
-    const order = this.ordersService.getOrderByNo(orderNo);
+  async getOrderDetail(orderNo: string) {
+    const order = await this.ordersService.getOrderByNo(orderNo);
     const email = this.authService.maskEmail(order.accountId);
 
     return {

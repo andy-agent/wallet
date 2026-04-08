@@ -17,7 +17,9 @@ describe('Orders (e2e)', () => {
   beforeEach(async () => {
     runtimeDir = mkdtempSync(join(tmpdir(), 'backend-orders-'));
     runtimeStateFile = join(runtimeDir, 'runtime-state.json');
+    process.env.NODE_ENV = 'test';
     process.env.RUNTIME_STATE_FILE = runtimeStateFile;
+    delete process.env.RUNTIME_STATE_BACKEND;
 
     app = await bootstrapApp();
 
@@ -41,7 +43,9 @@ describe('Orders (e2e)', () => {
 
   afterEach(async () => {
     await app.close();
+    delete process.env.NODE_ENV;
     delete process.env.RUNTIME_STATE_FILE;
+    delete process.env.RUNTIME_STATE_BACKEND;
     rmSync(runtimeDir, { recursive: true, force: true });
   });
 

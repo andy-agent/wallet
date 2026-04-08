@@ -1,36 +1,40 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { mkdtempSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
+import { newDb } from 'pg-mem';
 import * as request from 'supertest';
+
+const runtimeDb = newDb({ noAstCoverageCheck: true });
+
+jest.mock('pg', () => runtimeDb.adapters.createPg());
+
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { ResponseEnvelopeInterceptor } from '../src/common/interceptors/response-envelope.interceptor';
 
-describe('PlansSubscriptionVpn (e2e)', () => {
+describe('VPN Postgres runtime state (e2e)', () => {
   let app: INestApplication;
   let accessToken: string;
   let orderNo: string;
-  let runtimeDir: string;
 
   beforeEach(async () => {
-    runtimeDir = mkdtempSync(join(tmpdir(), 'backend-vpn-'));
-    process.env.NODE_ENV = 'test';
-    process.env.RUNTIME_STATE_FILE = join(runtimeDir, 'runtime-state.json');
+    process.env.NODE_ENV = 'production';
+    process.env.DATABASE_URL =
+      'postgres://runtime:runtime@server2:5432/cryptovpn';
     delete process.env.RUNTIME_STATE_BACKEND;
+    delete process.env.RUNTIME_STATE_FILE;
+
     app = await bootstrapApp();
 
     await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email/request-code')
-      .send({ email: 'vpn@example.com' })
+      .send({ email: 'vpn-pg@example.com' })
       .expect(200);
 
     const registerResponse = await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email')
-      .set('x-idempotency-key', 'vpn-register-1')
+      .set('x-idempotency-key', 'vpn-pg-register')
       .send({
-        email: 'vpn@example.com',
+        email: 'vpn-pg@example.com',
         code: '123456',
         password: 'Passw0rd!',
       })
@@ -41,7 +45,7 @@ describe('PlansSubscriptionVpn (e2e)', () => {
     const createOrder = await request(app.getHttpServer())
       .post('/api/client/v1/orders')
       .set('authorization', `Bearer ${accessToken}`)
-      .set('x-idempotency-key', 'vpn-order-1')
+      .set('x-idempotency-key', 'vpn-pg-order-1')
       .send({
         planCode: 'BASIC_1M',
         orderType: 'NEW',
@@ -56,7 +60,7 @@ describe('PlansSubscriptionVpn (e2e)', () => {
       .post(`/api/client/v1/orders/${orderNo}/submit-client-tx`)
       .set('authorization', `Bearer ${accessToken}`)
       .send({
-        txHash: 'tx-vpn-1',
+        txHash: 'sol-pg-tx-1',
         networkCode: 'SOLANA',
       })
       .expect(201);
@@ -70,20 +74,14 @@ describe('PlansSubscriptionVpn (e2e)', () => {
 
   afterEach(async () => {
     await app.close();
+    cleanupRuntimeTables();
     delete process.env.NODE_ENV;
-    delete process.env.RUNTIME_STATE_FILE;
+    delete process.env.DATABASE_URL;
     delete process.env.RUNTIME_STATE_BACKEND;
-    rmSync(runtimeDir, { recursive: true, force: true });
+    delete process.env.RUNTIME_STATE_FILE;
   });
 
-  it('reads subscription and vpn access from persisted fulfillment state after restart', async () => {
-    const plans = await request(app.getHttpServer())
-      .get('/api/client/v1/plans')
-      .set('authorization', `Bearer ${accessToken}`)
-      .expect(200);
-
-    expect(plans.body.data.items).toHaveLength(1);
-
+  it('keeps fulfillment, subscription reads, and vpn access restart-safe in Postgres', async () => {
     const order = await request(app.getHttpServer())
       .get(`/api/client/v1/orders/${orderNo}`)
       .set('authorization', `Bearer ${accessToken}`)
@@ -153,4 +151,14 @@ async function bootstrapApp() {
   nextApp.useGlobalFilters(new AllExceptionsFilter());
   await nextApp.init();
   return nextApp;
+}
+
+function cleanupRuntimeTables() {
+  try {
+    runtimeDb.public.none('DELETE FROM runtime_state_subscriptions');
+  } catch {}
+
+  try {
+    runtimeDb.public.none('DELETE FROM runtime_state_orders');
+  } catch {}
 }

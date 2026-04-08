@@ -13,14 +13,26 @@ export class AdminDashboardService {
     private readonly withdrawalsService: WithdrawalsService,
   ) {}
 
-  getSummary() {
+  async getSummary() {
+    const [
+      activeSubscriptions,
+      awaitingOrders,
+      reviewOrders,
+      todayPaidOrders,
+    ] = await Promise.all([
+      this.vpnService.getActiveSubscriptionCount(),
+      this.ordersService.getAwaitingOrderCount(),
+      this.ordersService.getReviewOrderCount(),
+      this.ordersService.getTodayPaidOrderCount(),
+    ]);
+
     return {
       activeAccounts: this.authService.getTotalAccounts(),
-      activeSubscriptions: this.vpnService.getActiveSubscriptionCount(),
-      awaitingOrders: this.ordersService.getAwaitingOrderCount(),
-      reviewOrders: this.ordersService.getReviewOrderCount(),
+      activeSubscriptions,
+      awaitingOrders,
+      reviewOrders,
       pendingWithdrawals: this.withdrawalsService.getPendingWithdrawalCount(),
-      todayPaidOrders: this.ordersService.getTodayPaidOrderCount(),
+      todayPaidOrders,
     };
   }
 }

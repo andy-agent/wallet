@@ -26,7 +26,11 @@ export class OrdersService {
     private readonly solanaClient: SolanaClientService,
   ) {}
 
-  createOrder(accessToken: string, dto: CreateOrderRequestDto, idempotencyKey: string) {
+  async createOrder(
+    accessToken: string,
+    dto: CreateOrderRequestDto,
+    idempotencyKey: string,
+  ) {
     const account = this.authService.getMe(accessToken);
     const compositeKey = `${account.accountId}:${idempotencyKey}`;
     if (!idempotencyKey) {
@@ -61,13 +65,16 @@ export class OrdersService {
       submittedClientTxHash: null,
     };
 
-    const order = this.runtimeStateRepository.createOrder(storedOrder, compositeKey);
+    const order = await this.runtimeStateRepository.createOrder(
+      storedOrder,
+      compositeKey,
+    );
     return this.toOrderRecord(order);
   }
 
-  getOrder(accessToken: string, orderNo: string) {
+  async getOrder(accessToken: string, orderNo: string) {
     const account = this.authService.getMe(accessToken);
-    const order = this.mustGet(orderNo);
+    const order = await this.mustGet(orderNo);
     if (order.accountId !== account.accountId) {
       throw new NotFoundException({
         code: 'ORDER_NOT_FOUND',
@@ -77,8 +84,8 @@ export class OrdersService {
     return this.toOrderRecord(order);
   }
 
-  getPaymentTarget(accessToken: string, orderNo: string) {
-    const order = this.mustGetOwned(accessToken, orderNo);
+  async getPaymentTarget(accessToken: string, orderNo: string) {
+    const order = await this.mustGetOwned(accessToken, orderNo);
     return {
       orderNo: order.orderNo,
       networkCode: order.quoteNetworkCode,
@@ -93,11 +100,15 @@ export class OrdersService {
     };
   }
 
-  submitClientTx(accessToken: string, orderNo: string, dto: SubmitClientTxRequestDto) {
-    const order = this.mustGetOwned(accessToken, orderNo);
+  async submitClientTx(
+    accessToken: string,
+    orderNo: string,
+    dto: SubmitClientTxRequestDto,
+  ) {
+    const order = await this.mustGetOwned(accessToken, orderNo);
     order.submittedClientTxHash = dto.txHash;
     order.status = order.status === 'AWAITING_PAYMENT' ? 'PAYMENT_DETECTED' : order.status;
-    this.runtimeStateRepository.saveOrder(order);
+    await this.runtimeStateRepository.saveOrder(order);
     return {};
   }
 
@@ -106,7 +117,7 @@ export class OrdersService {
     orderNo: string,
     _dto: RefreshOrderStatusRequestDto,
   ) {
-    const order = this.mustGetOwned(accessToken, orderNo);
+    const order = await this.mustGetOwned(accessToken, orderNo);
 
     // Terminal states: no further progression
     if (
@@ -120,7 +131,7 @@ export class OrdersService {
 
     if (new Date(order.expiresAt).getTime() <= Date.now() && order.status === 'AWAITING_PAYMENT') {
       order.status = 'EXPIRED';
-      this.runtimeStateRepository.saveOrder(order);
+      await this.runtimeStateRepository.saveOrder(order);
       return this.toOrderRecord(order);
     }
 
@@ -141,14 +152,14 @@ export class OrdersService {
         if (remoteStatus.status === 'failed') {
           order.status = 'FAILED';
           order.failureReason = remoteStatus.error ?? 'Transaction failed on chain';
-          this.runtimeStateRepository.saveOrder(order);
+          await this.runtimeStateRepository.saveOrder(order);
           return this.toOrderRecord(order);
         }
 
         if (remoteStatus.status === 'pending') {
           if (order.status === 'PAYMENT_DETECTED') {
             order.status = 'CONFIRMING';
-            this.runtimeStateRepository.saveOrder(order);
+            await this.runtimeStateRepository.saveOrder(order);
           }
           return this.toOrderRecord(order);
         }
@@ -166,18 +177,18 @@ export class OrdersService {
     return this.toOrderRecord(order);
   }
 
-  getAwaitingOrderCount() {
+  async getAwaitingOrderCount() {
     return this.runtimeStateRepository.countOrdersByStatus(['AWAITING_PAYMENT']);
   }
 
-  getReviewOrderCount() {
+  async getReviewOrderCount() {
     return this.runtimeStateRepository.countOrdersByStatus([
       'UNDERPAID_REVIEW',
       'OVERPAID_REVIEW',
     ]);
   }
 
-  getTodayPaidOrderCount() {
+  async getTodayPaidOrderCount() {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     return this.runtimeStateRepository.countOrdersByStatus(
@@ -186,8 +197,8 @@ export class OrdersService {
     );
   }
 
-  private mustGet(orderNo: string) {
-    const order = this.runtimeStateRepository.findOrderByNo(orderNo);
+  private async mustGet(orderNo: string) {
+    const order = await this.runtimeStateRepository.findOrderByNo(orderNo);
     if (!order) {
       throw new NotFoundException({
         code: 'ORDER_NOT_FOUND',
@@ -197,27 +208,27 @@ export class OrdersService {
     return order;
   }
 
-  listOrders(params: {
+  async listOrders(params: {
     page?: number;
     pageSize?: number;
     orderNo?: string;
     status?: string;
     accountId?: string;
   }) {
-    const result = this.runtimeStateRepository.listOrders(params);
+    const result = await this.runtimeStateRepository.listOrders(params);
     return {
       items: result.items.map((order) => this.toOrderRecord(order)),
       page: result.page,
     };
   }
 
-  getOrderByNo(orderNo: string) {
-    return this.toOrderRecord(this.mustGet(orderNo));
+  async getOrderByNo(orderNo: string) {
+    return this.toOrderRecord(await this.mustGet(orderNo));
   }
 
-  private mustGetOwned(accessToken: string, orderNo: string) {
+  private async mustGetOwned(accessToken: string, orderNo: string) {
     const account = this.authService.getMe(accessToken);
-    const order = this.mustGet(orderNo);
+    const order = await this.mustGet(orderNo);
     if (order.accountId !== account.accountId) {
       throw new NotFoundException({
         code: 'ORDER_NOT_FOUND',
@@ -227,17 +238,19 @@ export class OrdersService {
     return order;
   }
 
-  private markPaidAndProvision(order: StoredOrderRecord): OrderRecord {
+  private async markPaidAndProvision(
+    order: StoredOrderRecord,
+  ): Promise<OrderRecord> {
     if (order.status !== 'PAID' && order.status !== 'PROVISIONING' && order.status !== 'COMPLETED') {
       order.status = 'PAID';
       order.confirmedAt = new Date().toISOString();
-      this.runtimeStateRepository.saveOrder(order);
+      await this.runtimeStateRepository.saveOrder(order);
     }
 
     if (order.status === 'PAID') {
       order.status = 'PROVISIONING';
-      this.runtimeStateRepository.saveOrder(order);
-      this.provisioningService.provisionPaidOrder({
+      await this.runtimeStateRepository.saveOrder(order);
+      await this.provisioningService.provisionPaidOrder({
         accountId: order.accountId,
         planCode: order.planCode,
         orderNo: order.orderNo,
@@ -246,7 +259,7 @@ export class OrdersService {
       });
       order.status = 'COMPLETED';
       order.completedAt = new Date().toISOString();
-      this.runtimeStateRepository.saveOrder(order);
+      await this.runtimeStateRepository.saveOrder(order);
     }
 
     return this.toOrderRecord(order);

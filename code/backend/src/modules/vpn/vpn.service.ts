@@ -21,14 +21,14 @@ export class VpnService {
     private readonly runtimeStateRepository: RuntimeStateRepository,
   ) {}
 
-  getCurrentSubscription(accessToken: string) {
+  async getCurrentSubscription(accessToken: string) {
     const account = this.authService.getMe(accessToken);
     return this.getSubscriptionByAccountId(account.accountId);
   }
 
-  listRegions(accessToken: string) {
+  async listRegions(accessToken: string) {
     const account = this.authService.getMe(accessToken);
-    const subscription = this.getSubscriptionByAccountId(account.accountId);
+    const subscription = await this.getSubscriptionByAccountId(account.accountId);
     if (subscription.status !== 'ACTIVE') {
       throw new ForbiddenException({
         code: 'SUBSCRIPTION_REQUIRED',
@@ -59,20 +59,20 @@ export class VpnService {
     };
   }
 
-  issueConfig(
+  async issueConfig(
     accessToken: string,
     params: { regionCode: string; connectionMode: 'global' | 'rule' },
   ) {
     const session = this.authService.getSessionSummary(accessToken);
     const account = this.authService.getMe(accessToken);
-    const subscription = this.getSubscriptionByAccountId(account.accountId);
+    const subscription = await this.getSubscriptionByAccountId(account.accountId);
     if (subscription.status !== 'ACTIVE') {
       throw new ForbiddenException({
         code: 'SUBSCRIPTION_REQUIRED',
         message: 'Subscription required',
       });
     }
-    const regions = this.listRegions(accessToken).items;
+    const regions = (await this.listRegions(accessToken)).items;
     const region = regions.find((item) => item.regionCode === params.regionCode);
 
     if (!region) {
@@ -105,9 +105,9 @@ export class VpnService {
     };
   }
 
-  getVpnStatus(accessToken: string) {
+  async getVpnStatus(accessToken: string) {
     const account = this.authService.getMe(accessToken);
-    const subscription = this.getSubscriptionByAccountId(account.accountId);
+    const subscription = await this.getSubscriptionByAccountId(account.accountId);
     const session = this.authService.getSessionSummary(accessToken);
 
     return {
@@ -119,12 +119,17 @@ export class VpnService {
     };
   }
 
-  getActiveSubscriptionCount() {
+  async getActiveSubscriptionCount() {
     return this.runtimeStateRepository.countActiveSubscriptions();
   }
 
-  activateSubscription(accountId: string, planCode: string, orderNo: string) {
-    const existing = this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
+  async activateSubscription(
+    accountId: string,
+    planCode: string,
+    orderNo: string,
+  ) {
+    const existing =
+      await this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
     if (existing?.orderNo === orderNo) {
       return this.toSubscriptionState(existing);
     }
@@ -146,13 +151,15 @@ export class VpnService {
       maxActiveSessions: 1,
     };
 
-    this.runtimeStateRepository.upsertSubscription(subscription);
+    await this.runtimeStateRepository.upsertSubscription(subscription);
     return this.toSubscriptionState(subscription);
   }
 
-  private getSubscriptionByAccountId(accountId: string): SubscriptionState {
+  private async getSubscriptionByAccountId(
+    accountId: string,
+  ): Promise<SubscriptionState> {
     const subscription =
-      this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
+      await this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
 
     if (!subscription) {
       return this.getEmptySubscription();
@@ -165,16 +172,18 @@ export class VpnService {
         daysRemaining: 0,
         updatedAt: new Date().toISOString(),
       };
-      this.runtimeStateRepository.upsertSubscription(expiredSubscription);
+      await this.runtimeStateRepository.upsertSubscription(expiredSubscription);
       return this.toSubscriptionState(expiredSubscription);
     }
 
     return this.toSubscriptionState(subscription);
   }
 
-  getSubscriptionByAccountIdForAdmin(accountId: string): SubscriptionState | null {
+  async getSubscriptionByAccountIdForAdmin(
+    accountId: string,
+  ): Promise<SubscriptionState | null> {
     const subscription =
-      this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
+      await this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
     if (!subscription || subscription.status === 'NONE') {
       return null;
     }

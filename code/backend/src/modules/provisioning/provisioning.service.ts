@@ -14,14 +14,14 @@ export class ProvisioningService {
     private readonly referralService: ReferralService,
   ) {}
 
-  provisionPaidOrder(
+  async provisionPaidOrder(
     input: ProvisionOrderInput & {
       orderNo: string;
       sourceAssetCode: 'SOL' | 'USDT';
       sourceAmount: string;
     },
   ) {
-    const subscription = this.vpnService.activateSubscription(
+    const subscription = await this.vpnService.activateSubscription(
       input.accountId,
       input.planCode,
       input.orderNo,
