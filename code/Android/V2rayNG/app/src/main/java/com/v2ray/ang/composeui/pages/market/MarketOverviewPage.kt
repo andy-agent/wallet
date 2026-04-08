@@ -160,16 +160,20 @@ private fun MarketOverviewContent(
     onOpenQuote: (MarketQuote) -> Unit,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
-    var selectedCategoryIndex by rememberSaveable { mutableIntStateOf(1) }
+    var selectedPrimaryIndex by rememberSaveable { mutableIntStateOf(1) }
     var selectedBoardIndex by rememberSaveable { mutableIntStateOf(0) }
 
-    val selectedCategory = marketOverviewCategories[selectedCategoryIndex]
-    val selectedBoard = marketOverviewBoards[selectedBoardIndex]
-    val visibleQuotes = remember(query, selectedCategory, selectedBoard, quotes) {
+    val selectedPrimary = marketPrimarySections[selectedPrimaryIndex]
+    val boardOptions = remember(selectedPrimary) { marketBoardsFor(selectedPrimary) }
+    if (selectedBoardIndex > boardOptions.lastIndex) {
+        selectedBoardIndex = 0
+    }
+    val selectedBoard = boardOptions[selectedBoardIndex]
+    val visibleQuotes = remember(query, selectedPrimary, selectedBoard, quotes) {
         filterMarketQuotes(
             quotes = quotes,
             query = query,
-            category = selectedCategory,
+            primarySection = selectedPrimary,
             board = selectedBoard,
         )
     }
@@ -194,71 +198,26 @@ private fun MarketOverviewContent(
             ) {
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                Text(
-                                    text = "行情",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                Text(
-                                    text = "${selectedCategory.label} · ${selectedBoard.label} · ${visibleQuotes.size} 个标的",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary,
-                                )
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(14.dp),
-                                color = VpnSurfaceStrong,
-                                border = BorderStroke(1.dp, VpnOutline.copy(alpha = 0.8f)),
-                            ) {
-                                Text(
-                                    text = selectedBoard.label,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = TextSecondary,
-                                )
-                            }
-                        }
                         VpnSearchField(
                             value = query,
                             onValueChange = { query = it },
                             modifier = Modifier.height(52.dp),
-                            placeholder = "搜索币种 / 交易对",
+                            placeholder = "搜索代币/合约/股票/DApp",
                             trailingIcon = Icons.Default.Tune,
                             onTrailingClick = {},
                         )
-                        if (spotlights.isNotEmpty()) {
-                            MarketSpotlightStrip(
-                                spotlights = spotlights,
-                                onOpenQuote = { symbol ->
-                                    val target = quotes.firstOrNull { it.symbol == symbol } ?: quotes.firstOrNull()
-                                    if (target != null) {
-                                        onOpenQuote(target)
-                                    }
-                                },
-                            )
-                        }
                     }
                 }
                 item {
                     MarketTopTabs(
-                        labels = marketOverviewCategories.map { it.label },
-                        selectedIndex = selectedCategoryIndex,
-                        onSelect = { selectedCategoryIndex = it },
+                        labels = marketPrimarySections.map { it.label },
+                        selectedIndex = selectedPrimaryIndex,
+                        onSelect = { selectedPrimaryIndex = it },
                     )
                 }
                 item {
                     MarketBoardTabs(
-                        labels = marketOverviewBoards.map { it.label },
+                        labels = boardOptions.map { it.label },
                         selectedIndex = selectedBoardIndex,
                         onSelect = { selectedBoardIndex = it },
                     )
@@ -526,13 +485,8 @@ private fun MarketQuoteRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = TextTertiary,
                 )
-                val marker = if (quote.isFavorite) {
-                    MarketTag(label = "自选", tone = MarketTagTone.ACCENT)
-                } else {
-                    quote.tags.firstOrNull()
-                }
-                if (marker != null) {
-                    MarketInlineMarker(tag = marker)
+                if (quote.isFavorite) {
+                    MarketInlineMarker(tag = MarketTag(label = "收藏", tone = MarketTagTone.ACCENT))
                 }
             }
             Text(
@@ -626,7 +580,8 @@ private fun MarketBoardDivider() {
 
 private fun MarketBoard.primaryMetricColor(quote: MarketQuote): Color {
     return when (this) {
-        MarketBoard.HOT, MarketBoard.GAINERS -> if (quote.changeRateValue >= 0f) VpnAccent else Error
+        MarketBoard.HOT, MarketBoard.ALL, MarketBoard.FAVORITES, MarketBoard.GAINERS ->
+            if (quote.changeRateValue >= 0f) VpnAccent else Error
         MarketBoard.VOLUME -> TextPrimary
         MarketBoard.NEW -> VpnAccent
     }
@@ -643,6 +598,8 @@ private fun MarketOverviewPagePreview() {
                     symbol = "BTC",
                     name = "Bitcoin",
                     market = "CRYPTO",
+                    marketType = "CONTRACT",
+                    sessionLabel = "24x7",
                     lastPrice = "\$71,697.00",
                     changeAmount = "+\$3,342.22",
                     changePercent = "+4.89%",

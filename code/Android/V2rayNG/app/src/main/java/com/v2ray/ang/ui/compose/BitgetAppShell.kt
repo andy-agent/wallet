@@ -78,6 +78,7 @@ import com.v2ray.ang.composeui.pages.vpn.VPNHomePage
 import com.v2ray.ang.composeui.pages.wallet.WalletHomePage
 import com.v2ray.ang.composeui.theme.BackgroundDeepest
 import com.v2ray.ang.composeui.theme.BackgroundPrimary
+import com.v2ray.ang.composeui.theme.BackgroundSecondary
 import com.v2ray.ang.composeui.theme.GlowBlue
 import com.v2ray.ang.composeui.theme.GlowGreen
 import com.v2ray.ang.composeui.theme.GlowYellow
@@ -129,26 +130,26 @@ fun BitgetAppShell(
 
     val backgroundColors = if (selectedTab == ShellTab.HOME) {
         listOf(
-            Color(0xFF091112),
-            Color(0xFF0A1011),
+            Color(0xFFF8FBFF),
+            BackgroundSecondary,
             BackgroundPrimary,
         )
     } else {
         listOf(
-            BackgroundDeepest,
-            BackgroundPrimary,
+            Color(0xFFFBFDFF),
+            BackgroundSecondary,
             BackgroundPrimary,
         )
     }
     val firstGlow = if (selectedTab == ShellTab.HOME) {
-        Color(0x221AD6F1)
+        Color(0x1435D4E6)
     } else {
-        GlowGreen.copy(alpha = 0.22f)
+        GlowGreen.copy(alpha = 0.16f)
     }
     val secondGlow = if (selectedTab == ShellTab.HOME) {
-        Color(0x14F39B5C)
+        Color(0x14FFB14A)
     } else {
-        GlowBlue.copy(alpha = 0.16f)
+        GlowBlue.copy(alpha = 0.12f)
     }
 
     var showHomeActionsSheet by rememberSaveable(selectedTab) { mutableStateOf(false) }
@@ -389,7 +390,7 @@ fun BitgetAppShell(
                 ) {
                     when {
                         selectedTab == ShellTab.MARKET -> MarketOverviewPage(
-                            onOpenQuote = { quote -> onOpenMarketQuote(quote.symbol) },
+                            onOpenQuote = { quote -> onOpenMarketQuote(quote.instrumentId) },
                         )
 
                         isAuthenticated -> when (selectedTab) {

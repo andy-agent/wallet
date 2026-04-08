@@ -132,13 +132,13 @@ internal class MarketQuoteDetailViewModel : ViewModel() {
 
 @Composable
 internal fun MarketQuoteDetailPage(
-    symbol: String,
+    instrumentId: String,
     viewModel: MarketQuoteDetailViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onNavigateBack: () -> Unit = {},
     onTrade: () -> Unit = {},
 ) {
-    LaunchedEffect(symbol) {
-        viewModel.load(symbol)
+    LaunchedEffect(instrumentId) {
+        viewModel.load(instrumentId)
     }
     val state by viewModel.state.collectAsState()
     when (val currentState = state) {
@@ -191,7 +191,7 @@ private fun MarketQuoteDetailContent(
     onTrade: () -> Unit,
 ) {
     var selectedTopTab by rememberSaveable { mutableIntStateOf(0) }
-    var selectedRangeIndex by rememberSaveable { mutableIntStateOf(3) }
+    var selectedRangeIndex by rememberSaveable { mutableIntStateOf(0) }
     var selectedIndicatorIndex by rememberSaveable { mutableIntStateOf(0) }
     var starred by rememberSaveable { mutableStateOf(true) }
 
@@ -217,6 +217,7 @@ private fun MarketQuoteDetailContent(
                     VpnPrimaryButton(
                         text = detail.tradeActionLabel,
                         onClick = onTrade,
+                        enabled = detail.tradeActionEnabled,
                         modifier = Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
@@ -267,43 +268,17 @@ private fun MarketQuoteDetailContent(
                                 helper = detail.sessionLabel,
                                 changeColor = trendColor,
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                VpnStatusChip(
-                                    text = detail.marketLabel,
-                                    containerColor = VpnSurfaceStrong,
-                                    contentColor = TextSecondary,
-                                )
-                                VpnStatusChip(
-                                    text = "详情",
-                                    containerColor = VpnSurfaceStrong,
-                                    contentColor = TextSecondary,
-                                )
-                            }
+                            VpnStatusChip(
+                                text = detail.marketLabel,
+                                containerColor = VpnSurfaceStrong,
+                                contentColor = TextSecondary,
+                            )
                         }
                         VpnMetricColumn(
                             metrics = detail.metrics.map { metric ->
                                 VpnHeroMetric(metric.label, metric.value)
                             },
                             modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        VpnMetricPill(
-                            label = "主趋势",
-                            value = detail.changePercent,
-                            modifier = Modifier.weight(1f),
-                            valueColor = trendColor,
-                        )
-                        VpnMetricPill(
-                            label = "K 线视图",
-                            value = currentRange?.label ?: "--",
-                            modifier = Modifier.weight(1f),
-                            valueColor = TextPrimary,
                         )
                     }
                 }
@@ -348,8 +323,7 @@ private fun MarketQuoteDetailContent(
                     item {
                         VpnGlassCard {
                             VpnSectionHeading(
-                                title = "市场概览",
-                                subtitle = "主价格、右侧 KPI、主图表和底部 CTA 均对齐 CRWVon detail 结构。",
+                                title = "关键数据",
                             )
                             detail.overviewFacts.forEach { (label, value) ->
                                 VpnLabelValueRow(label = label, value = value)
@@ -360,8 +334,7 @@ private fun MarketQuoteDetailContent(
                     item {
                         VpnGlassCard {
                             VpnSectionHeading(
-                                title = "标的详情",
-                                subtitle = "下半区展示实时接口返回的详情字段。",
+                                title = "详情",
                             )
                             detail.detailFacts.forEach { (label, value) ->
                                 VpnLabelValueRow(label = label, value = value)
@@ -483,7 +456,8 @@ private fun MarketQuoteDetailPagePreview() {
             detail = MarketQuoteDetail(
                 symbol = "SOL",
                 companyName = "Solana",
-                marketLabel = "CRYPTO · 行情",
+                marketLabel = "合约",
+                shareUrl = null,
                 lastPrice = "\$84.47",
                 changeAmount = "+\$5.23",
                 changePercent = "+6.59%",
@@ -525,6 +499,7 @@ private fun MarketQuoteDetailPagePreview() {
                     "市场" to "CRYPTO",
                     "标的名称" to "Solana",
                 ),
+                tradeActionEnabled = true,
                 tradeActionLabel = "查看市场",
             ),
             onNavigateBack = {},

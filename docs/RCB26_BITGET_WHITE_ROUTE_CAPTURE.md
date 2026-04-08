@@ -4,84 +4,219 @@ Date: 2026-04-08
 Device: `ba2b016`
 Target: current Bitget white-theme `Market / 行情` family on the connected real device
 
-## Route Inventory
+## Baseline Sources
 
-1. Contract market shell home
-Path: `/tmp/liaojiang-screens/20260408-214141-bitget-current.png`
-- White background, not dark mode.
-- Top chrome is `全局搜索` plus utility icons.
-- First-level market family tabs are `代币 / 合约 / 股票`.
-- Secondary board row is real market taxonomy, not local mock chips.
-- Quote list is dense and list-first. The page is not built around hero cards.
+### Authoritative Human Screenshots
 
-2. Contract in-page search/filter sheet
-Path: `/tmp/liaojiang-screens/20260408-214706-bitget-market-token-shell-home.png`
-- Search/filter is a sheet layered over the contract market shell.
-- The overlay still keeps the quote list visible and searchable.
-- This confirms the current Bitget route is multi-state within the market family, not a single static list.
+Pulled from the device gallery at `/sdcard/DCIM/Screenshots` into `/tmp/phone-screens`:
 
-3. Stock shell home
-Path: `/tmp/liaojiang-screens/20260408-214205-bitget-03-token-tab.png`
-- `股票` is a first-level tab inside the same market family.
-- The page is white and card-light, with sector cards at the top and a stock list below.
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-04-23-54.jpg`
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-05-00-66_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-05-07-56_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-05-13-19_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-05-21-49_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-05-30-85_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+
+These screenshots are the authoritative route anchors for `rcb.26.2`.
+
+### Supporting Valid ADB Captures
+
+The following ADB captures were verified before route drift and still match Bitget:
+
+- `/tmp/liaojiang-screens/20260408-bitget-market-home-reset-1.png`
+- `/tmp/liaojiang-screens/20260408-bitget-market-contract.png`
+- `/tmp/liaojiang-screens/20260408-bitget-market-stock.png`
+- `/tmp/liaojiang-screens/20260408-bitget-market-search-open.png`
+- `/tmp/liaojiang-screens/20260408-bitget-market-search-nvda.png`
+- `/tmp/liaojiang-screens/20260408-bitget-market-stock-favorites.png`
+
+### Invalidated Automatic Captures
+
+The following later files are not valid Bitget baseline evidence because automation drifted into the local test app `com.v2ray.ang.fdroid`:
+
+- `/tmp/liaojiang-screens/20260408-bitget-market-root-token.png`
+- `/tmp/liaojiang-screens/20260408-bitget-market-root-contract.png`
+- `/tmp/liaojiang-screens/20260408-bitget-market-root-stock.png`
+- `/tmp/bitget-uix/20260408-bitget-market-root-token.xml`
+- `/tmp/bitget-uix/20260408-bitget-market-root-contract.xml`
+- `/tmp/bitget-uix/20260408-bitget-market-root-stock.xml`
+
+Do not use those files for parity decisions.
+
+## Confirmed Route Tree
+
+### Lane A: `行情 -> 代币`
+
+1. `行情 -> 代币` root
+Source: `/tmp/liaojiang-screens/20260408-bitget-market-home-reset-1.png`
+
+- White market shell with top `全局搜索`.
+- First-level tabs are `代币 / 合约 / 股票`.
+- `代币` root contains first-screen callable entries `金狗雷达 / 扫链 / 监控`.
+- `市场热度` is a separate clickable section with cards.
+- Board row is real: `收藏 / Hot Picks / 全链 / 新币榜 / 涨幅榜 ...`.
+
+2. `行情 -> 代币 -> 监控`
+Source: `/tmp/phone-screens/Screenshot_2026-04-08-22-04-23-54.jpg`
+
+- This is a dedicated route, not just a token list filter.
+- Top tabs are `推荐牛人 / 交易动态 / 关注的人`.
+- Page structure is list-first and signal-heavy.
+- This route was missing from the earlier automatic capture set.
+
+3. `行情 -> 代币 -> Hot Picks -> 某币种(BURNIE) -> 交易` family
+Sources:
+
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-05-21-49_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-05-30-85_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+
+- Human screenshots show that after selecting a token such as `BURNIE`, Bitget continues into a trade-family page, not just a quote detail dead-end.
+- The page has token header, chart, buy/sell segmented control, amount chips, fee section, and a bottom CTA.
+- This route proves the required parity chain extends beyond `行情详情`.
+
+3a. `行情 -> 代币 -> Hot Picks`
+Source: `/tmp/phone-screens/Screenshot_2026-04-08-21-54-47-03.jpg`
+
+- Human screenshot shows the token root with `Hot Picks` selected and a live list that includes `BURNIE`.
+- This confirms the exact representative-coin path used by the user: `行情 -> 代币 -> Hot Picks -> BURNIE`.
+
+3b. `BURNIE -> 概览`
+Source: `/tmp/phone-screens/Screenshot_2026-04-08-21-55-52-18.jpg`
+
+- `BURNIE` has its own multi-tab quote/detail family before entering the lower trade dock.
+- Visible top tabs include `概览 / 交易历史 / 持币地址 / 盈利地址 / 资金池 ...`.
+- The `概览` tab contains AI-style commentary and transaction summary modules.
+
+3c. `BURNIE -> 交易历史`
+Source: `/tmp/phone-screens/Screenshot_2026-04-08-21-56-16-22_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+
+- `交易历史` is a distinct tab under the token route.
+- The page combines chart, trade history filters, and lower `交易 / 极速交易` actions.
+
+3d. `BURNIE -> 持币地址`
+Source: `/tmp/phone-screens/Screenshot_2026-04-08-21-56-53-45_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+
+- `持币地址` is another distinct tab under the same token route.
+- This shows the token lane is not just a single chart page followed by trade; it has deeper information tabs and holder analytics.
+
+3e. `BURNIE -> 分享预览`
+Source: `/tmp/phone-screens/Screenshot_2026-04-08-21-59-41-97_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+
+- Bitget exposes a share-preview state from the token route.
+- This is another real substate missing from the earlier automatic capture set.
+
+4. `BURNIE -> 交易 -> 跨链闪兑`
+Source: `/tmp/phone-screens/Screenshot_2026-04-08-22-05-00-66_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+
+- Title is explicitly `跨链闪兑`.
+- Bottom dock exposes `闪兑 / 限价 / 合约 / 股票`.
+- This is a concrete downstream route of the token trade family.
+
+5. `BURNIE -> 交易 -> 限价`
+Source: `/tmp/phone-screens/Screenshot_2026-04-08-22-05-07-56_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+
+- Title is `限价`.
+- Form is input-first, not chart-first.
+- Same bottom trade dock remains visible.
+
+6. `BURNIE -> 交易 -> 合约`
+Source: `/tmp/phone-screens/Screenshot_2026-04-08-22-05-13-19_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+
+- Title is `合约`.
+- Layout changes again into a contract-trading surface with chart, order book, and position controls.
+- This confirms the trade family has multiple sibling routes under the same token context.
+
+7. Additional token-lane discovery subroute with network overlay
+Sources:
+
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-02-42-14.jpg`
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-02-53-16_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+
+- These screenshots show an additional token-lane list/discovery route with alert-style rows and a `切换网络` overlay.
+- The route is still within the token market family because the overlay operates on token-network scope (`全部网络 / Solana / BNB chain / Ethereum / BASE`).
+- This confirms the token lane is richer than just `监控 + Hot Picks + BURNIE trade family`; it also contains a discovery/feed state with network filtering.
+- Exact entry label still needs one more controlled recapture before final naming, so this evidence is recorded as a confirmed token-lane subroute without over-claiming which root chip launched it.
+
+### Lane B: `行情 -> 合约`
+
+1. `行情 -> 合约` root
+Source: `/tmp/liaojiang-screens/20260408-bitget-market-contract.png`
+
+- White root page with first-level `代币 / 合约 / 股票`.
+- Contract board row includes `热门 / 新上线 / 全部 / 股票 ...`.
+- Representative pairs like `CLUSDT` are visible in the list.
+
+Supplementary human screenshot:
+
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-01-06-16_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+
+- This confirms the same contract root under the user's manual route sequence and shows a `热门`-style board state with pairs such as `SMSNUSDC`, `PUMPUSDC`, `JPYUSDC`, and `SOLUSDC`.
+
+2. `行情 -> 合约 -> 某合约交易对 -> 交易 continuation`
+Source: `/tmp/phone-screens/Screenshot_2026-04-08-22-05-13-19_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+
+- Human screenshot confirms that the contract lane continues into a full trade surface, not just a read-only quote page.
+- Sample visible pair is `SOLUSDT`.
+- The route already exposes chart, order-entry widgets, and lower trade dock.
+
+2a. `行情 -> 合约 -> 某合约交易对 -> 行情`
+Sources:
+
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-00-39-98_d45d6ff0b77b937b71a8cf17b79cd5c0.jpg`
+- `/tmp/phone-screens/Screenshot_2026-04-08-22-01-49-38.jpg`
+
+- Human screenshots show contract quote-detail states for `SOL` and `SMSNUSDC`.
+- These pages use the expected `行情 / 详情` structure with chart-first layout and bottom long/short trade actions.
+- This confirms the contract lane includes a stable quote-detail layer before the deeper trading continuation.
+
+3. Remaining captures still required under this lane
+
+- `新上线`
+- `全部`
+- `股票`
+- board-by-board route proof that those tabs are separate list states under the contract lane
+
+These were pointed out by the user and remain incomplete in the current capture set.
+
+### Lane C: `行情 -> 股票`
+
+1. `行情 -> 股票` root
+Source: `/tmp/liaojiang-screens/20260408-bitget-market-stock.png`
+
+- White root page with sector cards and a stock-specific board row.
 - Stock boards include `收藏 / 涨幅榜 / 交易最多 / 中概股 / ETFs ...`.
-- This is materially different from the current Android Market dashboard.
 
-4. Stock hot list sub-route
-Path: `/tmp/liaojiang-screens/20260408-214520-bitget-market-stock-home-2.png`
-- Returning from stock detail lands on a narrower stock list route.
-- The stock family has its own internal route hierarchy, not just one stock tab inside a single page.
+2. `行情 -> 股票 -> 搜索 -> NVDAon`
+Sources:
 
-5. Stock quote detail, `行情` tab
-Path: `/tmp/liaojiang-screens/20260408-214205-bitget-04-token-page.png`
-- Detail page uses top `行情 / 详情` tabs.
-- Main body is price summary, right-side KPI table, time granularity row, K-line chart, and bottom `交易` CTA.
-- The chart area is the center of the page. There is no explanatory hero copy.
+- `/tmp/liaojiang-screens/20260408-bitget-market-search-open.png`
+- `/tmp/liaojiang-screens/20260408-bitget-market-search-nvda.png`
 
-6. Stock detail, `详情` tab
-Path: `/tmp/liaojiang-screens/20260408-214453-bitget-stock-detail-wdcon.png`
-- `详情` is a separate top tab, not a lower card section under the chart page.
-- The page becomes a clean information sheet with key data and one bottom CTA.
+- Search is route-bearing and returns stock entries such as `NVDAon`.
+- This is not a local-only filter over an already loaded list.
 
-7. Contract quote detail, `NVDAUSDT`
-Path: `/tmp/liaojiang-screens/20260408-214205-bitget-09-nvda-detail.png`
-- Contract detail remains under the market family and keeps `行情 / 详情`.
-- It has real-time quote summary, K-line, indicator strip, and dual trading CTAs.
-- The page chrome, spacing, and KPI layout are white-theme and highly structured.
+3. `行情 -> 股票 -> 某标的详情`
+Source: `/tmp/liaojiang-screens/20260408-bitget-market-stock-favorites.png`
 
-8. Contract trade sub-route
-Path: `/tmp/liaojiang-screens/20260408-214205-bitget-10-nvda-detail-tab.png`
-- From contract detail, Bitget can continue into a trade-oriented route with order book and order-entry controls.
-- This confirms that market detail is not a dead-end info page; it is a real functional route family.
+- Automatic capture reached a real stock-detail page (`CRWVon / CoreWeave`) with top `行情 / 详情`.
+- The route confirms the stock lane also continues into deeper detail and trade states.
 
-## Structural Findings
+## Comparison Against The Earlier Automatic Capture Set
 
-- Current Bitget market baseline is white-theme on this device.
-- `代币 / 合约 / 股票` are real first-level sections, not decorative local chips.
-- The market family is route-rich:
-  - top-level shell
-  - search/filter state
-  - section-specific list states
-  - quote detail with `行情 / 详情`
-  - contract trade continuation
-- Quote detail is chart-first and KPI-dense.
-- `详情` is a separate top-level detail tab, not extra commentary cards under the quote chart.
+- Earlier automatic work correctly identified the white theme and the three first-level sections.
+- Earlier automatic work missed user-provided high-value routes:
+  - `代币 -> 监控`
+  - `Hot Picks -> BURNIE -> 交易`
+  - `交易 -> 跨链闪兑 / 限价 / 合约`
+  - the need to finish one lane completely before switching to another lane
+- Earlier automatic work also became polluted by app drift into `com.v2ray.ang.fdroid`; those files are now explicitly invalidated above.
 
-## Functional Findings
+## Baseline Implications For RCB26 / RCB27
 
-- Search is real and route-bearing.
-- Section tabs change the content family, not just local sort labels.
-- Stock and contract routes diverge after selection.
-- Quote rows enter real details with stable market identity.
-- Contract details expose real trading affordances, not a placeholder CTA.
-
-## Baseline Implications For RCB26
-
-- Android `Market` cannot stay a custom hero-first dashboard.
-- Android `Market` must be re-based around:
-  - white theme
-  - first-level `代币 / 合约 / 股票`
-  - real list-first shell
-  - route-specific list states
-  - `行情 / 详情` dual-tab quote detail
-- Any implementation that keeps the current dark dashboard and synthetic boards will remain visibly non-1:1.
+- Parity work must follow route lanes, not just isolated screens.
+- The required order is:
+  1. finish `行情 -> 代币` lane from root through user-confirmed downstream routes
+  2. then finish `行情 -> 合约` lane
+  3. then finish `行情 -> 股票` lane
+- Android `Market` is not allowed to stop at a mock list + mock detail.
+- Functional parity must include the route continuations after token or quote selection, not only top-level market browsing.

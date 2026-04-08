@@ -47,17 +47,17 @@ import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
 import com.v2ray.ang.composeui.theme.TextTertiary
 
-private val HomeTopBarSurface = Color(0xFF151C1F)
-private val HomeCardSurface = Color(0xFF13191D)
-private val HomeCardSurfaceStrong = Color(0xFF1A2125)
-private val HomeCardBorder = Color(0xFF1C272C)
-private val HomeListDivider = Color(0xFF1A2328)
+private val HomeTopBarSurface = Color(0xFFFFFFFF)
+private val HomeCardSurface = Color(0xFFFFFFFF)
+private val HomeCardSurfaceStrong = Color(0xFFF6FAFD)
+private val HomeCardBorder = Color(0xFFE2EAF1)
+private val HomeListDivider = Color(0xFFE7EEF5)
 private val HomeAccent = Color(0xFF1DD6F1)
 private val HomeAccentSoft = Color(0x331DD6F1)
-private val HomePromoTop = Color(0xFF3A2A1C)
-private val HomePromoBottom = Color(0xFFDB7D4D)
-private val HomeHeroTop = Color(0xFF10345B)
-private val HomeHeroBottom = Color(0xFF0C1A1E)
+private val HomePromoTop = Color(0xFFFFE9D5)
+private val HomePromoBottom = Color(0xFFFFA96C)
+private val HomeHeroTop = Color(0xFFE6F7FF)
+private val HomeHeroBottom = Color(0xFFCDEEFF)
 
 data class BitgetHomeQuickLink(
     val label: String,

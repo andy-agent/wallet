@@ -40,7 +40,7 @@ object Routes {
 
     // Market
     const val MARKET_QUOTE_DETAIL = "market_quote_detail"
-    const val MARKET_QUOTE_DETAIL_TEMPLATE = "market_quote_detail/{symbol}"
+    const val MARKET_QUOTE_DETAIL_TEMPLATE = "market_quote_detail/{instrumentId}"
 
     // Growth
     const val INVITE_CENTER = "invite_center"
@@ -107,7 +107,7 @@ object Routes {
             matchPathArg(candidate, ORDER_CHECKOUT, "planId", queryArgs),
             matchPathArg(candidate, ORDER_DETAIL, "orderId", queryArgs),
             matchPathArg(candidate, ASSET_DETAIL, "assetId", queryArgs),
-            matchPathArg(candidate, MARKET_QUOTE_DETAIL, "symbol", queryArgs),
+            matchPathArg(candidate, MARKET_QUOTE_DETAIL, "instrumentId", queryArgs),
             matchPathArg(candidate, LEGAL_DOCUMENT_DETAIL, "documentId", queryArgs),
         )
         return matches.firstOrNull()
@@ -134,8 +134,8 @@ object Routes {
     fun assetDetail(assetId: String): String = withPathArg(ASSET_DETAIL, assetId)
     fun assetDetailRoute(assetId: String): String = assetDetail(assetId)
 
-    fun marketQuoteDetail(symbol: String): String = withPathArg(MARKET_QUOTE_DETAIL, symbol)
-    fun marketQuoteDetailRoute(symbol: String): String = marketQuoteDetail(symbol)
+    fun marketQuoteDetail(instrumentId: String): String = withPathArg(MARKET_QUOTE_DETAIL, instrumentId)
+    fun marketQuoteDetailRoute(instrumentId: String): String = marketQuoteDetail(instrumentId)
 
     fun legalDocumentDetail(documentId: String): String = withPathArg(LEGAL_DOCUMENT_DETAIL, documentId)
     fun legalDocumentDetailRoute(documentId: String): String = legalDocumentDetail(documentId)

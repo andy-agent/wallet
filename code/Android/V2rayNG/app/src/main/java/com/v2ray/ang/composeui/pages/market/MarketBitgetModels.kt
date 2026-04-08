@@ -31,11 +31,21 @@ internal enum class MarketBoard(
     val label: String,
     val columnLabel: String,
 ) {
-    HOT("hot", "热门", "涨跌/热度"),
+    HOT("hot", "热门", "24H涨跌"),
+    NEW("new_listing", "新上线", "新热度"),
+    ALL("all", "全部", "24H涨跌"),
+    FAVORITES("favorites", "收藏", "24H涨跌"),
     GAINERS("gainers", "涨幅榜", "24H涨跌"),
-    VOLUME("volume", "成交额", "成交额"),
-    NEW("new_listing", "新币榜", "新热度"),
+    VOLUME("volume", "交易最多", "24小时交易额"),
     ;
+}
+
+internal enum class MarketPrimarySection(
+    val label: String,
+) {
+    TOKEN("代币"),
+    CONTRACT("合约"),
+    STOCK("股票"),
 }
 
 internal enum class MarketTagTone {
@@ -55,6 +65,8 @@ internal data class MarketQuote(
     val symbol: String,
     val name: String,
     val market: String,
+    val marketType: String,
+    val sessionLabel: String,
     val lastPrice: String,
     val changeAmount: String,
     val changePercent: String,
@@ -98,6 +110,7 @@ internal data class MarketQuoteDetail(
     val symbol: String,
     val companyName: String,
     val marketLabel: String,
+    val shareUrl: String?,
     val lastPrice: String,
     val changeAmount: String,
     val changePercent: String,
@@ -107,6 +120,7 @@ internal data class MarketQuoteDetail(
     val indicators: List<String>,
     val overviewFacts: List<Pair<String, String>>,
     val detailFacts: List<Pair<String, String>>,
+    val tradeActionEnabled: Boolean,
     val tradeActionLabel: String,
 )
 
@@ -120,9 +134,14 @@ internal val marketOverviewCategories = listOf(
 
 internal val marketOverviewBoards = listOf(
     MarketBoard.HOT,
-    MarketBoard.GAINERS,
-    MarketBoard.VOLUME,
     MarketBoard.NEW,
+    MarketBoard.ALL,
+)
+
+internal val marketPrimarySections = listOf(
+    MarketPrimarySection.TOKEN,
+    MarketPrimarySection.CONTRACT,
+    MarketPrimarySection.STOCK,
 )
 
 internal fun MarketOverviewPayload.toMarketQuotes(): List<MarketQuote> {
@@ -135,6 +154,8 @@ internal fun MarketOverviewPayload.toMarketQuotes(): List<MarketQuote> {
             symbol = row.instrument.symbol,
             name = row.instrument.displayName,
             market = row.instrument.marketLabel,
+            marketType = row.instrument.marketType,
+            sessionLabel = row.instrument.sessionLabel ?: row.instrument.marketLabel,
             lastPrice = formatMarketPrice(row.ticker24h.lastPrice, precision),
             changeAmount = formatSignedPrice(row.ticker24h.absChange24h, precision),
             changePercent = formatSignedPercent(row.ticker24h.pctChange24h),
@@ -189,7 +210,8 @@ internal fun MarketInstrumentDetailPayload.toMarketQuoteDetail(
     return MarketQuoteDetail(
         symbol = instrument.symbol,
         companyName = instrument.displayName,
-        marketLabel = "${instrument.marketLabel} · 行情",
+        marketLabel = instrument.marketLabel,
+        shareUrl = shareUrl,
         lastPrice = formatMarketPrice(ticker24h.lastPrice, precision),
         changeAmount = formatSignedPrice(ticker24h.absChange24h, precision),
         changePercent = formatSignedPercent(ticker24h.pctChange24h),
@@ -211,8 +233,28 @@ internal fun MarketInstrumentDetailPayload.toMarketQuoteDetail(
             )
         },
         detailFacts = detailPairs,
+        tradeActionEnabled = tradeAction.enabled,
         tradeActionLabel = tradeAction.label.ifBlank { "查看市场" },
     )
+}
+
+internal fun MarketQuote.primarySection(): MarketPrimarySection {
+    val normalizedType = marketType.uppercase(Locale.ROOT)
+    return when {
+        normalizedType.contains("STOCK") || symbol.endsWith("ON", ignoreCase = true) -> MarketPrimarySection.STOCK
+        normalizedType.contains("SPOT") || normalizedType.contains("TOKEN") || normalizedType.contains("COIN") ->
+            MarketPrimarySection.TOKEN
+
+        else -> MarketPrimarySection.CONTRACT
+    }
+}
+
+internal fun marketBoardsFor(section: MarketPrimarySection): List<MarketBoard> {
+    return when (section) {
+        MarketPrimarySection.TOKEN -> listOf(MarketBoard.HOT, MarketBoard.NEW, MarketBoard.ALL)
+        MarketPrimarySection.CONTRACT -> listOf(MarketBoard.HOT, MarketBoard.NEW, MarketBoard.ALL)
+        MarketPrimarySection.STOCK -> listOf(MarketBoard.FAVORITES, MarketBoard.GAINERS, MarketBoard.VOLUME)
+    }
 }
 
 internal fun MarketCandlesPayload.toMarketTimeframe(
@@ -274,25 +316,29 @@ internal fun MarketCandlesPayload.toMarketTimeframe(
 internal fun MarketBoard.primaryMetric(quote: MarketQuote): String {
     return when (this) {
         MarketBoard.HOT -> quote.changePercent
+        MarketBoard.NEW -> quote.listingRank?.let { "热度 $it" } ?: "--"
+        MarketBoard.ALL -> quote.changePercent
+        MarketBoard.FAVORITES -> quote.changePercent
         MarketBoard.GAINERS -> quote.changePercent
         MarketBoard.VOLUME -> quote.volume24h
-        MarketBoard.NEW -> quote.listingRank?.let { "热度 $it" } ?: "--"
     }
 }
 
 internal fun MarketBoard.secondaryMetric(quote: MarketQuote): String {
     return when (this) {
         MarketBoard.HOT -> quote.heatRank?.let { "热度 $it" } ?: "热度 --"
+        MarketBoard.NEW -> "24H ${quote.changePercent}"
+        MarketBoard.ALL -> quote.sessionLabel
+        MarketBoard.FAVORITES -> quote.sessionLabel
         MarketBoard.GAINERS -> "成交额 ${quote.volume24h}"
         MarketBoard.VOLUME -> "24H ${quote.changePercent}"
-        MarketBoard.NEW -> "24H ${quote.changePercent}"
     }
 }
 
 internal fun filterMarketQuotes(
     quotes: List<MarketQuote>,
     query: String,
-    category: MarketCategory,
+    primarySection: MarketPrimarySection,
     board: MarketBoard,
 ): List<MarketQuote> {
     val normalizedQuery = query.trim()
@@ -301,24 +347,26 @@ internal fun filterMarketQuotes(
             quote.symbol.contains(normalizedQuery, ignoreCase = true) ||
             quote.name.contains(normalizedQuery, ignoreCase = true) ||
             quote.tags.any { it.label.contains(normalizedQuery, ignoreCase = true) }
-        val matchesCategory = when (category) {
-            MarketCategory.FAVORITES -> quote.isFavorite
-            else -> quote.categories.contains(category)
+        val matchesSection = quote.primarySection() == primarySection
+        val matchesBoard = when (board) {
+            MarketBoard.FAVORITES -> quote.isFavorite
+            else -> true
         }
-        matchesQuery && matchesCategory
+        matchesQuery && matchesSection && matchesBoard
     }
     return when (board) {
         MarketBoard.HOT -> filtered.sortedWith(
             compareBy<MarketQuote> { it.heatRank ?: Int.MAX_VALUE }
                 .thenByDescending { it.changeRateValue },
         )
-
-        MarketBoard.GAINERS -> filtered.sortedByDescending { it.changeRateValue }
-        MarketBoard.VOLUME -> filtered.sortedByDescending { it.turnover24hValue }
         MarketBoard.NEW -> filtered.sortedWith(
             compareBy<MarketQuote> { it.listingRank ?: Int.MAX_VALUE }
                 .thenByDescending { it.changeRateValue },
         )
+        MarketBoard.ALL -> filtered.sortedByDescending { kotlin.math.abs(it.changeRateValue) }
+        MarketBoard.FAVORITES -> filtered.sortedByDescending { kotlin.math.abs(it.changeRateValue) }
+        MarketBoard.GAINERS -> filtered.sortedByDescending { it.changeRateValue }
+        MarketBoard.VOLUME -> filtered.sortedByDescending { it.turnover24hValue }
     }
 }
 

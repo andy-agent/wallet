@@ -60,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.v2ray.ang.composeui.theme.BackgroundPrimary
 import com.v2ray.ang.composeui.theme.BackgroundDeepest
 import com.v2ray.ang.composeui.theme.Error
 import com.v2ray.ang.composeui.theme.TextPrimary
@@ -70,17 +71,17 @@ internal val VpnPageHorizontalPadding = 20.dp
 internal val VpnPageTopPadding = 16.dp
 internal val VpnPageBottomPadding = 132.dp
 
-internal val VpnAccent = Color(0xFF16D5E8)
+internal val VpnAccent = Color(0xFF35D4E6)
 internal val VpnAccentSoft = VpnAccent.copy(alpha = 0.16f)
-internal val VpnSurface = Color(0xFF141A1C)
-internal val VpnSurfaceStrong = Color(0xFF1A2123)
-internal val VpnSurfaceMuted = Color(0xFF20282A)
-internal val VpnOutline = Color(0xFF243033)
-internal val VpnWarningSurface = Color(0xFF2A271C)
-internal val VpnSheetScrim = Color(0x99000000)
+internal val VpnSurface = Color(0xFFFFFFFF)
+internal val VpnSurfaceStrong = Color(0xFFF6FAFD)
+internal val VpnSurfaceMuted = Color(0xFFEFF4F8)
+internal val VpnOutline = Color(0xFFD8E2EC)
+internal val VpnWarningSurface = Color(0xFFFFF6EA)
+internal val VpnSheetScrim = Color(0x33102033)
 internal val VpnPositive = VpnAccent
-internal val VpnNegative = Color(0xFFFF4F8D)
-internal val VpnDisabledButton = Color(0xFF0A7F8A)
+internal val VpnNegative = Color(0xFFE9687F)
+internal val VpnDisabledButton = Color(0xFFC6D5E1)
 
 private val VpnCardShape = RoundedCornerShape(28.dp)
 private val VpnRowShape = RoundedCornerShape(20.dp)
@@ -115,9 +116,9 @@ fun VpnBitgetBackground(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF102433),
-                        Color(0xFF0B1213),
-                        BackgroundDeepest,
+                        Color(0xFFFBFDFF),
+                        Color(0xFFF6FAFD),
+                        BackgroundPrimary,
                     ),
                 ),
             ),
@@ -420,7 +421,7 @@ fun VpnMetricPill(
 @Composable
 fun VpnSectionHeading(
     title: String,
-    subtitle: String,
+    subtitle: String = "",
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -433,11 +434,13 @@ fun VpnSectionHeading(
             fontWeight = FontWeight.SemiBold,
             color = TextPrimary,
         )
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = TextSecondary,
-        )
+        if (subtitle.isNotBlank()) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+            )
+        }
     }
 }
 

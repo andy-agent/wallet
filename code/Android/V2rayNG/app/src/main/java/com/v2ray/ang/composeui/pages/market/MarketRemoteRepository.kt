@@ -69,6 +69,13 @@ internal class MarketRemoteRepository {
     }
 
     suspend fun resolveInstrumentId(symbol: String): Result<String> {
+        if (symbol.isBlank()) {
+            return Result.failure(IllegalArgumentException("行情标识为空"))
+        }
+        val directDetail = getInstrumentDetail(symbol)
+        if (directDetail.isSuccess) {
+            return Result.success(symbol)
+        }
         return getOverview().mapCatching { overview ->
             overview.rows.firstOrNull {
                 it.instrument.symbol.equals(symbol, ignoreCase = true)

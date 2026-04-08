@@ -228,7 +228,7 @@ fun AppNavGraph(
                     onOpenReceive = { navigateAuthenticated(Routes.RECEIVE) },
                     onOpenSend = { navigateAuthenticated(Routes.send(symbol = "USDT")) },
                     onOpenAssetDetail = { assetId -> navigateAuthenticated(Routes.assetDetail(assetId)) },
-                    onOpenMarketQuote = { symbol -> navigateTo(Routes.marketQuoteDetail(symbol)) },
+                    onOpenMarketQuote = { instrumentId -> navigateTo(Routes.marketQuoteDetail(instrumentId)) },
                     onOpenInviteCenter = { navigateAuthenticated(Routes.INVITE_CENTER) },
                     onOpenCommission = { navigateAuthenticated(Routes.COMMISSION_LEDGER) },
                     onOpenWithdraw = { navigateAuthenticated(Routes.WITHDRAW) },
@@ -431,9 +431,9 @@ fun AppNavGraph(
             }
 
             Routes.MARKET_QUOTE_DETAIL -> {
-                val symbol = routeMatch.args.getValue("symbol")
+                val instrumentId = routeMatch.args.getValue("instrumentId")
                 MarketQuoteDetailPage(
-                    symbol = symbol,
+                    instrumentId = instrumentId,
                     onNavigateBack = { navigateBack() },
                 )
             }
