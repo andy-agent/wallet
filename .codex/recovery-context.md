@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-08T04:59:48Z
+Generated: 2026-04-08T05:30:47Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.22.8.3
-- next_task_title: 按新 IA 重排 bottom tabs 与二级入口
+- next_task_id: liaojiang-4j0.22.6.2.1
+- next_task_title: 预检真实账号与下单 API 可用性
 
 ## Counters
-- in_progress: 5
+- in_progress: 4
 - ready: 4
-- open: 9
-- closed: 167
-- dirty: 86
+- open: 8
+- closed: 171
+- dirty: 93
 
 ## Next Milestone
 - Continue the next task and complete one milestone
