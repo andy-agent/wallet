@@ -91,7 +91,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (shouldLaunchComposeHome()) {
+        if (shouldLaunchComposeHome(savedInstanceState)) {
             startActivity(ComposeContainerActivity.createIntent(this))
             finish()
             return
@@ -137,13 +137,17 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         }
     }
 
-    private fun shouldLaunchComposeHome(): Boolean {
+    private fun shouldLaunchComposeHome(savedInstanceState: Bundle?): Boolean {
+        if (savedInstanceState != null || !isTaskRoot) {
+            return false
+        }
         val currentIntent = intent ?: return false
         if (currentIntent.action != Intent.ACTION_MAIN) {
             return false
         }
-        val categories = currentIntent.categories ?: return false
-        return categories.contains(Intent.CATEGORY_LAUNCHER) ||
+        val categories = currentIntent.categories
+        return categories == null ||
+            categories.contains(Intent.CATEGORY_LAUNCHER) ||
             categories.contains(Intent.CATEGORY_LEANBACK_LAUNCHER)
     }
 
