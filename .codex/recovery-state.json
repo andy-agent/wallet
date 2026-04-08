@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-08T06:03:04Z",
+  "generated_at": "2026-04-08T06:33:48Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-4j0.22.12",
   "next_task_title": "修复 Plans CTA 真机仍不触发下单",
@@ -7,7 +7,7 @@
   "ready_count": 3,
   "open_count": 7,
   "closed_count": 175,
-  "dirty_count": 3,
+  "dirty_count": 6,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
