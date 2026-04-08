@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Send
@@ -30,7 +31,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -39,6 +44,18 @@ import com.v2ray.ang.composeui.components.navigation.BitgetBottomNavigationBar
 import com.v2ray.ang.composeui.components.navigation.ShellBottomBarItem
 import com.v2ray.ang.composeui.components.shell.BitgetAccountHeader
 import com.v2ray.ang.composeui.components.shell.BitgetActionGrid
+import com.v2ray.ang.composeui.components.shell.BitgetHomeActionsSheet
+import com.v2ray.ang.composeui.components.shell.BitgetHomeCampaignCard
+import com.v2ray.ang.composeui.components.shell.BitgetHomeHighlightCard
+import com.v2ray.ang.composeui.components.shell.BitgetHomeHighlightsRow
+import com.v2ray.ang.composeui.components.shell.BitgetHomeListCard
+import com.v2ray.ang.composeui.components.shell.BitgetHomeListEntry
+import com.v2ray.ang.composeui.components.shell.BitgetHomeOperationsHero
+import com.v2ray.ang.composeui.components.shell.BitgetHomePortfolioHero
+import com.v2ray.ang.composeui.components.shell.BitgetHomeQuickLink
+import com.v2ray.ang.composeui.components.shell.BitgetHomeQuickLinks
+import com.v2ray.ang.composeui.components.shell.BitgetHomeSheetAction
+import com.v2ray.ang.composeui.components.shell.BitgetHomeTopBar
 import com.v2ray.ang.composeui.components.shell.BitgetSectionTitle
 import com.v2ray.ang.composeui.components.shell.BitgetShowcaseCard
 import com.v2ray.ang.composeui.components.shell.BitgetTickerStrip
@@ -78,6 +95,14 @@ fun BitgetAppShell(
     onOpenAbout: () -> Unit,
     onOpenSupport: () -> Unit,
 ) {
+    fun guarded(action: () -> Unit): () -> Unit = {
+        if (isAuthenticated) {
+            action()
+        } else {
+            onOpenLogin()
+        }
+    }
+
     val navItems = remember {
         listOf(
             ShellBottomBarItem(tab = ShellTab.HOME, title = "Home", icon = Icons.Default.Home),
@@ -88,38 +113,64 @@ fun BitgetAppShell(
         )
     }
 
-    val model = buildShellModel(
-        selectedTab = selectedTab,
-        isAuthenticated = isAuthenticated,
-        onOpenLogin = onOpenLogin,
-        onOpenVpnConsole = onOpenVpnConsole,
-        onOpenPlans = onOpenPlans,
-        onOpenRegions = onOpenRegions,
-        onOpenOrders = onOpenOrders,
-        onOpenWalletHome = onOpenWalletHome,
-        onOpenReceive = onOpenReceive,
-        onOpenSend = onOpenSend,
-        onOpenAssetBook = onOpenAssetBook,
-        onOpenInviteCenter = onOpenInviteCenter,
-        onOpenCommission = onOpenCommission,
-        onOpenWithdraw = onOpenWithdraw,
-        onOpenProfile = onOpenProfile,
-        onOpenLegal = onOpenLegal,
-        onOpenSettings = onOpenSettings,
-        onOpenAbout = onOpenAbout,
-        onOpenSupport = onOpenSupport,
-    )
+    val model = if (selectedTab == ShellTab.HOME) {
+        null
+    } else {
+        buildShellModel(
+            selectedTab = selectedTab,
+            isAuthenticated = isAuthenticated,
+            onOpenLogin = onOpenLogin,
+            onOpenVpnConsole = onOpenVpnConsole,
+            onOpenPlans = onOpenPlans,
+            onOpenRegions = onOpenRegions,
+            onOpenOrders = onOpenOrders,
+            onOpenWalletHome = onOpenWalletHome,
+            onOpenReceive = onOpenReceive,
+            onOpenSend = onOpenSend,
+            onOpenAssetBook = onOpenAssetBook,
+            onOpenInviteCenter = onOpenInviteCenter,
+            onOpenCommission = onOpenCommission,
+            onOpenWithdraw = onOpenWithdraw,
+            onOpenProfile = onOpenProfile,
+            onOpenLegal = onOpenLegal,
+            onOpenSettings = onOpenSettings,
+            onOpenAbout = onOpenAbout,
+            onOpenSupport = onOpenSupport,
+        )
+    }
+
+    val backgroundColors = if (selectedTab == ShellTab.HOME) {
+        listOf(
+            Color(0xFF091112),
+            Color(0xFF0A1011),
+            BackgroundPrimary,
+        )
+    } else {
+        listOf(
+            BackgroundDeepest,
+            BackgroundPrimary,
+            BackgroundPrimary,
+        )
+    }
+    val firstGlow = if (selectedTab == ShellTab.HOME) {
+        Color(0x221AD6F1)
+    } else {
+        GlowGreen.copy(alpha = 0.22f)
+    }
+    val secondGlow = if (selectedTab == ShellTab.HOME) {
+        Color(0x14F39B5C)
+    } else {
+        GlowBlue.copy(alpha = 0.16f)
+    }
+
+    var showHomeActionsSheet by rememberSaveable(selectedTab) { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(
-                        BackgroundDeepest,
-                        BackgroundPrimary,
-                        BackgroundPrimary,
-                    ),
+                    colors = backgroundColors,
                 ),
             ),
     ) {
@@ -128,7 +179,7 @@ fun BitgetAppShell(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(GlowGreen.copy(alpha = 0.22f), Color.Transparent),
+                        colors = listOf(firstGlow, Color.Transparent),
                         radius = 900f,
                     ),
                 ),
@@ -138,7 +189,7 @@ fun BitgetAppShell(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(GlowBlue.copy(alpha = 0.16f), Color.Transparent),
+                        colors = listOf(secondGlow, Color.Transparent),
                         radius = 1200f,
                     ),
                 ),
@@ -155,65 +206,252 @@ fun BitgetAppShell(
                 )
             },
         ) { innerPadding ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(
-                    start = 20.dp,
-                    end = 20.dp,
-                    top = 16.dp,
-                    bottom = 18.dp,
-                ),
-            ) {
-                item {
-                    BitgetAccountHeader(
-                        badge = model.badge,
-                        title = model.title,
-                        subtitle = model.subtitle,
-                        metrics = model.metrics,
-                        primaryActionLabel = model.primaryActionLabel,
-                        onPrimaryAction = model.onPrimaryAction,
-                        secondaryActionLabel = model.secondaryActionLabel,
-                        onSecondaryAction = model.onSecondaryAction,
+            if (selectedTab == ShellTab.HOME) {
+                val openWalletHomeAction = guarded(onOpenWalletHome)
+                val openOrdersAction = guarded(onOpenOrders)
+                val openVpnAction = guarded(onOpenVpnConsole)
+                val openReceiveAction = guarded(onOpenReceive)
+                val openSendAction = guarded(onOpenSend)
+                val openInviteAction = guarded(onOpenInviteCenter)
+                val openWithdrawAction = guarded(onOpenWithdraw)
+                val heroBalance = if (isAuthenticated) "$12,604.58" else "$0.00"
+                val heroChange = if (isAuthenticated) "-$17.89  -0.96%" else "登录后同步"
+                val heroLabel = if (isAuthenticated) "当日盈亏" else "资产总览"
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                ) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = 20.dp,
+                            end = 20.dp,
+                            top = 16.dp,
+                            bottom = 24.dp,
+                        ),
+                    ) {
+                        item {
+                            BitgetHomeTopBar(
+                                onAvatarClick = openWalletHomeAction,
+                                onProfileClick = onOpenProfile,
+                            )
+                        }
+                        item {
+                            BitgetHomePortfolioHero(
+                                modifier = Modifier.padding(top = 26.dp),
+                                balance = heroBalance,
+                                changeText = heroChange,
+                                changeLabel = heroLabel,
+                                primaryActionLabel = if (isAuthenticated) "去订阅" else "去登录",
+                                onPrimaryAction = if (isAuthenticated) onOpenPlans else onOpenLogin,
+                            )
+                        }
+                        item {
+                            BitgetHomeQuickLinks(
+                                modifier = Modifier.padding(top = 18.dp),
+                                actions = listOf(
+                                    BitgetHomeQuickLink("套餐", Icons.Default.CreditCard, Info, onOpenPlans),
+                                    BitgetHomeQuickLink("钱包", Icons.Default.Wallet, Color(0xFF5AD0FF), openWalletHomeAction),
+                                    BitgetHomeQuickLink("订单", Icons.Default.ReceiptLong, GlowYellow, openOrdersAction),
+                                    BitgetHomeQuickLink("全部", Icons.Default.Menu, Color(0xFFF2F5F8), { showHomeActionsSheet = true }),
+                                ),
+                            )
+                        }
+                        item {
+                            BitgetHomeCampaignCard(
+                                modifier = Modifier.padding(top = 18.dp),
+                                eyebrow = "热门活动",
+                                title = "热门地区不用试错，\n一键切到稳定线路",
+                                description = "购买套餐、切换地区和查看订单都从同一个 Home 流里完成，保留原有业务路由不改接线。",
+                                actionLabel = "立即体验",
+                                onActionClick = openVpnAction,
+                            )
+                        }
+                        item {
+                            BitgetHomeOperationsHero(
+                                modifier = Modifier.padding(top = 18.dp),
+                                eyebrow = "运营专区",
+                                title = "随开随用 · 稳定覆盖\n让线路\n每天快一点",
+                                infoLabel = "快速了解套餐与地区组合",
+                                onClick = onOpenPlans,
+                            )
+                        }
+                        item {
+                            BitgetHomeHighlightsRow(
+                                modifier = Modifier.padding(top = 16.dp),
+                                cards = listOf(
+                                    BitgetHomeHighlightCard(
+                                        metric = "99.95",
+                                        unit = "% 在线率",
+                                        title = "全球旗舰",
+                                        subtitle = "48 个地区可用",
+                                        badge = "G",
+                                        accentColor = Color(0xFF2D82FF),
+                                        onClick = onOpenPlans,
+                                    ),
+                                    BitgetHomeHighlightCard(
+                                        metric = "34",
+                                        unit = "ms 延迟",
+                                        title = "亚洲加速",
+                                        subtitle = "12 条热门线路",
+                                        badge = "A",
+                                        accentColor = Info,
+                                        onClick = onOpenRegions,
+                                    ),
+                                ),
+                            )
+                        }
+                        item {
+                            BitgetHomeListCard(
+                                modifier = Modifier.padding(top = 18.dp),
+                                title = "热门地区",
+                                entries = listOf(
+                                    BitgetHomeListEntry(
+                                        badge = "JP",
+                                        title = "东京 Tokyo",
+                                        subtitle = "视频 / 低延迟",
+                                        metric = "34 ms",
+                                        metricLabel = "热门",
+                                        accentColor = Color(0xFFFFB14A),
+                                        onClick = onOpenRegions,
+                                    ),
+                                    BitgetHomeListEntry(
+                                        badge = "SG",
+                                        title = "新加坡 SG",
+                                        subtitle = "办公 / 稳定",
+                                        metric = "41 ms",
+                                        metricLabel = "推荐",
+                                        accentColor = Color(0xFF3FD6E3),
+                                        onClick = onOpenRegions,
+                                    ),
+                                    BitgetHomeListEntry(
+                                        badge = "US",
+                                        title = "洛杉矶 LA",
+                                        subtitle = "跨区 / 大带宽",
+                                        metric = "62 ms",
+                                        metricLabel = "新上",
+                                        accentColor = Color(0xFF6A86FF),
+                                        onClick = onOpenPlans,
+                                    ),
+                                ),
+                            )
+                        }
+                    }
+
+                    BitgetHomeActionsSheet(
+                        visible = showHomeActionsSheet,
+                        popularActions = listOf(
+                            BitgetHomeSheetAction("VPN", Icons.Default.VpnLock, Info) {
+                                showHomeActionsSheet = false
+                                openVpnAction()
+                            },
+                            BitgetHomeSheetAction("套餐", Icons.Default.CreditCard, Color(0xFF5AD0FF)) {
+                                showHomeActionsSheet = false
+                                onOpenPlans()
+                            },
+                            BitgetHomeSheetAction("订单", Icons.Default.ReceiptLong, GlowYellow) {
+                                showHomeActionsSheet = false
+                                openOrdersAction()
+                            },
+                            BitgetHomeSheetAction("邀请", Icons.Default.Groups, Color(0xFF7AB8FF)) {
+                                showHomeActionsSheet = false
+                                openInviteAction()
+                            },
+                            BitgetHomeSheetAction("帮助", Icons.Default.Info, Color(0xFFF2F5F8)) {
+                                showHomeActionsSheet = false
+                                onOpenSupport()
+                            },
+                            BitgetHomeSheetAction("地区", Icons.Default.Language, Color(0xFF4DD4F5)) {
+                                showHomeActionsSheet = false
+                                onOpenRegions()
+                            },
+                        ),
+                        assetActions = listOf(
+                            BitgetHomeSheetAction("钱包", Icons.Default.AccountBalanceWallet, Color(0xFF5AD0FF)) {
+                                showHomeActionsSheet = false
+                                openWalletHomeAction()
+                            },
+                            BitgetHomeSheetAction("收款", Icons.Default.SouthWest, Color(0xFF49D7C3)) {
+                                showHomeActionsSheet = false
+                                openReceiveAction()
+                            },
+                            BitgetHomeSheetAction("转账", Icons.Default.Send, Color(0xFF7AB8FF)) {
+                                showHomeActionsSheet = false
+                                openSendAction()
+                            },
+                            BitgetHomeSheetAction("提现", Icons.Default.Campaign, GlowYellow) {
+                                showHomeActionsSheet = false
+                                openWithdrawAction()
+                            },
+                        ),
+                        onDismiss = { showHomeActionsSheet = false },
                     )
                 }
-                item {
-                    BitgetTickerStrip(
-                        modifier = Modifier.padding(top = 16.dp),
-                        items = model.tickers,
-                    )
-                }
-                item {
-                    BitgetSectionTitle(
-                        modifier = Modifier.padding(top = 22.dp),
-                        title = model.sectionTitle,
-                        subtitle = model.sectionSubtitle,
-                    )
-                }
-                item {
-                    BitgetActionGrid(
-                        modifier = Modifier.padding(top = 14.dp),
-                        actions = model.actions,
-                    )
-                }
-                item {
-                    BitgetShowcaseCard(
-                        modifier = Modifier.padding(top = 18.dp),
-                        eyebrow = model.showcaseEyebrow,
-                        title = model.showcaseTitle,
-                        body = model.showcaseBody,
-                        actionLabel = model.showcaseActionLabel,
-                        onActionClick = model.onShowcaseAction,
-                    )
-                }
-                items(model.notes) { note ->
-                    Text(
-                        modifier = Modifier.padding(top = 14.dp),
-                        text = "• $note",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            } else {
+                model?.let { shellModel ->
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                        contentPadding = PaddingValues(
+                            start = 20.dp,
+                            end = 20.dp,
+                            top = 16.dp,
+                            bottom = 18.dp,
+                        ),
+                    ) {
+                        item {
+                            BitgetAccountHeader(
+                                badge = shellModel.badge,
+                                title = shellModel.title,
+                                subtitle = shellModel.subtitle,
+                                metrics = shellModel.metrics,
+                                primaryActionLabel = shellModel.primaryActionLabel,
+                                onPrimaryAction = shellModel.onPrimaryAction,
+                                secondaryActionLabel = shellModel.secondaryActionLabel,
+                                onSecondaryAction = shellModel.onSecondaryAction,
+                            )
+                        }
+                        item {
+                            BitgetTickerStrip(
+                                modifier = Modifier.padding(top = 16.dp),
+                                items = shellModel.tickers,
+                            )
+                        }
+                        item {
+                            BitgetSectionTitle(
+                                modifier = Modifier.padding(top = 22.dp),
+                                title = shellModel.sectionTitle,
+                                subtitle = shellModel.sectionSubtitle,
+                            )
+                        }
+                        item {
+                            BitgetActionGrid(
+                                modifier = Modifier.padding(top = 14.dp),
+                                actions = shellModel.actions,
+                            )
+                        }
+                        item {
+                            BitgetShowcaseCard(
+                                modifier = Modifier.padding(top = 18.dp),
+                                eyebrow = shellModel.showcaseEyebrow,
+                                title = shellModel.showcaseTitle,
+                                body = shellModel.showcaseBody,
+                                actionLabel = shellModel.showcaseActionLabel,
+                                onActionClick = shellModel.onShowcaseAction,
+                            )
+                        }
+                        items(shellModel.notes) { note ->
+                            Text(
+                                modifier = Modifier.padding(top = 14.dp),
+                                text = "• $note",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
             }
         }
