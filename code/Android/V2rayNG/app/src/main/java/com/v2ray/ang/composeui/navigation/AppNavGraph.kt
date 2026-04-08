@@ -125,6 +125,20 @@ fun AppNavGraph(
         }
     }
 
+    fun navigateAuthenticatedShellTab(
+        tab: ShellTab,
+        clearStack: Boolean = false,
+    ) {
+        val route = Routes.appShell(tab)
+        if (hasActiveSession) {
+            pendingPostAuthRoute = null
+            navigateTo(route, clearStack = clearStack)
+        } else {
+            pendingPostAuthRoute = route
+            navigateTo(Routes.EMAIL_LOGIN)
+        }
+    }
+
     fun consumePostAuthRoute(): String {
         val route = pendingPostAuthRoute ?: Routes.appShell()
         pendingPostAuthRoute = null
@@ -205,18 +219,18 @@ fun AppNavGraph(
                     isAuthenticated = hasActiveSession,
                     onTabSelected = { tab -> navigateToShell(tab = tab, clearStack = true) },
                     onOpenLogin = { navigateTo(Routes.EMAIL_LOGIN) },
-                    onOpenVpnConsole = { navigateAuthenticated(Routes.VPN_HOME) },
+                    onOpenVpnConsole = { navigateAuthenticatedShellTab(ShellTab.VPN, clearStack = true) },
                     onOpenPlans = { navigateTo(Routes.PLANS) },
                     onOpenRegions = { navigateAuthenticated(Routes.REGION_SELECTION) },
                     onOpenOrders = { navigateAuthenticated(Routes.ORDER_LIST) },
-                    onOpenWalletHome = { navigateAuthenticated(Routes.WALLET_HOME) },
+                    onOpenWalletHome = { navigateAuthenticatedShellTab(ShellTab.WALLET, clearStack = true) },
                     onOpenReceive = { navigateAuthenticated(Routes.RECEIVE) },
                     onOpenSend = { navigateAuthenticated(Routes.send(symbol = "USDT")) },
                     onOpenAssetDetail = { assetId -> navigateAuthenticated(Routes.assetDetail(assetId)) },
-                    onOpenInviteCenter = { navigateAuthenticated(Routes.INVITE_CENTER) },
+                    onOpenInviteCenter = { navigateAuthenticatedShellTab(ShellTab.DISCOVER, clearStack = true) },
                     onOpenCommission = { navigateAuthenticated(Routes.COMMISSION_LEDGER) },
                     onOpenWithdraw = { navigateAuthenticated(Routes.WITHDRAW) },
-                    onOpenProfile = { navigateAuthenticated(Routes.PROFILE) },
+                    onOpenProfile = { navigateAuthenticatedShellTab(ShellTab.PROFILE, clearStack = true) },
                     onOpenLegal = { navigateTo(Routes.LEGAL_DOCUMENTS) },
                     onOpenSettings = { onOpenLegacyDestination(LegacyDestination.SETTINGS) },
                     onOpenAbout = { onOpenLegacyDestination(LegacyDestination.ABOUT) },
