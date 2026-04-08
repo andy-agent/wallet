@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-04-08T12:23:47Z",
+  "generated_at": "2026-04-08T13:14:32Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "active_task_id": "liaojiang-rcb.20.2",
-  "accepted_task_id": "liaojiang-rcb.20.1",
+  "accepted_task_id": "liaojiang-rcb.20.3.3",
   "next_task_id": null,
   "active_worker_task_ids": [],
   "blockers": [
     {
       "task_id": "liaojiang-rcb.20.2",
       "type": "task",
-      "blocked_by": "waiting for the human-controlled real payment step and resulting txHash for order ORD-1775650877315-64DA3EFB, as documented in docs/RCB20_LIVE_PAYMENT_GUIDE.md"
+      "blocked_by": "waiting for the human-controlled real payment step and resulting txHash for order ORD-1775650877315-64DA3EFB, as documented in docs/RCB20_LIVE_PAYMENT_GUIDE.md; auth/login blocker is resolved and no other unblocked bd tasks remain"
     }
   ],
   "workers": [],

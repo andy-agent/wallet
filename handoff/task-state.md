@@ -1,9 +1,9 @@
 # Task State
 
-- Updated At: 2026-04-08 20:31 +08:00
+- Updated At: 2026-04-08 21:14 +08:00
 - Repository: /Users/cnyirui/git/projects/liaojiang
 - Next Task: `liaojiang-rcb.20.2`（执行 funding 后的 refresh-status 与开通验收）
-- Counts: `open=2` `in_progress=2` `closed=218` `ready=0`
+- Counts: `open=0` `in_progress=2` `closed=224` `ready=0`
 - Dirty Files:
   - .codex/bd-orchestrator-state.json
   - .codex/recovery-context.md
@@ -42,6 +42,13 @@ git status --short
     - amount = `9.990000`
     - collection address 已记录
     - 后续需要的 `networkCode` / `txHash` 输入已记录
+- `liaojiang-rcb.20.3` 已验收关闭
+  - 主线提交：`0507625b` `fix(backend): persist auth state in postgres`
+  - 真实 API 验证通过：
+    - `POST /api/client/v1/auth/login/password` 对 `system@cnyirui.cn` 返回 `200`
+    - server3 重启 `cryptovpn-backend.service` 后，再次登录仍返回 `200`
+    - `GET /api/client/v1/me` 返回 `system@cnyirui.cn / ACTIVE`
+  - 结论：`ACCOUNT_NOT_FOUND` 根因已修复，auth 持久化不再只依赖进程内存
 
 ## Remaining Work
 
