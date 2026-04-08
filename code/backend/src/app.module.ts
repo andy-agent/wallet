@@ -8,6 +8,7 @@ import { AccountsModule } from './modules/accounts/accounts.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
+import { MarketModule } from './modules/market/market.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { ProvisioningModule } from './modules/provisioning/provisioning.module';
@@ -34,6 +35,7 @@ import { WithdrawalsModule } from './modules/withdrawals/withdrawals.module';
       },
     }),
     HealthModule,
+    MarketModule,
     DatabaseModule,
     AuthModule,
     AccountsModule,
