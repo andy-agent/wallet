@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import {
   MARKET_BOARDS,
@@ -207,7 +208,7 @@ export class MarketService {
     identifier: string,
   ): Promise<MarketInstrumentDetailResponse> {
     const coinId = await this.resolveCoinId(identifier);
-    const coin = await this.provider.getCoinDetail(coinId);
+    const coin = await this.getDetailableCoin(coinId);
     const categoryKeys = this.deriveCategoryKeysFromDetail(coin);
     const tags = this.buildTags(categoryKeys, coin.categories);
     const instrument = this.toInstrumentRef(
@@ -236,6 +237,22 @@ export class MarketService {
         target: shareUrl,
       },
     };
+  }
+
+  private async getDetailableCoin(coinId: string): Promise<ProviderCoinDetail> {
+    try {
+      return await this.provider.getCoinDetail(coinId);
+    } catch (error) {
+      if (!(error instanceof ServiceUnavailableException)) {
+        throw error;
+      }
+
+      const fallbackCoin = (await this.provider.getMarketsByIds([coinId]))[0];
+      if (!fallbackCoin) {
+        throw error;
+      }
+      return this.toFallbackCoinDetail(fallbackCoin);
+    }
   }
 
   async getCandles(
@@ -444,6 +461,26 @@ export class MarketService {
       baseVolume24h: null,
       marketCap: this.toDecimalString(coin.marketCap),
       peRatio: null,
+    };
+  }
+
+  private toFallbackCoinDetail(coin: ProviderMarketCoin): ProviderCoinDetail {
+    return {
+      id: coin.id,
+      symbol: coin.symbol,
+      name: coin.name,
+      description: null,
+      categories: [],
+      homepageUrl: null,
+      marketCapRank: coin.marketCapRank,
+      currentPrice: coin.currentPrice,
+      priceChange24h: coin.priceChange24h,
+      priceChangePct24h: coin.priceChangePct24h,
+      high24h: coin.high24h,
+      low24h: coin.low24h,
+      totalVolume: coin.totalVolume,
+      marketCap: coin.marketCap,
+      lastUpdatedAt: coin.lastUpdatedAt,
     };
   }
 

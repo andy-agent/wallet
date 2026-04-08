@@ -14,7 +14,7 @@ export class MarketConfig {
 
   getProviderTimeoutMs(): number {
     return Number(
-      this.configService.get<string>('MARKET_PROVIDER_TIMEOUT_MS') ?? 8000,
+      this.configService.get<string>('MARKET_PROVIDER_TIMEOUT_MS') ?? 20000,
     );
   }
 

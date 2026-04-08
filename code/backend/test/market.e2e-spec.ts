@@ -1,4 +1,4 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ServiceUnavailableException, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
@@ -257,6 +257,48 @@ describe('MarketController (e2e)', () => {
         expect.objectContaining({ key: 'market', value: 'CRYPTO' }),
       ]),
     });
+  });
+
+  it('/api/client/v1/market/instruments/:instrumentId (GET) falls back to market summary when provider detail is unavailable', async () => {
+    (marketProvider.getCoinDetail as jest.Mock).mockRejectedValueOnce(
+      new ServiceUnavailableException({
+        code: 'MARKET_PROVIDER_UNAVAILABLE',
+        message: 'Market data provider is unavailable',
+      }),
+    );
+    (marketProvider.getMarketsByIds as jest.Mock).mockResolvedValueOnce([
+      {
+        id: 'zcash',
+        symbol: 'zec',
+        name: 'Zcash',
+        currentPrice: 329.75,
+        priceChange24h: 63.54,
+        priceChangePct24h: 23.87,
+        high24h: 341.0,
+        low24h: 260.0,
+        totalVolume: 125000000,
+        marketCap: 5100000000,
+        marketCapRank: 45,
+        lastUpdatedAt: 1775646590732,
+      },
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .get('/api/client/v1/market/instruments/crypto:zcash')
+      .expect(200);
+
+    expect(response.body.data).toMatchObject({
+      instrument: {
+        instrumentId: 'crypto:zcash',
+        symbol: 'ZEC',
+        displayName: 'Zcash',
+      },
+      tradeAction: {
+        enabled: true,
+      },
+    });
+    expect(marketProvider.getCoinDetail).toHaveBeenCalledWith('zcash');
+    expect(marketProvider.getMarketsByIds).toHaveBeenCalledWith(['zcash']);
   });
 
   it('/api/client/v1/market/instruments/:instrumentId/candles (GET) returns candles', async () => {

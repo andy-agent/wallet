@@ -14,6 +14,7 @@ import com.v2ray.ang.composeui.navigation.AppNavGraph
 import com.v2ray.ang.composeui.navigation.DeepLinkHandler
 import com.v2ray.ang.composeui.navigation.LegacyDestination
 import com.v2ray.ang.composeui.navigation.Routes
+import com.v2ray.ang.composeui.navigation.ShellTab
 import com.v2ray.ang.composeui.pages.splash.ComposeUpdateBridge
 import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import com.v2ray.ang.ui.AboutActivity
@@ -48,7 +49,16 @@ class ComposeContainerActivity : ComponentActivity() {
             is DeepLinkHandler.DeepLinkType.Navigation -> parsed.route
             else -> null
         }
-        val startRoute = Routes.normalize(intent.getStringExtra(EXTRA_START_ROUTE) ?: deepLinkRoute)
+        val startRoute = when {
+            intent.hasExtra(EXTRA_START_ROUTE) ->
+                Routes.normalize(intent.getStringExtra(EXTRA_START_ROUTE))
+            deepLinkRoute != null ->
+                Routes.normalize(deepLinkRoute)
+            isLauncherEntryIntent() ->
+                Routes.appShell(ShellTab.MARKET)
+            else ->
+                Routes.appShell()
+        }
         val forceUpdate = intent.getBooleanExtra(EXTRA_FORCE_UPDATE, false)
         val authBridge = ComposeAuthBridge(this)
         val updateBridge = ComposeUpdateBridge(forceUpdateFromIntent = forceUpdate)
@@ -71,6 +81,15 @@ class ComposeContainerActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun isLauncherEntryIntent(): Boolean {
+        if (intent.action != Intent.ACTION_MAIN) {
+            return false
+        }
+        val categories = intent.categories ?: return true
+        return categories.contains(Intent.CATEGORY_LAUNCHER) ||
+            categories.contains(Intent.CATEGORY_LEANBACK_LAUNCHER)
     }
 
     private fun openLegacyDestination(destination: LegacyDestination) {
