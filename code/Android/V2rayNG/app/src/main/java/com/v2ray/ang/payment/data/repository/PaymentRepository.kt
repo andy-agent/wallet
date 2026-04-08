@@ -2,6 +2,15 @@ package com.v2ray.ang.payment.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import com.google.gson.TypeAdapter
+import com.google.gson.TypeAdapterFactory
+import com.google.gson.reflect.TypeToken
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonWriter
 import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.api.CommissionLedgerPageData
@@ -67,7 +76,7 @@ class PaymentRepository(context: Context) {
         Retrofit.Builder()
             .baseUrl(PaymentConfig.API_BASE_URL)
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(createPaymentApiGson()))
             .build()
             .create(PaymentApi::class.java)
     }
@@ -84,6 +93,12 @@ class PaymentRepository(context: Context) {
         }
         private val isoDateFormatWithMs = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply {
             timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }
+
+        internal fun createPaymentApiGson(): Gson {
+            return GsonBuilder()
+                .registerTypeAdapterFactory(OrderCreatedAtFallbackAdapterFactory())
+                .create()
         }
 
         /**
@@ -758,4 +773,47 @@ class PaymentRepository(context: Context) {
      * 解析 ISO 8601 日期字符串
      */
     private fun parseIsoDate(dateString: String): Long? = parseIsoDateInternal(dateString)
+}
+
+private class OrderCreatedAtFallbackAdapterFactory : TypeAdapterFactory {
+    override fun <T> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>? {
+        if (type.rawType != Order::class.java) {
+            return null
+        }
+
+        val delegate = gson.getDelegateAdapter(this, type)
+        return object : TypeAdapter<T>() {
+            override fun write(out: JsonWriter, value: T?) {
+                delegate.write(out, value)
+            }
+
+            override fun read(reader: JsonReader): T {
+                val payload = JsonParser.parseReader(reader)
+                if (payload.isJsonObject) {
+                    payload.asJsonObject.backfillOrderCreatedAt()
+                }
+                return delegate.fromJsonTree(payload)
+            }
+        }
+    }
+}
+
+private fun JsonObject.backfillOrderCreatedAt() {
+    val createdAt = getStringOrNull("createdAt")
+    if (!createdAt.isNullOrBlank()) {
+        return
+    }
+
+    val fallback = getStringOrNull("expiresAt")
+    if (!fallback.isNullOrBlank()) {
+        addProperty("createdAt", fallback)
+    }
+}
+
+private fun JsonObject.getStringOrNull(fieldName: String): String? {
+    val element = get(fieldName) ?: return null
+    if (element.isJsonNull) {
+        return null
+    }
+    return runCatching { element.asString }.getOrNull()
 }

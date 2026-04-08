@@ -1,6 +1,7 @@
 package com.v2ray.ang.payment.data.repository
 
 import com.v2ray.ang.payment.PaymentConfig
+import com.v2ray.ang.payment.data.model.GetOrderResponse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -55,6 +56,35 @@ class PaymentRepositoryTest {
     fun `parseIsoDateInternal should return null for blank input`() {
         val result = PaymentRepository.parseIsoDateInternal("   ")
         assertNull("Should return null for blank input", result)
+    }
+
+    @Test
+    fun `createPaymentApiGson should backfill missing order createdAt from expiresAt`() {
+        val payload = """
+            {
+              "code": "OK",
+              "message": "success",
+              "data": {
+                "orderId": "ord_123",
+                "orderNo": "ORD-123",
+                "planCode": "vpn-quarter",
+                "planName": "季度套餐",
+                "orderType": "NEW",
+                "quoteAssetCode": "SOL",
+                "quoteNetworkCode": "SOLANA",
+                "quoteUsdAmount": "26.99",
+                "payableAmount": "0.123456",
+                "status": "AWAITING_PAYMENT",
+                "expiresAt": "2026-04-08T10:00:00Z",
+                "createdAt": null
+              }
+            }
+        """.trimIndent()
+
+        val response = PaymentRepository.createPaymentApiGson()
+            .fromJson(payload, GetOrderResponse::class.java)
+
+        assertEquals("2026-04-08T10:00:00Z", response.data?.createdAt)
     }
 
     @Test
