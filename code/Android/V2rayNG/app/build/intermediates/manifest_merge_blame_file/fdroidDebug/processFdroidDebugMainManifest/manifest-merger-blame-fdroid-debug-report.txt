@@ -128,7 +128,7 @@
 65-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:44:9-33
 66
 67    <application
-67-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:44:5-311:19
+67-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:44:5-321:19
 68        android:name="com.v2ray.ang.AngApplication"
 68-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:45:9-39
 69        android:allowBackup="true"
@@ -153,7 +153,7 @@
 79        android:usesCleartextTraffic="true" >
 79-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:53:9-44
 80        <activity
-80-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:55:9-72:20
+80-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:55:9-66:20
 81            android:name="com.v2ray.ang.ui.MainActivity"
 81-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:56:13-44
 82            android:exported="true"
@@ -161,692 +161,712 @@
 83            android:launchMode="singleTask" >
 83-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:58:13-44
 84            <intent-filter>
-84-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:59:13-64:29
-85                <action android:name="android.intent.action.MAIN" />
-85-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:60:17-69
-85-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:60:25-66
-86
-87                <category android:name="android.intent.category.LAUNCHER" />
-87-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:62:17-77
-87-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:62:27-74
-88                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-88-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:63:17-86
-88-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:63:27-83
-89            </intent-filter>
-90            <intent-filter>
-90-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:65:13-67:29
-91                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
-91-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:66:17-99
-91-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:66:25-96
-92            </intent-filter>
-93
-94            <meta-data
-94-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:69:13-71:53
-95                android:name="android.app.shortcuts"
-95-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:70:17-53
-96                android:resource="@xml/shortcuts" />
-96-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:71:17-50
-97        </activity>
-98        <activity
-98-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:73:9-76:60
-99            android:name="com.v2ray.ang.ui.ServerActivity"
-99-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:74:13-46
-100            android:exported="false"
-100-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:75:13-37
-101            android:windowSoftInputMode="stateUnchanged" />
-101-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:76:13-57
-102        <activity
-102-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:77:9-80:60
-103            android:name="com.v2ray.ang.ui.ServerCustomConfigActivity"
-103-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:78:13-58
-104            android:exported="false"
-104-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:79:13-37
-105            android:windowSoftInputMode="stateUnchanged" />
-105-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:80:13-57
-106        <activity
-106-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:81:9-84:60
-107            android:name="com.v2ray.ang.ui.ServerGroupActivity"
-107-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:82:13-51
-108            android:exported="false"
-108-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:83:13-37
-109            android:windowSoftInputMode="stateUnchanged" />
-109-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:84:13-57
+84-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:59:13-61:29
+85                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+85-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:60:17-99
+85-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:60:25-96
+86            </intent-filter>
+87
+88            <meta-data
+88-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:63:13-65:53
+89                android:name="android.app.shortcuts"
+89-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:64:17-53
+90                android:resource="@xml/shortcuts" />
+90-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:65:17-50
+91        </activity>
+92        <activity
+92-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:67:9-70:60
+93            android:name="com.v2ray.ang.ui.ServerActivity"
+93-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:68:13-46
+94            android:exported="false"
+94-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:69:13-37
+95            android:windowSoftInputMode="stateUnchanged" />
+95-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:70:13-57
+96        <activity
+96-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:71:9-74:60
+97            android:name="com.v2ray.ang.ui.ServerCustomConfigActivity"
+97-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:72:13-58
+98            android:exported="false"
+98-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:73:13-37
+99            android:windowSoftInputMode="stateUnchanged" />
+99-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:74:13-57
+100        <activity
+100-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:75:9-78:60
+101            android:name="com.v2ray.ang.ui.ServerGroupActivity"
+101-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:76:13-51
+102            android:exported="false"
+102-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:77:13-37
+103            android:windowSoftInputMode="stateUnchanged" />
+103-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:78:13-57
+104        <activity
+104-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:79:9-81:40
+105            android:name="com.v2ray.ang.ui.SettingsActivity"
+105-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:80:13-48
+106            android:exported="false" />
+106-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:81:13-37
+107        <activity
+107-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:82:9-84:40
+108            android:name="com.v2ray.ang.ui.PerAppProxyActivity"
+108-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:83:13-51
+109            android:exported="false" />
+109-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:84:13-37
 110        <activity
 110-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:85:9-87:40
-111            android:name="com.v2ray.ang.ui.SettingsActivity"
-111-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:86:13-48
+111            android:name="com.v2ray.ang.ui.ScannerActivity"
+111-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:86:13-47
 112            android:exported="false" />
 112-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:87:13-37
 113        <activity
 113-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:88:9-90:40
-114            android:name="com.v2ray.ang.ui.PerAppProxyActivity"
-114-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:89:13-51
+114            android:name="com.v2ray.ang.ui.LogcatActivity"
+114-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:89:13-46
 115            android:exported="false" />
 115-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:90:13-37
 116        <activity
 116-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:91:9-93:40
-117            android:name="com.v2ray.ang.ui.ScannerActivity"
-117-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:92:13-47
+117            android:name="com.v2ray.ang.ui.RoutingSettingActivity"
+117-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:92:13-54
 118            android:exported="false" />
 118-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:93:13-37
 119        <activity
 119-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:94:9-96:40
-120            android:name="com.v2ray.ang.ui.LogcatActivity"
-120-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:95:13-46
+120            android:name="com.v2ray.ang.ui.RoutingEditActivity"
+120-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:95:13-51
 121            android:exported="false" />
 121-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:96:13-37
 122        <activity
 122-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:97:9-99:40
-123            android:name="com.v2ray.ang.ui.RoutingSettingActivity"
-123-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:98:13-54
+123            android:name="com.v2ray.ang.ui.SubSettingActivity"
+123-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:98:13-50
 124            android:exported="false" />
 124-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:99:13-37
 125        <activity
 125-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:100:9-102:40
-126            android:name="com.v2ray.ang.ui.RoutingEditActivity"
-126-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:101:13-51
+126            android:name="com.v2ray.ang.ui.UserAssetActivity"
+126-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:101:13-49
 127            android:exported="false" />
 127-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:102:13-37
 128        <activity
 128-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:103:9-105:40
-129            android:name="com.v2ray.ang.ui.SubSettingActivity"
-129-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:104:13-50
+129            android:name="com.v2ray.ang.ui.UserAssetUrlActivity"
+129-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:104:13-52
 130            android:exported="false" />
 130-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:105:13-37
 131        <activity
-131-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:106:9-108:40
-132            android:name="com.v2ray.ang.ui.UserAssetActivity"
-132-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:107:13-49
+131-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:107:9-109:40
+132            android:name="com.v2ray.ang.ui.SubEditActivity"
+132-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:108:13-47
 133            android:exported="false" />
-133-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:108:13-37
+133-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:109:13-37
 134        <activity
-134-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:109:9-111:40
-135            android:name="com.v2ray.ang.ui.UserAssetUrlActivity"
-135-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:110:13-52
+134-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:110:9-112:40
+135            android:name="com.v2ray.ang.ui.ScScannerActivity"
+135-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:111:13-49
 136            android:exported="false" />
-136-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:111:13-37
+136-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:112:13-37
 137        <activity
-137-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:113:9-115:40
-138            android:name="com.v2ray.ang.ui.SubEditActivity"
-138-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:114:13-47
-139            android:exported="false" />
-139-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:115:13-37
-140        <activity
-140-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:116:9-118:40
-141            android:name="com.v2ray.ang.ui.ScScannerActivity"
-141-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:117:13-49
-142            android:exported="false" />
-142-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:118:13-37
+137-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:113:9-118:79
+138            android:name="com.v2ray.ang.ui.ScSwitchActivity"
+138-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:114:13-48
+139            android:excludeFromRecents="true"
+139-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:115:13-46
+140            android:exported="false"
+140-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:116:13-37
+141            android:process=":RunSoLibV2RayDaemon"
+141-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:117:13-51
+142            android:theme="@style/AppThemeDayNight.NoActionBar.Translucent" />
+142-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:118:13-76
 143        <activity
-143-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:119:9-124:79
-144            android:name="com.v2ray.ang.ui.ScSwitchActivity"
-144-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:120:13-48
-145            android:excludeFromRecents="true"
-145-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:121:13-46
-146            android:exported="false"
-146-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:122:13-37
-147            android:process=":RunSoLibV2RayDaemon"
-147-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:123:13-51
-148            android:theme="@style/AppThemeDayNight.NoActionBar.Translucent" />
-148-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:124:13-76
-149        <activity
-149-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:126:9-144:20
-150            android:name="com.v2ray.ang.ui.UrlSchemeActivity"
-150-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:127:13-49
-151            android:exported="true" >
-151-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:128:13-36
-152            <intent-filter>
-152-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:129:13-133:29
-153                <action android:name="android.intent.action.SEND" />
-153-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:130:17-69
-153-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:130:25-66
-154
-155                <category android:name="android.intent.category.DEFAULT" />
-155-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:131:17-76
-155-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:131:27-73
-156
-157                <data android:mimeType="text/plain" />
-157-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:132:17-55
-157-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:132:23-52
-158            </intent-filter>
-159            <intent-filter>
-159-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:134:13-143:29
-160                <action android:name="android.intent.action.VIEW" />
-160-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:135:17-69
-160-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:135:25-66
-161
-162                <category android:name="android.intent.category.BROWSABLE" />
-162-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:137:17-78
-162-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:137:27-75
-163                <category android:name="android.intent.category.DEFAULT" />
-163-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:131:17-76
-163-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:131:27-73
-164
-165                <data android:scheme="v2rayng" />
-165-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:132:17-55
-165-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:140:23-47
-166                <data android:host="install-config" />
-166-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:132:17-55
-166-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:141:23-52
-167                <data android:host="install-sub" />
-167-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:132:17-55
-167-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:141:23-52
-168            </intent-filter>
-169        </activity>
+143-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:120:9-138:20
+144            android:name="com.v2ray.ang.ui.UrlSchemeActivity"
+144-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:121:13-49
+145            android:exported="true" >
+145-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:122:13-36
+146            <intent-filter>
+146-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:123:13-127:29
+147                <action android:name="android.intent.action.SEND" />
+147-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:124:17-69
+147-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:124:25-66
+148
+149                <category android:name="android.intent.category.DEFAULT" />
+149-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:125:17-76
+149-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:125:27-73
+150
+151                <data android:mimeType="text/plain" />
+151-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:126:17-55
+151-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:126:23-52
+152            </intent-filter>
+153            <intent-filter>
+153-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:128:13-137:29
+154                <action android:name="android.intent.action.VIEW" />
+154-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:129:17-69
+154-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:129:25-66
+155
+156                <category android:name="android.intent.category.BROWSABLE" />
+156-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:131:17-78
+156-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:131:27-75
+157                <category android:name="android.intent.category.DEFAULT" />
+157-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:125:17-76
+157-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:125:27-73
+158
+159                <data android:scheme="v2rayng" />
+159-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:126:17-55
+159-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:134:23-47
+160                <data android:host="install-config" />
+160-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:126:17-55
+160-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:135:23-52
+161                <data android:host="install-sub" />
+161-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:126:17-55
+161-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:135:23-52
+162            </intent-filter>
+163        </activity>
+164        <activity
+164-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:139:9-141:40
+165            android:name="com.v2ray.ang.ui.CheckUpdateActivity"
+165-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:140:13-51
+166            android:exported="false" />
+166-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:141:13-37
+167        <activity
+167-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:142:9-144:40
+168            android:name="com.v2ray.ang.ui.BackupActivity"
+168-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:143:13-46
+169            android:exported="false" />
+169-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:144:13-37
 170        <activity
 170-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:145:9-147:40
-171            android:name="com.v2ray.ang.ui.CheckUpdateActivity"
-171-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:146:13-51
+171            android:name="com.v2ray.ang.ui.AboutActivity"
+171-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:146:13-45
 172            android:exported="false" />
 172-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:147:13-37
 173        <activity
-173-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:148:9-150:40
-174            android:name="com.v2ray.ang.ui.BackupActivity"
-174-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:149:13-46
-175            android:exported="false" />
-175-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:150:13-37
-176        <activity
-176-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:151:9-153:40
-177            android:name="com.v2ray.ang.ui.AboutActivity"
-177-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:152:13-45
-178            android:exported="false" />
-178-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:153:13-37
-179        <activity
-179-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:154:9-158:67
-180            android:name="com.v2ray.ang.plans.PlansActivity"
-180-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:155:13-48
-181            android:label="@string/title_plans"
-181-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:156:13-48
-182            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
-182-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:157:13-58
-183            android:theme="@style/AppThemeDayNight.NoActionBar" />
-183-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:158:13-64
-184        <activity
-184-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:159:9-163:67
-185            android:name="com.v2ray.ang.plans.PaymentActivity"
-185-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:160:13-50
-186            android:label="@string/title_payment"
-186-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:161:13-50
-187            android:parentActivityName="com.v2ray.ang.plans.PlansActivity"
-187-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:162:13-62
-188            android:theme="@style/AppThemeDayNight.NoActionBar" />
-188-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:163:13-64
-189        <activity
-189-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:164:9-168:67
-190            android:name="com.v2ray.ang.payment.ui.activity.UserProfileActivity"
-190-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:165:13-68
-191            android:label="@string/user_profile"
-191-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:166:13-49
-192            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
-192-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:167:13-58
-193            android:theme="@style/AppThemeDayNight.NoActionBar" />
-193-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:168:13-64
-194        <activity
-194-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:169:9-172:67
-195            android:name="com.v2ray.ang.payment.ui.activity.LoginActivity"
-195-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:170:13-62
-196            android:label="@string/login"
-196-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:171:13-42
-197            android:theme="@style/AppThemeDayNight.NoActionBar" />
-197-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:172:13-64
-198        <activity
-198-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:173:9-177:67
-199            android:name="com.v2ray.ang.payment.ui.activity.InvitationCenterActivity"
-199-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:174:13-73
-200            android:label="@string/title_invitation_center"
-200-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:175:13-60
-201            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
-201-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:176:13-58
-202            android:theme="@style/AppThemeDayNight.NoActionBar" />
-202-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:177:13-64
-203        <activity
-203-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:178:9-182:67
-204            android:name="com.v2ray.ang.payment.ui.activity.CommissionLedgerActivity"
-204-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:179:13-73
-205            android:label="@string/title_commission_ledger"
-205-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:180:13-60
-206            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
-206-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:181:13-58
-207            android:theme="@style/AppThemeDayNight.NoActionBar" />
-207-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:182:13-64
-208        <activity
-208-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:183:9-187:67
-209            android:name="com.v2ray.ang.payment.ui.activity.WithdrawalActivity"
-209-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:184:13-67
-210            android:label="@string/title_withdrawal"
-210-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:185:13-53
+173-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:148:9-152:67
+174            android:name="com.v2ray.ang.plans.PlansActivity"
+174-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:149:13-48
+175            android:label="@string/title_plans"
+175-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:150:13-48
+176            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
+176-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:151:13-58
+177            android:theme="@style/AppThemeDayNight.NoActionBar" />
+177-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:152:13-64
+178        <activity
+178-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:153:9-157:67
+179            android:name="com.v2ray.ang.plans.PaymentActivity"
+179-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:154:13-50
+180            android:label="@string/title_payment"
+180-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:155:13-50
+181            android:parentActivityName="com.v2ray.ang.plans.PlansActivity"
+181-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:156:13-62
+182            android:theme="@style/AppThemeDayNight.NoActionBar" />
+182-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:157:13-64
+183        <activity
+183-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:158:9-162:67
+184            android:name="com.v2ray.ang.payment.ui.activity.UserProfileActivity"
+184-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:159:13-68
+185            android:label="@string/user_profile"
+185-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:160:13-49
+186            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
+186-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:161:13-58
+187            android:theme="@style/AppThemeDayNight.NoActionBar" />
+187-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:162:13-64
+188        <activity
+188-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:163:9-166:67
+189            android:name="com.v2ray.ang.payment.ui.activity.LoginActivity"
+189-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:164:13-62
+190            android:label="@string/login"
+190-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:165:13-42
+191            android:theme="@style/AppThemeDayNight.NoActionBar" />
+191-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:166:13-64
+192        <activity
+192-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:167:9-171:67
+193            android:name="com.v2ray.ang.payment.ui.activity.InvitationCenterActivity"
+193-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:168:13-73
+194            android:label="@string/title_invitation_center"
+194-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:169:13-60
+195            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
+195-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:170:13-58
+196            android:theme="@style/AppThemeDayNight.NoActionBar" />
+196-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:171:13-64
+197        <activity
+197-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:172:9-176:67
+198            android:name="com.v2ray.ang.payment.ui.activity.CommissionLedgerActivity"
+198-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:173:13-73
+199            android:label="@string/title_commission_ledger"
+199-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:174:13-60
+200            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
+200-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:175:13-58
+201            android:theme="@style/AppThemeDayNight.NoActionBar" />
+201-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:176:13-64
+202        <activity
+202-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:177:9-181:67
+203            android:name="com.v2ray.ang.payment.ui.activity.WithdrawalActivity"
+203-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:178:13-67
+204            android:label="@string/title_withdrawal"
+204-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:179:13-53
+205            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
+205-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:180:13-58
+206            android:theme="@style/AppThemeDayNight.NoActionBar" />
+206-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:181:13-64
+207        <activity
+207-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:182:9-187:67
+208            android:name="com.v2ray.ang.ui.compose.ComposeContainerActivity"
+208-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:183:13-64
+209            android:exported="false"
+209-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:184:13-37
+210            android:label="Compose Container"
+210-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:185:13-46
 211            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
 211-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:186:13-58
 212            android:theme="@style/AppThemeDayNight.NoActionBar" />
 212-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:187:13-64
-213        <activity
-213-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:188:9-193:67
-214            android:name="com.v2ray.ang.ui.compose.ComposeContainerActivity"
-214-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:189:13-64
-215            android:exported="false"
-215-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:190:13-37
-216            android:label="Compose Container"
-216-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:191:13-46
-217            android:parentActivityName="com.v2ray.ang.ui.MainActivity"
-217-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:192:13-58
-218            android:theme="@style/AppThemeDayNight.NoActionBar" />
-218-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:193:13-64
-219
-220        <service
-220-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:195:9-213:19
-221            android:name="com.v2ray.ang.service.V2RayVpnService"
-221-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:196:13-52
-222            android:enabled="true"
-222-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:197:13-35
-223            android:exported="false"
-223-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:198:13-37
-224            android:foregroundServiceType="specialUse"
-224-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:199:13-55
-225            android:label="@string/app_name"
-225-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:200:13-45
-226            android:permission="android.permission.BIND_VPN_SERVICE"
-226-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:201:13-69
-227            android:process=":RunSoLibV2RayDaemon" >
-227-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:202:13-51
-228            <intent-filter>
-228-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:204:13-206:29
-229                <action android:name="android.net.VpnService" />
-229-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:205:17-65
-229-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:205:25-62
-230            </intent-filter>
-231
-232            <meta-data
-232-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:207:13-209:40
-233                android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON"
-233-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:208:17-73
-234                android:value="true" />
-234-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:209:17-37
-235
-236            <property
-236-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:210:13-212:39
-237                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-237-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:211:17-76
-238                android:value="vpn" />
-238-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:212:17-36
-239        </service>
-240        <service
-240-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:215:9-224:19
-241            android:name="com.v2ray.ang.service.V2RayProxyOnlyService"
-241-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:216:13-58
-242            android:exported="false"
-242-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:217:13-37
-243            android:foregroundServiceType="specialUse"
-243-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:218:13-55
-244            android:label="@string/app_name"
-244-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:219:13-45
-245            android:process=":RunSoLibV2RayDaemon" >
-245-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:220:13-51
-246            <property
-246-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:210:13-212:39
-247                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-247-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:211:17-76
-248                android:value="proxy" />
-248-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:212:17-36
-249        </service>
-250        <service
-250-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:226:9-229:54
-251            android:name="com.v2ray.ang.service.V2RayTestService"
-251-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:227:13-53
-252            android:exported="false"
-252-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:228:13-37
-253            android:process=":RunSoLibV2RayDaemon" />
-253-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:229:13-51
-254
-255        <receiver
-255-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:231:9-243:20
-256            android:name="com.v2ray.ang.receiver.WidgetProvider"
-256-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:232:13-52
-257            android:exported="true"
-257-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:233:13-36
-258            android:process=":RunSoLibV2RayDaemon" >
-258-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:234:13-51
-259            <meta-data
-259-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:235:13-237:63
-260                android:name="android.appwidget.provider"
-260-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:236:17-58
-261                android:resource="@xml/app_widget_provider" />
-261-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:237:17-60
-262
-263            <intent-filter>
-263-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:238:13-242:29
-264                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-264-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:239:17-84
-264-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:239:25-81
-265                <action android:name="com.v2ray.ang.fdroid.action.widget.click" />
-265-->INJECTED
-265-->INJECTED
-266                <action android:name="com.v2ray.ang.fdroid.action.activity" />
-266-->INJECTED
-266-->INJECTED
-267            </intent-filter>
-268        </receiver>
-269        <receiver
-269-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:244:9-251:20
-270            android:name="com.v2ray.ang.receiver.BootReceiver"
-270-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:245:13-50
-271            android:exported="true"
-271-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:246:13-36
-272            android:label="BootReceiver" >
-272-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:247:13-41
-273            <intent-filter>
-273-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:248:13-250:29
-274                <action android:name="android.intent.action.BOOT_COMPLETED" />
-274-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:249:17-79
-274-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:249:25-76
-275            </intent-filter>
-276        </receiver>
-277
-278        <service
-278-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:253:9-267:19
-279            android:name="com.v2ray.ang.service.QSTileService"
-279-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:254:13-50
-280            android:exported="true"
-280-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:255:13-36
-281            android:foregroundServiceType="specialUse"
-281-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:256:13-55
-282            android:icon="@drawable/ic_stat_name"
-282-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:257:13-50
-283            android:label="@string/app_tile_name"
-283-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:258:13-50
-284            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
-284-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:259:13-77
-285            android:process=":RunSoLibV2RayDaemon" >
-285-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:260:13-51
-286            <intent-filter>
-286-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:261:13-263:29
-287                <action android:name="android.service.quicksettings.action.QS_TILE" />
-287-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:262:17-87
-287-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:262:25-84
-288            </intent-filter>
-289
-290            <property
-290-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:210:13-212:39
-291                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-291-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:211:17-76
-292                android:value="tile" />
-292-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:212:17-36
-293        </service>
-294        <!-- =====================Tasker===================== -->
-295        <activity
-295-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:269:9-276:20
-296            android:name="com.v2ray.ang.ui.TaskerActivity"
-296-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:270:13-46
-297            android:exported="true"
-297-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:271:13-36
-298            android:icon="@mipmap/ic_launcher" >
-298-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:272:13-47
-299            <intent-filter>
-299-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:273:13-275:29
-300                <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
-300-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:274:17-95
-300-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:274:25-92
-301            </intent-filter>
-302        </activity>
-303
-304        <receiver
-304-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:278:9-286:20
-305            android:name="com.v2ray.ang.receiver.TaskerReceiver"
-305-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:279:13-52
-306            android:exported="true"
-306-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:280:13-36
-307            android:process=":RunSoLibV2RayDaemon" >
-307-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:281:13-51
-308            <intent-filter>
-308-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:283:13-285:29
-309                <action android:name="com.twofortyfouram.locale.intent.action.FIRE_SETTING" />
-309-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:284:17-95
-309-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:284:25-92
-310            </intent-filter>
-311        </receiver>
-312        <!-- =====================Tasker===================== -->
-313        <provider
-313-->INJECTED
-314            android:name="androidx.startup.InitializationProvider"
-314-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:289:13-67
-315            android:authorities="com.v2ray.ang.fdroid.androidx-startup"
-315-->INJECTED
-316            android:exported="false" >
-316-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:291:13-37
-317            <meta-data
-317-->[androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:29:13-31:52
-318                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-318-->[androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:30:17-75
-319                android:value="androidx.startup" />
-319-->[androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:31:17-49
-320            <meta-data
-320-->[androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:29:13-31:52
-321                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-321-->[androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:30:17-78
-322                android:value="androidx.startup" />
-322-->[androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:31:17-49
-323            <meta-data
-323-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:29:13-31:52
-324                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-324-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:30:17-85
-325                android:value="androidx.startup" />
-325-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:31:17-49
-326            <meta-data
-326-->[com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:16:13-18:52
-327                android:name="okhttp3.internal.platform.PlatformInitializer"
-327-->[com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:17:17-77
-328                android:value="androidx.startup" />
-328-->[com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:18:17-49
-329        </provider>
-330        <provider
-330-->INJECTED
-331            android:name="androidx.core.content.FileProvider"
-331-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:302:13-62
-332            android:authorities="com.v2ray.ang.fdroid.cache"
-332-->INJECTED
-333            android:exported="false"
-333-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:304:13-37
-334            android:grantUriPermissions="true" >
-334-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:305:13-47
-335            <meta-data
-335-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:306:13-308:55
-336                android:name="android.support.FILE_PROVIDER_PATHS"
-336-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:307:17-67
-337                android:resource="@xml/cache_paths" />
-337-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:308:17-52
-338        </provider>
-339
-340        <activity
-340-->[com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:15:9-19:45
-341            android:name="io.github.g00fy2.quickie.QRScannerActivity"
-341-->[com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:16:13-70
-342            android:screenOrientation="behind"
-342-->[com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:17:13-47
-343            android:theme="@style/QuickieScannerActivity" />
-343-->[com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:18:13-58
-344        <!--
-345        Service for holding metadata. Cannot be instantiated.
-346        Metadata will be merged from other manifests.
-347        -->
-348        <service
-348-->[androidx.camera:camera-core:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6e70fe418f29cee5d5d98a1dce6f918a/transformed/camera-core-1.4.1/AndroidManifest.xml:29:9-33:78
-349            android:name="androidx.camera.core.impl.MetadataHolderService"
-349-->[androidx.camera:camera-core:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6e70fe418f29cee5d5d98a1dce6f918a/transformed/camera-core-1.4.1/AndroidManifest.xml:30:13-75
-350            android:enabled="false"
-350-->[androidx.camera:camera-core:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6e70fe418f29cee5d5d98a1dce6f918a/transformed/camera-core-1.4.1/AndroidManifest.xml:31:13-36
-351            android:exported="false" >
-351-->[androidx.camera:camera-core:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6e70fe418f29cee5d5d98a1dce6f918a/transformed/camera-core-1.4.1/AndroidManifest.xml:32:13-37
-352            <meta-data
-352-->[androidx.camera:camera-camera2:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4d2d1fb851750af13d0ae111cf56fdeb/transformed/camera-camera2-1.4.1/AndroidManifest.xml:30:13-32:89
-353                android:name="androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER"
-353-->[androidx.camera:camera-camera2:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4d2d1fb851750af13d0ae111cf56fdeb/transformed/camera-camera2-1.4.1/AndroidManifest.xml:31:17-103
-354                android:value="androidx.camera.camera2.Camera2Config$DefaultProvider" />
-354-->[androidx.camera:camera-camera2:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4d2d1fb851750af13d0ae111cf56fdeb/transformed/camera-camera2-1.4.1/AndroidManifest.xml:32:17-86
-355        </service>
-356        <service
-356-->[androidx.work:work-multiprocess:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab3a2fac5118aa4f741a1bb57b617c5/transformed/work-multiprocess-2.11.1/AndroidManifest.xml:24:9-27:63
-357            android:name="androidx.work.multiprocess.RemoteWorkManagerService"
-357-->[androidx.work:work-multiprocess:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab3a2fac5118aa4f741a1bb57b617c5/transformed/work-multiprocess-2.11.1/AndroidManifest.xml:25:13-79
-358            android:exported="false" />
-358-->[androidx.work:work-multiprocess:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab3a2fac5118aa4f741a1bb57b617c5/transformed/work-multiprocess-2.11.1/AndroidManifest.xml:26:13-37
+213
+214        <activity-alias
+214-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:188:9-203:26
+215            android:name="com.v2ray.ang.ui.ComposeLauncherAlias"
+215-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:189:13-52
+216            android:banner="@mipmap/ic_banner"
+216-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:190:13-47
+217            android:enabled="true"
+217-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:191:13-35
+218            android:exported="true"
+218-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:192:13-36
+219            android:icon="@mipmap/ic_launcher"
+219-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:193:13-47
+220            android:label="@string/app_name"
+220-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:194:13-45
+221            android:targetActivity="com.v2ray.ang.ui.compose.ComposeContainerActivity"
+221-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:195:13-74
+222            android:theme="@style/AppThemeDayNight.NoActionBar" >
+222-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:196:13-64
+223            <intent-filter>
+223-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:197:13-202:29
+224                <action android:name="android.intent.action.MAIN" />
+224-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:198:17-69
+224-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:198:25-66
+225
+226                <category android:name="android.intent.category.LAUNCHER" />
+226-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:200:17-77
+226-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:200:27-74
+227                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+227-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:201:17-86
+227-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:201:27-83
+228            </intent-filter>
+229        </activity-alias>
+230
+231        <service
+231-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:205:9-223:19
+232            android:name="com.v2ray.ang.service.V2RayVpnService"
+232-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:206:13-52
+233            android:enabled="true"
+233-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:207:13-35
+234            android:exported="false"
+234-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:208:13-37
+235            android:foregroundServiceType="specialUse"
+235-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:209:13-55
+236            android:label="@string/app_name"
+236-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:210:13-45
+237            android:permission="android.permission.BIND_VPN_SERVICE"
+237-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:211:13-69
+238            android:process=":RunSoLibV2RayDaemon" >
+238-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:212:13-51
+239            <intent-filter>
+239-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:214:13-216:29
+240                <action android:name="android.net.VpnService" />
+240-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:215:17-65
+240-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:215:25-62
+241            </intent-filter>
+242
+243            <meta-data
+243-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:217:13-219:40
+244                android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON"
+244-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:218:17-73
+245                android:value="true" />
+245-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:219:17-37
+246
+247            <property
+247-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:220:13-222:39
+248                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+248-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:221:17-76
+249                android:value="vpn" />
+249-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:222:17-36
+250        </service>
+251        <service
+251-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:225:9-234:19
+252            android:name="com.v2ray.ang.service.V2RayProxyOnlyService"
+252-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:226:13-58
+253            android:exported="false"
+253-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:227:13-37
+254            android:foregroundServiceType="specialUse"
+254-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:228:13-55
+255            android:label="@string/app_name"
+255-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:229:13-45
+256            android:process=":RunSoLibV2RayDaemon" >
+256-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:230:13-51
+257            <property
+257-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:220:13-222:39
+258                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+258-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:221:17-76
+259                android:value="proxy" />
+259-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:222:17-36
+260        </service>
+261        <service
+261-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:236:9-239:54
+262            android:name="com.v2ray.ang.service.V2RayTestService"
+262-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:237:13-53
+263            android:exported="false"
+263-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:238:13-37
+264            android:process=":RunSoLibV2RayDaemon" />
+264-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:239:13-51
+265
+266        <receiver
+266-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:241:9-253:20
+267            android:name="com.v2ray.ang.receiver.WidgetProvider"
+267-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:242:13-52
+268            android:exported="true"
+268-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:243:13-36
+269            android:process=":RunSoLibV2RayDaemon" >
+269-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:244:13-51
+270            <meta-data
+270-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:245:13-247:63
+271                android:name="android.appwidget.provider"
+271-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:246:17-58
+272                android:resource="@xml/app_widget_provider" />
+272-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:247:17-60
+273
+274            <intent-filter>
+274-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:248:13-252:29
+275                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+275-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:249:17-84
+275-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:249:25-81
+276                <action android:name="com.v2ray.ang.fdroid.action.widget.click" />
+276-->INJECTED
+276-->INJECTED
+277                <action android:name="com.v2ray.ang.fdroid.action.activity" />
+277-->INJECTED
+277-->INJECTED
+278            </intent-filter>
+279        </receiver>
+280        <receiver
+280-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:254:9-261:20
+281            android:name="com.v2ray.ang.receiver.BootReceiver"
+281-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:255:13-50
+282            android:exported="true"
+282-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:256:13-36
+283            android:label="BootReceiver" >
+283-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:257:13-41
+284            <intent-filter>
+284-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:258:13-260:29
+285                <action android:name="android.intent.action.BOOT_COMPLETED" />
+285-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:259:17-79
+285-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:259:25-76
+286            </intent-filter>
+287        </receiver>
+288
+289        <service
+289-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:263:9-277:19
+290            android:name="com.v2ray.ang.service.QSTileService"
+290-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:264:13-50
+291            android:exported="true"
+291-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:265:13-36
+292            android:foregroundServiceType="specialUse"
+292-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:266:13-55
+293            android:icon="@drawable/ic_stat_name"
+293-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:267:13-50
+294            android:label="@string/app_tile_name"
+294-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:268:13-50
+295            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+295-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:269:13-77
+296            android:process=":RunSoLibV2RayDaemon" >
+296-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:270:13-51
+297            <intent-filter>
+297-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:271:13-273:29
+298                <action android:name="android.service.quicksettings.action.QS_TILE" />
+298-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:272:17-87
+298-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:272:25-84
+299            </intent-filter>
+300
+301            <property
+301-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:220:13-222:39
+302                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+302-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:221:17-76
+303                android:value="tile" />
+303-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:222:17-36
+304        </service>
+305        <!-- =====================Tasker===================== -->
+306        <activity
+306-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:279:9-286:20
+307            android:name="com.v2ray.ang.ui.TaskerActivity"
+307-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:280:13-46
+308            android:exported="true"
+308-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:281:13-36
+309            android:icon="@mipmap/ic_launcher" >
+309-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:282:13-47
+310            <intent-filter>
+310-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:283:13-285:29
+311                <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
+311-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:284:17-95
+311-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:284:25-92
+312            </intent-filter>
+313        </activity>
+314
+315        <receiver
+315-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:288:9-296:20
+316            android:name="com.v2ray.ang.receiver.TaskerReceiver"
+316-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:289:13-52
+317            android:exported="true"
+317-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:290:13-36
+318            android:process=":RunSoLibV2RayDaemon" >
+318-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:291:13-51
+319            <intent-filter>
+319-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:293:13-295:29
+320                <action android:name="com.twofortyfouram.locale.intent.action.FIRE_SETTING" />
+320-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:294:17-95
+320-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:294:25-92
+321            </intent-filter>
+322        </receiver>
+323        <!-- =====================Tasker===================== -->
+324        <provider
+324-->INJECTED
+325            android:name="androidx.startup.InitializationProvider"
+325-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:299:13-67
+326            android:authorities="com.v2ray.ang.fdroid.androidx-startup"
+326-->INJECTED
+327            android:exported="false" >
+327-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:301:13-37
+328            <meta-data
+328-->[androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:29:13-31:52
+329                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+329-->[androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:30:17-75
+330                android:value="androidx.startup" />
+330-->[androidx.emoji2:emoji2:1.4.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/a0105e40ab859b8c032400374f18a5f8/transformed/emoji2-1.4.0/AndroidManifest.xml:31:17-49
+331            <meta-data
+331-->[androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:29:13-31:52
+332                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+332-->[androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:30:17-78
+333                android:value="androidx.startup" />
+333-->[androidx.lifecycle:lifecycle-process:2.10.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/231a6f9ab954fe149176abd72776f715/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:31:17-49
+334            <meta-data
+334-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:29:13-31:52
+335                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+335-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:30:17-85
+336                android:value="androidx.startup" />
+336-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:31:17-49
+337            <meta-data
+337-->[com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:16:13-18:52
+338                android:name="okhttp3.internal.platform.PlatformInitializer"
+338-->[com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:17:17-77
+339                android:value="androidx.startup" />
+339-->[com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:18:17-49
+340        </provider>
+341        <provider
+341-->INJECTED
+342            android:name="androidx.core.content.FileProvider"
+342-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:312:13-62
+343            android:authorities="com.v2ray.ang.fdroid.cache"
+343-->INJECTED
+344            android:exported="false"
+344-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:314:13-37
+345            android:grantUriPermissions="true" >
+345-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:315:13-47
+346            <meta-data
+346-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:316:13-318:55
+347                android:name="android.support.FILE_PROVIDER_PATHS"
+347-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:317:17-67
+348                android:resource="@xml/cache_paths" />
+348-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:318:17-52
+349        </provider>
+350
+351        <activity
+351-->[com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:15:9-19:45
+352            android:name="io.github.g00fy2.quickie.QRScannerActivity"
+352-->[com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:16:13-70
+353            android:screenOrientation="behind"
+353-->[com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:17:13-47
+354            android:theme="@style/QuickieScannerActivity" />
+354-->[com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:18:13-58
+355        <!--
+356        Service for holding metadata. Cannot be instantiated.
+357        Metadata will be merged from other manifests.
+358        -->
 359        <service
-359-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:39:9-45:35
-360            android:name="androidx.work.impl.background.systemjob.SystemJobService"
-360-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:40:13-84
-361            android:directBootAware="false"
-361-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:41:13-44
-362            android:enabled="@bool/enable_system_job_service_default"
-362-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:42:13-70
-363            android:exported="true"
-363-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:43:13-36
-364            android:permission="android.permission.BIND_JOB_SERVICE" />
-364-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:44:13-69
-365        <service
-365-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:46:9-52:35
-366            android:name="androidx.work.impl.foreground.SystemForegroundService"
-366-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:47:13-81
-367            android:directBootAware="false"
-367-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:48:13-44
-368            android:enabled="@bool/enable_system_foreground_service_default"
-368-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:49:13-77
+359-->[androidx.camera:camera-core:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6e70fe418f29cee5d5d98a1dce6f918a/transformed/camera-core-1.4.1/AndroidManifest.xml:29:9-33:78
+360            android:name="androidx.camera.core.impl.MetadataHolderService"
+360-->[androidx.camera:camera-core:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6e70fe418f29cee5d5d98a1dce6f918a/transformed/camera-core-1.4.1/AndroidManifest.xml:30:13-75
+361            android:enabled="false"
+361-->[androidx.camera:camera-core:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6e70fe418f29cee5d5d98a1dce6f918a/transformed/camera-core-1.4.1/AndroidManifest.xml:31:13-36
+362            android:exported="false" >
+362-->[androidx.camera:camera-core:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6e70fe418f29cee5d5d98a1dce6f918a/transformed/camera-core-1.4.1/AndroidManifest.xml:32:13-37
+363            <meta-data
+363-->[androidx.camera:camera-camera2:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4d2d1fb851750af13d0ae111cf56fdeb/transformed/camera-camera2-1.4.1/AndroidManifest.xml:30:13-32:89
+364                android:name="androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER"
+364-->[androidx.camera:camera-camera2:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4d2d1fb851750af13d0ae111cf56fdeb/transformed/camera-camera2-1.4.1/AndroidManifest.xml:31:17-103
+365                android:value="androidx.camera.camera2.Camera2Config$DefaultProvider" />
+365-->[androidx.camera:camera-camera2:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/4d2d1fb851750af13d0ae111cf56fdeb/transformed/camera-camera2-1.4.1/AndroidManifest.xml:32:17-86
+366        </service>
+367        <service
+367-->[androidx.work:work-multiprocess:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab3a2fac5118aa4f741a1bb57b617c5/transformed/work-multiprocess-2.11.1/AndroidManifest.xml:24:9-27:63
+368            android:name="androidx.work.multiprocess.RemoteWorkManagerService"
+368-->[androidx.work:work-multiprocess:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab3a2fac5118aa4f741a1bb57b617c5/transformed/work-multiprocess-2.11.1/AndroidManifest.xml:25:13-79
 369            android:exported="false" />
-369-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:50:13-37
-370
-371        <receiver
-371-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:54:9-59:35
-372            android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver"
-372-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:55:13-88
-373            android:directBootAware="false"
-373-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:56:13-44
-374            android:enabled="true"
-374-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:57:13-35
-375            android:exported="false" />
-375-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:58:13-37
-376        <receiver
-376-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:60:9-69:20
-377            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
-377-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:61:13-88
+369-->[androidx.work:work-multiprocess:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fab3a2fac5118aa4f741a1bb57b617c5/transformed/work-multiprocess-2.11.1/AndroidManifest.xml:26:13-37
+370        <service
+370-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:39:9-45:35
+371            android:name="androidx.work.impl.background.systemjob.SystemJobService"
+371-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:40:13-84
+372            android:directBootAware="false"
+372-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:41:13-44
+373            android:enabled="@bool/enable_system_job_service_default"
+373-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:42:13-70
+374            android:exported="true"
+374-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:43:13-36
+375            android:permission="android.permission.BIND_JOB_SERVICE" />
+375-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:44:13-69
+376        <service
+376-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:46:9-52:35
+377            android:name="androidx.work.impl.foreground.SystemForegroundService"
+377-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:47:13-81
 378            android:directBootAware="false"
-378-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:62:13-44
-379            android:enabled="false"
-379-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:63:13-36
-380            android:exported="false" >
-380-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:64:13-37
-381            <intent-filter>
-381-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:248:13-250:29
-382                <action android:name="android.intent.action.BOOT_COMPLETED" />
-382-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:249:17-79
-382-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:249:25-76
-383            </intent-filter>
-384        </receiver>
-385        <receiver
-385-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:70:9-80:20
-386            android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
-386-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:71:13-78
-387            android:directBootAware="false"
-387-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:72:13-44
-388            android:enabled="true"
-388-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:73:13-35
-389            android:exported="true"
-389-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:74:13-36
-390            android:permission="android.permission.DUMP" >
-390-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:75:13-57
-391            <intent-filter>
-391-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:77:13-79:29
-392                <action android:name="androidx.work.diagnostics.REQUEST_DIAGNOSTICS" />
-392-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:78:17-88
-392-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:78:25-85
-393            </intent-filter>
-394        </receiver>
-395
-396        <uses-library
-396-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:25:9-27:40
-397            android:name="androidx.window.extensions"
-397-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:26:13-54
-398            android:required="false" />
-398-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:27:13-37
-399        <uses-library
-399-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:28:9-30:40
-400            android:name="androidx.window.sidecar"
-400-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:29:13-51
-401            android:required="false" />
-401-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:30:13-37
-402
-403        <activity
-403-->[androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:23:9-25:39
-404            android:name="androidx.compose.ui.tooling.PreviewActivity"
-404-->[androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:24:13-71
-405            android:exported="true" />
-405-->[androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:25:13-36
-406        <activity
-406-->[androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:23:9-26:79
-407            android:name="androidx.activity.ComponentActivity"
-407-->[androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:24:13-63
-408            android:exported="true"
-408-->[androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:25:13-36
-409            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
-409-->[androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:26:13-76
-410
-411        <receiver
-411-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:34:9-52:20
-412            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-412-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:35:13-76
-413            android:directBootAware="false"
-413-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:36:13-44
-414            android:enabled="true"
-414-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:37:13-35
-415            android:exported="true"
-415-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:38:13-36
-416            android:permission="android.permission.DUMP" >
-416-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:39:13-57
-417            <intent-filter>
-417-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:40:13-42:29
-418                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-418-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:41:17-91
-418-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:41:25-88
-419            </intent-filter>
-420            <intent-filter>
-420-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:43:13-45:29
-421                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-421-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:44:17-85
-421-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:44:25-82
-422            </intent-filter>
-423            <intent-filter>
-423-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:46:13-48:29
-424                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-424-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:47:17-88
-424-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:47:25-85
-425            </intent-filter>
-426            <intent-filter>
-426-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:49:13-51:29
-427                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-427-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:50:17-95
-427-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:50:25-92
-428            </intent-filter>
-429        </receiver>
-430
-431        <service
-431-->[androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/95fab1e1e8a39ff5150c289e8cac4256/transformed/room-runtime-release/AndroidManifest.xml:24:9-28:63
-432            android:name="androidx.room.MultiInstanceInvalidationService"
-432-->[androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/95fab1e1e8a39ff5150c289e8cac4256/transformed/room-runtime-release/AndroidManifest.xml:25:13-74
-433            android:directBootAware="true"
-433-->[androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/95fab1e1e8a39ff5150c289e8cac4256/transformed/room-runtime-release/AndroidManifest.xml:26:13-43
-434            android:exported="false" />
-434-->[androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/95fab1e1e8a39ff5150c289e8cac4256/transformed/room-runtime-release/AndroidManifest.xml:27:13-37
-435
-436        <activity
-436-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:47:9-53:63
-437            android:name="com.journeyapps.barcodescanner.CaptureActivity"
-437-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:48:13-74
-438            android:clearTaskOnLaunch="true"
-438-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:49:13-45
-439            android:screenOrientation="sensorLandscape"
-439-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:50:13-56
-440            android:stateNotNeeded="true"
-440-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:51:13-42
-441            android:theme="@style/zxing_CaptureTheme"
-441-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:52:13-54
-442            android:windowSoftInputMode="stateAlwaysHidden" />
-442-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:53:13-60
-443    </application>
-444
-445</manifest>
+378-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:48:13-44
+379            android:enabled="@bool/enable_system_foreground_service_default"
+379-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:49:13-77
+380            android:exported="false" />
+380-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:50:13-37
+381
+382        <receiver
+382-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:54:9-59:35
+383            android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver"
+383-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:55:13-88
+384            android:directBootAware="false"
+384-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:56:13-44
+385            android:enabled="true"
+385-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:57:13-35
+386            android:exported="false" />
+386-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:58:13-37
+387        <receiver
+387-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:60:9-69:20
+388            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
+388-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:61:13-88
+389            android:directBootAware="false"
+389-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:62:13-44
+390            android:enabled="false"
+390-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:63:13-36
+391            android:exported="false" >
+391-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:64:13-37
+392            <intent-filter>
+392-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:258:13-260:29
+393                <action android:name="android.intent.action.BOOT_COMPLETED" />
+393-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:259:17-79
+393-->/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:259:25-76
+394            </intent-filter>
+395        </receiver>
+396        <receiver
+396-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:70:9-80:20
+397            android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
+397-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:71:13-78
+398            android:directBootAware="false"
+398-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:72:13-44
+399            android:enabled="true"
+399-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:73:13-35
+400            android:exported="true"
+400-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:74:13-36
+401            android:permission="android.permission.DUMP" >
+401-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:75:13-57
+402            <intent-filter>
+402-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:77:13-79:29
+403                <action android:name="androidx.work.diagnostics.REQUEST_DIAGNOSTICS" />
+403-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:78:17-88
+403-->[androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:78:25-85
+404            </intent-filter>
+405        </receiver>
+406
+407        <uses-library
+407-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:25:9-27:40
+408            android:name="androidx.window.extensions"
+408-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:26:13-54
+409            android:required="false" />
+409-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:27:13-37
+410        <uses-library
+410-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:28:9-30:40
+411            android:name="androidx.window.sidecar"
+411-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:29:13-51
+412            android:required="false" />
+412-->[androidx.window:window:1.0.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/2cc7fa730167fdc76ec5b374db268c16/transformed/window-1.0.0/AndroidManifest.xml:30:13-37
+413
+414        <activity
+414-->[androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:23:9-25:39
+415            android:name="androidx.compose.ui.tooling.PreviewActivity"
+415-->[androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:24:13-71
+416            android:exported="true" />
+416-->[androidx.compose.ui:ui-tooling-android:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3328aef4e388acd386ba6e2c534e6e65/transformed/ui-tooling/AndroidManifest.xml:25:13-36
+417        <activity
+417-->[androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:23:9-26:79
+418            android:name="androidx.activity.ComponentActivity"
+418-->[androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:24:13-63
+419            android:exported="true"
+419-->[androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:25:13-36
+420            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+420-->[androidx.compose.ui:ui-test-manifest:1.9.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/fb2d65a5f4fb54f1d44051943018f2f6/transformed/ui-test-manifest-1.9.2/AndroidManifest.xml:26:13-76
+421
+422        <receiver
+422-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:34:9-52:20
+423            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+423-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:35:13-76
+424            android:directBootAware="false"
+424-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:36:13-44
+425            android:enabled="true"
+425-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:37:13-35
+426            android:exported="true"
+426-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:38:13-36
+427            android:permission="android.permission.DUMP" >
+427-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:39:13-57
+428            <intent-filter>
+428-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:40:13-42:29
+429                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+429-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:41:17-91
+429-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:41:25-88
+430            </intent-filter>
+431            <intent-filter>
+431-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:43:13-45:29
+432                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+432-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:44:17-85
+432-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:44:25-82
+433            </intent-filter>
+434            <intent-filter>
+434-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:46:13-48:29
+435                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+435-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:47:17-88
+435-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:47:25-85
+436            </intent-filter>
+437            <intent-filter>
+437-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:49:13-51:29
+438                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+438-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:50:17-95
+438-->[androidx.profileinstaller:profileinstaller:1.4.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/13242c82fc403ca8d7738fcd0db601a1/transformed/profileinstaller-1.4.1/AndroidManifest.xml:50:25-92
+439            </intent-filter>
+440        </receiver>
+441
+442        <service
+442-->[androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/95fab1e1e8a39ff5150c289e8cac4256/transformed/room-runtime-release/AndroidManifest.xml:24:9-28:63
+443            android:name="androidx.room.MultiInstanceInvalidationService"
+443-->[androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/95fab1e1e8a39ff5150c289e8cac4256/transformed/room-runtime-release/AndroidManifest.xml:25:13-74
+444            android:directBootAware="true"
+444-->[androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/95fab1e1e8a39ff5150c289e8cac4256/transformed/room-runtime-release/AndroidManifest.xml:26:13-43
+445            android:exported="false" />
+445-->[androidx.room:room-runtime-android:2.7.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/95fab1e1e8a39ff5150c289e8cac4256/transformed/room-runtime-release/AndroidManifest.xml:27:13-37
+446
+447        <activity
+447-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:47:9-53:63
+448            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+448-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:48:13-74
+449            android:clearTaskOnLaunch="true"
+449-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:49:13-45
+450            android:screenOrientation="sensorLandscape"
+450-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:50:13-56
+451            android:stateNotNeeded="true"
+451-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:51:13-42
+452            android:theme="@style/zxing_CaptureTheme"
+452-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:52:13-54
+453            android:windowSoftInputMode="stateAlwaysHidden" />
+453-->[com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:53:13-60
+454    </application>
+455
+456</manifest>
