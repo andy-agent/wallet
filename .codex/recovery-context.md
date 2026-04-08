@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-08T11:50:43Z
+Generated: 2026-04-08T12:22:45Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-rcb.24.2
-- next_task_title: 实现 server2-backed Postgres RuntimeStateRepository
+- next_task_id: liaojiang-rcb.20.1
+- next_task_title: 生成 fresh live order 与真实支付指引
 
 ## Counters
-- in_progress: 5
+- in_progress: 3
 - ready: 0
-- open: 8
-- closed: 206
-- dirty: 3
+- open: 4
+- closed: 216
+- dirty: 10
 
 ## Next Milestone
 - Continue the next task and complete one milestone
