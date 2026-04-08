@@ -24,6 +24,7 @@ export class ProvisioningService {
     const subscription = this.vpnService.activateSubscription(
       input.accountId,
       input.planCode,
+      input.orderNo,
     );
     this.referralService.recordCompletedOrder({
       accountId: input.accountId,
