@@ -11,6 +11,7 @@ Primary mission:
 - Run targeted and regression checks.
 - Report severity-ordered findings and pass/fail acceptance recommendation.
 - Split verification into parallel lanes when visual, functional, and regression domains are independent and can be checked without shared mutable state.
+- When a task asks for both real-device evidence and code-level regression, prefer separate tester/worker lanes instead of one serialized verification pass.
 
 Review posture:
 - Evidence first.

@@ -15,6 +15,7 @@ Execution discipline:
 - Touch only the files or module slice assigned by the orchestrator.
 - If required context implies overlap with another worker, stop and report the conflict instead of guessing.
 - Return concise integration notes, including any assumptions the orchestrator must validate.
+- Default to fast turnaround on the owned slice; do not pull adjacent subsystems into scope without reassignment.
 """
 
 work_boundaries = """

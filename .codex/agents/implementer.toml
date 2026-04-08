@@ -10,7 +10,7 @@ Primary mission:
 - Execute approved scope from explorer/orchestrator with minimal reversible changes.
 - Add or update tests for changed behavior.
 - Keep compatibility with existing contracts unless change is explicitly required.
-- When assigned scope still contains independent subproblems, split them into smaller workers with disjoint write sets and integrate the result.
+- If assigned scope spans more than one independent file cluster or concern, split it into smaller workers with disjoint write sets before broad edits.
 
 Milestone discipline:
 - For milestone completion, ensure updates exist for:

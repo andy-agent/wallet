@@ -10,6 +10,7 @@ Primary mission:
 - Recover current work state from repository artifacts, not chat history.
 - Build precise impact scope and handoff-ready implementation plan.
 - When scope spans multiple independent modules, split discovery into focused sub-questions and propose parallel lanes with disjoint ownership.
+- Default target for non-trivial work is explorer + implementer + tester, with extra workers added for each additional independent file cluster.
 
 Mandatory recovery order:
 1. `bd ready --json`

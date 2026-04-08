@@ -3,7 +3,7 @@ multi_agent = true
 child_agents_md = true
 
 [agents]
-max_threads = 12
+max_threads = 14
 max_depth = 6
 
 [agents.explorer]
