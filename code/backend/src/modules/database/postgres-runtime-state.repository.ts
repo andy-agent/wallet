@@ -1,4 +1,9 @@
 import { Pool } from 'pg';
+import {
+  AuthAccount,
+  AuthSession,
+  VerificationCodeRecord,
+} from '../auth/auth.types';
 import { OrderStatus } from '../orders/orders.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 import { RuntimeStateRepository } from './runtime-state.repository';
@@ -8,8 +13,40 @@ import {
   StoredOrderRecord,
 } from './runtime-state.types';
 
+const ACCOUNTS_TABLE = 'accounts';
+const SESSIONS_TABLE = 'client_sessions';
+const VERIFICATION_CODES_TABLE = 'verification_codes';
 const ORDERS_TABLE = 'runtime_state_orders';
 const SUBSCRIPTIONS_TABLE = 'runtime_state_subscriptions';
+const ACCOUNT_COLUMNS = `
+  account_id,
+  email,
+  password_hash,
+  status,
+  referral_code,
+  created_at,
+  updated_at
+`;
+const SESSION_COLUMNS = `
+  session_id,
+  account_id,
+  installation_id,
+  access_token,
+  refresh_token,
+  access_token_expires_at,
+  refresh_token_expires_at,
+  status,
+  created_at,
+  updated_at
+`;
+const VERIFICATION_CODE_COLUMNS = `
+  email,
+  purpose,
+  code_hash,
+  expires_at,
+  created_at,
+  updated_at
+`;
 const ORDER_COLUMNS = `
   order_id,
   order_no,
@@ -85,6 +122,38 @@ interface RuntimeStateSubscriptionRow {
   max_active_sessions: number;
 }
 
+interface AuthAccountRow {
+  account_id: string;
+  email: string;
+  password_hash: string;
+  status: AuthAccount['status'];
+  referral_code: string;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface AuthSessionRow {
+  session_id: string;
+  account_id: string;
+  installation_id: string | null;
+  access_token: string;
+  refresh_token: string;
+  access_token_expires_at: Date | string;
+  refresh_token_expires_at: Date | string;
+  status: AuthSession['status'];
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface VerificationCodeRow {
+  email: string;
+  purpose: VerificationCodeRecord['purpose'];
+  code_hash: string;
+  expires_at: Date | string;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
 interface CountRow {
   count: number;
 }
@@ -110,6 +179,157 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       this.readyPromise = this.ensureSchema();
     }
     await this.readyPromise;
+  }
+
+  async listAccounts(): Promise<AuthAccount[]> {
+    await this.ensureReady();
+    const result = await this.pool.query<AuthAccountRow>(
+      `
+        SELECT ${ACCOUNT_COLUMNS}
+        FROM ${ACCOUNTS_TABLE}
+      `,
+    );
+    return result.rows.map((row) => this.mapAccount(row));
+  }
+
+  async saveAccount(account: AuthAccount): Promise<AuthAccount> {
+    await this.ensureReady();
+    const result = await this.pool.query<AuthAccountRow>(
+      `
+        INSERT INTO ${ACCOUNTS_TABLE} (
+          account_id,
+          email,
+          password_hash,
+          status,
+          referral_code,
+          created_at,
+          updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (account_id) DO UPDATE
+        SET
+          email = EXCLUDED.email,
+          password_hash = EXCLUDED.password_hash,
+          status = EXCLUDED.status,
+          referral_code = EXCLUDED.referral_code,
+          created_at = EXCLUDED.created_at,
+          updated_at = EXCLUDED.updated_at
+        RETURNING ${ACCOUNT_COLUMNS}
+      `,
+      [
+        account.accountId,
+        account.email,
+        account.passwordHash,
+        account.status,
+        account.referralCode,
+        account.createdAt,
+        account.updatedAt,
+      ],
+    );
+    return this.mapAccount(result.rows[0]);
+  }
+
+  async listSessions(): Promise<AuthSession[]> {
+    await this.ensureReady();
+    const result = await this.pool.query<AuthSessionRow>(
+      `
+        SELECT ${SESSION_COLUMNS}
+        FROM ${SESSIONS_TABLE}
+      `,
+    );
+    return result.rows.map((row) => this.mapSession(row));
+  }
+
+  async saveSession(session: AuthSession): Promise<AuthSession> {
+    await this.ensureReady();
+    const result = await this.pool.query<AuthSessionRow>(
+      `
+        INSERT INTO ${SESSIONS_TABLE} (
+          session_id,
+          account_id,
+          installation_id,
+          access_token,
+          refresh_token,
+          access_token_expires_at,
+          refresh_token_expires_at,
+          status,
+          created_at,
+          updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ON CONFLICT (session_id) DO UPDATE
+        SET
+          account_id = EXCLUDED.account_id,
+          installation_id = EXCLUDED.installation_id,
+          access_token = EXCLUDED.access_token,
+          refresh_token = EXCLUDED.refresh_token,
+          access_token_expires_at = EXCLUDED.access_token_expires_at,
+          refresh_token_expires_at = EXCLUDED.refresh_token_expires_at,
+          status = EXCLUDED.status,
+          created_at = EXCLUDED.created_at,
+          updated_at = EXCLUDED.updated_at
+        RETURNING ${SESSION_COLUMNS}
+      `,
+      [
+        session.sessionId,
+        session.accountId,
+        session.installationId,
+        session.accessToken,
+        session.refreshToken,
+        session.accessTokenExpiresAt,
+        session.refreshTokenExpiresAt,
+        session.status,
+        session.createdAt,
+        session.updatedAt,
+      ],
+    );
+    return this.mapSession(result.rows[0]);
+  }
+
+  async listVerificationCodes(): Promise<VerificationCodeRecord[]> {
+    await this.ensureReady();
+    const result = await this.pool.query<VerificationCodeRow>(
+      `
+        SELECT ${VERIFICATION_CODE_COLUMNS}
+        FROM ${VERIFICATION_CODES_TABLE}
+      `,
+    );
+    return result.rows.map((row) => this.mapVerificationCode(row));
+  }
+
+  async saveVerificationCode(
+    record: VerificationCodeRecord,
+  ): Promise<VerificationCodeRecord> {
+    await this.ensureReady();
+    const result = await this.pool.query<VerificationCodeRow>(
+      `
+        INSERT INTO ${VERIFICATION_CODES_TABLE} (
+          email,
+          purpose,
+          code_hash,
+          expires_at,
+          created_at,
+          updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (email, purpose) DO UPDATE
+        SET
+          code_hash = EXCLUDED.code_hash,
+          expires_at = EXCLUDED.expires_at,
+          created_at = EXCLUDED.created_at,
+          updated_at = EXCLUDED.updated_at
+        RETURNING ${VERIFICATION_CODE_COLUMNS}
+      `,
+      [
+        record.email,
+        record.purpose,
+        record.codeHash,
+        new Date(record.expiresAt).toISOString(),
+        record.createdAt,
+        record.updatedAt,
+      ],
+    );
+    return this.mapVerificationCode(result.rows[0]);
   }
 
   async createOrder(
@@ -459,6 +679,61 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
 
   private async ensureSchema() {
     await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${ACCOUNTS_TABLE} (
+        account_id text PRIMARY KEY,
+        email text NOT NULL UNIQUE,
+        password_hash text NOT NULL,
+        status text NOT NULL,
+        referral_code text NOT NULL UNIQUE,
+        created_at timestamptz NOT NULL,
+        updated_at timestamptz NOT NULL
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_accounts_status
+      ON ${ACCOUNTS_TABLE} (status)
+    `);
+
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${SESSIONS_TABLE} (
+        session_id text PRIMARY KEY,
+        account_id text NOT NULL REFERENCES ${ACCOUNTS_TABLE} (account_id),
+        installation_id text NULL,
+        access_token text NOT NULL UNIQUE,
+        refresh_token text NOT NULL UNIQUE,
+        access_token_expires_at timestamptz NOT NULL,
+        refresh_token_expires_at timestamptz NOT NULL,
+        status text NOT NULL,
+        created_at timestamptz NOT NULL,
+        updated_at timestamptz NOT NULL
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_client_sessions_account_status
+      ON ${SESSIONS_TABLE} (account_id, status)
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_client_sessions_refresh_token_expires_at
+      ON ${SESSIONS_TABLE} (refresh_token_expires_at)
+    `);
+
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${VERIFICATION_CODES_TABLE} (
+        email text NOT NULL,
+        purpose text NOT NULL,
+        code_hash text NOT NULL,
+        expires_at timestamptz NOT NULL,
+        created_at timestamptz NOT NULL,
+        updated_at timestamptz NOT NULL,
+        PRIMARY KEY (email, purpose)
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_verification_codes_expires_at
+      ON ${VERIFICATION_CODES_TABLE} (expires_at)
+    `);
+
+    await this.pool.query(`
       CREATE TABLE IF NOT EXISTS ${ORDERS_TABLE} (
         order_no text PRIMARY KEY,
         order_id text NOT NULL UNIQUE,
@@ -543,6 +818,46 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       whereClause: conditions.length
         ? `WHERE ${conditions.join(' AND ')}`
         : '',
+    };
+  }
+
+  private mapAccount(row: AuthAccountRow): AuthAccount {
+    return {
+      accountId: row.account_id,
+      email: row.email,
+      passwordHash: row.password_hash,
+      status: row.status,
+      referralCode: row.referral_code,
+      createdAt: this.toIsoString(row.created_at)!,
+      updatedAt: this.toIsoString(row.updated_at)!,
+    };
+  }
+
+  private mapSession(row: AuthSessionRow): AuthSession {
+    return {
+      sessionId: row.session_id,
+      accountId: row.account_id,
+      installationId: row.installation_id,
+      accessToken: row.access_token,
+      refreshToken: row.refresh_token,
+      accessTokenExpiresAt: this.toIsoString(row.access_token_expires_at)!,
+      refreshTokenExpiresAt: this.toIsoString(row.refresh_token_expires_at)!,
+      status: row.status,
+      createdAt: this.toIsoString(row.created_at)!,
+      updatedAt: this.toIsoString(row.updated_at)!,
+    };
+  }
+
+  private mapVerificationCode(
+    row: VerificationCodeRow,
+  ): VerificationCodeRecord {
+    return {
+      email: row.email,
+      purpose: row.purpose,
+      codeHash: row.code_hash,
+      expiresAt: new Date(row.expires_at).getTime(),
+      createdAt: this.toIsoString(row.created_at)!,
+      updatedAt: this.toIsoString(row.updated_at)!,
     };
   }
 

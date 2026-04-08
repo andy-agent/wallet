@@ -1,3 +1,8 @@
+import {
+  AuthAccount,
+  AuthSession,
+  VerificationCodeRecord,
+} from '../auth/auth.types';
 import { OrderRecord } from '../orders/orders.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 
@@ -9,10 +14,13 @@ export interface StoredOrderRecord extends OrderRecord {
 }
 
 export interface RuntimeStateSnapshot {
-  version: 1;
+  version: 1 | 2;
   orders: StoredOrderRecord[];
   idempotencyIndex: Record<string, string>;
   subscriptions: PersistedSubscriptionRecord[];
+  accounts: AuthAccount[];
+  sessions: AuthSession[];
+  verificationCodes: VerificationCodeRecord[];
 }
 
 export interface RuntimeStateListOrdersParams {

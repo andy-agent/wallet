@@ -1,3 +1,8 @@
+import {
+  AuthAccount,
+  AuthSession,
+  VerificationCodeRecord,
+} from '../auth/auth.types';
 import { OrderStatus } from '../orders/orders.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 import {
@@ -7,6 +12,20 @@ import {
 } from './runtime-state.types';
 
 export abstract class RuntimeStateRepository {
+  abstract listAccounts(): Promise<AuthAccount[]>;
+
+  abstract saveAccount(account: AuthAccount): Promise<AuthAccount>;
+
+  abstract listSessions(): Promise<AuthSession[]>;
+
+  abstract saveSession(session: AuthSession): Promise<AuthSession>;
+
+  abstract listVerificationCodes(): Promise<VerificationCodeRecord[]>;
+
+  abstract saveVerificationCode(
+    record: VerificationCodeRecord,
+  ): Promise<VerificationCodeRecord>;
+
   abstract createOrder(
     order: StoredOrderRecord,
     compositeIdempotencyKey: string,

@@ -6,6 +6,11 @@ import {
   writeFileSync,
 } from 'fs';
 import { dirname } from 'path';
+import {
+  AuthAccount,
+  AuthSession,
+  VerificationCodeRecord,
+} from '../auth/auth.types';
 import { OrderStatus } from '../orders/orders.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 import { RuntimeStateRepository } from './runtime-state.repository';
@@ -17,16 +22,75 @@ import {
 } from './runtime-state.types';
 
 const EMPTY_RUNTIME_STATE: RuntimeStateSnapshot = {
-  version: 1,
+  version: 2,
   orders: [],
   idempotencyIndex: {},
   subscriptions: [],
+  accounts: [],
+  sessions: [],
+  verificationCodes: [],
 };
 
 export class FileRuntimeStateRepository extends RuntimeStateRepository {
   constructor(private readonly stateFilePath: string) {
     super();
     this.ensureStateFile();
+  }
+
+  async listAccounts(): Promise<AuthAccount[]> {
+    return [...this.readSnapshot().accounts];
+  }
+
+  async saveAccount(account: AuthAccount): Promise<AuthAccount> {
+    const snapshot = this.readSnapshot();
+    const nextAccounts = snapshot.accounts.filter(
+      (item) =>
+        item.accountId !== account.accountId &&
+        item.email.toLowerCase() !== account.email.toLowerCase(),
+    );
+
+    nextAccounts.push(account);
+    snapshot.accounts = nextAccounts;
+    this.writeSnapshot(snapshot);
+    return account;
+  }
+
+  async listSessions(): Promise<AuthSession[]> {
+    return [...this.readSnapshot().sessions];
+  }
+
+  async saveSession(session: AuthSession): Promise<AuthSession> {
+    const snapshot = this.readSnapshot();
+    const nextSessions = snapshot.sessions.filter(
+      (item) => item.sessionId !== session.sessionId,
+    );
+
+    nextSessions.push(session);
+    snapshot.sessions = nextSessions;
+    this.writeSnapshot(snapshot);
+    return session;
+  }
+
+  async listVerificationCodes(): Promise<VerificationCodeRecord[]> {
+    return [...this.readSnapshot().verificationCodes];
+  }
+
+  async saveVerificationCode(
+    record: VerificationCodeRecord,
+  ): Promise<VerificationCodeRecord> {
+    const snapshot = this.readSnapshot();
+    const nextCodes = snapshot.verificationCodes.filter(
+      (item) =>
+        !(
+          item.email.toLowerCase() === record.email.toLowerCase() &&
+          item.purpose === record.purpose
+        ),
+    );
+
+    nextCodes.push(record);
+    snapshot.verificationCodes = nextCodes;
+    this.writeSnapshot(snapshot);
+    return record;
   }
 
   async createOrder(
@@ -183,7 +247,7 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
     if (!raw) {
       return { ...EMPTY_RUNTIME_STATE };
     }
-    return JSON.parse(raw) as RuntimeStateSnapshot;
+    return this.normalizeSnapshot(JSON.parse(raw));
   }
 
   private writeSnapshot(snapshot: RuntimeStateSnapshot) {
@@ -195,5 +259,17 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
     const tempPath = `${this.stateFilePath}.${process.pid}.tmp`;
     writeFileSync(tempPath, JSON.stringify(snapshot, null, 2), 'utf8');
     renameSync(tempPath, this.stateFilePath);
+  }
+
+  private normalizeSnapshot(raw: Partial<RuntimeStateSnapshot>) {
+    return {
+      version: raw.version === 1 ? 2 : 2,
+      orders: raw.orders ?? [],
+      idempotencyIndex: raw.idempotencyIndex ?? {},
+      subscriptions: raw.subscriptions ?? [],
+      accounts: raw.accounts ?? [],
+      sessions: raw.sessions ?? [],
+      verificationCodes: raw.verificationCodes ?? [],
+    } satisfies RuntimeStateSnapshot;
   }
 }
