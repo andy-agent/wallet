@@ -1,28 +1,18 @@
 {
-  "generated_at": "2026-04-08T06:05:00Z",
+  "generated_at": "2026-04-08T06:20:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-4j0.22.12",
-  "accepted_task_id": "liaojiang-4j0.22.6.2.3",
+  "active_task_id": "liaojiang-4j0.22.6.2",
+  "accepted_task_id": "liaojiang-4j0.22.11",
   "next_task_id": "liaojiang-4j0.22.6.2.3",
-  "active_worker_task_ids": [
-    "liaojiang-4j0.22.12"
-  ],
+  "active_worker_task_ids": [],
   "blockers": [
     {
-      "task_id": "liaojiang-4j0.22.6.2.3",
+      "task_id": "liaojiang-4j0.22.6.2",
       "type": "task",
-      "blocked_by": "liaojiang-4j0.22.12 plans->checkout progression bug pending"
+      "blocked_by": "manual login on device ba2b016 required; current run cannot safely inject credentials under non-secret policy"
     }
   ],
-  "workers": [
-    {
-      "task_id": "liaojiang-4j0.22.12",
-      "agent_id": "019d6bae-e6ae-74c1-abb3-f3820073bad7",
-      "nickname": "Mill",
-      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-22-12-codex",
-      "status": "running"
-    }
-  ],
+  "workers": [],
   "mainline": {
     "feature_id": "liaojiang-4j0",
     "phase_id": "liaojiang-4j0.22",

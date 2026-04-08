@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-08T08:40:16Z
+Generated: 2026-04-08T09:12:01Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.22.12
-- next_task_title: 修复 Plans CTA 真机仍不触发下单
+- next_task_id: liaojiang-4j0.2
+- next_task_title: Android 真实环境登录/下单/支付页回归
 
 ## Counters
-- in_progress: 4
+- in_progress: 3
 - ready: 3
-- open: 7
-- closed: 175
-- dirty: 2
+- open: 6
+- closed: 176
+- dirty: 50
 
 ## Next Milestone
 - Continue the next task and complete one milestone
