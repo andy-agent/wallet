@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,9 +43,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.pages.vpn.VpnAccent
 import com.v2ray.ang.composeui.pages.vpn.VpnBitgetBackground
 import com.v2ray.ang.composeui.pages.vpn.VpnEmptyPanel
+import com.v2ray.ang.composeui.pages.vpn.VpnLoadingPanel
 import com.v2ray.ang.composeui.pages.vpn.VpnOutline
 import com.v2ray.ang.composeui.pages.vpn.VpnPageBottomPadding
 import com.v2ray.ang.composeui.pages.vpn.VpnPageHorizontalPadding
@@ -57,12 +61,103 @@ import com.v2ray.ang.composeui.theme.Error
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
 import com.v2ray.ang.composeui.theme.TextTertiary
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+
+internal sealed interface MarketOverviewUiState {
+    data object Loading : MarketOverviewUiState
+
+    data class Loaded(
+        val quotes: List<MarketQuote>,
+        val spotlights: List<MarketSpotlight>,
+    ) : MarketOverviewUiState
+
+    data class Error(val message: String) : MarketOverviewUiState
+}
+
+internal class MarketOverviewViewModel : ViewModel() {
+    private val repository = MarketRemoteRepository()
+    private val _state = MutableStateFlow<MarketOverviewUiState>(MarketOverviewUiState.Loading)
+    val state: StateFlow<MarketOverviewUiState> = _state
+
+    init {
+        refresh()
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _state.value = MarketOverviewUiState.Loading
+            val overview = repository.getOverview()
+            if (overview.isFailure) {
+                _state.value = MarketOverviewUiState.Error(
+                    overview.exceptionOrNull()?.message ?: "加载行情概览失败",
+                )
+                return@launch
+            }
+            val spotlights = repository.getSpotlights().getOrNull()?.toMarketSpotlights().orEmpty()
+            _state.value = MarketOverviewUiState.Loaded(
+                quotes = overview.getOrThrow().toMarketQuotes(),
+                spotlights = spotlights,
+            )
+        }
+    }
+}
 
 @Composable
 internal fun MarketOverviewPage(
-    quotes: List<MarketQuote> = marketSampleQuotes,
-    spotlights: List<MarketSpotlight> = marketSampleSpotlights,
+    viewModel: MarketOverviewViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onOpenQuote: (MarketQuote) -> Unit = {},
+) {
+    val state by viewModel.state.collectAsState()
+    when (val currentState = state) {
+        MarketOverviewUiState.Loading -> {
+            VpnBitgetBackground {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = VpnPageHorizontalPadding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    VpnLoadingPanel(
+                        title = "加载行情中",
+                        subtitle = "正在获取实时市场概览。",
+                    )
+                }
+            }
+        }
+
+        is MarketOverviewUiState.Error -> {
+            VpnBitgetBackground {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = VpnPageHorizontalPadding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    VpnEmptyPanel(
+                        title = "行情加载失败",
+                        subtitle = currentState.message,
+                        actionText = "重新加载",
+                        onAction = viewModel::refresh,
+                    )
+                }
+            }
+        }
+
+        is MarketOverviewUiState.Loaded -> MarketOverviewContent(
+            quotes = currentState.quotes,
+            spotlights = currentState.spotlights,
+            onOpenQuote = onOpenQuote,
+        )
+    }
+}
+
+@Composable
+private fun MarketOverviewContent(
+    quotes: List<MarketQuote>,
+    spotlights: List<MarketSpotlight>,
+    onOpenQuote: (MarketQuote) -> Unit,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     var selectedCategoryIndex by rememberSaveable { mutableIntStateOf(1) }
@@ -541,6 +636,39 @@ private fun MarketBoard.primaryMetricColor(quote: MarketQuote): Color {
 @Composable
 private fun MarketOverviewPagePreview() {
     CryptoVPNTheme {
-        MarketOverviewPage()
+        MarketOverviewContent(
+            quotes = listOf(
+                MarketQuote(
+                    instrumentId = "crypto:bitcoin",
+                    symbol = "BTC",
+                    name = "Bitcoin",
+                    market = "CRYPTO",
+                    lastPrice = "\$71,697.00",
+                    changeAmount = "+\$3,342.22",
+                    changePercent = "+4.89%",
+                    volume24h = "\$51.65B",
+                    marketCap = "\$1.43T",
+                    peRatio = "--",
+                    dayRange = "\$67,805.00 - \$72,379.00",
+                    categories = setOf(MarketCategory.HOT, MarketCategory.US_STOCKS),
+                    tags = listOf(MarketTag("热门", MarketTagTone.ACCENT)),
+                    changeRateValue = 4.89f,
+                    turnover24hValue = 51647750364.0,
+                    heatRank = 2,
+                ),
+            ),
+            spotlights = listOf(
+                MarketSpotlight(
+                    instrumentId = "crypto:bitcoin",
+                    symbol = "BTC",
+                    eyebrow = "热度榜 #2",
+                    title = "Bitcoin",
+                    subtitle = "BTC · CRYPTO",
+                    primaryValue = "+4.91%",
+                    secondaryValue = "\$48.47B",
+                ),
+            ),
+            onOpenQuote = {},
+        )
     }
 }

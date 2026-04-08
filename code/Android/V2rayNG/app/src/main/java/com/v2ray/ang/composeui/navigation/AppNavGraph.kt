@@ -26,8 +26,6 @@ import com.v2ray.ang.composeui.pages.growth.WithdrawPage
 import com.v2ray.ang.composeui.pages.legal.LegalDocumentDetailPage
 import com.v2ray.ang.composeui.pages.legal.LegalDocumentsListPage
 import com.v2ray.ang.composeui.pages.market.MarketQuoteDetailPage
-import com.v2ray.ang.composeui.pages.market.marketSampleQuoteDetail
-import com.v2ray.ang.composeui.pages.market.marketSampleQuotes
 import com.v2ray.ang.composeui.pages.profile.ProfilePage
 import com.v2ray.ang.composeui.pages.splash.ComposeUpdateBridge
 import com.v2ray.ang.composeui.pages.splash.ForceUpdatePage
@@ -434,10 +432,8 @@ fun AppNavGraph(
 
             Routes.MARKET_QUOTE_DETAIL -> {
                 val symbol = routeMatch.args.getValue("symbol")
-                val quote = marketSampleQuotes.firstOrNull { it.symbol.equals(symbol, ignoreCase = true) }
-                    ?: marketSampleQuotes.first()
                 MarketQuoteDetailPage(
-                    detail = marketSampleQuoteDetail(quote),
+                    symbol = symbol,
                     onNavigateBack = { navigateBack() },
                 )
             }
