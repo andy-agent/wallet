@@ -227,7 +227,7 @@ fun AppNavGraph(
                     onOpenReceive = { navigateAuthenticated(Routes.RECEIVE) },
                     onOpenSend = { navigateAuthenticated(Routes.send(symbol = "USDT")) },
                     onOpenAssetDetail = { assetId -> navigateAuthenticated(Routes.assetDetail(assetId)) },
-                    onOpenInviteCenter = { navigateAuthenticatedShellTab(ShellTab.DISCOVER, clearStack = true) },
+                    onOpenInviteCenter = { navigateAuthenticated(Routes.INVITE_CENTER) },
                     onOpenCommission = { navigateAuthenticated(Routes.COMMISSION_LEDGER) },
                     onOpenWithdraw = { navigateAuthenticated(Routes.WITHDRAW) },
                     onOpenProfile = { navigateAuthenticatedShellTab(ShellTab.PROFILE, clearStack = true) },

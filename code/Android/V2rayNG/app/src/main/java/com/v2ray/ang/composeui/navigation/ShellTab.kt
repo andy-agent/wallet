@@ -5,15 +5,19 @@ enum class ShellTab(
     val label: String,
 ) {
     HOME("home", "Home"),
-    WALLET("wallet", "Wallet"),
+    MARKET("market", "Market"),
     VPN("vpn", "VPN"),
-    DISCOVER("discover", "Discover"),
+    WALLET("wallet", "Wallet"),
     PROFILE("profile", "Profile"),
     ;
 
     companion object {
         fun fromKey(value: String?): ShellTab {
-            return entries.firstOrNull { it.key == value?.trim()?.lowercase() } ?: HOME
+            val normalized = value?.trim()?.lowercase()
+            return when (normalized) {
+                "discover" -> MARKET
+                else -> entries.firstOrNull { it.key == normalized } ?: HOME
+            }
         }
     }
 }
