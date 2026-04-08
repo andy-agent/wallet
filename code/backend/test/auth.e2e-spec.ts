@@ -1,5 +1,8 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
@@ -7,8 +10,15 @@ import { ResponseEnvelopeInterceptor } from '../src/common/interceptors/response
 
 describe('AuthAndAccount (e2e)', () => {
   let app: INestApplication;
+  let runtimeDir: string;
 
   beforeEach(async () => {
+    runtimeDir = mkdtempSync(join(tmpdir(), 'backend-auth-'));
+    process.env.NODE_ENV = 'test';
+    process.env.RUNTIME_STATE_FILE = join(runtimeDir, 'runtime-state.json');
+    delete process.env.RUNTIME_STATE_BACKEND;
+    delete process.env.DATABASE_URL;
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -29,6 +39,11 @@ describe('AuthAndAccount (e2e)', () => {
 
   afterEach(async () => {
     await app.close();
+    delete process.env.NODE_ENV;
+    delete process.env.RUNTIME_STATE_FILE;
+    delete process.env.RUNTIME_STATE_BACKEND;
+    delete process.env.DATABASE_URL;
+    rmSync(runtimeDir, { recursive: true, force: true });
   });
 
   it('register -> me -> session -> logout flow', async () => {

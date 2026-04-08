@@ -4,9 +4,11 @@ export type SessionStatus = 'ACTIVE' | 'EVICTED' | 'REVOKED' | 'EXPIRED';
 export interface AuthAccount {
   accountId: string;
   email: string;
-  password: string;
+  passwordHash: string;
   status: AccountStatus;
   referralCode: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AuthSession {
@@ -18,11 +20,15 @@ export interface AuthSession {
   accessTokenExpiresAt: string;
   refreshTokenExpiresAt: string;
   status: SessionStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface VerificationCodeRecord {
   email: string;
-  code: string;
+  codeHash: string;
   purpose: 'REGISTER' | 'RESET_PASSWORD';
   expiresAt: number;
+  createdAt: string;
+  updatedAt: string;
 }
