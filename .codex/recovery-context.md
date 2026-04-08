@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-08T15:33:38Z
+Generated: 2026-04-08T16:04:01Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-rcb.26.3
-- next_task_title: 按白底 Bitget 基线重构 Market 首页与详情结构
+- next_task_id: liaojiang-rcb.20
+- next_task_title: 验收正式拓扑下的支付与开通链路
 
 ## Counters
-- in_progress: 10
+- in_progress: 2
 - ready: 0
-- open: 13
-- closed: 236
-- dirty: 111
+- open: 5
+- closed: 244
+- dirty: 4
 
 ## Next Milestone
 - Continue the next task and complete one milestone
