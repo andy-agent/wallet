@@ -31,6 +31,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,12 +47,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.pages.vpn.VpnAccent
 import com.v2ray.ang.composeui.pages.vpn.VpnAccentSoft
 import com.v2ray.ang.composeui.pages.vpn.VpnBitgetBackground
 import com.v2ray.ang.composeui.pages.vpn.VpnCandleChart
+import com.v2ray.ang.composeui.pages.vpn.VpnEmptyPanel
 import com.v2ray.ang.composeui.pages.vpn.VpnGlassCard
 import com.v2ray.ang.composeui.pages.vpn.VpnLabelValueRow
+import com.v2ray.ang.composeui.pages.vpn.VpnLoadingPanel
 import com.v2ray.ang.composeui.pages.vpn.VpnMetricColumn
 import com.v2ray.ang.composeui.pages.vpn.VpnMetricPill
 import com.v2ray.ang.composeui.pages.vpn.VpnPageBottomPadding
@@ -70,19 +76,126 @@ import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
 import com.v2ray.ang.composeui.theme.TextTertiary
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+
+internal sealed interface MarketQuoteDetailUiState {
+    data object Loading : MarketQuoteDetailUiState
+
+    data class Loaded(val detail: MarketQuoteDetail) : MarketQuoteDetailUiState
+
+    data class Error(val message: String) : MarketQuoteDetailUiState
+}
+
+internal class MarketQuoteDetailViewModel : ViewModel() {
+    private val repository = MarketRemoteRepository()
+    private val _state = MutableStateFlow<MarketQuoteDetailUiState>(MarketQuoteDetailUiState.Loading)
+    private var currentSymbol: String? = null
+
+    val state: StateFlow<MarketQuoteDetailUiState> = _state
+
+    fun load(symbol: String, force: Boolean = false) {
+        if (!force && symbol == currentSymbol && _state.value is MarketQuoteDetailUiState.Loaded) {
+            return
+        }
+        currentSymbol = symbol
+        viewModelScope.launch {
+            _state.value = MarketQuoteDetailUiState.Loading
+            val instrumentId = repository.resolveInstrumentId(symbol).getOrElse {
+                _state.value = MarketQuoteDetailUiState.Error(it.message ?: "解析行情标的失败")
+                return@launch
+            }
+            val detailPayload = repository.getInstrumentDetail(instrumentId).getOrElse {
+                _state.value = MarketQuoteDetailUiState.Error(it.message ?: "加载行情详情失败")
+                return@launch
+            }
+            val ranges = detailPayload.supportedTimeframes.mapNotNull { option ->
+                repository.getCandles(
+                    instrumentId = instrumentId,
+                    timeframe = option.key,
+                ).getOrNull()?.toMarketTimeframe(
+                    label = option.label,
+                    precision = detailPayload.instrument.displayPrecision,
+                )
+            }
+            _state.value = MarketQuoteDetailUiState.Loaded(
+                detail = detailPayload.toMarketQuoteDetail(ranges),
+            )
+        }
+    }
+
+    fun refresh() {
+        currentSymbol?.let { load(it, force = true) }
+    }
+}
 
 @Composable
 internal fun MarketQuoteDetailPage(
-    detail: MarketQuoteDetail = marketSampleQuoteDetail(),
+    symbol: String,
+    viewModel: MarketQuoteDetailViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onNavigateBack: () -> Unit = {},
     onTrade: () -> Unit = {},
+) {
+    LaunchedEffect(symbol) {
+        viewModel.load(symbol)
+    }
+    val state by viewModel.state.collectAsState()
+    when (val currentState = state) {
+        MarketQuoteDetailUiState.Loading -> {
+            VpnBitgetBackground {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = VpnPageHorizontalPadding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    VpnLoadingPanel(
+                        title = "加载详情中",
+                        subtitle = "正在获取实时市场详情和 K 线。",
+                    )
+                }
+            }
+        }
+
+        is MarketQuoteDetailUiState.Error -> {
+            VpnBitgetBackground {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = VpnPageHorizontalPadding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    VpnEmptyPanel(
+                        title = "详情加载失败",
+                        subtitle = currentState.message,
+                        actionText = "重新加载",
+                        onAction = viewModel::refresh,
+                    )
+                }
+            }
+        }
+
+        is MarketQuoteDetailUiState.Loaded -> MarketQuoteDetailContent(
+            detail = currentState.detail,
+            onNavigateBack = onNavigateBack,
+            onTrade = onTrade,
+        )
+    }
+}
+
+@Composable
+private fun MarketQuoteDetailContent(
+    detail: MarketQuoteDetail,
+    onNavigateBack: () -> Unit,
+    onTrade: () -> Unit,
 ) {
     var selectedTopTab by rememberSaveable { mutableIntStateOf(0) }
     var selectedRangeIndex by rememberSaveable { mutableIntStateOf(3) }
     var selectedIndicatorIndex by rememberSaveable { mutableIntStateOf(0) }
     var starred by rememberSaveable { mutableStateOf(true) }
 
-    val currentRange = detail.ranges[selectedRangeIndex]
+    val currentRange = detail.ranges.getOrNull(selectedRangeIndex.coerceIn(0, detail.ranges.lastIndex.coerceAtLeast(0)))
     val trendColor = remember(detail.changePercent) {
         if (detail.changePercent.trim().startsWith("-")) {
             Color(0xFFFF5D85)
@@ -102,7 +215,7 @@ internal fun MarketQuoteDetailPage(
                     border = BorderStroke(1.dp, VpnOutline),
                 ) {
                     VpnPrimaryButton(
-                        text = "交易",
+                        text = detail.tradeActionLabel,
                         onClick = onTrade,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -188,36 +301,49 @@ internal fun MarketQuoteDetailPage(
                         )
                         VpnMetricPill(
                             label = "K 线视图",
-                            value = currentRange.label,
+                            value = currentRange?.label ?: "--",
                             modifier = Modifier.weight(1f),
                             valueColor = TextPrimary,
                         )
                     }
                 }
                 if (selectedTopTab == 0) {
-                    item {
-                        VpnRangeSelector(
-                            labels = detail.ranges.map { it.label },
-                            selectedIndex = selectedRangeIndex,
-                            trailingIcon = Icons.Default.Tune,
-                            onTrailingClick = {},
-                            onSelect = { selectedRangeIndex = it },
-                        )
-                    }
-                    item {
-                        VpnCandleChart(
-                            entries = currentRange.candles,
-                            calloutLines = currentRange.calloutLines,
-                            rightLabels = currentRange.rightLabels,
-                            bottomLabels = currentRange.bottomLabels,
-                        )
-                    }
-                    item {
-                        IndicatorStrip(
-                            indicators = detail.indicators,
-                            selectedIndex = selectedIndicatorIndex,
-                            onSelect = { selectedIndicatorIndex = it },
-                        )
+                    if (detail.ranges.isEmpty()) {
+                        item {
+                            VpnEmptyPanel(
+                                title = "暂无 K 线数据",
+                                subtitle = "当前标的未返回可展示的实时 K 线。",
+                            )
+                        }
+                    } else {
+                        item {
+                            VpnRangeSelector(
+                                labels = detail.ranges.map { it.label },
+                                selectedIndex = selectedRangeIndex.coerceIn(0, detail.ranges.lastIndex),
+                                trailingIcon = Icons.Default.Tune,
+                                onTrailingClick = {},
+                                onSelect = { selectedRangeIndex = it },
+                            )
+                        }
+                        item {
+                            currentRange?.let { range ->
+                                VpnCandleChart(
+                                    entries = range.candles,
+                                    calloutLines = range.calloutLines,
+                                    rightLabels = range.rightLabels,
+                                    bottomLabels = range.bottomLabels,
+                                )
+                            }
+                        }
+                        if (detail.indicators.isNotEmpty()) {
+                            item {
+                                IndicatorStrip(
+                                    indicators = detail.indicators,
+                                    selectedIndex = selectedIndicatorIndex.coerceIn(0, detail.indicators.lastIndex),
+                                    onSelect = { selectedIndicatorIndex = it },
+                                )
+                            }
+                        }
                     }
                     item {
                         VpnGlassCard {
@@ -235,21 +361,10 @@ internal fun MarketQuoteDetailPage(
                         VpnGlassCard {
                             VpnSectionHeading(
                                 title = "标的详情",
-                                subtitle = "详情 tab 保留同一顶部骨架，只切换下半区的信息表和说明层。",
+                                subtitle = "下半区展示实时接口返回的详情字段。",
                             )
                             detail.detailFacts.forEach { (label, value) ->
                                 VpnLabelValueRow(label = label, value = value)
-                            }
-                        }
-                    }
-                    item {
-                        VpnGlassCard {
-                            VpnSectionHeading(
-                                title = "页面落地说明",
-                                subtitle = "当前页面仅保留行情浏览与详情结构，不接入真实交易和复杂导航。",
-                            )
-                            detail.thesis.forEach { note ->
-                                ThesisRow(text = note)
                             }
                         }
                     }
@@ -360,33 +475,60 @@ private fun IndicatorStrip(
     }
 }
 
-@Composable
-private fun ThesisRow(text: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Box(
-            modifier = Modifier
-                .padding(top = 6.dp)
-                .size(6.dp)
-                .clip(CircleShape)
-                .background(VpnAccent),
-        )
-        Text(
-            text = text,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
-        )
-    }
-}
-
 @Preview
 @Composable
 private fun MarketQuoteDetailPagePreview() {
     CryptoVPNTheme {
-        MarketQuoteDetailPage()
+        MarketQuoteDetailContent(
+            detail = MarketQuoteDetail(
+                symbol = "SOL",
+                companyName = "Solana",
+                marketLabel = "CRYPTO · 行情",
+                lastPrice = "\$84.47",
+                changeAmount = "+\$5.23",
+                changePercent = "+6.59%",
+                sessionLabel = "24x7",
+                metrics = listOf(
+                    MarketDetailMetric("24H 最高", "\$86.37"),
+                    MarketDetailMetric("24H 最低", "\$78.48"),
+                    MarketDetailMetric("成交额", "\$5.06B"),
+                    MarketDetailMetric("总市值", "\$48.38B"),
+                    MarketDetailMetric("标签", "热门 / 公链"),
+                ),
+                ranges = listOf(
+                    MarketTimeframe(
+                        label = "1小时",
+                        candles = listOf(
+                            com.v2ray.ang.composeui.pages.vpn.VpnChartCandle(79.19f, 79.15f, 79.29f, 78.89f),
+                            com.v2ray.ang.composeui.pages.vpn.VpnChartCandle(79.09f, 78.95f, 79.15f, 78.92f),
+                            com.v2ray.ang.composeui.pages.vpn.VpnChartCandle(78.98f, 79.36f, 79.36f, 78.84f),
+                        ),
+                        rightLabels = listOf("79.36", "79.20", "79.04", "78.89"),
+                        bottomLabels = listOf("12:00", "16:00", "20:00", "00:00"),
+                        calloutLines = listOf(
+                            "时间" to "2026-04-08 00:00",
+                            "开盘" to "\$78.98",
+                            "最高" to "\$79.36",
+                            "最低" to "\$78.84",
+                            "收盘" to "\$79.36",
+                            "涨跌额" to "+\$0.38",
+                            "涨跌幅" to "+0.48%",
+                        ),
+                    ),
+                ),
+                indicators = listOf("MA", "BOLL", "MACD"),
+                overviewFacts = listOf(
+                    "24H 区间" to "\$78.48 - \$86.37",
+                    "24H 成交额" to "\$5.06B",
+                ),
+                detailFacts = listOf(
+                    "市场" to "CRYPTO",
+                    "标的名称" to "Solana",
+                ),
+                tradeActionLabel = "查看市场",
+            ),
+            onNavigateBack = {},
+            onTrade = {},
+        )
     }
 }
