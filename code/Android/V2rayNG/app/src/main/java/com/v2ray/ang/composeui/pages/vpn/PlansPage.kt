@@ -126,8 +126,11 @@ fun PlansPage(
     val selectedPlanId by viewModel.selectedPlanId.collectAsState()
     val loadedState = state as? PlansState.Loaded
     val selectedPlan = loadedState?.plans?.firstOrNull { it.id == selectedPlanId }
-    val proceedToCheckout: (String) -> Unit = { planId ->
+    val selectPlan: (String) -> Unit = { planId ->
         viewModel.selectPlan(planId)
+    }
+    val proceedToCheckout: (String) -> Unit = { planId ->
+        selectPlan(planId)
         onNavigateToCheckout(planId)
     }
 
@@ -140,15 +143,14 @@ fun PlansPage(
                 selectedPlan?.let { plan ->
                     Surface(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .navigationBarsPadding()
-                            .clickable { proceedToCheckout(plan.id) },
+                            .fillMaxWidth(),
                         color = VpnSurface,
                         border = BorderStroke(1.dp, VpnOutline),
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .navigationBarsPadding()
                                 .padding(horizontal = VpnPageHorizontalPadding, vertical = 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -227,14 +229,18 @@ fun PlansPage(
                                     FeaturedPlanTile(
                                         plan = plan,
                                         isSelected = plan.id == selectedPlanId,
-                                        onClick = { proceedToCheckout(plan.id) },
+                                        onSelect = { selectPlan(plan.id) },
+                                        onCheckoutClick = { proceedToCheckout(plan.id) },
                                     )
                                 }
                             }
                         }
                         selectedPlan?.let { plan ->
                             item {
-                                SelectedPlanPanel(plan = plan)
+                                SelectedPlanPanel(
+                                    plan = plan,
+                                    onCheckoutClick = { proceedToCheckout(plan.id) },
+                                )
                             }
                         }
                         item {
@@ -249,7 +255,7 @@ fun PlansPage(
                                     PlanListRow(
                                         plan = plan,
                                         isSelected = plan.id == selectedPlanId,
-                                        onClick = { proceedToCheckout(plan.id) },
+                                        onClick = { selectPlan(plan.id) },
                                     )
                                     if (index != current.plans.lastIndex) {
                                         VpnListDivider()
@@ -333,12 +339,13 @@ private fun PlansHeroBanner() {
 private fun FeaturedPlanTile(
     plan: PlanInfo,
     isSelected: Boolean,
-    onClick: () -> Unit,
+    onSelect: () -> Unit,
+    onCheckoutClick: () -> Unit,
 ) {
     VpnGlassCard(
         modifier = Modifier
             .width(178.dp)
-            .clickable(onClick = onClick),
+            .clickable(onClick = onSelect),
         accent = if (isSelected) VpnAccent else VpnOutline,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
     ) {
@@ -366,11 +373,19 @@ private fun FeaturedPlanTile(
             style = MaterialTheme.typography.bodySmall,
             color = TextSecondary,
         )
+        VpnPrimaryButton(
+            text = "继续下单",
+            onClick = onCheckoutClick,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
 @Composable
-private fun SelectedPlanPanel(plan: PlanInfo) {
+private fun SelectedPlanPanel(
+    plan: PlanInfo,
+    onCheckoutClick: () -> Unit,
+) {
     VpnGlassCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -400,6 +415,11 @@ private fun SelectedPlanPanel(plan: PlanInfo) {
                 color = VpnAccent,
             )
         }
+        VpnPrimaryButton(
+            text = "继续下单",
+            onClick = onCheckoutClick,
+            modifier = Modifier.fillMaxWidth(),
+        )
         VpnLineChart(values = vpnDemoLine(plan.duration.length.toFloat()))
         VpnRangeSelector(
             labels = listOf("1周", "1个月", "3个月", "1年"),
