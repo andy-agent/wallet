@@ -727,9 +727,9 @@ export class MarketService {
       case '1h':
         return { days: 1, groupSize: 2, baseIntervalMs: 30 * 60 * 1000 };
       case '4h':
-        return { days: 7, groupSize: 1, baseIntervalMs: 4 * 60 * 60 * 1000 };
+        return { days: 30, groupSize: 1, baseIntervalMs: 4 * 60 * 60 * 1000 };
       case '12h':
-        return { days: 14, groupSize: 3, baseIntervalMs: 4 * 60 * 60 * 1000 };
+        return { days: 30, groupSize: 3, baseIntervalMs: 4 * 60 * 60 * 1000 };
       case '1d':
         return { days: 30, groupSize: 6, baseIntervalMs: 4 * 60 * 60 * 1000 };
     }
