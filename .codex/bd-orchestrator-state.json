@@ -1,35 +1,25 @@
 {
-  "generated_at": "2026-04-08T02:44:00Z",
+  "generated_at": "2026-04-08T03:55:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-4j0.22.2.3",
-  "accepted_task_id": "liaojiang-4j0.22.2.1",
-  "next_task_id": "liaojiang-4j0.22.3",
+  "active_task_id": "liaojiang-4j0.22.7",
+  "accepted_task_id": "liaojiang-4j0.22.5.1",
+  "next_task_id": "liaojiang-4j0.22.6",
   "active_worker_task_ids": [
-    "liaojiang-4j0.22.2.3"
+    "liaojiang-4j0.22.7"
   ],
   "blockers": [
     {
-      "task_id": "liaojiang-4j0.22.3",
+      "task_id": "liaojiang-4j0.22.6",
       "type": "task",
-      "blocked_by": "liaojiang-4j0.22.2 and liaojiang-4j0.22.2.3"
-    },
-    {
-      "task_id": "liaojiang-4j0.22.4",
-      "type": "task",
-      "blocked_by": "liaojiang-4j0.22.2 and liaojiang-4j0.22.2.3"
-    },
-    {
-      "task_id": "liaojiang-4j0.22.5",
-      "type": "task",
-      "blocked_by": "liaojiang-4j0.22.2 and liaojiang-4j0.22.2.3"
+      "blocked_by": "liaojiang-4j0.22.7"
     }
   ],
   "workers": [
     {
-      "task_id": "liaojiang-4j0.22.2.3",
-      "agent_id": "019d6b15-f4c4-7a33-83b8-b9e1618cab12",
-      "nickname": "Ramanujan",
-      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-22-2-3-codex",
+      "task_id": "liaojiang-4j0.22.7",
+      "agent_id": "019d6b39-97d4-7de0-9154-fe3132a6d53f",
+      "nickname": "Nietzsche",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-22-7-codex",
       "status": "running"
     }
   ],
