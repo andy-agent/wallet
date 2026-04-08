@@ -212,7 +212,7 @@ fun AppNavGraph(
                     onOpenWalletHome = { navigateAuthenticated(Routes.WALLET_HOME) },
                     onOpenReceive = { navigateAuthenticated(Routes.RECEIVE) },
                     onOpenSend = { navigateAuthenticated(Routes.send(symbol = "USDT")) },
-                    onOpenAssetBook = { navigateAuthenticated(Routes.WALLET_HOME) },
+                    onOpenAssetDetail = { assetId -> navigateAuthenticated(Routes.assetDetail(assetId)) },
                     onOpenInviteCenter = { navigateAuthenticated(Routes.INVITE_CENTER) },
                     onOpenCommission = { navigateAuthenticated(Routes.COMMISSION_LEDGER) },
                     onOpenWithdraw = { navigateAuthenticated(Routes.WITHDRAW) },
@@ -221,6 +221,10 @@ fun AppNavGraph(
                     onOpenSettings = { onOpenLegacyDestination(LegacyDestination.SETTINGS) },
                     onOpenAbout = { onOpenLegacyDestination(LegacyDestination.ABOUT) },
                     onOpenSupport = { onOpenUrl(AppConfig.APP_ISSUES_URL) },
+                    onLogout = {
+                        hasActiveSession = false
+                        pendingPostAuthRoute = null
+                    },
                 )
             }
 

@@ -1,14 +1,25 @@
 package com.v2ray.ang.ui.compose
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Campaign
@@ -23,12 +34,15 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.SouthWest
 import androidx.compose.material.icons.filled.VpnLock
 import androidx.compose.material.icons.filled.Wallet
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,14 +50,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.components.navigation.BitgetBottomNavigationBar
 import com.v2ray.ang.composeui.components.navigation.ShellBottomBarItem
-import com.v2ray.ang.composeui.components.shell.BitgetAccountHeader
-import com.v2ray.ang.composeui.components.shell.BitgetActionGrid
 import com.v2ray.ang.composeui.components.shell.BitgetHomeActionsSheet
 import com.v2ray.ang.composeui.components.shell.BitgetHomeCampaignCard
 import com.v2ray.ang.composeui.components.shell.BitgetHomeHighlightCard
@@ -56,20 +71,17 @@ import com.v2ray.ang.composeui.components.shell.BitgetHomeQuickLink
 import com.v2ray.ang.composeui.components.shell.BitgetHomeQuickLinks
 import com.v2ray.ang.composeui.components.shell.BitgetHomeSheetAction
 import com.v2ray.ang.composeui.components.shell.BitgetHomeTopBar
-import com.v2ray.ang.composeui.components.shell.BitgetSectionTitle
-import com.v2ray.ang.composeui.components.shell.BitgetShowcaseCard
-import com.v2ray.ang.composeui.components.shell.BitgetTickerStrip
-import com.v2ray.ang.composeui.components.shell.ShellMetric
-import com.v2ray.ang.composeui.components.shell.ShellQuickAction
-import com.v2ray.ang.composeui.components.shell.ShellTickerItem
 import com.v2ray.ang.composeui.navigation.ShellTab
+import com.v2ray.ang.composeui.pages.growth.InviteCenterPage
+import com.v2ray.ang.composeui.pages.profile.ProfilePage
+import com.v2ray.ang.composeui.pages.vpn.VPNHomePage
+import com.v2ray.ang.composeui.pages.wallet.WalletHomePage
 import com.v2ray.ang.composeui.theme.BackgroundDeepest
 import com.v2ray.ang.composeui.theme.BackgroundPrimary
 import com.v2ray.ang.composeui.theme.GlowBlue
 import com.v2ray.ang.composeui.theme.GlowGreen
 import com.v2ray.ang.composeui.theme.GlowYellow
 import com.v2ray.ang.composeui.theme.Info
-import com.v2ray.ang.composeui.theme.Primary
 import com.v2ray.ang.composeui.theme.Warning
 
 @Composable
@@ -85,7 +97,7 @@ fun BitgetAppShell(
     onOpenWalletHome: () -> Unit,
     onOpenReceive: () -> Unit,
     onOpenSend: () -> Unit,
-    onOpenAssetBook: () -> Unit,
+    onOpenAssetDetail: (String) -> Unit,
     onOpenInviteCenter: () -> Unit,
     onOpenCommission: () -> Unit,
     onOpenWithdraw: () -> Unit,
@@ -94,6 +106,7 @@ fun BitgetAppShell(
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenSupport: () -> Unit,
+    onLogout: () -> Unit,
 ) {
     fun guarded(action: () -> Unit): () -> Unit = {
         if (isAuthenticated) {
@@ -110,32 +123,6 @@ fun BitgetAppShell(
             ShellBottomBarItem(tab = ShellTab.VPN, title = "VPN", icon = Icons.Default.VpnLock),
             ShellBottomBarItem(tab = ShellTab.DISCOVER, title = "Discover", icon = Icons.Default.Language),
             ShellBottomBarItem(tab = ShellTab.PROFILE, title = "Profile", icon = Icons.Default.Person),
-        )
-    }
-
-    val model = if (selectedTab == ShellTab.HOME) {
-        null
-    } else {
-        buildShellModel(
-            selectedTab = selectedTab,
-            isAuthenticated = isAuthenticated,
-            onOpenLogin = onOpenLogin,
-            onOpenVpnConsole = onOpenVpnConsole,
-            onOpenPlans = onOpenPlans,
-            onOpenRegions = onOpenRegions,
-            onOpenOrders = onOpenOrders,
-            onOpenWalletHome = onOpenWalletHome,
-            onOpenReceive = onOpenReceive,
-            onOpenSend = onOpenSend,
-            onOpenAssetBook = onOpenAssetBook,
-            onOpenInviteCenter = onOpenInviteCenter,
-            onOpenCommission = onOpenCommission,
-            onOpenWithdraw = onOpenWithdraw,
-            onOpenProfile = onOpenProfile,
-            onOpenLegal = onOpenLegal,
-            onOpenSettings = onOpenSettings,
-            onOpenAbout = onOpenAbout,
-            onOpenSupport = onOpenSupport,
         )
     }
 
@@ -390,67 +377,60 @@ fun BitgetAppShell(
                     )
                 }
             } else {
-                model?.let { shellModel ->
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        contentPadding = PaddingValues(
-                            start = 20.dp,
-                            end = 20.dp,
-                            top = 16.dp,
-                            bottom = 18.dp,
-                        ),
-                    ) {
-                        item {
-                            BitgetAccountHeader(
-                                badge = shellModel.badge,
-                                title = shellModel.title,
-                                subtitle = shellModel.subtitle,
-                                metrics = shellModel.metrics,
-                                primaryActionLabel = shellModel.primaryActionLabel,
-                                onPrimaryAction = shellModel.onPrimaryAction,
-                                secondaryActionLabel = shellModel.secondaryActionLabel,
-                                onSecondaryAction = shellModel.onSecondaryAction,
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                ) {
+                    if (isAuthenticated) {
+                        when (selectedTab) {
+                            ShellTab.WALLET -> WalletHomePage(
+                                onNavigateToReceive = onOpenReceive,
+                                onNavigateToSend = onOpenSend,
+                                onNavigateToAssetDetail = onOpenAssetDetail,
+                                onNavigateToProfile = onOpenProfile,
                             )
-                        }
-                        item {
-                            BitgetTickerStrip(
-                                modifier = Modifier.padding(top = 16.dp),
-                                items = shellModel.tickers,
+
+                            ShellTab.VPN -> VPNHomePage(
+                                onNavigateToRegions = onOpenRegions,
+                                onNavigateToPlans = onOpenPlans,
+                                onNavigateToProfile = onOpenProfile,
+                                onNavigateToOrders = onOpenOrders,
                             )
-                        }
-                        item {
-                            BitgetSectionTitle(
-                                modifier = Modifier.padding(top = 22.dp),
-                                title = shellModel.sectionTitle,
-                                subtitle = shellModel.sectionSubtitle,
+
+                            ShellTab.DISCOVER -> InviteCenterPage(
+                                onNavigateBack = { onTabSelected(ShellTab.HOME) },
+                                onNavigateToCommission = onOpenCommission,
+                                onNavigateToWithdraw = onOpenWithdraw,
                             )
-                        }
-                        item {
-                            BitgetActionGrid(
-                                modifier = Modifier.padding(top = 14.dp),
-                                actions = shellModel.actions,
+
+                            ShellTab.PROFILE -> ProfilePage(
+                                onNavigateToOrders = onOpenOrders,
+                                onNavigateToWallet = onOpenWalletHome,
+                                onNavigateToInvite = onOpenInviteCenter,
+                                onNavigateToCommission = onOpenCommission,
+                                onNavigateToSettings = onOpenSettings,
+                                onNavigateToLegal = onOpenLegal,
+                                onNavigateToSupport = onOpenSupport,
+                                onNavigateToAbout = onOpenAbout,
+                                onLogout = onLogout,
                             )
+
+                            ShellTab.HOME -> Unit
                         }
-                        item {
-                            BitgetShowcaseCard(
-                                modifier = Modifier.padding(top = 18.dp),
-                                eyebrow = shellModel.showcaseEyebrow,
-                                title = shellModel.showcaseTitle,
-                                body = shellModel.showcaseBody,
-                                actionLabel = shellModel.showcaseActionLabel,
-                                onActionClick = shellModel.onShowcaseAction,
-                            )
-                        }
-                        items(shellModel.notes) { note ->
-                            Text(
-                                modifier = Modifier.padding(top = 14.dp),
-                                text = "• $note",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                    } else {
+                        ShellGuestTabContent(
+                            selectedTab = selectedTab,
+                            onOpenWalletHome = onOpenWalletHome,
+                            onOpenVpnConsole = onOpenVpnConsole,
+                            onOpenInviteCenter = onOpenInviteCenter,
+                            onOpenProfile = onOpenProfile,
+                            onOpenPlans = onOpenPlans,
+                            onOpenLegal = onOpenLegal,
+                            onOpenSettings = onOpenSettings,
+                            onOpenAbout = onOpenAbout,
+                            onOpenSupport = onOpenSupport,
+                        )
                     }
                 }
             }
@@ -458,237 +438,212 @@ fun BitgetAppShell(
     }
 }
 
-private data class ShellModel(
-    val badge: String,
+private data class ShellGuestAction(
     val title: String,
     val subtitle: String,
-    val metrics: List<ShellMetric>,
-    val tickers: List<ShellTickerItem>,
-    val sectionTitle: String,
-    val sectionSubtitle: String,
-    val actions: List<ShellQuickAction>,
-    val primaryActionLabel: String,
-    val onPrimaryAction: () -> Unit,
-    val secondaryActionLabel: String?,
-    val onSecondaryAction: (() -> Unit)?,
-    val showcaseEyebrow: String,
-    val showcaseTitle: String,
-    val showcaseBody: String,
-    val showcaseActionLabel: String,
-    val onShowcaseAction: () -> Unit,
-    val notes: List<String>,
+    val icon: ImageVector,
+    val accentColor: Color,
+    val onClick: () -> Unit,
 )
 
-private fun buildShellModel(
+private data class ShellGuestTabState(
+    val badge: String,
+    val title: String,
+    val description: String,
+    val accentColor: Color,
+    val primaryActionLabel: String,
+    val onPrimaryAction: () -> Unit,
+    val secondaryActionLabel: String,
+    val onSecondaryAction: () -> Unit,
+    val actions: List<ShellGuestAction>,
+)
+
+@Composable
+private fun ShellGuestTabContent(
     selectedTab: ShellTab,
-    isAuthenticated: Boolean,
-    onOpenLogin: () -> Unit,
-    onOpenVpnConsole: () -> Unit,
-    onOpenPlans: () -> Unit,
-    onOpenRegions: () -> Unit,
-    onOpenOrders: () -> Unit,
     onOpenWalletHome: () -> Unit,
-    onOpenReceive: () -> Unit,
-    onOpenSend: () -> Unit,
-    onOpenAssetBook: () -> Unit,
+    onOpenVpnConsole: () -> Unit,
     onOpenInviteCenter: () -> Unit,
-    onOpenCommission: () -> Unit,
-    onOpenWithdraw: () -> Unit,
     onOpenProfile: () -> Unit,
+    onOpenPlans: () -> Unit,
     onOpenLegal: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenSupport: () -> Unit,
-): ShellModel {
-    val sessionBadge = if (isAuthenticated) "Account Live" else "Guest Mode"
-    return when (selectedTab) {
-        ShellTab.HOME -> ShellModel(
-            badge = sessionBadge,
-            title = if (isAuthenticated) "首页切到钱包优先的资产分发层" else "先浏览新首页，再按需解锁钱包与 VPN",
-            subtitle = if (isAuthenticated) {
-                "Home 先展示资产总览、收发入口和账户概览，再把 VPN、订单与套餐分发到原有业务页。"
-            } else {
-                "未登录也能浏览 Bitget 风格首页层级；涉及钱包和订单的动作会按需引导登录。"
-            },
-            metrics = listOf(
-                ShellMetric("资产层", if (isAuthenticated) "Wallet Ready" else "Guest"),
-                ShellMetric("收付", "Receive / Send"),
-                ShellMetric("桥接", "Preserved"),
-            ),
-            tickers = listOf(
-                ShellTickerItem("HOME", "Assets"),
-                ShellTickerItem("WALLET", "Live"),
-                ShellTickerItem("VPN", "Linked"),
-            ),
-            sectionTitle = "首页快捷操作",
-            sectionSubtitle = "首页优先露出钱包资产动作，再把 VPN、订单等存量路由收敛进统一的 Bitget 风格入口。",
-            actions = listOf(
-                ShellQuickAction("钱包主页", "进入 Wallet Home", Icons.Default.AccountBalanceWallet, Info, onOpenWalletHome),
-                ShellQuickAction("收款地址", "直接打开 Receive", Icons.Default.SouthWest, Primary, onOpenReceive),
-                ShellQuickAction("发送资产", "进入 Send 流程", Icons.Default.Send, GlowBlue, onOpenSend),
-                ShellQuickAction("VPN 控制台", "保持原有连接页面", Icons.Default.VpnLock, Warning, onOpenVpnConsole),
-            ),
-            primaryActionLabel = if (isAuthenticated) "打开钱包" else "登录账户",
-            onPrimaryAction = if (isAuthenticated) onOpenWalletHome else onOpenLogin,
-            secondaryActionLabel = if (isAuthenticated) "查看订单" else "查看套餐",
-            onSecondaryAction = if (isAuthenticated) onOpenOrders else onOpenPlans,
-            showcaseEyebrow = "Home Overview",
-            showcaseTitle = "首页先给出资产卡与收发起点",
-            showcaseBody = "Launcher 先落到新的 Home 资产分发层，再从快捷动作进入 Wallet、Receive、Send、VPN 等原有业务路由，不触碰 bridge 和数据层。",
-            showcaseActionLabel = if (isAuthenticated) "打开收款" else "前往登录",
-            onShowcaseAction = if (isAuthenticated) onOpenReceive else onOpenLogin,
-            notes = listOf(
-                "Home 仍是壳层入口，但视觉顺序改成 Bitget Wallet 常见的资产总览 -> 快捷操作 -> 路由分发。",
-                "业务状态与视觉状态继续解耦，避免因改样式触碰仓储与网络层。",
-            ),
-        )
+) {
+    if (selectedTab == ShellTab.HOME) return
 
-        ShellTab.WALLET -> ShellModel(
-            badge = sessionBadge,
-            title = if (isAuthenticated) "Wallet 作为资产中心与收付中枢" else "登录后启用钱包资产、收款与发送起点",
-            subtitle = "Wallet 负责承接钱包主页、资产详情、收款、发送等入口，底层页面继续复用原路由与 placeholder。",
-            metrics = listOf(
-                ShellMetric("资产", if (isAuthenticated) "Visible" else "Sign In"),
-                ShellMetric("明细", "Asset Detail"),
-                ShellMetric("收付", "Ready"),
-            ),
-            tickers = listOf(
-                ShellTickerItem("WALLET", "Assets"),
-                ShellTickerItem("RECEIVE", "Direct"),
-                ShellTickerItem("SEND", "Bridge"),
-            ),
-            sectionTitle = "钱包快捷操作",
-            sectionSubtitle = "Wallet tab 直接承接资产主页、收付款与资产详情入口，同时保留原有页面与导航回调。",
-            actions = listOf(
-                ShellQuickAction("打开钱包", "进入钱包主页", Icons.Default.Wallet, Primary, onOpenWalletHome),
-                ShellQuickAction("收款地址", "直接打开 Receive", Icons.Default.SouthWest, GlowGreen, onOpenReceive),
-                ShellQuickAction("发送资产", "进入 Send 流程", Icons.Default.Send, Info, onOpenSend),
-                ShellQuickAction("资产明细", "查看资产账本", Icons.Default.AccountBalanceWallet, Warning, onOpenAssetBook),
-            ),
-            primaryActionLabel = if (isAuthenticated) "进入钱包" else "登录账户",
-            onPrimaryAction = if (isAuthenticated) onOpenWalletHome else onOpenLogin,
-            secondaryActionLabel = if (isAuthenticated) "收款" else "查看支持",
-            onSecondaryAction = if (isAuthenticated) onOpenReceive else onOpenSupport,
-            showcaseEyebrow = "Wallet Surface",
-            showcaseTitle = "资产首页、详情与收发起点已并入统一风格",
-            showcaseBody = "钱包分区继续保留 `wallet_home / receive / send / asset_detail` 路由，只重构外层视觉、文案层级和默认入口顺序。",
-            showcaseActionLabel = if (isAuthenticated) "打开资产页" else "前往登录",
-            onShowcaseAction = if (isAuthenticated) onOpenAssetBook else onOpenLogin,
-            notes = listOf(
-                "Guest 态下保留钱包外壳，但所有资产动作仍会引导登录。",
-                "底层支付与钱包仓储未做修改，只有 Compose 表层重排。",
-            ),
-        )
-
-        ShellTab.VPN -> ShellModel(
-            badge = sessionBadge,
-            title = if (isAuthenticated) "VPN 控制与订阅交易舱" else "登录后进入 VPN 控制台与订单流",
-            subtitle = "VPN tab 直连 VPN、Regions、Plans、Orders，维持核心购买与连接流程的原有页面。",
-            metrics = listOf(
-                ShellMetric("状态", if (isAuthenticated) "Ready" else "Guarded"),
-                ShellMetric("套餐", "Plans"),
-                ShellMetric("订单", "Orders"),
-            ),
-            tickers = listOf(
-                ShellTickerItem("VPN", "Console"),
-                ShellTickerItem("PLANS", "Live"),
-                ShellTickerItem("REGION", "Fast"),
-            ),
-            sectionTitle = "VPN 动作区",
-            sectionSubtitle = "这里专门承接连接、地区、套餐和订单操作，确保底部导航里有独立 VPN 标签。",
-            actions = listOf(
-                ShellQuickAction("VPN 控制台", "进入连接主页面", Icons.Default.VpnLock, Primary, onOpenVpnConsole),
-                ShellQuickAction("地区选择", "快速切到 Region Selection", Icons.Default.Language, Info, onOpenRegions),
-                ShellQuickAction("订阅套餐", "查看 Plans 列表", Icons.Default.CreditCard, Warning, onOpenPlans),
-                ShellQuickAction("订单中心", "查看已下单与待支付订单", Icons.Default.ReceiptLong, GlowBlue, onOpenOrders),
-            ),
-            primaryActionLabel = if (isAuthenticated) "进入 VPN" else "登录账户",
-            onPrimaryAction = if (isAuthenticated) onOpenVpnConsole else onOpenLogin,
+    val state = when (selectedTab) {
+        ShellTab.WALLET -> ShellGuestTabState(
+            badge = "Wallet Ready",
+            title = "登录后进入新的 Wallet 资产页",
+            description = "Wallet tab 已切到钱包 family 的真实布局。登录后可直接查看资产总览、收款、发送和资产详情。",
+            accentColor = GlowGreen,
+            primaryActionLabel = "登录账户",
+            onPrimaryAction = onOpenWalletHome,
             secondaryActionLabel = "查看套餐",
             onSecondaryAction = onOpenPlans,
-            showcaseEyebrow = "VPN Desk",
-            showcaseTitle = "连接与订阅流量都从壳层统一承接",
-            showcaseBody = "从这里可进入 VPN 首页、地区选择、套餐页和订单页；连接、订单结果与支付结果回跳也会回到新壳。",
-            showcaseActionLabel = if (isAuthenticated) "打开订单" else "前往登录",
-            onShowcaseAction = if (isAuthenticated) onOpenOrders else onOpenLogin,
-            notes = listOf(
-                "保持 VPN 业务页原样，壳层只负责统一入口和回跳目的地。",
-                "未登录态点击受保护动作会先进入认证，再回到目标页。",
+            actions = listOf(
+                ShellGuestAction("套餐入口", "先浏览套餐与订阅信息", Icons.Default.CreditCard, Warning, onOpenPlans),
+                ShellGuestAction("支持帮助", "遇到问题时先查看帮助入口", Icons.Default.Info, Info, onOpenSupport),
             ),
         )
 
-        ShellTab.DISCOVER -> ShellModel(
-            badge = sessionBadge,
-            title = if (isAuthenticated) "Discover 与增长分发层" else "Discover 聚合增长、法务与支持入口",
-            subtitle = "Discover 负责把 Growth 相关页面和公共信息入口收束到独立底部标签里。",
-            metrics = listOf(
-                ShellMetric("增长", "Invite"),
-                ShellMetric("返佣", "Ledger"),
-                ShellMetric("状态", if (isAuthenticated) "Live" else "Locked"),
-            ),
-            tickers = listOf(
-                ShellTickerItem("DISCOVER", "Ready"),
-                ShellTickerItem("GROWTH", "Linked"),
-                ShellTickerItem("WITHDRAW", "Guarded"),
-            ),
-            sectionTitle = "Discover 动作区",
-            sectionSubtitle = "增长、返佣、提现、法务与支持入口统一在 Discover 内分发，不改现有 Growth 页面源码。",
+        ShellTab.VPN -> ShellGuestTabState(
+            badge = "VPN Locked",
+            title = "登录后打开 VPN 控制与订阅流",
+            description = "VPN tab 现在直接承接新的连接首页。未登录时只保留登录和套餐浏览，不放开连接与订单动作。",
+            accentColor = GlowBlue,
+            primaryActionLabel = "登录后继续",
+            onPrimaryAction = onOpenVpnConsole,
+            secondaryActionLabel = "浏览套餐",
+            onSecondaryAction = onOpenPlans,
             actions = listOf(
-                ShellQuickAction("邀请中心", "打开 Invite Center", Icons.Default.Groups, Primary, onOpenInviteCenter),
-                ShellQuickAction("佣金台账", "查看返佣流水", Icons.Default.ShowChart, GlowBlue, onOpenCommission),
-                ShellQuickAction("提现申请", "进入 Withdraw", Icons.Default.CreditCard, Warning, onOpenWithdraw),
-                ShellQuickAction("法务文档", "查看条款与隐私", Icons.Default.Description, Info, onOpenLegal),
-            ),
-            primaryActionLabel = if (isAuthenticated) "打开邀请中心" else "登录账户",
-            onPrimaryAction = if (isAuthenticated) onOpenInviteCenter else onOpenLogin,
-            secondaryActionLabel = "支持帮助",
-            onSecondaryAction = onOpenSupport,
-            showcaseEyebrow = "Discover Deck",
-            showcaseTitle = "Growth 页面通过 Discover 统一暴露",
-            showcaseBody = "邀请中心、佣金台账和提现流程仍由现有 growth/profile/legal 页面承接，壳层只负责更强的视觉骨架和入口组织。",
-            showcaseActionLabel = if (isAuthenticated) "打开佣金台账" else "查看法务",
-            onShowcaseAction = if (isAuthenticated) onOpenCommission else onOpenLegal,
-            notes = listOf(
-                "Discover 不是新业务页，而是既有 Growth 与公共入口的壳层分发器。",
-                "支持与法务保留访客可见，受保护增长页仍按需登录。",
+                ShellGuestAction("套餐列表", "先了解套餐和结算节奏", Icons.Default.CreditCard, Warning, onOpenPlans),
+                ShellGuestAction("支持帮助", "查看使用说明与问题反馈", Icons.Default.Info, Info, onOpenSupport),
             ),
         )
 
-        ShellTab.PROFILE -> ShellModel(
-            badge = sessionBadge,
-            title = if (isAuthenticated) "账户设置与资料入口" else "访客也可进入设置与法务入口",
-            subtitle = "把个人资料、设置、法务、关于等入口沉到底部导航的最后一个标签。",
-            metrics = listOf(
-                ShellMetric("配置", "Settings"),
-                ShellMetric("文档", "Legal"),
-                ShellMetric("会话", if (isAuthenticated) "Profile On" else "Guest"),
-            ),
-            tickers = listOf(
-                ShellTickerItem("PROFILE", "Compose"),
-                ShellTickerItem("LEGAL", "Ready"),
-                ShellTickerItem("ABOUT", "Legacy"),
-            ),
-            sectionTitle = "账户动作区",
-            sectionSubtitle = "资料页与设置页仍保留各自业务实现，外壳负责统一入口与视觉语言。",
+        ShellTab.DISCOVER -> ShellGuestTabState(
+            badge = "Discover Gate",
+            title = "Discover 改成增长与法务分发层",
+            description = "Discover 不再展示旧壳层占位。登录后进入增长页，访客态保留法务和帮助入口。",
+            accentColor = Color(0xFF7AB8FF),
+            primaryActionLabel = "登录解锁增长页",
+            onPrimaryAction = onOpenInviteCenter,
+            secondaryActionLabel = "查看 Legal",
+            onSecondaryAction = onOpenLegal,
             actions = listOf(
-                ShellQuickAction("个人资料", "打开原有 Profile", Icons.Default.Person, Primary, onOpenProfile),
-                ShellQuickAction("设置中心", "打开原生 Settings", Icons.Default.Settings, Warning, onOpenSettings),
-                ShellQuickAction("关于应用", "打开 About", Icons.Default.Info, GlowBlue, onOpenAbout),
-                ShellQuickAction("法务文档", "查看条款与隐私", Icons.Default.Description, Info, onOpenLegal),
-            ),
-            primaryActionLabel = if (isAuthenticated) "打开资料页" else "登录账户",
-            onPrimaryAction = if (isAuthenticated) onOpenProfile else onOpenLogin,
-            secondaryActionLabel = "支持帮助",
-            onSecondaryAction = onOpenSupport,
-            showcaseEyebrow = "Account Layer",
-            showcaseTitle = "顶部账户区与底部导航已成统一外壳",
-            showcaseBody = "从这里可以进入设置、法务、关于或个人资料。即便未登录，也不会破坏现有业务路由与遗留 Activity 的接线。",
-            showcaseActionLabel = if (isAuthenticated) "打开设置" else "查看法务",
-            onShowcaseAction = if (isAuthenticated) onOpenSettings else onOpenLegal,
-            notes = listOf(
-                "访客态保留设置、关于、法务入口。",
-                "登录后仍可继续进入原有 Profile 页面完成登出等动作。",
+                ShellGuestAction("Legal 文档", "查看条款、隐私和退款规则", Icons.Default.Description, Info, onOpenLegal),
+                ShellGuestAction("支持帮助", "保留访客可见的问题反馈入口", Icons.Default.Info, GlowBlue, onOpenSupport),
             ),
         )
+
+        ShellTab.PROFILE -> ShellGuestTabState(
+            badge = "Guest Mode",
+            title = "Profile tab 改成设置与账户入口",
+            description = "Profile 不再显示旧 ShellModel 列表。登录后进入设置页，访客态继续保留设置、关于和法务入口。",
+            accentColor = Warning,
+            primaryActionLabel = "登录账户",
+            onPrimaryAction = onOpenProfile,
+            secondaryActionLabel = "打开设置",
+            onSecondaryAction = onOpenSettings,
+            actions = listOf(
+                ShellGuestAction("设置中心", "继续使用原有设置接线", Icons.Default.Settings, Warning, onOpenSettings),
+                ShellGuestAction("关于应用", "打开 About 页面", Icons.Default.Info, GlowBlue, onOpenAbout),
+                ShellGuestAction("Legal 文档", "查看条款与隐私说明", Icons.Default.Description, Info, onOpenLegal),
+            ),
+        )
+
+        ShellTab.HOME -> return
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            end = 20.dp,
+            top = 18.dp,
+            bottom = 24.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(30.dp),
+                color = BackgroundPrimary.copy(alpha = 0.92f),
+                tonalElevation = 0.dp,
+                shadowElevation = 0.dp,
+                border = BorderStroke(1.dp, state.accentColor.copy(alpha = 0.28f)),
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Text(
+                        text = state.badge,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = state.accentColor,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = state.title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = state.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Button(
+                            modifier = Modifier.weight(1f),
+                            onClick = state.onPrimaryAction,
+                        ) {
+                            Text(text = state.primaryActionLabel)
+                        }
+                        OutlinedButton(
+                            modifier = Modifier.weight(1f),
+                            onClick = state.onSecondaryAction,
+                        ) {
+                            Text(text = state.secondaryActionLabel)
+                        }
+                    }
+                }
+            }
+        }
+
+        items(state.actions, key = { it.title }) { action ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(26.dp),
+                color = BackgroundPrimary.copy(alpha = 0.78f),
+                tonalElevation = 0.dp,
+                shadowElevation = 0.dp,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = action.onClick)
+                        .padding(horizontal = 18.dp, vertical = 18.dp),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(
+                                color = action.accentColor.copy(alpha = 0.18f),
+                                shape = CircleShape,
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = action.icon,
+                            contentDescription = action.title,
+                            tint = action.accentColor,
+                        )
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = action.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = action.subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
