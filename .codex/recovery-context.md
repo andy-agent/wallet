@@ -1,17 +1,17 @@
 # Recovery Context
 
-Generated: 2026-04-08T11:18:09Z
+Generated: 2026-04-08T11:50:43Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.22.13.8
-- next_task_title: 实现主后端 Market 真实读接口
+- next_task_id: liaojiang-rcb.24.2
+- next_task_title: 实现 server2-backed Postgres RuntimeStateRepository
 
 ## Counters
-- in_progress: 6
+- in_progress: 5
 - ready: 0
-- open: 9
-- closed: 201
+- open: 8
+- closed: 206
 - dirty: 3
 
 ## Next Milestone
