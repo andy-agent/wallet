@@ -169,22 +169,51 @@ Sources:
 - These pages use the expected `行情 / 详情` structure with chart-first layout and bottom long/short trade actions.
 - This confirms the contract lane includes a stable quote-detail layer before the deeper trading continuation.
 
-3. Remaining captures still required under this lane
+3. `行情 -> 合约 -> 新上线`
+Source: `/tmp/liaojiang-screens/20260408-bitget-contract-board-new.png`
 
-- `新上线`
-- `全部`
-- `股票`
-- board-by-board route proof that those tabs are separate list states under the contract lane
+- `新上线` is now captured as a distinct contract-lane board state.
+- Visible rows include `SP500USDC`, `CLUSDT`, `BZUSDT`, and `EDGEUSDT`.
+- This confirms the board materially changes the contract list payload.
 
-These were pointed out by the user and remain incomplete in the current capture set.
+4. `行情 -> 合约 -> 全部`
+Source: `/tmp/liaojiang-screens/20260408-bitget-contract-board-all.png`
+
+- `全部` is a separate board state under the contract lane.
+- Visible rows include `BTCUSDT`, `ETHUSDT`, `SOLUSDT`, `XAUUSDT`, and `XAGUSDT`.
+- This broadens beyond the narrower `新上线` list and confirms a distinct route/list state.
+
+5. `行情 -> 合约 -> 股票`
+Source: `/tmp/liaojiang-screens/20260408-bitget-contract-board-stock.png`
+
+- `股票` here is a board inside the contract lane, not the top-level stock lane.
+- Visible rows include `TSLAUSDC`, `SNDKUSDC`, `NVDAUSDC`, `HOODUSDC`, and `INTCUSDC`.
+- This confirms the contract lane carries its own stock-derived subroute semantics.
+
+6. Remaining captures still required under this lane
+
+- representative-row jump from contract board list into downstream quote detail under controlled recapture
+
+The contract lane is now mostly mapped; remaining work is narrow and focused on one clean board-list-to-detail transition.
 
 ### Lane C: `行情 -> 股票`
+
+Temporary product note:
+
+- On 2026-04-08, the user explicitly decided that the stock lane may remain blank for now.
+- The evidence below is retained as future restoration input and is not part of the current must-deliver parity scope.
 
 1. `行情 -> 股票` root
 Source: `/tmp/liaojiang-screens/20260408-bitget-market-stock.png`
 
 - White root page with sector cards and a stock-specific board row.
 - Stock boards include `收藏 / 涨幅榜 / 交易最多 / 中概股 / ETFs ...`.
+
+Supplementary live probe:
+
+- `/tmp/liaojiang-screens/current_probe.png`
+
+- This later live probe confirms the stock lane can sit on a `涨幅榜` board state while keeping the same white shell and board taxonomy.
 
 2. `行情 -> 股票 -> 搜索 -> NVDAon`
 Sources:

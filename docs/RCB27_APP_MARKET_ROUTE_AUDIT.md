@@ -178,7 +178,7 @@ Current app status: `no route`
 - The app is missing most of the token lane route tree itself.
 - Implementation must therefore start by creating a route-correct token lane skeleton before trying to polish detail visuals.
 
-## Contract Lane Early Gap Notes
+## Contract Lane Gap Matrix
 
 1. `行情 -> 合约` root
 Bitget baseline:
@@ -188,18 +188,97 @@ Current app status: `wrong page`
 - App still exposes the same dark custom Market dashboard instead of a distinct contract root lane.
 - There is no route-faithful contract root with Bitget board taxonomy.
 
-2. `合约 -> 代表性交易对 -> 交易 continuation`
+2. `合约 -> 热门`
 Bitget baseline:
-- Human screenshot already shows a real `SOLUSDT` contract trading continuation with chart and order-entry controls.
+- `热门` is a real contract-lane board state under the contract root.
+
+Current app status: `no route`
+- The app has no contract-lane board switching at all.
+- Nothing on the current Market page maps to a `热门` contract board.
+
+3. `合约 -> 新上线`
+Bitget baseline:
+- `新上线` is a distinct contract board with its own list payload.
+
+Current app status: `no route`
+- The app has no `新上线` contract board route.
+- Local chips and local boards are not an equivalent.
+
+4. `合约 -> 全部`
+Bitget baseline:
+- `全部` is a distinct contract board with broader market coverage.
+
+Current app status: `no route`
+- No contract-wide board exists on the app Market surface.
+
+5. `合约 -> 股票`
+Bitget baseline:
+- `股票` is a board inside the contract lane, not the top-level stock lane.
+
+Current app status: `no route`
+- The app has no contract-lane `股票` board or equivalent mixed contract/stock list state.
+
+6. `合约 -> 代表性交易对 -> 行情 / 详情`
+Bitget baseline:
+- Human screenshots show stable contract quote-detail pages with chart-first layout and bottom long/short actions.
+
+Current app status: `broken route`
+- Current Market-to-detail transition on device is unstable and can fall into a blank white screen.
+- There is no proven stable contract quote-detail route from the current app Market lane.
+
+7. `合约 -> 代表性交易对 -> 交易 continuation`
+Bitget baseline:
+- Human screenshot shows a real `SOLUSDT` contract-trading continuation with chart and order-entry controls.
 
 Current app status: `no route`
 - Current app Market lane has no stable contract-trade continuation from a market symbol.
-- Existing real-device detail transition is unstable and can fall into a blank white screen instead of a usable continuation route.
+- No equivalent contract-trading shell is reachable from the app Market surface.
 
-3. Outstanding contract-lane audit work
+## Stock Lane Gap Matrix
 
-- `热门 / 新上线 / 全部 / 股票` board-by-board comparison is still pending.
-- Contract lane should remain active in `bd` until those boards and downstream routes are audited route-by-route.
+Temporary product note:
+
+- On 2026-04-08, the user explicitly decided that the stock lane may remain blank for now.
+- The gap matrix below is therefore retained as future restoration input and is not part of the current must-fix scope.
+
+1. `行情 -> 股票` root
+Bitget baseline:
+- White stock root with sector cards and board row `收藏 / 涨幅榜 / 交易最多 / 中概股 / ETFs ...`.
+
+Current app status: `wrong page`
+- Current app has no first-level `股票` lane.
+- The current Market home remains the same dark custom dashboard instead of a stock-specific white shell.
+
+2. `股票 -> 收藏 / 涨幅榜 / 交易最多 / 中概股 / ETFs`
+Bitget baseline:
+- These are real stock-lane board states under the same stock shell.
+
+Current app status: `no route`
+- The app exposes no stock-lane board family at all.
+- Existing local chips do not correspond to these stock boards.
+
+3. `股票 -> 搜索 -> NVDAon`
+Bitget baseline:
+- Search is route-bearing and returns stock entries such as `NVDAon`.
+
+Current app status: `broken route`
+- The app does not expose a stock-lane search route.
+- Current Market-to-detail behavior on device is unstable before a stock-equivalent search/detail path can be reached.
+
+4. `股票 -> 某标的详情`
+Bitget baseline:
+- Representative stock detail exists and follows the `行情 / 详情` family structure.
+
+Current app status: `broken route`
+- The app does not reliably enter a usable quote-detail route from Market.
+- This means the stock lane cannot currently continue into a stable detail page.
+
+5. `股票 -> detail -> continuation`
+Bitget baseline:
+- Stock lane continues into deeper states after symbol selection.
+
+Current app status: `no route`
+- No stock-origin continuation route exists behind the current app Market page.
 
 ## Immediate Implementation Consequences
 

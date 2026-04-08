@@ -1,17 +1,15 @@
 {
-  "generated_at": "2026-04-08T14:27:00Z",
+  "generated_at": "2026-04-08T15:00:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-rcb.26.6",
-  "accepted_task_id": "liaojiang-rcb.27.5",
-  "next_task_id": "liaojiang-rcb.27.7",
-  "active_worker_task_ids": [
-    "liaojiang-rcb.27.7"
-  ],
+  "active_task_id": "liaojiang-rcb.26.7",
+  "accepted_task_id": "liaojiang-rcb.27.7",
+  "next_task_id": "liaojiang-rcb.27.4",
+  "active_worker_task_ids": [],
   "blockers": [],
   "workers": [],
   "mainline": {
     "feature_id": "liaojiang-rcb",
-    "phase_id": "liaojiang-rcb.26.6",
-    "policy": "Route handling proceeds lane-by-lane. Token lane is accepted. Current lane is 行情 -> 合约, using the verified contract root plus the user-provided SOLUSDT contract-trade screenshot as baseline while comparing current app route/function gaps in parallel under rcb.27.7."
+    "phase_id": "liaojiang-rcb.26.7",
+    "policy": "Stock lane is temporarily out of scope by product decision. Current mainline blocker is restoring a stable launcher/entry path into the Compose Market surface so token+contract Market parity can be verified on device."
   }
 }
