@@ -161,7 +161,7 @@ internal fun MarketQuoteDetailPage(
                                     contentColor = TextSecondary,
                                 )
                                 VpnStatusChip(
-                                    text = "Quote Detail",
+                                    text = "详情",
                                     containerColor = VpnSurfaceStrong,
                                     contentColor = TextSecondary,
                                 )
@@ -246,7 +246,7 @@ internal fun MarketQuoteDetailPage(
                         VpnGlassCard {
                             VpnSectionHeading(
                                 title = "页面落地说明",
-                                subtitle = "当前页面族只实现 Market browse + detail structure，不接入交易和导航 wiring。",
+                                subtitle = "当前页面仅保留行情浏览与详情结构，不接入真实交易和复杂导航。",
                             )
                             detail.thesis.forEach { note ->
                                 ThesisRow(text = note)

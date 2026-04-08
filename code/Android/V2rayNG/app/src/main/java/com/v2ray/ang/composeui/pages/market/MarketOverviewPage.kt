@@ -1,5 +1,6 @@
 package com.v2ray.ang.composeui.pages.market
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -21,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -41,17 +43,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.pages.vpn.VpnAccent
-import com.v2ray.ang.composeui.pages.vpn.VpnAccentSoft
 import com.v2ray.ang.composeui.pages.vpn.VpnBitgetBackground
-import com.v2ray.ang.composeui.pages.vpn.VpnCodeBadge
 import com.v2ray.ang.composeui.pages.vpn.VpnEmptyPanel
-import com.v2ray.ang.composeui.pages.vpn.VpnGlassCard
-import com.v2ray.ang.composeui.pages.vpn.VpnListDivider
-import com.v2ray.ang.composeui.pages.vpn.VpnMetricPill
-import com.v2ray.ang.composeui.pages.vpn.VpnRangeSelector
+import com.v2ray.ang.composeui.pages.vpn.VpnOutline
+import com.v2ray.ang.composeui.pages.vpn.VpnPageBottomPadding
+import com.v2ray.ang.composeui.pages.vpn.VpnPageHorizontalPadding
+import com.v2ray.ang.composeui.pages.vpn.VpnPageTopPadding
 import com.v2ray.ang.composeui.pages.vpn.VpnSearchField
-import com.v2ray.ang.composeui.pages.vpn.VpnSectionHeading
-import com.v2ray.ang.composeui.pages.vpn.VpnStatusChip
+import com.v2ray.ang.composeui.pages.vpn.VpnSurface
 import com.v2ray.ang.composeui.pages.vpn.VpnSurfaceStrong
 import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import com.v2ray.ang.composeui.theme.Error
@@ -90,103 +89,99 @@ internal fun MarketOverviewPage(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(
+                    start = VpnPageHorizontalPadding,
+                    end = VpnPageHorizontalPadding,
+                    top = VpnPageTopPadding,
+                    bottom = VpnPageBottomPadding,
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.Top,
+                            verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            VpnSectionHeading(
-                                title = "Market",
-                                subtitle = "Bitget-style quote browsing with public overview and detail surfaces.",
+                            Column(
                                 modifier = Modifier.weight(1f),
-                            )
-                            VpnStatusChip(
-                                text = "Public",
-                                containerColor = VpnAccentSoft,
-                                contentColor = VpnAccent,
-                            )
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Text(
+                                    text = "行情",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Text(
+                                    text = "${selectedCategory.label} · ${selectedBoard.label} · ${visibleQuotes.size} 个标的",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                )
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = VpnSurfaceStrong,
+                                border = BorderStroke(1.dp, VpnOutline.copy(alpha = 0.8f)),
+                            ) {
+                                Text(
+                                    text = selectedBoard.label,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = TextSecondary,
+                                )
+                            }
                         }
                         VpnSearchField(
                             value = query,
                             onValueChange = { query = it },
-                            placeholder = "搜索标的、主题或夜盘",
+                            modifier = Modifier.height(52.dp),
+                            placeholder = "搜索币种 / 交易对",
+                            trailingIcon = Icons.Default.Tune,
+                            onTrailingClick = {},
                         )
+                        if (spotlights.isNotEmpty()) {
+                            MarketSpotlightStrip(
+                                spotlights = spotlights,
+                                onOpenQuote = { symbol ->
+                                    val target = quotes.firstOrNull { it.symbol == symbol } ?: quotes.firstOrNull()
+                                    if (target != null) {
+                                        onOpenQuote(target)
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
                 item {
-                    SpotlightRow(
-                        spotlights = spotlights,
-                        onOpenQuote = { symbol ->
-                            val target = quotes.firstOrNull { it.symbol == symbol } ?: quotes.firstOrNull()
-                            if (target != null) {
-                                onOpenQuote(target)
-                            }
-                        },
-                    )
-                }
-                item {
-                    MarketChipStrip(
+                    MarketTopTabs(
                         labels = marketOverviewCategories.map { it.label },
                         selectedIndex = selectedCategoryIndex,
                         onSelect = { selectedCategoryIndex = it },
                     )
                 }
                 item {
-                    VpnRangeSelector(
+                    MarketBoardTabs(
                         labels = marketOverviewBoards.map { it.label },
                         selectedIndex = selectedBoardIndex,
-                        trailingIcon = Icons.Default.Tune,
-                        onTrailingClick = {},
                         onSelect = { selectedBoardIndex = it },
                     )
-                }
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        VpnMetricPill(
-                            label = "榜单模式",
-                            value = selectedBoard.label,
-                            modifier = Modifier.weight(1f),
-                            valueColor = VpnAccent,
-                        )
-                        VpnMetricPill(
-                            label = "筛选范围",
-                            value = selectedCategory.label,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
                 }
                 if (visibleQuotes.isEmpty()) {
                     item {
                         VpnEmptyPanel(
-                            title = "没有匹配的行情",
-                            subtitle = "调整搜索词或切换分段即可恢复榜单内容。",
+                            title = "未找到相关行情",
+                            subtitle = "尝试更换搜索词或切换榜单。",
                         )
                     }
                 } else {
                     item {
-                        VpnGlassCard {
-                            VpnSectionHeading(
-                                title = "热门行情",
-                                subtitle = "列表可直接进入 Quote detail，保持 Market -> Quote 的稳定链路。",
-                            )
-                            visibleQuotes.forEachIndexed { index, quote ->
-                                MarketQuoteRow(
-                                    quote = quote,
-                                    onClick = { onOpenQuote(quote) },
-                                )
-                                if (index != visibleQuotes.lastIndex) {
-                                    VpnListDivider()
-                                }
-                            }
-                        }
+                        MarketQuoteBoard(
+                            quotes = visibleQuotes,
+                            board = selectedBoard,
+                            onOpenQuote = onOpenQuote,
+                        )
                     }
                 }
             }
@@ -195,7 +190,7 @@ internal fun MarketOverviewPage(
 }
 
 @Composable
-private fun SpotlightRow(
+private fun MarketSpotlightStrip(
     spotlights: List<MarketSpotlight>,
     onOpenQuote: (String) -> Unit,
 ) {
@@ -203,72 +198,70 @@ private fun SpotlightRow(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         spotlights.forEach { spotlight ->
-            VpnGlassCard(
-                modifier = Modifier.width(246.dp),
-                accent = VpnAccent,
+            val metricColor = when {
+                spotlight.primaryValue.trim().startsWith("-") -> Error
+                spotlight.primaryValue.trim().startsWith("+") -> VpnAccent
+                else -> TextPrimary
+            }
+            Surface(
+                modifier = Modifier
+                    .width(164.dp)
+                    .clickable { onOpenQuote(spotlight.symbol) },
+                shape = RoundedCornerShape(18.dp),
+                color = VpnSurface,
+                border = BorderStroke(1.dp, VpnOutline.copy(alpha = 0.78f)),
             ) {
-                Text(
-                    text = spotlight.eyebrow,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = VpnAccent,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = spotlight.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = spotlight.subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                )
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                    ) {
+                        Text(
+                            text = spotlight.eyebrow,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextTertiary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = spotlight.title,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                         Text(
                             text = spotlight.primaryValue,
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = spotlight.secondaryValue,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = metricColor,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
                         )
                     }
-                    Surface(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(999.dp))
-                            .clickable { onOpenQuote(spotlight.symbol) },
-                        shape = RoundedCornerShape(999.dp),
-                        color = VpnSurfaceStrong,
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            Text(
-                                text = spotlight.symbol,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextPrimary,
-                                fontWeight = FontWeight.Medium,
-                            )
-                            androidx.compose.material3.Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = TextSecondary,
-                            )
-                        }
+                        Text(
+                            text = spotlight.secondaryValue,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = TextTertiary,
+                        )
                     }
                 }
             }
@@ -277,7 +270,7 @@ private fun SpotlightRow(
 }
 
 @Composable
-private fun MarketChipStrip(
+private fun MarketTopTabs(
     labels: List<String>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
@@ -286,20 +279,64 @@ private fun MarketChipStrip(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
+        labels.forEachIndexed { index, label ->
+            val selected = index == selectedIndex
+            Column(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .clickable { onSelect(index) },
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (selected) TextPrimary else TextSecondary,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                )
+                Box(
+                    modifier = Modifier
+                        .width(18.dp)
+                        .height(2.dp)
+                        .background(
+                            color = if (selected) VpnAccent else Color.Transparent,
+                            shape = RoundedCornerShape(999.dp),
+                        ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MarketBoardTabs(
+    labels: List<String>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         labels.forEachIndexed { index, label ->
             val selected = index == selectedIndex
             Surface(
                 modifier = Modifier.clickable { onSelect(index) },
-                shape = RoundedCornerShape(999.dp),
-                color = if (selected) VpnAccentSoft else VpnSurfaceStrong,
+                shape = RoundedCornerShape(14.dp),
+                color = if (selected) VpnSurfaceStrong else Color.Transparent,
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = if (selected) VpnAccent.copy(alpha = 0.34f) else VpnOutline.copy(alpha = 0.64f),
+                ),
             ) {
                 Text(
                     text = label,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (selected) VpnAccent else TextSecondary,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (selected) TextPrimary else TextSecondary,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
                 )
             }
@@ -308,31 +345,84 @@ private fun MarketChipStrip(
 }
 
 @Composable
+private fun MarketQuoteBoard(
+    quotes: List<MarketQuote>,
+    board: MarketBoard,
+    onOpenQuote: (MarketQuote) -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = VpnSurface,
+        border = BorderStroke(1.dp, VpnOutline.copy(alpha = 0.82f)),
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(
+                    text = "名称",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextTertiary,
+                )
+                Text(
+                    text = "最新价",
+                    modifier = Modifier.width(88.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextTertiary,
+                )
+                Text(
+                    text = board.columnLabel,
+                    modifier = Modifier.width(96.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextTertiary,
+                )
+            }
+            MarketBoardDivider()
+            quotes.forEachIndexed { index, quote ->
+                MarketQuoteRow(
+                    quote = quote,
+                    board = board,
+                    onClick = { onOpenQuote(quote) },
+                )
+                if (index != quotes.lastIndex) {
+                    MarketBoardDivider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun MarketQuoteRow(
     quote: MarketQuote,
+    board: MarketBoard,
     onClick: () -> Unit,
 ) {
+    val trendColor = if (quote.changeRateValue >= 0f) VpnAccent else Error
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(horizontal = 16.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        VpnCodeBadge(text = quote.symbol.take(2))
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
                     text = quote.symbol,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     color = TextPrimary,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -341,6 +431,14 @@ private fun MarketQuoteRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = TextTertiary,
                 )
+                val marker = if (quote.isFavorite) {
+                    MarketTag(label = "自选", tone = MarketTagTone.ACCENT)
+                } else {
+                    quote.tags.firstOrNull()
+                }
+                if (marker != null) {
+                    MarketInlineMarker(tag = marker)
+                }
             }
             Text(
                 text = quote.name,
@@ -349,60 +447,55 @@ private fun MarketQuoteRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                quote.tags.forEach { tag ->
-                    MarketTagChip(tag = tag)
-                }
-            }
+        }
+        Column(
+            modifier = Modifier.width(88.dp),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
             Text(
-                text = "区间 ${quote.dayRange}  ·  市值 ${quote.marketCap}  ·  PE ${quote.peRatio}",
+                text = quote.lastPrice,
+                style = MaterialTheme.typography.titleSmall,
+                color = TextPrimary,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+            )
+            Text(
+                text = quote.changeAmount,
+                style = MaterialTheme.typography.labelSmall,
+                color = trendColor,
+                maxLines = 1,
+            )
+        }
+        Column(
+            modifier = Modifier.width(96.dp),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = board.primaryMetric(quote),
+                style = MaterialTheme.typography.titleSmall,
+                color = board.primaryMetricColor(quote),
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+            )
+            Text(
+                text = board.secondaryMetric(quote),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextTertiary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(
-                text = quote.lastPrice,
-                style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Surface(
-                shape = RoundedCornerShape(999.dp),
-                color = if (quote.changeRateValue >= 0f) VpnAccentSoft else Error.copy(alpha = 0.18f),
-            ) {
-                Text(
-                    text = "${quote.changeAmount} ${quote.changePercent}",
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (quote.changeRateValue >= 0f) VpnAccent else Error,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-            Text(
-                text = "成交额 ${quote.volume24h}",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextTertiary,
-            )
-        }
     }
 }
 
 @Composable
-private fun MarketTagChip(tag: MarketTag) {
+private fun MarketInlineMarker(tag: MarketTag) {
     val containerColor = when (tag.tone) {
-        MarketTagTone.ACCENT -> VpnAccentSoft
+        MarketTagTone.ACCENT -> VpnAccent.copy(alpha = 0.16f)
         MarketTagTone.POSITIVE -> Color(0x2010C88C)
-        MarketTagTone.NEGATIVE -> Error.copy(alpha = 0.18f)
+        MarketTagTone.NEGATIVE -> Error.copy(alpha = 0.16f)
         MarketTagTone.NEUTRAL -> VpnSurfaceStrong
     }
     val contentColor = when (tag.tone) {
@@ -412,15 +505,35 @@ private fun MarketTagChip(tag: MarketTag) {
         MarketTagTone.NEUTRAL -> TextSecondary
     }
     Surface(
-        shape = RoundedCornerShape(999.dp),
+        shape = RoundedCornerShape(10.dp),
         color = containerColor,
     ) {
         Text(
             text = tag.label,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
             style = MaterialTheme.typography.labelSmall,
             color = contentColor,
+            maxLines = 1,
         )
+    }
+}
+
+@Composable
+private fun MarketBoardDivider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .height(1.dp)
+            .background(VpnOutline.copy(alpha = 0.72f)),
+    )
+}
+
+private fun MarketBoard.primaryMetricColor(quote: MarketQuote): Color {
+    return when (this) {
+        MarketBoard.HOT, MarketBoard.GAINERS -> if (quote.changeRateValue >= 0f) VpnAccent else Error
+        MarketBoard.VOLUME -> TextPrimary
+        MarketBoard.NEW -> VpnAccent
     }
 }
 
