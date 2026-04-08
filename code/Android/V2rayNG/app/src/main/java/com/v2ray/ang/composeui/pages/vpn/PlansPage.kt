@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -125,6 +126,10 @@ fun PlansPage(
     val selectedPlanId by viewModel.selectedPlanId.collectAsState()
     val loadedState = state as? PlansState.Loaded
     val selectedPlan = loadedState?.plans?.firstOrNull { it.id == selectedPlanId }
+    val proceedToCheckout: (String) -> Unit = { planId ->
+        viewModel.selectPlan(planId)
+        onNavigateToCheckout(planId)
+    }
 
     VpnBitgetBackground {
         Scaffold(
@@ -134,6 +139,10 @@ fun PlansPage(
             bottomBar = {
                 selectedPlan?.let { plan ->
                     Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .clickable { proceedToCheckout(plan.id) },
                         color = VpnSurface,
                         border = BorderStroke(1.dp, VpnOutline),
                     ) {
@@ -159,7 +168,7 @@ fun PlansPage(
                             }
                             VpnPrimaryButton(
                                 text = "继续下单",
-                                onClick = { onNavigateToCheckout(plan.id) },
+                                onClick = { proceedToCheckout(plan.id) },
                             )
                         }
                     }
@@ -218,7 +227,7 @@ fun PlansPage(
                                     FeaturedPlanTile(
                                         plan = plan,
                                         isSelected = plan.id == selectedPlanId,
-                                        onClick = { viewModel.selectPlan(plan.id) },
+                                        onClick = { proceedToCheckout(plan.id) },
                                     )
                                 }
                             }
@@ -240,7 +249,7 @@ fun PlansPage(
                                     PlanListRow(
                                         plan = plan,
                                         isSelected = plan.id == selectedPlanId,
-                                        onClick = { viewModel.selectPlan(plan.id) },
+                                        onClick = { proceedToCheckout(plan.id) },
                                     )
                                     if (index != current.plans.lastIndex) {
                                         VpnListDivider()
