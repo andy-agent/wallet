@@ -1,6 +1,7 @@
 package com.v2ray.ang.composeui.pages.wallet
 
 import android.app.Application
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,34 +12,36 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.ArrowOutward
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.NorthEast
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SouthWest
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -50,6 +53,7 @@ import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 data class AssetInfo(
     val symbol: String,
@@ -140,12 +144,12 @@ class WalletHomeViewModel(application: Application) : AndroidViewModel(applicati
             "TRX", "TRON" -> "TRON"
             "BNB" -> "BNB Chain"
             "MATIC" -> "Polygon"
+            "USD24" -> "USD24"
             else -> symbol
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WalletHomePage(
     viewModel: WalletHomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
@@ -156,34 +160,19 @@ fun WalletHomePage(
 ) {
     val state by viewModel.state.collectAsState()
     val isBalanceVisible by viewModel.isBalanceVisible.collectAsState()
+    var showWalletSwitcher by rememberSaveable { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Wallet") },
-                actions = {
-                    IconButton(onClick = { viewModel.refreshData() }) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh wallet",
-                        )
-                    }
-                    IconButton(onClick = onNavigateToProfile) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Open profile",
-                        )
-                    }
-                },
-            )
-        },
-    ) { paddingValues ->
+    Scaffold(containerColor = Color.Transparent) { paddingValues ->
         WalletPageBackdrop(modifier = Modifier.padding(paddingValues)) {
             when (val currentState = state) {
                 is WalletHomeState.Loaded -> WalletHomeContent(
                     state = currentState,
                     isBalanceVisible = isBalanceVisible,
-                    onToggleVisibility = { viewModel.toggleBalanceVisibility() },
+                    showWalletSwitcher = showWalletSwitcher,
+                    onDismissWalletSwitcher = { showWalletSwitcher = false },
+                    onOpenWalletSwitcher = { showWalletSwitcher = true },
+                    onToggleVisibility = viewModel::toggleBalanceVisibility,
+                    onRefresh = viewModel::refreshData,
                     onNavigateToReceive = onNavigateToReceive,
                     onNavigateToSend = onNavigateToSend,
                     onNavigateToAssetDetail = onNavigateToAssetDetail,
@@ -194,7 +183,7 @@ fun WalletHomePage(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = WalletAccent)
                 }
 
                 is WalletHomeState.Error -> WalletErrorView(message = currentState.message)
@@ -207,7 +196,11 @@ fun WalletHomePage(
 private fun WalletHomeContent(
     state: WalletHomeState.Loaded,
     isBalanceVisible: Boolean,
+    showWalletSwitcher: Boolean,
+    onDismissWalletSwitcher: () -> Unit,
+    onOpenWalletSwitcher: () -> Unit,
     onToggleVisibility: () -> Unit,
+    onRefresh: () -> Unit,
     onNavigateToReceive: () -> Unit,
     onNavigateToSend: () -> Unit,
     onNavigateToAssetDetail: (String) -> Unit,
@@ -215,241 +208,485 @@ private fun WalletHomeContent(
 ) {
     val featuredAsset = state.assets.firstOrNull()
     val totalValueText = if (isBalanceVisible) state.totalValue else "****"
-    val assetCount = state.assets.size.toString()
-    val networkCount = state.assets.map { walletNetworkLabel(it.symbol) }.distinct().size.toString()
+    val totalValueNumber = state.totalValue.removePrefix("$").toDoubleOrNull() ?: 0.0
+    val changeRate = featuredAsset?.let { parsePercent(walletReferenceChange(it.symbol)) } ?: 0f
+    val estimatedPnl = totalValueNumber * changeRate.toDouble() / 100.0
+    val pnlColor = if (changeRate < 0f) WalletDanger else WalletAccent
+    val pnlValueText = formatSignedUsd(estimatedPnl)
+    val pnlPercentText = formatSignedPercent(changeRate)
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
-    ) {
-        item {
-            WalletGlassCard(accent = featuredAsset?.let { walletAssetAccent(it.symbol) } ?: MaterialTheme.colorScheme.primary) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        WalletTag(text = "ASSET OVERVIEW")
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = WalletPagePadding,
+                end = WalletPagePadding,
+                top = 16.dp,
+                bottom = 32.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            item {
+                WalletSearchChrome(
+                    avatarLabel = state.walletAddress.firstOrNull()?.uppercaseChar()?.toString() ?: "W",
+                    onAvatarClick = onNavigateToProfile,
+                    onSearchClick = {},
+                    onTrailingClick = onRefresh,
+                    trailingIcon = Icons.Default.Refresh,
+                )
+            }
+
+            item {
+                WalletIdentityRow(
+                    walletAddress = state.walletAddress,
+                    onClick = onOpenWalletSwitcher,
+                )
+            }
+
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
                         Text(
-                            text = "Bitget 风格资产总览",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            text = totalValueText,
+                            fontSize = 42.sp,
+                            lineHeight = 42.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = WalletTextPrimary,
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(WalletSurface, shape = androidx.compose.foundation.shape.CircleShape)
+                                .clickable(onClick = onToggleVisibility),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = if (isBalanceVisible) {
+                                    Icons.Default.Visibility
+                                } else {
+                                    Icons.Default.VisibilityOff
+                                },
+                                contentDescription = "toggle balance",
+                                tint = WalletTextSecondary,
+                            )
+                        }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = pnlValueText,
+                            color = pnlColor,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = pnlPercentText,
+                            color = pnlColor,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = "当日盈亏",
+                            color = WalletTextSecondary,
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                     }
-                    WalletTag(
-                        text = walletShortAddress(state.walletAddress),
-                        accent = MaterialTheme.colorScheme.secondary,
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    WalletHomeAction(
+                        label = "转账",
+                        icon = Icons.Default.AccountBalanceWallet,
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToSend,
+                    )
+                    WalletHomeAction(
+                        label = "收款",
+                        icon = Icons.Default.SouthWest,
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToReceive,
+                    )
+                    WalletHomeAction(
+                        label = "交易历史",
+                        icon = Icons.Default.History,
+                        modifier = Modifier.weight(1f),
+                        onClick = { featuredAsset?.let { onNavigateToAssetDetail(it.symbol) } },
                     )
                 }
+            }
 
+            item {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    WalletFeatureCard(
+                        title = "银行卡",
+                        value = "$0.00",
+                        modifier = Modifier.weight(1f),
+                        accent = Color(0xFFFFCFA6),
+                    )
+                    WalletFeatureCard(
+                        title = "理财",
+                        value = "4% 年化收益率",
+                        modifier = Modifier.weight(1f),
+                        accent = Color(0xFFB7DBA8),
+                    )
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Text(
-                        text = totalValueText,
-                        fontSize = 34.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        text = "代币",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = WalletTextSecondary,
+                        fontWeight = FontWeight.SemiBold,
                     )
-                    IconButton(onClick = onToggleVisibility) {
-                        Icon(
-                            imageVector = if (isBalanceVisible) {
-                                Icons.Default.Visibility
-                            } else {
-                                Icons.Default.VisibilityOff
-                            },
-                            contentDescription = "Toggle balance visibility",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = state.totalValue,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = WalletTextPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    WalletToolbarIconButton(
+                        icon = Icons.Default.FilterList,
+                        contentDescription = "filter",
+                        onClick = {},
+                        tint = WalletTextSecondary,
+                    )
+                }
+            }
+
+            item {
+                WalletGlassCard(contentPadding = PaddingValues(vertical = 8.dp)) {
+                    state.assets.forEachIndexed { index, asset ->
+                        WalletHomeAssetRow(
+                            asset = asset,
+                            isBalanceVisible = isBalanceVisible,
+                            onClick = { onNavigateToAssetDetail(asset.symbol) },
+                        )
+                        if (index != state.assets.lastIndex) {
+                            WalletDivider(modifier = Modifier.padding(horizontal = 18.dp))
+                        }
+                    }
+                    WalletDivider(modifier = Modifier.padding(horizontal = 18.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = {})
+                            .padding(horizontal = 18.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "代币管理",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = WalletTextSecondary,
                         )
                     }
-                }
-
-                Text(
-                    text = "账户地址 ${walletShortAddress(state.walletAddress)} · Bridge 已保持兼容",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                WalletMetricStrip(
-                    metrics = listOf(
-                        WalletOverviewMetric("资产数", assetCount),
-                        WalletOverviewMetric("链路", networkCount),
-                        WalletOverviewMetric("模式", "Wallet Live"),
-                    ),
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    WalletPrimaryButton(
-                        label = "接收",
-                        onClick = onNavigateToReceive,
-                        modifier = Modifier.weight(1f),
-                    )
-                    WalletSecondaryButton(
-                        label = "发送",
-                        onClick = onNavigateToSend,
-                        modifier = Modifier.weight(1f),
-                    )
                 }
             }
         }
 
-        item {
-            WalletSectionHeading(
-                title = "快捷操作",
-                subtitle = "收发、查看资产明细、跳转账户中心都保持原有路由接线。",
-            )
-        }
-
-        item {
-            WalletActionRow(
-                actions = listOf(
-                    WalletQuickAction(
-                        label = "Receive",
-                        hint = "打开收款二维码",
-                        icon = Icons.Default.SouthWest,
-                        accent = MaterialTheme.colorScheme.primary,
-                        onClick = onNavigateToReceive,
-                    ),
-                    WalletQuickAction(
-                        label = "Send",
-                        hint = "进入发送起点",
-                        icon = Icons.Default.NorthEast,
-                        accent = MaterialTheme.colorScheme.secondary,
-                        onClick = onNavigateToSend,
-                    ),
-                    WalletQuickAction(
-                        label = "Detail",
-                        hint = "查看主资产详情",
-                        icon = Icons.Default.ArrowOutward,
-                        accent = featuredAsset?.let { walletAssetAccent(it.symbol) }
-                            ?: MaterialTheme.colorScheme.tertiary,
-                        onClick = { featuredAsset?.let { onNavigateToAssetDetail(it.symbol) } },
-                    ),
-                    WalletQuickAction(
-                        label = "Profile",
-                        hint = "进入账户概览",
-                        icon = Icons.Default.AccountBalanceWallet,
-                        accent = MaterialTheme.colorScheme.tertiary,
-                        onClick = onNavigateToProfile,
-                    ),
-                ),
-            )
-        }
-
-        item {
-            WalletSectionHeading(
-                title = "账户概览",
-                subtitle = "以 Bitget 风格卡片组织资产标签、主链状态与默认地址。",
-            )
-        }
-
-        item {
-            WalletGlassCard(accent = MaterialTheme.colorScheme.secondary) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            text = "默认接收地址",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            text = state.walletAddress,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Address preview",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                WalletMetricStrip(
-                    metrics = listOf(
-                        WalletOverviewMetric("主资产", featuredAsset?.symbol ?: "--"),
-                        WalletOverviewMetric("网络", featuredAsset?.let { walletNetworkLabel(it.symbol) } ?: "Mainnet"),
-                        WalletOverviewMetric("状态", "Bridge Ready"),
-                    ),
-                )
-            }
-        }
-
-        item {
-            WalletSectionHeading(
-                title = "资产列表",
-                subtitle = "按资产余额排序，保留现有占位值与订单缓存桥接能力。",
-            )
-        }
-
-        items(state.assets) { asset ->
-            AssetRow(
-                asset = asset,
-                isBalanceVisible = isBalanceVisible,
-                onClick = { onNavigateToAssetDetail(asset.symbol) },
+        if (showWalletSwitcher) {
+            WalletSwitcherOverlay(
+                currentAddress = state.walletAddress,
+                totalValue = state.totalValue,
+                featuredAsset = featuredAsset?.symbol ?: "USDT",
+                onDismiss = onDismissWalletSwitcher,
             )
         }
     }
 }
 
 @Composable
-private fun AssetRow(
+private fun WalletIdentityRow(
+    walletAddress: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = walletShortAddress(walletAddress),
+                style = MaterialTheme.typography.titleMedium,
+                color = WalletTextSecondary,
+                maxLines = 1,
+            )
+            Text(
+                text = "当前钱包",
+                style = MaterialTheme.typography.bodySmall,
+                color = WalletTextTertiary,
+            )
+        }
+        Icon(
+            imageVector = Icons.Default.KeyboardArrowDown,
+            contentDescription = "open wallet switcher",
+            tint = WalletTextSecondary,
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        WalletToolbarIconButton(
+            icon = Icons.Default.ContentCopy,
+            contentDescription = "copy wallet address",
+            onClick = {},
+            tint = WalletTextSecondary,
+        )
+    }
+}
+
+@Composable
+private fun WalletHomeAction(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    WalletGlassCard(
+        modifier = modifier.clickable(onClick = onClick),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .background(WalletTextPrimary, shape = androidx.compose.foundation.shape.CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = WalletAccent,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleSmall,
+                color = WalletTextPrimary,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WalletFeatureCard(
+    title: String,
+    value: String,
+    accent: Color,
+    modifier: Modifier = Modifier,
+) {
+    WalletGlassCard(
+        modifier = modifier,
+        accent = accent,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 18.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(30.dp)
+                .background(accent.copy(alpha = 0.18f), shape = androidx.compose.foundation.shape.CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .background(accent, shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)),
+            )
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = WalletTextSecondary,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = WalletTextPrimary,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun WalletHomeAssetRow(
     asset: AssetInfo,
     isBalanceVisible: Boolean,
     onClick: () -> Unit,
 ) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        WalletTokenBadge(symbol = asset.symbol, modifier = Modifier.size(44.dp))
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = asset.symbol,
+                style = MaterialTheme.typography.titleMedium,
+                color = WalletTextPrimary,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = walletReferencePrice(asset.symbol),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = WalletTextSecondary,
+                )
+                Text(
+                    text = walletReferenceChange(asset.symbol),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (walletReferenceChange(asset.symbol).startsWith("-")) {
+                        WalletDanger
+                    } else {
+                        WalletAccent
+                    },
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = if (isBalanceVisible) {
+                    asset.balance.trimEnd('0').trimEnd('.').ifBlank { asset.balance }
+                } else {
+                    "****"
+                },
+                style = MaterialTheme.typography.titleMedium,
+                color = WalletTextPrimary,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = if (isBalanceVisible) asset.value else "****",
+                style = MaterialTheme.typography.bodyMedium,
+                color = WalletTextSecondary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WalletSwitcherOverlay(
+    currentAddress: String,
+    totalValue: String,
+    featuredAsset: String,
+    onDismiss: () -> Unit,
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.58f))
+                .clickable(onClick = onDismiss),
+        )
+        WalletBottomSheetCard(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding(),
+        ) {
+            Text(
+                text = "选择钱包",
+                style = MaterialTheme.typography.headlineSmall,
+                color = WalletTextPrimary,
+                fontWeight = FontWeight.SemiBold,
+            )
+            WalletInfoRow(label = "总资产", value = totalValue)
+            WalletWalletCard(
+                title = "默认钱包",
+                address = walletShortAddress(currentAddress),
+                featuredAsset = featuredAsset,
+                selected = true,
+            )
+            WalletWalletCard(
+                title = "硬件钱包",
+                address = walletShortAddress("${currentAddress.take(8)}A1F38F"),
+                featuredAsset = "ETH",
+                selected = false,
+            )
+            WalletWalletCard(
+                title = "交易钱包",
+                address = walletShortAddress("${currentAddress.take(8)}B7CE0D"),
+                featuredAsset = "USDT",
+                selected = false,
+            )
+            WalletPrimaryButton(
+                label = "添加钱包",
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                icon = Icons.Default.Add,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WalletWalletCard(
+    title: String,
+    address: String,
+    featuredAsset: String,
+    selected: Boolean,
+) {
     WalletGlassCard(
-        modifier = Modifier.clickable(onClick = onClick),
-        accent = walletAssetAccent(asset.symbol),
-        contentPadding = PaddingValues(18.dp),
+        accent = walletAssetAccent(featuredAsset),
+        selected = selected,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            WalletTokenBadge(symbol = asset.symbol)
-            Spacer(modifier = Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = asset.symbol,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    WalletTag(
-                        text = walletNetworkLabel(asset.symbol),
-                        accent = walletAssetAccent(asset.symbol),
-                    )
-                }
+            WalletTokenBadge(symbol = featuredAsset, modifier = Modifier.size(42.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = asset.name,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = if (isBalanceVisible) {
-                        "${asset.balance} ${asset.symbol}"
-                    } else {
-                        "****"
-                    },
+                    text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = WalletTextPrimary,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = if (isBalanceVisible) asset.value else "****",
+                    text = address,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = WalletTextSecondary,
                 )
+            }
+            if (selected) {
+                WalletTag(text = "当前", accent = WalletAccent)
             }
         }
     }
@@ -460,22 +697,39 @@ private fun WalletErrorView(message: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
+            .padding(WalletPagePadding),
         contentAlignment = Alignment.Center,
     ) {
-        WalletGlassCard(accent = MaterialTheme.colorScheme.error) {
+        WalletGlassCard(accent = WalletDanger) {
             Text(
                 text = "Wallet 暂不可用",
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = WalletTextPrimary,
+                fontWeight = FontWeight.SemiBold,
             )
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
+                color = WalletDanger,
             )
         }
     }
+}
+
+private fun parsePercent(text: String): Float {
+    return text.replace("%", "").replace("+", "").toFloatOrNull()?.let {
+        if (text.startsWith("-")) -abs(it) else it
+    } ?: 0f
+}
+
+private fun formatSignedUsd(amount: Double): String {
+    val prefix = if (amount > 0) "+$" else if (amount < 0) "-$" else "$"
+    return "$prefix${String.format("%.2f", abs(amount))}"
+}
+
+private fun formatSignedPercent(amount: Float): String {
+    val prefix = if (amount > 0) "+" else ""
+    return "$prefix${String.format("%.2f", amount)}%"
 }
 
 @Preview(showBackground = true)
