@@ -38,6 +38,10 @@ object Routes {
     const val SEND_RESULT = "send_result"
     const val WALLET_PAYMENT = "wallet_payment"
 
+    // Market
+    const val MARKET_QUOTE_DETAIL = "market_quote_detail"
+    const val MARKET_QUOTE_DETAIL_TEMPLATE = "market_quote_detail/{symbol}"
+
     // Growth
     const val INVITE_CENTER = "invite_center"
     const val COMMISSION_LEDGER = "commission_ledger"
@@ -103,6 +107,7 @@ object Routes {
             matchPathArg(candidate, ORDER_CHECKOUT, "planId", queryArgs),
             matchPathArg(candidate, ORDER_DETAIL, "orderId", queryArgs),
             matchPathArg(candidate, ASSET_DETAIL, "assetId", queryArgs),
+            matchPathArg(candidate, MARKET_QUOTE_DETAIL, "symbol", queryArgs),
             matchPathArg(candidate, LEGAL_DOCUMENT_DETAIL, "documentId", queryArgs),
         )
         return matches.firstOrNull()
@@ -128,6 +133,9 @@ object Routes {
 
     fun assetDetail(assetId: String): String = withPathArg(ASSET_DETAIL, assetId)
     fun assetDetailRoute(assetId: String): String = assetDetail(assetId)
+
+    fun marketQuoteDetail(symbol: String): String = withPathArg(MARKET_QUOTE_DETAIL, symbol)
+    fun marketQuoteDetailRoute(symbol: String): String = marketQuoteDetail(symbol)
 
     fun legalDocumentDetail(documentId: String): String = withPathArg(LEGAL_DOCUMENT_DETAIL, documentId)
     fun legalDocumentDetailRoute(documentId: String): String = legalDocumentDetail(documentId)
@@ -197,6 +205,7 @@ object Routes {
                 ORDER_CHECKOUT -> ORDER_CHECKOUT_TEMPLATE
                 ORDER_DETAIL -> ORDER_DETAIL_TEMPLATE
                 ASSET_DETAIL -> ASSET_DETAIL_TEMPLATE
+                MARKET_QUOTE_DETAIL -> MARKET_QUOTE_DETAIL_TEMPLATE
                 LEGAL_DOCUMENT_DETAIL -> LEGAL_DOCUMENT_DETAIL_TEMPLATE
                 else -> baseRoute
             },

@@ -72,6 +72,7 @@ import com.v2ray.ang.composeui.components.shell.BitgetHomeQuickLinks
 import com.v2ray.ang.composeui.components.shell.BitgetHomeSheetAction
 import com.v2ray.ang.composeui.components.shell.BitgetHomeTopBar
 import com.v2ray.ang.composeui.navigation.ShellTab
+import com.v2ray.ang.composeui.pages.market.MarketOverviewPage
 import com.v2ray.ang.composeui.pages.profile.ProfilePage
 import com.v2ray.ang.composeui.pages.vpn.VPNHomePage
 import com.v2ray.ang.composeui.pages.wallet.WalletHomePage
@@ -97,6 +98,7 @@ fun BitgetAppShell(
     onOpenReceive: () -> Unit,
     onOpenSend: () -> Unit,
     onOpenAssetDetail: (String) -> Unit,
+    onOpenMarketQuote: (String) -> Unit,
     onOpenInviteCenter: () -> Unit,
     onOpenCommission: () -> Unit,
     onOpenWithdraw: () -> Unit,
@@ -386,11 +388,8 @@ fun BitgetAppShell(
                         .padding(innerPadding),
                 ) {
                     when {
-                        selectedTab == ShellTab.MARKET -> MarketTabPlaceholderContent(
-                            isAuthenticated = isAuthenticated,
-                            onOpenHome = { onTabSelected(ShellTab.HOME) },
-                            onOpenVpn = { onTabSelected(ShellTab.VPN) },
-                            onOpenSupport = onOpenSupport,
+                        selectedTab == ShellTab.MARKET -> MarketOverviewPage(
+                            onOpenQuote = { quote -> onOpenMarketQuote(quote.symbol) },
                         )
 
                         isAuthenticated -> when (selectedTab) {
@@ -464,153 +463,6 @@ private data class ShellGuestTabState(
     val onSecondaryAction: () -> Unit,
     val actions: List<ShellGuestAction>,
 )
-
-@Composable
-private fun MarketTabPlaceholderContent(
-    isAuthenticated: Boolean,
-    onOpenHome: () -> Unit,
-    onOpenVpn: () -> Unit,
-    onOpenSupport: () -> Unit,
-) {
-    val description = if (isAuthenticated) {
-        "Market 已从旧 Discover 位恢复为一级 tab。当前版本先完成壳层和路由归位，后续再接入行情列表与详情，不再让增长页占据一级入口。"
-    } else {
-        "访客态同样保留独立 Market 入口。当前版本先完成 IA 归位，后续会在这里接入可浏览的行情列表与详情。"
-    }
-
-    val actions = listOf(
-        ShellGuestAction(
-            title = "Home 总览",
-            subtitle = "返回首页查看运营卡片、快捷入口与 secondary pages 分发",
-            icon = Icons.Default.Home,
-            accentColor = GlowGreen,
-            onClick = onOpenHome,
-        ),
-        ShellGuestAction(
-            title = "VPN 中心",
-            subtitle = "VPN 保持独立一级业务位，不再承担 Market 替身职责",
-            icon = Icons.Default.VpnLock,
-            accentColor = GlowBlue,
-            onClick = onOpenVpn,
-        ),
-        ShellGuestAction(
-            title = "支持帮助",
-            subtitle = "需要帮助时继续从 Support 入口获取说明与反馈",
-            icon = Icons.Default.Info,
-            accentColor = Info,
-            onClick = onOpenSupport,
-        ),
-    )
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = 20.dp,
-            end = 20.dp,
-            top = 18.dp,
-            bottom = 24.dp,
-        ),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        item {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(30.dp),
-                color = BackgroundPrimary.copy(alpha = 0.92f),
-                tonalElevation = 0.dp,
-                shadowElevation = 0.dp,
-                border = BorderStroke(1.dp, GlowBlue.copy(alpha = 0.28f)),
-            ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    Text(
-                        text = "Market Family",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = GlowBlue,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = "Market tab 已恢复为一级入口",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Button(
-                            modifier = Modifier.weight(1f),
-                            onClick = onOpenHome,
-                        ) {
-                            Text(text = "返回 Home")
-                        }
-                        OutlinedButton(
-                            modifier = Modifier.weight(1f),
-                            onClick = onOpenVpn,
-                        ) {
-                            Text(text = "进入 VPN")
-                        }
-                    }
-                }
-            }
-        }
-
-        items(actions, key = { it.title }) { action ->
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(26.dp),
-                color = BackgroundPrimary.copy(alpha = 0.78f),
-                tonalElevation = 0.dp,
-                shadowElevation = 0.dp,
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = action.onClick)
-                        .padding(horizontal = 18.dp, vertical = 18.dp),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .background(
-                                color = action.accentColor.copy(alpha = 0.18f),
-                                shape = CircleShape,
-                            ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = action.icon,
-                            contentDescription = action.title,
-                            tint = action.accentColor,
-                        )
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = action.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = action.subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun ShellGuestTabContent(
