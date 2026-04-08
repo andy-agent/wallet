@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-08T02:21:09Z
+Generated: 2026-04-08T02:52:45Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.22.1.1.3
-- next_task_title: 整理 Bitget Capture Inventory 文档
+- next_task_id: liaojiang-4j0.22.2.1
+- next_task_title: 提炼 Bitget 全局 chrome 与视觉 tokens
 
 ## Counters
-- in_progress: 6
-- ready: 1
-- open: 13
-- closed: 146
-- dirty: 4
+- in_progress: 5
+- ready: 2
+- open: 12
+- closed: 150
+- dirty: 3
 
 ## Next Milestone
 - Continue the next task and complete one milestone
