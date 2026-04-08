@@ -1,58 +1,36 @@
 package com.v2ray.ang.composeui.pages.vpn
 
 import android.app.Application
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.ReceiptLong
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.VpnLock
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.theme.Error as AppError
-import com.v2ray.ang.composeui.theme.GlowBlue
-import com.v2ray.ang.composeui.theme.Info
-import com.v2ray.ang.composeui.theme.Primary
-import com.v2ray.ang.composeui.theme.Success
 import com.v2ray.ang.composeui.theme.TextPrimary
-import com.v2ray.ang.composeui.theme.TextSecondary
-import com.v2ray.ang.composeui.theme.Warning
 import com.v2ray.ang.payment.data.repository.PaymentRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,8 +45,8 @@ enum class VPNConnectionStatus {
 }
 
 sealed class VPNHomeState {
-    object Idle : VPNHomeState()
-    object Loading : VPNHomeState()
+    data object Idle : VPNHomeState()
+    data object Loading : VPNHomeState()
     data class Loaded(
         val status: VPNConnectionStatus,
         val selectedRegion: RegionInfo,
@@ -76,6 +54,7 @@ sealed class VPNHomeState {
         val uploadSpeed: String,
         val downloadSpeed: String,
     ) : VPNHomeState()
+
     data class Error(val message: String) : VPNHomeState()
 }
 
@@ -92,7 +71,7 @@ class VPNHomeViewModel(application: Application) : AndroidViewModel(application)
     private val repository = PaymentRepository(application)
 
     private val _selectedRegion = MutableStateFlow(
-        RegionInfo("us", "美国", "US", 45),
+        RegionInfo("us", "美国 - 洛杉矶", "US", 45),
     )
     val selectedRegion: StateFlow<RegionInfo> = _selectedRegion
 
@@ -137,7 +116,7 @@ class VPNHomeViewModel(application: Application) : AndroidViewModel(application)
                 VPNConnectionStatus.DISCONNECTED -> {
                     _connectionStatus.value = VPNConnectionStatus.CONNECTING
                     updateState()
-                    delay(2000)
+                    delay(1800)
                     _connectionStatus.value = VPNConnectionStatus.CONNECTED
                     startDurationTimer()
                 }
@@ -210,26 +189,24 @@ fun VPNHomePage(
     val connectionStatus by viewModel.connectionStatus.collectAsState()
     val selectedRegion by viewModel.selectedRegion.collectAsState()
     val connectionDuration by viewModel.connectionDuration.collectAsState()
-
-    val accent = connectionStatus.accentColor()
-    val heroTitle = when (connectionStatus) {
-        VPNConnectionStatus.CONNECTED -> "Private route is live"
-        VPNConnectionStatus.CONNECTING -> "Bootstrapping the secure tunnel"
-        VPNConnectionStatus.DISCONNECTING -> "Closing the current route"
-        VPNConnectionStatus.DISCONNECTED -> "Ready to launch your next private route"
-    }
-    val heroSubtitle = when (connectionStatus) {
-        VPNConnectionStatus.CONNECTED -> "已锁定 ${selectedRegion.name} 节点，保持一级 VPN tab 内的强 CTA 和清晰订单层级。"
-        VPNConnectionStatus.CONNECTING -> "正在与 ${selectedRegion.name} 节点握手，交易台式卡片会在建立后刷新实时速度。"
-        VPNConnectionStatus.DISCONNECTING -> "正在安全断开当前节点，稍后可以切换新区域或直接补购套餐。"
-        VPNConnectionStatus.DISCONNECTED -> "把 VPN 作为底部一级入口后，连接、套餐、区域、订单都集中在这里完成。"
-    }
+    val selectedTab = remember { mutableIntStateOf(0) }
+    val selectedRange = remember { mutableIntStateOf(3) }
 
     VpnBitgetBackground {
         Scaffold(
             containerColor = Color.Transparent,
             contentColor = TextPrimary,
             contentWindowInsets = WindowInsets.safeDrawing,
+            bottomBar = {
+                VpnPrimaryButton(
+                    text = connectionStatus.actionLabel(),
+                    onClick = viewModel::toggleConnection,
+                    enabled = connectionStatus == VPNConnectionStatus.CONNECTED || connectionStatus == VPNConnectionStatus.DISCONNECTED,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = VpnPageHorizontalPadding, vertical = 16.dp),
+                )
+            },
         ) { innerPadding ->
             LazyColumn(
                 modifier = Modifier
@@ -239,47 +216,33 @@ fun VPNHomePage(
                     start = VpnPageHorizontalPadding,
                     end = VpnPageHorizontalPadding,
                     top = VpnPageTopPadding,
-                    bottom = 36.dp,
+                    bottom = VpnPageBottomPadding,
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 item {
                     VpnTopChrome(
-                        title = "VPN",
-                        subtitle = "Primary tab for connection, package selection, regions, and orders.",
+                        title = "LJ Route",
+                        subtitle = selectedRegion.name,
                         actionIcon = Icons.Default.Person,
                         onActionClick = onNavigateToProfile,
                     )
                 }
                 item {
-                    VpnSearchStrip(
-                        placeholder = "Search regions, packages, or recent orders",
-                        trailingIcon = Icons.Default.Tune,
-                        onClick = onNavigateToRegions,
+                    VpnTabStrip(
+                        tabs = listOf("概览", "详情"),
+                        selectedIndex = selectedTab.intValue,
+                        onSelect = { selectedTab.intValue = it },
                     )
                 }
-                item {
-                    VpnHeroCard(
-                        eyebrow = connectionStatus.heroLabel(),
-                        title = heroTitle,
-                        subtitle = heroSubtitle,
-                        accent = accent,
-                        metrics = listOf(
-                            VpnHeroMetric("State", connectionStatus.metricLabel()),
-                            VpnHeroMetric("Region", selectedRegion.name),
-                            VpnHeroMetric("Timer", connectionDuration),
-                        ),
-                    )
-                }
-
                 when (val current = state) {
                     is VPNHomeState.Loading,
                     VPNHomeState.Idle,
                     -> {
                         item {
                             VpnLoadingPanel(
-                                title = "Syncing subscription desk",
-                                subtitle = "正在读取当前订阅与连接桥接状态。",
+                                title = "正在同步 VPN 详情",
+                                subtitle = "读取当前订阅、节点和连接状态。",
                             )
                         }
                     }
@@ -287,9 +250,9 @@ fun VPNHomePage(
                     is VPNHomeState.Error -> {
                         item {
                             VpnEmptyPanel(
-                                title = "VPN desk is temporarily unavailable",
+                                title = "VPN 页面暂不可用",
                                 subtitle = current.message,
-                                actionText = "Review packages",
+                                actionText = "查看套餐",
                                 onAction = onNavigateToPlans,
                             )
                         }
@@ -297,74 +260,107 @@ fun VPNHomePage(
 
                     is VPNHomeState.Loaded -> {
                         item {
-                            VpnSectionHeading(
-                                title = "Connection Desk",
-                                subtitle = "Bitget-like hero + deep action cards for the VPN business core.",
-                            )
-                        }
-                        item {
-                            ConnectionDeskCard(
-                                status = current.status,
-                                region = current.selectedRegion,
-                                duration = current.connectionDuration,
-                                uploadSpeed = current.uploadSpeed,
-                                downloadSpeed = current.downloadSpeed,
-                                onToggle = viewModel::toggleConnection,
-                            )
-                        }
-                        item {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                             ) {
-                                HomeActionCard(
+                                VpnValueBlock(
+                                    value = connectionStatus.headlineValue(connectionDuration),
+                                    change = connectionStatus.headlineChange(selectedRegion.latency),
+                                    helper = connectionStatus.helperLabel(),
+                                    changeColor = connectionStatus.accentColor(),
+                                    modifier = Modifier.weight(1.1f),
+                                )
+                                VpnMetricColumn(
+                                    metrics = listOf(
+                                        VpnHeroMetric("当前地区", selectedRegion.countryCode),
+                                        VpnHeroMetric("节点延迟", "${selectedRegion.latency}ms"),
+                                        VpnHeroMetric("上行速率", current.uploadSpeed),
+                                        VpnHeroMetric("下行速率", current.downloadSpeed),
+                                    ),
                                     modifier = Modifier.weight(1f),
-                                    icon = Icons.Default.Public,
-                                    title = "Regions",
-                                    subtitle = "Choose the fastest route",
-                                    accent = Info,
+                                )
+                            }
+                        }
+                        item {
+                            VpnRangeSelector(
+                                labels = listOf("1小时", "4小时", "12小时", "1天", "更多"),
+                                selectedIndex = selectedRange.intValue,
+                                trailingIcon = Icons.Default.Tune,
+                                onSelect = { selectedRange.intValue = it },
+                                onTrailingClick = onNavigateToRegions,
+                            )
+                        }
+                        item {
+                            VpnCandleChart(
+                                entries = vpnDemoCandles(selectedRegion.latency.toFloat()),
+                                calloutLines = listOf(
+                                    "节点" to selectedRegion.name,
+                                    "状态" to connectionStatus.metricLabel(),
+                                    "下行" to current.downloadSpeed,
+                                    "时长" to current.connectionDuration,
+                                ),
+                                rightLabels = listOf("101.9", "90.5", "78.5", "67.1"),
+                                bottomLabels = listOf("02/24", "03/06", "03/23", "04/08"),
+                            )
+                        }
+                        item {
+                            VpnGlassCard {
+                                Text(
+                                    text = "线路信息",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                )
+                                VpnLabelValueRow(label = "区域", value = current.selectedRegion.name)
+                                VpnLabelValueRow(label = "安全层", value = "Always-on encrypted tunnel")
+                                VpnLabelValueRow(label = "连接时长", value = current.connectionDuration)
+                                VpnLabelValueRow(label = "状态", value = connectionStatus.metricLabel(), valueColor = connectionStatus.accentColor())
+                            }
+                        }
+                        item {
+                            VpnGlassCard(accent = VpnOutline) {
+                                Text(
+                                    text = "业务入口",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                )
+                                VpnGroupRow(
+                                    title = "节点区域",
+                                    subtitle = "切换地区并重新建立路线",
                                     onClick = onNavigateToRegions,
+                                    leading = {
+                                        VpnCodeBadge(text = selectedRegion.countryCode)
+                                    },
                                 )
-                                HomeActionCard(
-                                    modifier = Modifier.weight(1f),
-                                    icon = Icons.Default.CreditCard,
-                                    title = "Packages",
-                                    subtitle = "Compare plans and activate",
-                                    accent = Warning,
+                                VpnListDivider()
+                                VpnGroupRow(
+                                    title = "套餐中心",
+                                    subtitle = "查看可购买的 VPN 套餐",
                                     onClick = onNavigateToPlans,
+                                    trailing = {
+                                        Text(
+                                            text = "查看",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = VpnAccent,
+                                        )
+                                    },
                                 )
-                            }
-                        }
-                        item {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                HomeActionCard(
-                                    modifier = Modifier.weight(1f),
-                                    icon = Icons.Default.ReceiptLong,
-                                    title = "Orders",
-                                    subtitle = "Pending payment and history",
-                                    accent = GlowBlue,
+                                VpnListDivider()
+                                VpnGroupRow(
+                                    title = "订单记录",
+                                    subtitle = "支付、激活和历史都从这里进入",
                                     onClick = onNavigateToOrders,
-                                )
-                                HomeActionCard(
-                                    modifier = Modifier.weight(1f),
-                                    icon = Icons.Default.Shield,
-                                    title = "Profile",
-                                    subtitle = "Session, support, and settings",
-                                    accent = Primary,
-                                    onClick = onNavigateToProfile,
+                                    trailing = {
+                                        Text(
+                                            text = "打开",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = VpnAccent,
+                                        )
+                                    },
                                 )
                             }
-                        }
-                        item {
-                            SubscriptionBanner(
-                                status = current.status,
-                                regionName = current.selectedRegion.name,
-                                onOpenPlans = onNavigateToPlans,
-                                onOpenOrders = onNavigateToOrders,
-                            )
                         }
                     }
                 }
@@ -373,173 +369,12 @@ fun VPNHomePage(
     }
 }
 
-@Composable
-private fun ConnectionDeskCard(
-    status: VPNConnectionStatus,
-    region: RegionInfo,
-    duration: String,
-    uploadSpeed: String,
-    downloadSpeed: String,
-    onToggle: () -> Unit,
-) {
-    VpnGlassCard(accent = status.accentColor()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = "Connection Console",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary,
-                )
-                Text(
-                    text = "节点 ${region.name} · ${region.latency}ms",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
-                )
-            }
-            VpnStatusChip(
-                text = status.metricLabel(),
-                containerColor = status.accentColor().copy(alpha = 0.16f),
-                contentColor = status.accentColor(),
-            )
-        }
-
-        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            VpnMetricPill(
-                modifier = Modifier.weight(1f),
-                label = "Upload",
-                value = uploadSpeed,
-            )
-            VpnMetricPill(
-                modifier = Modifier.weight(1f),
-                label = "Download",
-                value = downloadSpeed,
-            )
-        }
-
-        VpnLabelValueRow(label = "Route timer", value = duration)
-        VpnLabelValueRow(label = "Protection layer", value = "Always-on encrypted tunnel")
-
-        VpnPrimaryButton(
-            text = status.actionLabel(),
-            onClick = onToggle,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-@Composable
-private fun HomeActionCard(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    accent: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.62f),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.32f)),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = accent.copy(alpha = 0.16f),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = accent,
-                    )
-                }
-            }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary,
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary,
-            )
-        }
-    }
-}
-
-@Composable
-private fun SubscriptionBanner(
-    status: VPNConnectionStatus,
-    regionName: String,
-    onOpenPlans: () -> Unit,
-    onOpenOrders: () -> Unit,
-) {
-    VpnGlassCard(accent = Warning) {
-        Text(
-            text = "Subscription Desk",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary,
-        )
-        Text(
-            text = if (status == VPNConnectionStatus.CONNECTED) {
-                "当前已接入 $regionName，仍可在套餐页补购更长周期，订单状态会继续通过现有桥接同步。"
-            } else {
-                "未连接时优先引导用户到套餐和订单页，符合 Bitget 风格强 CTA 与清晰二级详情层级。"
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            VpnSecondaryButton(
-                text = "Open Orders",
-                onClick = onOpenOrders,
-                modifier = Modifier.weight(1f),
-            )
-            VpnPrimaryButton(
-                text = "Review Packages",
-                onClick = onOpenPlans,
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
 private fun VPNConnectionStatus.accentColor(): Color {
     return when (this) {
-        VPNConnectionStatus.CONNECTED -> Success
-        VPNConnectionStatus.CONNECTING -> Info
-        VPNConnectionStatus.DISCONNECTING -> Warning
+        VPNConnectionStatus.CONNECTED -> VpnAccent
+        VPNConnectionStatus.CONNECTING -> Color(0xFFFFB14A)
+        VPNConnectionStatus.DISCONNECTING -> Color(0xFFFFB14A)
         VPNConnectionStatus.DISCONNECTED -> AppError
-    }
-}
-
-private fun VPNConnectionStatus.heroLabel(): String {
-    return when (this) {
-        VPNConnectionStatus.CONNECTED -> "VPN LIVE"
-        VPNConnectionStatus.CONNECTING -> "VPN PENDING"
-        VPNConnectionStatus.DISCONNECTING -> "VPN CLOSING"
-        VPNConnectionStatus.DISCONNECTED -> "VPN READY"
     }
 }
 
@@ -552,12 +387,39 @@ private fun VPNConnectionStatus.metricLabel(): String {
     }
 }
 
+private fun VPNConnectionStatus.headlineValue(duration: String): String {
+    return when (this) {
+        VPNConnectionStatus.CONNECTED -> duration
+        VPNConnectionStatus.CONNECTING -> "连接中"
+        VPNConnectionStatus.DISCONNECTING -> "断开中"
+        VPNConnectionStatus.DISCONNECTED -> "--"
+    }
+}
+
+private fun VPNConnectionStatus.headlineChange(latency: Int): String {
+    return when (this) {
+        VPNConnectionStatus.CONNECTED -> "+$latency ms · route stable"
+        VPNConnectionStatus.CONNECTING -> "正在与当前节点握手"
+        VPNConnectionStatus.DISCONNECTING -> "会话正在安全关闭"
+        VPNConnectionStatus.DISCONNECTED -> "等待启动新的安全线路"
+    }
+}
+
+private fun VPNConnectionStatus.helperLabel(): String {
+    return when (this) {
+        VPNConnectionStatus.CONNECTED -> "夜盘"
+        VPNConnectionStatus.CONNECTING -> "准备中"
+        VPNConnectionStatus.DISCONNECTING -> "关闭中"
+        VPNConnectionStatus.DISCONNECTED -> "待机"
+    }
+}
+
 private fun VPNConnectionStatus.actionLabel(): String {
     return when (this) {
-        VPNConnectionStatus.CONNECTED -> "Disconnect Route"
-        VPNConnectionStatus.CONNECTING -> "Connection in Progress"
-        VPNConnectionStatus.DISCONNECTING -> "Disconnecting"
-        VPNConnectionStatus.DISCONNECTED -> "Launch Secure Route"
+        VPNConnectionStatus.CONNECTED -> "断开线路"
+        VPNConnectionStatus.CONNECTING -> "连接中"
+        VPNConnectionStatus.DISCONNECTING -> "断开中"
+        VPNConnectionStatus.DISCONNECTED -> "连接"
     }
 }
 

@@ -2,6 +2,7 @@ package com.v2ray.ang.composeui.pages.vpn
 
 import android.app.Application
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,18 +12,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Verified
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -32,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -40,13 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
-import com.v2ray.ang.composeui.theme.BackgroundSecondary
-import com.v2ray.ang.composeui.theme.BorderDefault
-import com.v2ray.ang.composeui.theme.GlowBlue
-import com.v2ray.ang.composeui.theme.Primary
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
-import com.v2ray.ang.composeui.theme.Warning
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -63,8 +59,8 @@ data class PlanInfo(
 )
 
 sealed class PlansState {
-    object Idle : PlansState()
-    object Loading : PlansState()
+    data object Idle : PlansState()
+    data object Loading : PlansState()
     data class Loaded(val plans: List<PlanInfo>, val selectedPlanId: String?) : PlansState()
     data class Error(val message: String) : PlansState()
 }
@@ -86,6 +82,7 @@ class PlansViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             bridge.loadPlans()
                 .onSuccess { plans ->
+                    val recommendedId = plans.firstOrNull { it.isRecommended }?.id ?: plans.firstOrNull()?.id
                     _state.value = PlansState.Loaded(
                         plans = plans.map {
                             PlanInfo(
@@ -99,9 +96,9 @@ class PlansViewModel(application: Application) : AndroidViewModel(application) {
                                 badge = it.badge,
                             )
                         },
-                        selectedPlanId = plans.firstOrNull { it.isRecommended }?.id,
+                        selectedPlanId = recommendedId,
                     )
-                    _selectedPlanId.value = plans.firstOrNull { it.isRecommended }?.id
+                    _selectedPlanId.value = recommendedId
                 }
                 .onFailure { error ->
                     _state.value = PlansState.Error(error.message ?: "加载套餐失败")
@@ -135,11 +132,37 @@ fun PlansPage(
             contentColor = TextPrimary,
             contentWindowInsets = WindowInsets.safeDrawing,
             bottomBar = {
-                if (selectedPlan != null) {
-                    PlanSelectionBar(
-                        plan = selectedPlan,
-                        onContinue = { onNavigateToCheckout(selectedPlan.id) },
-                    )
+                selectedPlan?.let { plan ->
+                    Surface(
+                        color = VpnSurface,
+                        border = BorderStroke(1.dp, VpnOutline),
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = VpnPageHorizontalPadding, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = plan.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                )
+                                Text(
+                                    text = "${plan.price} · ${plan.duration}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                )
+                            }
+                            VpnPrimaryButton(
+                                text = "继续下单",
+                                onClick = { onNavigateToCheckout(plan.id) },
+                            )
+                        }
+                    }
                 }
             },
         ) { innerPadding ->
@@ -153,27 +176,18 @@ fun PlansPage(
                     top = VpnPageTopPadding,
                     bottom = VpnPageBottomPadding,
                 ),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp),
             ) {
                 item {
-                    VpnTopChrome(
-                        title = "Plans",
-                        subtitle = "Bitget-style package deck with strong CTA and clear pricing hierarchy.",
+                    VpnCenterTopBar(
+                        title = "套餐中心",
                         onBack = onNavigateBack,
+                        rightIcon = Icons.Default.HelpOutline,
+                        onRightIconClick = {},
                     )
                 }
                 item {
-                    VpnHeroCard(
-                        eyebrow = "PACKAGE DESK",
-                        title = "Choose the route package that fits your traffic demand",
-                        subtitle = "保留现有 plans bridge 和 order 创建逻辑，只把视觉层切成深色行情卡片式层级。",
-                        accent = Warning,
-                        metrics = listOf(
-                            VpnHeroMetric("Guarantee", "7-Day Refund"),
-                            VpnHeroMetric("Selection", "${loadedState?.plans?.size ?: 0} Plans"),
-                            VpnHeroMetric("Core", "VPN First"),
-                        ),
-                    )
+                    PlansHeroBanner()
                 }
 
                 when (val current = state) {
@@ -182,8 +196,8 @@ fun PlansPage(
                     -> {
                         item {
                             VpnLoadingPanel(
-                                title = "Loading package deck",
-                                subtitle = "正在读取当前可售 VPN 套餐。",
+                                title = "正在拉取套餐",
+                                subtitle = "保留现有 plans bridge，只替换为 Bitget 风格展示。",
                             )
                         }
                     }
@@ -191,7 +205,7 @@ fun PlansPage(
                     is PlansState.Error -> {
                         item {
                             VpnEmptyPanel(
-                                title = "Plans unavailable",
+                                title = "套餐暂不可用",
                                 subtitle = current.message,
                             )
                         }
@@ -199,18 +213,39 @@ fun PlansPage(
 
                     is PlansState.Loaded -> {
                         item {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                items(current.plans.take(3), key = { it.id }) { plan ->
+                                    FeaturedPlanTile(
+                                        plan = plan,
+                                        isSelected = plan.id == selectedPlanId,
+                                        onClick = { viewModel.selectPlan(plan.id) },
+                                    )
+                                }
+                            }
+                        }
+                        selectedPlan?.let { plan ->
+                            item {
+                                SelectedPlanPanel(plan = plan)
+                            }
+                        }
+                        item {
                             VpnSectionHeading(
-                                title = "Available Packages",
-                                subtitle = "Recommended plans stay visually elevated, while the checkout bridge remains unchanged.",
+                                title = "稳定币套餐",
+                                subtitle = "保留统一深色底、大圆角分组卡和亮青 CTA 层级。",
                             )
                         }
-                        current.plans.forEach { plan ->
-                            item(plan.id) {
-                                BitgetPlanCard(
-                                    plan = plan,
-                                    isSelected = plan.id == selectedPlanId,
-                                    onSelect = { viewModel.selectPlan(plan.id) },
-                                )
+                        item {
+                            VpnGlassCard(accent = VpnOutline, contentPadding = PaddingValues(vertical = 6.dp)) {
+                                current.plans.forEachIndexed { index, plan ->
+                                    PlanListRow(
+                                        plan = plan,
+                                        isSelected = plan.id == selectedPlanId,
+                                        onClick = { viewModel.selectPlan(plan.id) },
+                                    )
+                                    if (index != current.plans.lastIndex) {
+                                        VpnListDivider()
+                                    }
+                                }
                             }
                         }
                     }
@@ -221,189 +256,206 @@ fun PlansPage(
 }
 
 @Composable
-private fun BitgetPlanCard(
-    plan: PlanInfo,
-    isSelected: Boolean,
-    onSelect: () -> Unit,
-) {
-    val accent = when {
-        isSelected -> Primary
-        plan.isRecommended -> Warning
-        else -> GlowBlue
-    }
-    VpnGlassCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onSelect),
-        accent = accent,
+private fun PlansHeroBanner() {
+    Surface(
+        shape = RoundedCornerShape(28.dp),
+        color = Color.Transparent,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top,
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFF0E2940),
+                            Color(0xFF0A202B),
+                            Color(0xFF0B1517),
+                        ),
+                    ),
+                )
+                .padding(20.dp),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                modifier = Modifier.align(Alignment.TopStart),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    text = plan.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
+                    text = "随充随用",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextSecondary,
                 )
-                if (plan.isRecommended) {
-                    VpnStatusChip(
-                        text = "HOT",
-                        containerColor = Warning.copy(alpha = 0.16f),
-                        contentColor = Warning,
-                    )
-                }
-            }
-            if (isSelected) {
-                VpnStatusChip(text = "SELECTED")
-            } else if (!plan.badge.isNullOrBlank()) {
-                VpnStatusChip(
-                    text = plan.badge,
-                    containerColor = GlowBlue.copy(alpha = 0.18f),
-                    contentColor = GlowBlue,
-                )
-            }
-        }
-
-        Text(
-            text = plan.duration,
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = plan.price,
+                    text = "给 VPN\n选一个更稳的周期",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
                 )
-                Text(
-                    text = " / ${plan.duration}",
-                    modifier = Modifier.padding(start = 6.dp, bottom = 4.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                )
             }
-            plan.originalPrice?.let { original ->
-                Text(
-                    text = original,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
-                    textDecoration = TextDecoration.LineThrough,
-                )
-            }
-        }
 
-        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
+            VpnStatusChip(
+                text = "快速了解套餐权益",
+                modifier = Modifier.align(Alignment.BottomStart),
+                containerColor = Color(0xFF113152),
+                contentColor = VpnAccent,
+            )
 
-        plan.features.forEach { feature ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(108.dp),
+                shape = RoundedCornerShape(30.dp),
+                color = VpnAccent.copy(alpha = 0.14f),
             ) {
-                Surface(
-                    modifier = Modifier.width(20.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    color = accent.copy(alpha = 0.16f),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = null,
-                            tint = accent,
-                        )
-                    }
+                Box(contentAlignment = Alignment.Center) {
+                    VpnCodeBadge(
+                        text = "VPN",
+                        modifier = Modifier.size(76.dp),
+                        backgroundColor = VpnAccent.copy(alpha = 0.2f),
+                        contentColor = VpnAccent,
+                    )
                 }
-                Text(
-                    text = feature,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
-                )
-            }
-        }
-
-        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = if (plan.isRecommended) Icons.Default.LocalFireDepartment else Icons.Default.Verified,
-                    contentDescription = null,
-                    tint = accent,
-                )
-                Text(
-                    text = if (plan.isRecommended) "Preferred package for quick purchase" else "Stable package for repeat orders",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                )
-            }
-            if (!isSelected) {
-                VpnSecondaryButton(
-                    text = "Choose",
-                    onClick = onSelect,
-                )
             }
         }
     }
 }
 
 @Composable
-private fun PlanSelectionBar(
+private fun FeaturedPlanTile(
     plan: PlanInfo,
-    onContinue: () -> Unit,
+    isSelected: Boolean,
+    onClick: () -> Unit,
 ) {
-    Surface(
-        color = BackgroundSecondary.copy(alpha = 0.98f),
-        border = BorderStroke(1.dp, BorderDefault.copy(alpha = 0.9f)),
+    VpnGlassCard(
+        modifier = Modifier
+            .width(178.dp)
+            .clickable(onClick = onClick),
+        accent = if (isSelected) VpnAccent else VpnOutline,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
     ) {
+        if (plan.isRecommended) {
+            VpnStatusChip(
+                text = "HOT",
+                containerColor = VpnAccentSoft,
+                contentColor = VpnAccent,
+            )
+        }
+        Text(
+            text = plan.price,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary,
+        )
+        Text(
+            text = plan.name,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
+        )
+        Text(
+            text = plan.duration,
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary,
+        )
+    }
+}
+
+@Composable
+private fun SelectedPlanPanel(plan: PlanInfo) {
+    VpnGlassCard {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = VpnPageHorizontalPadding, vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(modifier = Modifier.weight(1f)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                VpnCodeBadge(text = "V", backgroundColor = VpnAccentSoft, contentColor = VpnAccent)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = plan.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
                         color = TextPrimary,
                     )
                     Text(
-                        text = "${plan.price} · ${plan.duration}",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = plan.duration,
+                        style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                     )
                 }
             }
-            VpnPrimaryButton(
-                text = "Continue to Checkout",
-                onClick = onContinue,
+            Text(
+                text = plan.price,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = VpnAccent,
+            )
+        }
+        VpnLineChart(values = vpnDemoLine(plan.duration.length.toFloat()))
+        VpnRangeSelector(
+            labels = listOf("1周", "1个月", "3个月", "1年"),
+            selectedIndex = planSelectionIndex(plan),
+        )
+        plan.features.forEach { feature ->
+            VpnLabelValueRow(
+                label = "权益",
+                value = feature,
             )
         }
     }
+}
+
+private fun planSelectionIndex(plan: PlanInfo): Int {
+    return when {
+        plan.duration.contains("12") || plan.duration.contains("1年") -> 3
+        plan.duration.contains("3") -> 2
+        plan.duration.contains("1") -> 1
+        else -> 0
+    }
+}
+
+@Composable
+private fun PlanListRow(
+    plan: PlanInfo,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    VpnGroupRow(
+        title = plan.name,
+        subtitle = plan.features.firstOrNull() ?: plan.duration,
+        selected = isSelected,
+        onClick = onClick,
+        leading = {
+            VpnCodeBadge(
+                text = plan.name.take(1),
+                backgroundColor = if (isSelected) VpnAccentSoft else VpnSurfaceStrong,
+                contentColor = if (isSelected) VpnAccent else TextPrimary,
+            )
+        },
+        trailing = {
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = plan.price,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                )
+                plan.originalPrice?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        textDecoration = TextDecoration.LineThrough,
+                    )
+                }
+                Text(
+                    text = plan.duration,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isSelected) VpnAccent else TextSecondary,
+                )
+            }
+        },
+    )
 }
 
 @Preview

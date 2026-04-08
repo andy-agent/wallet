@@ -1,26 +1,30 @@
 package com.v2ray.ang.composeui.pages.vpn
 
 import android.app.Application
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -30,10 +34,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
 import com.v2ray.ang.composeui.theme.Error as AppError
-import com.v2ray.ang.composeui.theme.Primary
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
-import com.v2ray.ang.composeui.theme.Warning
 import com.v2ray.ang.payment.PaymentConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,7 +48,7 @@ enum class OrderResultType {
 }
 
 sealed class OrderResultState {
-    object Idle : OrderResultState()
+    data object Idle : OrderResultState()
     data class Loaded(
         val resultType: OrderResultType,
         val orderId: String,
@@ -96,9 +98,9 @@ class OrderResultViewModel(application: Application) : AndroidViewModel(applicat
         txHash: String? = null,
     ): OrderResultState.Loaded {
         val message = when (resultType) {
-            OrderResultType.SUCCESS -> "支付成功，您的套餐已激活。"
+            OrderResultType.SUCCESS -> "支付成功，套餐已准备激活。"
             OrderResultType.FAILED -> "支付失败，请重试或联系客服。"
-            OrderResultType.PENDING -> "订单处理中，请稍后查看结果。"
+            OrderResultType.PENDING -> "订单处理中，请稍后查看最终结果。"
         }
         return OrderResultState.Loaded(resultType, orderId, amount, message, txHash)
     }
@@ -120,179 +122,148 @@ fun OrderResultPage(
     }
 
     VpnBitgetBackground {
-        Scaffold(
-            containerColor = Color.Transparent,
-            contentColor = TextPrimary,
-            contentWindowInsets = WindowInsets.safeDrawing,
-        ) { innerPadding ->
-            androidx.compose.foundation.lazy.LazyColumn(
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding(),
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(
-                    start = VpnPageHorizontalPadding,
-                    end = VpnPageHorizontalPadding,
-                    top = VpnPageTopPadding,
-                    bottom = 32.dp,
-                ),
+                    .padding(horizontal = VpnPageHorizontalPadding, vertical = VpnPageTopPadding),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                item {
-                    VpnTopChrome(
-                        title = "Order Result",
-                        subtitle = "Clear post-payment state with actions grouped by outcome.",
+                VpnCenterTopBar(
+                    title = "支付结果",
+                    onBack = onNavigateToHome,
+                )
+                VpnGlassCard {
+                    Text(
+                        text = "订单背景页",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
                     )
-                }
-                when (val current = state) {
-                    OrderResultState.Idle -> {
-                        item {
-                            VpnLoadingPanel(
-                                title = "Loading payment result",
-                                subtitle = "正在查询订单最终状态。",
-                            )
-                        }
-                    }
-
-                    is OrderResultState.Loaded -> {
-                        item {
-                            ResultHeroCard(state = current)
-                        }
-                        item {
-                            ResultDetailsCard(state = current)
-                        }
-                        item {
-                            ResultActionCard(
-                                resultType = current.resultType,
-                                onNavigateToHome = onNavigateToHome,
-                                onNavigateToOrders = onNavigateToOrders,
-                                onRetry = onRetry,
-                            )
-                        }
-                    }
+                    Text(
+                        text = "VPN 套餐支付结果",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                    )
+                    VpnLabelValueRow(label = "订单号", value = orderId.ifBlank { "Unknown" })
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun ResultHeroCard(state: OrderResultState.Loaded) {
-    VpnGlassCard(accent = state.resultType.accent()) {
-        VpnStatusChip(
-            text = state.resultType.label(),
-            containerColor = state.resultType.accent().copy(alpha = 0.16f),
-            contentColor = state.resultType.accent(),
-        )
-        Icon(
-            imageVector = state.resultType.icon(),
-            contentDescription = null,
-            tint = state.resultType.accent(),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Text(
-            text = state.resultType.title(),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary,
-        )
-        Text(
-            text = state.message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            VpnMetricPill(
-                modifier = Modifier.weight(1f),
-                label = "Order",
-                value = state.orderId.ifBlank { "Unknown" },
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(VpnSheetScrim),
             )
-            VpnMetricPill(
-                modifier = Modifier.weight(1f),
-                label = "Amount",
-                value = state.amount,
-            )
-        }
-    }
-}
+            when (val current = state) {
+                OrderResultState.Idle -> {
+                    VpnBottomSheet(
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    ) {
+                        Text(
+                            text = "正在查询结果",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                        )
+                        Text(
+                            text = "同步订单结果并准备后续动作。",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
+                        )
+                    }
+                }
 
-@Composable
-private fun ResultDetailsCard(state: OrderResultState.Loaded) {
-    VpnGlassCard(accent = state.resultType.accent()) {
-        Text(
-            text = "Settlement Details",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary,
-        )
-        VpnLabelValueRow(label = "Order No.", value = state.orderId.ifBlank { "Unknown" })
-        VpnLabelValueRow(label = "Amount", value = state.amount)
-        VpnLabelValueRow(label = "Status", value = state.resultType.title(), valueColor = state.resultType.accent())
-        state.txHash?.let {
-            VpnLabelValueRow(label = "Transaction Hash", value = it)
-        }
-    }
-}
+                is OrderResultState.Loaded -> {
+                    VpnBottomSheet(
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .background(current.resultType.accent().copy(alpha = 0.16f), RoundedCornerShape(18.dp)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = current.resultType.icon(),
+                                    contentDescription = null,
+                                    tint = current.resultType.accent(),
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = current.resultType.title(),
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary,
+                                )
+                                Text(
+                                    text = current.message,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = TextSecondary,
+                                )
+                            }
+                        }
+                        VpnLabelValueRow(label = "订单号", value = current.orderId.ifBlank { "Unknown" })
+                        VpnLabelValueRow(label = "支付金额", value = current.amount)
+                        VpnLabelValueRow(label = "状态", value = current.resultType.title(), valueColor = current.resultType.accent())
+                        current.txHash?.let {
+                            VpnLabelValueRow(label = "交易哈希", value = it)
+                        }
+                        when (current.resultType) {
+                            OrderResultType.SUCCESS -> {
+                                VpnPrimaryButton(
+                                    text = "返回首页",
+                                    onClick = onNavigateToHome,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                VpnSecondaryButton(
+                                    text = "查看订单",
+                                    onClick = onNavigateToOrders,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .navigationBarsPadding(),
+                                )
+                            }
 
-@Composable
-private fun ResultActionCard(
-    resultType: OrderResultType,
-    onNavigateToHome: () -> Unit,
-    onNavigateToOrders: () -> Unit,
-    onRetry: () -> Unit,
-) {
-    VpnGlassCard(accent = resultType.accent()) {
-        Text(
-            text = "Next Action",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary,
-        )
-        Text(
-            text = resultType.actionHint(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
-        )
-        when (resultType) {
-            OrderResultType.SUCCESS -> {
-                VpnPrimaryButton(
-                    text = "Return to Home",
-                    onClick = onNavigateToHome,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                VpnSecondaryButton(
-                    text = "Open Orders",
-                    onClick = onNavigateToOrders,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+                            OrderResultType.FAILED -> {
+                                VpnPrimaryButton(
+                                    text = "重新支付",
+                                    onClick = onRetry,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                VpnSecondaryButton(
+                                    text = "返回首页",
+                                    onClick = onNavigateToHome,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .navigationBarsPadding(),
+                                )
+                            }
 
-            OrderResultType.FAILED -> {
-                VpnPrimaryButton(
-                    text = "Retry Payment",
-                    onClick = onRetry,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                VpnSecondaryButton(
-                    text = "Back to Home",
-                    onClick = onNavigateToHome,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
-            OrderResultType.PENDING -> {
-                VpnPrimaryButton(
-                    text = "View Orders",
-                    onClick = onNavigateToOrders,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                VpnSecondaryButton(
-                    text = "Back to Home",
-                    onClick = onNavigateToHome,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                            OrderResultType.PENDING -> {
+                                VpnPrimaryButton(
+                                    text = "查看订单",
+                                    onClick = onNavigateToOrders,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                VpnSecondaryButton(
+                                    text = "返回首页",
+                                    onClick = onNavigateToHome,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .navigationBarsPadding(),
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -300,33 +271,17 @@ private fun ResultActionCard(
 
 private fun OrderResultType.title(): String {
     return when (this) {
-        OrderResultType.SUCCESS -> "Payment Successful"
-        OrderResultType.FAILED -> "Payment Failed"
-        OrderResultType.PENDING -> "Processing"
-    }
-}
-
-private fun OrderResultType.label(): String {
-    return when (this) {
-        OrderResultType.SUCCESS -> "SUCCESS"
-        OrderResultType.FAILED -> "FAILED"
-        OrderResultType.PENDING -> "PENDING"
-    }
-}
-
-private fun OrderResultType.actionHint(): String {
-    return when (this) {
-        OrderResultType.SUCCESS -> "资金已完成入账，可回首页继续使用 VPN，或去订单页查看完整明细。"
-        OrderResultType.FAILED -> "建议重新进入支付流程，必要时联系支持或改用其他支付轨道。"
-        OrderResultType.PENDING -> "链上状态仍在推进，订单页会承接后续确认与结果刷新。"
+        OrderResultType.SUCCESS -> "支付成功"
+        OrderResultType.FAILED -> "支付失败"
+        OrderResultType.PENDING -> "处理中"
     }
 }
 
 private fun OrderResultType.accent(): Color {
     return when (this) {
-        OrderResultType.SUCCESS -> Primary
+        OrderResultType.SUCCESS -> VpnAccent
         OrderResultType.FAILED -> AppError
-        OrderResultType.PENDING -> Warning
+        OrderResultType.PENDING -> Color(0xFFFFB14A)
     }
 }
 

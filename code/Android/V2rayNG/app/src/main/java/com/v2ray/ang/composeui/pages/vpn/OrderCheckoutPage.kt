@@ -21,10 +21,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CurrencyBitcoin
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.Divider
+import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -33,14 +36,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -49,14 +50,8 @@ import androidx.lifecycle.viewModelScope
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
-import com.v2ray.ang.composeui.theme.BackgroundSecondary
-import com.v2ray.ang.composeui.theme.BorderDefault
-import com.v2ray.ang.composeui.theme.GlowBlue
-import com.v2ray.ang.composeui.theme.Info
-import com.v2ray.ang.composeui.theme.Primary
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
-import com.v2ray.ang.composeui.theme.Warning
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -68,8 +63,8 @@ enum class PaymentMethod {
 }
 
 sealed class OrderCheckoutState {
-    object Idle : OrderCheckoutState()
-    object Loading : OrderCheckoutState()
+    data object Idle : OrderCheckoutState()
+    data object Loading : OrderCheckoutState()
     data class Loaded(
         val orderId: String,
         val planName: String,
@@ -79,8 +74,10 @@ sealed class OrderCheckoutState {
         val totalAmount: String,
         val selectedPaymentMethod: PaymentMethod,
         val walletAddress: String?,
+        val qrText: String?,
         val expiresIn: Int,
     ) : OrderCheckoutState()
+
     data class Error(val message: String) : OrderCheckoutState()
 }
 
@@ -125,6 +122,7 @@ class OrderCheckoutViewModel(application: Application) : AndroidViewModel(applic
                     totalAmount = data.totalAmount,
                     selectedPaymentMethod = selected,
                     walletAddress = data.receiveAddress,
+                    qrText = data.qrText,
                     expiresIn = data.expiresInSeconds,
                 )
             }.onFailure { error ->
@@ -162,6 +160,7 @@ fun OrderCheckoutPage(
     onPayWithCrypto: (String) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
+    val selectedRange = remember { mutableIntStateOf(0) }
 
     LaunchedEffect(planId) {
         viewModel.loadOrderDetails(planId)
@@ -173,23 +172,26 @@ fun OrderCheckoutPage(
             contentColor = TextPrimary,
             contentWindowInsets = WindowInsets.safeDrawing,
             bottomBar = {
-                val loadedState = state as? OrderCheckoutState.Loaded
-                if (loadedState != null) {
-                    CheckoutActionBar(
-                        totalAmount = loadedState.totalAmount,
-                        method = loadedState.selectedPaymentMethod,
-                        onPay = {
-                            when (loadedState.selectedPaymentMethod) {
-                                PaymentMethod.WALLET -> onPayWithWallet(
-                                    loadedState.orderId,
-                                    loadedState.totalAmount,
-                                )
-
-                                PaymentMethod.CRYPTO -> onPayWithCrypto(loadedState.orderId)
-                            }
-                        },
-                    )
-                }
+                VpnModeDock(
+                    items = listOf(
+                        VpnDockItem("钱包", Icons.Default.AccountBalanceWallet),
+                        VpnDockItem("链上", Icons.Default.CurrencyBitcoin),
+                        VpnDockItem("订单", Icons.Default.ReceiptLong),
+                        VpnDockItem("帮助", Icons.Default.HelpOutline),
+                    ),
+                    selectedIndex = when ((state as? OrderCheckoutState.Loaded)?.selectedPaymentMethod) {
+                        PaymentMethod.CRYPTO -> 1
+                        else -> 0
+                    },
+                    onSelect = { index ->
+                        when (index) {
+                            0 -> viewModel.selectPaymentMethod(PaymentMethod.WALLET)
+                            1 -> viewModel.selectPaymentMethod(PaymentMethod.CRYPTO)
+                        }
+                    },
+                    onClose = onNavigateBack,
+                    modifier = Modifier.padding(horizontal = VpnPageHorizontalPadding, vertical = 12.dp),
+                )
             },
         ) { innerPadding ->
             LazyColumn(
@@ -205,10 +207,15 @@ fun OrderCheckoutPage(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 item {
-                    VpnTopChrome(
-                        title = "Checkout",
-                        subtitle = "Order desk with clear pay rail selection and strong call to action.",
+                    VpnCenterTopBar(
+                        title = "订单支付",
                         onBack = onNavigateBack,
+                        backIcon = Icons.Default.Close,
+                    )
+                }
+                item {
+                    VpnWarningStrip(
+                        text = "该订单用于展示 VPN 套餐收银台，支付轨道可切换，但订单与支付桥接保持原样。",
                     )
                 }
 
@@ -218,8 +225,8 @@ fun OrderCheckoutPage(
                     -> {
                         item {
                             VpnLoadingPanel(
-                                title = "Preparing checkout desk",
-                                subtitle = "正在创建订单并拉取支付参数。",
+                                title = "正在创建订单",
+                                subtitle = "拉起现有 createOrder 并同步支付轨道。",
                             )
                         }
                     }
@@ -227,7 +234,7 @@ fun OrderCheckoutPage(
                     is OrderCheckoutState.Error -> {
                         item {
                             VpnEmptyPanel(
-                                title = "Checkout unavailable",
+                                title = "订单支付不可用",
                                 subtitle = current.message,
                             )
                         }
@@ -235,47 +242,73 @@ fun OrderCheckoutPage(
 
                     is OrderCheckoutState.Loaded -> {
                         item {
-                            CheckoutHero(state = current)
-                        }
-                        item {
-                            VpnSectionHeading(
-                                title = "Payment Rail",
-                                subtitle = "Switch between wallet and on-chain settlement without changing the bridge behavior.",
+                            VpnSwapDeck(
+                                onSwap = {
+                                    viewModel.selectPaymentMethod(
+                                        if (current.selectedPaymentMethod == PaymentMethod.WALLET) {
+                                            PaymentMethod.CRYPTO
+                                        } else {
+                                            PaymentMethod.WALLET
+                                        },
+                                    )
+                                },
+                                topCard = {
+                                    SwapPaymentCard(state = current)
+                                },
+                                bottomCard = {
+                                    SwapPlanCard(state = current)
+                                },
                             )
                         }
                         item {
-                            PaymentRailCard(
-                                icon = Icons.Default.AccountBalanceWallet,
-                                title = "Wallet Balance",
-                                subtitle = "Fast confirmation through the existing wallet confirmation step.",
-                                badge = "PRIMARY",
-                                accent = Primary,
-                                isSelected = current.selectedPaymentMethod == PaymentMethod.WALLET,
-                                onClick = { viewModel.selectPaymentMethod(PaymentMethod.WALLET) },
+                            VpnPrimaryButton(
+                                text = if (current.selectedPaymentMethod == PaymentMethod.WALLET) "去钱包确认" else "我已完成转账",
+                                onClick = {
+                                    when (current.selectedPaymentMethod) {
+                                        PaymentMethod.WALLET -> onPayWithWallet(current.orderId, current.totalAmount)
+                                        PaymentMethod.CRYPTO -> onPayWithCrypto(current.orderId)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
                             )
                         }
                         item {
-                            PaymentRailCard(
-                                icon = Icons.Default.CurrencyBitcoin,
-                                title = "Crypto Address",
-                                subtitle = "TRON / USDT style on-chain payment with QR and address exposure.",
-                                badge = "ON-CHAIN",
-                                accent = Warning,
-                                isSelected = current.selectedPaymentMethod == PaymentMethod.CRYPTO,
-                                onClick = { viewModel.selectPaymentMethod(PaymentMethod.CRYPTO) },
-                            )
+                            VpnGlassCard {
+                                Text(
+                                    text = "订单摘要",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                )
+                                VpnLabelValueRow(label = "订单号", value = current.orderId)
+                                VpnLabelValueRow(label = "套餐", value = current.planName)
+                                VpnLabelValueRow(label = "周期", value = current.duration)
+                                VpnLabelValueRow(label = "标价", value = current.amount)
+                                VpnLabelValueRow(label = "应付", value = current.totalAmount, valueColor = VpnAccent)
+                            }
                         }
                         item {
-                            CheckoutSummaryCard(state = current)
+                            VpnRangeSelector(
+                                labels = listOf("支付", "订单", "激活"),
+                                selectedIndex = selectedRange.intValue,
+                                onSelect = { selectedRange.intValue = it },
+                                trailingIcon = Icons.Default.SwapVert,
+                                onTrailingClick = {
+                                    viewModel.selectPaymentMethod(
+                                        if (current.selectedPaymentMethod == PaymentMethod.WALLET) {
+                                            PaymentMethod.CRYPTO
+                                        } else {
+                                            PaymentMethod.WALLET
+                                        },
+                                    )
+                                },
+                            )
                         }
                         item {
                             if (current.selectedPaymentMethod == PaymentMethod.WALLET) {
-                                WalletRailDetail(amount = current.totalAmount)
+                                WalletRailDetail(current)
                             } else {
-                                CryptoRailDetail(
-                                    walletAddress = current.walletAddress.orEmpty(),
-                                    amount = current.totalAmount,
-                                )
+                                CryptoRailDetail(current)
                             }
                         }
                     }
@@ -286,128 +319,99 @@ fun OrderCheckoutPage(
 }
 
 @Composable
-private fun CheckoutHero(state: OrderCheckoutState.Loaded) {
+private fun SwapPaymentCard(state: OrderCheckoutState.Loaded) {
     val countdown = rememberCountdownSeconds(state.expiresIn)
-    VpnHeroCard(
-        eyebrow = "ORDER ${state.orderId.takeLast(6)}",
-        title = "Confirm payment route for ${state.planName}",
-        subtitle = "收银台把订单、金额、支付轨道和过期时间抬到第一层，同时保持现有 createOrder 兼容。",
-        accent = if (state.selectedPaymentMethod == PaymentMethod.WALLET) Primary else Warning,
-        metrics = listOf(
-            VpnHeroMetric("Rail", state.selectedPaymentMethod.label()),
-            VpnHeroMetric("Amount", state.totalAmount),
-            VpnHeroMetric("Expires", countdown.toCountdownLabel()),
-        ),
+    val railLabel = if (state.selectedPaymentMethod == PaymentMethod.WALLET) "钱包余额" else "链上支付"
+    val assetLabel = if (state.selectedPaymentMethod == PaymentMethod.WALLET) "SOL" else "USDT"
+    Text(
+        text = "支付方式",
+        style = MaterialTheme.typography.bodySmall,
+        color = TextSecondary,
+    )
+    Text(
+        text = state.totalAmount,
+        style = MaterialTheme.typography.headlineMedium,
+        fontWeight = FontWeight.Bold,
+        color = TextPrimary,
+    )
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = if (state.selectedPaymentMethod == PaymentMethod.WALLET) "$railLabel · 快速确认" else "$railLabel · 扫码转账",
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            VpnCodeBadge(text = assetLabel.take(1), backgroundColor = VpnAccentSoft, contentColor = VpnAccent)
+            Text(
+                text = assetLabel,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary,
+            )
+        }
+    }
+    Text(
+        text = "剩余 ${countdown.toCountdownLabel()}",
+        style = MaterialTheme.typography.bodySmall,
+        color = TextSecondary,
     )
 }
 
 @Composable
-private fun PaymentRailCard(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    badge: String,
-    accent: Color,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-) {
-    VpnGlassCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        accent = accent,
+private fun SwapPlanCard(state: OrderCheckoutState.Loaded) {
+    Text(
+        text = "购买套餐",
+        style = MaterialTheme.typography.bodySmall,
+        color = TextSecondary,
+    )
+    Text(
+        text = state.amount,
+        style = MaterialTheme.typography.headlineMedium,
+        fontWeight = FontWeight.Bold,
+        color = TextPrimary,
+    )
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    modifier = Modifier.size(46.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    color = accent.copy(alpha = 0.16f),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        androidx.compose.material3.Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = accent,
-                        )
-                    }
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary,
-                    )
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
-                    )
-                }
-            }
-            VpnStatusChip(
-                text = if (isSelected) "SELECTED" else badge,
-                containerColor = accent.copy(alpha = 0.16f),
-                contentColor = accent,
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = state.planName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary,
+            )
+            Text(
+                text = state.duration,
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
             )
         }
-        VpnPrimaryButton(
-            text = if (isSelected) "Current Payment Rail" else "Use This Rail",
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth(),
+        VpnStatusChip(
+            text = "VPN",
+            containerColor = VpnAccentSoft,
+            contentColor = VpnAccent,
         )
     }
 }
 
 @Composable
-private fun CheckoutSummaryCard(state: OrderCheckoutState.Loaded) {
-    VpnGlassCard(accent = GlowBlue) {
+private fun WalletRailDetail(state: OrderCheckoutState.Loaded) {
+    VpnGlassCard {
         Text(
-            text = "Order Summary",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary,
-        )
-        VpnLabelValueRow(label = "Order No.", value = state.orderId)
-        VpnLabelValueRow(label = "Package", value = state.planName)
-        VpnLabelValueRow(label = "Duration", value = state.duration)
-        VpnLabelValueRow(label = "Listed Price", value = state.amount)
-        state.discount?.let {
-            VpnLabelValueRow(
-                label = "Discount",
-                value = it,
-                valueColor = Primary,
-            )
-        }
-        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
-        VpnLabelValueRow(
-            label = "Payable",
-            value = state.totalAmount,
-            valueColor = if (state.selectedPaymentMethod == PaymentMethod.WALLET) Primary else Warning,
-        )
-    }
-}
-
-@Composable
-private fun WalletRailDetail(amount: String) {
-    VpnGlassCard(accent = Primary) {
-        Text(
-            text = "Wallet Confirmation",
-            style = MaterialTheme.typography.titleLarge,
+            text = "钱包确认",
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = TextPrimary,
         )
         Text(
-            text = "下一步会进入支付确认页，沿用现有 refreshOrder 结果判断和成功回跳。",
-            style = MaterialTheme.typography.bodyMedium,
+            text = "下一步进入钱包确认页，沿用现有 refreshOrder 成功/失败回桥。",
+            style = MaterialTheme.typography.bodySmall,
             color = TextSecondary,
         )
         Row(
@@ -416,47 +420,36 @@ private fun WalletRailDetail(amount: String) {
         ) {
             VpnMetricPill(
                 modifier = Modifier.weight(1f),
-                label = "Settlement",
+                label = "支付轨道",
                 value = "Wallet",
             )
             VpnMetricPill(
                 modifier = Modifier.weight(1f),
-                label = "Amount",
-                value = amount,
+                label = "订单",
+                value = state.orderId.takeTrailing(6),
             )
         }
-        VpnStatusChip(text = "Password confirmation required")
     }
 }
 
 @Composable
-private fun CryptoRailDetail(
-    walletAddress: String,
-    amount: String,
-) {
-    val qrBitmap = remember(walletAddress) {
-        generateQRCode(walletAddress)
+private fun CryptoRailDetail(state: OrderCheckoutState.Loaded) {
+    val qrBitmap = remember(state.qrText ?: state.walletAddress.orEmpty()) {
+        generateQRCode(state.qrText ?: state.walletAddress.orEmpty())
     }
-
-    VpnGlassCard(accent = Warning) {
+    VpnGlassCard {
         Text(
-            text = "Crypto Address",
-            style = MaterialTheme.typography.titleLarge,
+            text = "链上收款地址",
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = TextPrimary,
         )
-        Text(
-            text = "链上支付仍走既有订单桥接，只在视觉上切成更明确的扫码支付二级层。",
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
-        )
-
         qrBitmap?.let { bitmap ->
             Surface(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 shape = RoundedCornerShape(24.dp),
                 color = Color.White,
-                border = BorderStroke(1.dp, Warning.copy(alpha = 0.24f)),
+                border = BorderStroke(1.dp, VpnAccentSoft),
             ) {
                 Image(
                     bitmap = bitmap.asImageBitmap(),
@@ -467,91 +460,46 @@ private fun CryptoRailDetail(
                 )
             }
         }
-
-        VpnLabelValueRow(label = "Payable", value = amount, valueColor = Warning)
-
+        VpnLabelValueRow(label = "应付金额", value = state.totalAmount, valueColor = VpnAccent)
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            color = BackgroundSecondary.copy(alpha = 0.92f),
-            border = BorderStroke(1.dp, BorderDefault.copy(alpha = 0.84f)),
+            color = VpnSurfaceStrong,
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = walletAddress.ifBlank { "Address unavailable" },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextPrimary,
-                    )
-                }
-                androidx.compose.material3.Icon(
+                Text(
+                    text = state.walletAddress.orEmpty().ifBlank { "地址暂不可用" },
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextPrimary,
+                )
+                Icon(
                     imageVector = Icons.Default.ContentCopy,
                     contentDescription = null,
-                    tint = Info,
+                    tint = TextSecondary,
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun CheckoutActionBar(
-    totalAmount: String,
-    method: PaymentMethod,
-    onPay: () -> Unit,
-) {
-    Surface(
-        color = BackgroundSecondary.copy(alpha = 0.98f),
-        border = BorderStroke(1.dp, BorderDefault.copy(alpha = 0.9f)),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = VpnPageHorizontalPadding, vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = "Payable",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
-                )
-                Text(
-                    text = totalAmount,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (method == PaymentMethod.WALLET) Primary else Warning,
-                )
-            }
-            VpnPrimaryButton(
-                text = if (method == PaymentMethod.WALLET) "Go to Wallet Confirm" else "I Have Sent Payment",
-                onClick = onPay,
-            )
         }
     }
 }
 
 @Composable
 private fun rememberCountdownSeconds(initialSeconds: Int): Int {
-    var remaining by remember(initialSeconds) {
-        mutableStateOf(initialSeconds.coerceAtLeast(0))
-    }
+    val remaining = remember(initialSeconds) { mutableIntStateOf(initialSeconds.coerceAtLeast(0)) }
     LaunchedEffect(initialSeconds) {
-        remaining = initialSeconds.coerceAtLeast(0)
-        while (remaining > 0) {
+        remaining.intValue = initialSeconds.coerceAtLeast(0)
+        while (remaining.intValue > 0) {
             delay(1000)
-            remaining -= 1
+            remaining.intValue -= 1
         }
     }
-    return remaining
+    return remaining.intValue
 }
 
 private fun Int.toCountdownLabel(): String {
@@ -559,13 +507,6 @@ private fun Int.toCountdownLabel(): String {
     val minutes = (this % 3600) / 60
     val seconds = this % 60
     return String.format("%02d:%02d:%02d", hours, minutes, seconds)
-}
-
-private fun PaymentMethod.label(): String {
-    return when (this) {
-        PaymentMethod.WALLET -> "Wallet"
-        PaymentMethod.CRYPTO -> "Crypto"
-    }
 }
 
 @Preview

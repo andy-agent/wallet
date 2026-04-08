@@ -1,9 +1,8 @@
 package com.v2ray.ang.composeui.pages.vpn
 
 import android.app.Application
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -11,13 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ReceiptLong
-import androidx.compose.material.icons.filled.Replay
-import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,9 +27,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
 import com.v2ray.ang.composeui.theme.Error as AppError
-import com.v2ray.ang.composeui.theme.GlowBlue
-import com.v2ray.ang.composeui.theme.Primary
-import com.v2ray.ang.composeui.theme.Warning
+import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,11 +55,11 @@ data class VpnOrderListItem(
 )
 
 sealed class OrderListState {
-    object Idle : OrderListState()
-    object Loading : OrderListState()
+    data object Idle : OrderListState()
+    data object Loading : OrderListState()
     data class Loaded(val orders: List<VpnOrderListItem>) : OrderListState()
     data class Error(val message: String) : OrderListState()
-    object Empty : OrderListState()
+    data object Empty : OrderListState()
 }
 
 class OrderListViewModel(application: Application) : AndroidViewModel(application) {
@@ -143,10 +134,10 @@ fun OrderListPage(
     VpnBitgetBackground {
         Scaffold(
             containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onBackground,
+            contentColor = TextPrimary,
             contentWindowInsets = WindowInsets.safeDrawing,
         ) { innerPadding ->
-            androidx.compose.foundation.lazy.LazyColumn(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -159,23 +150,36 @@ fun OrderListPage(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 item {
-                    VpnTopChrome(
-                        title = "Orders",
-                        subtitle = "Primary purchase records with overview first, detail later.",
+                    VpnCenterTopBar(
+                        title = "订单列表",
                         onBack = onNavigateBack,
                     )
                 }
                 item {
-                    VpnHeroCard(
-                        eyebrow = "ORDER BOOK",
-                        title = "Track pending payment, settlement, and fulfilled VPN packages",
-                        subtitle = "保留缓存订单桥接，仅把列表切成 Bitget 风格总览卡片和二级明细卡片流。",
-                        metrics = listOf(
-                            VpnHeroMetric("Pending", orders.count { it.status == ListOrderStatus.PENDING }.toString()),
-                            VpnHeroMetric("Completed", orders.count { it.status == ListOrderStatus.COMPLETED }.toString()),
-                            VpnHeroMetric("Records", orders.size.toString()),
-                        ),
-                    )
+                    VpnGlassCard {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            VpnMetricPill(
+                                modifier = Modifier.weight(1f),
+                                label = "待支付",
+                                value = orders.count { it.status == ListOrderStatus.PENDING }.toString(),
+                                valueColor = Color(0xFFFFB14A),
+                            )
+                            VpnMetricPill(
+                                modifier = Modifier.weight(1f),
+                                label = "已完成",
+                                value = orders.count { it.status == ListOrderStatus.COMPLETED }.toString(),
+                                valueColor = VpnAccent,
+                            )
+                            VpnMetricPill(
+                                modifier = Modifier.weight(1f),
+                                label = "总记录",
+                                value = orders.size.toString(),
+                            )
+                        }
+                    }
                 }
 
                 when (val current = state) {
@@ -184,8 +188,8 @@ fun OrderListPage(
                     -> {
                         item {
                             VpnLoadingPanel(
-                                title = "Loading order book",
-                                subtitle = "正在汇总本地缓存订单与待支付状态。",
+                                title = "正在同步订单列表",
+                                subtitle = "从现有缓存订单桥接聚合记录。",
                             )
                         }
                     }
@@ -193,7 +197,7 @@ fun OrderListPage(
                     is OrderListState.Error -> {
                         item {
                             VpnEmptyPanel(
-                                title = "Order book unavailable",
+                                title = "订单列表不可用",
                                 subtitle = current.message,
                             )
                         }
@@ -202,24 +206,25 @@ fun OrderListPage(
                     OrderListState.Empty -> {
                         item {
                             VpnEmptyPanel(
-                                title = "No VPN orders yet",
-                                subtitle = "订单账本为空，新的套餐购买会在这里以卡片式时间线展示。",
+                                title = "暂无 VPN 订单",
+                                subtitle = "新的套餐购买会按时间顺序出现在这里。",
                             )
                         }
                     }
 
                     is OrderListState.Loaded -> {
                         item {
-                            VpnSectionHeading(
-                                title = "Recent Activity",
-                                subtitle = "Every order card keeps status, amount, and settlement route readable at a glance.",
-                            )
-                        }
-                        items(current.orders, key = { it.id }) { order ->
-                            OrderBookCard(
-                                order = order,
-                                onClick = { onOrderClick(order.id) },
-                            )
+                            VpnGlassCard(accent = VpnOutline, contentPadding = PaddingValues(vertical = 6.dp)) {
+                                current.orders.forEachIndexed { index, order ->
+                                    OrderRow(
+                                        order = order,
+                                        onClick = { onOrderClick(order.id) },
+                                    )
+                                    if (index != current.orders.lastIndex) {
+                                        VpnListDivider()
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -229,102 +234,56 @@ fun OrderListPage(
 }
 
 @Composable
-private fun OrderBookCard(
+private fun OrderRow(
     order: VpnOrderListItem,
     onClick: () -> Unit,
 ) {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-    val accent = order.status.accentColor()
-    VpnGlassCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        accent = accent,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top,
-        ) {
-            Box(modifier = Modifier.weight(1f)) {
+    VpnGroupRow(
+        title = order.planName,
+        subtitle = dateFormat.format(order.createdAt),
+        onClick = onClick,
+        leading = {
+            VpnCodeBadge(
+                text = "订",
+                backgroundColor = order.status.accentColor().copy(alpha = 0.18f),
+                contentColor = order.status.accentColor(),
+            )
+        },
+        trailing = {
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = order.planName,
-                    style = MaterialTheme.typography.titleLarge,
+                    text = order.amount,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = TextPrimary,
+                )
+                VpnStatusChip(
+                    text = order.status.label(),
+                    containerColor = order.status.accentColor().copy(alpha = 0.14f),
+                    contentColor = order.status.accentColor(),
                 )
             }
-            VpnStatusChip(
-                text = order.status.label(),
-                containerColor = accent.copy(alpha = 0.16f),
-                contentColor = accent,
-            )
-        }
-
-        Text(
-            text = order.id,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            VpnMetricPill(
-                modifier = Modifier.weight(1f),
-                label = "Amount",
-                value = order.amount,
-            )
-            VpnMetricPill(
-                modifier = Modifier.weight(1f),
-                label = "Created",
-                value = dateFormat.format(order.createdAt),
-            )
-        }
-
-        order.expiresAt?.let { expiresAt ->
-            VpnLabelValueRow(
-                label = "Expiry",
-                value = dateFormat.format(expiresAt),
-                valueColor = accent,
-            )
-        }
-
-        Text(
-            text = order.status.description(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
+        },
+    )
 }
 
 private fun ListOrderStatus.label(): String {
     return when (this) {
-        ListOrderStatus.PENDING -> "Pending"
-        ListOrderStatus.PAID -> "Paid"
-        ListOrderStatus.COMPLETED -> "Completed"
-        ListOrderStatus.CANCELLED -> "Cancelled"
-        ListOrderStatus.REFUNDED -> "Refunded"
-    }
-}
-
-private fun ListOrderStatus.description(): String {
-    return when (this) {
-        ListOrderStatus.PENDING -> "等待链上支付或确认，详情页会展示更细的支付路径与操作按钮。"
-        ListOrderStatus.PAID -> "资金已到账，后台正在处理套餐激活。"
-        ListOrderStatus.COMPLETED -> "套餐已交付，可在 VPN 首页继续使用。"
-        ListOrderStatus.CANCELLED -> "订单已取消或超时关闭。"
-        ListOrderStatus.REFUNDED -> "订单异常或退款已处理。"
+        ListOrderStatus.PENDING -> "待支付"
+        ListOrderStatus.PAID -> "已支付"
+        ListOrderStatus.COMPLETED -> "已完成"
+        ListOrderStatus.CANCELLED -> "已关闭"
+        ListOrderStatus.REFUNDED -> "已退款"
     }
 }
 
 private fun ListOrderStatus.accentColor(): Color {
     return when (this) {
-        ListOrderStatus.PENDING -> Warning
-        ListOrderStatus.PAID -> GlowBlue
-        ListOrderStatus.COMPLETED -> Primary
-        ListOrderStatus.CANCELLED -> Color(0xFF6D7B91)
+        ListOrderStatus.PENDING -> Color(0xFFFFB14A)
+        ListOrderStatus.PAID -> VpnAccent
+        ListOrderStatus.COMPLETED -> VpnAccent
+        ListOrderStatus.CANCELLED -> Color(0xFF97A1A5)
         ListOrderStatus.REFUNDED -> AppError
     }
 }

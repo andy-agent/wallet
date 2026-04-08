@@ -1,16 +1,17 @@
 package com.v2ray.ang.composeui.pages.vpn
 
 import android.app.Application
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
@@ -21,11 +22,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -36,16 +35,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
-import com.v2ray.ang.composeui.theme.BackgroundSecondary
-import com.v2ray.ang.composeui.theme.BorderDefault
 import com.v2ray.ang.composeui.theme.Error as AppError
-import com.v2ray.ang.composeui.theme.Primary
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
 import com.v2ray.ang.payment.PaymentConfig
@@ -54,8 +49,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 sealed class WalletPaymentConfirmState {
-    object Idle : WalletPaymentConfirmState()
-    object Confirming : WalletPaymentConfirmState()
+    data object Idle : WalletPaymentConfirmState()
+    data object Confirming : WalletPaymentConfirmState()
     data class Confirmed(val txHash: String) : WalletPaymentConfirmState()
     data class Error(val message: String) : WalletPaymentConfirmState()
 }
@@ -135,229 +130,186 @@ fun WalletPaymentConfirmPage(
     }
 
     VpnBitgetBackground {
-        Scaffold(
-            containerColor = Color.Transparent,
-            contentColor = TextPrimary,
-            contentWindowInsets = WindowInsets.safeDrawing,
-            bottomBar = {
-                WalletConfirmBottomBar(
-                    isConfirming = state is WalletPaymentConfirmState.Confirming,
-                    onConfirm = { viewModel.confirmPayment(orderId) },
-                    onCancel = onNavigateBack,
-                )
-            },
-        ) { innerPadding ->
-            androidx.compose.foundation.lazy.LazyColumn(
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding(),
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(
-                    start = VpnPageHorizontalPadding,
-                    end = VpnPageHorizontalPadding,
-                    top = VpnPageTopPadding,
-                    bottom = VpnPageBottomPadding,
-                ),
+                    .padding(horizontal = VpnPageHorizontalPadding, vertical = VpnPageTopPadding),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                item {
-                    VpnTopChrome(
-                        title = "Wallet Confirm",
-                        subtitle = "Authorize the current order with the existing wallet refresh bridge.",
-                        onBack = onNavigateBack,
-                    )
-                }
-                item {
-                    VpnHeroCard(
-                        eyebrow = "WALLET AUTH",
-                        title = "Confirm wallet payment for order ${orderId.takeLast(6)}",
-                        subtitle = "支付确认页转成 Bitget 风格安全授权卡，但仍沿用 refreshOrder 成功/失败判断。",
-                        accent = Primary,
-                        metrics = listOf(
-                            VpnHeroMetric("Amount", amount),
-                            VpnHeroMetric("Order", orderId.ifBlank { "Unknown" }),
-                            VpnHeroMetric("Status", if (state is WalletPaymentConfirmState.Confirming) "Confirming" else "Awaiting"),
-                        ),
-                    )
-                }
-                item {
-                    WalletConfirmDetailsCard(
-                        orderId = orderId,
-                        amount = amount,
-                    )
-                }
-                item {
-                    VpnGlassCard(accent = Primary) {
-                        Text(
-                            text = "Wallet Password",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary,
-                        )
-                        Text(
-                            text = "输入钱包密码后，当前支付状态会通过既有订单桥接刷新并决定跳转结果页。",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondary,
-                        )
-                        OutlinedTextField(
-                            value = password,
-                            onValueChange = viewModel::onPasswordChange,
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Lock,
-                                    contentDescription = null,
-                                    tint = TextSecondary,
-                                )
-                            },
-                            trailingIcon = {
-                                IconButton(onClick = viewModel::togglePasswordVisibility) {
-                                    Icon(
-                                        imageVector = if (passwordVisible) {
-                                            Icons.Default.VisibilityOff
-                                        } else {
-                                            Icons.Default.Visibility
-                                        },
-                                        contentDescription = null,
-                                        tint = TextSecondary,
-                                    )
-                                }
-                            },
-                            placeholder = {
-                                Text(
-                                    text = "Enter wallet password",
-                                    color = TextSecondary,
-                                )
-                            },
-                            visualTransformation = if (passwordVisible) {
-                                VisualTransformation.None
-                            } else {
-                                PasswordVisualTransformation()
-                            },
-                            isError = state is WalletPaymentConfirmState.Error,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = TextPrimary,
-                                unfocusedTextColor = TextPrimary,
-                                focusedContainerColor = BackgroundSecondary.copy(alpha = 0.95f),
-                                unfocusedContainerColor = BackgroundSecondary.copy(alpha = 0.95f),
-                                focusedBorderColor = Primary.copy(alpha = 0.6f),
-                                unfocusedBorderColor = BorderDefault.copy(alpha = 0.82f),
-                                cursorColor = Primary,
-                            ),
-                        )
-                        if (state is WalletPaymentConfirmState.Error) {
-                            Text(
-                                text = (state as WalletPaymentConfirmState.Error).message,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = AppError,
-                                textAlign = TextAlign.Start,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun WalletConfirmDetailsCard(
-    orderId: String,
-    amount: String,
-) {
-    VpnGlassCard(accent = Primary) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Surface(
-                modifier = Modifier.padding(end = 4.dp),
-                shape = RoundedCornerShape(18.dp),
-                color = Primary.copy(alpha = 0.16f),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Wallet,
-                    contentDescription = null,
-                    modifier = Modifier.padding(12.dp),
-                    tint = Primary,
+                VpnCenterTopBar(
+                    title = "钱包支付",
+                    onBack = onNavigateBack,
                 )
+                VpnGlassCard {
+                    Text(
+                        text = "订单背景页",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                    )
+                    Text(
+                        text = "VPN 套餐支付",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                    )
+                    VpnLabelValueRow(label = "订单号", value = orderId.ifBlank { "Unknown" })
+                    VpnLabelValueRow(label = "支付金额", value = amount, valueColor = VpnAccent)
+                    VpnLabelValueRow(label = "支付方式", value = "Wallet Balance")
+                }
             }
-            Column {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(VpnSheetScrim),
+            )
+
+            VpnBottomSheet(
+                modifier = Modifier.align(Alignment.BottomCenter),
+            ) {
                 Text(
-                    text = "Payment Details",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    text = "提示",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
                     color = TextPrimary,
                 )
                 Text(
-                    text = "Strong primary confirmation card with wallet-only settlement language.",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = "授权查看订单支付状态，并在校验成功后跳转结果页。",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary,
                 )
-            }
-        }
-        VpnLabelValueRow(label = "Order No.", value = orderId.ifBlank { "Unknown" })
-        VpnLabelValueRow(label = "Method", value = "Wallet Balance")
-        VpnLabelValueRow(label = "Network Fee", value = "~$0.01")
-        VpnLabelValueRow(label = "Payable", value = amount, valueColor = Primary)
-    }
-}
-
-@Composable
-private fun WalletConfirmBottomBar(
-    isConfirming: Boolean,
-    onConfirm: () -> Unit,
-    onCancel: () -> Unit,
-) {
-    Surface(
-        color = BackgroundSecondary.copy(alpha = 0.98f),
-        border = BorderStroke(1.dp, BorderDefault.copy(alpha = 0.9f)),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = VpnPageHorizontalPadding, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            if (isConfirming) {
-                Surface(
-                    shape = RoundedCornerShape(22.dp),
-                    color = Primary.copy(alpha = 0.12f),
+                Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
+                            .size(48.dp)
+                            .background(VpnAccentSoft, RoundedCornerShape(18.dp)),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.padding(end = 12.dp),
-                            color = Primary,
-                            strokeWidth = 2.dp,
+                        Icon(
+                            imageVector = Icons.Default.Wallet,
+                            contentDescription = null,
+                            tint = VpnAccent,
                         )
+                    }
+                    Column {
                         Text(
-                            text = "Confirming order status",
+                            text = "钱包确认",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = TextPrimary,
                         )
+                        Text(
+                            text = "订单 ${orderId.takeTrailing(6)} · $amount",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                        )
                     }
                 }
-            } else {
-                VpnPrimaryButton(
-                    text = "Confirm Payment",
-                    onClick = onConfirm,
+                TextField(
+                    value = password,
+                    onValueChange = viewModel::onPasswordChange,
                     modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(22.dp),
+                    visualTransformation = if (passwordVisible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+                    placeholder = {
+                        Text(
+                            text = "输入钱包密码",
+                            color = TextSecondary,
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = TextSecondary,
+                        )
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = viewModel::togglePasswordVisibility) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = null,
+                                tint = TextSecondary,
+                            )
+                        }
+                    },
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedContainerColor = VpnSurfaceStrong,
+                        unfocusedContainerColor = VpnSurfaceStrong,
+                        disabledContainerColor = VpnSurfaceStrong,
+                        cursorColor = VpnAccent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
                 )
+                if (state is WalletPaymentConfirmState.Error) {
+                    Text(
+                        text = (state as WalletPaymentConfirmState.Error).message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppError,
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    VpnSecondaryButton(
+                        text = "取消",
+                        onClick = onNavigateBack,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (state is WalletPaymentConfirmState.Confirming) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(VpnAccent, RoundedCornerShape(26.dp))
+                                .padding(vertical = 14.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    color = Color(0xFF041012),
+                                    strokeWidth = 2.dp,
+                                )
+                                Text(
+                                    text = "确认中",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF041012),
+                                )
+                            }
+                        }
+                    } else {
+                        VpnPrimaryButton(
+                            text = "确认",
+                            onClick = { viewModel.confirmPayment(orderId) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
             }
-            VpnSecondaryButton(
-                text = "Cancel",
-                onClick = onCancel,
-                modifier = Modifier.fillMaxWidth(),
-            )
         }
     }
 }

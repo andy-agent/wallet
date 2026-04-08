@@ -3,13 +3,17 @@ package com.v2ray.ang.composeui.pages.vpn
 import android.app.Application
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.material3.Divider
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -18,6 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -26,23 +33,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
-import com.v2ray.ang.composeui.theme.BackgroundSecondary
-import com.v2ray.ang.composeui.theme.BorderDefault
 import com.v2ray.ang.composeui.theme.Error as AppError
-import com.v2ray.ang.composeui.theme.GlowBlue
-import com.v2ray.ang.composeui.theme.Primary
 import com.v2ray.ang.composeui.theme.TextPrimary
-import com.v2ray.ang.composeui.theme.TextSecondary
-import com.v2ray.ang.composeui.theme.Warning
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.model.Order
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import kotlinx.coroutines.launch
 
 enum class DetailOrderStatus {
     PENDING,
@@ -69,8 +70,8 @@ data class OrderDetailData(
 )
 
 sealed class OrderDetailState {
-    object Idle : OrderDetailState()
-    object Loading : OrderDetailState()
+    data object Idle : OrderDetailState()
+    data object Loading : OrderDetailState()
     data class Loaded(val order: OrderDetailData) : OrderDetailState()
     data class Error(val message: String) : OrderDetailState()
 }
@@ -153,6 +154,8 @@ fun OrderDetailPage(
     onContactSupport: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
+    val selectedTab = remember { mutableIntStateOf(0) }
+    val selectedRange = remember { mutableIntStateOf(2) }
 
     LaunchedEffect(orderId) {
         if (orderId.isNotBlank()) {
@@ -168,14 +171,32 @@ fun OrderDetailPage(
             bottomBar = {
                 val order = (state as? OrderDetailState.Loaded)?.order
                 if (order?.status == DetailOrderStatus.PENDING) {
-                    OrderDetailActionBar(
-                        onPay = { onPayOrder(order.id) },
-                        onContactSupport = onContactSupport,
-                    )
+                    Surface(
+                        color = VpnSurface,
+                        border = BorderStroke(1.dp, VpnOutline),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = VpnPageHorizontalPadding, vertical = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            VpnPrimaryButton(
+                                text = "继续支付",
+                                onClick = { onPayOrder(order.id) },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            VpnSecondaryButton(
+                                text = "联系客服",
+                                onClick = onContactSupport,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
                 }
             },
         ) { innerPadding ->
-            androidx.compose.foundation.lazy.LazyColumn(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -189,9 +210,16 @@ fun OrderDetailPage(
             ) {
                 item {
                     VpnTopChrome(
-                        title = "Order Detail",
-                        subtitle = "Status-first breakdown with clear payment and settlement hierarchy.",
+                        title = "订单 ${orderId.takeTrailing(6)}",
+                        subtitle = "VPN package order detail",
                         onBack = onNavigateBack,
+                    )
+                }
+                item {
+                    VpnTabStrip(
+                        tabs = listOf("状态", "详情"),
+                        selectedIndex = selectedTab.intValue,
+                        onSelect = { selectedTab.intValue = it },
                     )
                 }
                 when (val current = state) {
@@ -200,8 +228,8 @@ fun OrderDetailPage(
                     -> {
                         item {
                             VpnLoadingPanel(
-                                title = "Loading order detail",
-                                subtitle = "正在同步订单详情与支付状态。",
+                                title = "正在同步订单详情",
+                                subtitle = "通过既有 refreshOrder 获取支付与激活状态。",
                             )
                         }
                     }
@@ -209,7 +237,7 @@ fun OrderDetailPage(
                     is OrderDetailState.Error -> {
                         item {
                             VpnEmptyPanel(
-                                title = "Order detail unavailable",
+                                title = "订单详情不可用",
                                 subtitle = current.message,
                             )
                         }
@@ -217,123 +245,89 @@ fun OrderDetailPage(
 
                     is OrderDetailState.Loaded -> {
                         item {
-                            DetailHeroCard(order = current.order)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
+                                VpnValueBlock(
+                                    value = current.order.totalAmount,
+                                    change = current.order.status.title(),
+                                    helper = current.order.status.label(),
+                                    changeColor = current.order.status.accent(),
+                                    modifier = Modifier.weight(1.1f),
+                                )
+                                VpnMetricColumn(
+                                    metrics = listOf(
+                                        VpnHeroMetric("支付方式", current.order.paymentMethod),
+                                        VpnHeroMetric("套餐", current.order.planName.take(8)),
+                                        VpnHeroMetric("周期", current.order.duration),
+                                        VpnHeroMetric("订单号", current.order.id.takeTrailing(6)),
+                                    ),
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
                         }
                         item {
-                            DetailPackageCard(order = current.order)
+                            VpnRangeSelector(
+                                labels = listOf("创建", "支付", "确认", "完成"),
+                                selectedIndex = selectedRange.intValue,
+                                trailingIcon = Icons.Default.Tune,
+                                onSelect = { selectedRange.intValue = it },
+                                onTrailingClick = {},
+                            )
                         }
                         item {
-                            DetailPricingCard(order = current.order)
+                            VpnCandleChart(
+                                entries = vpnDemoCandles(current.order.id.length.toFloat()),
+                                calloutLines = listOf(
+                                    "订单" to current.order.id.takeTrailing(6),
+                                    "套餐" to current.order.planName,
+                                    "状态" to current.order.status.label(),
+                                    "金额" to current.order.totalAmount,
+                                ),
+                                rightLabels = listOf("101.9", "90.5", "78.5", "67.1"),
+                                bottomLabels = listOf("创建", "支付", "确认", "完成"),
+                            )
                         }
                         item {
-                            DetailMetaCard(order = current.order)
+                            VpnGlassCard {
+                                Text(
+                                    text = "套餐信息",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                )
+                                VpnLabelValueRow(label = "套餐名称", value = current.order.planName)
+                                VpnLabelValueRow(label = "购买周期", value = current.order.duration)
+                                VpnLabelValueRow(label = "标价", value = current.order.amount)
+                                VpnLabelValueRow(label = "应付", value = current.order.totalAmount, valueColor = current.order.status.accent())
+                            }
+                        }
+                        item {
+                            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                            VpnGlassCard {
+                                Text(
+                                    text = "订单信息",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                )
+                                VpnLabelValueRow(label = "创建时间", value = dateFormat.format(current.order.createdAt))
+                                current.order.paidAt?.let {
+                                    VpnLabelValueRow(label = "支付时间", value = dateFormat.format(it))
+                                }
+                                current.order.expiresAt?.let {
+                                    VpnLabelValueRow(label = "过期时间", value = dateFormat.format(it))
+                                }
+                                VpnLabelValueRow(label = "支付轨道", value = current.order.paymentMethod)
+                                current.order.txHash?.let {
+                                    VpnLabelValueRow(label = "交易哈希", value = it)
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun DetailHeroCard(order: OrderDetailData) {
-    VpnHeroCard(
-        eyebrow = order.status.label(),
-        title = order.status.title(),
-        subtitle = order.status.description(),
-        accent = order.status.accent(),
-        metrics = listOf(
-            VpnHeroMetric("Amount", order.totalAmount),
-            VpnHeroMetric("Method", order.paymentMethod),
-            VpnHeroMetric("Order", order.id.takeLast(6)),
-        ),
-    )
-}
-
-@Composable
-private fun DetailPackageCard(order: OrderDetailData) {
-    VpnGlassCard(accent = GlowBlue) {
-        Text(
-            text = "Package",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary,
-        )
-        VpnLabelValueRow(label = "Plan", value = order.planName)
-        VpnLabelValueRow(label = "Duration", value = order.duration)
-        order.expiresAt?.let { expiresAt ->
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-            VpnLabelValueRow(label = "Expires", value = dateFormat.format(expiresAt))
-        }
-    }
-}
-
-@Composable
-private fun DetailPricingCard(order: OrderDetailData) {
-    VpnGlassCard(accent = Warning) {
-        Text(
-            text = "Pricing",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary,
-        )
-        VpnLabelValueRow(label = "Listed", value = order.amount)
-        order.discount?.let {
-            VpnLabelValueRow(label = "Discount", value = it, valueColor = Primary)
-        }
-        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
-        VpnLabelValueRow(label = "Payable", value = order.totalAmount, valueColor = order.status.accent())
-    }
-}
-
-@Composable
-private fun DetailMetaCard(order: OrderDetailData) {
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-    VpnGlassCard(accent = order.status.accent()) {
-        Text(
-            text = "Order Metadata",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary,
-        )
-        VpnLabelValueRow(label = "Order No.", value = order.id)
-        VpnLabelValueRow(label = "Created", value = dateFormat.format(order.createdAt))
-        VpnLabelValueRow(label = "Method", value = order.paymentMethod)
-        VpnLabelValueRow(label = "Email", value = if (order.email.isBlank()) "Current account" else order.email)
-        order.paidAt?.let {
-            VpnLabelValueRow(label = "Paid At", value = dateFormat.format(it))
-        }
-        order.txHash?.let {
-            VpnLabelValueRow(label = "Tx Hash", value = it)
-        }
-    }
-}
-
-@Composable
-private fun OrderDetailActionBar(
-    onPay: () -> Unit,
-    onContactSupport: () -> Unit,
-) {
-    Surface(
-        color = BackgroundSecondary.copy(alpha = 0.98f),
-        border = BorderStroke(1.dp, BorderDefault.copy(alpha = 0.9f)),
-    ) {
-        androidx.compose.foundation.layout.Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = VpnPageHorizontalPadding, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            VpnPrimaryButton(
-                text = "Continue Payment",
-                onClick = onPay,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            VpnSecondaryButton(
-                text = "Contact Support",
-                onClick = onContactSupport,
-                modifier = Modifier.fillMaxWidth(),
-            )
         }
     }
 }
@@ -350,30 +344,20 @@ private fun DetailOrderStatus.label(): String {
 
 private fun DetailOrderStatus.title(): String {
     return when (this) {
-        DetailOrderStatus.PENDING -> "Awaiting Settlement"
-        DetailOrderStatus.PAID -> "Paid, Activating"
-        DetailOrderStatus.COMPLETED -> "Package Fulfilled"
-        DetailOrderStatus.CANCELLED -> "Order Closed"
-        DetailOrderStatus.REFUNDED -> "Refunded"
-    }
-}
-
-private fun DetailOrderStatus.description(): String {
-    return when (this) {
-        DetailOrderStatus.PENDING -> "待支付订单保持底部强 CTA，方便直接回到支付确认流程。"
-        DetailOrderStatus.PAID -> "资金已到账，当前正在进行套餐激活。"
-        DetailOrderStatus.COMPLETED -> "订单已交付，VPN 业务链路已完成。"
-        DetailOrderStatus.CANCELLED -> "订单已取消或超过支付时效。"
-        DetailOrderStatus.REFUNDED -> "支付异常或退款已处理。"
+        DetailOrderStatus.PENDING -> "待支付"
+        DetailOrderStatus.PAID -> "已支付，待激活"
+        DetailOrderStatus.COMPLETED -> "套餐已交付"
+        DetailOrderStatus.CANCELLED -> "订单已关闭"
+        DetailOrderStatus.REFUNDED -> "退款完成"
     }
 }
 
 private fun DetailOrderStatus.accent(): Color {
     return when (this) {
-        DetailOrderStatus.PENDING -> Warning
-        DetailOrderStatus.PAID -> GlowBlue
-        DetailOrderStatus.COMPLETED -> Primary
-        DetailOrderStatus.CANCELLED -> Color(0xFF6D7B91)
+        DetailOrderStatus.PENDING -> Color(0xFFFFB14A)
+        DetailOrderStatus.PAID -> VpnAccent
+        DetailOrderStatus.COMPLETED -> VpnAccent
+        DetailOrderStatus.CANCELLED -> Color(0xFF93A0A4)
         DetailOrderStatus.REFUNDED -> AppError
     }
 }
