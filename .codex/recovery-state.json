@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-04-08T12:34:17Z",
+  "generated_at": "2026-04-08T12:35:52Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "next_task_id": "liaojiang-rcb.20.2",
-  "next_task_title": "执行 funding 后的 refresh-status 与开通验收",
+  "next_task_id": "liaojiang-rcb.20",
+  "next_task_title": "验收正式拓扑下的支付与开通链路",
   "in_progress_count": 2,
   "ready_count": 0,
   "open_count": 3,
   "closed_count": 217,
-  "dirty_count": 3,
+  "dirty_count": 0,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
