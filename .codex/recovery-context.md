@@ -1,17 +1,17 @@
 # Recovery Context
 
-Generated: 2026-04-08T00:30:15Z
+Generated: 2026-04-08T01:17:34Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.2
-- next_task_title: Android 真实环境登录/下单/支付页回归
+- next_task_id: liaojiang-4j0.22.1
+- next_task_title: 提取 Bitget 已登录页面清单与截图矩阵
 
 ## Counters
-- in_progress: 3
-- ready: 0
-- open: 3
-- closed: 141
+- in_progress: 4
+- ready: 1
+- open: 10
+- closed: 142
 - dirty: 2
 
 ## Next Milestone
