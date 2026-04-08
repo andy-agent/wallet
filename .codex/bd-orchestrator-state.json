@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-04-08T01:44:00Z",
+  "generated_at": "2026-04-08T01:50:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-4j0.22.1.1.2",
-  "accepted_task_id": "liaojiang-4j0.22.1.1.4",
-  "next_task_id": "liaojiang-4j0.22.1.1.3",
+  "active_task_id": "liaojiang-4j0.22.1.1.3",
+  "accepted_task_id": "liaojiang-4j0.22.1.1.2",
+  "next_task_id": "liaojiang-4j0.22.1.3",
   "active_worker_task_ids": [
-    "liaojiang-4j0.22.1.1.2"
+    "liaojiang-4j0.22.1.1.3"
   ],
   "blockers": [
     {
-      "task_id": "liaojiang-4j0.22.1.1.3",
+      "task_id": "liaojiang-4j0.22.1.3",
       "type": "task",
-      "blocked_by": "liaojiang-4j0.22.1.1.2"
+      "blocked_by": "liaojiang-4j0.22.1.1.3 and liaojiang-4j0.22.1 completion"
     },
     {
       "task_id": "liaojiang-4j0.22.2",
@@ -21,10 +21,10 @@
   ],
   "workers": [
     {
-      "task_id": "liaojiang-4j0.22.1.1.2",
-      "agent_id": "019d6ac4-e380-7c63-94af-57e10bef7051",
-      "nickname": "Lovelace",
-      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-22-1-1-2-codex",
+      "task_id": "liaojiang-4j0.22.1.1.3",
+      "agent_id": "019d6adc-03a9-7d02-b6db-1dc3274c444d",
+      "nickname": "Heisenberg",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-22-1-1-3-codex",
       "status": "running"
     }
   ],
