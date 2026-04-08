@@ -6,8 +6,21 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { createHmac, randomUUID } from 'crypto';
 import { AuthAccount, AuthSession, VerificationCodeRecord } from './auth.types';
+
+type SignedTokenType = 'access' | 'refresh';
+
+interface SignedSessionPayload {
+  accountId: string;
+  email: string;
+  installationId: string | null;
+  referralCode: string;
+  sessionId: string;
+  accountStatus: AuthAccount['status'];
+  accessTokenExpiresAt: string;
+  refreshTokenExpiresAt: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -17,6 +30,8 @@ export class AuthService {
   private readonly sessionsByRefreshToken = new Map<string, AuthSession>();
   private readonly sessionsByAccountId = new Map<string, AuthSession>();
   private readonly codes = new Map<string, VerificationCodeRecord>();
+  private readonly tokenSecret =
+    process.env.AUTH_TOKEN_SECRET ?? 'cryptovpn-backend-dev-secret';
 
   requestRegisterCode(email: string) {
     if (this.accountsByEmail.has(email.toLowerCase())) {
@@ -140,27 +155,34 @@ export class AuthService {
   getMe(accessToken: string) {
     const session = this.requireAccessSession(accessToken);
     const account = this.accounts.get(session.accountId);
-    if (!account) {
+    const payload = !account ? this.parseSignedToken(accessToken, 'access') : null;
+    const email = account?.email ?? payload?.email;
+    const status = account?.status ?? payload?.accountStatus;
+    const referralCode = account?.referralCode ?? payload?.referralCode;
+
+    if (!email || !status || !referralCode) {
       throw new NotFoundException({
         code: 'ACCOUNT_NOT_FOUND',
         message: 'Account not found',
       });
     }
+
     return {
-      accountId: account.accountId,
-      email: account.email,
-      status: account.status,
-      referralCode: account.referralCode,
+      accountId: session.accountId,
+      email,
+      status,
+      referralCode,
       subscription: null,
     };
   }
 
   getSessionSummary(accessToken: string) {
     const session = this.requireAccessSession(accessToken);
+    const payload = this.parseSignedToken(accessToken, 'access');
     return {
       sessionId: session.sessionId,
       status: session.status,
-      installationId: session.installationId ?? null,
+      installationId: session.installationId ?? payload?.installationId ?? null,
       expiresAt: session.refreshTokenExpiresAt,
     };
   }
@@ -258,12 +280,25 @@ export class AuthService {
       sessionId: randomUUID(),
       accountId: account.accountId,
       installationId: installationId ?? null,
-      accessToken: `access_${randomUUID()}`,
-      refreshToken: `refresh_${randomUUID()}`,
+      accessToken: '',
+      refreshToken: '',
       accessTokenExpiresAt: new Date(now + 2 * 60 * 60 * 1000).toISOString(),
       refreshTokenExpiresAt: new Date(now + 30 * 24 * 60 * 60 * 1000).toISOString(),
       status: 'ACTIVE',
     };
+
+    const payload: SignedSessionPayload = {
+      sessionId: session.sessionId,
+      accountId: account.accountId,
+      email: account.email,
+      installationId: session.installationId ?? null,
+      referralCode: account.referralCode,
+      accountStatus: account.status,
+      accessTokenExpiresAt: session.accessTokenExpiresAt,
+      refreshTokenExpiresAt: session.refreshTokenExpiresAt,
+    };
+    session.accessToken = this.createSignedToken('access', payload);
+    session.refreshToken = this.createSignedToken('refresh', payload);
 
     this.sessionsByAccountId.set(account.accountId, session);
     this.sessionsByAccessToken.set(session.accessToken, session);
@@ -282,10 +317,30 @@ export class AuthService {
   private requireAccessSession(accessToken: string) {
     const session = this.sessionsByAccessToken.get(accessToken);
     if (!session) {
-      throw new UnauthorizedException({
-        code: 'UNAUTHORIZED',
-        message: 'Access token is invalid',
-      });
+      const payload = this.parseSignedToken(accessToken, 'access');
+      if (!payload) {
+        throw new UnauthorizedException({
+          code: 'UNAUTHORIZED',
+          message: 'Access token is invalid',
+        });
+      }
+      if (new Date(payload.accessTokenExpiresAt).getTime() <= Date.now()) {
+        throw new UnauthorizedException({
+          code: 'UNAUTHORIZED',
+          message: 'Access token expired',
+        });
+      }
+
+      return {
+        sessionId: payload.sessionId,
+        accountId: payload.accountId,
+        installationId: payload.installationId,
+        accessToken,
+        refreshToken: '',
+        accessTokenExpiresAt: payload.accessTokenExpiresAt,
+        refreshTokenExpiresAt: payload.refreshTokenExpiresAt,
+        status: 'ACTIVE',
+      } satisfies AuthSession;
     }
     if (session.status === 'EVICTED') {
       throw new UnauthorizedException({
@@ -349,5 +404,51 @@ export class AuthService {
 
   private generateReferralCode() {
     return randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase();
+  }
+
+  private createSignedToken(
+    type: SignedTokenType,
+    payload: SignedSessionPayload,
+  ) {
+    const encodedPayload = Buffer.from(
+      JSON.stringify({ ...payload, type }),
+      'utf8',
+    ).toString('base64url');
+    const signature = this.signToken(encodedPayload);
+    return `${type}.${encodedPayload}.${signature}`;
+  }
+
+  private parseSignedToken(
+    token: string,
+    expectedType: SignedTokenType,
+  ): (SignedSessionPayload & { type: SignedTokenType }) | null {
+    const [type, encodedPayload, signature] = token.split('.');
+    if (type !== expectedType || !encodedPayload || !signature) {
+      return null;
+    }
+
+    if (this.signToken(encodedPayload) !== signature) {
+      return null;
+    }
+
+    try {
+      const payload = JSON.parse(
+        Buffer.from(encodedPayload, 'base64url').toString('utf8'),
+      ) as SignedSessionPayload & { type: SignedTokenType };
+
+      if (payload.type !== expectedType || !payload.accountId || !payload.sessionId) {
+        return null;
+      }
+
+      return payload;
+    } catch {
+      return null;
+    }
+  }
+
+  private signToken(encodedPayload: string) {
+    return createHmac('sha256', this.tokenSecret)
+      .update(encodedPayload)
+      .digest('base64url');
   }
 }

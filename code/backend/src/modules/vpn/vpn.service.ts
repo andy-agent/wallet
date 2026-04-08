@@ -5,32 +5,21 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
+import { RuntimeStateRepository } from '../database/runtime-state.repository';
+import {
+  PersistedSubscriptionRecord,
+  SubscriptionState,
+} from './vpn.types';
 
 const BASIC_REGION_ID = '33333333-3333-3333-3333-333333333333';
 const ADVANCED_REGION_ID = '22222222-2222-2222-2222-222222222222';
 
-export interface SubscriptionState {
-  subscriptionId: string;
-  planCode: string;
-  status:
-    | 'PENDING_ACTIVATION'
-    | 'ACTIVE'
-    | 'EXPIRED'
-    | 'SUSPENDED'
-    | 'CANCELED'
-    | 'NONE';
-  startedAt: string | null;
-  expireAt: string | null;
-  daysRemaining: number | null;
-  isUnlimitedTraffic: boolean;
-  maxActiveSessions: number;
-}
-
 @Injectable()
 export class VpnService {
-  private readonly subscriptionsByAccountId = new Map<string, SubscriptionState>();
-
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly runtimeStateRepository: RuntimeStateRepository,
+  ) {}
 
   getCurrentSubscription(accessToken: string) {
     const account = this.authService.getMe(accessToken);
@@ -131,50 +120,85 @@ export class VpnService {
   }
 
   getActiveSubscriptionCount() {
-    let count = 0;
-    for (const sub of this.subscriptionsByAccountId.values()) {
-      if (sub.status === 'ACTIVE') {
-        count++;
-      }
-    }
-    return count;
+    return this.runtimeStateRepository.countActiveSubscriptions();
   }
 
-  activateSubscription(accountId: string, planCode: string) {
-    const subscription: SubscriptionState = {
+  activateSubscription(accountId: string, planCode: string, orderNo: string) {
+    const existing = this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
+    if (existing?.orderNo === orderNo) {
+      return this.toSubscriptionState(existing);
+    }
+
+    const now = new Date();
+    const expireAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const subscription: PersistedSubscriptionRecord = {
+      accountId,
+      orderNo,
+      createdAt: existing?.createdAt ?? now.toISOString(),
+      updatedAt: now.toISOString(),
       subscriptionId: randomUUID(),
       planCode,
       status: 'ACTIVE',
-      startedAt: new Date().toISOString(),
-      expireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      startedAt: now.toISOString(),
+      expireAt: expireAt.toISOString(),
       daysRemaining: 30,
       isUnlimitedTraffic: true,
       maxActiveSessions: 1,
     };
-    this.subscriptionsByAccountId.set(accountId, subscription);
-    return subscription;
+
+    this.runtimeStateRepository.upsertSubscription(subscription);
+    return this.toSubscriptionState(subscription);
   }
 
   private getSubscriptionByAccountId(accountId: string): SubscriptionState {
-    return (
-      this.subscriptionsByAccountId.get(accountId) ?? {
-        subscriptionId: '' ,
-        planCode: '',
-        status: 'NONE',
-        startedAt: null,
-        expireAt: null,
-        daysRemaining: null,
-        isUnlimitedTraffic: true,
-        maxActiveSessions: 1,
-      }
-    );
+    const subscription =
+      this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
+
+    if (!subscription) {
+      return this.getEmptySubscription();
+    }
+
+    if (subscription.expireAt && new Date(subscription.expireAt).getTime() <= Date.now()) {
+      const expiredSubscription: PersistedSubscriptionRecord = {
+        ...subscription,
+        status: 'EXPIRED',
+        daysRemaining: 0,
+        updatedAt: new Date().toISOString(),
+      };
+      this.runtimeStateRepository.upsertSubscription(expiredSubscription);
+      return this.toSubscriptionState(expiredSubscription);
+    }
+
+    return this.toSubscriptionState(subscription);
   }
 
   getSubscriptionByAccountIdForAdmin(accountId: string): SubscriptionState | null {
-    const sub = this.subscriptionsByAccountId.get(accountId);
-    if (!sub || sub.status === 'NONE') {
+    const subscription =
+      this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
+    if (!subscription || subscription.status === 'NONE') {
       return null;
     }
-    return sub;
+    return this.toSubscriptionState(subscription);
+  }
+
+  private toSubscriptionState(
+    subscription: PersistedSubscriptionRecord,
+  ): SubscriptionState {
+    const { accountId: _accountId, createdAt: _createdAt, orderNo: _orderNo, updatedAt: _updatedAt, ...publicSubscription } =
+      subscription;
+    return publicSubscription;
+  }
+
+  private getEmptySubscription(): SubscriptionState {
+    return {
+      subscriptionId: '',
+      planCode: '',
+      status: 'NONE',
+      startedAt: null,
+      expireAt: null,
+      daysRemaining: null,
+      isUnlimitedTraffic: true,
+      maxActiveSessions: 1,
+    };
   }
 }

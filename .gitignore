@@ -9,6 +9,7 @@ code/backend/node_modules/
 code/backend/dist/
 code/backend/coverage/
 code/backend/.env
+code/backend/.runtime/
 
 # Chain-side service build artifacts
 code/sol-agent/node_modules/

@@ -1,5 +1,8 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
@@ -9,24 +12,12 @@ describe('PlansSubscriptionVpn (e2e)', () => {
   let app: INestApplication;
   let accessToken: string;
   let orderNo: string;
+  let runtimeDir: string;
 
   beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        transform: true,
-        forbidUnknownValues: false,
-      }),
-    );
-    app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
-    app.useGlobalFilters(new AllExceptionsFilter());
-    await app.init();
+    runtimeDir = mkdtempSync(join(tmpdir(), 'backend-vpn-'));
+    process.env.RUNTIME_STATE_FILE = join(runtimeDir, 'runtime-state.json');
+    app = await bootstrapApp();
 
     await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email/request-code')
@@ -73,25 +64,15 @@ describe('PlansSubscriptionVpn (e2e)', () => {
       .set('authorization', `Bearer ${accessToken}`)
       .send({})
       .expect(201);
-
-    await request(app.getHttpServer())
-      .post(`/api/client/v1/orders/${orderNo}/refresh-status`)
-      .set('authorization', `Bearer ${accessToken}`)
-      .send({})
-      .expect(201);
-
-    await request(app.getHttpServer())
-      .post(`/api/client/v1/orders/${orderNo}/refresh-status`)
-      .set('authorization', `Bearer ${accessToken}`)
-      .send({})
-      .expect(201);
   });
 
   afterEach(async () => {
     await app.close();
+    delete process.env.RUNTIME_STATE_FILE;
+    rmSync(runtimeDir, { recursive: true, force: true });
   });
 
-  it('plans / subscription / vpn flow', async () => {
+  it('reads subscription and vpn access from persisted fulfillment state after restart', async () => {
     const plans = await request(app.getHttpServer())
       .get('/api/client/v1/plans')
       .set('authorization', `Bearer ${accessToken}`)
@@ -99,12 +80,29 @@ describe('PlansSubscriptionVpn (e2e)', () => {
 
     expect(plans.body.data.items).toHaveLength(1);
 
+    const order = await request(app.getHttpServer())
+      .get(`/api/client/v1/orders/${orderNo}`)
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(order.body.data.status).toBe('COMPLETED');
+
     const subscription = await request(app.getHttpServer())
       .get('/api/client/v1/subscriptions/current')
       .set('authorization', `Bearer ${accessToken}`)
       .expect(200);
 
     expect(subscription.body.data.status).toBe('ACTIVE');
+
+    await app.close();
+    app = await bootstrapApp();
+
+    const subscriptionAfterRestart = await request(app.getHttpServer())
+      .get('/api/client/v1/subscriptions/current')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(subscriptionAfterRestart.body.data.status).toBe('ACTIVE');
 
     const regions = await request(app.getHttpServer())
       .get('/api/client/v1/vpn/regions')
@@ -132,3 +130,23 @@ describe('PlansSubscriptionVpn (e2e)', () => {
     expect(status.body.data.canIssueConfig).toBe(true);
   });
 });
+
+async function bootstrapApp() {
+  const moduleFixture: TestingModule = await Test.createTestingModule({
+    imports: [AppModule],
+  }).compile();
+
+  const nextApp = moduleFixture.createNestApplication();
+  nextApp.setGlobalPrefix('api');
+  nextApp.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidUnknownValues: false,
+    }),
+  );
+  nextApp.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
+  nextApp.useGlobalFilters(new AllExceptionsFilter());
+  await nextApp.init();
+  return nextApp;
+}
