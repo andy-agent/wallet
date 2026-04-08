@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from 'crypto';
 import { Pool } from 'pg';
 import {
   AuthAccount,
@@ -14,36 +15,34 @@ import {
 } from './runtime-state.types';
 
 const ACCOUNTS_TABLE = 'accounts';
+const ACCOUNT_INSTALLATIONS_TABLE = 'account_installations';
 const SESSIONS_TABLE = 'client_sessions';
 const VERIFICATION_CODES_TABLE = 'verification_codes';
 const ORDERS_TABLE = 'runtime_state_orders';
 const SUBSCRIPTIONS_TABLE = 'runtime_state_subscriptions';
 const ACCOUNT_COLUMNS = `
-  account_id,
-  email,
+  id::text AS account_id,
+  email::text AS email,
   password_hash,
-  status,
+  status::text AS status,
   referral_code,
   created_at,
   updated_at
 `;
 const SESSION_COLUMNS = `
-  session_id,
-  account_id,
+  id::text AS session_id,
+  account_id::text AS account_id,
   installation_id,
-  access_token,
-  refresh_token,
-  access_token_expires_at,
-  refresh_token_expires_at,
-  status,
-  created_at,
+  status::text AS status,
+  issued_at AS created_at,
+  expires_at AS refresh_token_expires_at,
   updated_at
 `;
 const VERIFICATION_CODE_COLUMNS = `
-  email,
-  purpose,
+  email::text AS email,
+  purpose::text AS purpose,
   code_hash,
-  expires_at,
+  expire_at AS expires_at,
   created_at,
   updated_at
 `;
@@ -136,9 +135,6 @@ interface AuthSessionRow {
   session_id: string;
   account_id: string;
   installation_id: string | null;
-  access_token: string;
-  refresh_token: string;
-  access_token_expires_at: Date | string;
   refresh_token_expires_at: Date | string;
   status: AuthSession['status'];
   created_at: Date | string;
@@ -197,31 +193,38 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     const result = await this.pool.query<AuthAccountRow>(
       `
         INSERT INTO ${ACCOUNTS_TABLE} (
-          account_id,
+          id,
+          account_no,
           email,
           password_hash,
           status,
           referral_code,
+          email_verified_at,
           created_at,
           updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (account_id) DO UPDATE
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ON CONFLICT (id) DO UPDATE
         SET
           email = EXCLUDED.email,
           password_hash = EXCLUDED.password_hash,
           status = EXCLUDED.status,
           referral_code = EXCLUDED.referral_code,
-          created_at = EXCLUDED.created_at,
+          email_verified_at = COALESCE(
+            ${ACCOUNTS_TABLE}.email_verified_at,
+            EXCLUDED.email_verified_at
+          ),
           updated_at = EXCLUDED.updated_at
         RETURNING ${ACCOUNT_COLUMNS}
       `,
       [
         account.accountId,
+        this.buildAccountNo(account.accountId),
         account.email,
         account.passwordHash,
         account.status,
         account.referralCode,
+        account.status === 'ACTIVE' ? account.createdAt : null,
         account.createdAt,
         account.updatedAt,
       ],
@@ -242,48 +245,89 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
 
   async saveSession(session: AuthSession): Promise<AuthSession> {
     await this.ensureReady();
-    const result = await this.pool.query<AuthSessionRow>(
-      `
-        INSERT INTO ${SESSIONS_TABLE} (
-          session_id,
-          account_id,
-          installation_id,
-          access_token,
-          refresh_token,
-          access_token_expires_at,
-          refresh_token_expires_at,
-          status,
-          created_at,
-          updated_at
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        ON CONFLICT (session_id) DO UPDATE
-        SET
-          account_id = EXCLUDED.account_id,
-          installation_id = EXCLUDED.installation_id,
-          access_token = EXCLUDED.access_token,
-          refresh_token = EXCLUDED.refresh_token,
-          access_token_expires_at = EXCLUDED.access_token_expires_at,
-          refresh_token_expires_at = EXCLUDED.refresh_token_expires_at,
-          status = EXCLUDED.status,
-          created_at = EXCLUDED.created_at,
-          updated_at = EXCLUDED.updated_at
-        RETURNING ${SESSION_COLUMNS}
-      `,
-      [
-        session.sessionId,
-        session.accountId,
-        session.installationId,
-        session.accessToken,
-        session.refreshToken,
-        session.accessTokenExpiresAt,
-        session.refreshTokenExpiresAt,
-        session.status,
-        session.createdAt,
-        session.updatedAt,
-      ],
-    );
-    return this.mapSession(result.rows[0]);
+    const result =
+      session.accessToken && session.refreshToken
+        ? await this.pool.query<AuthSessionRow>(
+            `
+              INSERT INTO ${SESSIONS_TABLE} (
+                id,
+                account_id,
+                installation_id,
+                refresh_token_hash,
+                access_jti,
+                status,
+                invalidated_reason,
+                issued_at,
+                expires_at,
+                last_refresh_at,
+                created_at,
+                updated_at
+              )
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+              ON CONFLICT (id) DO UPDATE
+              SET
+                account_id = EXCLUDED.account_id,
+                installation_id = EXCLUDED.installation_id,
+                refresh_token_hash = EXCLUDED.refresh_token_hash,
+                access_jti = EXCLUDED.access_jti,
+                status = EXCLUDED.status,
+                invalidated_reason = EXCLUDED.invalidated_reason,
+                issued_at = EXCLUDED.issued_at,
+                expires_at = EXCLUDED.expires_at,
+                last_refresh_at = EXCLUDED.last_refresh_at,
+                updated_at = EXCLUDED.updated_at
+              RETURNING ${SESSION_COLUMNS}
+            `,
+            [
+              session.sessionId,
+              session.accountId,
+              session.installationId,
+              this.buildRefreshTokenHash(session.refreshToken),
+              this.buildSessionAccessJti(session.accessToken),
+              session.status,
+              this.buildSessionInvalidatedReason(session.status),
+              session.createdAt,
+              session.refreshTokenExpiresAt,
+              null,
+              session.createdAt,
+              session.updatedAt,
+            ],
+          )
+        : await this.pool.query<AuthSessionRow>(
+            `
+              UPDATE ${SESSIONS_TABLE}
+              SET
+                account_id = $2,
+                installation_id = $3,
+                status = $4,
+                invalidated_reason = $5,
+                issued_at = $6,
+                expires_at = $7,
+                updated_at = $8
+              WHERE id = $1
+              RETURNING ${SESSION_COLUMNS}
+            `,
+            [
+              session.sessionId,
+              session.accountId,
+              session.installationId,
+              session.status,
+              this.buildSessionInvalidatedReason(session.status),
+              session.createdAt,
+              session.refreshTokenExpiresAt,
+              session.updatedAt,
+            ],
+          );
+
+    if (!result.rows[0]) {
+      throw new Error(`Missing auth session row for ${session.sessionId}`);
+    }
+
+    if (session.installationId) {
+      await this.touchInstallation(session);
+    }
+
+    return this.mapSession(result.rows[0], session);
   }
 
   async listVerificationCodes(): Promise<VerificationCodeRecord[]> {
@@ -292,6 +336,8 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       `
         SELECT ${VERIFICATION_CODE_COLUMNS}
         FROM ${VERIFICATION_CODES_TABLE}
+        WHERE status = 'PENDING'
+        ORDER BY created_at ASC
       `,
     );
     return result.rows.map((row) => this.mapVerificationCode(row));
@@ -301,26 +347,31 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     record: VerificationCodeRecord,
   ): Promise<VerificationCodeRecord> {
     await this.ensureReady();
+    await this.pool.query(
+      `
+        DELETE FROM ${VERIFICATION_CODES_TABLE}
+        WHERE email = $1 AND purpose = $2
+      `,
+      [record.email, record.purpose],
+    );
+
     const result = await this.pool.query<VerificationCodeRow>(
       `
         INSERT INTO ${VERIFICATION_CODES_TABLE} (
+          id,
           email,
           purpose,
           code_hash,
-          expires_at,
+          expire_at,
+          status,
           created_at,
           updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
-        ON CONFLICT (email, purpose) DO UPDATE
-        SET
-          code_hash = EXCLUDED.code_hash,
-          expires_at = EXCLUDED.expires_at,
-          created_at = EXCLUDED.created_at,
-          updated_at = EXCLUDED.updated_at
+        VALUES ($1, $2, $3, $4, $5, 'PENDING', $6, $7)
         RETURNING ${VERIFICATION_CODE_COLUMNS}
       `,
       [
+        randomUUID(),
         record.email,
         record.purpose,
         record.codeHash,
@@ -680,11 +731,16 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
   private async ensureSchema() {
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS ${ACCOUNTS_TABLE} (
-        account_id text PRIMARY KEY,
+        id text PRIMARY KEY,
+        account_no text NOT NULL UNIQUE,
         email text NOT NULL UNIQUE,
         password_hash text NOT NULL,
-        status text NOT NULL,
+        status text NOT NULL DEFAULT 'PENDING_VERIFY',
         referral_code text NOT NULL UNIQUE,
+        inviter_account_id text NULL,
+        email_verified_at timestamptz NULL,
+        risk_level integer NOT NULL DEFAULT 0,
+        last_login_at timestamptz NULL,
         created_at timestamptz NOT NULL,
         updated_at timestamptz NOT NULL
       )
@@ -695,15 +751,42 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     `);
 
     await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${ACCOUNT_INSTALLATIONS_TABLE} (
+        id text PRIMARY KEY,
+        account_id text NOT NULL REFERENCES ${ACCOUNTS_TABLE} (id) ON DELETE CASCADE,
+        installation_id text NOT NULL,
+        device_name text NULL,
+        brand text NULL,
+        model text NULL,
+        os_version text NULL,
+        app_version text NULL,
+        status text NOT NULL DEFAULT 'OBSERVED',
+        first_seen_at timestamptz NOT NULL,
+        last_seen_at timestamptz NULL,
+        created_at timestamptz NOT NULL,
+        updated_at timestamptz NOT NULL,
+        UNIQUE (account_id, installation_id)
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_account_installations_last_seen_at
+      ON ${ACCOUNT_INSTALLATIONS_TABLE} (last_seen_at)
+    `);
+
+    await this.pool.query(`
       CREATE TABLE IF NOT EXISTS ${SESSIONS_TABLE} (
-        session_id text PRIMARY KEY,
-        account_id text NOT NULL REFERENCES ${ACCOUNTS_TABLE} (account_id),
+        id text PRIMARY KEY,
+        account_id text NOT NULL REFERENCES ${ACCOUNTS_TABLE} (id) ON DELETE CASCADE,
         installation_id text NULL,
-        access_token text NOT NULL UNIQUE,
-        refresh_token text NOT NULL UNIQUE,
-        access_token_expires_at timestamptz NOT NULL,
-        refresh_token_expires_at timestamptz NOT NULL,
-        status text NOT NULL,
+        refresh_token_hash text NOT NULL UNIQUE,
+        access_jti text NULL,
+        status text NOT NULL DEFAULT 'ACTIVE',
+        invalidated_reason text NULL,
+        ip text NULL,
+        user_agent text NULL,
+        issued_at timestamptz NOT NULL,
+        expires_at timestamptz NOT NULL,
+        last_refresh_at timestamptz NULL,
         created_at timestamptz NOT NULL,
         updated_at timestamptz NOT NULL
       )
@@ -713,24 +796,31 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       ON ${SESSIONS_TABLE} (account_id, status)
     `);
     await this.pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_client_sessions_refresh_token_expires_at
-      ON ${SESSIONS_TABLE} (refresh_token_expires_at)
+      CREATE INDEX IF NOT EXISTS idx_client_sessions_expires_at
+      ON ${SESSIONS_TABLE} (expires_at)
     `);
 
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS ${VERIFICATION_CODES_TABLE} (
+        id text PRIMARY KEY,
         email text NOT NULL,
         purpose text NOT NULL,
         code_hash text NOT NULL,
-        expires_at timestamptz NOT NULL,
+        status text NOT NULL DEFAULT 'PENDING',
+        request_ip text NULL,
+        expire_at timestamptz NOT NULL,
+        consumed_at timestamptz NULL,
         created_at timestamptz NOT NULL,
-        updated_at timestamptz NOT NULL,
-        PRIMARY KEY (email, purpose)
+        updated_at timestamptz NOT NULL
       )
     `);
     await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_verification_codes_email_purpose_status
+      ON ${VERIFICATION_CODES_TABLE} (email, purpose, status)
+    `);
+    await this.pool.query(`
       CREATE INDEX IF NOT EXISTS idx_verification_codes_expires_at
-      ON ${VERIFICATION_CODES_TABLE} (expires_at)
+      ON ${VERIFICATION_CODES_TABLE} (expire_at)
     `);
 
     await this.pool.query(`
@@ -833,17 +923,22 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     };
   }
 
-  private mapSession(row: AuthSessionRow): AuthSession {
+  private mapSession(row: AuthSessionRow, rawSession?: AuthSession): AuthSession {
+    const createdAt = this.toIsoString(row.created_at)!;
     return {
       sessionId: row.session_id,
       accountId: row.account_id,
       installationId: row.installation_id,
-      accessToken: row.access_token,
-      refreshToken: row.refresh_token,
-      accessTokenExpiresAt: this.toIsoString(row.access_token_expires_at)!,
-      refreshTokenExpiresAt: this.toIsoString(row.refresh_token_expires_at)!,
+      accessToken: rawSession?.accessToken ?? '',
+      refreshToken: rawSession?.refreshToken ?? '',
+      accessTokenExpiresAt:
+        rawSession?.accessTokenExpiresAt ??
+        new Date(new Date(createdAt).getTime() + 2 * 60 * 60 * 1000).toISOString(),
+      refreshTokenExpiresAt:
+        rawSession?.refreshTokenExpiresAt ??
+        this.toIsoString(row.refresh_token_expires_at)!,
       status: row.status,
-      createdAt: this.toIsoString(row.created_at)!,
+      createdAt,
       updatedAt: this.toIsoString(row.updated_at)!,
     };
   }
@@ -859,6 +954,53 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       createdAt: this.toIsoString(row.created_at)!,
       updatedAt: this.toIsoString(row.updated_at)!,
     };
+  }
+
+  private buildAccountNo(accountId: string) {
+    return `ACC-${accountId.replace(/-/g, '').slice(0, 12).toUpperCase()}`;
+  }
+
+  private buildSessionAccessJti(accessToken: string) {
+    return createHash('sha256').update(accessToken).digest('hex').slice(0, 64);
+  }
+
+  private buildRefreshTokenHash(refreshToken: string) {
+    return createHash('sha256').update(refreshToken).digest('hex');
+  }
+
+  private buildSessionInvalidatedReason(status: AuthSession['status']) {
+    return status === 'ACTIVE' ? null : status;
+  }
+
+  private async touchInstallation(session: AuthSession) {
+    await this.pool.query(
+      `
+        INSERT INTO ${ACCOUNT_INSTALLATIONS_TABLE} (
+          id,
+          account_id,
+          installation_id,
+          status,
+          first_seen_at,
+          last_seen_at,
+          created_at,
+          updated_at
+        )
+        VALUES ($1, $2, $3, 'OBSERVED', $4, $5, $6, $7)
+        ON CONFLICT (account_id, installation_id) DO UPDATE
+        SET
+          last_seen_at = EXCLUDED.last_seen_at,
+          updated_at = EXCLUDED.updated_at
+      `,
+      [
+        randomUUID(),
+        session.accountId,
+        session.installationId,
+        session.createdAt,
+        session.updatedAt,
+        session.createdAt,
+        session.updatedAt,
+      ],
+    );
   }
 
   private toOrderValues(
