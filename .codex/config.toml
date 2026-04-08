@@ -3,8 +3,8 @@ multi_agent = true
 child_agents_md = true
 
 [agents]
-max_threads = 8
-max_depth = 4
+max_threads = 12
+max_depth = 6
 
 [agents.explorer]
 description = "Use for repository-first recovery, codebase exploration, dependency/impact analysis, and implementation scoping before coding."
@@ -17,3 +17,7 @@ config_file = ".codex/agents/implementer.toml"
 [agents.tester]
 description = "Use for regression validation, risk review, acceptance checks, and release-readiness evidence."
 config_file = ".codex/agents/tester.toml"
+
+[agents.worker]
+description = "Use for bounded parallel execution when work can be split into disjoint write scopes or independent operational subtasks."
+config_file = ".codex/agents/worker.toml"

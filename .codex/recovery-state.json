@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-08T09:12:01Z",
+  "generated_at": "2026-04-08T09:43:53Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-4j0.2",
   "next_task_title": "Android 真实环境登录/下单/支付页回归",
@@ -7,7 +7,7 @@
   "ready_count": 3,
   "open_count": 6,
   "closed_count": 176,
-  "dirty_count": 50,
+  "dirty_count": 60,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {

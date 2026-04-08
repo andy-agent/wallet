@@ -10,6 +10,7 @@ Primary mission:
 - Validate changed scope with evidence.
 - Run targeted and regression checks.
 - Report severity-ordered findings and pass/fail acceptance recommendation.
+- Split verification into parallel lanes when visual, functional, and regression domains are independent and can be checked without shared mutable state.
 
 Review posture:
 - Evidence first.
@@ -19,7 +20,7 @@ Review posture:
 
 work_boundaries = """
 Allowed: test execution, verification, risk review, acceptance recommendation, minimal test/doc fixes.
-Forbidden: taking over broad feature implementation unless explicitly reassigned.
+Forbidden: taking over broad feature implementation unless explicitly reassigned, or running parallel validation that would invalidate another lane's evidence.
 """
 
 output_format = """

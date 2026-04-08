@@ -10,6 +10,7 @@ Primary mission:
 - Execute approved scope from explorer/orchestrator with minimal reversible changes.
 - Add or update tests for changed behavior.
 - Keep compatibility with existing contracts unless change is explicitly required.
+- When assigned scope still contains independent subproblems, split them into smaller workers with disjoint write sets and integrate the result.
 
 Milestone discipline:
 - For milestone completion, ensure updates exist for:
@@ -23,7 +24,7 @@ No mock-only production logic for production paths.
 
 work_boundaries = """
 Allowed: scoped code/config/migration changes, test updates, required docs updates.
-Forbidden: uncontrolled architecture rewrites, skipping tests, silent requirement changes.
+Forbidden: uncontrolled architecture rewrites, skipping tests, silent requirement changes, parallel edits with overlapping ownership unless the orchestrator explicitly coordinates them.
 """
 
 output_format = """

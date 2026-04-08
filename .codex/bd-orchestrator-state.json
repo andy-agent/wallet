@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-04-08T06:20:00Z",
+  "generated_at": "2026-04-08T06:30:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "active_task_id": "liaojiang-4j0.22.6.2",
-  "accepted_task_id": "liaojiang-4j0.22.11",
+  "accepted_task_id": "liaojiang-4j0.22.8",
   "next_task_id": "liaojiang-4j0.22.6.2.3",
   "active_worker_task_ids": [],
   "blockers": [
     {
       "task_id": "liaojiang-4j0.22.6.2",
       "type": "task",
-      "blocked_by": "manual login on device ba2b016 required; current run cannot safely inject credentials under non-secret policy"
+      "blocked_by": "manual login on ba2b016 required; current run cannot safely inject credentials under non-secret policy"
     }
   ],
   "workers": [],
