@@ -2,9 +2,11 @@ package com.v2ray.ang.composeui.pages.growth
 
 import android.app.Application
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,24 +15,25 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.NorthEast
-import androidx.compose.material.icons.filled.PeopleAlt
+import androidx.compose.material.icons.filled.AutoGraph
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Wallet
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -43,91 +46,110 @@ import com.v2ray.ang.composeui.bridge.growth.GrowthBridgeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
-enum class CommissionType {
-    INVITE,
-    REBATE,
-    WITHDRAW
+private enum class CommissionFilter(val label: String) {
+    ALL("全部"),
+    AVAILABLE("可用"),
+    SETTLED("已结算"),
+}
+
+enum class CommissionType(
+    val badge: String,
+    val tint: Color,
+    val icon: ImageVector,
+) {
+    LEVEL1("一级邀请", GrowthPositive, Icons.Default.Groups),
+    LEVEL2("二级返佣", GrowthAccent, Icons.Default.AutoGraph),
 }
 
 data class CommissionRecord(
     val id: String,
     val type: CommissionType,
     val amount: String,
-    val description: String,
-    val fromUser: String?,
-    val timestamp: Date,
-    val status: String
+    val sourceOrderNo: String,
+    val sourceAccountMasked: String,
+    val sourceAssetCode: String,
+    val sourceAmount: String,
+    val status: String,
+    val createdAt: String,
 )
 
 sealed class CommissionLedgerState {
-    object Idle : CommissionLedgerState()
-    object Loading : CommissionLedgerState()
+    data object Loading : CommissionLedgerState()
+
     data class Loaded(
-        val totalCommission: String,
-        val availableCommission: String,
-        val records: List<CommissionRecord>
+        val settlementAssetCode: String,
+        val settlementNetworkCode: String,
+        val availableAmount: String,
+        val frozenAmount: String,
+        val withdrawingAmount: String,
+        val withdrawnTotal: String,
+        val records: List<CommissionRecord>,
     ) : CommissionLedgerState()
+
     data class Error(val message: String) : CommissionLedgerState()
-    object Empty : CommissionLedgerState()
 }
 
 class CommissionLedgerViewModel(application: Application) : AndroidViewModel(application) {
     private val growthBridgeRepository = GrowthBridgeRepository(application)
-    private val _state = MutableStateFlow<CommissionLedgerState>(CommissionLedgerState.Idle)
+    private val _state = MutableStateFlow<CommissionLedgerState>(CommissionLedgerState.Loading)
     val state: StateFlow<CommissionLedgerState> = _state
 
     init {
         loadCommissionData()
     }
 
-    private fun loadCommissionData() {
+    fun loadCommissionData() {
         viewModelScope.launch {
             _state.value = CommissionLedgerState.Loading
 
             val summaryResult = growthBridgeRepository.getCommissionSummary()
             val ledgerResult = growthBridgeRepository.getCommissionLedger()
             if (summaryResult.isFailure) {
-                _state.value = CommissionLedgerState.Error(summaryResult.exceptionOrNull()?.message ?: "加载佣金概览失败")
+                _state.value = CommissionLedgerState.Error(
+                    summaryResult.exceptionOrNull()?.message ?: "加载佣金概览失败",
+                )
                 return@launch
             }
             if (ledgerResult.isFailure) {
-                _state.value = CommissionLedgerState.Error(ledgerResult.exceptionOrNull()?.message ?: "加载佣金账本失败")
+                _state.value = CommissionLedgerState.Error(
+                    ledgerResult.exceptionOrNull()?.message ?: "加载佣金账本失败",
+                )
                 return@launch
             }
 
-            val summary = summaryResult.getOrNull() ?: run {
-                _state.value = CommissionLedgerState.Error("佣金概览为空")
+            val summary = summaryResult.getOrNull()
+            val records = ledgerResult.getOrNull()
+            if (summary == null || records == null) {
+                _state.value = CommissionLedgerState.Error("账本数据为空")
                 return@launch
             }
-            val records = (ledgerResult.getOrNull() ?: emptyList()).map {
-                CommissionRecord(
-                    id = it.entryNo,
-                    type = when {
-                        it.status.equals("SETTLED", true) -> CommissionType.WITHDRAW
-                        it.commissionLevel.equals("LEVEL2", true) -> CommissionType.REBATE
-                        else -> CommissionType.INVITE
-                    },
-                    amount = "+$${it.settlementAmountUsdt}",
-                    description = "来源订单 ${it.sourceOrderNo}",
-                    fromUser = it.sourceAccountMasked,
-                    timestamp = Date(),
-                    status = it.status,
-                )
-            }
 
-            _state.value = if (records.isEmpty()) {
-                CommissionLedgerState.Empty
-            } else {
-                CommissionLedgerState.Loaded(
-                    totalCommission = "$${summary.withdrawnTotal}",
-                    availableCommission = "$${summary.availableAmount}",
-                    records = records
-                )
-            }
+            _state.value = CommissionLedgerState.Loaded(
+                settlementAssetCode = summary.settlementAssetCode,
+                settlementNetworkCode = summary.settlementNetworkCode,
+                availableAmount = summary.availableAmount,
+                frozenAmount = summary.frozenAmount,
+                withdrawingAmount = summary.withdrawingAmount,
+                withdrawnTotal = summary.withdrawnTotal,
+                records = records.map {
+                    CommissionRecord(
+                        id = it.entryNo,
+                        type = if (it.commissionLevel.equals("LEVEL2", true)) {
+                            CommissionType.LEVEL2
+                        } else {
+                            CommissionType.LEVEL1
+                        },
+                        amount = "${it.settlementAmountUsdt} ${summary.settlementAssetCode}",
+                        sourceOrderNo = it.sourceOrderNo,
+                        sourceAccountMasked = it.sourceAccountMasked,
+                        sourceAssetCode = it.sourceAssetCode,
+                        sourceAmount = it.sourceAmount,
+                        status = it.status,
+                        createdAt = it.createdAt,
+                    )
+                },
+            )
         }
     }
 }
@@ -136,49 +158,61 @@ class CommissionLedgerViewModel(application: Application) : AndroidViewModel(app
 fun CommissionLedgerPage(
     viewModel: CommissionLedgerViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onNavigateBack: () -> Unit = {},
-    onNavigateToWithdraw: () -> Unit = {}
+    onNavigateToWithdraw: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
 
     GrowthPageScaffold(
-        title = "佣金账本",
-        onNavigateBack = onNavigateBack
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(GrowthPageBackground)
-                .padding(paddingValues)
-        ) {
-            when (val currentState = state) {
-                is CommissionLedgerState.Loaded -> {
-                    CommissionLedgerContent(
-                        state = currentState,
-                        onNavigateToWithdraw = onNavigateToWithdraw
-                    )
-                }
-
-                is CommissionLedgerState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = GrowthAccent)
+        topBar = {
+            GrowthTopBar(
+                title = "奖励记录",
+                subtitle = "佣金账本与提现页共用同一结算节奏",
+                onNavigateBack = onNavigateBack,
+            )
+        },
+        bottomBar = {
+            if (state is CommissionLedgerState.Loaded) {
+                Surface(
+                    color = GrowthPageBackground.copy(alpha = 0.98f),
+                    tonalElevation = 0.dp,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                    ) {
+                        GrowthPrimaryButton(
+                            text = "发起提现",
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = onNavigateToWithdraw,
+                        )
                     }
                 }
+            }
+        },
+    ) { paddingValues ->
+        when (val currentState = state) {
+            CommissionLedgerState.Loading -> Unit
+            is CommissionLedgerState.Error -> {
+                GrowthStatusView(
+                    title = "账本加载失败",
+                    message = currentState.message,
+                    modifier = Modifier.padding(paddingValues),
+                    action = {
+                        GrowthPrimaryButton(
+                            text = "重新加载",
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = viewModel::loadCommissionData,
+                        )
+                    },
+                )
+            }
 
-                is CommissionLedgerState.Empty -> {
-                    GrowthStatusView(
-                        title = "暂无账本",
-                        message = "邀请好友并完成订单后，收益记录会以 Discover 流式卡片形式出现在这里。"
-                    )
-                }
-
-                is CommissionLedgerState.Error -> {
-                    GrowthStatusView(
-                        title = "账本加载失败",
-                        message = currentState.message
-                    )
-                }
-
-                CommissionLedgerState.Idle -> Unit
+            is CommissionLedgerState.Loaded -> {
+                CommissionLedgerContent(
+                    state = currentState,
+                    paddingValues = paddingValues,
+                )
             }
         }
     }
@@ -187,195 +221,280 @@ fun CommissionLedgerPage(
 @Composable
 private fun CommissionLedgerContent(
     state: CommissionLedgerState.Loaded,
-    onNavigateToWithdraw: () -> Unit
+    paddingValues: PaddingValues,
 ) {
-    Column(
+    var filter by rememberSaveable { mutableStateOf(CommissionFilter.ALL) }
+    val filteredRecords = state.records.filter {
+        when (filter) {
+            CommissionFilter.ALL -> true
+            CommissionFilter.AVAILABLE -> it.status.equals("AVAILABLE", true)
+            CommissionFilter.SETTLED -> it.status.equals("SETTLED", true)
+        }
+    }
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(paddingValues),
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            end = 20.dp,
+            top = 6.dp,
+            bottom = 110.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        CommissionOverviewCard(
-            totalCommission = state.totalCommission,
-            availableCommission = state.availableCommission,
-            recordCount = state.records.size,
-            onNavigateToWithdraw = onNavigateToWithdraw
-        )
+        item {
+            CommissionSummaryHero(state = state)
+        }
 
-        GrowthSectionCard(modifier = Modifier.weight(1f), contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
-            Column(modifier = Modifier.padding(20.dp)) {
+        item {
+            GrowthSectionCard(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp)) {
                 GrowthSectionTitle(
-                    title = "收益流水",
-                    subtitle = "按 Discover feed 的节奏把账本主信息压缩进单卡：订单来源、账户掩码、状态与金额。",
-                    trailing = { GrowthBadge(text = "${state.records.size} 条") }
+                    title = "账本筛选",
+                    subtitle = "优先展示摘要区，再通过小型 tabs 切换状态，不把筛选抢到首屏标题上方。",
                 )
-            }
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 20.dp, end = 20.dp, bottom = 20.dp)
-            ) {
-                items(state.records) { record ->
-                    CommissionRecordRow(record = record)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CommissionFilter.entries.forEach { item ->
+                        Surface(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(Color.Transparent)
+                                .padding(0.dp),
+                            shape = RoundedCornerShape(999.dp),
+                            color = if (item == filter) GrowthSurfaceStrong else GrowthSurfaceRaised,
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (item == filter) GrowthAccent else GrowthBorder,
+                            ),
+                        ) {
+                            Text(
+                                text = item.label,
+                                color = if (item == filter) GrowthTextPrimary else GrowthTextSecondary,
+                                fontWeight = if (item == filter) FontWeight.SemiBold else FontWeight.Medium,
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                                    .clickable { filter = item },
+                            )
+                        }
+                    }
                 }
             }
         }
+
+        item {
+            GrowthSectionCard {
+                GrowthSectionTitle(
+                    title = "收益流水",
+                    subtitle = "缺图页复用“单摘要区 + 连续内容区”的法则，把所有记录收纳进同一卡组。",
+                    trailing = { GrowthBadge(text = "${filteredRecords.size} 条") },
+                )
+
+                if (filteredRecords.isEmpty()) {
+                    Surface(
+                        shape = RoundedCornerShape(22.dp),
+                        color = GrowthSurfaceRaised,
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 18.dp, vertical = 20.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = "当前筛选下暂无记录",
+                                color = GrowthTextPrimary,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                text = "邀请好友下单后，返佣明细会按时间顺序出现在这里。",
+                                color = GrowthTextSecondary,
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp,
+                            )
+                        }
+                    }
+                } else {
+                    filteredRecords.forEachIndexed { index, record ->
+                        CommissionRecordRow(record = record)
+                        if (index != filteredRecords.lastIndex) {
+                            GrowthListDivider()
+                        }
+                    }
+                }
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(8.dp)) }
     }
 }
 
 @Composable
-private fun CommissionOverviewCard(
-    totalCommission: String,
-    availableCommission: String,
-    recordCount: Int,
-    onNavigateToWithdraw: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(GrowthHeroGradient)
-            .padding(22.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Column {
-                Text("Discover Ledger", color = Color(0xFF5E4300), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(availableCommission, color = Color(0xFF161A1E), fontSize = 34.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(6.dp))
-                Text("当前可提现佣金", color = Color(0xFF5E4300), fontSize = 13.sp)
-            }
-            GrowthBadge(text = "实时结算")
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
+private fun CommissionSummaryHero(state: CommissionLedgerState.Loaded) {
+    GrowthHighlightCard {
+        GrowthBadge(text = "${state.settlementAssetCode} / ${state.settlementNetworkCode}")
+        Text(
+            text = "${state.availableAmount} ${state.settlementAssetCode}",
+            color = GrowthTextPrimary,
+            fontSize = 34.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = "当前可提现佣金",
+            color = GrowthTextSecondary,
+            fontSize = 14.sp,
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            GrowthStatChip(label = "累计到账", value = totalCommission, modifier = Modifier.weight(1f))
-            GrowthStatChip(label = "流水数量", value = recordCount.toString(), modifier = Modifier.weight(1f))
-        }
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Button(
-            onClick = onNavigateToWithdraw,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF161A1E),
-                contentColor = GrowthTextPrimary
-            ),
-            shape = RoundedCornerShape(18.dp)
-        ) {
-            Text("发起提现", fontWeight = FontWeight.SemiBold)
+            GrowthStatChip(
+                label = "冻结中",
+                value = state.frozenAmount,
+                modifier = Modifier.weight(1f),
+            )
+            GrowthStatChip(
+                label = "提现中",
+                value = state.withdrawingAmount,
+                modifier = Modifier.weight(1f),
+            )
+            GrowthStatChip(
+                label = "累计到账",
+                value = state.withdrawnTotal,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
 
 @Composable
 private fun CommissionRecordRow(record: CommissionRecord) {
-    val dateFormat = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
-    val (icon, iconTint, amountTint, badgeText) = when (record.type) {
-        CommissionType.INVITE -> LedgerVisual(Icons.Default.PeopleAlt, GrowthPositive, GrowthPositive, "邀请返佣")
-        CommissionType.REBATE -> LedgerVisual(Icons.Default.Wallet, GrowthAccent, GrowthAccent, "二级返利")
-        CommissionType.WITHDRAW -> LedgerVisual(Icons.Default.NorthEast, GrowthNegative, GrowthNegative, "提现支出")
+    val statusColor = when (record.status.uppercase()) {
+        "AVAILABLE" -> GrowthPositive
+        "SETTLED" -> GrowthAccent
+        "FROZEN" -> GrowthWarningText
+        else -> GrowthTextSecondary
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 6.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(GrowthSurfaceRaised)
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = record.type.tint.copy(alpha = 0.16f),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(iconTint.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(icon, contentDescription = badgeText, tint = iconTint)
-                }
-                Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(record.description, color = GrowthTextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = buildString {
-                            append(dateFormat.format(record.timestamp))
-                            if (!record.fromUser.isNullOrBlank()) {
-                                append("  ·  ")
-                                append(record.fromUser)
-                            }
-                        },
-                        color = GrowthTextSecondary,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(record.amount, color = amountTint, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Spacer(modifier = Modifier.height(4.dp))
-                GrowthBadge(text = badgeText)
+            Box(
+                modifier = Modifier.size(46.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = record.type.icon,
+                    contentDescription = null,
+                    tint = record.type.tint,
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
-        GrowthListDivider()
-        Spacer(modifier = Modifier.height(12.dp))
+        androidx.compose.foundation.layout.Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                androidx.compose.foundation.layout.Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(5.dp),
+                ) {
+                    Text(
+                        text = "来源订单 ${record.sourceOrderNo}",
+                        color = GrowthTextPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                    )
+                    Text(
+                        text = "${formatLedgerDate(record.createdAt)}  ·  ${record.sourceAccountMasked}",
+                        color = GrowthTextSecondary,
+                        fontSize = 12.sp,
+                    )
+                }
+                androidx.compose.foundation.layout.Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = record.amount,
+                        color = GrowthTextPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                    )
+                    GrowthBadge(
+                        text = record.type.badge,
+                        containerColor = record.type.tint.copy(alpha = 0.14f),
+                        contentColor = record.type.tint,
+                    )
+                }
+            }
 
-        GrowthInfoRow(label = "状态", value = record.status, emphasize = true)
-        Spacer(modifier = Modifier.height(8.dp))
-        GrowthInfoRow(label = "流水号", value = record.id.takeLast(8))
+            GrowthInfoRow(label = "状态", value = record.status, valueColor = statusColor, emphasize = true)
+            GrowthInfoRow(
+                label = "来源资产",
+                value = "${record.sourceAmount} ${record.sourceAssetCode}",
+            )
+            GrowthInfoRow(
+                label = "流水号",
+                value = record.id.takeLast(10),
+            )
+        }
     }
 }
 
-private data class LedgerVisual(
-    val icon: ImageVector,
-    val iconTint: Color,
-    val amountTint: Color,
-    val badgeText: String
-)
+private fun formatLedgerDate(value: String): String {
+    val normalized = value.replace("T", " ").replace("Z", "")
+    return if (normalized.length >= 16) normalized.substring(0, 16) else normalized
+}
 
 @Preview(showBackground = true)
 @Composable
 private fun CommissionLedgerPagePreview() {
     MaterialTheme {
-        CommissionLedgerContent(
-            state = CommissionLedgerState.Loaded(
-                totalCommission = "$512.30",
-                availableCommission = "$96.24",
-                records = listOf(
-                    CommissionRecord(
-                        id = "LEDGER-20260407-01",
-                        type = CommissionType.INVITE,
-                        amount = "+$12.00",
-                        description = "来源订单 ORD-1048",
-                        fromUser = "u***6",
-                        timestamp = Date(),
-                        status = "PENDING"
+        GrowthBitgetBackground {
+            CommissionLedgerContent(
+                state = CommissionLedgerState.Loaded(
+                    settlementAssetCode = "USDT",
+                    settlementNetworkCode = "SOLANA",
+                    availableAmount = "96.24",
+                    frozenAmount = "12.00",
+                    withdrawingAmount = "10.00",
+                    withdrawnTotal = "512.30",
+                    records = listOf(
+                        CommissionRecord(
+                            id = "LEDGER-20260407-01",
+                            type = CommissionType.LEVEL1,
+                            amount = "12.50 USDT",
+                            sourceOrderNo = "ORD-1048",
+                            sourceAccountMasked = "zsc***rui@gmail.com",
+                            sourceAssetCode = "USDT",
+                            sourceAmount = "59.90",
+                            status = "AVAILABLE",
+                            createdAt = "2026-04-07T10:24:00Z",
+                        ),
+                        CommissionRecord(
+                            id = "LEDGER-20260407-02",
+                            type = CommissionType.LEVEL2,
+                            amount = "6.20 USDT",
+                            sourceOrderNo = "ORD-1062",
+                            sourceAccountMasked = "xue***@mail.com",
+                            sourceAssetCode = "USDT",
+                            sourceAmount = "31.20",
+                            status = "SETTLED",
+                            createdAt = "2026-04-06T18:02:00Z",
+                        ),
                     ),
-                    CommissionRecord(
-                        id = "LEDGER-20260407-02",
-                        type = CommissionType.WITHDRAW,
-                        amount = "-$50.00",
-                        description = "提现申请 WD-88",
-                        fromUser = null,
-                        timestamp = Date(),
-                        status = "SETTLED"
-                    )
-                )
-            ),
-            onNavigateToWithdraw = {}
-        )
+                ),
+                paddingValues = PaddingValues(),
+            )
+        }
     }
 }

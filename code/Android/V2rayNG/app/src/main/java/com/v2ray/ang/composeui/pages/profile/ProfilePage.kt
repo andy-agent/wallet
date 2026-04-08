@@ -5,59 +5,54 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.SupervisorAccount
-import androidx.compose.material.icons.filled.VerifiedUser
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -72,31 +67,37 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-private val ProfilePageBackground = Color(0xFFF5F7FA)
-private val ProfileCardBackground = Color.White
-private val ProfileAccent = Color(0xFF00C2A8)
-private val ProfileAccentDeep = Color(0xFF0E8E7F)
-private val ProfileTextSecondary = Color(0xFF667085)
-private val ProfileDivider = Color(0xFFEAECEF)
+private enum class ProfileScreen {
+    SETTINGS,
+    SECURITY,
+}
 
-data class UserInfo(
-    val email: String,
-    val nickname: String?,
-    val avatarUrl: String?,
-    val memberLevel: String,
-    val memberExpiry: String?
-)
-
-data class SettingItem(
+private data class ProfileSettingRow(
     val icon: ImageVector,
     val title: String,
-    val subtitle: String? = null,
-    val badge: String? = null,
-    val showArrow: Boolean = true
+    val trailingText: String? = null,
+    val onClick: () -> Unit,
+)
+
+private data class SupportTile(
+    val icon: ImageVector,
+    val title: String,
+    val onClick: () -> Unit,
+)
+
+private data class AvatarSwatch(
+    val color: Color,
+    val glyph: String,
+)
+
+data class UserInfo(
+    val userId: String,
+    val email: String,
+    val nickname: String?,
+    val memberLevel: String,
 )
 
 sealed class ProfileState {
-    data object Idle : ProfileState()
     data object Loading : ProfileState()
     data class Loaded(val user: UserInfo) : ProfileState()
     data class Error(val message: String) : ProfileState()
@@ -104,7 +105,7 @@ sealed class ProfileState {
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
     private val profileBridgeRepository = ProfileBridgeRepository(application)
-    private val _state = MutableStateFlow<ProfileState>(ProfileState.Idle)
+    private val _state = MutableStateFlow<ProfileState>(ProfileState.Loading)
     val state: StateFlow<ProfileState> = _state
 
     init {
@@ -125,20 +126,20 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 orders.firstOrNull { it.expiredAt != null && it.expiredAt > System.currentTimeMillis() }
             _state.value = ProfileState.Loaded(
                 user = UserInfo(
+                    userId = user.userId,
                     email = user.email ?: user.username,
                     nickname = user.username.substringBefore("@"),
-                    avatarUrl = null,
                     memberLevel = if (activeOrder != null) "已订阅" else "基础用户",
-                    memberExpiry = activeOrder?.expiredAt?.toString()
-                )
+                ),
             )
         }
     }
 
-    fun logout() {
+    fun logout(onLoggedOut: () -> Unit) {
         viewModelScope.launch {
             profileBridgeRepository.logout()
             _state.value = ProfileState.Error("已退出登录")
+            onLoggedOut()
         }
     }
 }
@@ -155,666 +156,725 @@ fun ProfilePage(
     onNavigateToLegal: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
-    val showLogoutDialog = remember { mutableStateOf(false) }
+    var currentScreen by rememberSaveable { mutableStateOf(ProfileScreen.SETTINGS) }
+    var showAvatarSheet by rememberSaveable { mutableStateOf(false) }
+    var showLogoutSheet by rememberSaveable { mutableStateOf(false) }
+    var selectedAvatarIndex by rememberSaveable { mutableIntStateOf(1) }
+    var selectedSwatchIndex by rememberSaveable { mutableIntStateOf(1) }
+    val avatarSwatches = remember {
+        listOf(
+            AvatarSwatch(Color(0xFFA68BFF), "🚀"),
+            AvatarSwatch(Color(0xFFFF73C2), "💾"),
+            AvatarSwatch(Color(0xFFFF8D88), "😎"),
+            AvatarSwatch(Color(0xFFFFD37E), "🔥"),
+            AvatarSwatch(Color(0xFFA2FF78), "🤖"),
+            AvatarSwatch(Color(0xFF78E7FF), "🦄"),
+            AvatarSwatch(Color(0xFF7FAEFF), "⭐"),
+        )
+    }
+    val avatarGlyphs = remember {
+        listOf(
+            "🚀", "💰", "😎", "🔥", "💎", "🤖", "🦄",
+            "🦌", "⚡", "👻", "🦁", "🏆", "👀", "⭐",
+            "🐬", "🦍", "⛏️", "🔑", "🍕", "➡️", "🐱",
+            "🐼", "🐯", "🐶", "🦋", "🦊", "😊", "😁",
+            "😄", "😆", "😂", "🤣",
+        )
+    }
 
-    Scaffold(
-        containerColor = ProfilePageBackground,
+    val loadedUser = (state as? ProfileState.Loaded)?.user
+
+    ProfilePageScaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Profile",
-                        fontWeight = FontWeight.SemiBold
-                    )
+            ProfileTopBar(
+                title = if (currentScreen == ProfileScreen.SETTINGS) "设置" else "钱包安全",
+                onNavigateBack = if (currentScreen == ProfileScreen.SECURITY) {
+                    { currentScreen = ProfileScreen.SETTINGS }
+                } else {
+                    null
                 },
-                actions = {
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
+            )
+        },
+    ) { paddingValues ->
+        when (val currentState = state) {
+            ProfileState.Loading -> Unit
+            is ProfileState.Error -> {
+                ProfileErrorView(
+                    message = currentState.message,
+                    modifier = Modifier.padding(paddingValues),
+                )
+            }
+
+            is ProfileState.Loaded -> {
+                when (currentScreen) {
+                    ProfileScreen.SETTINGS -> {
+                        ProfileSettingsContent(
+                            user = currentState.user,
+                            paddingValues = paddingValues,
+                            onOpenSecurity = { currentScreen = ProfileScreen.SECURITY },
+                            onNavigateToWallet = onNavigateToWallet,
+                            onNavigateToInvite = onNavigateToInvite,
+                            onNavigateToCommission = onNavigateToCommission,
+                            onNavigateToSettings = onNavigateToSettings,
+                            onNavigateToLegal = onNavigateToLegal,
+                            onNavigateToSupport = onNavigateToSupport,
+                            onNavigateToAbout = onNavigateToAbout,
+                            onNavigateToOrders = onNavigateToOrders,
+                        )
+                    }
+
+                    ProfileScreen.SECURITY -> {
+                        ProfileSecurityContent(
+                            user = currentState.user,
+                            paddingValues = paddingValues,
+                            avatar = avatarGlyphs[selectedAvatarIndex],
+                            avatarColor = avatarSwatches[selectedSwatchIndex].color,
+                            onAvatarClick = { showAvatarSheet = true },
+                            onNavigateToWallet = onNavigateToWallet,
+                            onNavigateToOrders = onNavigateToOrders,
+                            onNavigateToLegal = onNavigateToLegal,
+                            onNavigateToSettings = onNavigateToSettings,
+                            onLogoutClick = { showLogoutSheet = true },
                         )
                     }
                 }
-            )
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(ProfilePageBackground)
-                .padding(paddingValues)
-        ) {
-            when (val currentState = state) {
-                is ProfileState.Loaded -> {
-                    ProfileContent(
-                        user = currentState.user,
-                        onNavigateToOrders = onNavigateToOrders,
-                        onNavigateToWallet = onNavigateToWallet,
-                        onNavigateToInvite = onNavigateToInvite,
-                        onNavigateToCommission = onNavigateToCommission,
-                        onNavigateToLegal = onNavigateToLegal,
-                        onNavigateToSupport = onNavigateToSupport,
-                        onNavigateToAbout = onNavigateToAbout,
-                        onLogoutClick = { showLogoutDialog.value = true }
-                    )
-                }
-
-                ProfileState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = ProfileAccent)
-                    }
-                }
-
-                is ProfileState.Error -> ErrorView(currentState.message)
-                ProfileState.Idle -> Unit
             }
         }
     }
 
-    if (showLogoutDialog.value) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog.value = false },
-            title = { Text("确认登出") },
-            text = { Text("确定要退出当前账号吗？") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showLogoutDialog.value = false
-                        viewModel.logout()
-                        onLogout()
-                    }
-                ) {
-                    Text("确认", color = Color(0xFFEF4444))
-                }
+    if (showAvatarSheet && loadedUser != null) {
+        ProfileAvatarPickerSheet(
+            selectedAvatarIndex = selectedAvatarIndex,
+            selectedSwatchIndex = selectedSwatchIndex,
+            swatches = avatarSwatches,
+            avatars = avatarGlyphs,
+            onSelectAvatar = { selectedAvatarIndex = it },
+            onSelectSwatch = { selectedSwatchIndex = it },
+            onDismiss = { showAvatarSheet = false },
+        )
+    }
+
+    if (showLogoutSheet) {
+        ProfileLogoutSheet(
+            onDismiss = { showLogoutSheet = false },
+            onConfirm = {
+                showLogoutSheet = false
+                viewModel.logout(onLoggedOut = onLogout)
             },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog.value = false }) {
-                    Text("取消")
-                }
-            }
         )
     }
 }
 
 @Composable
-private fun ProfileContent(
+private fun ProfileSettingsContent(
     user: UserInfo,
-    onNavigateToOrders: () -> Unit,
+    paddingValues: PaddingValues,
+    onOpenSecurity: () -> Unit,
     onNavigateToWallet: () -> Unit,
     onNavigateToInvite: () -> Unit,
     onNavigateToCommission: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onNavigateToLegal: () -> Unit,
     onNavigateToSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
-    onLogoutClick: () -> Unit
+    onNavigateToOrders: () -> Unit,
 ) {
-    Column(
+    val primaryRows = remember(onOpenSecurity, onNavigateToWallet, onNavigateToSettings, onNavigateToInvite, onNavigateToCommission) {
+        listOf(
+            ProfileSettingRow(Icons.Default.Shield, "钱包安全", onClick = onOpenSecurity),
+            ProfileSettingRow(Icons.Default.AccountBalanceWallet, "地址簿", onClick = onNavigateToWallet),
+            ProfileSettingRow(Icons.Default.Notifications, "消息推送", onClick = onNavigateToSettings),
+            ProfileSettingRow(Icons.Default.Settings, "偏好设置", onClick = onNavigateToSettings),
+            ProfileSettingRow(Icons.Default.Route, "节点与线路", onClick = onNavigateToSettings),
+            ProfileSettingRow(Icons.Default.Campaign, "邀请中心", onClick = onNavigateToInvite),
+            ProfileSettingRow(Icons.AutoMirrored.Filled.ReceiptLong, "佣金账本", onClick = onNavigateToCommission),
+        )
+    }
+    val secondaryRows = remember(onNavigateToLegal, onNavigateToAbout) {
+        listOf(
+            ProfileSettingRow(Icons.Default.PrivacyTip, "法务文档", onClick = onNavigateToLegal),
+            ProfileSettingRow(Icons.Default.Info, "关于 CryptoVPN", trailingText = "v 1.0.0", onClick = onNavigateToAbout),
+        )
+    }
+    val supportTiles = remember(onNavigateToSupport, onNavigateToOrders) {
+        listOf(
+            SupportTile(Icons.Default.Headphones, "获取帮助", onNavigateToSupport),
+            SupportTile(Icons.AutoMirrored.Filled.Help, "订单与订阅", onNavigateToOrders),
+        )
+    }
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(paddingValues),
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            end = 20.dp,
+            top = 10.dp,
+            bottom = 28.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Spacer(modifier = Modifier.height(4.dp))
-        UserInfoCard(user = user)
-        StatusOverviewCard(user = user)
-        SectionTitle(title = "快捷入口", caption = "常用功能集中管理")
-        QuickAccessGrid(
-            onNavigateToOrders = onNavigateToOrders,
-            onNavigateToWallet = onNavigateToWallet,
-            onNavigateToInvite = onNavigateToInvite,
-            onNavigateToCommission = onNavigateToCommission
-        )
-        SectionTitle(title = "服务与支持", caption = "协议、帮助与应用信息")
-        SettingsList(
-            onNavigateToLegal = onNavigateToLegal,
-            onNavigateToSupport = onNavigateToSupport,
-            onNavigateToAbout = onNavigateToAbout
-        )
-        LogoutCard(onClick = onLogoutClick)
-        Text(
-            text = "CryptoVPN v1.0.0",
-            fontSize = 12.sp,
-            color = ProfileTextSecondary,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+        item {
+            ProfileBadge(
+                text = "${user.nickname ?: user.email.substringBefore("@")} · ${user.memberLevel}",
+                containerColor = ProfileSurfaceRaised,
+                contentColor = ProfileTextSecondary,
+            )
+        }
+
+        item {
+            ProfileCard(contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp)) {
+                primaryRows.forEachIndexed { index, item ->
+                    ProfileSettingsRow(item = item)
+                    if (index != primaryRows.lastIndex) {
+                        ProfileListDivider()
+                    }
+                }
+            }
+        }
+
+        item {
+            ProfileCard(contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp)) {
+                secondaryRows.forEachIndexed { index, item ->
+                    ProfileSettingsRow(item = item)
+                    if (index != secondaryRows.lastIndex) {
+                        ProfileListDivider()
+                    }
+                }
+            }
+        }
+
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                supportTiles.forEach { tile ->
+                    ProfileSupportTile(
+                        tile = tile,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun UserInfoCard(user: UserInfo) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileCardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+private fun ProfileSecurityContent(
+    user: UserInfo,
+    paddingValues: PaddingValues,
+    avatar: String,
+    avatarColor: Color,
+    onAvatarClick: () -> Unit,
+    onNavigateToWallet: () -> Unit,
+    onNavigateToOrders: () -> Unit,
+    onNavigateToLegal: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onLogoutClick: () -> Unit,
+) {
+    val securityRows = remember(onNavigateToSettings, onNavigateToWallet, onNavigateToOrders, onNavigateToLegal) {
+        listOf(
+            ProfileSettingRow(Icons.Default.Devices, "社交登录介绍", onClick = onNavigateToSettings),
+            ProfileSettingRow(Icons.Default.Lock, "登录账号", trailingText = user.email, onClick = onNavigateToSettings),
+            ProfileSettingRow(Icons.Default.AccountBalanceWallet, "我的钱包", onClick = onNavigateToWallet),
+            ProfileSettingRow(Icons.AutoMirrored.Filled.ReceiptLong, "订单与订阅", onClick = onNavigateToOrders),
+            ProfileSettingRow(Icons.Default.PrivacyTip, "法务文档", onClick = onNavigateToLegal),
+        )
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            end = 20.dp,
+            top = 8.dp,
+            bottom = 28.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(Color(0xFF103B43), Color(0xFF1C5C57), Color(0xFF00C2A8))
-                    )
-                )
-                .padding(20.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+        item {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                androidx.compose.foundation.layout.Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Surface(
+                        modifier = Modifier
+                            .size(104.dp)
+                            .clickable(onClick = onAvatarClick),
                         shape = CircleShape,
-                        color = Color.White.copy(alpha = 0.16f),
-                        modifier = Modifier.size(68.dp)
+                        color = avatarColor,
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = user.nickname?.take(1)?.uppercase()
-                                    ?: user.email.take(1).uppercase(),
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                text = avatar,
+                                fontSize = 42.sp,
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = user.nickname ?: user.email.substringBefore("@"),
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = user.email,
-                            fontSize = 13.sp,
-                            color = Color.White.copy(alpha = 0.78f)
-                        )
-                    }
-                    Surface(
-                        shape = RoundedCornerShape(999.dp),
-                        color = Color.White.copy(alpha = 0.14f)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.VerifiedUser,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "安全",
-                                fontSize = 12.sp,
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ProfileBadge(
-                        icon = Icons.Default.Star,
-                        text = user.memberLevel
+                    Text(
+                        text = user.email,
+                        color = ProfileTextPrimary,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
+                        text = "ID: ${maskUserId(user.userId)}",
+                        color = ProfileTextSecondary,
+                        fontSize = 13.sp,
                     )
                     ProfileBadge(
-                        icon = Icons.Default.Shield,
-                        text = "账号中心"
+                        text = "安全等级 低",
+                        containerColor = ProfileDanger.copy(alpha = 0.12f),
+                        contentColor = ProfileDanger,
                     )
                 }
             }
         }
-    }
-}
 
-@Composable
-private fun ProfileBadge(icon: ImageVector, text: String) {
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = Color.White.copy(alpha = 0.14f)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(14.dp)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = text,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatusOverviewCard(user: UserInfo) {
-    val statusText = if (user.memberLevel == "已订阅") "服务有效" else "尚未激活"
-    val caption = if (user.memberLevel == "已订阅") {
-        "当前订阅状态正常，可继续使用全部线路与账户能力。"
-    } else {
-        "开通订阅后可解锁完整网络能力与更高优先级支持。"
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileCardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Row(
+        item {
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                shape = RoundedCornerShape(24.dp),
+                color = ProfileWarningSurface,
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = "账户概览",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF101828)
-                    )
-                    Text(
-                        text = caption,
-                        fontSize = 13.sp,
-                        color = ProfileTextSecondary,
-                        lineHeight = 18.sp
-                    )
-                }
-                Surface(
-                    shape = RoundedCornerShape(999.dp),
-                    color = ProfileAccent.copy(alpha = 0.12f)
+                androidx.compose.foundation.layout.Column(
+                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text(
-                        text = statusText,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                        fontSize = 12.sp,
-                        color = ProfileAccentDeep,
-                        fontWeight = FontWeight.SemiBold
+                        text = "安全设置",
+                        color = ProfileWarningText,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = "至少开启一种验证方式，保证资产安全",
+                        color = ProfileTextSecondary,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SummaryStat(
-                    modifier = Modifier.weight(1f),
-                    label = "会员",
-                    value = user.memberLevel
-                )
-                SummaryStat(
-                    modifier = Modifier.weight(1f),
-                    label = "身份",
-                    value = user.nickname ?: "访客"
-                )
-            }
         }
-    }
-}
 
-@Composable
-private fun SummaryStat(modifier: Modifier = Modifier, label: String, value: String) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFFF8FAFB))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            color = ProfileTextSecondary
-        )
-        Text(
-            text = value,
-            fontSize = 15.sp,
-            color = Color(0xFF101828),
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
-
-@Composable
-private fun SectionTitle(title: String, caption: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = title,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF101828)
-        )
-        Text(
-            text = caption,
-            fontSize = 13.sp,
-            color = ProfileTextSecondary
-        )
-    }
-}
-
-@Composable
-private fun QuickAccessGrid(
-    onNavigateToOrders: () -> Unit,
-    onNavigateToWallet: () -> Unit,
-    onNavigateToInvite: () -> Unit,
-    onNavigateToCommission: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileCardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                QuickAccessItem(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
-                    label = "我的订单",
-                    accent = Color(0xFFE8FFF7),
-                    onClick = onNavigateToOrders
-                )
-                QuickAccessItem(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.AccountBalanceWallet,
-                    label = "我的钱包",
-                    accent = Color(0xFFEFF4FF),
-                    onClick = onNavigateToWallet
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                QuickAccessItem(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.SupervisorAccount,
-                    label = "邀请好友",
-                    accent = Color(0xFFFFF4EA),
-                    onClick = onNavigateToInvite
-                )
-                QuickAccessItem(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.AttachMoney,
-                    label = "佣金收益",
-                    accent = Color(0xFFFFF5F5),
-                    onClick = onNavigateToCommission
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun QuickAccessItem(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    label: String,
-    accent: Color,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFFF8FAFB))
-            .clickable(onClick = onClick)
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = accent,
-            modifier = Modifier.size(46.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    tint = Color(0xFF101828),
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-        }
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = Color(0xFF101828),
-            fontWeight = FontWeight.Medium
-        )
-    }
-}
-
-@Composable
-private fun SettingsList(
-    onNavigateToLegal: () -> Unit,
-    onNavigateToSupport: () -> Unit,
-    onNavigateToAbout: () -> Unit
-) {
-    val settings = listOf(
-        SettingItem(
-            icon = Icons.Default.Description,
-            title = "法务文档",
-            subtitle = "用户协议、隐私政策与退款规则",
-            badge = "Legal"
-        ),
-        SettingItem(
-            icon = Icons.AutoMirrored.Filled.Help,
-            title = "帮助与反馈",
-            subtitle = "常见问题、联系客服",
-            badge = "Support"
-        ),
-        SettingItem(
-            icon = Icons.Default.Info,
-            title = "关于我们",
-            subtitle = "版本信息、更新日志",
-            badge = "About"
-        )
-    )
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileCardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            settings.forEachIndexed { index, item ->
-                SettingListItem(
-                    item = item,
-                    onClick = {
-                        when (item.title) {
-                            "法务文档" -> onNavigateToLegal()
-                            "帮助与反馈" -> onNavigateToSupport()
-                            "关于我们" -> onNavigateToAbout()
-                        }
+        item {
+            ProfileCard(contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp)) {
+                securityRows.forEachIndexed { index, item ->
+                    ProfileSettingsRow(item = item)
+                    if (index != securityRows.lastIndex) {
+                        ProfileListDivider()
                     }
-                )
-                if (index < settings.lastIndex) {
-                    HorizontalDivider(color = ProfileDivider)
                 }
             }
         }
+
+        item {
+            OutlinedButton(
+                onClick = onLogoutClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, ProfileDanger),
+            ) {
+                Text(
+                    text = "退出钱包",
+                    color = ProfileDanger,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(vertical = 8.dp),
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun SettingListItem(item: SettingItem, onClick: () -> Unit) {
+private fun ProfileSettingsRow(item: ProfileSettingRow) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(onClick = item.onClick)
             .padding(vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Surface(
-            shape = RoundedCornerShape(14.dp),
-            color = ProfileAccent.copy(alpha = 0.12f),
-            modifier = Modifier.size(42.dp)
+            shape = RoundedCornerShape(16.dp),
+            color = ProfileSurfaceRaised,
         ) {
-            Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.size(44.dp),
+                contentAlignment = Alignment.Center,
+            ) {
                 Icon(
                     imageVector = item.icon,
-                    contentDescription = item.title,
-                    tint = ProfileAccentDeep,
-                    modifier = Modifier.size(20.dp)
+                    contentDescription = null,
+                    tint = ProfileTextSecondary,
                 )
             }
         }
-        Spacer(modifier = Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(
-                text = item.title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF101828)
-            )
-            item.subtitle?.let {
-                Text(
-                    text = it,
-                    fontSize = 12.sp,
-                    color = ProfileTextSecondary,
-                    lineHeight = 17.sp
-                )
-            }
-        }
-        item.badge?.let {
-            Surface(
-                shape = RoundedCornerShape(999.dp),
-                color = Color(0xFFF2F4F7)
-            ) {
-                Text(
-                    text = it,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    fontSize = 11.sp,
-                    color = ProfileTextSecondary,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-        if (item.showArrow) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = ProfileTextSecondary
-            )
-        }
-    }
-}
 
-@Composable
-private fun LogoutCard(onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileCardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Text(
+            text = item.title,
+            color = ProfileTextPrimary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f),
+        )
+
+        item.trailingText?.let {
             Text(
-                text = "会话管理",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF101828)
-            )
-            Text(
-                text = "退出登录将清除当前会话，需要重新输入账号信息。",
+                text = it,
+                color = if (it.startsWith("v")) ProfileTextTertiary else ProfileAccent,
                 fontSize = 13.sp,
-                lineHeight = 18.sp,
-                color = ProfileTextSecondary
+                maxLines = 1,
             )
-            Button(
-                onClick = onClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text("退出登录")
-            }
         }
+
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = ProfileTextSecondary,
+        )
     }
 }
 
 @Composable
-private fun ErrorView(message: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp),
+private fun ProfileSupportTile(
+    tile: SupportTile,
+    modifier: Modifier = Modifier,
+) {
+    androidx.compose.foundation.layout.Column(
+        modifier = modifier
+            .background(ProfilePageBackground)
+            .clickable(onClick = tile.onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = Color.White
+            shape = CircleShape,
+            color = ProfileSurface,
         ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+            Box(
+                modifier = Modifier.size(52.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = "无法加载 Profile",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF101828)
-                )
-                Text(
-                    text = message,
-                    fontSize = 14.sp,
-                    color = ProfileTextSecondary,
-                    textAlign = TextAlign.Center
+                Icon(
+                    imageVector = tile.icon,
+                    contentDescription = null,
+                    tint = ProfileTextPrimary,
                 )
             }
         }
+        Text(
+            text = tile.title,
+            color = ProfileTextSecondary,
+            fontSize = 13.sp,
+            textAlign = TextAlign.Center,
+        )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProfileAvatarPickerSheet(
+    selectedAvatarIndex: Int,
+    selectedSwatchIndex: Int,
+    swatches: List<AvatarSwatch>,
+    avatars: List<String>,
+    onSelectAvatar: (Int) -> Unit,
+    onSelectSwatch: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = ProfileSurface,
+        dragHandle = {
+            Surface(
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .width(44.dp)
+                    .height(5.dp),
+                color = ProfileDivider,
+                shape = RoundedCornerShape(999.dp),
+            ) {}
+        },
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Surface(
+                        modifier = Modifier.size(104.dp),
+                        shape = CircleShape,
+                        color = swatches[selectedSwatchIndex].color,
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(text = avatars[selectedAvatarIndex], fontSize = 40.sp)
+                        }
+                    }
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    swatches.forEachIndexed { index, item ->
+                        Surface(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clickable(onClick = { onSelectSwatch(index) }),
+                            shape = CircleShape,
+                            color = item.color,
+                            border = androidx.compose.foundation.BorderStroke(
+                                width = if (index == selectedSwatchIndex) 3.dp else 0.dp,
+                                color = if (index == selectedSwatchIndex) ProfileTextPrimary else Color.Transparent,
+                            ),
+                        ) {}
+                    }
+                }
+            }
+
+            item {
+                Text(
+                    text = "推荐",
+                    color = ProfileTextSecondary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+
+            item {
+                EmojiGrid(
+                    avatars = avatars.take(21),
+                    selectedIndex = selectedAvatarIndex,
+                    onSelectAvatar = onSelectAvatar,
+                )
+            }
+
+            item {
+                Text(
+                    text = "笑脸与人物",
+                    color = ProfileTextSecondary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+
+            item {
+                EmojiGrid(
+                    avatars = avatars.drop(21),
+                    selectedIndex = selectedAvatarIndex - 21,
+                    offset = 21,
+                    onSelectAvatar = onSelectAvatar,
+                )
+            }
+
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(28.dp),
+                    color = ProfileAccent,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onDismiss)
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "保存",
+                            color = ProfilePageBackground,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmojiGrid(
+    avatars: List<String>,
+    selectedIndex: Int,
+    offset: Int = 0,
+    onSelectAvatar: (Int) -> Unit,
+) {
+    androidx.compose.foundation.layout.Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        avatars.chunked(7).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                row.forEachIndexed { index, avatar ->
+                    val actualIndex = offset + avatars.indexOf(avatar)
+                    Surface(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clickable(onClick = { onSelectAvatar(actualIndex) }),
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (actualIndex == offset + selectedIndex) ProfileSurfaceRaised else Color.Transparent,
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(text = avatar, fontSize = 24.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProfileLogoutSheet(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = ProfileSurface,
+        dragHandle = {
+            Surface(
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .width(44.dp)
+                    .height(5.dp),
+                color = ProfileDivider,
+                shape = RoundedCornerShape(999.dp),
+            ) {}
+        },
+    ) {
+        androidx.compose.foundation.layout.Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = "退出钱包",
+                color = ProfileTextPrimary,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "退出后会清除当前会话，需要重新登录才能访问钱包和邀请相关页面。",
+                color = ProfileTextSecondary,
+                fontSize = 13.sp,
+                lineHeight = 19.sp,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(24.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, ProfileDivider),
+                ) {
+                    Text("取消", color = ProfileTextPrimary)
+                }
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(24.dp),
+                    color = ProfileDanger,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onConfirm)
+                            .padding(vertical = 14.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "确认退出",
+                            color = ProfilePageBackground,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+private fun ProfileErrorView(
+    message: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        ProfileCard(modifier = Modifier.padding(horizontal = 20.dp)) {
+            Text(
+                text = "无法加载 Profile",
+                color = ProfileTextPrimary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = message,
+                color = ProfileTextSecondary,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+            )
+        }
+    }
+}
+
+private fun maskUserId(userId: String): String {
+    if (userId.length <= 10) return userId
+    return "${userId.take(4)}...${userId.takeLast(4)}"
 }
 
 @Preview(showBackground = true)
 @Composable
-fun ProfilePagePreview() {
+private fun ProfilePagePreview() {
     MaterialTheme {
-        ProfileContent(
-            user = UserInfo(
-                email = "hello@example.com",
-                nickname = "Alice",
-                avatarUrl = null,
-                memberLevel = "已订阅",
-                memberExpiry = null
-            ),
-            onNavigateToOrders = {},
-            onNavigateToWallet = {},
-            onNavigateToInvite = {},
-            onNavigateToCommission = {},
-            onNavigateToLegal = {},
-            onNavigateToSupport = {},
-            onNavigateToAbout = {},
-            onLogoutClick = {}
-        )
+        ProfileBitgetBackground {
+            ProfileSettingsContent(
+                user = UserInfo(
+                    userId = "dcce0ed7",
+                    email = "zsc***rui@gmail.com",
+                    nickname = "zsc",
+                    memberLevel = "已订阅",
+                ),
+                paddingValues = PaddingValues(),
+                onOpenSecurity = {},
+                onNavigateToWallet = {},
+                onNavigateToInvite = {},
+                onNavigateToCommission = {},
+                onNavigateToSettings = {},
+                onNavigateToLegal = {},
+                onNavigateToSupport = {},
+                onNavigateToAbout = {},
+                onNavigateToOrders = {},
+            )
+        }
     }
 }
