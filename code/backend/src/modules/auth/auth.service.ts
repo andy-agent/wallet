@@ -34,6 +34,7 @@ interface SignedSessionPayload {
 export class AuthService implements OnModuleInit {
   private readonly accounts = new Map<string, AuthAccount>();
   private readonly accountsByEmail = new Map<string, string>();
+  private readonly sessionsById = new Map<string, AuthSession>();
   private readonly sessionsByAccessToken = new Map<string, AuthSession>();
   private readonly sessionsByRefreshToken = new Map<string, AuthSession>();
   private readonly sessionsByAccountId = new Map<string, AuthSession>();
@@ -54,6 +55,7 @@ export class AuthService implements OnModuleInit {
 
     this.accounts.clear();
     this.accountsByEmail.clear();
+    this.sessionsById.clear();
     this.sessionsByAccessToken.clear();
     this.sessionsByRefreshToken.clear();
     this.sessionsByAccountId.clear();
@@ -185,13 +187,7 @@ export class AuthService implements OnModuleInit {
   }
 
   async refresh(params: { refreshToken: string; installationId?: string }) {
-    const session = this.sessionsByRefreshToken.get(params.refreshToken);
-    if (!session || session.status !== 'ACTIVE') {
-      throw new UnauthorizedException({
-        code: 'AUTH_REFRESH_INVALID',
-        message: 'Refresh token is invalid',
-      });
-    }
+    const session = this.requireRefreshSession(params.refreshToken);
 
     if (new Date(session.refreshTokenExpiresAt).getTime() <= Date.now()) {
       const expiredSession = {
@@ -471,7 +467,7 @@ export class AuthService implements OnModuleInit {
   }
 
   private requireAccessSession(accessToken: string) {
-    const session = this.sessionsByAccessToken.get(accessToken);
+    const session = this.resolveSessionByToken(accessToken, 'access');
     if (!session) {
       throw new UnauthorizedException({
         code: 'UNAUTHORIZED',
@@ -494,6 +490,17 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException({
         code: 'UNAUTHORIZED',
         message: 'Access token expired',
+      });
+    }
+    return session;
+  }
+
+  private requireRefreshSession(refreshToken: string) {
+    const session = this.resolveSessionByToken(refreshToken, 'refresh');
+    if (!session || session.status !== 'ACTIVE') {
+      throw new UnauthorizedException({
+        code: 'AUTH_REFRESH_INVALID',
+        message: 'Refresh token is invalid',
       });
     }
     return session;
@@ -548,17 +555,81 @@ export class AuthService implements OnModuleInit {
   }
 
   private storeSession(session: AuthSession) {
-    this.sessionsByAccessToken.set(session.accessToken, session);
-    this.sessionsByRefreshToken.set(session.refreshToken, session);
+    const previous = this.sessionsById.get(session.sessionId);
+    const persistedSession: AuthSession = {
+      ...session,
+      accessToken: session.accessToken || previous?.accessToken || '',
+      refreshToken: session.refreshToken || previous?.refreshToken || '',
+    };
 
-    const currentAccountSession = this.sessionsByAccountId.get(session.accountId);
-    if (
-      session.status === 'ACTIVE' ||
-      !currentAccountSession ||
-      currentAccountSession.sessionId === session.sessionId
-    ) {
-      this.sessionsByAccountId.set(session.accountId, session);
+    this.sessionsById.set(persistedSession.sessionId, persistedSession);
+
+    if (persistedSession.accessToken) {
+      this.sessionsByAccessToken.set(
+        persistedSession.accessToken,
+        persistedSession,
+      );
     }
+
+    if (persistedSession.refreshToken) {
+      this.sessionsByRefreshToken.set(
+        persistedSession.refreshToken,
+        persistedSession,
+      );
+    }
+
+    const currentAccountSession = this.sessionsByAccountId.get(
+      persistedSession.accountId,
+    );
+    if (
+      persistedSession.status === 'ACTIVE' ||
+      !currentAccountSession ||
+      currentAccountSession.sessionId === persistedSession.sessionId
+    ) {
+      this.sessionsByAccountId.set(
+        persistedSession.accountId,
+        persistedSession,
+      );
+    }
+  }
+
+  private resolveSessionByToken(
+    token: string,
+    expectedType: SignedTokenType,
+  ) {
+    const cachedSession =
+      expectedType === 'access'
+        ? this.sessionsByAccessToken.get(token)
+        : this.sessionsByRefreshToken.get(token);
+
+    if (cachedSession) {
+      return cachedSession;
+    }
+
+    const payload = this.parseSignedToken(token, expectedType);
+    if (!payload) {
+      return null;
+    }
+
+    const persistedSession = this.sessionsById.get(payload.sessionId);
+    if (!persistedSession || persistedSession.accountId !== payload.accountId) {
+      return null;
+    }
+
+    const hydratedSession: AuthSession = {
+      ...persistedSession,
+      installationId:
+        persistedSession.installationId ?? payload.installationId ?? null,
+      accessToken:
+        expectedType === 'access' ? token : persistedSession.accessToken,
+      refreshToken:
+        expectedType === 'refresh' ? token : persistedSession.refreshToken,
+      accessTokenExpiresAt: payload.accessTokenExpiresAt,
+      refreshTokenExpiresAt: payload.refreshTokenExpiresAt,
+    };
+
+    this.storeSession(hydratedSession);
+    return this.sessionsById.get(hydratedSession.sessionId) ?? hydratedSession;
   }
 
   private hashPassword(password: string) {
@@ -628,6 +699,38 @@ export class AuthService implements OnModuleInit {
     ).toString('base64url');
     const signature = this.signToken(encodedPayload);
     return `${type}.${encodedPayload}.${signature}`;
+  }
+
+  private parseSignedToken(
+    token: string,
+    expectedType: SignedTokenType,
+  ): (SignedSessionPayload & { type: SignedTokenType }) | null {
+    const [type, encodedPayload, signature] = token.split('.');
+    if (type !== expectedType || !encodedPayload || !signature) {
+      return null;
+    }
+
+    if (this.signToken(encodedPayload) !== signature) {
+      return null;
+    }
+
+    try {
+      const payload = JSON.parse(
+        Buffer.from(encodedPayload, 'base64url').toString('utf8'),
+      ) as SignedSessionPayload & { type: SignedTokenType };
+
+      if (
+        payload.type !== expectedType ||
+        !payload.accountId ||
+        !payload.sessionId
+      ) {
+        return null;
+      }
+
+      return payload;
+    } catch {
+      return null;
+    }
   }
 
   private signToken(encodedPayload: string) {

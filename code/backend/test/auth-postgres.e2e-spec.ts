@@ -134,12 +134,14 @@ describe('Auth Postgres persistence (e2e)', () => {
       })
       .expect(200);
 
-    await request(app.getHttpServer())
+    const meResponse = await request(app.getHttpServer())
       .get('/api/client/v1/me')
       .set('authorization', `Bearer ${secondLogin.body.data.accessToken}`)
       .expect(200);
 
     expect(secondLogin.body.data.accountId).toBe(firstLogin.body.data.accountId);
+    expect(meResponse.body.data.email).toBe('system@cnyirui.cn');
+    expect(meResponse.body.data.status).toBe('ACTIVE');
   });
 });
 
