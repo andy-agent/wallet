@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-08T13:25:48Z
+Generated: 2026-04-08T13:58:02Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-rcb.27.1
-- next_task_title: 盘点 Market 真实功能与分类语义偏差
+- next_task_id: liaojiang-rcb.26.3
+- next_task_title: 按白底 Bitget 基线重构 Market 首页与详情结构
 
 ## Counters
-- in_progress: 6
-- ready: 2
-- open: 9
-- closed: 224
-- dirty: 2
+- in_progress: 10
+- ready: 0
+- open: 11
+- closed: 229
+- dirty: 4
 
 ## Next Milestone
 - Continue the next task and complete one milestone
