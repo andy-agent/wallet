@@ -1,7 +1,9 @@
 package com.v2ray.ang.composeui.pages.wallet
 
-import androidx.compose.foundation.background
 import android.app.Application
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,40 +12,37 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.NorthEast
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
@@ -149,7 +148,6 @@ class SendPageViewModel(application: Application) : AndroidViewModel(application
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SendPage(
     viewModel: SendPageViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
@@ -163,6 +161,7 @@ fun SendPage(
     val amount by viewModel.amount.collectAsState()
     val selectedAsset by viewModel.selectedAsset.collectAsState()
     val balance by viewModel.balance.collectAsState()
+    val clipboardManager = LocalClipboardManager.current
 
     LaunchedEffect(symbol) {
         viewModel.onAssetSelected(symbol)
@@ -175,17 +174,17 @@ fun SendPage(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Send ${selectedAsset.uppercase()}") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
+        containerColor = Color.Transparent,
+        bottomBar = {
+            WalletPrimaryButton(
+                label = if (state is SendPageState.Validating) "验证中..." else "下一步",
+                onClick = { viewModel.validateAndContinue() },
+                enabled = state !is SendPageState.Validating,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = WalletPagePadding, vertical = 16.dp),
+                icon = Icons.Default.NorthEast,
             )
         },
     ) { paddingValues ->
@@ -196,6 +195,7 @@ fun SendPage(
                 amount = amount,
                 selectedAsset = selectedAsset,
                 balance = balance,
+                onNavigateBack = onNavigateBack,
                 onRecipientAddressChange = {
                     viewModel.onRecipientAddressChange(it)
                     viewModel.clearError()
@@ -204,10 +204,16 @@ fun SendPage(
                     viewModel.onAmountChange(it)
                     viewModel.clearError()
                 },
-                onAssetSelected = { viewModel.onAssetSelected(it) },
-                onSetMaxAmount = { viewModel.setMaxAmount() },
-                onContinue = { viewModel.validateAndContinue() },
+                onAssetSelected = viewModel::onAssetSelected,
+                onSetMaxAmount = viewModel::setMaxAmount,
                 onScanQR = onScanQR,
+                onPaste = {
+                    val clipboardText = clipboardManager.getText()?.text.orEmpty()
+                    if (clipboardText.isNotBlank()) {
+                        viewModel.onRecipientAddressChange(clipboardText)
+                        viewModel.clearError()
+                    }
+                },
             )
         }
     }
@@ -220,183 +226,181 @@ private fun SendPageContent(
     amount: String,
     selectedAsset: String,
     balance: String,
+    onNavigateBack: () -> Unit,
     onRecipientAddressChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
     onAssetSelected: (String) -> Unit,
     onSetMaxAmount: () -> Unit,
-    onContinue: () -> Unit,
     onScanQR: () -> Unit,
+    onPaste: () -> Unit,
 ) {
-    val assets = listOf("USDT", "ETH", "SOL", "BNB")
+    val assets = remember { listOf("USDT", "ETH", "SOL", "BNB") }
+    var selectedTab by remember { mutableIntStateOf(0) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(
+            start = WalletPagePadding,
+            end = WalletPagePadding,
+            top = 12.dp,
+            bottom = 18.dp,
+        ),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item {
-            WalletGlassCard(accent = walletAssetAccent(selectedAsset)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        WalletTag(text = "SEND", accent = walletAssetAccent(selectedAsset))
-                        Text(
-                            text = "资产发送起点",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                    WalletTag(text = walletNetworkLabel(selectedAsset), accent = MaterialTheme.colorScheme.secondary)
-                }
+            WalletTopBar(
+                title = "收款地址",
+                onBack = onNavigateBack,
+                trailingIcon = null,
+            )
+        }
 
-                Text(
-                    text = "可用余额 $balance $selectedAsset",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = "保留现有确认页桥接逻辑，只更新表单视觉、步骤感和摘要卡层级。",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        item {
+            WalletInputField(
+                value = recipientAddress,
+                onValueChange = onRecipientAddressChange,
+                placeholder = "请输入接收转账的钱包地址",
+                singleLine = false,
+                minLines = 4,
+                maxLines = 5,
+                isError = state is SendPageState.Error && recipientAddress.isBlank(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
 
-                WalletMetricStrip(
-                    metrics = listOf(
-                        WalletOverviewMetric("资产", selectedAsset),
-                        WalletOverviewMetric("网络", walletNetworkLabel(selectedAsset)),
-                        WalletOverviewMetric("桥接", "兼容"),
-                    ),
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                WalletAssistPillButton(
+                    label = "扫一扫",
+                    icon = Icons.Default.QrCodeScanner,
+                    onClick = onScanQR,
+                    modifier = Modifier.weight(1f),
+                )
+                WalletAssistPillButton(
+                    label = "粘贴",
+                    icon = Icons.Default.ContentPaste,
+                    onClick = onPaste,
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
 
         item {
-            WalletSectionHeading(
-                title = "选择资产",
-                subtitle = "快速切换主资产，保留余额取值与发送流程入口。",
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                SendTab(
+                    label = "我的钱包",
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                )
+                SendTab(
+                    label = "地址本",
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                )
+            }
         }
 
         item {
-            WalletGlassCard(accent = MaterialTheme.colorScheme.secondary) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            WalletGlassCard(contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(84.dp)
+                                .background(WalletSurfaceStrong, shape = CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Wallet,
+                                contentDescription = null,
+                                tint = WalletTextTertiary,
+                                modifier = Modifier.size(42.dp),
+                            )
+                        }
+                        Text(
+                            text = if (selectedTab == 0) "暂无其他钱包" else "地址本为空",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = WalletTextPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = if (selectedTab == 0) {
+                                "当前只保留手动输入地址入口，现有发送校验和跳转链路保持不变。"
+                            } else {
+                                "后续地址本数据接入后，这里会直接承接同一转账确认流程。"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = WalletTextSecondary,
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            WalletGlassCard(accent = walletAssetAccent(selectedAsset)) {
+                Text(
+                    text = "发送金额",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = WalletTextPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
                     assets.forEach { asset ->
-                        AssetFilterChip(
+                        SendAssetChip(
                             asset = asset,
                             selected = asset == selectedAsset,
                             onSelected = { onAssetSelected(asset) },
                         )
                     }
                 }
-            }
-        }
-
-        item {
-            WalletSectionHeading(
-                title = "发送信息",
-                subtitle = "地址与金额仍按现有校验规则处理，错误态只调整为新的卡片样式。",
-            )
-        }
-
-        item {
-            WalletGlassCard(accent = walletAssetAccent(selectedAsset)) {
-                OutlinedTextField(
-                    value = recipientAddress,
-                    onValueChange = onRecipientAddressChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("收款地址") },
-                    placeholder = { Text("请输入或粘贴链上地址") },
-                    singleLine = true,
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Wallet,
-                            contentDescription = "Recipient address",
-                        )
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = onScanQR) {
-                            Icon(
-                                imageVector = Icons.Default.QrCodeScanner,
-                                contentDescription = "Scan QR",
-                            )
-                        }
-                    },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next,
-                    ),
-                    isError = state is SendPageState.Error && recipientAddress.isBlank(),
-                )
-
-                OutlinedTextField(
+                WalletInputField(
                     value = amount,
                     onValueChange = onAmountChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("发送金额") },
-                    placeholder = { Text("0.00") },
-                    singleLine = true,
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.NorthEast,
-                            contentDescription = "Amount",
-                        )
-                    },
-                    trailingIcon = {
-                        WalletSecondaryButton(label = "MAX", onClick = onSetMaxAmount)
-                    },
+                    placeholder = "0.00",
+                    leadingIcon = Icons.Default.NorthEast,
+                    isError = state is SendPageState.Error && amount.isBlank(),
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                         keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Done,
                     ),
-                    isError = state is SendPageState.Error && amount.isBlank(),
+                    trailingContent = {
+                        Text(
+                            text = "MAX",
+                            modifier = Modifier.clickable(onClick = onSetMaxAmount),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = WalletAccent,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    },
                 )
-
+                WalletInfoRow(label = "可用余额", value = "$balance $selectedAsset")
+                WalletInfoRow(label = "网络", value = walletNetworkLabel(selectedAsset))
+                WalletInfoRow(label = "手续费", value = "链上确认")
                 if (state is SendPageState.Error) {
                     Text(
                         text = state.message,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
+                        color = WalletDanger,
                     )
                 }
             }
-        }
-
-        item {
-            WalletSectionHeading(
-                title = "发送摘要",
-                subtitle = "进入下一步前先确认资产、余额与桥接状态。",
-            )
-        }
-
-        item {
-            WalletGlassCard(accent = MaterialTheme.colorScheme.tertiary) {
-                WalletMetricStrip(
-                    metrics = listOf(
-                        WalletOverviewMetric("数量", amount.ifBlank { "--" }),
-                        WalletOverviewMetric("余额", balance),
-                        WalletOverviewMetric("手续费", "链上确认"),
-                    ),
-                )
-                Text(
-                    text = "确认后会继续进入现有 WalletPaymentConfirmPage2 起点，不改变后续业务流程。",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        item {
-            WalletPrimaryButton(
-                label = "下一步",
-                onClick = onContinue,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-            )
         }
 
         if (state is SendPageState.Validating) {
@@ -405,7 +409,7 @@ private fun SendPageContent(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = WalletAccent)
                 }
             }
         }
@@ -413,43 +417,49 @@ private fun SendPageContent(
 }
 
 @Composable
-private fun AssetFilterChip(
+private fun SendTab(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Text(
+        text = label,
+        modifier = Modifier.clickable(onClick = onClick),
+        style = MaterialTheme.typography.titleMedium,
+        color = if (selected) WalletTextPrimary else WalletTextTertiary,
+        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+    )
+}
+
+@Composable
+private fun SendAssetChip(
     asset: String,
     selected: Boolean,
     onSelected: () -> Unit,
 ) {
-    FilterChip(
-        selected = selected,
-        onClick = onSelected,
-        label = {
-            Text(
-                text = asset,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+    Row(
+        modifier = Modifier
+            .background(
+                color = if (selected) walletAssetAccent(asset).copy(alpha = 0.18f) else WalletSurfaceStrong,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(999.dp),
             )
-        },
-        leadingIcon = {
-            Box(
-                modifier = Modifier
-                    .size(18.dp)
-                    .clip(CircleShape)
-                    .padding(1.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape)
-                        .background(walletAssetAccent(asset)),
-                )
-            }
-        },
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = walletAssetAccent(asset).copy(alpha = 0.18f),
-            selectedLabelColor = MaterialTheme.colorScheme.onSurface,
-            selectedLeadingIconColor = walletAssetAccent(asset),
-            containerColor = MaterialTheme.colorScheme.surface,
-            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
-    )
+            .clickable(onClick = onSelected)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .background(walletAssetAccent(asset), shape = CircleShape),
+        )
+        Text(
+            text = asset,
+            style = MaterialTheme.typography.titleSmall,
+            color = if (selected) WalletTextPrimary else WalletTextSecondary,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+        )
+    }
 }
 
 @Preview(showBackground = true)

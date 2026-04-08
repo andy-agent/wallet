@@ -4,34 +4,31 @@ import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material.icons.filled.Redeem
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -125,7 +122,6 @@ fun generateReceiveQRCode(content: String, size: Int = 512): Bitmap? {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReceivePage(
     viewModel: ReceivePageViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
@@ -143,33 +139,28 @@ fun ReceivePage(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = when (val currentState = state) {
-                            is ReceivePageState.Loaded -> "Receive ${currentState.symbol}"
-                            else -> "Receive"
-                        },
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-            )
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        bottomBar = {
+            if (state is ReceivePageState.Loaded) {
+                WalletPrimaryButton(
+                    label = "分享给 TA",
+                    onClick = {},
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = WalletPagePadding, vertical = 16.dp),
+                    icon = Icons.Default.Share,
+                )
+            }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
         WalletPageBackdrop(modifier = Modifier.padding(paddingValues)) {
             when (val currentState = state) {
                 is ReceivePageState.Loaded -> ReceivePageContent(
                     symbol = currentState.symbol,
                     walletAddress = currentState.walletAddress,
+                    onNavigateBack = onNavigateBack,
                     onCopy = {
                         clipboardManager.setText(AnnotatedString(currentState.walletAddress))
                         viewModel.onAddressCopied(currentState.walletAddress)
@@ -182,7 +173,7 @@ fun ReceivePage(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = WalletAccent)
                 }
             }
         }
@@ -193,129 +184,145 @@ fun ReceivePage(
 private fun ReceivePageContent(
     symbol: String,
     walletAddress: String,
+    onNavigateBack: () -> Unit,
     onCopy: () -> Unit,
 ) {
     val qrBitmap = remember(walletAddress) { generateReceiveQRCode(walletAddress) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 18.dp),
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = WalletPagePadding,
+            end = WalletPagePadding,
+            top = 12.dp,
+            bottom = 18.dp,
+        ),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        WalletGlassCard(accent = walletAssetAccent(symbol)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    WalletTag(text = "RECEIVE", accent = walletAssetAccent(symbol))
-                    Text(
-                        text = "扫码向我付款",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-                WalletTag(text = walletNetworkLabel(symbol), accent = MaterialTheme.colorScheme.secondary)
+        item {
+            WalletCloseBar(onClose = onNavigateBack)
+        }
+
+        item {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                WalletTokenBadge(symbol = symbol, modifier = Modifier.size(78.dp))
             }
+        }
 
-            Text(
-                text = "Bitget 风格二维码入口，继续复用当前地址生成与复制行为。",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        item {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = "$symbol 收款",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = WalletTextPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
 
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
+        item {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = "仅支持接收 ${walletNetworkLabel(symbol)} 网络资产",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = WalletTextSecondary,
+                )
+            }
+        }
+
+        item {
+            WalletGlassCard(
+                accent = walletAssetAccent(symbol),
+                contentPadding = PaddingValues(22.dp),
             ) {
-                WalletGlassCard(
-                    modifier = Modifier.width(260.dp),
-                    accent = MaterialTheme.colorScheme.secondary,
-                    contentPadding = PaddingValues(20.dp),
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(292.dp)
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(28.dp))
+                            .background(androidx.compose.ui.graphics.Color.White),
+                            contentAlignment = Alignment.Center,
                     ) {
                         if (qrBitmap != null) {
                             Image(
                                 bitmap = qrBitmap.asImageBitmap(),
                                 contentDescription = "Receive QR Code",
-                                modifier = Modifier
-                                    .size(220.dp)
-                                    .clip(RoundedCornerShape(22.dp)),
+                                modifier = Modifier.size(252.dp),
                             )
                         } else {
-                            Icon(
+                            androidx.compose.material3.Icon(
                                 imageVector = Icons.Default.QrCode2,
                                 contentDescription = "QRCode placeholder",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(120.dp),
+                                tint = WalletTextTertiary,
+                                modifier = Modifier.size(140.dp),
                             )
                         }
                     }
                 }
             }
-
-            WalletMetricStrip(
-                metrics = listOf(
-                    WalletOverviewMetric("资产", symbol),
-                    WalletOverviewMetric("网络", walletNetworkLabel(symbol)),
-                    WalletOverviewMetric("状态", "Ready"),
-                ),
-            )
         }
 
-        WalletSectionHeading(
-            title = "地址信息",
-            subtitle = "复制地址或分享链接仍保持兼容，占位能力不变。",
-        )
-
-        WalletGlassCard(accent = MaterialTheme.colorScheme.secondary) {
-            Text(
-                text = walletAddress,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = "请确认转入链路与网络一致，错误网络资产不会自动退回。",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                WalletPrimaryButton(
-                    label = "复制地址",
-                    onClick = onCopy,
-                    modifier = Modifier.weight(1f),
+        item {
+            WalletGlassCard(contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp)) {
+                Text(
+                    text = "收款地址",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = WalletTextPrimary,
+                    fontWeight = FontWeight.SemiBold,
                 )
-                WalletSecondaryButton(
-                    label = "分享",
-                    onClick = {},
-                    modifier = Modifier.weight(1f),
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = walletAddress,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = WalletTextSecondary,
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(46.dp)
+                            .background(WalletSurfaceStrong, shape = androidx.compose.foundation.shape.CircleShape)
+                            .clickable(onClick = onCopy),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        androidx.compose.material3.Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "copy address",
+                            tint = WalletTextPrimary,
+                        )
+                    }
+                }
             }
         }
 
-        WalletGlassCard(accent = MaterialTheme.colorScheme.primary) {
-            WalletSectionHeading(
-                title = "收款提示",
-                subtitle = "沿用原有 placeholder 逻辑，只增强视觉分层与重点提醒。",
-            )
-            WalletMetricStrip(
-                metrics = listOf(
-                    WalletOverviewMetric("最小金额", "0.001 $symbol"),
-                    WalletOverviewMetric("到账方式", "链上确认"),
-                    WalletOverviewMetric("桥接", "兼容"),
-                ),
-            )
-            Text(
-                text = "若对方需要文字地址，请直接使用复制按钮；二维码与地址对应同一账户。",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Start,
-            )
+        item {
+            WalletGlassCard(
+                accent = WalletAccent,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = Icons.Default.Redeem,
+                        contentDescription = null,
+                        tint = WalletAccent,
+                    )
+                    Text(
+                        text = "${walletNetworkLabel(symbol)} 链转账，享每日 3 笔免 Gas 福利！",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WalletTextPrimary,
+                        textAlign = TextAlign.Start,
+                    )
+                }
+            }
         }
     }
 }
@@ -325,19 +332,20 @@ private fun ReceiveErrorView(message: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
+            .padding(WalletPagePadding),
         contentAlignment = Alignment.Center,
     ) {
-        WalletGlassCard(accent = MaterialTheme.colorScheme.error) {
+        WalletGlassCard(accent = WalletDanger) {
             Text(
                 text = "收款页不可用",
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = WalletTextPrimary,
+                fontWeight = FontWeight.SemiBold,
             )
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
+                color = WalletDanger,
             )
         }
     }
