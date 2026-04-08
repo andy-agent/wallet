@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-08T13:15:16Z
+Generated: 2026-04-08T13:25:48Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-rcb.20
-- next_task_title: 验收正式拓扑下的支付与开通链路
+- next_task_id: liaojiang-rcb.27.1
+- next_task_title: 盘点 Market 真实功能与分类语义偏差
 
 ## Counters
-- in_progress: 2
-- ready: 0
-- open: 3
+- in_progress: 6
+- ready: 2
+- open: 9
 - closed: 224
-- dirty: 3
+- dirty: 2
 
 ## Next Milestone
 - Continue the next task and complete one milestone
