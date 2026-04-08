@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-08T10:15:17Z
+Generated: 2026-04-08T10:45:59Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-4j0.22.13.4
-- next_task_title: 验收 Market 行情页像素级修正
+- next_task_id: liaojiang-rcb
+- next_task_title: 二期：链侧钱包服务独立化与多子域扩展
 
 ## Counters
-- in_progress: 9
-- ready: 2
-- open: 14
-- closed: 178
-- dirty: 122
+- in_progress: 1
+- ready: 0
+- open: 1
+- closed: 193
+- dirty: 3
 
 ## Next Milestone
 - Continue the next task and complete one milestone

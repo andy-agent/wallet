@@ -1,26 +1,21 @@
 {
-  "generated_at": "2026-04-08T10:08:00Z",
+  "generated_at": "2026-04-08T07:05:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-4j0.22.13",
-  "accepted_task_id": "liaojiang-4j0.22.11",
-  "next_task_id": "liaojiang-4j0.22.13.1",
-  "active_worker_task_ids": [
-    "liaojiang-4j0.22.13.1"
-  ],
-  "blockers": [],
-  "workers": [
+  "active_task_id": null,
+  "accepted_task_id": "liaojiang-4j0.22.6.4",
+  "next_task_id": null,
+  "active_worker_task_ids": [],
+  "blockers": [
     {
-      "task_id": "liaojiang-4j0.22.13.1",
-      "role": "explorer",
-      "status": "running",
-      "agent_id": "019d6c87-9dc4-76c2-b2ad-d217be23ee69",
-      "workspace": "native child agent forked workspace",
-      "task_worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-4j0-22-13-codex"
+      "task_id": "liaojiang-4j0.22",
+      "type": "feature",
+      "blocked_by": "only remaining open dependency is sibling issue liaojiang-4j0.22.13, which this thread must not handle"
     }
   ],
+  "workers": [],
   "mainline": {
     "feature_id": "liaojiang-4j0",
-    "phase_id": "liaojiang-4j0.22.13",
-    "policy": "Market page must converge to Bitget 1:1 visual structure before real-device visual regression can pass"
+    "phase_id": null,
+    "policy": "Android real-environment mainline is accepted. No ready BD work remains; next long-running feature is liaojiang-rcb."
   }
 }

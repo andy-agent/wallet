@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-04-08T10:15:17Z",
+  "generated_at": "2026-04-08T07:05:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "next_task_id": "liaojiang-4j0.22.13.4",
-  "next_task_title": "验收 Market 行情页像素级修正",
-  "in_progress_count": 9,
-  "ready_count": 2,
-  "open_count": 14,
-  "closed_count": 178,
-  "dirty_count": 122,
+  "next_task_id": null,
+  "next_task_title": null,
+  "in_progress_count": 1,
+  "ready_count": 0,
+  "open_count": 1,
+  "closed_count": 193,
+  "dirty_count": 3,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
@@ -21,8 +21,10 @@
   "auto_created_task_id": null,
   "dispatch": {
     "requested": true,
-    "mode": "simulate",
+    "mode": "blocked",
     "dispatched_count": 0,
-    "max_workers": 3
-  }
+    "max_workers": 4
+  },
+  "accepted_task_id": "liaojiang-4j0.22.6.4",
+  "active_workers": []
 }
