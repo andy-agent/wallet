@@ -151,7 +151,12 @@ fun PlansPage(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .navigationBarsPadding()
-                                .padding(horizontal = VpnPageHorizontalPadding, vertical = 16.dp),
+                                .padding(
+                                    start = VpnPageHorizontalPadding,
+                                    end = VpnPageHorizontalPadding,
+                                    top = 16.dp,
+                                    bottom = 28.dp,
+                                ),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
@@ -233,6 +238,14 @@ fun PlansPage(
                                         onCheckoutClick = { proceedToCheckout(plan.id) },
                                     )
                                 }
+                            }
+                        }
+                        selectedPlan?.let { plan ->
+                            item {
+                                SelectedPlanCheckoutStrip(
+                                    plan = plan,
+                                    onCheckoutClick = { proceedToCheckout(plan.id) },
+                                )
                             }
                         }
                         selectedPlan?.let { plan ->
@@ -372,6 +385,36 @@ private fun FeaturedPlanTile(
             text = plan.duration,
             style = MaterialTheme.typography.bodySmall,
             color = TextSecondary,
+        )
+        VpnPrimaryButton(
+            text = "继续下单",
+            onClick = onCheckoutClick,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun SelectedPlanCheckoutStrip(
+    plan: PlanInfo,
+    onCheckoutClick: () -> Unit,
+) {
+    VpnGlassCard(accent = VpnAccent) {
+        Text(
+            text = "已选套餐",
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary,
+        )
+        Text(
+            text = plan.name,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary,
+        )
+        Text(
+            text = "${plan.price} · ${plan.duration}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = VpnAccent,
         )
         VpnPrimaryButton(
             text = "继续下单",
