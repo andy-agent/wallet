@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-04-08T07:05:00Z",
+  "generated_at": "2026-04-08T11:18:09Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "next_task_id": null,
-  "next_task_title": null,
-  "in_progress_count": 1,
+  "next_task_id": "liaojiang-4j0.22.13.8",
+  "next_task_title": "实现主后端 Market 真实读接口",
+  "in_progress_count": 6,
   "ready_count": 0,
-  "open_count": 1,
-  "closed_count": 193,
+  "open_count": 9,
+  "closed_count": 201,
   "dirty_count": 3,
   "milestone_reached": false,
   "write_human_docs": false,
@@ -21,10 +21,8 @@
   "auto_created_task_id": null,
   "dispatch": {
     "requested": true,
-    "mode": "blocked",
+    "mode": "simulate",
     "dispatched_count": 0,
-    "max_workers": 4
-  },
-  "accepted_task_id": "liaojiang-4j0.22.6.4",
-  "active_workers": []
+    "max_workers": 3
+  }
 }

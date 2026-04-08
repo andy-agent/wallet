@@ -1,17 +1,17 @@
 # Recovery Context
 
-Generated: 2026-04-08T10:45:59Z
+Generated: 2026-04-08T11:18:09Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-rcb
-- next_task_title: 二期：链侧钱包服务独立化与多子域扩展
+- next_task_id: liaojiang-4j0.22.13.8
+- next_task_title: 实现主后端 Market 真实读接口
 
 ## Counters
-- in_progress: 1
+- in_progress: 6
 - ready: 0
-- open: 1
-- closed: 193
+- open: 9
+- closed: 201
 - dirty: 3
 
 ## Next Milestone
