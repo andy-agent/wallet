@@ -13,6 +13,7 @@
 - `compose-integration-notes.md`: Android / Compose 接入建议
 - `app-ui-gap-audit.md`: Android APP 功能盘点与 UI 缺口审计
 - `p0-adoption-decision.md`: ZIP 与旧版 `/UI` 的采用结论
+- `master-pack-gap-audit.md`: P0/P1/P2 增量包的覆盖与缺口审计
 
 ## 页面范围
 
