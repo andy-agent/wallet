@@ -158,7 +158,7 @@ fun RegionSelectionPage(
             ) {
                 item {
                     VpnCenterTopBar(
-                        title = "选择区域",
+                        title = "路由区域控制",
                         onBack = onNavigateBack,
                         backIcon = Icons.Default.Close,
                     )
@@ -184,7 +184,7 @@ fun RegionSelectionPage(
                         item {
                             VpnLoadingPanel(
                                 title = "正在加载节点列表",
-                                subtitle = "保留 RegionSelectionProvider，只替换为单选列表语法。",
+                                subtitle = "同步节点延迟、负载与可用线路。",
                             )
                         }
                     }
@@ -217,7 +217,7 @@ fun RegionSelectionPage(
                             item {
                                 VpnEmptyPanel(
                                     title = "没有匹配的区域",
-                                    subtitle = "换一个关键词，或清空搜索恢复完整节点列表。",
+                                    subtitle = "请更换关键词，或清空搜索恢复完整路由列表。",
                                 )
                             }
                         }

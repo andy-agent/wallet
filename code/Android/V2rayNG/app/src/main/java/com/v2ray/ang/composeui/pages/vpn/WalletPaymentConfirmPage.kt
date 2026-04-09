@@ -142,24 +142,24 @@ fun WalletPaymentConfirmPage(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 VpnCenterTopBar(
-                    title = "钱包支付",
+                    title = "钱包结算授权",
                     onBack = onNavigateBack,
                 )
                 VpnGlassCard {
                     Text(
-                        text = "订单背景页",
+                        text = "结算背景",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                     )
                     Text(
-                        text = "VPN 套餐支付",
+                        text = "VPN 订阅结算",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary,
                     )
                     VpnLabelValueRow(label = "订单号", value = orderId.ifBlank { "Unknown" })
                     VpnLabelValueRow(label = "支付金额", value = amount, valueColor = VpnAccent)
-                    VpnLabelValueRow(label = "支付方式", value = "Wallet Balance")
+                    VpnLabelValueRow(label = "结算轨道", value = "Wallet Balance")
                 }
             }
 
@@ -173,13 +173,13 @@ fun WalletPaymentConfirmPage(
                 modifier = Modifier.align(Alignment.BottomCenter),
             ) {
                 Text(
-                    text = "提示",
+                    text = "授权确认",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
                 )
                 Text(
-                    text = "授权查看订单支付状态，并在校验成功后跳转结果页。",
+                    text = "授权查看订单结算状态，并在校验成功后跳转结果页。",
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary,
                 )
@@ -202,7 +202,7 @@ fun WalletPaymentConfirmPage(
                     }
                     Column {
                         Text(
-                            text = "钱包确认",
+                            text = "钱包授权",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = TextPrimary,
@@ -294,7 +294,7 @@ fun WalletPaymentConfirmPage(
                                     strokeWidth = 2.dp,
                                 )
                                 Text(
-                                    text = "确认中",
+                                    text = "校验中",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color(0xFF041012),
@@ -303,7 +303,7 @@ fun WalletPaymentConfirmPage(
                         }
                     } else {
                         VpnPrimaryButton(
-                            text = "确认",
+                            text = "确认授权",
                             onClick = { viewModel.confirmPayment(orderId) },
                             modifier = Modifier.weight(1f),
                         )

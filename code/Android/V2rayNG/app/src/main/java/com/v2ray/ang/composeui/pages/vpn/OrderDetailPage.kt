@@ -33,7 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
-import com.v2ray.ang.composeui.theme.Error as AppError
+import com.v2ray.ang.composeui.theme.AuditState
+import com.v2ray.ang.composeui.theme.ControlPlaneTokens
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.model.Order
@@ -211,7 +212,7 @@ fun OrderDetailPage(
                 item {
                     VpnTopChrome(
                         title = "订单 ${orderId.takeTrailing(6)}",
-                        subtitle = "VPN package order detail",
+                        subtitle = "结算与交付控制详情",
                         onBack = onNavigateBack,
                     )
                 }
@@ -229,7 +230,7 @@ fun OrderDetailPage(
                         item {
                             VpnLoadingPanel(
                                 title = "正在同步订单详情",
-                                subtitle = "通过既有 refreshOrder 获取支付与激活状态。",
+                                subtitle = "通过既有 refreshOrder 获取结算与激活状态。",
                             )
                         }
                     }
@@ -292,7 +293,7 @@ fun OrderDetailPage(
                         item {
                             VpnGlassCard {
                                 Text(
-                                    text = "套餐信息",
+                                    text = "订阅档位信息",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = TextPrimary,
@@ -307,7 +308,7 @@ fun OrderDetailPage(
                             val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                             VpnGlassCard {
                                 Text(
-                                    text = "订单信息",
+                                    text = "审计时间线",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = TextPrimary,
@@ -354,11 +355,11 @@ private fun DetailOrderStatus.title(): String {
 
 private fun DetailOrderStatus.accent(): Color {
     return when (this) {
-        DetailOrderStatus.PENDING -> Color(0xFFFFB14A)
-        DetailOrderStatus.PAID -> VpnAccent
-        DetailOrderStatus.COMPLETED -> VpnAccent
-        DetailOrderStatus.CANCELLED -> Color(0xFF93A0A4)
-        DetailOrderStatus.REFUNDED -> AppError
+        DetailOrderStatus.PENDING -> ControlPlaneTokens.audit(AuditState.Warn).accent
+        DetailOrderStatus.PAID -> ControlPlaneTokens.audit(AuditState.Ok).accent
+        DetailOrderStatus.COMPLETED -> ControlPlaneTokens.audit(AuditState.Ok).accent
+        DetailOrderStatus.CANCELLED -> ControlPlaneTokens.audit(AuditState.Unknown).accent
+        DetailOrderStatus.REFUNDED -> ControlPlaneTokens.audit(AuditState.Critical).accent
     }
 }
 

@@ -215,7 +215,7 @@ fun OrderCheckoutPage(
                 }
                 item {
                     VpnWarningStrip(
-                        text = "该订单用于展示 VPN 套餐收银台，支付轨道可切换，但订单与支付桥接保持原样。",
+                        text = "当前订单使用统一结算控制面，支付轨道可切换，订单与支付桥接保持原样。",
                     )
                 }
 
@@ -226,7 +226,7 @@ fun OrderCheckoutPage(
                         item {
                             VpnLoadingPanel(
                                 title = "正在创建订单",
-                                subtitle = "拉起现有 createOrder 并同步支付轨道。",
+                                subtitle = "正在同步结算轨道、订单快照与支付状态。",
                             )
                         }
                     }
@@ -275,7 +275,7 @@ fun OrderCheckoutPage(
                         item {
                             VpnGlassCard {
                                 Text(
-                                    text = "订单摘要",
+                                    text = "结算快照",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = TextPrimary,
@@ -340,7 +340,11 @@ private fun SwapPaymentCard(state: OrderCheckoutState.Loaded) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = if (state.selectedPaymentMethod == PaymentMethod.WALLET) "$railLabel · 快速确认" else "$railLabel · 扫码转账",
+            text = if (state.selectedPaymentMethod == PaymentMethod.WALLET) {
+                "$railLabel · 快速确认"
+            } else {
+                "$railLabel · 扫码转账"
+            },
             style = MaterialTheme.typography.bodySmall,
             color = TextSecondary,
         )
@@ -404,13 +408,13 @@ private fun SwapPlanCard(state: OrderCheckoutState.Loaded) {
 private fun WalletRailDetail(state: OrderCheckoutState.Loaded) {
     VpnGlassCard {
         Text(
-            text = "钱包确认",
+            text = "钱包结算轨道",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = TextPrimary,
         )
         Text(
-            text = "下一步进入钱包确认页，沿用现有 refreshOrder 成功/失败回桥。",
+            text = "下一步进入钱包授权校验，沿用现有 refreshOrder 成功/失败回桥。",
             style = MaterialTheme.typography.bodySmall,
             color = TextSecondary,
         )
@@ -421,7 +425,7 @@ private fun WalletRailDetail(state: OrderCheckoutState.Loaded) {
             VpnMetricPill(
                 modifier = Modifier.weight(1f),
                 label = "支付轨道",
-                value = "Wallet",
+                value = "Wallet / Internal",
             )
             VpnMetricPill(
                 modifier = Modifier.weight(1f),
@@ -439,7 +443,7 @@ private fun CryptoRailDetail(state: OrderCheckoutState.Loaded) {
     }
     VpnGlassCard {
         Text(
-            text = "链上收款地址",
+            text = "链上结算地址",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = TextPrimary,

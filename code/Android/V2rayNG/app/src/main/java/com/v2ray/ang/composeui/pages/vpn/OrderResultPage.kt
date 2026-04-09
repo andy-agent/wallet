@@ -33,7 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
-import com.v2ray.ang.composeui.theme.Error as AppError
+import com.v2ray.ang.composeui.theme.AuditState
+import com.v2ray.ang.composeui.theme.ControlPlaneTokens
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
 import com.v2ray.ang.payment.PaymentConfig
@@ -98,9 +99,9 @@ class OrderResultViewModel(application: Application) : AndroidViewModel(applicat
         txHash: String? = null,
     ): OrderResultState.Loaded {
         val message = when (resultType) {
-            OrderResultType.SUCCESS -> "支付成功，套餐已准备激活。"
-            OrderResultType.FAILED -> "支付失败，请重试或联系客服。"
-            OrderResultType.PENDING -> "订单处理中，请稍后查看最终结果。"
+            OrderResultType.SUCCESS -> "结算通过，订阅已进入交付队列。"
+            OrderResultType.FAILED -> "结算失败，请重试或提交人工复核。"
+            OrderResultType.PENDING -> "结算处理中，请稍后查看最终审计状态。"
         }
         return OrderResultState.Loaded(resultType, orderId, amount, message, txHash)
     }
@@ -134,17 +135,17 @@ fun OrderResultPage(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 VpnCenterTopBar(
-                    title = "支付结果",
+                    title = "结算结果",
                     onBack = onNavigateToHome,
                 )
                 VpnGlassCard {
                     Text(
-                        text = "订单背景页",
+                        text = "结算背景",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                     )
                     Text(
-                        text = "VPN 套餐支付结果",
+                        text = "VPN 订阅结算结果",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary,
@@ -279,9 +280,9 @@ private fun OrderResultType.title(): String {
 
 private fun OrderResultType.accent(): Color {
     return when (this) {
-        OrderResultType.SUCCESS -> VpnAccent
-        OrderResultType.FAILED -> AppError
-        OrderResultType.PENDING -> Color(0xFFFFB14A)
+        OrderResultType.SUCCESS -> ControlPlaneTokens.audit(AuditState.Ok).accent
+        OrderResultType.FAILED -> ControlPlaneTokens.audit(AuditState.Critical).accent
+        OrderResultType.PENDING -> ControlPlaneTokens.audit(AuditState.Warn).accent
     }
 }
 
