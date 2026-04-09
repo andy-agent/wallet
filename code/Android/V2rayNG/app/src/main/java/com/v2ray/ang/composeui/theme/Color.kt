@@ -2,57 +2,59 @@ package com.v2ray.ang.composeui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Background Colors
-val BackgroundDeepest = Color(0xFF202728)
-val BackgroundPrimary = Color(0xFFF7F4EE)
-val BackgroundSecondary = Color(0xFFFCFAF6)
-val BackgroundTertiary = Color(0xFFF1EDE5)
-val BackgroundOverlay = Color(0xFFFFFDF9)
+// White-base financial control plane colors
+val BackgroundDeepest = ControlPlaneTokens.Ink
+val BackgroundPrimary = ControlPlaneTokens.layer(ControlPlaneLayer.Level0).container
+val BackgroundSecondary = ControlPlaneTokens.layer(ControlPlaneLayer.Level1).container
+val BackgroundTertiary = ControlPlaneTokens.layer(ControlPlaneLayer.Level2).container
+val BackgroundOverlay = ControlPlaneTokens.layer(ControlPlaneLayer.Level3).container
 
-// Brand Colors
-val Primary = Color(0xFF5E9C96)
-val PrimaryHover = Color(0xFF73ACA5)
-val PrimaryDisabled = Color(0x665E9C96)
-val PrimaryContainerTint = Color(0x1A5E9C96)
+// Primary system semantics
+val Primary = ControlPlaneTokens.Infra.accent
+val PrimaryHover = Color(0xFF4F6D91)
+val PrimaryDisabled = Primary.copy(alpha = 0.36f)
+val PrimaryContainerTint = ControlPlaneTokens.Infra.container
 
-// Functional Colors
-val Success = Color(0xFF4E9B74)
-val Warning = Color(0xFFD39A57)
-val Error = Color(0xFFCB6D78)
-val Info = Color(0xFF7CA7AF)
+// Functional colors aligned to explicit audit semantics
+val Success = ControlPlaneTokens.Settlement.accent
+val Warning = ControlPlaneTokens.Warning.accent
+val Error = ControlPlaneTokens.Critical.accent
+val Info = ControlPlaneTokens.Infra.accent
 
-// VPN Status Colors
+// VPN status colors
 val VPNConnected = Success
 val VPNConnecting = Info
-val VPNDisconnected = Color(0xFF7F8887)
+val VPNDisconnected = ControlPlaneTokens.Neutral.accent
 
-// Text Colors
-val TextPrimary = Color(0xFF243033)
-val TextSecondary = Color(0xFF677272)
-val TextTertiary = Color(0xFF8C9594)
-val TextDisabled = Color(0xFFB4BCBB)
+// Text colors
+val TextPrimary = ControlPlaneTokens.Ink
+val TextSecondary = ControlPlaneTokens.InkSecondary
+val TextTertiary = ControlPlaneTokens.InkTertiary
+val TextDisabled = ControlPlaneTokens.InkDisabled
 
-// Border & Divider Colors
-val BorderDefault = Color(0xFFE3DCD2)
+// Border & divider colors
+val BorderDefault = ControlPlaneTokens.layer(ControlPlaneLayer.Level1).outline
 val BorderFocus = Primary
 val BorderError = Error
-val DividerColor = Color(0xFFEAE3D9)
+val DividerColor = ControlPlaneTokens.layer(ControlPlaneLayer.Level2).outline
 
-// Accent Surfaces
-val AccentSurface = Color(0x145E9C96)
-val AccentSurfaceStrong = Color(0x245E9C96)
-val AccentSurfaceInfo = Color(0x1A7CA7AF)
-val AccentSurfaceWarm = Color(0x22D39A57)
+// Accent surfaces
+val AccentSurface = ControlPlaneTokens.Infra.container
+val AccentSurfaceStrong = Color(0xFFE2ECF7)
+val AccentSurfaceInfo = ControlPlaneTokens.Infra.container
+val AccentSurfaceWarm = ControlPlaneTokens.Warning.container
 
 // Chain Colors
-val SolanaPurple = Color(0xFF9945FF)
+val SolanaPurple = ControlPlaneTokens.Finance.accent
 val TronRed = Color(0xFFFF060A)
 val USDTGreen = Color(0xFF26A17B)
 
-// Glow Colors
-val GlowBlue = Color(0x1E7CA7AF)
-val GlowGreen = Color(0x225E9C96)
-val GlowYellow = Color(0x1ED39A57)
+// Low-alpha emphasis washes used instead of cinematic neon
+val GlowBlue = ControlPlaneTokens.Infra.accent.copy(alpha = ControlPlaneTokens.Motion.maxGlowAlpha)
+val GlowGreen =
+    ControlPlaneTokens.Settlement.accent.copy(alpha = ControlPlaneTokens.Motion.maxGlowAlpha)
+val GlowYellow =
+    ControlPlaneTokens.Warning.accent.copy(alpha = ControlPlaneTokens.Motion.maxGlowAlpha)
 
 // Legacy color aliases for backward compatibility
 val TextPrimaryWhite = TextPrimary
