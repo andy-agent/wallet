@@ -259,7 +259,7 @@ fun PlansPage(
                         item {
                             VpnSectionHeading(
                                 title = "稳定币套餐",
-                                subtitle = "保留统一深色底、大圆角分组卡和亮青 CTA 层级。",
+                                subtitle = "柔和白底分层与更安静的确认节奏。",
                             )
                         }
                         item {
@@ -296,14 +296,25 @@ private fun PlansHeroBanner() {
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color(0xFF0E2940),
-                            Color(0xFF0A202B),
-                            Color(0xFF0B1517),
+                            Color(0xFFFFFCF8),
+                            Color(0xFFF6F0E8),
+                            Color(0xFFF0E8DE),
                         ),
                     ),
                 )
                 .padding(20.dp),
         ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(148.dp)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(VpnAccent.copy(alpha = 0.12f), Color.Transparent),
+                        ),
+                        shape = RoundedCornerShape(40.dp),
+                    ),
+            )
             Column(
                 modifier = Modifier.align(Alignment.TopStart),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -324,8 +335,8 @@ private fun PlansHeroBanner() {
             VpnStatusChip(
                 text = "快速了解套餐权益",
                 modifier = Modifier.align(Alignment.BottomStart),
-                containerColor = Color(0xFF113152),
-                contentColor = VpnAccent,
+                containerColor = VpnSurfaceRaised,
+                contentColor = VpnAccentDeep,
             )
 
             Surface(
@@ -333,14 +344,15 @@ private fun PlansHeroBanner() {
                     .align(Alignment.CenterEnd)
                     .size(108.dp),
                 shape = RoundedCornerShape(30.dp),
-                color = VpnAccent.copy(alpha = 0.14f),
+                color = VpnSurfaceRaised,
+                border = BorderStroke(1.dp, VpnOutline),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     VpnCodeBadge(
                         text = "VPN",
                         modifier = Modifier.size(76.dp),
-                        backgroundColor = VpnAccent.copy(alpha = 0.2f),
-                        contentColor = VpnAccent,
+                        backgroundColor = VpnAccentSoft,
+                        contentColor = VpnAccentDeep,
                     )
                 }
             }
@@ -364,9 +376,9 @@ private fun FeaturedPlanTile(
     ) {
         if (plan.isRecommended) {
             VpnStatusChip(
-                text = "HOT",
+                text = "推荐",
                 containerColor = VpnAccentSoft,
-                contentColor = VpnAccent,
+                contentColor = VpnAccentDeep,
             )
         }
         Text(
@@ -414,7 +426,7 @@ private fun SelectedPlanCheckoutStrip(
         Text(
             text = "${plan.price} · ${plan.duration}",
             style = MaterialTheme.typography.bodyMedium,
-            color = VpnAccent,
+            color = VpnAccentDeep,
         )
         VpnPrimaryButton(
             text = "继续下单",
@@ -436,7 +448,7 @@ private fun SelectedPlanPanel(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                VpnCodeBadge(text = "V", backgroundColor = VpnAccentSoft, contentColor = VpnAccent)
+                VpnCodeBadge(text = "V", backgroundColor = VpnAccentSoft, contentColor = VpnAccentDeep)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = plan.name,
@@ -455,7 +467,7 @@ private fun SelectedPlanPanel(
                 text = plan.price,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = VpnAccent,
+                color = VpnAccentDeep,
             )
         }
         VpnPrimaryButton(
@@ -501,7 +513,7 @@ private fun PlanListRow(
             VpnCodeBadge(
                 text = plan.name.take(1),
                 backgroundColor = if (isSelected) VpnAccentSoft else VpnSurfaceStrong,
-                contentColor = if (isSelected) VpnAccent else TextPrimary,
+                contentColor = if (isSelected) VpnAccentDeep else TextPrimary,
             )
         },
         trailing = {
@@ -523,7 +535,7 @@ private fun PlanListRow(
                 Text(
                     text = plan.duration,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isSelected) VpnAccent else TextSecondary,
+                    color = if (isSelected) VpnAccentDeep else TextSecondary,
                 )
             }
         },

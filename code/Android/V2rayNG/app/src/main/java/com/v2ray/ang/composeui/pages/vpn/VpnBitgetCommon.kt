@@ -64,11 +64,7 @@ import com.v2ray.ang.composeui.theme.BackgroundDeepest
 import com.v2ray.ang.composeui.theme.BackgroundOverlay
 import com.v2ray.ang.composeui.theme.BackgroundPrimary
 import com.v2ray.ang.composeui.theme.BackgroundSecondary
-import com.v2ray.ang.composeui.theme.BackgroundTertiary
-import com.v2ray.ang.composeui.theme.BorderDefault
 import com.v2ray.ang.composeui.theme.Error
-import com.v2ray.ang.composeui.theme.Primary
-import com.v2ray.ang.composeui.theme.Success
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
 import com.v2ray.ang.composeui.theme.TextTertiary
@@ -78,17 +74,23 @@ internal val VpnPageHorizontalPadding = 20.dp
 internal val VpnPageTopPadding = 16.dp
 internal val VpnPageBottomPadding = 132.dp
 
-internal val VpnAccent = Primary
-internal val VpnAccentSoft = VpnAccent.copy(alpha = 0.14f)
-internal val VpnSurface = BackgroundSecondary
-internal val VpnSurfaceStrong = BackgroundOverlay
-internal val VpnSurfaceMuted = BackgroundTertiary
-internal val VpnOutline = BorderDefault
-internal val VpnWarningSurface = Warning.copy(alpha = 0.14f)
-internal val VpnSheetScrim = BackgroundDeepest.copy(alpha = 0.16f)
-internal val VpnPositive = Success
-internal val VpnNegative = Error
-internal val VpnDisabledButton = BackgroundTertiary
+internal val VpnAccent = Color(0xFF6E8B82)
+internal val VpnAccentDeep = Color(0xFF5D766E)
+internal val VpnAccentSoft = VpnAccent.copy(alpha = 0.11f)
+internal val VpnAccentWash = Color(0xFFF4F0E8)
+internal val VpnSurface = Color(0xFFFFFCF8)
+internal val VpnSurfaceStrong = Color(0xFFF6F0E8)
+internal val VpnSurfaceMuted = Color(0xFFF0E8DE)
+internal val VpnSurfaceRaised = Color(0xFFFFFEFC)
+internal val VpnOutline = Color(0xFFE8DED1)
+internal val VpnOutlineStrong = Color(0xFFDCCFC1)
+internal val VpnWarningSurface = Warning.copy(alpha = 0.11f)
+internal val VpnSheetScrim = BackgroundDeepest.copy(alpha = 0.12f)
+internal val VpnPositive = Color(0xFF728A74)
+internal val VpnPending = Color(0xFFBA9467)
+internal val VpnNegative = Color(0xFFB3747B)
+internal val VpnIdle = Color(0xFF87908A)
+internal val VpnDisabledButton = Color(0xFFE7DFD5)
 
 private val VpnCardShape = RoundedCornerShape(28.dp)
 private val VpnRowShape = RoundedCornerShape(20.dp)
@@ -123,8 +125,8 @@ fun VpnBitgetBackground(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
+                        Color(0xFFFFFEFC),
                         BackgroundOverlay,
-                        BackgroundSecondary,
                         BackgroundPrimary,
                     ),
                 ),
@@ -135,9 +137,20 @@ fun VpnBitgetBackground(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(VpnAccent.copy(alpha = 0.06f), Color.Transparent),
-                        center = Offset(600f, 260f),
-                        radius = 860f,
+                        colors = listOf(VpnAccent.copy(alpha = 0.08f), Color.Transparent),
+                        center = Offset(620f, 220f),
+                        radius = 820f,
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(Color(0xFFF3E8DA).copy(alpha = 0.5f), Color.Transparent),
+                        center = Offset(80f, 160f),
+                        radius = 760f,
                     ),
                 ),
         )
@@ -252,17 +265,21 @@ private fun VpnTopBarIcon(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Surface(
         modifier = modifier
-            .size(36.dp)
+            .size(38.dp)
             .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
+        shape = CircleShape,
+        color = VpnSurfaceRaised,
+        border = androidx.compose.foundation.BorderStroke(1.dp, VpnOutline),
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = TextPrimary,
-        )
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = TextPrimary,
+            )
+        }
     }
 }
 
@@ -296,7 +313,7 @@ fun VpnTabStrip(
                         .width(24.dp)
                         .height(3.dp)
                         .clip(VpnPillShape)
-                        .background(if (selectedIndex == index) TextPrimary else Color.Transparent),
+                        .background(if (selectedIndex == index) VpnAccentDeep else Color.Transparent),
                 )
             }
         }
@@ -311,28 +328,36 @@ fun VpnValueBlock(
     helper: String? = null,
     changeColor: Color = VpnAccent,
 ) {
-    Column(
+    val borderColor = if (changeColor == VpnIdle) VpnOutline else changeColor.copy(alpha = 0.16f)
+    Surface(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        shape = RoundedCornerShape(30.dp),
+        color = VpnSurfaceRaised,
+        border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
     ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary,
-        )
-        Text(
-            text = change,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Medium,
-            color = changeColor,
-        )
-        if (!helper.isNullOrBlank()) {
-            VpnStatusChip(
-                text = helper,
-                containerColor = VpnAccentSoft,
-                contentColor = VpnAccent,
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
             )
+            Text(
+                text = change,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium,
+                color = changeColor,
+            )
+            if (!helper.isNullOrBlank()) {
+                VpnStatusChip(
+                    text = helper,
+                    containerColor = VpnAccentSoft,
+                    contentColor = VpnAccentDeep,
+                )
+            }
         }
     }
 }
@@ -342,23 +367,33 @@ fun VpnMetricColumn(
     metrics: List<VpnHeroMetric>,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    Surface(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        shape = RoundedCornerShape(26.dp),
+        color = VpnSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, VpnOutline),
     ) {
-        metrics.forEach { metric ->
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = metric.label,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextTertiary,
-                )
-                Text(
-                    text = metric.value,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary,
-                )
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            metrics.forEachIndexed { index, metric ->
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = metric.label,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextTertiary,
+                    )
+                    Text(
+                        text = metric.value,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary,
+                    )
+                }
+                if (index != metrics.lastIndex) {
+                    Divider(color = VpnOutline.copy(alpha = 0.62f))
+                }
             }
         }
     }
@@ -375,10 +410,11 @@ fun VpnGlassCard(
     Surface(
         modifier = modifier,
         shape = shape,
-        color = VpnSurface,
+        color = VpnSurfaceRaised,
+        shadowElevation = 1.dp,
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = accent.copy(alpha = 0.16f).takeIf { accent != VpnAccent } ?: VpnOutline,
+            color = accent.copy(alpha = 0.14f).takeIf { accent != VpnOutline } ?: VpnOutline,
         ),
     ) {
         Column(
@@ -402,6 +438,7 @@ fun VpnMetricPill(
         modifier = modifier.heightIn(min = 68.dp),
         shape = RoundedCornerShape(20.dp),
         color = VpnSurfaceStrong,
+        border = androidx.compose.foundation.BorderStroke(1.dp, VpnOutline.copy(alpha = 0.78f)),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
@@ -411,7 +448,7 @@ fun VpnMetricPill(
                 text = label,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
-                color = TextTertiary,
+                color = TextSecondary,
             )
             Text(
                 text = value,
@@ -458,15 +495,16 @@ fun VpnStatusChip(
     containerColor: Color = VpnSurfaceStrong,
     contentColor: Color = TextPrimary,
 ) {
+    val borderColor = if (contentColor == TextPrimary) VpnOutlineStrong else contentColor.copy(alpha = 0.16f)
     Surface(
         modifier = modifier,
         shape = VpnPillShape,
         color = containerColor,
-        border = androidx.compose.foundation.BorderStroke(1.dp, contentColor.copy(alpha = 0.16f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            modifier = Modifier.padding(horizontal = 11.dp, vertical = 6.dp),
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
             color = contentColor,
@@ -516,7 +554,8 @@ fun VpnSearchStrip(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(22.dp),
-        color = VpnSurface,
+        color = VpnSurfaceRaised,
+        border = androidx.compose.foundation.BorderStroke(1.dp, VpnOutline),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -559,7 +598,8 @@ fun VpnSearchField(
         onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp)),
+            .clip(RoundedCornerShape(22.dp))
+            .border(1.dp, VpnOutline, RoundedCornerShape(22.dp)),
         singleLine = true,
         shape = RoundedCornerShape(22.dp),
         placeholder = {
@@ -597,14 +637,16 @@ fun VpnSearchField(
         colors = TextFieldDefaults.colors(
             focusedTextColor = TextPrimary,
             unfocusedTextColor = TextPrimary,
-            focusedContainerColor = VpnSurface,
-            unfocusedContainerColor = VpnSurface,
+            focusedContainerColor = VpnSurfaceRaised,
+            unfocusedContainerColor = VpnSurfaceRaised,
             disabledContainerColor = VpnSurface,
-            cursorColor = VpnAccent,
+            cursorColor = VpnAccentDeep,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
-            focusedLeadingIconColor = TextSecondary,
+            focusedLeadingIconColor = VpnAccentDeep,
             unfocusedLeadingIconColor = TextSecondary,
+            focusedTrailingIconColor = VpnAccentDeep,
+            unfocusedTrailingIconColor = TextSecondary,
         ),
     )
 }
@@ -620,7 +662,8 @@ fun VpnWarningStrip(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        color = VpnSurfaceStrong,
+        color = VpnAccentWash,
+        border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = 0.14f)),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
@@ -630,14 +673,14 @@ fun VpnWarningStrip(
             Surface(
                 modifier = Modifier.size(18.dp),
                 shape = CircleShape,
-                color = accent.copy(alpha = 0.18f),
+                color = accent.copy(alpha = 0.14f),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Box(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(accent),
+                            .background(accent.copy(alpha = 0.88f)),
                     )
                 }
             }
@@ -674,10 +717,10 @@ fun VpnPrimaryButton(
         enabled = enabled,
         shape = RoundedCornerShape(26.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (enabled) VpnAccent else VpnDisabledButton,
-            contentColor = BackgroundDeepest,
+            containerColor = if (enabled) VpnAccentDeep else VpnDisabledButton,
+            contentColor = BackgroundOverlay,
             disabledContainerColor = VpnDisabledButton,
-            disabledContentColor = BackgroundDeepest.copy(alpha = 0.6f),
+            disabledContentColor = TextSecondary,
         ),
     ) {
         Text(
@@ -698,9 +741,9 @@ fun VpnSecondaryButton(
         onClick = onClick,
         modifier = modifier.heightIn(min = 50.dp),
         shape = RoundedCornerShape(26.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, VpnOutline),
+        border = androidx.compose.foundation.BorderStroke(1.dp, VpnOutlineStrong),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = VpnSurfaceStrong,
+            containerColor = VpnSurfaceRaised,
             contentColor = TextPrimary,
         ),
     ) {
@@ -725,10 +768,10 @@ fun VpnLightPrimaryButton(
         enabled = enabled,
         shape = RoundedCornerShape(26.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = BackgroundSecondary,
-            contentColor = TextPrimary,
-            disabledContainerColor = BackgroundTertiary,
-            disabledContentColor = TextPrimary.copy(alpha = 0.6f),
+            containerColor = VpnSurfaceStrong,
+            contentColor = VpnAccentDeep,
+            disabledContainerColor = VpnSurfaceMuted,
+            disabledContentColor = VpnAccentDeep.copy(alpha = 0.45f),
         ),
     ) {
         Text(
@@ -754,7 +797,12 @@ fun VpnGroupRow(
         modifier = rowModifier
             .fillMaxWidth()
             .clip(VpnRowShape)
-            .background(if (selected) VpnSurfaceMuted else Color.Transparent)
+            .border(
+                width = 1.dp,
+                color = if (selected) VpnAccent.copy(alpha = 0.16f) else Color.Transparent,
+                shape = VpnRowShape,
+            )
+            .background(if (selected) VpnAccent.copy(alpha = 0.06f) else Color.Transparent)
             .padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -763,12 +811,12 @@ fun VpnGroupRow(
             leading()
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary,
-            )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (selected) VpnAccentDeep else TextPrimary,
+                )
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     text = subtitle,
@@ -789,7 +837,7 @@ fun VpnGroupRow(
 fun VpnListDivider(modifier: Modifier = Modifier) {
     Divider(
         modifier = modifier.padding(horizontal = 14.dp),
-        color = VpnOutline.copy(alpha = 0.75f),
+        color = VpnOutline.copy(alpha = 0.58f),
     )
 }
 
@@ -798,12 +846,13 @@ fun VpnCodeBadge(
     text: String,
     modifier: Modifier = Modifier,
     backgroundColor: Color = VpnAccentSoft,
-    contentColor: Color = VpnAccent,
+    contentColor: Color = VpnAccentDeep,
 ) {
     Surface(
         modifier = modifier.size(42.dp),
         shape = CircleShape,
         color = backgroundColor,
+        border = androidx.compose.foundation.BorderStroke(1.dp, VpnOutline.copy(alpha = 0.72f)),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
@@ -841,7 +890,11 @@ fun VpnRangeSelector(
                 Surface(
                     modifier = Modifier.clickable { onSelect(index) },
                     shape = VpnPillShape,
-                    color = if (selected) VpnSurfaceStrong else Color.Transparent,
+                    color = if (selected) VpnSurfaceRaised else VpnAccentWash,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (selected) VpnAccent.copy(alpha = 0.16f) else VpnOutline,
+                    ),
                 ) {
                     Text(
                         text = label,
@@ -859,13 +912,14 @@ fun VpnRangeSelector(
                     .size(38.dp)
                     .clickable(onClick = onTrailingClick),
                 shape = CircleShape,
-                color = VpnSurfaceStrong,
+                color = VpnSurfaceRaised,
+                border = androidx.compose.foundation.BorderStroke(1.dp, VpnOutline),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = trailingIcon,
                         contentDescription = null,
-                        tint = TextPrimary,
+                        tint = VpnAccentDeep,
                     )
                 }
             }
@@ -883,13 +937,13 @@ fun VpnSwapDeck(
     Box(modifier = modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             VpnGlassCard(
-                accent = VpnOutline,
+                accent = VpnAccent,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
                 content = topCard,
             )
             Spacer(modifier = Modifier.height(14.dp))
             VpnGlassCard(
-                accent = VpnOutline,
+                accent = VpnOutlineStrong,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
                 content = bottomCard,
             )
@@ -898,10 +952,10 @@ fun VpnSwapDeck(
             modifier = Modifier
                 .align(Alignment.Center)
                 .size(44.dp)
-                .border(2.dp, BackgroundDeepest, CircleShape)
+                .border(1.dp, VpnOutlineStrong, CircleShape)
                 .clickable(onClick = onSwap),
             shape = CircleShape,
-            color = VpnSurfaceMuted,
+            color = VpnSurfaceRaised,
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -909,13 +963,13 @@ fun VpnSwapDeck(
                         modifier = Modifier
                             .width(12.dp)
                             .height(2.dp)
-                            .background(TextPrimary, RoundedCornerShape(999.dp)),
+                            .background(VpnAccentDeep, RoundedCornerShape(999.dp)),
                     )
                     Box(
                         modifier = Modifier
                             .width(12.dp)
                             .height(2.dp)
-                            .background(TextPrimary, RoundedCornerShape(999.dp)),
+                            .background(VpnAccentDeep, RoundedCornerShape(999.dp)),
                     )
                 }
             }
@@ -941,7 +995,8 @@ fun VpnModeDock(
         Surface(
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(30.dp),
-            color = VpnSurfaceStrong,
+            color = VpnSurfaceRaised,
+            border = androidx.compose.foundation.BorderStroke(1.dp, VpnOutline),
         ) {
             Row(
                 modifier = Modifier
@@ -957,26 +1012,22 @@ fun VpnModeDock(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Box {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(if (selected) VpnAccentSoft else Color.Transparent)
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                        ) {
                             Icon(
                                 imageVector = item.icon,
                                 contentDescription = null,
-                                tint = if (selected) TextPrimary else TextTertiary,
+                                tint = if (selected) VpnAccentDeep else TextTertiary,
                             )
-                            if (selected) {
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(VpnAccent),
-                                )
-                            }
                         }
                         Text(
                             text = item.label,
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (selected) TextPrimary else TextTertiary,
+                            color = if (selected) VpnAccentDeep else TextTertiary,
                         )
                     }
                 }
@@ -988,7 +1039,8 @@ fun VpnModeDock(
                     .size(56.dp)
                     .clickable(onClick = onClose),
                 shape = CircleShape,
-                color = VpnSurfaceStrong,
+                color = VpnSurfaceRaised,
+                border = androidx.compose.foundation.BorderStroke(1.dp, VpnOutline),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -1010,7 +1062,9 @@ fun VpnBottomSheet(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = VpnSheetShape,
-        color = VpnSurface,
+        color = VpnSurfaceRaised,
+        shadowElevation = 8.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, VpnOutline),
     ) {
         Column(
             modifier = Modifier
@@ -1025,7 +1079,7 @@ fun VpnBottomSheet(
                     .width(44.dp)
                     .height(4.dp)
                     .clip(VpnPillShape)
-                    .background(TextTertiary.copy(alpha = 0.65f)),
+                    .background(TextTertiary.copy(alpha = 0.38f)),
             )
             content()
         }
@@ -1270,7 +1324,7 @@ fun VpnLoadingPanel(
     ) {
         CircularProgressIndicator(
             modifier = Modifier.size(28.dp),
-            color = VpnAccent,
+            color = VpnAccentDeep,
             strokeWidth = 2.5.dp,
         )
         Text(
