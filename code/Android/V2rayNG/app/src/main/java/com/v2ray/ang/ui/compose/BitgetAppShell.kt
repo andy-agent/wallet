@@ -37,6 +37,11 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SouthWest
 import androidx.compose.material.icons.filled.VpnLock
 import androidx.compose.material.icons.filled.Wallet
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.VpnLock
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -120,11 +125,36 @@ fun BitgetAppShell(
 
     val navItems = remember {
         listOf(
-            ShellBottomBarItem(tab = ShellTab.HOME, title = "Home", icon = Icons.Default.Home),
-            ShellBottomBarItem(tab = ShellTab.MARKET, title = "Market", icon = Icons.Default.Language),
-            ShellBottomBarItem(tab = ShellTab.VPN, title = "VPN", icon = Icons.Default.VpnLock),
-            ShellBottomBarItem(tab = ShellTab.WALLET, title = "Wallet", icon = Icons.Default.AccountBalanceWallet),
-            ShellBottomBarItem(tab = ShellTab.PROFILE, title = "Profile", icon = Icons.Default.Person),
+            ShellBottomBarItem(
+                tab = ShellTab.HOME,
+                title = "Home",
+                icon = Icons.Outlined.Home,
+                selectedIcon = Icons.Default.Home,
+            ),
+            ShellBottomBarItem(
+                tab = ShellTab.MARKET,
+                title = "Market",
+                icon = Icons.Outlined.Language,
+                selectedIcon = Icons.Default.Language,
+            ),
+            ShellBottomBarItem(
+                tab = ShellTab.VPN,
+                title = "VPN",
+                icon = Icons.Outlined.VpnLock,
+                selectedIcon = Icons.Default.VpnLock,
+            ),
+            ShellBottomBarItem(
+                tab = ShellTab.WALLET,
+                title = "Wallet",
+                icon = Icons.Outlined.AccountBalanceWallet,
+                selectedIcon = Icons.Default.AccountBalanceWallet,
+            ),
+            ShellBottomBarItem(
+                tab = ShellTab.PROFILE,
+                title = "Profile",
+                icon = Icons.Outlined.Person,
+                selectedIcon = Icons.Default.Person,
+            ),
         )
     }
 
