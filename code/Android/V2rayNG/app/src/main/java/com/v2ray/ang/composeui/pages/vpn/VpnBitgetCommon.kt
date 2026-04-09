@@ -32,7 +32,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -60,37 +60,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.v2ray.ang.composeui.theme.AuditState
 import com.v2ray.ang.composeui.theme.BackgroundDeepest
 import com.v2ray.ang.composeui.theme.BackgroundOverlay
 import com.v2ray.ang.composeui.theme.BackgroundPrimary
-import com.v2ray.ang.composeui.theme.BackgroundSecondary
-import com.v2ray.ang.composeui.theme.Error
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
+import com.v2ray.ang.composeui.theme.ControlPlaneTokens
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
 import com.v2ray.ang.composeui.theme.TextTertiary
-import com.v2ray.ang.composeui.theme.Warning
 
 internal val VpnPageHorizontalPadding = 20.dp
 internal val VpnPageTopPadding = 16.dp
 internal val VpnPageBottomPadding = 132.dp
 
-internal val VpnAccent = Color(0xFF6E8B82)
-internal val VpnAccentDeep = Color(0xFF5D766E)
-internal val VpnAccentSoft = VpnAccent.copy(alpha = 0.11f)
-internal val VpnAccentWash = Color(0xFFF4F0E8)
-internal val VpnSurface = Color(0xFFFFFCF8)
-internal val VpnSurfaceStrong = Color(0xFFF6F0E8)
-internal val VpnSurfaceMuted = Color(0xFFF0E8DE)
-internal val VpnSurfaceRaised = Color(0xFFFFFEFC)
-internal val VpnOutline = Color(0xFFE8DED1)
-internal val VpnOutlineStrong = Color(0xFFDCCFC1)
-internal val VpnWarningSurface = Warning.copy(alpha = 0.11f)
+internal val VpnAccent = ControlPlaneTokens.Infra.accent
+internal val VpnAccentDeep = ControlPlaneTokens.Infra.accent
+internal val VpnAccentSoft = ControlPlaneTokens.Infra.container
+internal val VpnAccentWash = ControlPlaneTokens.layer(ControlPlaneLayer.Level2).container
+internal val VpnSurface = ControlPlaneTokens.layer(ControlPlaneLayer.Level1).container
+internal val VpnSurfaceStrong = ControlPlaneTokens.layer(ControlPlaneLayer.Level2).container
+internal val VpnSurfaceMuted = ControlPlaneTokens.layer(ControlPlaneLayer.Level3).container
+internal val VpnSurfaceRaised = ControlPlaneTokens.layer(ControlPlaneLayer.Level0).container
+internal val VpnOutline = ControlPlaneTokens.layer(ControlPlaneLayer.Level1).outline
+internal val VpnOutlineStrong = ControlPlaneTokens.layer(ControlPlaneLayer.Level2).outline
+internal val VpnWarningSurface = ControlPlaneTokens.Warning.container
 internal val VpnSheetScrim = BackgroundDeepest.copy(alpha = 0.12f)
-internal val VpnPositive = Color(0xFF728A74)
-internal val VpnPending = Color(0xFFBA9467)
-internal val VpnNegative = Color(0xFFB3747B)
-internal val VpnIdle = Color(0xFF87908A)
-internal val VpnDisabledButton = Color(0xFFE7DFD5)
+internal val VpnPositive = ControlPlaneTokens.Settlement.accent
+internal val VpnPending = ControlPlaneTokens.Warning.accent
+internal val VpnNegative = ControlPlaneTokens.Critical.accent
+internal val VpnIdle = ControlPlaneTokens.Neutral.accent
+internal val VpnDisabledButton = ControlPlaneTokens.Neutral.container
 
 private val VpnCardShape = RoundedCornerShape(28.dp)
 private val VpnRowShape = RoundedCornerShape(20.dp)
@@ -125,13 +125,26 @@ fun VpnBitgetBackground(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFFFFEFC),
+                        VpnSurfaceRaised,
                         BackgroundOverlay,
                         BackgroundPrimary,
                     ),
                 ),
             ),
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            ControlPlaneTokens.Infra.container.copy(alpha = 0.72f),
+                            VpnSurfaceRaised,
+                        ),
+                    ),
+                ),
+        )
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -148,9 +161,20 @@ fun VpnBitgetBackground(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Color(0xFFF3E8DA).copy(alpha = 0.5f), Color.Transparent),
-                        center = Offset(80f, 160f),
-                        radius = 760f,
+                        colors = listOf(ControlPlaneTokens.Settlement.accent.copy(alpha = 0.05f), Color.Transparent),
+                        center = Offset(90f, 340f),
+                        radius = 700f,
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(ControlPlaneTokens.Finance.accent.copy(alpha = 0.04f), Color.Transparent),
+                        center = Offset(560f, 520f),
+                        radius = 680f,
                     ),
                 ),
         )
@@ -392,7 +416,7 @@ fun VpnMetricColumn(
                     )
                 }
                 if (index != metrics.lastIndex) {
-                    Divider(color = VpnOutline.copy(alpha = 0.62f))
+                    HorizontalDivider(color = VpnOutline.copy(alpha = 0.62f))
                 }
             }
         }
@@ -417,13 +441,24 @@ fun VpnGlassCard(
             color = accent.copy(alpha = 0.14f).takeIf { accent != VpnOutline } ?: VpnOutline,
         ),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(contentPadding),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            content = content,
-        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(accent.copy(alpha = 0.06f), Color.Transparent),
+                        ),
+                    ),
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(contentPadding),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                content = content,
+            )
+        }
     }
 }
 
@@ -835,7 +870,7 @@ fun VpnGroupRow(
 
 @Composable
 fun VpnListDivider(modifier: Modifier = Modifier) {
-    Divider(
+    HorizontalDivider(
         modifier = modifier.padding(horizontal = 14.dp),
         color = VpnOutline.copy(alpha = 0.58f),
     )
@@ -1411,13 +1446,13 @@ internal fun statusAccent(status: String): Color {
         "paid",
         "completed",
         "connected",
-        -> VpnAccent
+        -> ControlPlaneTokens.audit(AuditState.Ok).accent
 
         "pending",
         "confirming",
         "connecting",
-        -> Warning
+        -> ControlPlaneTokens.audit(AuditState.Warn).accent
 
-        else -> Error
+        else -> ControlPlaneTokens.audit(AuditState.Critical).accent
     }
 }

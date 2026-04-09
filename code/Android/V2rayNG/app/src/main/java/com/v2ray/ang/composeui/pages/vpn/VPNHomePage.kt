@@ -3,11 +3,12 @@ package com.v2ray.ang.composeui.pages.vpn
 import android.app.Application
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,7 +30,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.v2ray.ang.composeui.theme.Error as AppError
+import com.v2ray.ang.composeui.theme.AuditState
+import com.v2ray.ang.composeui.theme.ControlPlaneTokens
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.payment.data.repository.PaymentRepository
 import kotlinx.coroutines.delay
@@ -260,26 +262,49 @@ fun VPNHomePage(
 
                     is VPNHomeState.Loaded -> {
                         item {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            VpnGlassCard(
+                                accent = connectionStatus.accentColor(),
                             ) {
-                                VpnValueBlock(
-                                    value = connectionStatus.headlineValue(connectionDuration),
-                                    change = connectionStatus.headlineChange(selectedRegion.latency),
-                                    helper = connectionStatus.helperLabel(),
-                                    changeColor = connectionStatus.accentColor(),
-                                    modifier = Modifier.weight(1.1f),
+                                VpnSectionHeading(
+                                    title = "连接控制平面",
+                                    subtitle = "路由状态、节点健康和审计信号统一展示",
                                 )
-                                VpnMetricColumn(
-                                    metrics = listOf(
-                                        VpnHeroMetric("当前地区", selectedRegion.countryCode),
-                                        VpnHeroMetric("节点延迟", "${selectedRegion.latency}ms"),
-                                        VpnHeroMetric("上行速率", current.uploadSpeed),
-                                        VpnHeroMetric("下行速率", current.downloadSpeed),
-                                    ),
-                                    modifier = Modifier.weight(1f),
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    VpnStatusChip(
+                                        text = connectionStatus.auditLabel(),
+                                        containerColor = connectionStatus.auditContainerColor(),
+                                        contentColor = connectionStatus.accentColor(),
+                                    )
+                                    VpnStatusChip(
+                                        text = connectionStatus.helperLabel(),
+                                        containerColor = ControlPlaneTokens.Finance.container,
+                                        contentColor = ControlPlaneTokens.Finance.accent,
+                                    )
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    VpnValueBlock(
+                                        value = connectionStatus.headlineValue(connectionDuration),
+                                        change = connectionStatus.headlineChange(selectedRegion.latency),
+                                        helper = "路由会话",
+                                        changeColor = connectionStatus.accentColor(),
+                                        modifier = Modifier.weight(1.1f),
+                                    )
+                                    VpnMetricColumn(
+                                        metrics = listOf(
+                                            VpnHeroMetric("接入地区", selectedRegion.countryCode),
+                                            VpnHeroMetric("节点延迟", "${selectedRegion.latency}ms"),
+                                            VpnHeroMetric("上行带宽", current.uploadSpeed),
+                                            VpnHeroMetric("下行带宽", current.downloadSpeed),
+                                        ),
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
                             }
                         }
                         item {
@@ -305,26 +330,42 @@ fun VPNHomePage(
                             )
                         }
                         item {
-                            VpnGlassCard {
-                                Text(
-                                    text = "线路信息",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary,
+                            VpnGlassCard(accent = ControlPlaneTokens.Settlement.accent) {
+                                VpnSectionHeading(
+                                    title = "线路与订阅审计",
+                                    subtitle = "突出连接状态层级、会话信息与订阅有效性",
                                 )
-                                VpnLabelValueRow(label = "区域", value = current.selectedRegion.name)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    VpnMetricPill(
+                                        label = "审计状态",
+                                        value = connectionStatus.metricLabel(),
+                                        valueColor = connectionStatus.accentColor(),
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    VpnMetricPill(
+                                        label = "连接时长",
+                                        value = current.connectionDuration,
+                                        valueColor = ControlPlaneTokens.Settlement.accent,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
+                                VpnLabelValueRow(label = "路由区域", value = current.selectedRegion.name)
                                 VpnLabelValueRow(label = "安全层", value = "Always-on encrypted tunnel")
-                                VpnLabelValueRow(label = "连接时长", value = current.connectionDuration)
-                                VpnLabelValueRow(label = "状态", value = connectionStatus.metricLabel(), valueColor = connectionStatus.accentColor())
+                                VpnLabelValueRow(
+                                    label = "审计等级",
+                                    value = connectionStatus.auditLabel(),
+                                    valueColor = connectionStatus.accentColor(),
+                                )
                             }
                         }
                         item {
-                            VpnGlassCard(accent = VpnOutline) {
-                                Text(
-                                    text = "业务入口",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary,
+                            VpnGlassCard(accent = ControlPlaneTokens.Finance.accent) {
+                                VpnSectionHeading(
+                                    title = "控制入口",
+                                    subtitle = "路由管理、订阅结算和订单审计",
                                 )
                                 VpnGroupRow(
                                     title = "节点区域",
@@ -370,20 +411,37 @@ fun VPNHomePage(
 }
 
 private fun VPNConnectionStatus.accentColor(): Color {
+    return ControlPlaneTokens.audit(auditState()).accent
+}
+
+private fun VPNConnectionStatus.auditContainerColor(): Color {
+    return ControlPlaneTokens.audit(auditState()).container
+}
+
+private fun VPNConnectionStatus.auditState(): AuditState {
     return when (this) {
-        VPNConnectionStatus.CONNECTED -> VpnAccent
-        VPNConnectionStatus.CONNECTING -> Color(0xFFFFB14A)
-        VPNConnectionStatus.DISCONNECTING -> Color(0xFFFFB14A)
-        VPNConnectionStatus.DISCONNECTED -> AppError
+        VPNConnectionStatus.CONNECTED -> AuditState.Ok
+        VPNConnectionStatus.CONNECTING -> AuditState.Warn
+        VPNConnectionStatus.DISCONNECTING -> AuditState.Warn
+        VPNConnectionStatus.DISCONNECTED -> AuditState.Critical
+    }
+}
+
+private fun VPNConnectionStatus.auditLabel(): String {
+    return when (auditState()) {
+        AuditState.Ok -> "AUDIT · OK"
+        AuditState.Warn -> "AUDIT · WARN"
+        AuditState.Critical -> "AUDIT · CRITICAL"
+        AuditState.Unknown -> "AUDIT · UNKNOWN"
     }
 }
 
 private fun VPNConnectionStatus.metricLabel(): String {
     return when (this) {
         VPNConnectionStatus.CONNECTED -> "Connected"
-        VPNConnectionStatus.CONNECTING -> "Connecting"
+        VPNConnectionStatus.CONNECTING -> "Handshake"
         VPNConnectionStatus.DISCONNECTING -> "Closing"
-        VPNConnectionStatus.DISCONNECTED -> "Idle"
+        VPNConnectionStatus.DISCONNECTED -> "Offline"
     }
 }
 
@@ -398,19 +456,19 @@ private fun VPNConnectionStatus.headlineValue(duration: String): String {
 
 private fun VPNConnectionStatus.headlineChange(latency: Int): String {
     return when (this) {
-        VPNConnectionStatus.CONNECTED -> "+$latency ms · route stable"
-        VPNConnectionStatus.CONNECTING -> "正在与当前节点握手"
-        VPNConnectionStatus.DISCONNECTING -> "会话正在安全关闭"
-        VPNConnectionStatus.DISCONNECTED -> "等待启动新的安全线路"
+        VPNConnectionStatus.CONNECTED -> "Latency $latency ms · routing stable"
+        VPNConnectionStatus.CONNECTING -> "控制面正在执行节点握手"
+        VPNConnectionStatus.DISCONNECTING -> "控制面正在执行会话关闭"
+        VPNConnectionStatus.DISCONNECTED -> "等待启动新的受控路由会话"
     }
 }
 
 private fun VPNConnectionStatus.helperLabel(): String {
     return when (this) {
-        VPNConnectionStatus.CONNECTED -> "夜盘"
-        VPNConnectionStatus.CONNECTING -> "准备中"
-        VPNConnectionStatus.DISCONNECTING -> "关闭中"
-        VPNConnectionStatus.DISCONNECTED -> "待机"
+        VPNConnectionStatus.CONNECTED -> "Live session"
+        VPNConnectionStatus.CONNECTING -> "Control sync"
+        VPNConnectionStatus.DISCONNECTING -> "Session stop"
+        VPNConnectionStatus.DISCONNECTED -> "Standby"
     }
 }
 

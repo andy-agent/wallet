@@ -26,7 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.order.VpnOrderBridge
-import com.v2ray.ang.composeui.theme.Error as AppError
+import com.v2ray.ang.composeui.theme.AuditState
+import com.v2ray.ang.composeui.theme.ControlPlaneTokens
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
@@ -151,7 +152,7 @@ fun OrderListPage(
             ) {
                 item {
                     VpnCenterTopBar(
-                        title = "订单列表",
+                        title = "订单审计列表",
                         onBack = onNavigateBack,
                     )
                 }
@@ -189,7 +190,7 @@ fun OrderListPage(
                         item {
                             VpnLoadingPanel(
                                 title = "正在同步订单列表",
-                                subtitle = "从现有缓存订单桥接聚合记录。",
+                                subtitle = "从现有缓存订单桥接聚合结算记录。",
                             )
                         }
                     }
@@ -206,8 +207,8 @@ fun OrderListPage(
                     OrderListState.Empty -> {
                         item {
                             VpnEmptyPanel(
-                                title = "暂无 VPN 订单",
-                                subtitle = "新的套餐购买会按时间顺序出现在这里。",
+                                title = "暂无订阅结算记录",
+                                subtitle = "新的套餐订单会按时间顺序出现在这里。",
                             )
                         }
                     }
@@ -280,11 +281,11 @@ private fun ListOrderStatus.label(): String {
 
 private fun ListOrderStatus.accentColor(): Color {
     return when (this) {
-        ListOrderStatus.PENDING -> Color(0xFFFFB14A)
-        ListOrderStatus.PAID -> VpnAccent
-        ListOrderStatus.COMPLETED -> VpnAccent
-        ListOrderStatus.CANCELLED -> Color(0xFF97A1A5)
-        ListOrderStatus.REFUNDED -> AppError
+        ListOrderStatus.PENDING -> ControlPlaneTokens.audit(AuditState.Warn).accent
+        ListOrderStatus.PAID -> ControlPlaneTokens.audit(AuditState.Ok).accent
+        ListOrderStatus.COMPLETED -> ControlPlaneTokens.audit(AuditState.Ok).accent
+        ListOrderStatus.CANCELLED -> ControlPlaneTokens.audit(AuditState.Unknown).accent
+        ListOrderStatus.REFUNDED -> ControlPlaneTokens.audit(AuditState.Critical).accent
     }
 }
 

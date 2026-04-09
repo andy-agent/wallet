@@ -196,7 +196,7 @@ fun PlansPage(
             ) {
                 item {
                     VpnCenterTopBar(
-                        title = "套餐中心",
+                        title = "订阅控制",
                         onBack = onNavigateBack,
                         rightIcon = Icons.Default.HelpOutline,
                         onRightIconClick = {},
@@ -213,7 +213,7 @@ fun PlansPage(
                         item {
                             VpnLoadingPanel(
                                 title = "正在拉取套餐",
-                                subtitle = "保留现有 plans bridge，只替换为 Bitget 风格展示。",
+                                subtitle = "同步订阅档位、结算规则与当前默认方案。",
                             )
                         }
                     }
@@ -258,8 +258,8 @@ fun PlansPage(
                         }
                         item {
                             VpnSectionHeading(
-                                title = "稳定币套餐",
-                                subtitle = "柔和白底分层与更安静的确认节奏。",
+                                title = "订阅档位",
+                                subtitle = "按同一控制面语义展示周期、价格与权益。",
                             )
                         }
                         item {
@@ -320,12 +320,12 @@ private fun PlansHeroBanner() {
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    text = "随充随用",
+                    text = "订阅编排",
                     style = MaterialTheme.typography.titleMedium,
                     color = TextSecondary,
                 )
                 Text(
-                    text = "给 VPN\n选一个更稳的周期",
+                    text = "为路由控制面\n选择稳定的订阅周期",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
@@ -333,7 +333,7 @@ private fun PlansHeroBanner() {
             }
 
             VpnStatusChip(
-                text = "快速了解套餐权益",
+                text = "订阅权益一览",
                 modifier = Modifier.align(Alignment.BottomStart),
                 containerColor = VpnSurfaceRaised,
                 contentColor = VpnAccentDeep,
@@ -376,7 +376,7 @@ private fun FeaturedPlanTile(
     ) {
         if (plan.isRecommended) {
             VpnStatusChip(
-                text = "推荐",
+                text = "主推",
                 containerColor = VpnAccentSoft,
                 contentColor = VpnAccentDeep,
             )
