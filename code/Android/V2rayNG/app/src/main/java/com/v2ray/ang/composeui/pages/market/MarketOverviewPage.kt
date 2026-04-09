@@ -37,12 +37,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.v2ray.ang.composeui.pages.vpn.VpnEmptyPanel
-import com.v2ray.ang.composeui.pages.vpn.VpnLoadingPanel
 import com.v2ray.ang.composeui.pages.vpn.VpnPageBottomPadding
 import com.v2ray.ang.composeui.pages.vpn.VpnPageHorizontalPadding
 import com.v2ray.ang.composeui.pages.vpn.VpnPageTopPadding
@@ -65,6 +64,8 @@ private val MarketAccent = Color(0xFF1CB7D0)
 private val MarketAccentSoft = Color(0xFFECFAFD)
 private val MarketPositive = Color(0xFF19A8C8)
 private val MarketNegative = Color(0xFFD85D86)
+private val MarketSkeleton = Color(0xFFF0F4F8)
+private val MarketSkeletonStrong = Color(0xFFE5EBF3)
 
 internal sealed interface MarketOverviewUiState {
     data object Loading : MarketOverviewUiState
@@ -112,44 +113,100 @@ internal fun MarketOverviewPage(
 ) {
     val state by viewModel.state.collectAsState()
     when (val currentState = state) {
-        MarketOverviewUiState.Loading -> {
-            MarketOverviewBackground {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = VpnPageHorizontalPadding),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    VpnLoadingPanel(
-                        title = "加载行情中",
-                        subtitle = "正在获取实时市场概览。",
-                    )
-                }
-            }
-        }
+        MarketOverviewUiState.Loading -> MarketOverviewLoadingContent()
 
-        is MarketOverviewUiState.Error -> {
-            MarketOverviewBackground {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = VpnPageHorizontalPadding),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    VpnEmptyPanel(
-                        title = "行情加载失败",
-                        subtitle = currentState.message,
-                        actionText = "重新加载",
-                        onAction = viewModel::refresh,
-                    )
-                }
-            }
-        }
+        is MarketOverviewUiState.Error -> MarketOverviewErrorContent(
+            message = currentState.message,
+            onRetry = viewModel::refresh,
+        )
 
         is MarketOverviewUiState.Loaded -> MarketOverviewContent(
             quotes = currentState.quotes,
             spotlights = currentState.spotlights,
             onOpenQuote = onOpenQuote,
+        )
+    }
+}
+
+@Composable
+private fun MarketOverviewLoadingContent() {
+    val selectedPrimary = MarketPrimarySection.CONTRACT
+    val boardOptions = remember { marketBoardsFor(selectedPrimary) }
+    val selectedBoardIndex = boardOptions.indexOf(MarketBoard.ALL).takeIf { it >= 0 } ?: 0
+    val selectedBoard = boardOptions[selectedBoardIndex]
+
+    MarketOverviewShell(
+        query = "",
+        onQueryChange = {},
+        selectedPrimaryIndex = marketPrimarySections.indexOf(selectedPrimary).takeIf { it >= 0 } ?: 1,
+        onSelectPrimary = {},
+        boardOptions = boardOptions,
+        selectedBoardIndex = selectedBoardIndex,
+        onSelectBoard = {},
+        selectedPrimary = selectedPrimary,
+        selectedBoard = selectedBoard,
+        countLabel = "--",
+        headlineSpotlight = MarketSpotlight(
+            instrumentId = "loading:banner",
+            symbol = "SYNC",
+            eyebrow = "市场同步中",
+            title = "合约行情即将显示",
+            subtitle = "页面骨架已提前加载，可直接评估样式方向",
+            primaryValue = "--",
+            secondaryValue = "--",
+        ),
+        signalSpotlights = listOf(
+            MarketSpotlight("loading:signal-1", "HOT", "同步", "热门", "", "--", "--"),
+            MarketSpotlight("loading:signal-2", "NEW", "同步", "新上线", "", "--", "--"),
+            MarketSpotlight("loading:signal-3", "ALL", "同步", "全部", "", "--", "--"),
+        ),
+        signalQuotes = emptyList(),
+        onOpenQuote = {},
+    ) {
+        MarketQuoteLoadingBoard(board = selectedBoard)
+    }
+}
+
+@Composable
+private fun MarketOverviewErrorContent(
+    message: String,
+    onRetry: () -> Unit,
+) {
+    val selectedPrimary = MarketPrimarySection.CONTRACT
+    val boardOptions = remember { marketBoardsFor(selectedPrimary) }
+    val selectedBoardIndex = boardOptions.indexOf(MarketBoard.ALL).takeIf { it >= 0 } ?: 0
+    val selectedBoard = boardOptions[selectedBoardIndex]
+
+    MarketOverviewShell(
+        query = "",
+        onQueryChange = {},
+        selectedPrimaryIndex = marketPrimarySections.indexOf(selectedPrimary).takeIf { it >= 0 } ?: 1,
+        onSelectPrimary = {},
+        boardOptions = boardOptions,
+        selectedBoardIndex = selectedBoardIndex,
+        onSelectBoard = {},
+        selectedPrimary = selectedPrimary,
+        selectedBoard = selectedBoard,
+        countLabel = "00",
+        headlineSpotlight = MarketSpotlight(
+            instrumentId = "error:banner",
+            symbol = "WARN",
+            eyebrow = "行情加载失败",
+            title = "未拿到实时数据",
+            subtitle = "已保留市场页结构，便于先评审布局方向",
+            primaryValue = "--",
+            secondaryValue = "--",
+        ),
+        signalSpotlights = emptyList(),
+        signalQuotes = emptyList(),
+        onOpenQuote = {},
+    ) {
+        MarketQuoteEmptyBoard(
+            board = selectedBoard,
+            title = "暂无实时行情",
+            subtitle = message,
+            actionText = "重新加载",
+            onAction = onRetry,
         )
     }
 }
@@ -181,6 +238,56 @@ private fun MarketOverviewContent(
     val headlineSpotlight = spotlights.firstOrNull()
     val signalSpotlights = remember(spotlights) { if (spotlights.size > 1) spotlights.drop(1) else emptyList() }
 
+    MarketOverviewShell(
+        query = query,
+        onQueryChange = { query = it },
+        selectedPrimaryIndex = selectedPrimaryIndex,
+        onSelectPrimary = { selectedPrimaryIndex = it },
+        boardOptions = boardOptions,
+        selectedBoardIndex = selectedBoardIndex,
+        onSelectBoard = { selectedBoardIndex = it },
+        selectedPrimary = selectedPrimary,
+        selectedBoard = selectedBoard,
+        countLabel = padCount(visibleQuotes.size),
+        headlineSpotlight = headlineSpotlight,
+        signalSpotlights = signalSpotlights,
+        signalQuotes = quotes,
+        onOpenQuote = onOpenQuote,
+    ) {
+        if (visibleQuotes.isEmpty()) {
+            MarketQuoteEmptyBoard(
+                board = selectedBoard,
+                title = "未找到相关行情",
+                subtitle = "尝试更换搜索词或切换榜单。",
+            )
+        } else {
+            MarketQuoteBoard(
+                quotes = visibleQuotes,
+                board = selectedBoard,
+                onOpenQuote = onOpenQuote,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MarketOverviewShell(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    selectedPrimaryIndex: Int,
+    onSelectPrimary: (Int) -> Unit,
+    boardOptions: List<MarketBoard>,
+    selectedBoardIndex: Int,
+    onSelectBoard: (Int) -> Unit,
+    selectedPrimary: MarketPrimarySection,
+    selectedBoard: MarketBoard,
+    countLabel: String,
+    headlineSpotlight: MarketSpotlight?,
+    signalSpotlights: List<MarketSpotlight>,
+    signalQuotes: List<MarketQuote>,
+    onOpenQuote: (MarketQuote) -> Unit,
+    body: @Composable () -> Unit,
+) {
     MarketOverviewBackground {
         Scaffold(
             containerColor = Color.Transparent,
@@ -201,7 +308,7 @@ private fun MarketOverviewContent(
                 item {
                     MarketCompactHeader(
                         query = query,
-                        onQueryChange = { query = it },
+                        onQueryChange = onQueryChange,
                     )
                 }
                 item {
@@ -211,7 +318,7 @@ private fun MarketOverviewContent(
                     MarketPrimaryTabs(
                         labels = marketPrimarySections.map { it.label },
                         selectedIndex = selectedPrimaryIndex,
-                        onSelect = { selectedPrimaryIndex = it },
+                        onSelect = onSelectPrimary,
                     )
                 }
                 item {
@@ -229,7 +336,7 @@ private fun MarketOverviewContent(
                     MarketBoardTabs(
                         labels = boardOptions.map { it.label },
                         selectedIndex = selectedBoardIndex,
-                        onSelect = { selectedBoardIndex = it },
+                        onSelect = onSelectBoard,
                     )
                 }
                 item {
@@ -239,7 +346,7 @@ private fun MarketOverviewContent(
                     MarketFilterRow(
                         selectedPrimary = selectedPrimary,
                         selectedBoard = selectedBoard,
-                        quoteCount = visibleQuotes.size,
+                        countLabel = countLabel,
                     )
                 }
                 if (signalSpotlights.isNotEmpty()) {
@@ -249,7 +356,7 @@ private fun MarketOverviewContent(
                     item {
                         MarketSignalStrip(
                             spotlights = signalSpotlights,
-                            quotes = quotes,
+                            quotes = signalQuotes,
                             onOpenQuote = onOpenQuote,
                         )
                     }
@@ -257,21 +364,8 @@ private fun MarketOverviewContent(
                 item {
                     Spacer(modifier = Modifier.height(10.dp))
                 }
-                if (visibleQuotes.isEmpty()) {
-                    item {
-                        VpnEmptyPanel(
-                            title = "未找到相关行情",
-                            subtitle = "尝试更换搜索词或切换榜单。",
-                        )
-                    }
-                } else {
-                    item {
-                        MarketQuoteBoard(
-                            quotes = visibleQuotes,
-                            board = selectedBoard,
-                            onOpenQuote = onOpenQuote,
-                        )
-                    }
+                item {
+                    body()
                 }
             }
         }
@@ -521,7 +615,7 @@ private fun MarketBoardTabs(
 private fun MarketFilterRow(
     selectedPrimary: MarketPrimarySection,
     selectedBoard: MarketBoard,
-    quoteCount: Int,
+    countLabel: String,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -539,7 +633,7 @@ private fun MarketFilterRow(
             MarketFilterChip(text = "24h")
         }
         Text(
-            text = "${selectedBoard.label} · ${padCount(quoteCount)}",
+            text = "${selectedBoard.label} · $countLabel",
             style = MaterialTheme.typography.labelMedium,
             color = MarketTextSecondary,
         )
@@ -640,6 +734,46 @@ private fun MarketQuoteBoard(
 }
 
 @Composable
+private fun MarketQuoteLoadingBoard(
+    board: MarketBoard,
+    rowCount: Int = 6,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        MarketQuoteHeader(board = board)
+        repeat(rowCount) { index ->
+            MarketQuoteLoadingRow()
+            if (index != rowCount - 1) {
+                HorizontalDivider(color = MarketLine, thickness = 0.8.dp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MarketQuoteEmptyBoard(
+    board: MarketBoard,
+    title: String,
+    subtitle: String,
+    actionText: String? = null,
+    onAction: () -> Unit = {},
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        MarketQuoteHeader(board = board)
+        Spacer(modifier = Modifier.height(14.dp))
+        MarketInlineStateCard(
+            title = title,
+            subtitle = subtitle,
+            actionText = actionText,
+            onAction = onAction,
+        )
+    }
+}
+
+@Composable
 private fun MarketQuoteHeader(
     board: MarketBoard,
 ) {
@@ -687,6 +821,75 @@ private fun MarketHeaderCell(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+@Composable
+private fun MarketQuoteLoadingRow() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            modifier = Modifier.weight(1.25f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(MarketSkeletonStrong),
+            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                MarketPlaceholderLine(
+                    modifier = Modifier
+                        .width(104.dp)
+                        .height(20.dp),
+                )
+                MarketPlaceholderLine(
+                    modifier = Modifier
+                        .width(148.dp)
+                        .height(14.dp),
+                )
+            }
+        }
+        Column(
+            modifier = Modifier.weight(0.9f),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            MarketPlaceholderLine(
+                modifier = Modifier
+                    .width(92.dp)
+                    .height(20.dp),
+            )
+            MarketPlaceholderLine(
+                modifier = Modifier
+                    .width(74.dp)
+                    .height(14.dp),
+            )
+        }
+        Column(
+            modifier = Modifier.weight(0.85f),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            MarketPlaceholderLine(
+                modifier = Modifier
+                    .width(80.dp)
+                    .height(20.dp),
+            )
+            MarketPlaceholderLine(
+                modifier = Modifier
+                    .width(64.dp)
+                    .height(14.dp),
+            )
+        }
     }
 }
 
@@ -795,6 +998,46 @@ private fun MarketQuoteRow(
 }
 
 @Composable
+private fun MarketInlineStateCard(
+    title: String,
+    subtitle: String,
+    actionText: String? = null,
+    onAction: () -> Unit = {},
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MarketChipSurface,
+        border = BorderStroke(1.dp, MarketLine),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MarketTextPrimary,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MarketTextSecondary,
+            )
+            if (actionText != null) {
+                Text(
+                    text = actionText,
+                    modifier = Modifier.clickable(onClick = onAction),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MarketAccent,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun MarketSymbolAvatar(
     symbol: String,
 ) {
@@ -816,6 +1059,18 @@ private fun MarketSymbolAvatar(
             )
         }
     }
+}
+
+@Composable
+private fun MarketPlaceholderLine(
+    modifier: Modifier,
+    radius: Dp = 999.dp,
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(radius))
+            .background(MarketSkeleton),
+    )
 }
 
 @Composable
