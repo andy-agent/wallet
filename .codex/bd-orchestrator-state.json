@@ -1,31 +1,21 @@
 {
-  "generated_at": "2026-04-09T08:44:38+08:00",
+  "generated_at": "2026-04-09T10:08:00+08:00",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-rcb.20.4.2",
-  "accepted_task_id": "liaojiang-rcb.20.4.1",
-  "next_task_id": "liaojiang-rcb.20.4.3",
+  "active_task_id": "liaojiang-rcb.20.2",
+  "accepted_task_id": "liaojiang-rcb.20.4.3",
+  "next_task_id": null,
   "active_worker_task_ids": [],
-  "blockers": [],
+  "blockers": [
+    {
+      "task_id": "liaojiang-rcb.20.2",
+      "type": "task",
+      "blocked_by": "auth blocker is cleared again; the only remaining blocker is the human-controlled real payment step and resulting txHash for order ORD-1775650877315-64DA3EFB"
+    }
+  ],
   "workers": [],
   "mainline": {
     "feature_id": "liaojiang-rcb",
-    "phase_id": "liaojiang-rcb.20.4.2",
-    "policy": "Current mainline is restoring the previously accepted persistent-auth runtime onto the recovered server3 backend with the smallest-safe file set so market runtime is not disturbed. liaojiang-rcb.20.4.3 is the ready live-acceptance successor after deployment."
-  },
-  "current_findings": {
-    "minimal_restore_set_if_runtime_state_foundation_exists": [
-      "code/backend/src/modules/auth/auth.service.ts",
-      "code/backend/src/modules/auth/auth.types.ts",
-      "code/backend/src/modules/database/runtime-state.repository.ts",
-      "code/backend/src/modules/database/runtime-state.types.ts",
-      "code/backend/src/modules/database/file-runtime-state.repository.ts",
-      "code/backend/src/modules/database/postgres-runtime-state.repository.ts"
-    ],
-    "extra_if_target_predates_39768034": [
-      "code/backend/package.json",
-      "code/backend/pnpm-lock.yaml",
-      "code/backend/src/modules/database/database.module.ts",
-      "code/backend/src/modules/database/runtime-state.config.ts"
-    ]
+    "phase_id": "liaojiang-rcb.20.2",
+    "policy": "The recurring system login regression is fixed and verified across restart. Market token+contract scope remains accepted, stock lane is intentionally deferred, and the only remaining blocker under rcb is the human-controlled funding step for rcb.20.2."
   }
 }
