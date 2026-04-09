@@ -4,14 +4,15 @@
 
 当前 `vpnui` 实际接线的 Compose App 以 `MainActivity -> AppNavGraph` 为准。
 
-- 已有 `/UI` 原型可以直接或近似承接的页面：`01 / 07 / 08 / 09 / 10 / 11`
-- 只能部分承接、仍需补专用 UI 的页面：`02 / 03 / 04 / 06`
-- 仍然**完全缺失**的页面 / 弹层 / 结果态较多，不能直接进入整包嵌套
+当前 `/UI` 已采纳的主事实源是：
 
-另外有一个反向情况：
+- `/UI/p0-pack/`
 
-- `/UI/05-market-monitor.html` 当前在 `vpnui` 的主导航里 **没有对应 route**
-- 这说明它现在是产品原型页，不是现有 Android App 已接线功能
+基于这套已采纳页面：
+
+- 可以**直接承接** 10 个 Android 主页面
+- 可以**部分承接** 1 个主页面
+- 仍然**完全缺失**若干订单结果、增长、法务和系统状态页，不能直接进入整包嵌套
 
 ## 判定依据
 
@@ -63,34 +64,33 @@
 这些页面已经有较明确的 `/UI` 对应物，可以作为 Compose 重做的主视觉来源：
 
 1. `SplashScreen`
-   - 对应 `/UI/pages/01-splash.html`
-2. `WalletHomePage`
-   - 对应 `/UI/pages/07-wallet-home.html`
-3. `AssetDetailPage`
-   - 对应 `/UI/pages/08-asset-detail.html`
-4. `SendPage`
-   - 对应 `/UI/pages/09-send-asset.html`
-5. `ReceivePage`
-   - 对应 `/UI/pages/10-receive-asset.html`
-6. `WalletPaymentConfirmPage`
-   - 对应 `/UI/pages/11-wallet-payment-confirm.html`
+   - 对应 `/UI/p0-pack/01_splash.html`
+2. `EmailLoginPage`
+   - 对应 `/UI/p0-pack/02_login.html`
+3. `WalletOnboardingPage`
+   - 对应 `/UI/p0-pack/03_wallet_onboarding.html`
+4. `RegionSelectionPage`
+   - 对应 `/UI/p0-pack/05_region_selection.html`
+5. `PlansPage`
+   - 对应 `/UI/p0-pack/06_plans.html`
+6. `WalletHomePage`
+   - 对应 `/UI/p0-pack/07_wallet_home.html`
+7. `AssetDetailPage`
+   - 对应 `/UI/p0-pack/08_asset_detail.html`
+8. `SendPage`
+   - 对应 `/UI/p0-pack/09_send.html`
+9. `ReceivePage`
+   - 对应 `/UI/p0-pack/10_receive.html`
+10. `WalletPaymentConfirmPage`
+   - 对应 `/UI/p0-pack/11_wallet_payment_confirm.html`
 
 ### B. 只有部分覆盖，不能直接套用的页面
 
 这些页面虽然在 `/UI` 中有相近原型，但**功能模型不完全一致**，嵌套前必须补专用页面：
 
-1. `EmailLoginPage`
-   - `/UI/pages/02-login.html` 当前更像“钱包连接 / 接入页”
-   - 但 App 真实登录流是邮箱登录
-2. `PlansPage`
-   - `/UI/pages/03-plan-guide.html` 更偏套餐引导
-   - 还缺标准套餐对比、选择态、状态标签细化
-3. `VPNHomePage`
-   - `/UI/pages/04-control-plane.html` 是更大的总览控制面
-   - 但现有 App 的 VPN 首页还包含连接模式、节点连接、Profile 入口等专用交互
-4. `OrderCheckoutPage`
-   - `/UI/pages/06-purchase-confirm.html` 只覆盖了摘要确认
-   - 还未完整覆盖收款地址、支付状态刷新、复制地址、已支付检查等收银台交互
+1. `VPNHomePage`
+   - `/UI/p0-pack/04_unified_home.html` 更像“统一控制面 / 总览首页”
+   - 能承接视觉方向，但还未拆成专用 VPN 主屏状态与交互
 
 ## 真正缺失的页面 UI
 
@@ -105,15 +105,14 @@
 
 ### 2. VPN 交易链路缺口
 
-1. `RegionSelectionPage`
+1. `OrderCheckoutPage`
 2. `OrderResultPage`
 3. `OrderListPage`
 4. `OrderDetailPage`
 
 ### 3. 钱包链路缺口
 
-1. `WalletOnboardingPage`
-2. `SendResultPage`
+1. `SendResultPage`
 
 ### 4. 增长与分佣缺口
 
@@ -158,54 +157,51 @@
    - `Routes.kt` 中有 `wallet_payment`
    - 但当前 `AppNavGraph` 并没有接进主导航
 
-## 当前 `/UI` 有，但 APP 里没有对应主路由的页面
+## Legacy 中存在但当前主事实源未采用的页面
 
-1. `05-market-monitor.html`
+1. `/UI/pages/05-market-monitor.html`
+   - 这是旧版探索稿中的市场监控页
    - 当前 `AppNavGraph` 和活跃 `Routes.kt` 都没有 `market` / `monitor` 主页面
-   - 如果产品确认市场监控仍是核心功能，则 Android App 自身也需要先补 route 和信息架构
+   - 因此它没有进入已采纳的 `p0-pack/`
 
 ## 嵌套前的建议顺序
 
 ### 第一批：先能跑通主链路
 
 1. `VPNHomePage` 专用 UI
-2. `PlansPage`
-3. `OrderCheckoutPage`
-4. `OrderResultPage`
-5. `EmailLogin / Register / ResetPassword`
-6. `WalletOnboardingPage`
-7. `ProfilePage`
+2. `OrderCheckoutPage`
+3. `OrderResultPage`
+4. `EmailRegister / ResetPassword / ForceUpdate / OptionalUpdate`
+5. `ProfilePage`
 
 ### 第二批：补完整钱包与订单链路
 
-1. `RegionSelectionPage`
-2. `OrderListPage`
-3. `OrderDetailPage`
-4. `SendResultPage`
-5. `ForceUpdatePage`
-6. `OptionalUpdateDialog`
+1. `OrderListPage`
+2. `OrderDetailPage`
+3. `SendResultPage`
+4. `InviteCenterPage`
+5. `CommissionLedgerPage`
+6. `WithdrawPage`
 
 ### 第三批：补增长、法务、系统状态页
 
-1. `InviteCenterPage`
-2. `CommissionLedgerPage`
-3. `WithdrawPage`
-4. `LegalDocumentsListPage`
-5. `LegalDocumentDetailPage`
-6. `SessionEvictedDialog`
+1. `LegalDocumentsListPage`
+2. `LegalDocumentDetailPage`
+3. `SessionEvictedDialog`
+4. 设置 / 帮助 / 关于 / 钱包支付请求等隐含系统页
 
 ## 最终结论
 
 如果现在就开始把 `/UI` 整体嵌进 Android / Compose：
 
-- 可以先落地 6 个页面的高保真重做
-- 4 个页面只能做“部分套壳”
-- 还有 15 个以上的页面 / 弹层 / 结果态没有对应 UI
+- 可以先落地 10 个页面的高保真重做
+- 1 个页面只能做“部分套壳”
+- 还有 16 个以上的页面 / 弹层 / 结果态没有对应 UI
 
 所以，**当前真正的阻塞不是嵌套技术，而是页面覆盖率不足**。
 
 在开始嵌套前，人类需要先确认：
 
-1. `05-market-monitor` 是否要进入 Android 主导航
-2. 认证是继续邮箱体系，还是改成钱包接入体系
-3. 是否把设置、帮助、关于、提现历史、钱包支付请求页视为本轮必须补齐的正式页面
+1. `04_unified_home` 最终是单独的总览首页，还是继续拆回 `VPNHomePage`
+2. 是否把设置、帮助、关于、提现历史、钱包支付请求页视为本轮必须补齐的正式页面
+3. 是否需要把 legacy 的 `market-monitor` 重新纳入 Android 主导航
