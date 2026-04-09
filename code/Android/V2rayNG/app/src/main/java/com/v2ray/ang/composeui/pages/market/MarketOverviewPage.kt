@@ -58,12 +58,21 @@ import com.v2ray.ang.composeui.pages.vpn.VpnSurface
 import com.v2ray.ang.composeui.pages.vpn.VpnSurfaceStrong
 import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import com.v2ray.ang.composeui.theme.Error
+import com.v2ray.ang.composeui.theme.Success
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
 import com.v2ray.ang.composeui.theme.TextTertiary
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
+private val MarketPaperSurface = Color(0xFFFFFCF8)
+private val MarketSubtleSurface = Color(0xFFF9F4ED)
+private val MarketOutlineSoft = VpnOutline.copy(alpha = 0.58f)
+private val MarketDividerSoft = VpnOutline.copy(alpha = 0.42f)
+private val MarketSelectionFill = VpnAccent.copy(alpha = 0.08f)
+private val MarketSelectionBorder = VpnAccent.copy(alpha = 0.14f)
+private val MarketPositive = Success
 
 internal sealed interface MarketOverviewUiState {
     data object Loading : MarketOverviewUiState
@@ -194,18 +203,28 @@ private fun MarketOverviewContent(
                     top = VpnPageTopPadding,
                     bottom = VpnPageBottomPadding,
                 ),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        VpnSearchField(
-                            value = query,
-                            onValueChange = { query = it },
-                            modifier = Modifier.height(52.dp),
-                            placeholder = "搜索代币/合约/股票/DApp",
-                            trailingIcon = Icons.Default.Tune,
-                            onTrailingClick = {},
-                        )
+                    Surface(
+                        shape = RoundedCornerShape(28.dp),
+                        color = MarketPaperSurface,
+                        border = BorderStroke(1.dp, MarketOutlineSoft),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp, vertical = 4.dp),
+                        ) {
+                            VpnSearchField(
+                                value = query,
+                                onValueChange = { query = it },
+                                modifier = Modifier.height(54.dp),
+                                placeholder = "搜索代币/合约/股票/DApp",
+                                trailingIcon = Icons.Default.Tune,
+                                onTrailingClick = {},
+                            )
+                        }
                     }
                 }
                 item {
@@ -257,7 +276,7 @@ private fun MarketSpotlightStrip(
         spotlights.forEach { spotlight ->
             val metricColor = when {
                 spotlight.primaryValue.trim().startsWith("-") -> Error
-                spotlight.primaryValue.trim().startsWith("+") -> VpnAccent
+                spotlight.primaryValue.trim().startsWith("+") -> MarketPositive
                 else -> TextPrimary
             }
             Surface(
@@ -265,11 +284,11 @@ private fun MarketSpotlightStrip(
                     .width(164.dp)
                     .clickable { onOpenQuote(spotlight.symbol) },
                 shape = RoundedCornerShape(18.dp),
-                color = VpnSurface,
-                border = BorderStroke(1.dp, VpnOutline.copy(alpha = 0.78f)),
+                color = MarketPaperSurface,
+                border = BorderStroke(1.dp, MarketOutlineSoft),
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp),
+                    modifier = Modifier.padding(horizontal = 13.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
@@ -333,30 +352,25 @@ private fun MarketTopTabs(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(18.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         labels.forEachIndexed { index, label ->
             val selected = index == selectedIndex
-            Column(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(999.dp))
-                    .clickable { onSelect(index) },
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+            Surface(
+                modifier = Modifier.clickable { onSelect(index) },
+                shape = RoundedCornerShape(18.dp),
+                color = if (selected) MarketSelectionFill else Color.Transparent,
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = if (selected) MarketSelectionBorder else Color.Transparent,
+                ),
             ) {
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = if (selected) TextPrimary else TextSecondary,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                )
-                Box(
-                    modifier = Modifier
-                        .width(18.dp)
-                        .height(2.dp)
-                        .background(
-                            color = if (selected) VpnAccent else Color.Transparent,
-                            shape = RoundedCornerShape(999.dp),
-                        ),
                 )
             }
         }
@@ -373,22 +387,22 @@ private fun MarketBoardTabs(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         labels.forEachIndexed { index, label ->
             val selected = index == selectedIndex
             Surface(
                 modifier = Modifier.clickable { onSelect(index) },
-                shape = RoundedCornerShape(14.dp),
-                color = if (selected) VpnSurfaceStrong else Color.Transparent,
+                shape = RoundedCornerShape(16.dp),
+                color = if (selected) MarketSelectionFill else MarketPaperSurface,
                 border = BorderStroke(
                     width = 1.dp,
-                    color = if (selected) VpnAccent.copy(alpha = 0.34f) else VpnOutline.copy(alpha = 0.64f),
+                    color = if (selected) MarketSelectionBorder else MarketOutlineSoft,
                 ),
             ) {
                 Text(
                     text = label,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.labelMedium,
                     color = if (selected) TextPrimary else TextSecondary,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
@@ -405,15 +419,16 @@ private fun MarketQuoteBoard(
     onOpenQuote: (MarketQuote) -> Unit,
 ) {
     Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = VpnSurface,
-        border = BorderStroke(1.dp, VpnOutline.copy(alpha = 0.82f)),
+        shape = RoundedCornerShape(28.dp),
+        color = MarketPaperSurface,
+        border = BorderStroke(1.dp, MarketOutlineSoft),
     ) {
         Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                    .background(MarketSubtleSurface)
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -457,22 +472,22 @@ private fun MarketQuoteRow(
     board: MarketBoard,
     onClick: () -> Unit,
 ) {
-    val trendColor = if (quote.changeRateValue >= 0f) VpnAccent else Error
+    val trendColor = if (quote.changeRateValue >= 0f) MarketPositive else Error
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 13.dp),
+            .padding(horizontal = 18.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = quote.symbol,
@@ -542,14 +557,14 @@ private fun MarketQuoteRow(
 @Composable
 private fun MarketInlineMarker(tag: MarketTag) {
     val containerColor = when (tag.tone) {
-        MarketTagTone.ACCENT -> VpnAccent.copy(alpha = 0.16f)
-        MarketTagTone.POSITIVE -> Color(0x2010C88C)
+        MarketTagTone.ACCENT -> MarketSelectionFill
+        MarketTagTone.POSITIVE -> MarketPositive.copy(alpha = 0.12f)
         MarketTagTone.NEGATIVE -> Error.copy(alpha = 0.16f)
-        MarketTagTone.NEUTRAL -> VpnSurfaceStrong
+        MarketTagTone.NEUTRAL -> MarketSubtleSurface
     }
     val contentColor = when (tag.tone) {
-        MarketTagTone.ACCENT -> VpnAccent
-        MarketTagTone.POSITIVE -> Color(0xFF10C88C)
+        MarketTagTone.ACCENT -> VpnAccent.copy(alpha = 0.88f)
+        MarketTagTone.POSITIVE -> MarketPositive
         MarketTagTone.NEGATIVE -> Error
         MarketTagTone.NEUTRAL -> TextSecondary
     }
@@ -572,18 +587,18 @@ private fun MarketBoardDivider() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 18.dp)
             .height(1.dp)
-            .background(VpnOutline.copy(alpha = 0.72f)),
+            .background(MarketDividerSoft),
     )
 }
 
 private fun MarketBoard.primaryMetricColor(quote: MarketQuote): Color {
     return when (this) {
         MarketBoard.HOT, MarketBoard.ALL, MarketBoard.FAVORITES, MarketBoard.GAINERS ->
-            if (quote.changeRateValue >= 0f) VpnAccent else Error
+            if (quote.changeRateValue >= 0f) MarketPositive else Error
         MarketBoard.VOLUME -> TextPrimary
-        MarketBoard.NEW -> VpnAccent
+        MarketBoard.NEW -> TextPrimary
     }
 }
 

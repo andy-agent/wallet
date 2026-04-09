@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -25,6 +26,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -50,35 +53,39 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.pages.vpn.VpnAccent
-import com.v2ray.ang.composeui.pages.vpn.VpnAccentSoft
 import com.v2ray.ang.composeui.pages.vpn.VpnBitgetBackground
 import com.v2ray.ang.composeui.pages.vpn.VpnCandleChart
 import com.v2ray.ang.composeui.pages.vpn.VpnEmptyPanel
 import com.v2ray.ang.composeui.pages.vpn.VpnGlassCard
+import com.v2ray.ang.composeui.pages.vpn.VpnHeroMetric
 import com.v2ray.ang.composeui.pages.vpn.VpnLabelValueRow
 import com.v2ray.ang.composeui.pages.vpn.VpnLoadingPanel
 import com.v2ray.ang.composeui.pages.vpn.VpnMetricColumn
-import com.v2ray.ang.composeui.pages.vpn.VpnMetricPill
+import com.v2ray.ang.composeui.pages.vpn.VpnOutline
 import com.v2ray.ang.composeui.pages.vpn.VpnPageBottomPadding
 import com.v2ray.ang.composeui.pages.vpn.VpnPageHorizontalPadding
 import com.v2ray.ang.composeui.pages.vpn.VpnPageTopPadding
-import com.v2ray.ang.composeui.pages.vpn.VpnPrimaryButton
 import com.v2ray.ang.composeui.pages.vpn.VpnRangeSelector
 import com.v2ray.ang.composeui.pages.vpn.VpnSectionHeading
-import com.v2ray.ang.composeui.pages.vpn.VpnStatusChip
-import com.v2ray.ang.composeui.pages.vpn.VpnSurface
-import com.v2ray.ang.composeui.pages.vpn.VpnSurfaceStrong
-import com.v2ray.ang.composeui.pages.vpn.VpnTabStrip
 import com.v2ray.ang.composeui.pages.vpn.VpnValueBlock
-import com.v2ray.ang.composeui.pages.vpn.VpnHeroMetric
-import com.v2ray.ang.composeui.pages.vpn.VpnOutline
 import com.v2ray.ang.composeui.theme.CryptoVPNTheme
+import com.v2ray.ang.composeui.theme.Error
+import com.v2ray.ang.composeui.theme.Success
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
 import com.v2ray.ang.composeui.theme.TextTertiary
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
+private val MarketDetailPaperSurface = Color(0xFFFFFCF8)
+private val MarketDetailSubtleSurface = Color(0xFFF9F4ED)
+private val MarketDetailOutlineSoft = VpnOutline.copy(alpha = 0.58f)
+private val MarketDetailSelectionFill = VpnAccent.copy(alpha = 0.08f)
+private val MarketDetailSelectionBorder = VpnAccent.copy(alpha = 0.14f)
+private val MarketDetailAccentText = VpnAccent.copy(alpha = 0.84f)
+private val MarketDetailPositive = Success
+private val MarketDetailButtonFill = Color(0xFFDDE8E2)
 
 internal sealed interface MarketQuoteDetailUiState {
     data object Loading : MarketQuoteDetailUiState
@@ -198,9 +205,9 @@ private fun MarketQuoteDetailContent(
     val currentRange = detail.ranges.getOrNull(selectedRangeIndex.coerceIn(0, detail.ranges.lastIndex.coerceAtLeast(0)))
     val trendColor = remember(detail.changePercent) {
         if (detail.changePercent.trim().startsWith("-")) {
-            Color(0xFFFF5D85)
+            Error
         } else {
-            VpnAccent
+            MarketDetailPositive
         }
     }
 
@@ -211,10 +218,10 @@ private fun MarketQuoteDetailContent(
             contentWindowInsets = WindowInsets.safeDrawing,
             bottomBar = {
                 Surface(
-                    color = VpnSurface,
-                    border = BorderStroke(1.dp, VpnOutline),
+                    color = MarketDetailPaperSurface,
+                    border = BorderStroke(1.dp, MarketDetailOutlineSoft),
                 ) {
-                    VpnPrimaryButton(
+                    MarketTradeButton(
                         text = detail.tradeActionLabel,
                         onClick = onTrade,
                         enabled = detail.tradeActionEnabled,
@@ -247,39 +254,58 @@ private fun MarketQuoteDetailContent(
                     )
                 }
                 item {
-                    VpnTabStrip(
+                    MarketDetailTabs(
                         tabs = listOf("行情", "详情"),
                         selectedIndex = selectedTopTab,
                         onSelect = { selectedTopTab = it },
                     )
                 }
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    Surface(
+                        shape = RoundedCornerShape(28.dp),
+                        color = MarketDetailPaperSurface,
+                        border = BorderStroke(1.dp, MarketDetailOutlineSoft),
                     ) {
-                        Column(
-                            modifier = Modifier.weight(1.1f),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 18.dp, vertical = 18.dp),
+                            horizontalArrangement = Arrangement.spacedBy(18.dp),
                         ) {
-                            VpnValueBlock(
-                                value = detail.lastPrice,
-                                change = "${detail.changeAmount} ${detail.changePercent}",
-                                helper = detail.sessionLabel,
-                                changeColor = trendColor,
-                            )
-                            VpnStatusChip(
-                                text = detail.marketLabel,
-                                containerColor = VpnSurfaceStrong,
-                                contentColor = TextSecondary,
+                            Column(
+                                modifier = Modifier.weight(1.1f),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                VpnValueBlock(
+                                    value = detail.lastPrice,
+                                    change = "${detail.changeAmount} ${detail.changePercent}",
+                                    helper = null,
+                                    changeColor = trendColor,
+                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    if (detail.sessionLabel.isNotBlank()) {
+                                        MarketDetailChip(
+                                            text = detail.sessionLabel,
+                                            containerColor = MarketDetailSelectionFill,
+                                            contentColor = MarketDetailAccentText,
+                                        )
+                                    }
+                                    MarketDetailChip(
+                                        text = detail.marketLabel,
+                                        containerColor = MarketDetailSubtleSurface,
+                                        contentColor = TextSecondary,
+                                    )
+                                }
+                            }
+                            VpnMetricColumn(
+                                metrics = detail.metrics.map { metric ->
+                                    VpnHeroMetric(metric.label, metric.value)
+                                },
+                                modifier = Modifier.weight(1f),
                             )
                         }
-                        VpnMetricColumn(
-                            metrics = detail.metrics.map { metric ->
-                                VpnHeroMetric(metric.label, metric.value)
-                            },
-                            modifier = Modifier.weight(1f),
-                        )
                     }
                 }
                 if (selectedTopTab == 0) {
@@ -381,7 +407,7 @@ private fun MarketQuoteDetailTopBar(
         }
         DetailIconButton(
             icon = Icons.Default.Star,
-            tint = if (starred) VpnAccent else TextTertiary,
+            tint = if (starred) MarketDetailAccentText else TextTertiary,
             onClick = onToggleStar,
         )
         DetailIconButton(
@@ -400,10 +426,11 @@ private fun DetailIconButton(
 ) {
     Surface(
         modifier = Modifier
-            .size(36.dp)
+            .size(38.dp)
             .clickable(onClick = onClick),
         shape = CircleShape,
-        color = VpnSurfaceStrong,
+        color = MarketDetailPaperSurface,
+        border = BorderStroke(1.dp, MarketDetailOutlineSoft),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
@@ -425,7 +452,7 @@ private fun IndicatorStrip(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         indicators.forEachIndexed { index, label ->
             val selected = index == selectedIndex
@@ -434,17 +461,104 @@ private fun IndicatorStrip(
                     .clip(RoundedCornerShape(999.dp))
                     .clickable { onSelect(index) },
                 shape = RoundedCornerShape(999.dp),
-                color = if (selected) VpnAccentSoft else VpnSurfaceStrong,
+                color = if (selected) MarketDetailSelectionFill else MarketDetailPaperSurface,
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = if (selected) MarketDetailSelectionBorder else MarketDetailOutlineSoft,
+                ),
             ) {
                 Text(
                     text = label,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (selected) VpnAccent else TextSecondary,
+                    color = if (selected) TextPrimary else TextSecondary,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun MarketDetailTabs(
+    tabs: List<String>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        tabs.forEachIndexed { index, label ->
+            val selected = index == selectedIndex
+            Surface(
+                modifier = Modifier.clickable { onSelect(index) },
+                shape = RoundedCornerShape(18.dp),
+                color = if (selected) MarketDetailSelectionFill else Color.Transparent,
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = if (selected) MarketDetailSelectionBorder else Color.Transparent,
+                ),
+            ) {
+                Text(
+                    text = label,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (selected) TextPrimary else TextSecondary,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MarketDetailChip(
+    text: String,
+    containerColor: Color,
+    contentColor: Color,
+) {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = containerColor,
+        border = BorderStroke(1.dp, contentColor.copy(alpha = 0.1f)),
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 11.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = contentColor,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+@Composable
+private fun MarketTradeButton(
+    text: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = 54.dp),
+        enabled = enabled,
+        shape = RoundedCornerShape(26.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MarketDetailButtonFill,
+            contentColor = TextPrimary,
+            disabledContainerColor = MarketDetailSubtleSurface,
+            disabledContentColor = TextTertiary,
+        ),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 
