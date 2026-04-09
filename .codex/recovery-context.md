@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-09T13:38:38Z
+Generated: 2026-04-09T14:10:17Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-7fr
-- next_task_title: 梳理 PNG 原型页面结构并定义 /UI 组件层
+- next_task_id: liaojiang-dtg.17.1
+- next_task_title: 修复真机验收被安装器弹窗污染
 
 ## Counters
-- in_progress: 6
-- ready: 1
-- open: 13
-- closed: 270
-- dirty: 3
+- in_progress: 4
+- ready: 4
+- open: 11
+- closed: 277
+- dirty: 4
 
 ## Next Milestone
 - Continue the next task and complete one milestone
