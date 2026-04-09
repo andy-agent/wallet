@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-09T08:22:06Z
+Generated: 2026-04-09T08:52:44Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-dtg.8
-- next_task_title: 第二轮重设计：VPN 科技感白底重做
+- next_task_id: liaojiang-dtg.12
+- next_task_title: 第三轮重设计：冻结 Infra/Settlement/Finance 视觉系统
 
 ## Counters
-- in_progress: 4
+- in_progress: 3
 - ready: 1
-- open: 8
-- closed: 257
-- dirty: 9
+- open: 9
+- closed: 259
+- dirty: 2
 
 ## Next Milestone
 - Continue the next task and complete one milestone
