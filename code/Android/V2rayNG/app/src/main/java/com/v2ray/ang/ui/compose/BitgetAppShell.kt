@@ -84,6 +84,7 @@ import com.v2ray.ang.composeui.pages.wallet.WalletHomePage
 import com.v2ray.ang.composeui.theme.BackgroundDeepest
 import com.v2ray.ang.composeui.theme.BackgroundPrimary
 import com.v2ray.ang.composeui.theme.BackgroundSecondary
+import com.v2ray.ang.composeui.theme.ControlPlaneIntent
 import com.v2ray.ang.composeui.theme.GlowBlue
 import com.v2ray.ang.composeui.theme.GlowGreen
 import com.v2ray.ang.composeui.theme.GlowYellow
@@ -130,30 +131,35 @@ fun BitgetAppShell(
                 title = "Home",
                 icon = Icons.Outlined.Home,
                 selectedIcon = Icons.Default.Home,
+                intent = ControlPlaneIntent.Infra,
             ),
             ShellBottomBarItem(
                 tab = ShellTab.MARKET,
                 title = "Market",
                 icon = Icons.Outlined.Language,
                 selectedIcon = Icons.Default.Language,
+                intent = ControlPlaneIntent.Finance,
             ),
             ShellBottomBarItem(
                 tab = ShellTab.VPN,
                 title = "VPN",
                 icon = Icons.Outlined.VpnLock,
                 selectedIcon = Icons.Default.VpnLock,
+                intent = ControlPlaneIntent.Infra,
             ),
             ShellBottomBarItem(
                 tab = ShellTab.WALLET,
                 title = "Wallet",
                 icon = Icons.Outlined.AccountBalanceWallet,
                 selectedIcon = Icons.Default.AccountBalanceWallet,
+                intent = ControlPlaneIntent.Settlement,
             ),
             ShellBottomBarItem(
                 tab = ShellTab.PROFILE,
                 title = "Profile",
                 icon = Icons.Outlined.Person,
                 selectedIcon = Icons.Default.Person,
+                intent = ControlPlaneIntent.Neutral,
             ),
         )
     }
