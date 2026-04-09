@@ -1,16 +1,16 @@
 # Recovery Context
 
-Generated: 2026-04-09T11:31:40Z
+Generated: 2026-04-09T12:35:16Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-dtg.17
-- next_task_title: 验收金融控制面 UI 全局重构结果
+- next_task_id: liaojiang-dtg.13.1
+- next_task_title: 按参考图 1:1 重做 Market 列表页
 
 ## Counters
-- in_progress: 3
+- in_progress: 5
 - ready: 1
-- open: 7
+- open: 9
 - closed: 268
 - dirty: 3
 
