@@ -9,6 +9,7 @@
 - `styles.css`: 共享视觉令牌与区块样式
 - `compose-map.md`: 页面区块到 Compose Composable 的映射
 - `compose-integration-notes.md`: Android / Compose 接入建议
+- `app-ui-gap-audit.md`: Android APP 功能盘点与 UI 缺口审计
 
 ## 页面范围
 
