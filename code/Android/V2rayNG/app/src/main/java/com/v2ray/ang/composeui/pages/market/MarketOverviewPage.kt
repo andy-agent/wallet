@@ -4,24 +4,17 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -38,41 +31,41 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.v2ray.ang.composeui.pages.vpn.VpnAccent
-import com.v2ray.ang.composeui.pages.vpn.VpnBitgetBackground
-import com.v2ray.ang.composeui.pages.vpn.VpnEmptyPanel
-import com.v2ray.ang.composeui.pages.vpn.VpnLoadingPanel
-import com.v2ray.ang.composeui.pages.vpn.VpnOutline
 import com.v2ray.ang.composeui.pages.vpn.VpnPageBottomPadding
 import com.v2ray.ang.composeui.pages.vpn.VpnPageHorizontalPadding
 import com.v2ray.ang.composeui.pages.vpn.VpnPageTopPadding
-import com.v2ray.ang.composeui.pages.vpn.VpnSearchField
-import com.v2ray.ang.composeui.pages.vpn.VpnSurface
-import com.v2ray.ang.composeui.pages.vpn.VpnSurfaceStrong
 import com.v2ray.ang.composeui.theme.CryptoVPNTheme
-import com.v2ray.ang.composeui.theme.Error
-import com.v2ray.ang.composeui.theme.Success
-import com.v2ray.ang.composeui.theme.TextPrimary
-import com.v2ray.ang.composeui.theme.TextSecondary
-import com.v2ray.ang.composeui.theme.TextTertiary
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-private val MarketPaperSurface = Color(0xFFFFFCF8)
-private val MarketSubtleSurface = Color(0xFFF9F4ED)
-private val MarketOutlineSoft = VpnOutline.copy(alpha = 0.58f)
-private val MarketDividerSoft = VpnOutline.copy(alpha = 0.42f)
-private val MarketSelectionFill = VpnAccent.copy(alpha = 0.08f)
-private val MarketSelectionBorder = VpnAccent.copy(alpha = 0.14f)
-private val MarketPositive = Success
+private val MarketPageBackground = Color(0xFFFFFFFF)
+private val MarketTopGlow = Color(0xFFF4F8FC)
+private val MarketSearchSurface = Color(0xFFF6F8FB)
+private val MarketChipSurface = Color(0xFFF5F8FB)
+private val MarketChipSurfaceStrong = Color(0xFFEFF8FB)
+private val MarketLine = Color(0xFFE8EEF5)
+private val MarketLineStrong = Color(0xFFD7E2EE)
+private val MarketTextPrimary = Color(0xFF0C1B2A)
+private val MarketTextSecondary = Color(0xFF7D8C9D)
+private val MarketTextMuted = Color(0xFFB0BAC7)
+private val MarketAccent = Color(0xFF1CB7D0)
+private val MarketAccentSoft = Color(0xFFECFAFD)
+private val MarketPositive = Color(0xFF19A8C8)
+private val MarketNegative = Color(0xFFD85D86)
+private val MarketSkeleton = Color(0xFFF0F4F8)
+private val MarketSkeletonStrong = Color(0xFFE5EBF3)
 
 internal sealed interface MarketOverviewUiState {
     data object Loading : MarketOverviewUiState
@@ -120,44 +113,100 @@ internal fun MarketOverviewPage(
 ) {
     val state by viewModel.state.collectAsState()
     when (val currentState = state) {
-        MarketOverviewUiState.Loading -> {
-            VpnBitgetBackground {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = VpnPageHorizontalPadding),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    VpnLoadingPanel(
-                        title = "加载行情中",
-                        subtitle = "正在获取实时市场概览。",
-                    )
-                }
-            }
-        }
+        MarketOverviewUiState.Loading -> MarketOverviewLoadingContent()
 
-        is MarketOverviewUiState.Error -> {
-            VpnBitgetBackground {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = VpnPageHorizontalPadding),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    VpnEmptyPanel(
-                        title = "行情加载失败",
-                        subtitle = currentState.message,
-                        actionText = "重新加载",
-                        onAction = viewModel::refresh,
-                    )
-                }
-            }
-        }
+        is MarketOverviewUiState.Error -> MarketOverviewErrorContent(
+            message = currentState.message,
+            onRetry = viewModel::refresh,
+        )
 
         is MarketOverviewUiState.Loaded -> MarketOverviewContent(
             quotes = currentState.quotes,
             spotlights = currentState.spotlights,
             onOpenQuote = onOpenQuote,
+        )
+    }
+}
+
+@Composable
+private fun MarketOverviewLoadingContent() {
+    val selectedPrimary = MarketPrimarySection.CONTRACT
+    val boardOptions = remember { marketBoardsFor(selectedPrimary) }
+    val selectedBoardIndex = boardOptions.indexOf(MarketBoard.ALL).takeIf { it >= 0 } ?: 0
+    val selectedBoard = boardOptions[selectedBoardIndex]
+
+    MarketOverviewShell(
+        query = "",
+        onQueryChange = {},
+        selectedPrimaryIndex = marketPrimarySections.indexOf(selectedPrimary).takeIf { it >= 0 } ?: 1,
+        onSelectPrimary = {},
+        boardOptions = boardOptions,
+        selectedBoardIndex = selectedBoardIndex,
+        onSelectBoard = {},
+        selectedPrimary = selectedPrimary,
+        selectedBoard = selectedBoard,
+        countLabel = "--",
+        headlineSpotlight = MarketSpotlight(
+            instrumentId = "loading:banner",
+            symbol = "SYNC",
+            eyebrow = "市场同步中",
+            title = "合约行情即将显示",
+            subtitle = "页面骨架已提前加载，可直接评估样式方向",
+            primaryValue = "--",
+            secondaryValue = "--",
+        ),
+        signalSpotlights = listOf(
+            MarketSpotlight("loading:signal-1", "HOT", "同步", "热门", "", "--", "--"),
+            MarketSpotlight("loading:signal-2", "NEW", "同步", "新上线", "", "--", "--"),
+            MarketSpotlight("loading:signal-3", "ALL", "同步", "全部", "", "--", "--"),
+        ),
+        signalQuotes = emptyList(),
+        onOpenQuote = {},
+    ) {
+        MarketQuoteLoadingBoard(board = selectedBoard)
+    }
+}
+
+@Composable
+private fun MarketOverviewErrorContent(
+    message: String,
+    onRetry: () -> Unit,
+) {
+    val selectedPrimary = MarketPrimarySection.CONTRACT
+    val boardOptions = remember { marketBoardsFor(selectedPrimary) }
+    val selectedBoardIndex = boardOptions.indexOf(MarketBoard.ALL).takeIf { it >= 0 } ?: 0
+    val selectedBoard = boardOptions[selectedBoardIndex]
+
+    MarketOverviewShell(
+        query = "",
+        onQueryChange = {},
+        selectedPrimaryIndex = marketPrimarySections.indexOf(selectedPrimary).takeIf { it >= 0 } ?: 1,
+        onSelectPrimary = {},
+        boardOptions = boardOptions,
+        selectedBoardIndex = selectedBoardIndex,
+        onSelectBoard = {},
+        selectedPrimary = selectedPrimary,
+        selectedBoard = selectedBoard,
+        countLabel = "00",
+        headlineSpotlight = MarketSpotlight(
+            instrumentId = "error:banner",
+            symbol = "WARN",
+            eyebrow = "行情加载失败",
+            title = "未拿到实时数据",
+            subtitle = "已保留市场页结构，便于先评审布局方向",
+            primaryValue = "--",
+            secondaryValue = "--",
+        ),
+        signalSpotlights = emptyList(),
+        signalQuotes = emptyList(),
+        onOpenQuote = {},
+    ) {
+        MarketQuoteEmptyBoard(
+            board = selectedBoard,
+            title = "暂无实时行情",
+            subtitle = message,
+            actionText = "重新加载",
+            onAction = onRetry,
         )
     }
 }
@@ -186,11 +235,63 @@ private fun MarketOverviewContent(
             board = selectedBoard,
         )
     }
+    val headlineSpotlight = spotlights.firstOrNull()
+    val signalSpotlights = remember(spotlights) { if (spotlights.size > 1) spotlights.drop(1) else emptyList() }
 
-    VpnBitgetBackground {
+    MarketOverviewShell(
+        query = query,
+        onQueryChange = { query = it },
+        selectedPrimaryIndex = selectedPrimaryIndex,
+        onSelectPrimary = { selectedPrimaryIndex = it },
+        boardOptions = boardOptions,
+        selectedBoardIndex = selectedBoardIndex,
+        onSelectBoard = { selectedBoardIndex = it },
+        selectedPrimary = selectedPrimary,
+        selectedBoard = selectedBoard,
+        countLabel = padCount(visibleQuotes.size),
+        headlineSpotlight = headlineSpotlight,
+        signalSpotlights = signalSpotlights,
+        signalQuotes = quotes,
+        onOpenQuote = onOpenQuote,
+    ) {
+        if (visibleQuotes.isEmpty()) {
+            MarketQuoteEmptyBoard(
+                board = selectedBoard,
+                title = "未找到相关行情",
+                subtitle = "尝试更换搜索词或切换榜单。",
+            )
+        } else {
+            MarketQuoteBoard(
+                quotes = visibleQuotes,
+                board = selectedBoard,
+                onOpenQuote = onOpenQuote,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MarketOverviewShell(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    selectedPrimaryIndex: Int,
+    onSelectPrimary: (Int) -> Unit,
+    boardOptions: List<MarketBoard>,
+    selectedBoardIndex: Int,
+    onSelectBoard: (Int) -> Unit,
+    selectedPrimary: MarketPrimarySection,
+    selectedBoard: MarketBoard,
+    countLabel: String,
+    headlineSpotlight: MarketSpotlight?,
+    signalSpotlights: List<MarketSpotlight>,
+    signalQuotes: List<MarketQuote>,
+    onOpenQuote: (MarketQuote) -> Unit,
+    body: @Composable () -> Unit,
+) {
+    MarketOverviewBackground {
         Scaffold(
             containerColor = Color.Transparent,
-            contentColor = TextPrimary,
+            contentColor = MarketTextPrimary,
             contentWindowInsets = WindowInsets.safeDrawing,
         ) { innerPadding ->
             LazyColumn(
@@ -203,139 +304,68 @@ private fun MarketOverviewContent(
                     top = VpnPageTopPadding,
                     bottom = VpnPageBottomPadding,
                 ),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 item {
-                    Surface(
-                        shape = RoundedCornerShape(28.dp),
-                        color = MarketPaperSurface,
-                        border = BorderStroke(1.dp, MarketOutlineSoft),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 4.dp, vertical = 4.dp),
-                        ) {
-                            VpnSearchField(
-                                value = query,
-                                onValueChange = { query = it },
-                                modifier = Modifier.height(54.dp),
-                                placeholder = "搜索代币/合约/股票/DApp",
-                                trailingIcon = Icons.Default.Tune,
-                                onTrailingClick = {},
-                            )
-                        }
-                    }
+                    MarketCompactHeader(
+                        query = query,
+                        onQueryChange = onQueryChange,
+                    )
                 }
                 item {
-                    MarketTopTabs(
+                    Spacer(modifier = Modifier.height(18.dp))
+                }
+                item {
+                    MarketPrimaryTabs(
                         labels = marketPrimarySections.map { it.label },
                         selectedIndex = selectedPrimaryIndex,
-                        onSelect = { selectedPrimaryIndex = it },
+                        onSelect = onSelectPrimary,
                     )
+                }
+                item {
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
+                if (headlineSpotlight != null) {
+                    item {
+                        MarketAnnouncementBanner(spotlight = headlineSpotlight)
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
                 }
                 item {
                     MarketBoardTabs(
                         labels = boardOptions.map { it.label },
                         selectedIndex = selectedBoardIndex,
-                        onSelect = { selectedBoardIndex = it },
+                        onSelect = onSelectBoard,
                     )
                 }
-                if (visibleQuotes.isEmpty()) {
+                item {
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                item {
+                    MarketFilterRow(
+                        selectedPrimary = selectedPrimary,
+                        selectedBoard = selectedBoard,
+                        countLabel = countLabel,
+                    )
+                }
+                if (signalSpotlights.isNotEmpty()) {
                     item {
-                        VpnEmptyPanel(
-                            title = "未找到相关行情",
-                            subtitle = "尝试更换搜索词或切换榜单。",
-                        )
+                        Spacer(modifier = Modifier.height(10.dp))
                     }
-                } else {
                     item {
-                        MarketQuoteBoard(
-                            quotes = visibleQuotes,
-                            board = selectedBoard,
+                        MarketSignalStrip(
+                            spotlights = signalSpotlights,
+                            quotes = signalQuotes,
                             onOpenQuote = onOpenQuote,
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MarketSpotlightStrip(
-    spotlights: List<MarketSpotlight>,
-    onOpenQuote: (String) -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        spotlights.forEach { spotlight ->
-            val metricColor = when {
-                spotlight.primaryValue.trim().startsWith("-") -> Error
-                spotlight.primaryValue.trim().startsWith("+") -> MarketPositive
-                else -> TextPrimary
-            }
-            Surface(
-                modifier = Modifier
-                    .width(164.dp)
-                    .clickable { onOpenQuote(spotlight.symbol) },
-                shape = RoundedCornerShape(18.dp),
-                color = MarketPaperSurface,
-                border = BorderStroke(1.dp, MarketOutlineSoft),
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 13.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(3.dp),
-                    ) {
-                        Text(
-                            text = spotlight.eyebrow,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextTertiary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            text = spotlight.title,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            text = spotlight.primaryValue,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = metricColor,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                        )
-                    }
-                    Column(
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Text(
-                            text = spotlight.secondaryValue,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = TextTertiary,
-                        )
-                    }
+                item {
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+                item {
+                    body()
                 }
             }
         }
@@ -343,7 +373,117 @@ private fun MarketSpotlightStrip(
 }
 
 @Composable
-private fun MarketTopTabs(
+private fun MarketOverviewBackground(
+    content: @Composable BoxScope.() -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MarketPageBackground),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(MarketTopGlow, MarketPageBackground),
+                    ),
+                ),
+        )
+        content()
+    }
+}
+
+@Composable
+private fun MarketCompactHeader(
+    query: String,
+    onQueryChange: (String) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Surface(
+            modifier = Modifier.size(42.dp),
+            shape = CircleShape,
+            color = Color(0xFFF6B6DA),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = "M",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MarketTextPrimary,
+                    fontWeight = FontWeight.Black,
+                )
+            }
+        }
+        Surface(
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(24.dp),
+            color = MarketSearchSurface,
+            border = BorderStroke(1.dp, MarketLine),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MarketTextMuted,
+                )
+                BasicTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge.merge(
+                        TextStyle(
+                            color = MarketTextPrimary,
+                            fontWeight = FontWeight.Medium,
+                        ),
+                    ),
+                    decorationBox = { innerTextField ->
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.CenterStart,
+                        ) {
+                            if (query.isBlank()) {
+                                Text(
+                                    text = "全局搜索",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MarketTextMuted,
+                                )
+                            }
+                            innerTextField()
+                        }
+                    },
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .clickable { }
+                        .padding(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Tune,
+                        contentDescription = null,
+                        tint = MarketTextSecondary,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MarketPrimaryTabs(
     labels: List<String>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
@@ -352,27 +492,76 @@ private fun MarketTopTabs(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(30.dp),
     ) {
         labels.forEachIndexed { index, label ->
             val selected = index == selectedIndex
-            Surface(
+            Text(
+                text = label,
                 modifier = Modifier.clickable { onSelect(index) },
-                shape = RoundedCornerShape(18.dp),
-                color = if (selected) MarketSelectionFill else Color.Transparent,
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = if (selected) MarketSelectionBorder else Color.Transparent,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = if (selected) FontWeight.Black else FontWeight.SemiBold,
+                    color = if (selected) MarketTextPrimary else MarketTextMuted,
+                    letterSpacing = (-0.4).sp,
                 ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MarketAnnouncementBanner(
+    spotlight: MarketSpotlight,
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = MarketAccentSoft,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFB8F0FA),
+                ) {
+                    Text(
+                        text = spotlight.eyebrow,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MarketTextPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                    )
+                }
                 Text(
-                    text = label,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                    text = "${spotlight.title} ${spotlight.primaryValue}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MarketTextPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = spotlight.subtitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (selected) TextPrimary else TextSecondary,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                    color = MarketTextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = null,
+                tint = MarketTextSecondary,
+            )
         }
     }
 }
@@ -383,30 +572,139 @@ private fun MarketBoardTabs(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
 ) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            labels.forEachIndexed { index, label ->
+                val selected = index == selectedIndex
+                Column(
+                    modifier = Modifier.clickable { onSelect(index) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(7.dp),
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            color = if (selected) MarketTextPrimary else MarketTextSecondary,
+                            fontWeight = if (selected) FontWeight.Black else FontWeight.SemiBold,
+                            letterSpacing = (-0.2).sp,
+                        ),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(36.dp)
+                            .height(3.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(if (selected) MarketTextPrimary else Color.Transparent),
+                    )
+                }
+            }
+        }
+        HorizontalDivider(color = MarketLine, thickness = 0.8.dp)
+    }
+}
+
+@Composable
+private fun MarketFilterRow(
+    selectedPrimary: MarketPrimarySection,
+    selectedBoard: MarketBoard,
+    countLabel: String,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MarketFilterChip(
+                text = when (selectedPrimary) {
+                    MarketPrimarySection.TOKEN -> "全市场"
+                    MarketPrimarySection.CONTRACT -> "USDT"
+                    MarketPrimarySection.STOCK -> "美股"
+                },
+            )
+            MarketFilterChip(text = "24h")
+        }
+        Text(
+            text = "${selectedBoard.label} · $countLabel",
+            style = MaterialTheme.typography.labelMedium,
+            color = MarketTextSecondary,
+        )
+    }
+}
+
+@Composable
+private fun MarketFilterChip(
+    text: String,
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MarketChipSurface,
+        border = BorderStroke(1.dp, MarketLine),
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MarketTextPrimary,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+@Composable
+private fun MarketSignalStrip(
+    spotlights: List<MarketSpotlight>,
+    quotes: List<MarketQuote>,
+    onOpenQuote: (MarketQuote) -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        labels.forEachIndexed { index, label ->
-            val selected = index == selectedIndex
+        spotlights.forEach { spotlight ->
+            val relatedQuote = quotes.firstOrNull {
+                it.instrumentId == spotlight.instrumentId || it.symbol == spotlight.symbol
+            }
+            val metricColor = when {
+                spotlight.primaryValue.trim().startsWith("-") -> MarketNegative
+                spotlight.primaryValue.trim().startsWith("+") -> MarketPositive
+                else -> MarketTextPrimary
+            }
             Surface(
-                modifier = Modifier.clickable { onSelect(index) },
-                shape = RoundedCornerShape(16.dp),
-                color = if (selected) MarketSelectionFill else MarketPaperSurface,
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = if (selected) MarketSelectionBorder else MarketOutlineSoft,
-                ),
+                modifier = Modifier.clickable(enabled = relatedQuote != null) {
+                    relatedQuote?.let(onOpenQuote)
+                },
+                shape = RoundedCornerShape(14.dp),
+                color = MarketChipSurfaceStrong,
             ) {
-                Text(
-                    text = label,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (selected) TextPrimary else TextSecondary,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        text = spotlight.title,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MarketTextPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = spotlight.primaryValue,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = metricColor,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
         }
     }
@@ -418,50 +716,179 @@ private fun MarketQuoteBoard(
     board: MarketBoard,
     onOpenQuote: (MarketQuote) -> Unit,
 ) {
-    Surface(
-        shape = RoundedCornerShape(28.dp),
-        color = MarketPaperSurface,
-        border = BorderStroke(1.dp, MarketOutlineSoft),
+    Column(
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Column {
-            Row(
+        MarketQuoteHeader(board = board)
+        quotes.forEachIndexed { index, quote ->
+            MarketQuoteRow(
+                quote = quote,
+                board = board,
+                onClick = { onOpenQuote(quote) },
+            )
+            if (index != quotes.lastIndex) {
+                HorizontalDivider(color = MarketLine, thickness = 0.8.dp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MarketQuoteLoadingBoard(
+    board: MarketBoard,
+    rowCount: Int = 6,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        MarketQuoteHeader(board = board)
+        repeat(rowCount) { index ->
+            MarketQuoteLoadingRow()
+            if (index != rowCount - 1) {
+                HorizontalDivider(color = MarketLine, thickness = 0.8.dp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MarketQuoteEmptyBoard(
+    board: MarketBoard,
+    title: String,
+    subtitle: String,
+    actionText: String? = null,
+    onAction: () -> Unit = {},
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        MarketQuoteHeader(board = board)
+        Spacer(modifier = Modifier.height(14.dp))
+        MarketInlineStateCard(
+            title = title,
+            subtitle = subtitle,
+            actionText = actionText,
+            onAction = onAction,
+        )
+    }
+}
+
+@Composable
+private fun MarketQuoteHeader(
+    board: MarketBoard,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MarketHeaderCell(
+                modifier = Modifier.weight(1.25f),
+                title = "名称",
+            )
+            MarketHeaderCell(
+                modifier = Modifier.weight(0.9f),
+                title = "最新价格",
+                alignEnd = true,
+            )
+            MarketHeaderCell(
+                modifier = Modifier.weight(0.85f),
+                title = board.columnLabel,
+                alignEnd = true,
+            )
+        }
+        HorizontalDivider(color = MarketLineStrong, thickness = 0.8.dp)
+    }
+}
+
+@Composable
+private fun MarketHeaderCell(
+    modifier: Modifier,
+    title: String,
+    alignEnd: Boolean = false,
+) {
+    Box(modifier = modifier) {
+        Text(
+            text = title,
+            modifier = Modifier.align(if (alignEnd) Alignment.CenterEnd else Alignment.CenterStart),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MarketTextSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun MarketQuoteLoadingRow() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            modifier = Modifier.weight(1.25f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MarketSubtleSurface)
-                    .padding(horizontal = 18.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(MarketSkeletonStrong),
+            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    text = "名称",
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TextTertiary,
+                MarketPlaceholderLine(
+                    modifier = Modifier
+                        .width(104.dp)
+                        .height(20.dp),
                 )
-                Text(
-                    text = "最新价",
-                    modifier = Modifier.width(88.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TextTertiary,
-                )
-                Text(
-                    text = board.columnLabel,
-                    modifier = Modifier.width(96.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TextTertiary,
+                MarketPlaceholderLine(
+                    modifier = Modifier
+                        .width(148.dp)
+                        .height(14.dp),
                 )
             }
-            MarketBoardDivider()
-            quotes.forEachIndexed { index, quote ->
-                MarketQuoteRow(
-                    quote = quote,
-                    board = board,
-                    onClick = { onOpenQuote(quote) },
-                )
-                if (index != quotes.lastIndex) {
-                    MarketBoardDivider()
-                }
-            }
+        }
+        Column(
+            modifier = Modifier.weight(0.9f),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            MarketPlaceholderLine(
+                modifier = Modifier
+                    .width(92.dp)
+                    .height(20.dp),
+            )
+            MarketPlaceholderLine(
+                modifier = Modifier
+                    .width(74.dp)
+                    .height(14.dp),
+            )
+        }
+        Column(
+            modifier = Modifier.weight(0.85f),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            MarketPlaceholderLine(
+                modifier = Modifier
+                    .width(80.dp)
+                    .height(20.dp),
+            )
+            MarketPlaceholderLine(
+                modifier = Modifier
+                    .width(64.dp)
+                    .height(14.dp),
+            )
         }
     }
 }
@@ -472,135 +899,249 @@ private fun MarketQuoteRow(
     board: MarketBoard,
     onClick: () -> Unit,
 ) {
-    val trendColor = if (quote.changeRateValue >= 0f) MarketPositive else Error
+    val tag = remember(quote) {
+        when {
+            quote.isFavorite -> MarketTag("收藏", MarketTagTone.ACCENT)
+            quote.tags.isNotEmpty() -> quote.tags.first()
+            quote.heatRank != null -> MarketTag("热度 ${quote.heatRank}", MarketTagTone.NEUTRAL)
+            else -> null
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 16.dp),
+            .padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(5.dp),
+        Row(
+            modifier = Modifier.weight(1.25f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            MarketSymbolAvatar(symbol = quote.symbol)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(5.dp),
             ) {
-                Text(
-                    text = quote.symbol,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = TextPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = quote.market,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextTertiary,
-                )
-                if (quote.isFavorite) {
-                    MarketInlineMarker(tag = MarketTag(label = "收藏", tone = MarketTagTone.ACCENT))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        text = quote.symbol,
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            color = MarketTextPrimary,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-0.4).sp,
+                        ),
+                        maxLines = 1,
+                    )
+                    if (tag != null) {
+                        MarketInlineMarker(tag = tag)
+                    }
                 }
+                Text(
+                    text = quote.marketMeta(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MarketTextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
-            Text(
-                text = quote.name,
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
         Column(
-            modifier = Modifier.width(88.dp),
+            modifier = Modifier.weight(0.9f),
             horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
         ) {
             Text(
                 text = quote.lastPrice,
-                style = MaterialTheme.typography.titleSmall,
-                color = TextPrimary,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    color = MarketTextPrimary,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-0.3).sp,
+                ),
                 maxLines = 1,
             )
             Text(
                 text = quote.changeAmount,
-                style = MaterialTheme.typography.labelSmall,
-                color = trendColor,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MarketTextSecondary,
                 maxLines = 1,
             )
         }
         Column(
-            modifier = Modifier.width(96.dp),
+            modifier = Modifier.weight(0.85f),
             horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
         ) {
             Text(
                 text = board.primaryMetric(quote),
-                style = MaterialTheme.typography.titleSmall,
-                color = board.primaryMetricColor(quote),
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    color = board.primaryMetricColor(quote),
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-0.3).sp,
+                ),
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = board.secondaryMetric(quote),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextTertiary,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MarketTextSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
     }
+}
+
+@Composable
+private fun MarketInlineStateCard(
+    title: String,
+    subtitle: String,
+    actionText: String? = null,
+    onAction: () -> Unit = {},
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MarketChipSurface,
+        border = BorderStroke(1.dp, MarketLine),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MarketTextPrimary,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MarketTextSecondary,
+            )
+            if (actionText != null) {
+                Text(
+                    text = actionText,
+                    modifier = Modifier.clickable(onClick = onAction),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MarketAccent,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MarketSymbolAvatar(
+    symbol: String,
+) {
+    val palette = remember(symbol) {
+        marketAvatarPalette[(symbol.hashCode().absoluteValue()) % marketAvatarPalette.size]
+    }
+    Surface(
+        modifier = Modifier.size(46.dp),
+        shape = CircleShape,
+        color = palette.first,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = symbol.take(2).uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                color = palette.second,
+                fontWeight = FontWeight.Black,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MarketPlaceholderLine(
+    modifier: Modifier,
+    radius: Dp = 999.dp,
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(radius))
+            .background(MarketSkeleton),
+    )
 }
 
 @Composable
 private fun MarketInlineMarker(tag: MarketTag) {
     val containerColor = when (tag.tone) {
-        MarketTagTone.ACCENT -> MarketSelectionFill
+        MarketTagTone.ACCENT -> MarketAccentSoft
         MarketTagTone.POSITIVE -> MarketPositive.copy(alpha = 0.12f)
-        MarketTagTone.NEGATIVE -> Error.copy(alpha = 0.16f)
-        MarketTagTone.NEUTRAL -> MarketSubtleSurface
+        MarketTagTone.NEGATIVE -> MarketNegative.copy(alpha = 0.12f)
+        MarketTagTone.NEUTRAL -> MarketChipSurface
     }
     val contentColor = when (tag.tone) {
-        MarketTagTone.ACCENT -> VpnAccent.copy(alpha = 0.88f)
+        MarketTagTone.ACCENT -> MarketAccent
         MarketTagTone.POSITIVE -> MarketPositive
-        MarketTagTone.NEGATIVE -> Error
-        MarketTagTone.NEUTRAL -> TextSecondary
+        MarketTagTone.NEGATIVE -> MarketNegative
+        MarketTagTone.NEUTRAL -> MarketTextSecondary
     }
     Surface(
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(8.dp),
         color = containerColor,
     ) {
         Text(
             text = tag.label,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
             color = contentColor,
+            fontWeight = FontWeight.Medium,
             maxLines = 1,
         )
     }
 }
 
-@Composable
-private fun MarketBoardDivider() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 18.dp)
-            .height(1.dp)
-            .background(MarketDividerSoft),
-    )
-}
-
 private fun MarketBoard.primaryMetricColor(quote: MarketQuote): Color {
     return when (this) {
-        MarketBoard.HOT, MarketBoard.ALL, MarketBoard.FAVORITES, MarketBoard.GAINERS ->
-            if (quote.changeRateValue >= 0f) MarketPositive else Error
-        MarketBoard.VOLUME -> TextPrimary
-        MarketBoard.NEW -> TextPrimary
+        MarketBoard.HOT,
+        MarketBoard.ALL,
+        MarketBoard.FAVORITES,
+        MarketBoard.GAINERS,
+        -> if (quote.changeRateValue >= 0f) MarketPositive else MarketNegative
+
+        MarketBoard.VOLUME,
+        MarketBoard.NEW,
+        -> MarketTextPrimary
     }
 }
+
+private fun MarketQuote.marketMeta(): String {
+    val parts = buildList {
+        if (volume24h.isNotBlank()) {
+            add(volume24h)
+        }
+        when {
+            marketCap.isNotBlank() && marketCap != "--" -> add(marketCap)
+            sessionLabel.isNotBlank() -> add(sessionLabel)
+            market.isNotBlank() -> add(market)
+        }
+    }
+    return parts.joinToString("  |  ").ifBlank { name }
+}
+
+private fun Int.absoluteValue(): Int = if (this == Int.MIN_VALUE) 0 else kotlin.math.abs(this)
+
+private fun padCount(value: Int): String = value.coerceAtLeast(0).toString().padStart(2, '0')
+
+private val marketAvatarPalette = listOf(
+    Color(0xFFE5F4FF) to Color(0xFF1175C5),
+    Color(0xFFFDEAD8) to Color(0xFFC26A16),
+    Color(0xFFE7F8EE) to Color(0xFF238A58),
+    Color(0xFFF7E9FF) to Color(0xFF9A45CF),
+    Color(0xFFFFE7EF) to Color(0xFFC24974),
+    Color(0xFFEAF1FF) to Color(0xFF355FC9),
+)
 
 @Preview
 @Composable
@@ -628,16 +1169,75 @@ private fun MarketOverviewPagePreview() {
                     turnover24hValue = 51647750364.0,
                     heatRank = 2,
                 ),
+                MarketQuote(
+                    instrumentId = "contract:sol",
+                    symbol = "SOLUSDT",
+                    name = "Solana",
+                    market = "CONTRACT",
+                    marketType = "CONTRACT",
+                    sessionLabel = "USDT 永续",
+                    lastPrice = "\$141.32",
+                    changeAmount = "-\$1.76",
+                    changePercent = "-1.23%",
+                    volume24h = "\$10.62M",
+                    marketCap = "\$70.11B",
+                    peRatio = "--",
+                    dayRange = "\$138.00 - \$146.30",
+                    categories = setOf(MarketCategory.HOT),
+                    tags = listOf(MarketTag("75x", MarketTagTone.NEUTRAL)),
+                    changeRateValue = -1.23f,
+                    turnover24hValue = 10620000.0,
+                    heatRank = 5,
+                ),
+                MarketQuote(
+                    instrumentId = "stock:nvda",
+                    symbol = "NVDA",
+                    name = "NVIDIA",
+                    market = "STOCK",
+                    marketType = "STOCK",
+                    sessionLabel = "US",
+                    lastPrice = "\$934.13",
+                    changeAmount = "+\$18.62",
+                    changePercent = "+2.03%",
+                    volume24h = "\$12.21B",
+                    marketCap = "\$2.29T",
+                    peRatio = "71.3",
+                    dayRange = "\$919.00 - \$944.20",
+                    categories = setOf(MarketCategory.US_STOCKS),
+                    tags = listOf(MarketTag("AI", MarketTagTone.NEUTRAL)),
+                    isFavorite = true,
+                    changeRateValue = 2.03f,
+                    turnover24hValue = 12210000000.0,
+                    heatRank = 3,
+                ),
             ),
             spotlights = listOf(
+                MarketSpotlight(
+                    instrumentId = "contract:sol",
+                    symbol = "SOLUSDT",
+                    eyebrow = "新交易对",
+                    title = "SOLUSDT",
+                    subtitle = "今日上线 1-50 倍合约",
+                    primaryValue = "+4.91%",
+                    secondaryValue = "\$48.47B",
+                ),
                 MarketSpotlight(
                     instrumentId = "crypto:bitcoin",
                     symbol = "BTC",
                     eyebrow = "热度榜 #2",
-                    title = "Bitcoin",
+                    title = "BTC",
                     subtitle = "BTC · CRYPTO",
                     primaryValue = "+4.91%",
                     secondaryValue = "\$48.47B",
+                ),
+                MarketSpotlight(
+                    instrumentId = "stock:nvda",
+                    symbol = "NVDA",
+                    eyebrow = "AI 风向",
+                    title = "NVDA",
+                    subtitle = "NVDA · STOCK",
+                    primaryValue = "+2.03%",
+                    secondaryValue = "\$12.21B",
                 ),
             ),
             onOpenQuote = {},
