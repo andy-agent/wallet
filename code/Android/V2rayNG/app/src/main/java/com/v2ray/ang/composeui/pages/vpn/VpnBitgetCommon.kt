@@ -60,28 +60,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.v2ray.ang.composeui.theme.BackgroundPrimary
 import com.v2ray.ang.composeui.theme.BackgroundDeepest
+import com.v2ray.ang.composeui.theme.BackgroundOverlay
+import com.v2ray.ang.composeui.theme.BackgroundPrimary
+import com.v2ray.ang.composeui.theme.BackgroundSecondary
+import com.v2ray.ang.composeui.theme.BackgroundTertiary
+import com.v2ray.ang.composeui.theme.BorderDefault
 import com.v2ray.ang.composeui.theme.Error
+import com.v2ray.ang.composeui.theme.Primary
+import com.v2ray.ang.composeui.theme.Success
 import com.v2ray.ang.composeui.theme.TextPrimary
 import com.v2ray.ang.composeui.theme.TextSecondary
 import com.v2ray.ang.composeui.theme.TextTertiary
+import com.v2ray.ang.composeui.theme.Warning
 
 internal val VpnPageHorizontalPadding = 20.dp
 internal val VpnPageTopPadding = 16.dp
 internal val VpnPageBottomPadding = 132.dp
 
-internal val VpnAccent = Color(0xFF35D4E6)
-internal val VpnAccentSoft = VpnAccent.copy(alpha = 0.16f)
-internal val VpnSurface = Color(0xFFFFFFFF)
-internal val VpnSurfaceStrong = Color(0xFFF6FAFD)
-internal val VpnSurfaceMuted = Color(0xFFEFF4F8)
-internal val VpnOutline = Color(0xFFD8E2EC)
-internal val VpnWarningSurface = Color(0xFFFFF6EA)
-internal val VpnSheetScrim = Color(0x33102033)
-internal val VpnPositive = VpnAccent
-internal val VpnNegative = Color(0xFFE9687F)
-internal val VpnDisabledButton = Color(0xFFC6D5E1)
+internal val VpnAccent = Primary
+internal val VpnAccentSoft = VpnAccent.copy(alpha = 0.14f)
+internal val VpnSurface = BackgroundSecondary
+internal val VpnSurfaceStrong = BackgroundOverlay
+internal val VpnSurfaceMuted = BackgroundTertiary
+internal val VpnOutline = BorderDefault
+internal val VpnWarningSurface = Warning.copy(alpha = 0.14f)
+internal val VpnSheetScrim = BackgroundDeepest.copy(alpha = 0.16f)
+internal val VpnPositive = Success
+internal val VpnNegative = Error
+internal val VpnDisabledButton = BackgroundTertiary
 
 private val VpnCardShape = RoundedCornerShape(28.dp)
 private val VpnRowShape = RoundedCornerShape(20.dp)
@@ -116,8 +123,8 @@ fun VpnBitgetBackground(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFFBFDFF),
-                        Color(0xFFF6FAFD),
+                        BackgroundOverlay,
+                        BackgroundSecondary,
                         BackgroundPrimary,
                     ),
                 ),
@@ -128,7 +135,7 @@ fun VpnBitgetBackground(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(VpnAccent.copy(alpha = 0.08f), Color.Transparent),
+                        colors = listOf(VpnAccent.copy(alpha = 0.06f), Color.Transparent),
                         center = Offset(600f, 260f),
                         radius = 860f,
                     ),
@@ -668,9 +675,9 @@ fun VpnPrimaryButton(
         shape = RoundedCornerShape(26.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (enabled) VpnAccent else VpnDisabledButton,
-            contentColor = Color(0xFF041012),
+            contentColor = BackgroundDeepest,
             disabledContainerColor = VpnDisabledButton,
-            disabledContentColor = Color(0xFF041012).copy(alpha = 0.6f),
+            disabledContentColor = BackgroundDeepest.copy(alpha = 0.6f),
         ),
     ) {
         Text(
@@ -718,10 +725,10 @@ fun VpnLightPrimaryButton(
         enabled = enabled,
         shape = RoundedCornerShape(26.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFFF4F4F2),
-            contentColor = Color(0xFF111417),
-            disabledContainerColor = Color(0xFFB7BCBF),
-            disabledContentColor = Color(0xFF111417).copy(alpha = 0.6f),
+            containerColor = BackgroundSecondary,
+            contentColor = TextPrimary,
+            disabledContainerColor = BackgroundTertiary,
+            disabledContentColor = TextPrimary.copy(alpha = 0.6f),
         ),
     ) {
         Text(
@@ -1133,7 +1140,7 @@ fun VpnCandleChart(
                     .align(Alignment.TopCenter)
                     .padding(top = 18.dp),
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFF3A4245),
+                color = VpnSurfaceStrong,
             ) {
                 Column(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -1355,7 +1362,7 @@ internal fun statusAccent(status: String): Color {
         "pending",
         "confirming",
         "connecting",
-        -> Color(0xFFFFB14A)
+        -> Warning
 
         else -> Error
     }

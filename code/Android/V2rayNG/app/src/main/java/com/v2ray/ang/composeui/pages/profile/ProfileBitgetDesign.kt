@@ -40,19 +40,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.v2ray.ang.composeui.theme.BackgroundOverlay
+import com.v2ray.ang.composeui.theme.BackgroundPrimary
+import com.v2ray.ang.composeui.theme.BackgroundSecondary
+import com.v2ray.ang.composeui.theme.BackgroundTertiary
+import com.v2ray.ang.composeui.theme.BorderDefault
+import com.v2ray.ang.composeui.theme.Error
+import com.v2ray.ang.composeui.theme.Primary
+import com.v2ray.ang.composeui.theme.PrimaryHover
+import com.v2ray.ang.composeui.theme.TextPrimary
+import com.v2ray.ang.composeui.theme.TextSecondary
+import com.v2ray.ang.composeui.theme.TextTertiary
+import com.v2ray.ang.composeui.theme.Warning
 
-internal val ProfilePageBackground = Color(0xFF0D1417)
-internal val ProfileSurface = Color(0xFF162027)
-internal val ProfileSurfaceRaised = Color(0xFF1B2830)
-internal val ProfileAccent = Color(0xFF17D7E7)
-internal val ProfileAccentDeep = Color(0xFF08B4C6)
-internal val ProfileTextPrimary = Color(0xFFF2F7FA)
-internal val ProfileTextSecondary = Color(0xFF95A6B3)
-internal val ProfileTextTertiary = Color(0xFF62737F)
-internal val ProfileDanger = Color(0xFFFF4F8C)
-internal val ProfileWarningSurface = Color(0xFF412F1B)
-internal val ProfileWarningText = Color(0xFFFFC877)
-internal val ProfileDivider = Color(0xFF2D3C46)
+internal val ProfilePageBackground = BackgroundPrimary
+internal val ProfileSurface = BackgroundSecondary
+internal val ProfileSurfaceRaised = BackgroundTertiary
+internal val ProfileAccent = Primary
+internal val ProfileAccentDeep = PrimaryHover
+internal val ProfileTextPrimary = TextPrimary
+internal val ProfileTextSecondary = TextSecondary
+internal val ProfileTextTertiary = TextTertiary
+internal val ProfileDanger = Error
+internal val ProfileWarningSurface = Warning.copy(alpha = 0.14f)
+internal val ProfileWarningText = Warning
+internal val ProfileDivider = BorderDefault
 
 private val ProfileCardShape = RoundedCornerShape(28.dp)
 
@@ -66,7 +78,7 @@ internal fun ProfileBitgetBackground(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color(0xFF091014), ProfilePageBackground, ProfilePageBackground),
+                    colors = listOf(BackgroundOverlay, BackgroundSecondary, ProfilePageBackground),
                 ),
             ),
     ) {
@@ -75,7 +87,7 @@ internal fun ProfileBitgetBackground(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(ProfileAccent.copy(alpha = 0.12f), Color.Transparent),
+                        colors = listOf(ProfileAccent.copy(alpha = 0.05f), Color.Transparent),
                         radius = 980f,
                     ),
                 ),

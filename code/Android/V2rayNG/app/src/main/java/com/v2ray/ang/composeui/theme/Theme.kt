@@ -1,6 +1,5 @@
 package com.v2ray.ang.composeui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -11,17 +10,17 @@ private val DarkColorScheme = darkColorScheme(
     primary = Primary,
     onPrimary = BackgroundDeepest,
     primaryContainer = AccentSurfaceStrong,
-    onPrimaryContainer = PrimaryHover,
+    onPrimaryContainer = BackgroundDeepest,
     secondary = Info,
     onSecondary = BackgroundDeepest,
     secondaryContainer = AccentSurfaceInfo,
-    onSecondaryContainer = Info,
+    onSecondaryContainer = BackgroundDeepest,
     tertiary = Warning,
     onTertiary = BackgroundDeepest,
     tertiaryContainer = AccentSurfaceWarm,
-    onTertiaryContainer = Warning,
+    onTertiaryContainer = BackgroundDeepest,
     error = Error,
-    onError = BackgroundDeepest,
+    onError = Color.White,
     errorContainer = Error.copy(alpha = 0.16f),
     onErrorContainer = Error.copy(alpha = 0.92f),
     background = BackgroundPrimary,
@@ -32,7 +31,7 @@ private val DarkColorScheme = darkColorScheme(
     onSurfaceVariant = TextSecondary,
     outline = BorderDefault,
     outlineVariant = DividerColor,
-    scrim = Color.Black.copy(alpha = 0.72f),
+    scrim = BackgroundDeepest.copy(alpha = 0.24f),
 )
 
 private val LightColorScheme = lightColorScheme(

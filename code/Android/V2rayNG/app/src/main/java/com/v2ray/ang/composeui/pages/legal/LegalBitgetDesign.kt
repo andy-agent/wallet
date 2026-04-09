@@ -40,16 +40,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.v2ray.ang.composeui.theme.BackgroundOverlay
+import com.v2ray.ang.composeui.theme.BackgroundPrimary
+import com.v2ray.ang.composeui.theme.BackgroundSecondary
+import com.v2ray.ang.composeui.theme.BackgroundTertiary
+import com.v2ray.ang.composeui.theme.BorderDefault
+import com.v2ray.ang.composeui.theme.Primary
+import com.v2ray.ang.composeui.theme.PrimaryHover
+import com.v2ray.ang.composeui.theme.TextPrimary
+import com.v2ray.ang.composeui.theme.TextSecondary
+import com.v2ray.ang.composeui.theme.TextTertiary
 
-internal val LegalPageBackground = Color(0xFF0D1417)
-internal val LegalCardBackground = Color(0xFF162027)
-internal val LegalCardRaised = Color(0xFF1B2830)
-internal val LegalAccent = Color(0xFF16D7E8)
-internal val LegalAccentDeep = Color(0xFF08B5C6)
-internal val LegalTextPrimary = Color(0xFFF2F7FA)
-internal val LegalTextSecondary = Color(0xFF95A6B3)
-internal val LegalTextTertiary = Color(0xFF62737F)
-internal val LegalBorder = Color(0xFF2D3C46)
+internal val LegalPageBackground = BackgroundPrimary
+internal val LegalCardBackground = BackgroundSecondary
+internal val LegalCardRaised = BackgroundTertiary
+internal val LegalAccent = Primary
+internal val LegalAccentDeep = PrimaryHover
+internal val LegalTextPrimary = TextPrimary
+internal val LegalTextSecondary = TextSecondary
+internal val LegalTextTertiary = TextTertiary
+internal val LegalBorder = BorderDefault
 
 private val LegalCardShape = RoundedCornerShape(28.dp)
 
@@ -63,7 +73,7 @@ internal fun LegalBitgetBackground(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color(0xFF091014), LegalPageBackground, LegalPageBackground),
+                    colors = listOf(BackgroundOverlay, BackgroundSecondary, LegalPageBackground),
                 ),
             ),
     ) {
@@ -72,7 +82,7 @@ internal fun LegalBitgetBackground(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(LegalAccent.copy(alpha = 0.12f), Color.Transparent),
+                        colors = listOf(LegalAccent.copy(alpha = 0.05f), Color.Transparent),
                         radius = 980f,
                     ),
                 ),
@@ -183,7 +193,7 @@ internal fun LegalHighlightCard(
             .clip(LegalCardShape)
             .background(
                 Brush.linearGradient(
-                    colors = listOf(Color(0xFF0F2430), Color(0xFF112A34), Color(0xFF111A20)),
+                    colors = listOf(LegalCardBackground, LegalCardRaised, LegalPageBackground),
                 ),
             )
             .background(Color.Transparent)
