@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>04 Control Plane</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body class="single-page">
+    <main class="page-frame">
+      <div class="page-stack" style="padding-bottom: 108px">
+        <header class="status-bar">
+          <span>18:06</span>
+          <div class="status-icons">
+            <span class="signal"><span></span><span></span><span></span></span>
+            <span>◔</span>
+            <span class="battery"></span>
+          </div>
+        </header>
+
+        <section>
+          <div class="eyebrow">CONTROL PLANE</div>
+          <div class="title-row" style="margin-top: 10px">
+            <div>
+              <h1 class="page-title">网络与资产总览</h1>
+              <p class="page-subtitle">
+                把 VPN 连接状态、钱包余额、异常提醒放进同一块控制平面。
+              </p>
+            </div>
+            <span class="badge-pill is-alert">3 条实时提醒</span>
+          </div>
+        </section>
+
+        <div class="search-bar">
+          <span class="search-icon">⌕</span>
+          <span class="grow">搜索节点 / 币种 / 订单 / 标签</span>
+          <span class="tiny-badge is-live">智能筛选</span>
+        </div>
+
+        <section class="surface-card" style="padding: 14px">
+          <div class="section-label">
+            <span>Secure Tunnel</span>
+            <span>已连接 · 东京 01</span>
+          </div>
+          <div class="stat-grid" style="margin-top: 12px; align-items: center">
+            <div style="display: grid; place-items: center">
+              <div class="secure-ring" style="width: 146px; height: 146px">
+                <div class="ring-center" style="width: 84px; height: 84px">
+                  <strong>89 Mbps</strong>
+                  延迟 41 ms
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="metric-label">组合总额</div>
+              <div class="metric-value" style="font-size: 20px">$248,892.42</div>
+              <div class="metric-caption">总资产 · 24h +6.24%</div>
+              <div class="dual-grid" style="margin-top: 10px">
+                <div class="mini-card">
+                  <div class="metric-label">活跃隧道</div>
+                  <div class="metric-value" style="font-size: 24px">4</div>
+                </div>
+                <div class="mini-card">
+                  <div class="metric-label">节点健康</div>
+                  <div class="metric-value" style="font-size: 24px">97%</div>
+                </div>
+              </div>
+              <div class="button-row" style="margin-top: 10px">
+                <button class="secondary-button">切换节点</button>
+                <button class="primary-button">断开 / 重连</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-label">
+            <span>快捷动作</span>
+            <span>P0 核心</span>
+          </div>
+          <div class="triple-grid" style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 10px">
+            <div class="action-card center-text">
+              <div class="mini-icon">↓</div>
+              <div class="metric-caption">收款</div>
+            </div>
+            <div class="action-card center-text">
+              <div class="mini-icon">↑</div>
+              <div class="metric-caption">发送</div>
+            </div>
+            <div class="action-card center-text">
+              <div class="mini-icon">⌂</div>
+              <div class="metric-caption">选区</div>
+            </div>
+            <div class="action-card center-text">
+              <div class="mini-icon">▣</div>
+              <div class="metric-caption">买套餐</div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-label">
+            <span>实时提醒</span>
+            <span>监控中 UI</span>
+          </div>
+          <div class="list-stack" style="margin-top: 10px">
+            <div class="list-item">
+              <span class="mini-icon is-amber">!</span>
+              <div class="list-copy">
+                <strong>节点抖动恢复</strong>
+                <span>东京 01 已回到低延迟路线</span>
+              </div>
+              <span class="tiny-badge is-safe">已恢复</span>
+            </div>
+            <div class="list-item">
+              <span class="mini-icon is-violet">S</span>
+              <div class="list-copy">
+                <strong>SOL 入账待确认</strong>
+                <span>0.82 SOL · 来自订阅退款</span>
+              </div>
+              <span class="tiny-badge is-live">1 block</span>
+            </div>
+            <div class="list-item">
+              <span class="mini-icon is-green">U</span>
+              <div class="list-copy">
+                <strong>USDT 命中历史峰值</strong>
+                <span>预计可覆盖 6 个月专业套餐</span>
+              </div>
+              <span class="tiny-badge is-safe">可支付</span>
+            </div>
+          </div>
+        </section>
+
+        <nav class="bottom-nav">
+          <div class="nav-item is-active"><span class="nav-icon">◎</span><span>总览</span></div>
+          <div class="nav-item"><span class="nav-icon">◌</span><span>VPN</span></div>
+          <div class="nav-item"><span class="nav-icon">¤</span><span>钱包</span></div>
+          <div class="nav-item"><span class="nav-icon">⌁</span><span>增长</span></div>
+          <div class="nav-item"><span class="nav-icon">◔</span><span>我的</span></div>
+        </nav>
+      </div>
+    </main>
+  </body>
+</html>

@@ -8,6 +8,7 @@
 - `pages/`: 单页原型，每个页面对应一块手机画板
 - `styles.css`: 共享视觉令牌与区块样式
 - `compose-map.md`: 页面区块到 Compose Composable 的映射
+- `compose-integration-notes.md`: Android / Compose 接入建议
 
 ## 页面范围
 
