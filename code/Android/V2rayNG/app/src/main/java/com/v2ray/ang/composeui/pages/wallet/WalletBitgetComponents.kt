@@ -66,9 +66,11 @@ import com.v2ray.ang.composeui.theme.Warning
 
 internal val WalletAccent = Primary
 internal val WalletBackgroundTop = BackgroundOverlay
+internal val WalletBackgroundMiddle = BackgroundSecondary
 internal val WalletBackgroundBottom = BackgroundPrimary
-internal val WalletSurface = BackgroundSecondary
-internal val WalletSurfaceStrong = BackgroundTertiary
+internal val WalletSurface = BackgroundOverlay
+internal val WalletSurfaceStrong = BackgroundSecondary
+internal val WalletSurfaceMuted = BackgroundTertiary
 internal val WalletOutline = BorderDefault
 internal val WalletTextPrimary = TextPrimary
 internal val WalletTextSecondary = TextSecondary
@@ -102,6 +104,7 @@ internal fun WalletPageBackdrop(
                 Brush.verticalGradient(
                     colors = listOf(
                         WalletBackgroundTop,
+                        WalletBackgroundMiddle,
                         WalletBackgroundBottom,
                     ),
                 ),
@@ -112,8 +115,8 @@ internal fun WalletPageBackdrop(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(WalletAccent.copy(alpha = 0.08f), Color.Transparent),
-                        radius = 980f,
+                        colors = listOf(WalletAccent.copy(alpha = 0.05f), Color.Transparent),
+                        radius = 860f,
                     ),
                 ),
         )
@@ -122,8 +125,8 @@ internal fun WalletPageBackdrop(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Info.copy(alpha = 0.06f), Color.Transparent),
-                        radius = 760f,
+                        colors = listOf(Info.copy(alpha = 0.03f), Color.Transparent),
+                        radius = 680f,
                     ),
                 ),
         )
@@ -140,7 +143,7 @@ internal fun WalletGlassCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val borderColor = if (selected) {
-        accent.copy(alpha = 0.92f)
+        accent.copy(alpha = 0.34f)
     } else {
         WalletOutline
     }
@@ -149,14 +152,14 @@ internal fun WalletGlassCard(
         shape = RoundedCornerShape(28.dp),
         color = WalletSurface,
         border = BorderStroke(if (selected) 1.6.dp else 1.dp, borderColor),
-        shadowElevation = if (selected) 6.dp else 0.dp,
+        shadowElevation = if (selected) 8.dp else 3.dp,
     ) {
         Column(
             modifier = Modifier
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            accent.copy(alpha = 0.08f),
+                            accent.copy(alpha = if (selected) 0.08f else 0.03f),
                             WalletSurface,
                             WalletSurfaceStrong,
                         ),
@@ -180,7 +183,7 @@ internal fun WalletBottomSheetCard(
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
         color = WalletSurface,
         border = BorderStroke(1.dp, WalletOutline),
-        shadowElevation = 20.dp,
+        shadowElevation = 12.dp,
     ) {
         Column(
             modifier = Modifier
@@ -238,7 +241,7 @@ internal fun WalletMetricStrip(
             Surface(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(20.dp),
-                color = WalletSurfaceStrong,
+                color = WalletSurface,
                 border = BorderStroke(1.dp, WalletOutline),
             ) {
                 Column(
@@ -416,7 +419,7 @@ internal fun WalletSecondaryButton(
         shape = RoundedCornerShape(26.dp),
         border = BorderStroke(1.dp, WalletOutline),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = WalletSurfaceStrong,
+            containerColor = WalletSurface,
             contentColor = WalletTextPrimary,
         ),
     ) {
@@ -667,8 +670,8 @@ internal fun WalletAssistPillButton(
             .height(44.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
-        color = WalletAccent.copy(alpha = 0.12f),
-        border = BorderStroke(1.dp, WalletAccent.copy(alpha = 0.24f)),
+        color = WalletSurface,
+        border = BorderStroke(1.dp, WalletOutline),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 18.dp),
@@ -678,7 +681,7 @@ internal fun WalletAssistPillButton(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = WalletTextPrimary,
+                tint = WalletAccent,
                 modifier = Modifier.size(18.dp),
             )
             Text(
@@ -742,9 +745,9 @@ internal fun WalletInputField(
         trailingIcon = trailingContent,
         shape = RoundedCornerShape(24.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = WalletSurface,
-            unfocusedContainerColor = WalletSurface,
-            disabledContainerColor = WalletSurface,
+            focusedContainerColor = WalletSurfaceStrong,
+            unfocusedContainerColor = WalletSurfaceStrong,
+            disabledContainerColor = WalletSurfaceStrong,
             focusedBorderColor = WalletAccent.copy(alpha = 0.62f),
             unfocusedBorderColor = WalletOutline,
             disabledBorderColor = WalletOutline,

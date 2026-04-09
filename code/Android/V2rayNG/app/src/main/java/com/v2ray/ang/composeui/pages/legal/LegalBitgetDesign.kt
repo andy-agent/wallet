@@ -52,8 +52,8 @@ import com.v2ray.ang.composeui.theme.TextSecondary
 import com.v2ray.ang.composeui.theme.TextTertiary
 
 internal val LegalPageBackground = BackgroundPrimary
-internal val LegalCardBackground = BackgroundSecondary
-internal val LegalCardRaised = BackgroundTertiary
+internal val LegalCardBackground = BackgroundOverlay
+internal val LegalCardRaised = BackgroundSecondary
 internal val LegalAccent = Primary
 internal val LegalAccentDeep = PrimaryHover
 internal val LegalTextPrimary = TextPrimary
@@ -82,8 +82,8 @@ internal fun LegalBitgetBackground(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(LegalAccent.copy(alpha = 0.05f), Color.Transparent),
-                        radius = 980f,
+                        colors = listOf(LegalAccent.copy(alpha = 0.04f), Color.Transparent),
+                        radius = 860f,
                     ),
                 ),
         )
@@ -124,7 +124,7 @@ internal fun LegalTopBar(
         Surface(
             modifier = Modifier.size(40.dp),
             shape = CircleShape,
-            color = LegalCardBackground,
+            color = LegalCardRaised,
             border = BorderStroke(1.dp, LegalBorder),
         ) {
             Box(
@@ -173,6 +173,8 @@ internal fun LegalCard(
         modifier = modifier.fillMaxWidth(),
         shape = LegalCardShape,
         colors = CardDefaults.cardColors(containerColor = LegalCardBackground),
+        border = BorderStroke(1.dp, LegalBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
     ) {
         Column(
             modifier = Modifier.padding(contentPadding),
@@ -187,19 +189,28 @@ internal fun LegalHighlightCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(LegalCardShape)
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(LegalCardBackground, LegalCardRaised, LegalPageBackground),
-                ),
-            )
-            .background(Color.Transparent)
-            .padding(22.dp),
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = LegalCardShape,
+        color = LegalCardBackground,
+        border = BorderStroke(1.dp, LegalBorder),
+        shadowElevation = 3.dp,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp), content = content)
+        Column(
+            modifier = Modifier
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            LegalAccent.copy(alpha = 0.04f),
+                            LegalCardBackground,
+                            LegalCardRaised,
+                        ),
+                    ),
+                )
+                .padding(22.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            content = content,
+        )
     }
 }
 
@@ -207,13 +218,14 @@ internal fun LegalHighlightCard(
 internal fun LegalBadge(
     text: String,
     modifier: Modifier = Modifier,
-    containerColor: Color = LegalAccent.copy(alpha = 0.15f),
-    contentColor: Color = LegalAccent,
+    containerColor: Color = LegalCardRaised,
+    contentColor: Color = LegalTextSecondary,
 ) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(999.dp),
         color = containerColor,
+        border = BorderStroke(1.dp, LegalBorder),
     ) {
         Text(
             text = text,

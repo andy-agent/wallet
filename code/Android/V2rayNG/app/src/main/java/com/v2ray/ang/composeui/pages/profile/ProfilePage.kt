@@ -166,13 +166,13 @@ fun ProfilePage(
     var selectedSwatchIndex by rememberSaveable { mutableIntStateOf(1) }
     val avatarSwatches = remember {
         listOf(
-            AvatarSwatch(Color(0xFFA68BFF), "🚀"),
-            AvatarSwatch(Color(0xFFFF73C2), "💾"),
-            AvatarSwatch(Color(0xFFFF8D88), "😎"),
-            AvatarSwatch(Color(0xFFFFD37E), "🔥"),
-            AvatarSwatch(Color(0xFFA2FF78), "🤖"),
-            AvatarSwatch(Color(0xFF78E7FF), "🦄"),
-            AvatarSwatch(Color(0xFF7FAEFF), "⭐"),
+            AvatarSwatch(Color(0xFF8FA59B), "🚀"),
+            AvatarSwatch(Color(0xFFA2A8B5), "💾"),
+            AvatarSwatch(Color(0xFFD1AEA2), "😎"),
+            AvatarSwatch(Color(0xFFD4BE97), "🔥"),
+            AvatarSwatch(Color(0xFF9EB39A), "🤖"),
+            AvatarSwatch(Color(0xFF95AFB9), "🦄"),
+            AvatarSwatch(Color(0xFFAAA0B7), "⭐"),
         )
     }
     val avatarGlyphs = remember {
@@ -319,10 +319,36 @@ private fun ProfileSettingsContent(
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item {
-            ProfileBadge(
-                text = "${user.nickname ?: user.email.substringBefore("@")} · ${user.memberLevel}",
-                containerColor = ProfileSurfaceRaised,
-                contentColor = ProfileTextSecondary,
+            ProfileCard {
+                ProfileBadge(
+                    text = user.memberLevel,
+                    containerColor = ProfileAccent.copy(alpha = 0.1f),
+                    contentColor = ProfileAccent,
+                )
+                Text(
+                    text = user.nickname ?: user.email.substringBefore("@"),
+                    color = ProfileTextPrimary,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = user.email,
+                    color = ProfileTextSecondary,
+                    fontSize = 14.sp,
+                )
+                Text(
+                    text = "账户、安全与支持入口统一收进浅色卡片，减少在白底页面里的视觉噪声。",
+                    color = ProfileTextSecondary,
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp,
+                )
+            }
+        }
+
+        item {
+            ProfileSectionHeading(
+                title = "账户与偏好",
+                subtitle = "钱包、安全与常用设置保持同一套浅色容器层级。",
             )
         }
 
@@ -335,6 +361,13 @@ private fun ProfileSettingsContent(
                     }
                 }
             }
+        }
+
+        item {
+            ProfileSectionHeading(
+                title = "法务与支持",
+                subtitle = "辅助入口收敛成更轻的卡片和说明层级。",
+            )
         }
 
         item {
@@ -397,20 +430,22 @@ private fun ProfileSecurityContent(
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
+            ProfileCard {
                 androidx.compose.foundation.layout.Column(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Surface(
                         modifier = Modifier
-                            .size(104.dp)
+                            .size(96.dp)
                             .clickable(onClick = onAvatarClick),
                         shape = CircleShape,
-                        color = avatarColor,
+                        color = avatarColor.copy(alpha = 0.18f),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            avatarColor.copy(alpha = 0.26f),
+                        ),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
@@ -432,9 +467,9 @@ private fun ProfileSecurityContent(
                         fontSize = 13.sp,
                     )
                     ProfileBadge(
-                        text = "安全等级 低",
-                        containerColor = ProfileDanger.copy(alpha = 0.12f),
-                        contentColor = ProfileDanger,
+                        text = "建议补充验证",
+                        containerColor = ProfileWarningSurface,
+                        contentColor = ProfileWarningText,
                     )
                 }
             }
@@ -445,16 +480,20 @@ private fun ProfileSecurityContent(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 color = ProfileWarningSurface,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    ProfileWarningText.copy(alpha = 0.18f),
+                ),
             ) {
                 androidx.compose.foundation.layout.Column(
                     modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text(
-                        text = "安全设置",
+                        text = "安全建议",
                         color = ProfileWarningText,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         text = "至少开启一种验证方式，保证资产安全",
@@ -464,6 +503,13 @@ private fun ProfileSecurityContent(
                     )
                 }
             }
+        }
+
+        item {
+            ProfileSectionHeading(
+                title = "账户与验证",
+                subtitle = "保持轻量说明，再进入登录、钱包与订阅信息。",
+            )
         }
 
         item {
@@ -532,7 +578,7 @@ private fun ProfileSettingsRow(item: ProfileSettingRow) {
         item.trailingText?.let {
             Text(
                 text = it,
-                color = if (it.startsWith("v")) ProfileTextTertiary else ProfileAccent,
+                color = if (it.startsWith("v")) ProfileTextTertiary else ProfileTextSecondary,
                 fontSize = 13.sp,
                 maxLines = 1,
             )
@@ -551,34 +597,42 @@ private fun ProfileSupportTile(
     tile: SupportTile,
     modifier: Modifier = Modifier,
 ) {
-    androidx.compose.foundation.layout.Column(
-        modifier = modifier
-            .background(ProfilePageBackground)
-            .clickable(onClick = tile.onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+    Surface(
+        modifier = modifier.clickable(onClick = tile.onClick),
+        shape = RoundedCornerShape(24.dp),
+        color = ProfileSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, ProfileDivider),
+        shadowElevation = 2.dp,
     ) {
-        Surface(
-            shape = CircleShape,
-            color = ProfileSurface,
+        androidx.compose.foundation.layout.Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Box(
-                modifier = Modifier.size(52.dp),
-                contentAlignment = Alignment.Center,
+            Surface(
+                shape = CircleShape,
+                color = ProfileSurfaceRaised,
             ) {
-                Icon(
-                    imageVector = tile.icon,
-                    contentDescription = null,
-                    tint = ProfileTextPrimary,
-                )
+                Box(
+                    modifier = Modifier.size(52.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = tile.icon,
+                        contentDescription = null,
+                        tint = ProfileTextPrimary,
+                    )
+                }
             }
+            Text(
+                text = tile.title,
+                color = ProfileTextSecondary,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+            )
         }
-        Text(
-            text = tile.title,
-            color = ProfileTextSecondary,
-            fontSize = 13.sp,
-            textAlign = TextAlign.Center,
-        )
     }
 }
 
@@ -599,6 +653,7 @@ private fun ProfileAvatarPickerSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = ProfileSurface,
+        scrimColor = ProfileTextPrimary.copy(alpha = 0.18f),
         dragHandle = {
             Surface(
                 modifier = Modifier
@@ -758,6 +813,7 @@ private fun ProfileLogoutSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = ProfileSurface,
+        scrimColor = ProfileTextPrimary.copy(alpha = 0.18f),
         dragHandle = {
             Surface(
                 modifier = Modifier
