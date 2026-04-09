@@ -54,15 +54,15 @@ import com.v2ray.ang.composeui.theme.TextTertiary
 import com.v2ray.ang.composeui.theme.Warning
 
 internal val ProfilePageBackground = BackgroundPrimary
-internal val ProfileSurface = BackgroundSecondary
-internal val ProfileSurfaceRaised = BackgroundTertiary
+internal val ProfileSurface = BackgroundOverlay
+internal val ProfileSurfaceRaised = BackgroundSecondary
 internal val ProfileAccent = Primary
 internal val ProfileAccentDeep = PrimaryHover
 internal val ProfileTextPrimary = TextPrimary
 internal val ProfileTextSecondary = TextSecondary
 internal val ProfileTextTertiary = TextTertiary
 internal val ProfileDanger = Error
-internal val ProfileWarningSurface = Warning.copy(alpha = 0.14f)
+internal val ProfileWarningSurface = Warning.copy(alpha = 0.1f)
 internal val ProfileWarningText = Warning
 internal val ProfileDivider = BorderDefault
 
@@ -87,8 +87,8 @@ internal fun ProfileBitgetBackground(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(ProfileAccent.copy(alpha = 0.05f), Color.Transparent),
-                        radius = 980f,
+                        colors = listOf(ProfileAccent.copy(alpha = 0.04f), Color.Transparent),
+                        radius = 860f,
                     ),
                 ),
         )
@@ -129,7 +129,7 @@ internal fun ProfileTopBar(
             Surface(
                 modifier = Modifier.size(40.dp),
                 shape = CircleShape,
-                color = ProfileSurface,
+                color = ProfileSurfaceRaised,
                 border = BorderStroke(1.dp, ProfileDivider),
             ) {
                 Box(
@@ -178,6 +178,8 @@ internal fun ProfileCard(
         modifier = modifier.fillMaxWidth(),
         shape = ProfileCardShape,
         colors = CardDefaults.cardColors(containerColor = ProfileSurface),
+        border = BorderStroke(1.dp, ProfileDivider),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
     ) {
         Column(
             modifier = Modifier.padding(contentPadding),
@@ -191,13 +193,14 @@ internal fun ProfileCard(
 internal fun ProfileBadge(
     text: String,
     modifier: Modifier = Modifier,
-    containerColor: Color = ProfileAccent.copy(alpha = 0.15f),
-    contentColor: Color = ProfileAccent,
+    containerColor: Color = ProfileSurfaceRaised,
+    contentColor: Color = ProfileTextSecondary,
 ) {
     Surface(
         modifier = modifier,
         color = containerColor,
         shape = RoundedCornerShape(999.dp),
+        border = BorderStroke(1.dp, ProfileDivider),
     ) {
         Text(
             text = text,
@@ -205,6 +208,30 @@ internal fun ProfileBadge(
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+        )
+    }
+}
+
+@Composable
+internal fun ProfileSectionHeading(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            text = title,
+            color = ProfileTextPrimary,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = subtitle,
+            color = ProfileTextSecondary,
+            style = MaterialTheme.typography.bodySmall,
         )
     }
 }

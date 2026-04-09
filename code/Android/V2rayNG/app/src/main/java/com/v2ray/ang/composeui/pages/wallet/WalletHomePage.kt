@@ -334,13 +334,13 @@ private fun WalletHomeContent(
                         title = "银行卡",
                         value = "$0.00",
                         modifier = Modifier.weight(1f),
-                        accent = Color(0xFFFFCFA6),
+                        accent = Color(0xFFD8B595),
                     )
                     WalletFeatureCard(
                         title = "理财",
                         value = "4% 年化收益率",
                         modifier = Modifier.weight(1f),
-                        accent = Color(0xFFB7DBA8),
+                        accent = Color(0xFFA9C2A2),
                     )
                 }
             }
@@ -353,7 +353,7 @@ private fun WalletHomeContent(
                     Text(
                         text = "代币",
                         style = MaterialTheme.typography.titleLarge,
-                        color = WalletTextSecondary,
+                        color = WalletTextPrimary,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -475,7 +475,10 @@ private fun WalletHomeAction(
             Box(
                 modifier = Modifier
                     .size(34.dp)
-                    .background(WalletTextPrimary, shape = androidx.compose.foundation.shape.CircleShape),
+                    .background(
+                        WalletAccent.copy(alpha = 0.12f),
+                        shape = androidx.compose.foundation.shape.CircleShape,
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -511,7 +514,7 @@ private fun WalletFeatureCard(
         Box(
             modifier = Modifier
                 .size(30.dp)
-                .background(accent.copy(alpha = 0.18f), shape = androidx.compose.foundation.shape.CircleShape),
+                .background(accent.copy(alpha = 0.12f), shape = androidx.compose.foundation.shape.CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Box(
@@ -611,7 +614,7 @@ private fun WalletSwitcherOverlay(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.58f))
+                .background(WalletTextPrimary.copy(alpha = 0.14f))
                 .clickable(onClick = onDismiss),
         )
         WalletBottomSheetCard(
