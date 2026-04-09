@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-09T00:59:09Z
+Generated: 2026-04-09T01:31:38Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-dtg.1
-- next_task_title: 冻结白底舒适化视觉基线与主题 token
+- next_task_id: liaojiang-dtg.2
+- next_task_title: 重构 Market 板块白底视觉舒适度
 
 ## Counters
-- in_progress: 5
+- in_progress: 7
 - ready: 1
-- open: 13
-- closed: 245
-- dirty: 3
+- open: 12
+- closed: 246
+- dirty: 9
 
 ## Next Milestone
 - Continue the next task and complete one milestone
