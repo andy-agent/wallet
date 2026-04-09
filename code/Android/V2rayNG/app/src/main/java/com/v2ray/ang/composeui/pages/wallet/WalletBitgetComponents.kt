@@ -47,24 +47,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.v2ray.ang.composeui.theme.BackgroundDeepest
+import com.v2ray.ang.composeui.theme.BackgroundOverlay
+import com.v2ray.ang.composeui.theme.BackgroundPrimary
+import com.v2ray.ang.composeui.theme.BackgroundSecondary
+import com.v2ray.ang.composeui.theme.BackgroundTertiary
+import com.v2ray.ang.composeui.theme.BorderDefault
+import com.v2ray.ang.composeui.theme.Error
 import com.v2ray.ang.composeui.theme.Info
 import com.v2ray.ang.composeui.theme.Primary
 import com.v2ray.ang.composeui.theme.SolanaPurple
+import com.v2ray.ang.composeui.theme.TextPrimary
+import com.v2ray.ang.composeui.theme.TextSecondary
+import com.v2ray.ang.composeui.theme.TextTertiary
 import com.v2ray.ang.composeui.theme.TronRed
 import com.v2ray.ang.composeui.theme.USDTGreen
 import com.v2ray.ang.composeui.theme.Warning
 
 internal val WalletAccent = Primary
-internal val WalletBackgroundTop = Color(0xFF123C41)
-internal val WalletBackgroundBottom = Color(0xFF0D1415)
-internal val WalletSurface = Color(0xFF1A2122)
-internal val WalletSurfaceStrong = Color(0xFF232B2D)
-internal val WalletOutline = Color(0x26FFFFFF)
-internal val WalletTextPrimary = Color(0xFFF5FAFB)
-internal val WalletTextSecondary = Color(0xFF98A7AC)
-internal val WalletTextTertiary = Color(0xFF6A757A)
-internal val WalletDanger = Color(0xFFFF4D7D)
-internal val WalletWarningSurface = Color(0xFF3A3023)
+internal val WalletBackgroundTop = BackgroundOverlay
+internal val WalletBackgroundBottom = BackgroundPrimary
+internal val WalletSurface = BackgroundSecondary
+internal val WalletSurfaceStrong = BackgroundTertiary
+internal val WalletOutline = BorderDefault
+internal val WalletTextPrimary = TextPrimary
+internal val WalletTextSecondary = TextSecondary
+internal val WalletTextTertiary = TextTertiary
+internal val WalletDanger = Error
+internal val WalletWarningSurface = Warning.copy(alpha = 0.14f)
 internal val WalletPagePadding = 20.dp
 
 internal data class WalletQuickAction(
@@ -102,7 +112,7 @@ internal fun WalletPageBackdrop(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(WalletAccent.copy(alpha = 0.12f), Color.Transparent),
+                        colors = listOf(WalletAccent.copy(alpha = 0.08f), Color.Transparent),
                         radius = 980f,
                     ),
                 ),
@@ -112,7 +122,7 @@ internal fun WalletPageBackdrop(
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Color(0xFF1D8D8F).copy(alpha = 0.18f), Color.Transparent),
+                        colors = listOf(Info.copy(alpha = 0.06f), Color.Transparent),
                         radius = 760f,
                     ),
                 ),
@@ -146,7 +156,7 @@ internal fun WalletGlassCard(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            accent.copy(alpha = 0.12f),
+                            accent.copy(alpha = 0.08f),
                             WalletSurface,
                             WalletSurfaceStrong,
                         ),
@@ -184,7 +194,7 @@ internal fun WalletBottomSheetCard(
                     .width(42.dp)
                     .height(5.dp)
                     .clip(RoundedCornerShape(999.dp))
-                    .background(Color.White.copy(alpha = 0.22f)),
+                    .background(WalletOutline.copy(alpha = 0.9f)),
             )
             content()
         }
@@ -368,9 +378,9 @@ internal fun WalletPrimaryButton(
         shape = RoundedCornerShape(26.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = WalletAccent,
-            contentColor = WalletBackgroundBottom,
+            contentColor = BackgroundDeepest,
             disabledContainerColor = WalletAccent.copy(alpha = 0.4f),
-            disabledContentColor = WalletBackgroundBottom.copy(alpha = 0.6f),
+            disabledContentColor = BackgroundDeepest.copy(alpha = 0.6f),
         ),
     ) {
         if (icon != null) {
@@ -473,12 +483,13 @@ internal fun WalletSearchChrome(
                 .size(40.dp)
                 .clickable(onClick = onAvatarClick),
             shape = CircleShape,
-            color = Color(0xFFFF76D7),
+            color = WalletAccent.copy(alpha = 0.16f),
+            border = BorderStroke(1.dp, WalletAccent.copy(alpha = 0.22f)),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
                     text = avatarLabel,
-                    color = WalletBackgroundBottom,
+                    color = WalletAccent,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
                 )
@@ -612,7 +623,7 @@ internal fun WalletDivider(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .height(1.dp)
-            .background(Color.White.copy(alpha = 0.08f)),
+            .background(WalletOutline.copy(alpha = 0.8f)),
     )
 }
 
@@ -656,7 +667,7 @@ internal fun WalletAssistPillButton(
             .height(44.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
-        color = Color(0xFF0A4A58),
+        color = WalletAccent.copy(alpha = 0.12f),
         border = BorderStroke(1.dp, WalletAccent.copy(alpha = 0.24f)),
     ) {
         Row(
