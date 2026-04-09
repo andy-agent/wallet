@@ -15,6 +15,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
+import com.v2ray.ang.composeui.theme.AuditState
+import com.v2ray.ang.composeui.theme.ControlPlaneTokens
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -156,39 +158,26 @@ fun SessionEvictedDialog(
 
 @Composable
 private fun SessionEvictedIcon(reason: SessionEvictedReason) {
-    val (icon, color) = when (reason) {
-        SessionEvictedReason.TOKEN_EXPIRED -> Pair(
-            Icons.Default.Schedule,
-            MaterialTheme.colorScheme.primary
-        )
-        SessionEvictedReason.LOGIN_ELSEWHERE -> Pair(
-            Icons.Default.Devices,
-            MaterialTheme.colorScheme.primary
-        )
-        SessionEvictedReason.ACCOUNT_DISABLED -> Pair(
-            Icons.Default.Block,
-            Color(0xFFEF4444)
-        )
-        SessionEvictedReason.PASSWORD_CHANGED -> Pair(
-            Icons.Default.Lock,
-            MaterialTheme.colorScheme.primary
-        )
-        SessionEvictedReason.SECURITY_CONCERN -> Pair(
-            Icons.Default.Security,
-            Color(0xFFF59E0B)
-        )
+    val palette = ControlPlaneTokens.audit(reason.toAuditState())
+    val icon = when (reason) {
+        SessionEvictedReason.TOKEN_EXPIRED -> Icons.Default.Schedule
+        SessionEvictedReason.LOGIN_ELSEWHERE -> Icons.Default.Devices
+        SessionEvictedReason.ACCOUNT_DISABLED -> Icons.Default.Block
+        SessionEvictedReason.PASSWORD_CHANGED -> Icons.Default.Lock
+        SessionEvictedReason.SECURITY_CONCERN -> Icons.Default.Security
     }
 
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = color.copy(alpha = 0.1f),
+        color = palette.container,
+        border = androidx.compose.foundation.BorderStroke(1.dp, palette.border),
         modifier = Modifier.size(72.dp)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = color,
+                tint = palette.accent,
                 modifier = Modifier.size(34.dp)
             )
         }
@@ -197,11 +186,14 @@ private fun SessionEvictedIcon(reason: SessionEvictedReason) {
 
 @Composable
 private fun AdditionalInfo(reason: SessionEvictedReason) {
+    val palette = ControlPlaneTokens.audit(reason.toAuditState())
+
     when (reason) {
         SessionEvictedReason.LOGIN_ELSEWHERE -> {
             Surface(
-                color = Color(0xFFF2F4F7),
-                shape = RoundedCornerShape(16.dp)
+                color = palette.container,
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, palette.border),
             ) {
                 Text(
                     text = "如果这不是您的操作，建议立即修改密码",
@@ -214,13 +206,14 @@ private fun AdditionalInfo(reason: SessionEvictedReason) {
         }
         SessionEvictedReason.ACCOUNT_DISABLED -> {
             Surface(
-                color = Color(0xFFEF4444).copy(alpha = 0.1f),
-                shape = RoundedCornerShape(16.dp)
+                color = palette.container,
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, palette.border),
             ) {
                 Text(
                     text = "客服邮箱: support@cryptovpn.app",
                     fontSize = 12.sp,
-                    color = Color(0xFFEF4444),
+                    color = palette.accent,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     textAlign = TextAlign.Center
                 )
@@ -228,13 +221,14 @@ private fun AdditionalInfo(reason: SessionEvictedReason) {
         }
         SessionEvictedReason.SECURITY_CONCERN -> {
             Surface(
-                color = Color(0xFFF59E0B).copy(alpha = 0.1f),
-                shape = RoundedCornerShape(16.dp)
+                color = palette.container,
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, palette.border),
             ) {
                 Text(
                     text = "为了您的账户安全，请重新登录",
                     fontSize = 12.sp,
-                    color = Color(0xFFF59E0B),
+                    color = palette.accent,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     textAlign = TextAlign.Center
                 )
@@ -242,6 +236,12 @@ private fun AdditionalInfo(reason: SessionEvictedReason) {
         }
         else -> {}
     }
+}
+
+private fun SessionEvictedReason.toAuditState(): AuditState = when (this) {
+    SessionEvictedReason.ACCOUNT_DISABLED -> AuditState.Critical
+    SessionEvictedReason.SECURITY_CONCERN -> AuditState.Warn
+    else -> AuditState.Unknown
 }
 
 private fun getDialogTitle(reason: SessionEvictedReason): String {

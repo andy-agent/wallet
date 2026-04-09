@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SouthWest
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +50,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
+import com.v2ray.ang.composeui.components.tags.StatusTag
+import com.v2ray.ang.composeui.components.tags.StatusType
+import com.v2ray.ang.composeui.theme.ControlPlaneIntent
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
 import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -237,14 +242,38 @@ private fun WalletHomeContent(
             }
 
             item {
-                WalletIdentityRow(
-                    walletAddress = state.walletAddress,
-                    onClick = onOpenWalletSwitcher,
-                )
-            }
-
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                WalletGlassCard(
+                    layer = ControlPlaneLayer.Level3,
+                    accent = WalletAccent,
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        WalletConsoleHeader(
+                            eyebrow = "ASSET CONTROL PLANE",
+                            title = "资产总账",
+                            detail = "${state.assets.size} assets",
+                            modifier = Modifier.weight(1f),
+                        )
+                        StatusTag(
+                            text = if (state.assets.any { (it.balance.toDoubleOrNull() ?: 0.0) > 0.0 }) {
+                                "已同步"
+                            } else {
+                                "待入账"
+                            },
+                            type = if (state.assets.any { (it.balance.toDoubleOrNull() ?: 0.0) > 0.0 }) {
+                                StatusType.OK
+                            } else {
+                                StatusType.UNKNOWN
+                            },
+                        )
+                    }
+                    WalletIdentityRow(
+                        walletAddress = state.walletAddress,
+                        onClick = onOpenWalletSwitcher,
+                    )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -259,7 +288,7 @@ private fun WalletHomeContent(
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
-                                .background(WalletSurface, shape = androidx.compose.foundation.shape.CircleShape)
+                                .background(WalletSurfaceStrong, shape = RoundedCornerShape(14.dp))
                                 .clickable(onClick = onToggleVisibility),
                             contentAlignment = Alignment.Center,
                         ) {
@@ -274,27 +303,20 @@ private fun WalletHomeContent(
                             )
                         }
                     }
+                    WalletMetricStrip(
+                        metrics = listOf(
+                            WalletOverviewMetric("当日盈亏", "$pnlValueText · $pnlPercentText"),
+                            WalletOverviewMetric("主资产", featuredAsset?.symbol ?: "USDT"),
+                            WalletOverviewMetric("账本状态", if (state.assets.size > 1) "多资产" else "单资产"),
+                        ),
+                    )
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text(
-                            text = pnlValueText,
-                            color = pnlColor,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Text(
-                            text = pnlPercentText,
-                            color = pnlColor,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Text(
-                            text = "当日盈亏",
-                            color = WalletTextSecondary,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
+                        WalletIntentBadge(text = "INFRA CUSTODY", intent = ControlPlaneIntent.Infra)
+                        WalletIntentBadge(text = "SETTLEMENT READY", intent = ControlPlaneIntent.Settlement)
+                        WalletIntentBadge(text = "FINANCE VIEW", intent = ControlPlaneIntent.Finance)
                     }
                 }
             }
@@ -349,21 +371,14 @@ private fun WalletHomeContent(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = "代币",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = WalletTextPrimary,
-                        fontWeight = FontWeight.SemiBold,
+                    WalletConsoleHeader(
+                        eyebrow = "LEDGER MATRIX",
+                        title = "代币",
+                        detail = state.totalValue,
+                        modifier = Modifier.weight(1f),
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = state.totalValue,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = WalletTextPrimary,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
                     WalletToolbarIconButton(
                         icon = Icons.Default.FilterList,
                         contentDescription = "filter",
@@ -374,7 +389,10 @@ private fun WalletHomeContent(
             }
 
             item {
-                WalletGlassCard(contentPadding = PaddingValues(vertical = 8.dp)) {
+                WalletGlassCard(
+                    layer = ControlPlaneLayer.Level1,
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                ) {
                     state.assets.forEachIndexed { index, asset ->
                         WalletHomeAssetRow(
                             asset = asset,
@@ -392,11 +410,17 @@ private fun WalletHomeContent(
                             .clickable(onClick = {})
                             .padding(horizontal = 18.dp, vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
                             text = "代币管理",
                             style = MaterialTheme.typography.bodyMedium,
                             color = WalletTextSecondary,
+                        )
+                        WalletIntentBadge(
+                            text = "${state.assets.size} tracked",
+                            intent = ControlPlaneIntent.Neutral,
+                            compact = true,
                         )
                     }
                 }

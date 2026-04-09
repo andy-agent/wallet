@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,6 +46,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
+import com.v2ray.ang.composeui.components.tags.StatusTag
+import com.v2ray.ang.composeui.components.tags.StatusType
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
 import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -223,44 +227,67 @@ private fun SendResultLoadedContent(
             }
 
             item {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    SendResultIcon(resultType = state.resultType)
-                }
-            }
-
-            item {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                WalletGlassCard(
+                    layer = ControlPlaneLayer.Level3,
+                    accent = resultAccent(state.resultType),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top,
                     ) {
-                        Text(
-                            text = when (state.resultType) {
+                        WalletConsoleHeader(
+                            eyebrow = "SETTLEMENT RESULT",
+                            title = when (state.resultType) {
                                 SendResultType.SUCCESS -> "发送成功"
                                 SendResultType.FAILED -> "发送失败"
                                 SendResultType.PENDING -> "处理中"
                             },
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = resultAccent(state.resultType),
+                            detail = state.symbol,
+                            modifier = Modifier.weight(1f),
                         )
-                        Text(
-                            text = "${state.amount} ${state.symbol}",
-                            fontSize = 38.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = WalletTextPrimary,
+                        StatusTag(
+                            text = when (state.resultType) {
+                                SendResultType.SUCCESS -> "已确认"
+                                SendResultType.FAILED -> "失败"
+                                SendResultType.PENDING -> "等待中"
+                            },
+                            type = when (state.resultType) {
+                                SendResultType.SUCCESS -> StatusType.OK
+                                SendResultType.FAILED -> StatusType.CRITICAL
+                                SendResultType.PENDING -> StatusType.WARN
+                            },
                         )
-                        Text(
-                            text = "发送至 ${walletShortAddress(state.recipient)}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = WalletTextSecondary,
-                        )
+                    }
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        SendResultIcon(resultType = state.resultType)
+                    }
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = "${state.amount} ${state.symbol}",
+                                fontSize = 38.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = WalletTextPrimary,
+                            )
+                            Text(
+                                text = "发送至 ${walletShortAddress(state.recipient)}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = WalletTextSecondary,
+                            )
+                        }
                     }
                 }
             }
 
             item {
-                WalletGlassCard(accent = resultAccent(state.resultType)) {
+                WalletGlassCard(
+                    layer = ControlPlaneLayer.Level2,
+                    accent = resultAccent(state.resultType),
+                ) {
                     WalletInfoRow(label = "状态", value = state.resultType.name.lowercase().replaceFirstChar { it.uppercase() })
                     WalletInfoRow(label = "矿工费", value = state.fee)
                     state.txHash?.let { txHash ->
@@ -309,7 +336,7 @@ private fun SendResultIcon(resultType: SendResultType) {
 
 private fun resultAccent(resultType: SendResultType): Color {
     return when (resultType) {
-        SendResultType.SUCCESS -> WalletAccent
+        SendResultType.SUCCESS -> Color(0xFF4E8872)
         SendResultType.FAILED -> WalletDanger
         SendResultType.PENDING -> Color(0xFFE8B35C)
     }

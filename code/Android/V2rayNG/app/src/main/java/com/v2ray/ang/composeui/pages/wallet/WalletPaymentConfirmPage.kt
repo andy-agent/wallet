@@ -43,6 +43,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
+import com.v2ray.ang.composeui.components.tags.StatusTag
+import com.v2ray.ang.composeui.components.tags.StatusType
+import com.v2ray.ang.composeui.theme.ControlPlaneIntent
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
 import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -135,19 +139,29 @@ fun WalletPaymentConfirmPage2(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.22f)),
+                    .background(WalletTextPrimary.copy(alpha = 0.12f)),
             )
             WalletBottomSheetCard(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding(),
             ) {
-                Text(
-                    text = "提示",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = WalletTextPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    WalletConsoleHeader(
+                        eyebrow = "SETTLEMENT AUTH",
+                        title = "授权确认",
+                        detail = walletShortAddress(orderId),
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatusTag(
+                        text = if (state is WalletPaymentConfirmState2.Confirming) "确认中" else "待签名",
+                        type = if (state is WalletPaymentConfirmState2.Confirming) StatusType.OK else StatusType.UNKNOWN,
+                    )
+                }
                 Text(
                     text = "授权确认当前钱包支付，继续后会刷新既有订单桥接状态并跳转结果页。",
                     style = MaterialTheme.typography.bodyMedium,
@@ -155,6 +169,7 @@ fun WalletPaymentConfirmPage2(
                 )
                 WalletGlassCard(
                     accent = WalletAccent,
+                    layer = ControlPlaneLayer.Level2,
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
                 ) {
                     WalletInfoRow(label = "支付项目", value = planName)
@@ -278,14 +293,20 @@ private fun WalletPaymentBackdropContent(
             contentAlignment = Alignment.Center,
         ) {
             WalletGlassCard(
-                accent = Color(0xFF99A3B3),
+                accent = WalletAccent,
+                layer = ControlPlaneLayer.Level3,
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 20.dp),
             ) {
+                WalletConsoleHeader(
+                    eyebrow = "PAYMENT CONTROL",
+                    title = "用加密资产完成支付",
+                    detail = amount,
+                )
                 Box(
                     modifier = Modifier
                         .size(width = 168.dp, height = 104.dp)
                         .background(
-                            color = Color(0xFF181A1C),
+                            color = WalletTextPrimary,
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
                         ),
                     contentAlignment = Alignment.Center,
@@ -297,28 +318,21 @@ private fun WalletPaymentBackdropContent(
                         modifier = Modifier.size(54.dp),
                     )
                 }
+                Text(
+                    text = planName,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = WalletTextPrimary,
+                    fontWeight = FontWeight.Medium,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    WalletIntentBadge(text = "INFRA AUTH", intent = ControlPlaneIntent.Infra)
+                    WalletIntentBadge(text = "SETTLEMENT CHECK", intent = ControlPlaneIntent.Settlement)
+                }
             }
         }
-        Text(
-            text = "用加密资产完成支付",
-            style = MaterialTheme.typography.headlineMedium,
-            color = Color(0xFF10252D),
-            fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            text = planName,
-            style = MaterialTheme.typography.titleLarge,
-            color = Color(0xFF183640),
-            fontWeight = FontWeight.Medium,
-        )
-        Text(
-            text = amount,
-            fontSize = 34.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF0D1A1E),
-        )
         WalletGlassCard(
             accent = WalletAccent,
+            layer = ControlPlaneLayer.Level2,
             contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
         ) {
             Text(

@@ -1,5 +1,7 @@
 package com.v2ray.ang.composeui.pages.legal
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -22,8 +25,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,35 +34,35 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.v2ray.ang.composeui.theme.BackgroundOverlay
-import com.v2ray.ang.composeui.theme.BackgroundPrimary
-import com.v2ray.ang.composeui.theme.BackgroundSecondary
-import com.v2ray.ang.composeui.theme.BackgroundTertiary
-import com.v2ray.ang.composeui.theme.BorderDefault
-import com.v2ray.ang.composeui.theme.Primary
-import com.v2ray.ang.composeui.theme.PrimaryHover
-import com.v2ray.ang.composeui.theme.TextPrimary
-import com.v2ray.ang.composeui.theme.TextSecondary
-import com.v2ray.ang.composeui.theme.TextTertiary
+import com.v2ray.ang.composeui.theme.ControlPlaneIntent
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
+import com.v2ray.ang.composeui.theme.ControlPlaneTokens
 
-internal val LegalPageBackground = BackgroundPrimary
-internal val LegalCardBackground = BackgroundOverlay
-internal val LegalCardRaised = BackgroundSecondary
-internal val LegalAccent = Primary
-internal val LegalAccentDeep = PrimaryHover
-internal val LegalTextPrimary = TextPrimary
-internal val LegalTextSecondary = TextSecondary
-internal val LegalTextTertiary = TextTertiary
-internal val LegalBorder = BorderDefault
+private val LegalLayer0 = ControlPlaneTokens.layer(ControlPlaneLayer.Level0)
+private val LegalLayer1 = ControlPlaneTokens.layer(ControlPlaneLayer.Level1)
+private val LegalLayer2 = ControlPlaneTokens.layer(ControlPlaneLayer.Level2)
+private val LegalLayer3 = ControlPlaneTokens.layer(ControlPlaneLayer.Level3)
+private val LegalInfra = ControlPlaneTokens.Infra
+private val LegalSettlement = ControlPlaneTokens.Settlement
+private val LegalFinance = ControlPlaneTokens.Finance
 
-private val LegalCardShape = RoundedCornerShape(28.dp)
+internal val LegalPageBackground = LegalLayer0.container
+internal val LegalCardBackground = LegalLayer1.container
+internal val LegalCardRaised = LegalLayer2.container
+internal val LegalAccent = LegalInfra.accent
+internal val LegalAccentDeep = LegalInfra.onContainer
+internal val LegalTextPrimary = ControlPlaneTokens.Ink
+internal val LegalTextSecondary = ControlPlaneTokens.InkSecondary
+internal val LegalTextTertiary = ControlPlaneTokens.InkTertiary
+internal val LegalBorder = LegalLayer2.outline
+
+private val LegalCardShape = RoundedCornerShape(24.dp)
 
 @Composable
 internal fun LegalBitgetBackground(
@@ -71,20 +72,52 @@ internal fun LegalBitgetBackground(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(BackgroundOverlay, BackgroundSecondary, LegalPageBackground),
-                ),
-            ),
+            .background(LegalPageBackground),
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .height(232.dp)
                 .background(
-                    Brush.radialGradient(
-                        colors = listOf(LegalAccent.copy(alpha = 0.04f), Color.Transparent),
-                        radius = 860f,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            LegalInfra.container.copy(alpha = 0.68f),
+                            LegalPageBackground,
+                        ),
                     ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .size(228.dp)
+                .padding(start = 170.dp)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(LegalInfra.accent.copy(alpha = 0.06f), Color.Transparent),
+                    ),
+                    shape = CircleShape,
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .size(170.dp)
+                .padding(top = 206.dp, start = 8.dp)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(LegalSettlement.accent.copy(alpha = 0.04f), Color.Transparent),
+                    ),
+                    shape = CircleShape,
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .size(146.dp)
+                .padding(top = 334.dp, start = 252.dp)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(LegalFinance.accent.copy(alpha = 0.04f), Color.Transparent),
+                    ),
+                    shape = CircleShape,
                 ),
         )
         content()
@@ -100,6 +133,7 @@ internal fun LegalPageScaffold(
         Scaffold(
             containerColor = Color.Transparent,
             contentColor = LegalTextPrimary,
+            contentWindowInsets = WindowInsets.safeDrawing,
             topBar = topBar,
         ) { paddingValues ->
             content(paddingValues)
@@ -122,10 +156,11 @@ internal fun LegalTopBar(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Surface(
-            modifier = Modifier.size(40.dp),
-            shape = CircleShape,
-            color = LegalCardRaised,
-            border = BorderStroke(1.dp, LegalBorder),
+            modifier = Modifier.size(42.dp),
+            shape = RoundedCornerShape(16.dp),
+            color = LegalLayer3.container,
+            border = BorderStroke(1.dp, LegalLayer3.outline),
+            shadowElevation = 4.dp,
         ) {
             Box(
                 modifier = Modifier
@@ -141,13 +176,25 @@ internal fun LegalTopBar(
             }
         }
 
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = "EVIDENCE CONTROL",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+                color = LegalAccent,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+            )
             if (title != null) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     color = LegalTextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             if (subtitle != null) {
@@ -160,24 +207,56 @@ internal fun LegalTopBar(
                 )
             }
         }
+
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = LegalInfra.container,
+            border = BorderStroke(1.dp, LegalInfra.border),
+        ) {
+            Text(
+                text = "AUDIT",
+                color = LegalAccent,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+            )
+        }
     }
 }
 
 @Composable
 internal fun LegalCard(
     modifier: Modifier = Modifier,
+    layer: ControlPlaneLayer = ControlPlaneLayer.Level1,
+    accentWash: Color? = null,
     contentPadding: PaddingValues = PaddingValues(20.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
+    val palette = ControlPlaneTokens.layer(layer)
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(
+                animationSpec = tween(
+                    durationMillis = ControlPlaneTokens.Motion.stateChange.durationMillis,
+                    easing = ControlPlaneTokens.Motion.stateChange.easing,
+                ),
+            ),
         shape = LegalCardShape,
-        colors = CardDefaults.cardColors(containerColor = LegalCardBackground),
-        border = BorderStroke(1.dp, LegalBorder),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        color = palette.container,
+        border = BorderStroke(1.dp, palette.outline),
+        shadowElevation = palette.shadowElevation,
+        tonalElevation = palette.tonalElevation,
     ) {
         Column(
-            modifier = Modifier.padding(contentPadding),
+            modifier = Modifier
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(accentWash ?: Color.Transparent, palette.container),
+                    ),
+                )
+                .padding(contentPadding),
             verticalArrangement = Arrangement.spacedBy(14.dp),
             content = content,
         )
@@ -189,50 +268,39 @@ internal fun LegalHighlightCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = LegalCardShape,
-        color = LegalCardBackground,
-        border = BorderStroke(1.dp, LegalBorder),
-        shadowElevation = 3.dp,
-    ) {
-        Column(
-            modifier = Modifier
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            LegalAccent.copy(alpha = 0.04f),
-                            LegalCardBackground,
-                            LegalCardRaised,
-                        ),
-                    ),
-                )
-                .padding(22.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            content = content,
-        )
-    }
+    LegalCard(
+        modifier = modifier,
+        layer = ControlPlaneLayer.Level2,
+        accentWash = LegalInfra.container.copy(alpha = 0.72f),
+        contentPadding = PaddingValues(22.dp),
+        content = content,
+    )
 }
 
 @Composable
 internal fun LegalBadge(
     text: String,
     modifier: Modifier = Modifier,
-    containerColor: Color = LegalCardRaised,
-    contentColor: Color = LegalTextSecondary,
+    intent: ControlPlaneIntent = ControlPlaneIntent.Neutral,
+    compact: Boolean = false,
 ) {
+    val palette = ControlPlaneTokens.intent(intent)
+
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(999.dp),
-        color = containerColor,
-        border = BorderStroke(1.dp, LegalBorder),
+        shape = RoundedCornerShape(if (compact) 10.dp else 14.dp),
+        color = palette.container,
+        border = BorderStroke(1.dp, palette.border),
     ) {
         Text(
             text = text,
-            color = contentColor,
-            fontSize = 11.sp,
+            color = if (intent == ControlPlaneIntent.Neutral) LegalTextSecondary else palette.accent,
+            fontSize = if (compact) 11.sp else 12.sp,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            modifier = Modifier.padding(
+                horizontal = if (compact) 8.dp else 10.dp,
+                vertical = if (compact) 5.dp else 7.dp,
+            ),
         )
     }
 }
@@ -248,20 +316,27 @@ internal fun LegalSectionTitle(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = "EVIDENCE REGISTER",
+                color = LegalTextTertiary,
+                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
+                fontWeight = FontWeight.SemiBold,
+            )
             Text(
                 text = title,
                 color = LegalTextPrimary,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
             )
             if (subtitle != null) {
                 Text(
                     text = subtitle,
                     color = LegalTextSecondary,
-                    fontSize = 13.sp,
-                    lineHeight = 19.sp,
-                    modifier = Modifier.padding(top = 6.dp),
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
         }
@@ -271,7 +346,7 @@ internal fun LegalSectionTitle(
 
 @Composable
 internal fun LegalListDivider() {
-    HorizontalDivider(color = LegalBorder)
+    HorizontalDivider(color = LegalBorder, thickness = 0.8.dp)
 }
 
 @Composable
@@ -284,26 +359,16 @@ internal fun LegalStatusView(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
-        LegalCard(modifier = Modifier.padding(horizontal = 20.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(68.dp)
-                    .clip(CircleShape)
-                    .background(LegalCardRaised),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = title.take(1),
-                    color = LegalAccent,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp,
-                )
-            }
+        LegalCard(
+            modifier = Modifier.padding(horizontal = 20.dp),
+            layer = ControlPlaneLayer.Level2,
+            accentWash = ControlPlaneTokens.Critical.container.copy(alpha = 0.72f),
+        ) {
             Text(
                 text = title,
                 color = LegalTextPrimary,
-                fontWeight = FontWeight.SemiBold,
                 fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
             )
             Text(
                 text = message,

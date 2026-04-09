@@ -49,6 +49,10 @@ import androidx.lifecycle.viewModelScope
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
+import com.v2ray.ang.composeui.components.tags.StatusTag
+import com.v2ray.ang.composeui.components.tags.StatusType
+import com.v2ray.ang.composeui.theme.ControlPlaneIntent
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
 import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -204,35 +208,46 @@ private fun ReceivePageContent(
         }
 
         item {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                WalletTokenBadge(symbol = symbol, modifier = Modifier.size(78.dp))
-            }
-        }
-
-        item {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "$symbol 收款",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = WalletTextPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        }
-
-        item {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "仅支持接收 ${walletNetworkLabel(symbol)} 网络资产",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = WalletTextSecondary,
-                )
+            WalletGlassCard(
+                layer = ControlPlaneLayer.Level3,
+                accent = walletAssetAccent(symbol),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    WalletConsoleHeader(
+                        eyebrow = "SETTLEMENT INTAKE",
+                        title = "$symbol 收款",
+                        detail = walletNetworkLabel(symbol),
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatusTag(text = "可接收", type = StatusType.OK)
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    WalletTokenBadge(symbol = symbol, modifier = Modifier.size(78.dp))
+                    Text(
+                        text = "仅支持接收 ${walletNetworkLabel(symbol)} 网络资产",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WalletTextSecondary,
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    WalletIntentBadge(text = "INFRA ROUTE", intent = ControlPlaneIntent.Infra)
+                    WalletIntentBadge(text = "SETTLEMENT READY", intent = ControlPlaneIntent.Settlement)
+                }
             }
         }
 
         item {
             WalletGlassCard(
                 accent = walletAssetAccent(symbol),
+                layer = ControlPlaneLayer.Level2,
                 contentPadding = PaddingValues(22.dp),
             ) {
                 Box(
@@ -266,7 +281,10 @@ private fun ReceivePageContent(
         }
 
         item {
-            WalletGlassCard(contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp)) {
+            WalletGlassCard(
+                layer = ControlPlaneLayer.Level1,
+                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
+            ) {
                 Text(
                     text = "收款地址",
                     style = MaterialTheme.typography.titleMedium,
@@ -287,7 +305,7 @@ private fun ReceivePageContent(
                     Box(
                         modifier = Modifier
                             .size(46.dp)
-                            .background(WalletSurfaceStrong, shape = androidx.compose.foundation.shape.CircleShape)
+                            .background(WalletSurfaceStrong, shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
                             .clickable(onClick = onCopy),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -304,6 +322,7 @@ private fun ReceivePageContent(
         item {
             WalletGlassCard(
                 accent = WalletAccent,
+                layer = ControlPlaneLayer.Level2,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
             ) {
                 Row(

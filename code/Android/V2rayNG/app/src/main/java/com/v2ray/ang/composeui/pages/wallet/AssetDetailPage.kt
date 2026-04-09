@@ -41,6 +41,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
+import com.v2ray.ang.composeui.components.tags.StatusTag
+import com.v2ray.ang.composeui.components.tags.StatusType
+import com.v2ray.ang.composeui.theme.ControlPlaneIntent
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
 import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -234,64 +238,66 @@ private fun AssetDetailLoadedContent(
             }
 
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top,
+                WalletGlassCard(
+                    layer = ControlPlaneLayer.Level3,
+                    accent = walletAssetAccent(state.symbol),
                 ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        WalletTokenBadge(symbol = state.symbol)
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        WalletConsoleHeader(
+                            eyebrow = "ASSET EVIDENCE",
+                            title = state.name,
+                            detail = walletNetworkLabel(state.symbol),
+                            modifier = Modifier.weight(1f),
+                        )
+                        StatusTag(
+                            text = if (state.priceChange.startsWith("-")) "观察中" else "稳定",
+                            type = if (state.priceChange.startsWith("-")) StatusType.WARN else StatusType.OK,
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        WalletTokenBadge(symbol = state.symbol, modifier = Modifier.size(64.dp))
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
                             Text(
-                                text = state.name,
-                                style = MaterialTheme.typography.headlineSmall,
+                                text = state.balance.trimEnd('0').trimEnd('.').ifBlank { state.balance },
+                                fontSize = 40.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = WalletTextPrimary,
-                                fontWeight = FontWeight.SemiBold,
                             )
                             Text(
-                                text = walletNetworkLabel(state.symbol),
-                                style = MaterialTheme.typography.bodyMedium,
+                                text = state.value,
+                                style = MaterialTheme.typography.titleMedium,
                                 color = WalletTextSecondary,
                             )
                         }
-                    }
-                    WalletTag(text = "资产详情", accent = walletAssetAccent(state.symbol))
-                }
-            }
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom,
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Text(
-                            text = state.balance.trimEnd('0').trimEnd('.').ifBlank { state.balance },
-                            fontSize = 40.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = WalletTextPrimary,
-                        )
-                        Text(
-                            text = state.value,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = WalletTextSecondary,
+                        WalletPrimaryButton(
+                            label = "交易",
+                            onClick = onNavigateToSend,
+                            modifier = Modifier.width(132.dp),
                         )
                     }
-                    WalletPrimaryButton(
-                        label = "交易",
-                        onClick = onNavigateToSend,
-                        modifier = Modifier.width(132.dp),
-                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        WalletIntentBadge(text = state.symbol, intent = ControlPlaneIntent.Finance)
+                        WalletIntentBadge(text = "Wallet Live", intent = ControlPlaneIntent.Infra)
+                        WalletIntentBadge(text = "Bridge Ready", intent = ControlPlaneIntent.Settlement)
+                    }
                 }
             }
 
             item {
                 WalletGlassCard(
                     accent = Color(0xFFE9B56D),
+                    layer = ControlPlaneLayer.Level2,
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
                 ) {
                     Row(
@@ -320,6 +326,7 @@ private fun AssetDetailLoadedContent(
                     WalletGlassCard(
                         modifier = Modifier.weight(1f),
                         accent = walletAssetAccent(state.symbol),
+                        layer = ControlPlaneLayer.Level2,
                     ) {
                         Text(
                             text = "链上行情",
@@ -342,6 +349,7 @@ private fun AssetDetailLoadedContent(
                     WalletGlassCard(
                         modifier = Modifier.weight(1f),
                         accent = Color(0xFF9AC0FF),
+                        layer = ControlPlaneLayer.Level2,
                     ) {
                         Text(
                             text = "产品信息",
@@ -360,14 +368,14 @@ private fun AssetDetailLoadedContent(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = "交易历史",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = WalletTextPrimary,
-                        fontWeight = FontWeight.SemiBold,
+                    WalletConsoleHeader(
+                        eyebrow = "LEDGER HISTORY",
+                        title = "交易历史",
+                        detail = "${state.transactions.size} entries",
+                        modifier = Modifier.weight(1f),
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = Icons.Default.History,
                         contentDescription = null,

@@ -1,6 +1,7 @@
 package com.v2ray.ang.composeui.pages.legal
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,6 +22,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import com.v2ray.ang.composeui.bridge.legal.LegalBridgeRepository
+import com.v2ray.ang.composeui.components.tags.StatusTag
+import com.v2ray.ang.composeui.components.tags.StatusType
+import com.v2ray.ang.composeui.theme.ControlPlaneIntent
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
+import com.v2ray.ang.composeui.theme.ControlPlaneTokens
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -126,30 +133,50 @@ private fun LegalDocumentDetailContent(
     ) {
         item {
             LegalHighlightCard {
-                LegalBadge(text = "Legal Detail")
-                Text(
-                    text = document.title,
-                    color = LegalTextPrimary,
-                    fontSize = 28.sp,
-                    lineHeight = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    androidx.compose.foundation.layout.Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        LegalBadge(text = "Legal Detail", intent = ControlPlaneIntent.Infra)
+                        Text(
+                            text = document.title,
+                            color = LegalTextPrimary,
+                            fontSize = 28.sp,
+                            lineHeight = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    StatusTag(text = "正文有效", type = StatusType.OK)
+                }
                 Text(
                     text = document.description,
                     color = LegalTextSecondary,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
                 )
-                LegalBadge(
-                    text = "最后更新 ${document.lastUpdated}",
-                    containerColor = LegalCardRaised,
-                    contentColor = LegalTextSecondary,
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LegalBadge(
+                        text = "最后更新 ${document.lastUpdated}",
+                        intent = ControlPlaneIntent.Neutral,
+                    )
+                    LegalBadge(
+                        text = document.id.uppercase(),
+                        intent = ControlPlaneIntent.Finance,
+                    )
+                }
             }
         }
 
         item {
-            LegalCard {
+            LegalCard(
+                layer = ControlPlaneLayer.Level2,
+                accentWash = ControlPlaneTokens.Warning.container.copy(alpha = 0.72f),
+            ) {
                 LegalSectionTitle(
                     title = "阅读提示",
                     subtitle = "详情页不抢 CTA，把阅读辅助信息收纳在正文之前。",
@@ -170,7 +197,10 @@ private fun LegalDocumentDetailContent(
         }
 
         item {
-            LegalCard {
+            LegalCard(
+                layer = ControlPlaneLayer.Level1,
+                accentWash = ControlPlaneTokens.Infra.container.copy(alpha = 0.28f),
+            ) {
                 LegalSectionTitle(
                     title = "正文",
                     subtitle = "法律详情页派生自极简容器，正文是唯一主角。",

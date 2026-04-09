@@ -48,6 +48,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.wallet.WalletBridgeRepository
+import com.v2ray.ang.composeui.components.tags.StatusTag
+import com.v2ray.ang.composeui.components.tags.StatusType
+import com.v2ray.ang.composeui.theme.ControlPlaneIntent
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
 import com.v2ray.ang.composeui.theme.CryptoVPNTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -256,6 +260,50 @@ private fun SendPageContent(
         }
 
         item {
+            WalletGlassCard(
+                layer = ControlPlaneLayer.Level3,
+                accent = walletAssetAccent(selectedAsset),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    WalletConsoleHeader(
+                        eyebrow = "TRANSFER AUTHORIZATION",
+                        title = "链上转账",
+                        detail = selectedAsset,
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatusTag(
+                        text = when (state) {
+                            SendPageState.Validating -> "校验中"
+                            is SendPageState.Error -> "待修正"
+                            else -> "待授权"
+                        },
+                        type = when (state) {
+                            SendPageState.Validating -> StatusType.OK
+                            is SendPageState.Error -> StatusType.WARN
+                            else -> StatusType.UNKNOWN
+                        },
+                    )
+                }
+                WalletMetricStrip(
+                    metrics = listOf(
+                        WalletOverviewMetric("可用余额", "$balance $selectedAsset"),
+                        WalletOverviewMetric("网络", walletNetworkLabel(selectedAsset)),
+                        WalletOverviewMetric("路由", "Wallet Live"),
+                    ),
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    WalletIntentBadge(text = "INFRA ROUTE", intent = ControlPlaneIntent.Infra)
+                    WalletIntentBadge(text = "SETTLEMENT CHECK", intent = ControlPlaneIntent.Settlement)
+                    WalletIntentBadge(text = selectedAsset, intent = ControlPlaneIntent.Finance)
+                }
+            }
+        }
+
+        item {
             WalletInputField(
                 value = recipientAddress,
                 onValueChange = onRecipientAddressChange,
@@ -290,21 +338,26 @@ private fun SendPageContent(
 
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                SendTab(
+                WalletSelectionChip(
                     label = "我的钱包",
                     selected = selectedTab == 0,
+                    intent = ControlPlaneIntent.Infra,
                     onClick = { selectedTab = 0 },
                 )
-                SendTab(
+                WalletSelectionChip(
                     label = "地址本",
                     selected = selectedTab == 1,
+                    intent = ControlPlaneIntent.Finance,
                     onClick = { selectedTab = 1 },
                 )
             }
         }
 
         item {
-            WalletGlassCard(contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp)) {
+            WalletGlassCard(
+                layer = ControlPlaneLayer.Level1,
+                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
+            ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -349,7 +402,10 @@ private fun SendPageContent(
         }
 
         item {
-            WalletGlassCard(accent = walletAssetAccent(selectedAsset)) {
+            WalletGlassCard(
+                accent = walletAssetAccent(selectedAsset),
+                layer = ControlPlaneLayer.Level2,
+            ) {
                 Text(
                     text = "发送金额",
                     style = MaterialTheme.typography.titleLarge,
@@ -363,10 +419,15 @@ private fun SendPageContent(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     assets.forEach { asset ->
-                        SendAssetChip(
-                            asset = asset,
+                        WalletSelectionChip(
+                            label = asset,
                             selected = asset == selectedAsset,
-                            onSelected = { onAssetSelected(asset) },
+                            intent = if (asset == selectedAsset) {
+                                ControlPlaneIntent.Finance
+                            } else {
+                                ControlPlaneIntent.Neutral
+                            },
+                            onClick = { onAssetSelected(asset) },
                         )
                     }
                 }

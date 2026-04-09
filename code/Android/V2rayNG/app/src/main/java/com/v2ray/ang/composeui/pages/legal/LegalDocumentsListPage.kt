@@ -38,6 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import com.v2ray.ang.composeui.bridge.legal.LegalBridgeRepository
+import com.v2ray.ang.composeui.components.tags.StatusTag
+import com.v2ray.ang.composeui.components.tags.StatusType
+import com.v2ray.ang.composeui.theme.ControlPlaneIntent
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
+import com.v2ray.ang.composeui.theme.ControlPlaneTokens
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -147,29 +152,51 @@ private fun LegalDocumentsContent(
     ) {
         item {
             LegalHighlightCard {
-                LegalBadge(
-                    text = "文档中心",
-                    containerColor = LegalAccent.copy(alpha = 0.1f),
-                    contentColor = LegalAccent,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    androidx.compose.foundation.layout.Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        LegalBadge(
+                            text = "文档中心",
+                            intent = ControlPlaneIntent.Infra,
+                        )
+                        Text(
+                            text = "在一个入口查看所有协议与政策",
+                            color = LegalTextPrimary,
+                            fontSize = 28.sp,
+                            lineHeight = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    StatusTag(
+                        text = if (state.documents.isNotEmpty()) "已登记" else "待同步",
+                        type = if (state.documents.isNotEmpty()) StatusType.OK else StatusType.UNKNOWN,
+                    )
+                }
                 Text(
-                    text = "在一个入口查看所有协议与政策",
-                    color = LegalTextPrimary,
-                    fontSize = 28.sp,
-                    lineHeight = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = "当前共 ${state.documents.size} 份文档，先看摘要再进入正文，让白底页面里的阅读节奏更连贯。",
+                    text = "当前共 ${state.documents.size} 份文档，先看摘要再进入正文，让白底页面里的阅读节奏更连贯。当前页面只改造证据容器，不改变原始条款内容。",
                     color = LegalTextSecondary,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
                 )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    LegalBadge(text = "${state.documents.size} 份文档", intent = ControlPlaneIntent.Settlement)
+                    LegalBadge(text = "本地 Provider", intent = ControlPlaneIntent.Neutral)
+                    LegalBadge(text = "Legal Surface", intent = ControlPlaneIntent.Finance)
+                }
             }
         }
 
         item {
-            LegalCard {
+            LegalCard(layer = ControlPlaneLayer.Level1) {
                 LegalSectionTitle(
                     title = "文档列表",
                     subtitle = "同类内容保持在连续卡片里，减少列表页的视觉跳跃。",
@@ -187,7 +214,10 @@ private fun LegalDocumentsContent(
         }
 
         item {
-            LegalCard {
+            LegalCard(
+                layer = ControlPlaneLayer.Level2,
+                accentWash = ControlPlaneTokens.Warning.container.copy(alpha = 0.72f),
+            ) {
                 LegalSectionTitle(
                     title = "阅读提示",
                     subtitle = "把必要说明前置，但不过度强调，保持法律内容本身是主角。",
@@ -214,6 +244,9 @@ private fun LegalDocumentRow(
     document: LegalDocument,
     onClick: () -> Unit,
 ) {
+    val intent = legalIntentForDocument(document.id)
+    val palette = ControlPlaneTokens.intent(intent)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -223,8 +256,8 @@ private fun LegalDocumentRow(
     ) {
         Surface(
             shape = RoundedCornerShape(18.dp),
-            color = LegalCardRaised,
-            border = androidx.compose.foundation.BorderStroke(1.dp, LegalBorder),
+            color = palette.container,
+            border = androidx.compose.foundation.BorderStroke(1.dp, palette.border),
         ) {
             Box(
                 modifier = Modifier.size(48.dp),
@@ -233,7 +266,7 @@ private fun LegalDocumentRow(
                 Icon(
                     imageVector = document.icon,
                     contentDescription = null,
-                    tint = LegalAccentDeep,
+                    tint = palette.accent,
                 )
             }
         }
@@ -256,11 +289,13 @@ private fun LegalDocumentRow(
             )
             LegalBadge(
                 text = "更新于 ${document.lastUpdated}",
-                containerColor = LegalPageBackground,
-                contentColor = LegalTextSecondary,
+                intent = ControlPlaneIntent.Neutral,
+                compact = true,
             )
         }
 
+        Spacer(modifier = Modifier.width(4.dp))
+        StatusTag(text = "已登记", type = StatusType.OK)
         Spacer(modifier = Modifier.width(4.dp))
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -299,4 +334,11 @@ private fun LegalDocumentsListPagePreview() {
             )
         }
     }
+}
+
+private fun legalIntentForDocument(documentId: String): ControlPlaneIntent = when (documentId) {
+    "terms", "privacy" -> ControlPlaneIntent.Infra
+    "refund" -> ControlPlaneIntent.Settlement
+    "affiliate", "cookies" -> ControlPlaneIntent.Finance
+    else -> ControlPlaneIntent.Neutral
 }

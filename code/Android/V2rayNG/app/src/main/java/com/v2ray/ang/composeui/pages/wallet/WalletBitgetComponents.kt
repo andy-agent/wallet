@@ -1,5 +1,8 @@
 package com.v2ray.ang.composeui.pages.wallet
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -37,9 +41,9 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -47,36 +51,40 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.v2ray.ang.composeui.theme.BackgroundDeepest
-import com.v2ray.ang.composeui.theme.BackgroundOverlay
-import com.v2ray.ang.composeui.theme.BackgroundPrimary
-import com.v2ray.ang.composeui.theme.BackgroundSecondary
-import com.v2ray.ang.composeui.theme.BackgroundTertiary
-import com.v2ray.ang.composeui.theme.BorderDefault
+import com.v2ray.ang.composeui.theme.ControlPlaneIntent
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
+import com.v2ray.ang.composeui.theme.ControlPlaneTokens
 import com.v2ray.ang.composeui.theme.Error
 import com.v2ray.ang.composeui.theme.Info
-import com.v2ray.ang.composeui.theme.Primary
 import com.v2ray.ang.composeui.theme.SolanaPurple
-import com.v2ray.ang.composeui.theme.TextPrimary
-import com.v2ray.ang.composeui.theme.TextSecondary
-import com.v2ray.ang.composeui.theme.TextTertiary
 import com.v2ray.ang.composeui.theme.TronRed
 import com.v2ray.ang.composeui.theme.USDTGreen
 import com.v2ray.ang.composeui.theme.Warning
 
-internal val WalletAccent = Primary
-internal val WalletBackgroundTop = BackgroundOverlay
-internal val WalletBackgroundMiddle = BackgroundSecondary
-internal val WalletBackgroundBottom = BackgroundPrimary
-internal val WalletSurface = BackgroundOverlay
-internal val WalletSurfaceStrong = BackgroundSecondary
-internal val WalletSurfaceMuted = BackgroundTertiary
-internal val WalletOutline = BorderDefault
-internal val WalletTextPrimary = TextPrimary
-internal val WalletTextSecondary = TextSecondary
-internal val WalletTextTertiary = TextTertiary
-internal val WalletDanger = Error
-internal val WalletWarningSurface = Warning.copy(alpha = 0.14f)
+private val WalletLayer0 = ControlPlaneTokens.layer(ControlPlaneLayer.Level0)
+private val WalletLayer1 = ControlPlaneTokens.layer(ControlPlaneLayer.Level1)
+private val WalletLayer2 = ControlPlaneTokens.layer(ControlPlaneLayer.Level2)
+private val WalletLayer3 = ControlPlaneTokens.layer(ControlPlaneLayer.Level3)
+private val WalletInfra = ControlPlaneTokens.Infra
+private val WalletSettlement = ControlPlaneTokens.Settlement
+private val WalletFinance = ControlPlaneTokens.Finance
+private val WalletCritical = ControlPlaneTokens.Critical
+
+internal val WalletAccent = WalletInfra.accent
+internal val WalletBackgroundTop = WalletLayer0.container
+internal val WalletBackgroundMiddle = WalletLayer1.container
+internal val WalletBackgroundBottom = WalletLayer0.container
+internal val WalletSurface = WalletLayer1.container
+internal val WalletSurfaceStrong = WalletLayer2.container
+internal val WalletSurfaceMuted = WalletLayer3.container
+internal val WalletOutline = WalletLayer2.outline
+internal val WalletTextPrimary = ControlPlaneTokens.Ink
+internal val WalletTextSecondary = ControlPlaneTokens.InkSecondary
+internal val WalletTextTertiary = ControlPlaneTokens.InkTertiary
+internal val WalletDanger = WalletCritical.accent
+internal val WalletWarningSurface = ControlPlaneTokens.Warning.container
 internal val WalletPagePadding = 20.dp
 
 internal data class WalletQuickAction(
@@ -100,34 +108,52 @@ internal fun WalletPageBackdrop(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        WalletBackgroundTop,
-                        WalletBackgroundMiddle,
-                        WalletBackgroundBottom,
-                    ),
-                ),
-            ),
+            .background(WalletLayer0.container),
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .height(228.dp)
                 .background(
-                    Brush.radialGradient(
-                        colors = listOf(WalletAccent.copy(alpha = 0.05f), Color.Transparent),
-                        radius = 860f,
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            WalletInfra.container.copy(alpha = 0.72f),
+                            WalletLayer0.container,
+                        ),
                     ),
                 ),
         )
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .size(232.dp)
+                .padding(start = 170.dp)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Info.copy(alpha = 0.03f), Color.Transparent),
-                        radius = 680f,
+                        colors = listOf(WalletInfra.accent.copy(alpha = 0.06f), Color.Transparent),
                     ),
+                    shape = CircleShape,
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .size(176.dp)
+                .padding(top = 208.dp, start = 8.dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(WalletSettlement.accent.copy(alpha = 0.05f), Color.Transparent),
+                    ),
+                    shape = CircleShape,
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .size(154.dp)
+                .padding(top = 336.dp, start = 250.dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(WalletFinance.accent.copy(alpha = 0.04f), Color.Transparent),
+                    ),
+                    shape = CircleShape,
                 ),
         )
         content()
@@ -138,30 +164,41 @@ internal fun WalletPageBackdrop(
 internal fun WalletGlassCard(
     modifier: Modifier = Modifier,
     accent: Color = WalletAccent,
+    layer: ControlPlaneLayer = ControlPlaneLayer.Level1,
     selected: Boolean = false,
     contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val borderColor = if (selected) {
-        accent.copy(alpha = 0.34f)
-    } else {
-        WalletOutline
-    }
+    val palette = ControlPlaneTokens.layer(
+        when {
+            selected && layer == ControlPlaneLayer.Level1 -> ControlPlaneLayer.Level2
+            selected && layer == ControlPlaneLayer.Level2 -> ControlPlaneLayer.Level3
+            else -> layer
+        },
+    )
+    val borderColor = if (selected) accent.copy(alpha = 0.34f) else palette.outline
+
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(28.dp),
-        color = WalletSurface,
+        shape = RoundedCornerShape(24.dp),
+        color = palette.container,
         border = BorderStroke(if (selected) 1.6.dp else 1.dp, borderColor),
-        shadowElevation = if (selected) 8.dp else 3.dp,
+        shadowElevation = if (selected) palette.shadowElevation + 3.dp else palette.shadowElevation,
+        tonalElevation = palette.tonalElevation,
     ) {
         Column(
             modifier = Modifier
+                .animateContentSize(
+                    animationSpec = tween(
+                        durationMillis = ControlPlaneTokens.Motion.stateChange.durationMillis,
+                        easing = ControlPlaneTokens.Motion.stateChange.easing,
+                    ),
+                )
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            accent.copy(alpha = if (selected) 0.08f else 0.03f),
-                            WalletSurface,
-                            WalletSurfaceStrong,
+                            accent.copy(alpha = if (selected) 0.1f else 0.05f),
+                            palette.container,
                         ),
                     ),
                 )
@@ -180,14 +217,23 @@ internal fun WalletBottomSheetCard(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-        color = WalletSurface,
-        border = BorderStroke(1.dp, WalletOutline),
-        shadowElevation = 12.dp,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        color = WalletLayer3.container,
+        border = BorderStroke(1.dp, WalletLayer3.outline),
+        shadowElevation = WalletLayer3.shadowElevation + 4.dp,
+        tonalElevation = WalletLayer3.tonalElevation,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            WalletInfra.container.copy(alpha = 0.54f),
+                            WalletLayer3.container,
+                        ),
+                    ),
+                )
                 .padding(contentPadding),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -196,8 +242,7 @@ internal fun WalletBottomSheetCard(
                     .align(Alignment.CenterHorizontally)
                     .width(42.dp)
                     .height(5.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(WalletOutline.copy(alpha = 0.9f)),
+                    .background(WalletLayer3.outline.copy(alpha = 0.9f), RoundedCornerShape(999.dp)),
             )
             content()
         }
@@ -215,15 +260,186 @@ internal fun WalletSectionHeading(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
+            text = "ASSET CONSOLE",
+            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
+            color = WalletTextTertiary,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
             color = WalletTextPrimary,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Bold,
         )
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodySmall,
             color = WalletTextSecondary,
+        )
+    }
+}
+
+@Composable
+internal fun WalletConsoleHeader(
+    eyebrow: String,
+    title: String,
+    detail: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = eyebrow,
+                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
+                color = WalletTextTertiary,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge.copy(letterSpacing = (-0.3).sp),
+                color = WalletTextPrimary,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Text(
+            text = detail,
+            style = MaterialTheme.typography.labelLarge,
+            color = WalletTextTertiary,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+internal fun WalletSummaryMetric(
+    title: String,
+    value: String,
+    supporting: String,
+    intent: ControlPlaneIntent,
+    modifier: Modifier = Modifier,
+) {
+    val palette = ControlPlaneTokens.intent(intent)
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        color = palette.container,
+        border = BorderStroke(1.dp, palette.border),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                color = if (intent == ControlPlaneIntent.Neutral) WalletTextSecondary else palette.accent,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                color = WalletTextPrimary,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = supporting,
+                style = MaterialTheme.typography.bodySmall,
+                color = WalletTextSecondary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun WalletIntentBadge(
+    text: String,
+    intent: ControlPlaneIntent,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false,
+) {
+    val palette = ControlPlaneTokens.intent(intent)
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(if (compact) 10.dp else 14.dp),
+        color = palette.container,
+        border = BorderStroke(1.dp, palette.border),
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(
+                horizontal = if (compact) 8.dp else 10.dp,
+                vertical = if (compact) 5.dp else 7.dp,
+            ),
+            style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge,
+            color = if (intent == ControlPlaneIntent.Neutral) WalletTextSecondary else palette.accent,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+internal fun WalletSelectionChip(
+    label: String,
+    selected: Boolean,
+    intent: ControlPlaneIntent,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val intentPalette = ControlPlaneTokens.intent(intent)
+    val containerColor by animateColorAsState(
+        targetValue = if (selected) intentPalette.container else WalletLayer1.container,
+        animationSpec = tween(
+            durationMillis = ControlPlaneTokens.Motion.stateChange.durationMillis,
+            easing = ControlPlaneTokens.Motion.stateChange.easing,
+        ),
+        label = "walletSelectionContainer",
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) intentPalette.border else WalletLayer2.outline,
+        animationSpec = tween(
+            durationMillis = ControlPlaneTokens.Motion.stateChange.durationMillis,
+            easing = ControlPlaneTokens.Motion.stateChange.easing,
+        ),
+        label = "walletSelectionBorder",
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (selected) WalletTextPrimary else WalletTextSecondary,
+        animationSpec = tween(
+            durationMillis = ControlPlaneTokens.Motion.stateChange.durationMillis,
+            easing = ControlPlaneTokens.Motion.stateChange.easing,
+        ),
+        label = "walletSelectionText",
+    )
+
+    Surface(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        color = containerColor,
+        border = BorderStroke(1.dp, borderColor),
+        shadowElevation = if (selected) 4.dp else 0.dp,
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+            style = MaterialTheme.typography.titleSmall,
+            color = textColor,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
         )
     }
 }
@@ -240,9 +456,9 @@ internal fun WalletMetricStrip(
         metrics.forEach { metric ->
             Surface(
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(20.dp),
-                color = WalletSurface,
-                border = BorderStroke(1.dp, WalletOutline),
+                shape = RoundedCornerShape(18.dp),
+                color = WalletLayer2.container,
+                border = BorderStroke(1.dp, WalletLayer2.outline),
             ) {
                 Column(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
@@ -328,13 +544,13 @@ internal fun WalletTokenBadge(symbol: String, modifier: Modifier = Modifier) {
     val accent = walletAssetAccent(symbol)
     Surface(
         modifier = modifier.size(56.dp),
-        shape = CircleShape,
-        color = accent.copy(alpha = 0.18f),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.3f)),
+        shape = RoundedCornerShape(18.dp),
+        color = accent.copy(alpha = 0.14f),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.26f)),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
-                text = symbol.take(1).uppercase(),
+                text = symbol.take(2).uppercase(),
                 style = MaterialTheme.typography.titleMedium,
                 color = accent,
                 fontWeight = FontWeight.Bold,
@@ -351,13 +567,13 @@ internal fun WalletTag(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(999.dp),
+        shape = RoundedCornerShape(14.dp),
         color = accent.copy(alpha = 0.12f),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.24f)),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.22f)),
     ) {
         Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+            text = text.uppercase(),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
             style = MaterialTheme.typography.labelMedium,
             color = accent,
             maxLines = 1,
@@ -378,12 +594,12 @@ internal fun WalletPrimaryButton(
         onClick = onClick,
         modifier = modifier.height(54.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = WalletAccent,
-            contentColor = BackgroundDeepest,
+            contentColor = WalletInfra.onAccent,
             disabledContainerColor = WalletAccent.copy(alpha = 0.4f),
-            disabledContentColor = BackgroundDeepest.copy(alpha = 0.6f),
+            disabledContentColor = WalletInfra.onAccent.copy(alpha = 0.6f),
         ),
     ) {
         if (icon != null) {
@@ -416,10 +632,10 @@ internal fun WalletSecondaryButton(
         onClick = onClick,
         modifier = modifier.height(54.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(26.dp),
-        border = BorderStroke(1.dp, WalletOutline),
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, WalletLayer2.outline),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = WalletSurface,
+            containerColor = WalletLayer1.container,
             contentColor = WalletTextPrimary,
         ),
     ) {
@@ -453,9 +669,10 @@ internal fun WalletToolbarIconButton(
         modifier = modifier
             .size(44.dp)
             .clickable(onClick = onClick),
-        shape = CircleShape,
-        color = WalletSurface,
-        border = BorderStroke(1.dp, WalletOutline),
+        shape = RoundedCornerShape(16.dp),
+        color = WalletLayer3.container,
+        border = BorderStroke(1.dp, WalletLayer3.outline),
+        shadowElevation = 2.dp,
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
@@ -483,11 +700,11 @@ internal fun WalletSearchChrome(
     ) {
         Surface(
             modifier = Modifier
-                .size(40.dp)
+                .size(42.dp)
                 .clickable(onClick = onAvatarClick),
-            shape = CircleShape,
-            color = WalletAccent.copy(alpha = 0.16f),
-            border = BorderStroke(1.dp, WalletAccent.copy(alpha = 0.22f)),
+            shape = RoundedCornerShape(16.dp),
+            color = WalletInfra.container,
+            border = BorderStroke(1.dp, WalletInfra.border),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
@@ -504,8 +721,8 @@ internal fun WalletSearchChrome(
                 .height(40.dp)
                 .clickable(onClick = onSearchClick),
             shape = RoundedCornerShape(22.dp),
-            color = WalletSurface,
-            border = BorderStroke(1.dp, WalletOutline),
+            color = WalletLayer3.container,
+            border = BorderStroke(1.dp, WalletLayer3.outline),
         ) {
             Row(
                 modifier = Modifier
@@ -548,21 +765,32 @@ internal fun WalletTopBar(
             .fillMaxWidth()
             .padding(top = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         WalletToolbarIconButton(
             icon = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = "back",
             onClick = onBack,
         )
-        Text(
-            text = title,
+        Column(
             modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.titleLarge,
-            color = WalletTextPrimary,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+            verticalArrangement = Arrangement.spacedBy(1.dp),
+        ) {
+            Text(
+                text = "WALLET CONTROL",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                color = WalletTextTertiary,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = WalletTextPrimary,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
         if (trailingIcon != null) {
             WalletToolbarIconButton(
                 icon = trailingIcon,
@@ -589,6 +817,7 @@ internal fun WalletCloseBar(
             .fillMaxWidth()
             .padding(top = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         WalletToolbarIconButton(
             icon = Icons.Default.Close,
@@ -596,15 +825,25 @@ internal fun WalletCloseBar(
             onClick = onClose,
         )
         if (title != null) {
-            Text(
-                text = title,
+            Column(
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.titleLarge,
-                color = WalletTextPrimary,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+                verticalArrangement = Arrangement.spacedBy(1.dp),
+            ) {
+                Text(
+                    text = "SETTLEMENT VIEW",
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                    color = WalletTextTertiary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = WalletTextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         } else {
             Box(modifier = Modifier.weight(1f))
         }
@@ -626,7 +865,7 @@ internal fun WalletDivider(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .height(1.dp)
-            .background(WalletOutline.copy(alpha = 0.8f)),
+            .background(WalletLayer3.outline.copy(alpha = 0.8f)),
     )
 }
 
@@ -669,9 +908,9 @@ internal fun WalletAssistPillButton(
         modifier = modifier
             .height(44.dp)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
-        color = WalletSurface,
-        border = BorderStroke(1.dp, WalletOutline),
+        shape = RoundedCornerShape(18.dp),
+        color = WalletLayer1.container,
+        border = BorderStroke(1.dp, WalletLayer2.outline),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 18.dp),
@@ -745,12 +984,12 @@ internal fun WalletInputField(
         trailingIcon = trailingContent,
         shape = RoundedCornerShape(24.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = WalletSurfaceStrong,
-            unfocusedContainerColor = WalletSurfaceStrong,
-            disabledContainerColor = WalletSurfaceStrong,
+            focusedContainerColor = WalletLayer1.container,
+            unfocusedContainerColor = WalletLayer1.container,
+            disabledContainerColor = WalletLayer1.container,
             focusedBorderColor = WalletAccent.copy(alpha = 0.62f),
-            unfocusedBorderColor = WalletOutline,
-            disabledBorderColor = WalletOutline,
+            unfocusedBorderColor = WalletLayer2.outline,
+            disabledBorderColor = WalletLayer2.outline,
             errorBorderColor = WalletDanger,
             cursorColor = WalletAccent,
             focusedTextColor = WalletTextPrimary,

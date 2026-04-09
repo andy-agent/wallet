@@ -63,6 +63,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.bridge.profile.ProfileBridgeRepository
+import com.v2ray.ang.composeui.components.tags.StatusTag
+import com.v2ray.ang.composeui.components.tags.StatusType
+import com.v2ray.ang.composeui.theme.ControlPlaneIntent
+import com.v2ray.ang.composeui.theme.ControlPlaneLayer
+import com.v2ray.ang.composeui.theme.ControlPlaneTokens
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -191,6 +196,11 @@ fun ProfilePage(
         topBar = {
             ProfileTopBar(
                 title = if (currentScreen == ProfileScreen.SETTINGS) "设置" else "钱包安全",
+                subtitle = if (currentScreen == ProfileScreen.SETTINGS) {
+                    "账户、偏好、支持与法务入口"
+                } else {
+                    "身份、验证与会话安全控制"
+                },
                 onNavigateBack = if (currentScreen == ProfileScreen.SECURITY) {
                     { currentScreen = ProfileScreen.SETTINGS }
                 } else {
@@ -319,29 +329,104 @@ private fun ProfileSettingsContent(
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item {
-            ProfileCard {
-                ProfileBadge(
-                    text = user.memberLevel,
-                    containerColor = ProfileAccent.copy(alpha = 0.1f),
-                    contentColor = ProfileAccent,
-                )
+            ProfileCard(
+                layer = ControlPlaneLayer.Level3,
+                accentWash = ProfileAccent.copy(alpha = 0.08f),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    androidx.compose.foundation.layout.Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(
+                            text = "ACCOUNT CONTROL PLANE",
+                            color = ProfileAccent,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp,
+                        )
+                        Text(
+                            text = user.nickname ?: user.email.substringBefore("@"),
+                            color = ProfileTextPrimary,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = user.email,
+                            color = ProfileTextSecondary,
+                            fontSize = 14.sp,
+                        )
+                    }
+                    StatusTag(
+                        text = if (user.memberLevel.contains("已")) "账户有效" else "待激活",
+                        type = if (user.memberLevel.contains("已")) StatusType.OK else StatusType.UNKNOWN,
+                    )
+                }
                 Text(
-                    text = user.nickname ?: user.email.substringBefore("@"),
-                    color = ProfileTextPrimary,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = user.email,
-                    color = ProfileTextSecondary,
-                    fontSize = 14.sp,
-                )
-                Text(
-                    text = "账户、安全与支持入口统一收进浅色卡片，减少在白底页面里的视觉噪声。",
+                    text = "账户、安全与支持入口被重排为同一张控制面。保留原有内容与跳转，但信息层级更接近账户台账而不是普通工具页。",
                     color = ProfileTextSecondary,
                     fontSize = 13.sp,
                     lineHeight = 19.sp,
                 )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ProfileBadge(
+                        text = user.memberLevel,
+                        intent = ControlPlaneIntent.Settlement,
+                    )
+                    ProfileBadge(
+                        text = "ID ${maskUserId(user.userId)}",
+                        intent = ControlPlaneIntent.Neutral,
+                    )
+                    ProfileBadge(
+                        text = "Profile Surface",
+                        intent = ControlPlaneIntent.Infra,
+                    )
+                }
+            }
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                ProfileCard(
+                    modifier = Modifier.weight(1f),
+                    layer = ControlPlaneLayer.Level2,
+                    accentWash = ControlPlaneTokens.Infra.container.copy(alpha = 0.72f),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 14.dp),
+                ) {
+                    Text("身份", color = ProfileTextTertiary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text(user.memberLevel, color = ProfileTextPrimary, fontWeight = FontWeight.Bold)
+                    Text("账户档案", color = ProfileTextSecondary, fontSize = 12.sp)
+                }
+                ProfileCard(
+                    modifier = Modifier.weight(1f),
+                    layer = ControlPlaneLayer.Level2,
+                    accentWash = ControlPlaneTokens.Finance.container.copy(alpha = 0.72f),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 14.dp),
+                ) {
+                    Text("法务", color = ProfileTextTertiary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text("已接线", color = ProfileTextPrimary, fontWeight = FontWeight.Bold)
+                    Text("协议可读", color = ProfileTextSecondary, fontSize = 12.sp)
+                }
+                ProfileCard(
+                    modifier = Modifier.weight(1f),
+                    layer = ControlPlaneLayer.Level2,
+                    accentWash = ControlPlaneTokens.Settlement.container.copy(alpha = 0.72f),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 14.dp),
+                ) {
+                    Text("支持", color = ProfileTextTertiary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text("在线", color = ProfileTextPrimary, fontWeight = FontWeight.Bold)
+                    Text("订单查询", color = ProfileTextSecondary, fontSize = 12.sp)
+                }
             }
         }
 
@@ -430,21 +515,55 @@ private fun ProfileSecurityContent(
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item {
-            ProfileCard {
-                androidx.compose.foundation.layout.Column(
+            ProfileCard(
+                layer = ControlPlaneLayer.Level3,
+                accentWash = avatarColor.copy(alpha = 0.16f),
+            ) {
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    androidx.compose.foundation.layout.Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(
+                            text = "IDENTITY EVIDENCE",
+                            color = ProfileAccent,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp,
+                        )
+                        Text(
+                            text = "账户主档案",
+                            color = ProfileTextPrimary,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = "头像、会话与钱包入口被收束为单一审计面。",
+                            color = ProfileTextSecondary,
+                            fontSize = 13.sp,
+                            lineHeight = 19.sp,
+                        )
+                    }
+                    StatusTag(text = "建议复核", type = StatusType.WARN)
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Surface(
                         modifier = Modifier
-                            .size(96.dp)
+                            .size(104.dp)
                             .clickable(onClick = onAvatarClick),
-                        shape = CircleShape,
+                        shape = RoundedCornerShape(30.dp),
                         color = avatarColor.copy(alpha = 0.18f),
                         border = androidx.compose.foundation.BorderStroke(
                             1.dp,
-                            avatarColor.copy(alpha = 0.26f),
+                            avatarColor.copy(alpha = 0.3f),
                         ),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
@@ -454,53 +573,68 @@ private fun ProfileSecurityContent(
                             )
                         }
                     }
-                    Text(
-                        text = user.email,
-                        color = ProfileTextPrimary,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                    )
-                    Text(
-                        text = "ID: ${maskUserId(user.userId)}",
-                        color = ProfileTextSecondary,
-                        fontSize = 13.sp,
-                    )
-                    ProfileBadge(
-                        text = "建议补充验证",
-                        containerColor = ProfileWarningSurface,
-                        contentColor = ProfileWarningText,
-                    )
+                    androidx.compose.foundation.layout.Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(
+                            text = user.email,
+                            color = ProfileTextPrimary,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = "ID: ${maskUserId(user.userId)}",
+                            color = ProfileTextSecondary,
+                            fontSize = 13.sp,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ProfileBadge(
+                                text = user.memberLevel,
+                                intent = ControlPlaneIntent.Settlement,
+                            )
+                            ProfileBadge(
+                                text = "验证待补充",
+                                intent = ControlPlaneIntent.Finance,
+                            )
+                        }
+                    }
                 }
             }
         }
 
         item {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = ProfileWarningSurface,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    ProfileWarningText.copy(alpha = 0.18f),
-                ),
+            ProfileCard(
+                layer = ControlPlaneLayer.Level2,
+                accentWash = ProfileWarningSurface.copy(alpha = 0.8f),
             ) {
-                androidx.compose.foundation.layout.Column(
-                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
                 ) {
-                    Text(
-                        text = "安全建议",
-                        color = ProfileWarningText,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = "至少开启一种验证方式，保证资产安全",
-                        color = ProfileTextSecondary,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp,
-                    )
+                    androidx.compose.foundation.layout.Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(
+                            text = "安全建议",
+                            color = ProfileWarningText,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = "至少开启一种验证方式，保证资产安全。",
+                            color = ProfileTextSecondary,
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                        )
+                    }
+                    StatusTag(text = "待处理", type = StatusType.WARN)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ProfileBadge(text = "验证优先", intent = ControlPlaneIntent.Finance)
+                    ProfileBadge(text = "会话保护", intent = ControlPlaneIntent.Infra)
                 }
             }
         }
@@ -543,6 +677,8 @@ private fun ProfileSecurityContent(
 
 @Composable
 private fun ProfileSettingsRow(item: ProfileSettingRow) {
+    val palette = ControlPlaneTokens.intent(profileIntentFor(item.title))
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -553,7 +689,8 @@ private fun ProfileSettingsRow(item: ProfileSettingRow) {
     ) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = ProfileSurfaceRaised,
+            color = palette.container,
+            border = androidx.compose.foundation.BorderStroke(1.dp, palette.border),
         ) {
             Box(
                 modifier = Modifier.size(44.dp),
@@ -562,7 +699,7 @@ private fun ProfileSettingsRow(item: ProfileSettingRow) {
                 Icon(
                     imageVector = item.icon,
                     contentDescription = null,
-                    tint = ProfileTextSecondary,
+                    tint = palette.accent,
                 )
             }
         }
@@ -576,12 +713,16 @@ private fun ProfileSettingsRow(item: ProfileSettingRow) {
         )
 
         item.trailingText?.let {
-            Text(
-                text = it,
-                color = if (it.startsWith("v")) ProfileTextTertiary else ProfileTextSecondary,
-                fontSize = 13.sp,
-                maxLines = 1,
-            )
+            if (it.startsWith("v")) {
+                ProfileBadge(text = it, intent = ControlPlaneIntent.Neutral, compact = true)
+            } else {
+                Text(
+                    text = it,
+                    color = ProfileTextSecondary,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                )
+            }
         }
 
         Icon(
@@ -597,12 +738,14 @@ private fun ProfileSupportTile(
     tile: SupportTile,
     modifier: Modifier = Modifier,
 ) {
+    val palette = ControlPlaneTokens.intent(profileIntentFor(tile.title))
+
     Surface(
         modifier = modifier.clickable(onClick = tile.onClick),
         shape = RoundedCornerShape(24.dp),
-        color = ProfileSurface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, ProfileDivider),
-        shadowElevation = 2.dp,
+        color = ProfileSurfaceRaised,
+        border = androidx.compose.foundation.BorderStroke(1.dp, palette.border),
+        shadowElevation = 3.dp,
     ) {
         androidx.compose.foundation.layout.Column(
             modifier = Modifier
@@ -612,8 +755,9 @@ private fun ProfileSupportTile(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Surface(
-                shape = CircleShape,
-                color = ProfileSurfaceRaised,
+                shape = RoundedCornerShape(18.dp),
+                color = palette.container,
+                border = androidx.compose.foundation.BorderStroke(1.dp, palette.border),
             ) {
                 Box(
                     modifier = Modifier.size(52.dp),
@@ -622,14 +766,21 @@ private fun ProfileSupportTile(
                     Icon(
                         imageVector = tile.icon,
                         contentDescription = null,
-                        tint = ProfileTextPrimary,
+                        tint = palette.accent,
                     )
                 }
             }
             Text(
                 text = tile.title,
-                color = ProfileTextSecondary,
+                color = ProfileTextPrimary,
                 fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = if (tile.title.contains("订单")) "账单与订阅证据" else "帮助与会话支持",
+                color = ProfileTextSecondary,
+                fontSize = 12.sp,
                 textAlign = TextAlign.Center,
             )
         }
@@ -652,7 +803,7 @@ private fun ProfileAvatarPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = ProfileSurface,
+        containerColor = ProfileSurfaceStrong,
         scrimColor = ProfileTextPrimary.copy(alpha = 0.18f),
         dragHandle = {
             Surface(
@@ -812,7 +963,7 @@ private fun ProfileLogoutSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = ProfileSurface,
+        containerColor = ProfileSurfaceStrong,
         scrimColor = ProfileTextPrimary.copy(alpha = 0.18f),
         dragHandle = {
             Surface(
@@ -906,6 +1057,13 @@ private fun ProfileErrorView(
 private fun maskUserId(userId: String): String {
     if (userId.length <= 10) return userId
     return "${userId.take(4)}...${userId.takeLast(4)}"
+}
+
+private fun profileIntentFor(title: String): ControlPlaneIntent = when {
+    title.contains("钱包") || title.contains("节点") -> ControlPlaneIntent.Infra
+    title.contains("佣金") || title.contains("邀请") || title.contains("账号") -> ControlPlaneIntent.Finance
+    title.contains("法务") || title.contains("订单") || title.contains("帮助") -> ControlPlaneIntent.Settlement
+    else -> ControlPlaneIntent.Neutral
 }
 
 @Preview(showBackground = true)
