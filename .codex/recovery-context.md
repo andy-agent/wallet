@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-09T13:07:07Z
+Generated: 2026-04-09T13:38:38Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-dtg.13.1
-- next_task_title: 按参考图 1:1 重做 Market 列表页
+- next_task_id: liaojiang-7fr
+- next_task_title: 梳理 PNG 原型页面结构并定义 /UI 组件层
 
 ## Counters
-- in_progress: 5
+- in_progress: 6
 - ready: 1
-- open: 9
-- closed: 268
-- dirty: 2
+- open: 13
+- closed: 270
+- dirty: 3
 
 ## Next Milestone
 - Continue the next task and complete one milestone
