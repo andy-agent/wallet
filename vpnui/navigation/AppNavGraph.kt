@@ -24,31 +24,6 @@ fun AppNavGraph(
         navController = navController,
         startDestination = startDestination
     ) {
-        // Splash & Version
-        composable(Routes.SPLASH) {
-            val viewModel: SplashViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsState()
-            SplashScreen(
-                state = state,
-                onNavigateToLogin = {
-                    navController.navigate(Routes.EMAIL_LOGIN) {
-                        popUpTo(Routes.SPLASH) { inclusive = true }
-                    }
-                },
-                onNavigateToHome = {
-                    navController.navigate(Routes.VPN_HOME) {
-                        popUpTo(Routes.SPLASH) { inclusive = true }
-                    }
-                },
-                onNavigateToForceUpdate = {
-                    navController.navigate(Routes.FORCE_UPDATE)
-                },
-                onShowOptionalUpdate = {
-                    // Show optional update dialog
-                }
-            )
-        }
-
         composable(Routes.FORCE_UPDATE) {
             ForceUpdatePage(
                 onUpdateClick = { /* Open download link */ },
@@ -56,30 +31,9 @@ fun AppNavGraph(
             )
         }
 
-        // Auth
-        composable(Routes.EMAIL_LOGIN) {
-            val viewModel: LoginViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsState()
-            EmailLoginPage(
-                state = state,
-                onEmailChange = viewModel::onEmailChange,
-                onPasswordChange = viewModel::onPasswordChange,
-                onPasswordVisibilityToggle = viewModel::togglePasswordVisibility,
-                onLoginClick = viewModel::login,
-                onNavigateToRegister = {
-                    navController.navigate(Routes.EMAIL_REGISTER)
-                },
-                onNavigateToResetPassword = {
-                    navController.navigate(Routes.RESET_PASSWORD)
-                },
-                onLoginSuccess = {
-                    navController.navigate(Routes.VPN_HOME) {
-                        popUpTo(Routes.EMAIL_LOGIN) { inclusive = true }
-                    }
-                }
-            )
-        }
+        installCryptoVpnP0Routes(navController = navController)
 
+        // Auth
         composable(Routes.EMAIL_REGISTER) {
             val viewModel: RegisterViewModel = hiltViewModel()
             val state by viewModel.uiState.collectAsState()
@@ -117,31 +71,6 @@ fun AppNavGraph(
                     navController.navigate(Routes.EMAIL_LOGIN) {
                         popUpTo(Routes.RESET_PASSWORD) { inclusive = true }
                     }
-                }
-            )
-        }
-
-        // VPN
-        composable(Routes.VPN_HOME) {
-            val viewModel: VPNHomeViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsState()
-            VPNHomePage(
-                state = state,
-                onMenuClick = { /* Open drawer */ },
-                onSettingsClick = { /* Navigate to settings */ },
-                onProfileClick = {
-                    navController.navigate(Routes.PROFILE)
-                },
-                onConnectClick = viewModel::toggleConnection,
-                onModeChange = viewModel::changeMode,
-                onNavigateToRegions = {
-                    navController.navigate(Routes.REGION_SELECTION)
-                },
-                onNavigateToPlans = {
-                    navController.navigate(Routes.PLANS)
-                },
-                onRenewClick = {
-                    navController.navigate(Routes.PLANS)
                 }
             )
         }
@@ -249,42 +178,6 @@ fun AppNavGraph(
                 onBackClick = { navController.popBackStack() },
                 onReorderClick = {
                     navController.navigate(Routes.PLANS)
-                }
-            )
-        }
-
-        // Wallet
-        composable(Routes.WALLET_ONBOARDING) {
-            val viewModel: WalletOnboardingViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsState()
-            WalletOnboardingPage(
-                state = state,
-                onCreateWalletClick = viewModel::createWallet,
-                onImportWalletClick = viewModel::importWallet,
-                onNavigateToWalletHome = {
-                    navController.navigate(Routes.WALLET_HOME) {
-                        popUpTo(Routes.WALLET_ONBOARDING) { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        composable(Routes.WALLET_HOME) {
-            val viewModel: WalletHomeViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsState()
-            WalletHomePage(
-                state = state,
-                onBackClick = { navController.popBackStack() },
-                onSettingsClick = { /* Navigate to wallet settings */ },
-                onChainSelect = viewModel::selectChain,
-                onAssetClick = { assetId ->
-                    navController.navigate(Routes.assetDetail(assetId))
-                },
-                onReceiveClick = {
-                    navController.navigate(Routes.RECEIVE)
-                },
-                onSendClick = {
-                    navController.navigate(Routes.SEND)
                 }
             )
         }
