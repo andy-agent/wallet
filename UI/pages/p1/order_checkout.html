@@ -36,14 +36,24 @@
             </div>
           </article>
           <div class="p01-chip-row">
-            <span class="p01-chip">USDT-TRON</span>
-            <span class="p01-chip">USDT-Solana</span>
-            <span class="p01-chip">SOL</span>
+            <span class="p01-network-chip">USDT-TRON</span>
+            <span class="p01-network-chip">USDT-Solana</span>
+            <span class="p01-network-chip">SOL</span>
           </div>
-          <div class="p01-dual">
-            <a class="p01-button-secondary" href="./order_list.html">扫码支付</a>
-            <a class="p01-button-primary" href="./wallet_payment_confirm.html">我已完成支付</a>
-          </div>
+          <article class="p01-card p01-qr-card">
+            <div>
+              <div class="p01-card-title">扫码支付</div>
+              <p class="p01-card-copy">使用任意支持 TRON 的钱包完成付款，或复制地址转账。</p>
+            </div>
+            <div class="p01-qr-box">
+              <div class="p01-qr-art" aria-hidden="true"></div>
+              <div class="p01-qr-address">TXvM...eR92</div>
+            </div>
+            <div class="p01-dual">
+              <div class="p01-button-secondary" data-action="copy" data-copy="TXvM...eR92" role="button" tabindex="0">复制地址</div>
+              <a class="p01-button-primary" href="./order_result.html">我已完成支付</a>
+            </div>
+          </article>
         </section>
       </div>
     </section>
