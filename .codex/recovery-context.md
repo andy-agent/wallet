@@ -1,17 +1,17 @@
 # Recovery Context
 
-Generated: 2026-04-10T12:55:34Z
+Generated: 2026-04-10T13:21:23Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-2mt.16
-- next_task_title: 修复 wallet_home 与 asset_detail 底栏/尺寸异常
+- next_task_id: liaojiang-2mt.22.1
+- next_task_title: 分析并冻结 H5→Android 路由/页面/组件映射
 
 ## Counters
-- in_progress: 2
+- in_progress: 3
 - ready: 3
-- open: 7
-- closed: 342
+- open: 9
+- closed: 346
 - dirty: 2
 
 ## Next Milestone
