@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-10T08:34:14Z",
+  "generated_at": "2026-04-10T09:06:26Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-2mt",
   "next_task_title": "新主线：将 full delivery 最新 UI 重写为高保真 HTML5",
@@ -7,7 +7,7 @@
   "ready_count": 1,
   "open_count": 5,
   "closed_count": 335,
-  "dirty_count": 15,
+  "dirty_count": 2,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
