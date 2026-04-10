@@ -23,11 +23,13 @@
     { id: "p2-core/send", title: "发送资产", copy: "地址、链和安全检查。", page: "./pages/p2-core/send.html" },
     { id: "p2-core/send_result", title: "发送完成", copy: "转账广播结果。", page: "./pages/p2-core/send_result.html" },
     { id: "p2-core/invite_center", title: "邀请中心", copy: "邀请码与增长数据。", page: "./pages/p2-core/invite_center.html" },
+    { id: "p2-core/invite_share", title: "分享推广链接", copy: "推广链接与二维码分享。", page: "./pages/p2-core/invite_share.html" },
     { id: "p2-core/commission_ledger", title: "佣金账本", copy: "收益趋势与结算记录。", page: "./pages/p2-core/commission_ledger.html" },
     { id: "p2-core/withdraw", title: "提现佣金", copy: "结算收益提现。", page: "./pages/p2-core/withdraw.html" },
     { id: "p2-core/profile", title: "我的", copy: "账户、安全、法务入口。", page: "./pages/p2-core/profile.html" },
     { id: "p2-core/legal_documents", title: "法务文档", copy: "协议、隐私与免责声明。", page: "./pages/p2-core/legal_documents.html" },
     { id: "p2-core/legal_document_detail", title: "服务协议", copy: "法务正文详情。", page: "./pages/p2-core/legal_document_detail.html" },
+    { id: "p2-core/about_app", title: "关于应用", copy: "版本、更新和帮助。", page: "./pages/p2-core/about_app.html" },
 
     { id: "p2-extended/import_wallet_method", title: "导入多链钱包", copy: "钱包导入方式。", page: "./pages/p2-extended/import_wallet_method.html" },
     { id: "p2-extended/import_mnemonic", title: "输入助记词", copy: "本地解析助记词。", page: "./pages/p2-extended/import_mnemonic.html" },
