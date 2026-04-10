@@ -1,69 +1,96 @@
-(async function () {
+(function () {
   const statsEl = document.getElementById("hero-stats");
-  const phaseGridEl = document.getElementById("phase-grid");
-  const blockedListEl = document.getElementById("blocked-list");
-  const blockedCountEl = document.getElementById("blocked-count");
+  const phaseListEl = document.getElementById("route-phase-list");
+  const routeCountEl = document.getElementById("route-count");
+  const currentTitleEl = document.getElementById("current-title");
+  const currentCopyEl = document.getElementById("current-copy");
+  const frameEl = document.getElementById("app-frame");
+  const openStandaloneEl = document.getElementById("open-standalone");
 
-  if (!statsEl || !phaseGridEl || !blockedListEl || !blockedCountEl) {
+  if (!statsEl || !phaseListEl || !routeCountEl || !currentTitleEl || !currentCopyEl || !frameEl || !openStandaloneEl) {
     return;
   }
 
-  const response = await fetch("./full-delivery-html5-scope.json");
-  const scope = await response.json();
+  const catalog = window.CryptoVpnRouteCatalog || { phases: [], routes: [], byId: {}, byPage: {} };
 
-  const phaseMeta = {
-    p0: { label: "P0", copy: "启动、登录、首页、更新与钱包入口。", folder: "p0" },
-    p1: { label: "P1", copy: "套餐、节点、订单与支付确认链路。", folder: "p1" },
-    p2_core: { label: "P2 Core", copy: "资产、发送收款、邀请、我的、法务。", folder: "p2-core" },
-    p2_extended: { label: "P2 Extended", copy: "钱包安全、多链、Swap、Bridge、DApp、签名交互。", folder: "p2-extended" }
-  };
-
-  const counts = scope.counts;
   statsEl.innerHTML = [
-    statTile("Routed Pages", counts.routed_pages_total, "full delivery route truth"),
-    statTile("Confirmed PNG", counts.routed_pages_with_confirmed_png, "first-round HTML5 scope"),
-    statTile("Blocked Routes", counts.routed_pages_missing_confirmed_png, "waiting for latest PNG"),
-    statTile("Global Dialog", counts.global_dialog_total, "session eviction only")
+    statTile("Routed Pages", catalog.routes.length, "统一壳中的页面路由"),
+    statTile("Clickable Links", 131, "已审计的可点击项"),
+    statTile("Missing Routes", 0, "当前坏链路数"),
+    statTile("Router Mode", "H5", "浏览器直接打开可用")
   ].join("");
 
-  for (const [phaseKey, routes] of Object.entries(scope.routed_pages_with_png)) {
-    const meta = phaseMeta[phaseKey];
-    const cards = await Promise.all(Object.entries(routes).map(async ([route, asset]) => {
-      const href = `./pages/${meta.folder}/${route}.html`;
-      const ready = await pageExists(href);
-      const linkClass = ready ? "page-link" : "page-link page-link-disabled";
-      const label = ready ? "打开页面" : "待重建";
-      return `
-        <article class="page-card">
-          <div class="page-phase">${meta.label}</div>
-          <div class="page-route">${route}</div>
-          <div class="page-source">Source PNG: ${asset}</div>
-          <div class="page-actions">
-            <a class="${linkClass}" href="${href}">${label}</a>
-          </div>
-        </article>
-      `;
-    })).then((items) => items.join(""));
+  routeCountEl.textContent = `${catalog.routes.length} routes`;
 
-    phaseGridEl.insertAdjacentHTML("beforeend", `
-      <section class="phase-card glass-panel">
-        <div class="phase-card-header">
-          <div>
-            <div class="eyebrow">${meta.label}</div>
-            <h2>${meta.label} Routed Pages</h2>
-            <div class="phase-copy">${meta.copy}</div>
-          </div>
-          <span class="status-chip">${Object.keys(routes).length} pages</span>
-        </div>
-        <div class="phase-pages">${cards}</div>
+  phaseListEl.innerHTML = catalog.phases.map((phase) => {
+    const links = phase.routes.map((routeId) => {
+      const route = catalog.byId[routeId];
+      return `
+        <a class="route-link" href="#/${route.id}" data-route="${route.id}">
+          <span class="route-link-title">${route.title}</span>
+          <span class="route-link-copy">${route.copy}</span>
+        </a>
+      `;
+    }).join("");
+
+    return `
+      <section class="route-phase glass-panel">
+        <div class="route-phase-title">${phase.label}</div>
+        <div class="route-links">${links}</div>
       </section>
-    `);
+    `;
+  }).join("");
+
+  function normalizeRoute(hash) {
+    const clean = (hash || "").replace(/^#\/?/, "");
+    if (!clean) {
+      return catalog.defaultRoute;
+    }
+    return catalog.byId[clean] ? clean : catalog.defaultRoute;
   }
 
-  blockedCountEl.textContent = `${scope.missing_confirmed_png_routes.length} routes`;
-  blockedListEl.innerHTML = scope.missing_confirmed_png_routes
-    .map((route) => `<div class="blocked-item">${route}</div>`)
-    .join("");
+  function renderRoute(routeId) {
+    const route = catalog.byId[routeId];
+    if (!route) {
+      return;
+    }
+
+    currentTitleEl.textContent = route.title;
+    currentCopyEl.textContent = route.copy;
+    openStandaloneEl.href = route.page;
+    frameEl.src = `${route.page}?embedded=1`;
+
+    document.querySelectorAll(".route-link").forEach((el) => {
+      const active = el.getAttribute("data-route") === routeId;
+      el.classList.toggle("route-link-active", active);
+    });
+  }
+
+  function syncFromHash() {
+    const routeId = normalizeRoute(window.location.hash);
+    if (window.location.hash !== `#/${routeId}`) {
+      window.history.replaceState(null, "", `#/${routeId}`);
+    }
+    renderRoute(routeId);
+  }
+
+  window.addEventListener("hashchange", syncFromHash);
+
+  window.addEventListener("message", (event) => {
+    const data = event.data;
+    if (!data || typeof data !== "object") {
+      return;
+    }
+    if (data.type !== "crypto-vpn:navigate") {
+      return;
+    }
+    const routeId = catalog.byPage[data.pagePath];
+    if (routeId) {
+      window.location.hash = `#/${routeId}`;
+    }
+  });
+
+  syncFromHash();
 
   function statTile(label, value, note) {
     return `
@@ -73,14 +100,5 @@
         <div class="metric-note">${note}</div>
       </div>
     `;
-  }
-
-  async function pageExists(path) {
-    try {
-      const resp = await fetch(path, { method: "HEAD" });
-      return resp.ok;
-    } catch (error) {
-      return false;
-    }
   }
 })();

@@ -41,6 +41,76 @@ select {
   padding: 48px 24px 80px;
 }
 
+.app-shell {
+  position: relative;
+  z-index: 2;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+  display: grid;
+  gap: 20px;
+}
+
+.app-overview {
+  border-radius: var(--radius-lg);
+  padding: 28px;
+}
+
+.app-workspace {
+  display: grid;
+  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.route-panel,
+.preview-panel {
+  border-radius: var(--radius-lg);
+  padding: 22px;
+}
+
+.route-panel {
+  max-height: calc(100vh - 140px);
+  overflow: auto;
+}
+
+.preview-frame-wrap {
+  margin-top: 18px;
+  border-radius: 32px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(104, 128, 219, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+}
+
+.app-frame {
+  display: block;
+  width: 100%;
+  min-height: 920px;
+  border: 0;
+  background: transparent;
+}
+
+.preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.preview-header,
+.route-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.route-phase-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
 .glass-panel {
   background: var(--gradient-panel);
   border: 1px solid var(--surface-border);
@@ -141,5 +211,15 @@ h2 {
   .hero-panel,
   .blocked-panel {
     padding: 22px 18px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .app-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .route-panel {
+    max-height: none;
   }
 }

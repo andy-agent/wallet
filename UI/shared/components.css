@@ -137,3 +137,55 @@
   font-family: var(--font-display);
   font-weight: 600;
 }
+
+.route-phase {
+  padding: 16px;
+  border-radius: 24px;
+}
+
+.route-phase-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.route-links {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.route-link {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(104, 128, 219, 0.1);
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.route-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(72, 116, 255, 0.18);
+  box-shadow: 0 12px 24px rgba(57, 88, 160, 0.08);
+}
+
+.route-link-active {
+  background: rgba(72, 116, 255, 0.08);
+  border-color: rgba(72, 116, 255, 0.22);
+}
+
+.route-link-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.route-link-copy {
+  font-size: 12px;
+  color: var(--text-body);
+  line-height: 1.55;
+}
