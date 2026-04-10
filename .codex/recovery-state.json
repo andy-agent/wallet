@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-04-10T06:48:30Z",
+  "generated_at": "2026-04-10T06:48:55Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "next_task_id": "liaojiang-2mt.10",
-  "next_task_title": "等待人类最终确认 H5 可点击与兼容性",
-  "in_progress_count": 0,
+  "next_task_id": "liaojiang-2mt",
+  "next_task_title": "新主线：将 full delivery 最新 UI 重写为高保真 HTML5",
+  "in_progress_count": 1,
   "ready_count": 0,
-  "open_count": 1,
-  "closed_count": 333,
-  "dirty_count": 4,
-  "milestone_reached": true,
+  "open_count": 4,
+  "closed_count": 331,
+  "dirty_count": 0,
+  "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
     "current_status": "docs/current-status.md",
@@ -21,18 +21,8 @@
   "auto_created_task_id": null,
   "dispatch": {
     "requested": true,
-    "mode": "agents",
+    "mode": "simulate",
     "dispatched_count": 0,
     "max_workers": 3
-  },
-  "active_workers": [],
-  "current_milestone": {
-    "feature_id": "liaojiang-2mt",
-    "entrypoint": "UI/index.html",
-    "route_pages": 38,
-    "clickable_links": 131,
-    "pseudo_controls_checked": 60,
-    "pseudo_controls_unwired": 0,
-    "blocked_next": "liaojiang-2mt.10"
   }
 }
