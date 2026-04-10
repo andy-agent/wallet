@@ -12,10 +12,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -113,38 +115,96 @@ fun P01PhoneScaffold(
             .background(P01OuterBrush)
             .drawBehind {
                 drawDecorativeDots()
-            }
-            .padding(14.dp),
+                drawScreenTexture()
+            },
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(34.dp))
-                .background(P01InnerBrush)
-                .border(1.dp, P01Border, RoundedCornerShape(34.dp))
-                .drawBehind {
-                    drawScreenTexture()
-                },
+                .statusBarsPadding()
+                .padding(contentPadding),
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .padding(contentPadding),
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                content = content,
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            P01BottomNav(
+                currentRoute = currentRoute,
+                destinations = destinations,
+                onNavigate = onBottomNav,
+            )
+        }
+    }
+}
+
+private fun DrawScope.drawTopDivider(color: Color) {
+    drawLine(
+        color = color,
+        start = Offset(0f, 0f),
+        end = Offset(size.width, 0f),
+        strokeWidth = 1.dp.toPx(),
+    )
+}
+
+@Composable
+private fun FlatNavBackground(
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .drawBehind { drawTopDivider(P01BorderStrong.copy(alpha = 0.55f)) }
+            .background(Color.White.copy(alpha = 0.96f))
+            .padding(horizontal = 4.dp, vertical = 3.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        content = content,
+    )
+}
+
+@Composable
+fun P01BottomNav(
+    currentRoute: String,
+    destinations: List<P01BottomDestination>,
+    onNavigate: (String) -> Unit,
+) {
+    FlatNavBackground {
+        destinations.forEach { item ->
+            val active = currentRoute == item.route
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (active) P01AccentBlue.copy(alpha = 0.08f) else Color.Transparent)
+                    .clickable { onNavigate(item.route) }
+                    .padding(vertical = 4.dp, horizontal = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Column(
+                Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                    content = content,
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                P01BottomNav(
-                    currentRoute = currentRoute,
-                    destinations = destinations,
-                    onNavigate = onBottomNav,
+                        .size(22.dp)
+                        .clip(CircleShape)
+                        .background(if (active) P01AccentBlue.copy(alpha = 0.10f) else Color.Transparent),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    P01BottomIcon(
+                        kind = item.iconKind,
+                        tint = if (active) P01AccentBlue else P01TextSoft,
+                    )
+                }
+                Text(
+                    text = item.label,
+                    color = if (active) P01AccentBlue else P01TextSoft,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -728,56 +788,6 @@ fun P01QrArt(modifier: Modifier = Modifier) {
                 size = Size(unit * 0.72f, unit * 0.72f),
                 cornerRadius = CornerRadius(unit * 0.12f, unit * 0.12f),
             )
-        }
-    }
-}
-
-@Composable
-fun P01BottomNav(
-    currentRoute: String,
-    destinations: List<P01BottomDestination>,
-    onNavigate: (String) -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(P01Surface)
-            .border(1.dp, P01Border, RoundedCornerShape(18.dp))
-            .padding(horizontal = 5.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        destinations.forEach { item ->
-            val active = currentRoute == item.route
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (active) P01AccentBlue.copy(alpha = 0.08f) else Color.Transparent)
-                    .clickable { onNavigate(item.route) }
-                    .padding(vertical = 4.dp, horizontal = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(22.dp)
-                        .clip(CircleShape)
-                        .background(P01AccentBlue.copy(alpha = 0.08f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    P01BottomIcon(
-                        kind = item.iconKind,
-                        tint = if (active) P01AccentBlue else P01TextSoft,
-                    )
-                }
-                Text(
-                    text = item.label,
-                    color = if (active) P01AccentBlue else P01TextSoft,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
         }
     }
 }

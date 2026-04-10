@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -85,46 +86,51 @@ internal fun P2CorePageScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .statusBarsPadding()
-                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 18.dp, vertical = 8.dp),
             ) {
-                Text(kicker, style = MaterialTheme.typography.labelLarge, color = Color(0xFF7381AD))
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = CoreText)
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = CoreSubtleText)
-                if (!badge.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    StatusChip(text = badge)
-                }
-                Spacer(modifier = Modifier.height(14.dp))
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                    content = content,
-                )
-                if (primaryActionLabel != null && onPrimaryAction != null) {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    if (secondaryActionLabel != null && onSecondaryAction != null) {
-                        CoreActionRow(
-                            primaryActionLabel = primaryActionLabel,
-                            onPrimaryAction = onPrimaryAction,
-                            secondaryActionLabel = secondaryActionLabel,
-                            onSecondaryAction = onSecondaryAction,
-                        )
-                    } else {
-                        CorePrimaryButton(
-                            label = primaryActionLabel,
-                            onClick = onPrimaryAction,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    Text(kicker, style = MaterialTheme.typography.labelLarge, color = Color(0xFF7381AD))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = CoreText)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = CoreSubtleText)
+                    if (!badge.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        StatusChip(text = badge)
                     }
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                        content = content,
+                    )
+                    if (primaryActionLabel != null && onPrimaryAction != null) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        if (secondaryActionLabel != null && onSecondaryAction != null) {
+                            CoreActionRow(
+                                primaryActionLabel = primaryActionLabel,
+                                onPrimaryAction = onPrimaryAction,
+                                secondaryActionLabel = secondaryActionLabel,
+                                onSecondaryAction = onSecondaryAction,
+                            )
+                        } else {
+                            CorePrimaryButton(
+                                label = primaryActionLabel,
+                                onClick = onPrimaryAction,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
-                Spacer(modifier = Modifier.height(16.dp))
                 CoreBottomNav(
                     activeSection = activeSection,
                     onBottomNav = onBottomNav,
                 )
-                Spacer(modifier = Modifier.height(14.dp))
             }
         }
     }
@@ -462,9 +468,17 @@ private fun CoreBottomNav(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(20.dp))
-            .border(1.dp, CoreCardBorder, RoundedCornerShape(20.dp))
-            .padding(horizontal = 5.dp, vertical = 4.dp),
+            .navigationBarsPadding()
+            .drawBehind {
+                drawLine(
+                    color = CoreCardBorder.copy(alpha = 0.75f),
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                    strokeWidth = 1.dp.toPx(),
+                )
+            }
+            .background(Color.White.copy(alpha = 0.97f))
+            .padding(horizontal = 4.dp, vertical = 3.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Box(modifier = Modifier.weight(1f)) {
@@ -521,7 +535,7 @@ private fun CoreBottomNavItem(
     Column(
         modifier = Modifier
             .clickable(onClick = onClick)
-            .padding(vertical = 2.dp),
+            .padding(vertical = 3.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
