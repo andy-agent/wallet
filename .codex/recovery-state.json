@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-10T12:48:09Z",
+  "generated_at": "2026-04-10T12:49:37Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-2mt.16",
   "next_task_title": "修复 wallet_home 与 asset_detail 底栏/尺寸异常",
@@ -7,8 +7,8 @@
   "ready_count": 3,
   "open_count": 7,
   "closed_count": 342,
-  "dirty_count": 11,
-  "milestone_reached": true,
+  "dirty_count": 0,
+  "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
     "current_status": "docs/current-status.md",
