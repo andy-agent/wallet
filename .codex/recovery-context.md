@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-10T00:07:47Z
+Generated: 2026-04-10T00:39:59Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-dtg.17.1
-- next_task_title: 修复真机验收被安装器弹窗污染
+- next_task_id: liaojiang-07u
+- next_task_title: 分析 full delivery 与现有 vpnui 的并轨差异
 
 ## Counters
-- in_progress: 4
-- ready: 4
-- open: 11
-- closed: 280
-- dirty: 2
+- in_progress: 5
+- ready: 8
+- open: 18
+- closed: 282
+- dirty: 6
 
 ## Next Milestone
 - Continue the next task and complete one milestone
