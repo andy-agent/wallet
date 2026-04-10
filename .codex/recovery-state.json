@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-04-10T02:15:00Z",
+  "generated_at": "2026-04-10T02:46:19Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-dtg.17.1",
   "next_task_title": "修复真机验收被安装器弹窗污染",
   "in_progress_count": 4,
-  "ready_count": 2,
-  "open_count": 9,
-  "closed_count": 293,
-  "dirty_count": 2,
+  "ready_count": 3,
+  "open_count": 10,
+  "closed_count": 294,
+  "dirty_count": 277,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
