@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wallet Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <link rel="stylesheet" href="../../shared/components.css">
+  <link rel="stylesheet" href="../../shared/effects.css">
+  <link rel="stylesheet" href="../../shared/p0-p1.css">
+</head>
+<body class="p01-body">
+  <main class="p01-shell">
+    <section class="p01-screen">
+      <div class="p01-safe">
+        <div class="p01-status"><span>18:11</span><div class="p01-icons"><span>Wallet</span><span>Synced</span></div></div>
+        <header class="p01-header">
+          <div class="p01-eyebrow">WALLET HOME</div>
+          <h1 class="p01-title">我的钱包</h1>
+          <p class="p01-subtitle">总余额、资产列表、发送收款入口与最近活动都集中在钱包首页。</p>
+          <div class="p01-tab-row">
+            <a class="p01-tab active" href="./wallet_home.html">资产</a>
+            <a class="p01-tab" href="../p2-core/asset_detail.html">详情</a>
+            <a class="p01-tab" href="../p2-extended/swap.html">Swap</a>
+          </div>
+        </header>
+        <section class="p01-body-grid">
+          <article class="p01-card">
+            <div class="p01-card-header"><div><div class="p01-card-title">$31,842.88</div><div class="p01-card-copy">总余额 · Wallet 01</div></div><span class="p01-chip">Active</span></div>
+            <div class="p01-dual">
+              <a class="p01-button-secondary" href="../p2-core/receive.html">收款</a>
+              <a class="p01-button-primary" href="../p2-core/send.html">发送</a>
+            </div>
+          </article>
+          <article class="p01-card">
+            <div class="p01-card-title">资产列表</div>
+            <div class="p01-list" style="margin-top:10px;">
+              <div class="p01-row"><div><div class="p01-row-title">USDT</div><div class="p01-row-copy">TRON · 热门稳定币</div></div><div class="p01-row-value">$24,892</div></div>
+              <div class="p01-row"><div><div class="p01-row-title">SOL</div><div class="p01-row-copy">Solana · 主网资产</div></div><div class="p01-row-value">$3,120</div></div>
+              <div class="p01-row"><div><div class="p01-row-title">ENJ</div><div class="p01-row-copy">Enjin · 热度上升</div></div><div class="p01-row-value">$1,240</div></div>
+            </div>
+          </article>
+        </section>
+        <nav class="p01-bottom-nav">
+          <a class="p01-nav" href="./vpn_home.html"><span class="p01-nav-icon">H</span><span>Home</span></a>
+          <a class="p01-nav" href="../p1/plans.html"><span class="p01-nav-icon">V</span><span>VPN</span></a>
+          <a class="p01-nav active" href="./wallet_home.html"><span class="p01-nav-icon">W</span><span>Wallet</span></a>
+          <a class="p01-nav" href="../p2-core/invite_center.html"><span class="p01-nav-icon">E</span><span>Earn</span></a>
+          <a class="p01-nav" href="../p2-core/profile.html"><span class="p01-nav-icon">P</span><span>Profile</span></a>
+        </nav>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

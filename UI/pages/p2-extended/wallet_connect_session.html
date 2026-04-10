@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>连接会话</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <link rel="stylesheet" href="../../shared/components.css">
+  <link rel="stylesheet" href="../../shared/effects.css">
+  <link rel="stylesheet" href="../../shared/p2-extended.css">
+</head>
+<body class="p2e-body">
+  <main class="p2e-shell">
+    <section class="p2e-phone accent-violet p2e-short">
+      <div class="p2e-layer p2e-layer-dust"></div>
+      <div class="p2e-layer p2e-layer-glow"></div>
+      <svg class="p2e-mesh" viewBox="0 0 220 220" aria-hidden="true">
+        <path d="M58 28L158 42 206 120 144 196 86 146 94 76z"></path>
+        <path d="M158 42L84 198 206 120"></path>
+        <circle cx="58" cy="28" r="3"></circle>
+        <circle cx="158" cy="42" r="3"></circle>
+        <circle cx="206" cy="120" r="3"></circle>
+        <circle cx="144" cy="196" r="3"></circle>
+        <circle cx="86" cy="146" r="3"></circle>
+        <circle cx="94" cy="76" r="3"></circle>
+        <circle cx="84" cy="198" r="3"></circle>
+      </svg>
+      <div class="p2e-safe">
+        <div class="p2e-status">
+          <div>19:35</div>
+          <div class="p2e-icons">
+            <div class="p2e-signal"><span></span><span></span><span></span><span></span></div>
+            <div class="p2e-wifi"></div>
+            <div class="p2e-battery"></div>
+          </div>
+        </div>
+
+        <header class="p2e-hero">
+          <div class="p2e-kicker">WalletConnect</div>
+          <h1 class="p2e-title">连接会话</h1>
+          <p class="p2e-subtitle">管理与 DApp 的已连接会话、权限范围与自动断开。</p>
+          <a class="p2e-hub" href="./sign_message_confirm.html">
+            <span class="p2e-hub-label">6 会话</span>
+            <span class="p2e-hub-orb"></span>
+          </a>
+        </header>
+
+        <div class="p2e-simple-list">
+          <div class="p2e-card p2e-list-row">
+            <div class="p2e-list-copy">
+              <strong>Jupiter</strong>
+              <span>读取余额 / 发起兑换</span>
+              <span style="margin-top: 4px;">当前网络：Solana</span>
+            </div>
+            <a class="p2e-status-pill is-warm" href="./sign_message_confirm.html" style="text-decoration: none;">断开</a>
+          </div>
+          <div class="p2e-card p2e-list-row">
+            <div class="p2e-list-copy">
+              <strong>Sunswap</strong>
+              <span>读取地址 / 发起授权</span>
+              <span style="margin-top: 4px;">当前网络：TRON</span>
+            </div>
+            <a class="p2e-status-pill is-warm" href="./dapp_browser.html" style="text-decoration: none;">断开</a>
+          </div>
+          <div class="p2e-card p2e-list-row">
+            <div class="p2e-list-copy">
+              <strong>Aave</strong>
+              <span>读取资产 / 发起存款</span>
+              <span style="margin-top: 4px;">当前网络：Ethereum</span>
+            </div>
+            <a class="p2e-status-pill is-warm" href="./dapp_browser.html" style="text-decoration: none;">断开</a>
+          </div>
+          <div class="p2e-card p2e-list-row">
+            <div class="p2e-list-copy">
+              <strong>Magic Eden</strong>
+              <span>读取 NFT / 签名</span>
+              <span style="margin-top: 4px;">当前网络：Solana</span>
+            </div>
+            <a class="p2e-status-pill is-warm" href="./dapp_browser.html" style="text-decoration: none;">断开</a>
+          </div>
+        </div>
+
+        <div class="p2e-card p2e-note" style="margin-top: 18px;">
+          <span class="p2e-note-icon"></span>
+          <div>
+            <strong>会话安全</strong>
+            <span>高风险域名会自动标红并在签名前再次确认</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

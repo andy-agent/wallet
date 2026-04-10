@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>确认助记词</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <link rel="stylesheet" href="../../shared/components.css">
+  <link rel="stylesheet" href="../../shared/effects.css">
+  <link rel="stylesheet" href="../../shared/p2-extended.css">
+</head>
+<body class="p2e-body">
+  <main class="p2e-shell">
+    <section class="p2e-phone accent-violet">
+      <div class="p2e-layer p2e-layer-dust"></div>
+      <div class="p2e-layer p2e-layer-glow"></div>
+      <svg class="p2e-mesh" viewBox="0 0 220 220" aria-hidden="true">
+        <path d="M26 44L118 26 176 86 168 182 102 204 48 108z"></path>
+        <path d="M118 26L78 126 102 204 176 86"></path>
+        <circle cx="26" cy="44" r="3"></circle>
+        <circle cx="118" cy="26" r="3"></circle>
+        <circle cx="176" cy="86" r="3"></circle>
+        <circle cx="168" cy="182" r="3"></circle>
+        <circle cx="102" cy="204" r="3"></circle>
+        <circle cx="48" cy="108" r="3"></circle>
+        <circle cx="78" cy="126" r="3"></circle>
+      </svg>
+      <div class="p2e-safe">
+        <div class="p2e-status">
+          <div>19:12</div>
+          <div class="p2e-icons">
+            <div class="p2e-signal"><span></span><span></span><span></span><span></span></div>
+            <div class="p2e-wifi"></div>
+            <div class="p2e-battery"></div>
+          </div>
+        </div>
+
+        <header class="p2e-hero">
+          <div class="p2e-kicker">Verify Backup</div>
+          <h1 class="p2e-title">确认助记词</h1>
+          <p class="p2e-subtitle">通过抽查验证确保你已经正确备份。</p>
+          <a class="p2e-hub" href="./security_center.html">
+            <span class="p2e-hub-label">验证中</span>
+            <span class="p2e-hub-orb"></span>
+          </a>
+        </header>
+
+        <section class="p2e-card p2e-panel">
+          <h2 class="p2e-panel-title">按顺序选择缺失的单词</h2>
+          <p class="p2e-panel-copy">系统会随机抽查 3 个位置。</p>
+          <div class="p2e-fields">
+            <label class="p2e-field-group">
+              <span class="p2e-field-label">第 2 个单词</span>
+              <input class="p2e-input" value="brick">
+            </label>
+            <label class="p2e-field-group">
+              <span class="p2e-field-label">第 7 个单词</span>
+              <input class="p2e-input" value="orbit">
+            </label>
+            <label class="p2e-field-group">
+              <span class="p2e-field-label">第 11 个单词</span>
+              <input class="p2e-input" value="anchor">
+            </label>
+          </div>
+          <div class="p2e-answer-row p2e-word-answers">
+            <span class="p2e-chip is-active">brick</span>
+            <span class="p2e-chip">orbit</span>
+            <span class="p2e-chip">anchor</span>
+            <span class="p2e-chip">velvet</span>
+            <span class="p2e-chip">glow</span>
+            <span class="p2e-chip">coral</span>
+          </div>
+        </section>
+
+        <div class="p2e-page-bottom">
+          <div class="p2e-actions">
+            <a class="p2e-button p2e-button-primary" href="./security_center.html">完成校验并进入钱包</a>
+            <a class="p2e-button p2e-button-secondary" href="./backup_mnemonic.html">返回备份页</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

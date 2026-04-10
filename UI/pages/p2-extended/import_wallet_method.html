@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>导入多链钱包</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <link rel="stylesheet" href="../../shared/components.css">
+  <link rel="stylesheet" href="../../shared/effects.css">
+  <link rel="stylesheet" href="../../shared/p2-extended.css">
+</head>
+<body class="p2e-body">
+  <main class="p2e-shell">
+    <section class="p2e-phone accent-violet">
+      <div class="p2e-layer p2e-layer-dust"></div>
+      <div class="p2e-layer p2e-layer-glow"></div>
+      <svg class="p2e-mesh" viewBox="0 0 220 220" aria-hidden="true">
+        <path d="M28 42L98 22 154 66 192 42 202 118 170 184 110 200 54 158 26 96z"></path>
+        <path d="M98 22L118 92 154 66 170 184 26 96 110 200"></path>
+        <circle cx="28" cy="42" r="3"></circle>
+        <circle cx="98" cy="22" r="3"></circle>
+        <circle cx="154" cy="66" r="3"></circle>
+        <circle cx="192" cy="42" r="3"></circle>
+        <circle cx="202" cy="118" r="3"></circle>
+        <circle cx="170" cy="184" r="3"></circle>
+        <circle cx="110" cy="200" r="3"></circle>
+        <circle cx="54" cy="158" r="3"></circle>
+        <circle cx="26" cy="96" r="3"></circle>
+        <circle cx="118" cy="92" r="3"></circle>
+      </svg>
+      <div class="p2e-safe">
+        <div class="p2e-status">
+          <div>19:05</div>
+          <div class="p2e-icons">
+            <div class="p2e-signal"><span></span><span></span><span></span><span></span></div>
+            <div class="p2e-wifi"></div>
+            <div class="p2e-battery"></div>
+          </div>
+        </div>
+
+        <header class="p2e-hero">
+          <div class="p2e-kicker">Wallet Import</div>
+          <h1 class="p2e-title">导入多链钱包</h1>
+          <p class="p2e-subtitle">补齐完整钱包能力：创建、导入、恢复与地址隔离。</p>
+          <a class="p2e-hub" href="./security_center.html">
+            <span class="p2e-hub-label">新增能力</span>
+            <span class="p2e-hub-orb"></span>
+          </a>
+        </header>
+
+        <section class="p2e-card p2e-panel">
+          <h2 class="p2e-panel-title">选择导入方式</h2>
+          <p class="p2e-panel-copy">支持助记词、私钥、Keystore 与观察钱包。</p>
+          <div class="p2e-option-list" style="margin-top: 18px;">
+            <a class="p2e-option" href="./import_mnemonic.html">
+              <span class="p2e-option-icon"></span>
+              <div>
+                <div class="p2e-option-title">助记词导入</div>
+                <div class="p2e-option-strong">适合完整恢复多链资产</div>
+              </div>
+            </a>
+            <a class="p2e-option" href="./security_center.html">
+              <span class="p2e-option-icon" style="background: rgba(91, 123, 255, 0.14);"></span>
+              <div>
+                <div class="p2e-option-title">私钥导入</div>
+                <div class="p2e-option-strong">适合单地址快速恢复</div>
+              </div>
+            </a>
+            <a class="p2e-option" href="./chain_manager.html">
+              <span class="p2e-option-icon" style="background: rgba(143, 121, 255, 0.14);"></span>
+              <div>
+                <div class="p2e-option-title">Keystore / JSON</div>
+                <div class="p2e-option-strong">适合 EVM 系资产</div>
+              </div>
+            </a>
+          </div>
+        </section>
+
+        <a class="p2e-card p2e-link-row" href="./dapp_browser.html" style="margin-top: 18px;">
+          <span class="p2e-option-icon" style="background: rgba(255, 152, 72, 0.16);"></span>
+          <div class="p2e-list-copy">
+            <strong>观察钱包</strong>
+            <span>只读地址，不可签名</span>
+          </div>
+        </a>
+
+        <div class="p2e-page-bottom">
+          <div class="p2e-actions">
+            <a class="p2e-button p2e-button-primary" href="./import_mnemonic.html">继续导入</a>
+            <a class="p2e-button p2e-button-secondary" href="./security_center.html">查看安全中心</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

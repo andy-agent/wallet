@@ -26,21 +26,24 @@
     statTile("Global Dialog", counts.global_dialog_total, "session eviction only")
   ].join("");
 
-  Object.entries(scope.routed_pages_with_png).forEach(([phaseKey, routes]) => {
+  for (const [phaseKey, routes] of Object.entries(scope.routed_pages_with_png)) {
     const meta = phaseMeta[phaseKey];
-    const cards = Object.entries(routes).map(([route, asset]) => {
+    const cards = await Promise.all(Object.entries(routes).map(async ([route, asset]) => {
       const href = `./pages/${meta.folder}/${route}.html`;
+      const ready = await pageExists(href);
+      const linkClass = ready ? "page-link" : "page-link page-link-disabled";
+      const label = ready ? "打开页面" : "待重建";
       return `
         <article class="page-card">
           <div class="page-phase">${meta.label}</div>
           <div class="page-route">${route}</div>
           <div class="page-source">Source PNG: ${asset}</div>
           <div class="page-actions">
-            <a class="page-link page-link-disabled" href="${href}">待重建</a>
+            <a class="${linkClass}" href="${href}">${label}</a>
           </div>
         </article>
       `;
-    }).join("");
+    })).then((items) => items.join(""));
 
     phaseGridEl.insertAdjacentHTML("beforeend", `
       <section class="phase-card glass-panel">
@@ -55,7 +58,7 @@
         <div class="phase-pages">${cards}</div>
       </section>
     `);
-  });
+  }
 
   blockedCountEl.textContent = `${scope.missing_confirmed_png_routes.length} routes`;
   blockedListEl.innerHTML = scope.missing_confirmed_png_routes
@@ -70,5 +73,14 @@
         <div class="metric-note">${note}</div>
       </div>
     `;
+  }
+
+  async function pageExists(path) {
+    try {
+      const resp = await fetch(path, { method: "HEAD" });
+      return resp.ok;
+    } catch (error) {
+      return false;
+    }
   }
 })();

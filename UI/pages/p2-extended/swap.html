@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>币币兑换</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <link rel="stylesheet" href="../../shared/components.css">
+  <link rel="stylesheet" href="../../shared/effects.css">
+  <link rel="stylesheet" href="../../shared/p2-extended.css">
+</head>
+<body class="p2e-body">
+  <main class="p2e-shell">
+    <section class="p2e-phone accent-green">
+      <div class="p2e-layer p2e-layer-dust"></div>
+      <div class="p2e-layer p2e-layer-glow"></div>
+      <svg class="p2e-mesh" viewBox="0 0 220 220" aria-hidden="true">
+        <path d="M28 44L118 40 186 92 188 144 124 198 52 140z"></path>
+        <path d="M118 40L126 198 186 92 52 140"></path>
+        <circle cx="28" cy="44" r="3"></circle>
+        <circle cx="118" cy="40" r="3"></circle>
+        <circle cx="186" cy="92" r="3"></circle>
+        <circle cx="188" cy="144" r="3"></circle>
+        <circle cx="124" cy="198" r="3"></circle>
+        <circle cx="52" cy="140" r="3"></circle>
+      </svg>
+      <div class="p2e-safe">
+        <div class="p2e-status">
+          <div>19:26</div>
+          <div class="p2e-icons">
+            <div class="p2e-signal"><span></span><span></span><span></span><span></span></div>
+            <div class="p2e-wifi"></div>
+            <div class="p2e-battery"></div>
+          </div>
+        </div>
+
+        <header class="p2e-hero">
+          <div class="p2e-kicker">Swap</div>
+          <h1 class="p2e-title">币币兑换</h1>
+          <p class="p2e-subtitle">补齐钱包内兑换能力，支持同链资产快速换币。</p>
+          <a class="p2e-hub" href="./bridge.html">
+            <span class="p2e-hub-label">低滑点</span>
+            <span class="p2e-hub-orb"></span>
+          </a>
+        </header>
+
+        <section class="p2e-card p2e-panel">
+          <h2 class="p2e-panel-title">兑换面板</h2>
+          <p class="p2e-panel-copy">支持 SOL / USDT / ETH / TRX 等常见资产。</p>
+          <div class="p2e-fields">
+            <div class="p2e-token-block">
+              <div class="p2e-token-label">支付</div>
+              <strong>USDT</strong>
+              <span>TRON</span>
+              <strong style="margin-top: 8px; text-align: right;">580</strong>
+            </div>
+            <div class="p2e-swap-arrow">↓</div>
+            <div class="p2e-token-block">
+              <div class="p2e-token-label">获得</div>
+              <strong>SOL</strong>
+              <span>Solana</span>
+              <strong style="margin-top: 8px; text-align: right;">82.6</strong>
+            </div>
+          </div>
+          <div class="p2e-kpi-grid">
+            <div class="p2e-kpi">
+              <div class="p2e-kpi-label">滑点</div>
+              <strong>0.5%</strong>
+            </div>
+            <div class="p2e-kpi">
+              <div class="p2e-kpi-label">路由</div>
+              <strong>2 hops</strong>
+            </div>
+            <div class="p2e-kpi">
+              <div class="p2e-kpi-label">预计到手</div>
+              <strong>82.1</strong>
+            </div>
+          </div>
+        </section>
+
+        <div class="p2e-page-bottom">
+          <div class="p2e-actions">
+            <a class="p2e-button p2e-button-primary" href="./sign_message_confirm.html">预览兑换并签名</a>
+            <a class="p2e-button p2e-button-secondary" href="./bridge.html">切换到 Bridge</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

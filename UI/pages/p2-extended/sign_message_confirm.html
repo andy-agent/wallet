@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>签名确认</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <link rel="stylesheet" href="../../shared/components.css">
+  <link rel="stylesheet" href="../../shared/effects.css">
+  <link rel="stylesheet" href="../../shared/p2-extended.css">
+</head>
+<body class="p2e-body">
+  <main class="p2e-shell">
+    <section class="p2e-phone accent-orange">
+      <div class="p2e-layer p2e-layer-dust"></div>
+      <div class="p2e-layer p2e-layer-glow"></div>
+      <svg class="p2e-mesh" viewBox="0 0 220 220" aria-hidden="true">
+        <path d="M26 60L116 40 198 96 190 136 126 194 48 126z"></path>
+        <path d="M116 40L132 124 126 194 198 96 48 126"></path>
+        <circle cx="26" cy="60" r="3"></circle>
+        <circle cx="116" cy="40" r="3"></circle>
+        <circle cx="198" cy="96" r="3"></circle>
+        <circle cx="190" cy="136" r="3"></circle>
+        <circle cx="126" cy="194" r="3"></circle>
+        <circle cx="48" cy="126" r="3"></circle>
+        <circle cx="132" cy="124" r="3"></circle>
+      </svg>
+      <div class="p2e-safe">
+        <div class="p2e-status">
+          <div>19:38</div>
+          <div class="p2e-icons">
+            <div class="p2e-signal"><span></span><span></span><span></span><span></span></div>
+            <div class="p2e-wifi"></div>
+            <div class="p2e-battery"></div>
+          </div>
+        </div>
+
+        <header class="p2e-hero">
+          <div class="p2e-kicker">Signature Request</div>
+          <h1 class="p2e-title">签名确认</h1>
+          <p class="p2e-subtitle">对 DApp 发起的操作进行最后确认，补齐钱包交互的关键闭环。</p>
+          <a class="p2e-hub" href="./security_center.html">
+            <span class="p2e-hub-label">高风险需确认</span>
+            <span class="p2e-hub-orb"></span>
+          </a>
+        </header>
+
+        <section class="p2e-card p2e-panel">
+          <h2 class="p2e-panel-title">Jupiter 请求签名</h2>
+          <p class="p2e-panel-copy">请检查合约、数量、网络与 gas 费用。</p>
+          <div class="p2e-detail-rows">
+            <div class="p2e-detail-row"><strong>操作类型</strong><span>Swap Exact In</span></div>
+            <div class="p2e-detail-row"><strong>网络</strong><span>Solana</span></div>
+            <div class="p2e-detail-row"><strong>支付资产</strong><span>580 USDT</span></div>
+            <div class="p2e-detail-row"><strong>目标资产</strong><span>82.6 SOL</span></div>
+            <div class="p2e-detail-row"><strong>预估费用</strong><span>0.0012 SOL</span></div>
+          </div>
+          <div class="p2e-card p2e-note" style="margin-top: 18px;">
+            <span class="p2e-option-icon" style="background: rgba(37, 203, 136, 0.16);"></span>
+            <div>
+              <strong>风险提示</strong>
+              <span>授权范围为本次交易，未检测到无限授权</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="p2e-page-bottom">
+          <div class="p2e-actions p2e-actions-inline">
+            <a class="p2e-button p2e-button-danger" href="./dapp_browser.html">拒绝</a>
+            <a class="p2e-button p2e-button-primary" href="./security_center.html">确认签名</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

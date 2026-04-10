@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>链管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <link rel="stylesheet" href="../../shared/components.css">
+  <link rel="stylesheet" href="../../shared/effects.css">
+  <link rel="stylesheet" href="../../shared/p2-extended.css">
+</head>
+<body class="p2e-body">
+  <main class="p2e-shell">
+    <section class="p2e-phone accent-violet p2e-short">
+      <div class="p2e-layer p2e-layer-dust"></div>
+      <div class="p2e-layer p2e-layer-glow"></div>
+      <svg class="p2e-mesh" viewBox="0 0 220 220" aria-hidden="true">
+        <path d="M30 64L110 40 186 60 202 118 150 180 108 194 42 132z"></path>
+        <path d="M110 40L122 134 150 180 186 60"></path>
+        <circle cx="30" cy="64" r="3"></circle>
+        <circle cx="110" cy="40" r="3"></circle>
+        <circle cx="186" cy="60" r="3"></circle>
+        <circle cx="202" cy="118" r="3"></circle>
+        <circle cx="150" cy="180" r="3"></circle>
+        <circle cx="108" cy="194" r="3"></circle>
+        <circle cx="42" cy="132" r="3"></circle>
+        <circle cx="122" cy="134" r="3"></circle>
+      </svg>
+      <div class="p2e-safe">
+        <div class="p2e-status">
+          <div>19:19</div>
+          <div class="p2e-icons">
+            <div class="p2e-signal"><span></span><span></span><span></span><span></span></div>
+            <div class="p2e-wifi"></div>
+            <div class="p2e-battery"></div>
+          </div>
+        </div>
+
+        <header class="p2e-hero">
+          <div class="p2e-kicker">Chain Manager</div>
+          <h1 class="p2e-title">链管理</h1>
+          <p class="p2e-subtitle">为完整多链钱包补齐网络启用、排序与默认链切换。</p>
+          <a class="p2e-hub" href="./add_custom_token.html">
+            <span class="p2e-hub-label">多链扩展</span>
+            <span class="p2e-hub-orb"></span>
+          </a>
+        </header>
+
+        <div class="p2e-filter-row">
+          <span class="p2e-chip is-active">已启用</span>
+          <span class="p2e-chip">可添加</span>
+          <span class="p2e-chip">测试网</span>
+        </div>
+
+        <div class="p2e-simple-list">
+          <div class="p2e-card p2e-list-row">
+            <div class="p2e-list-copy">
+              <strong>Solana</strong>
+              <span>已启用 · 主链</span>
+            </div>
+            <span class="p2e-status-pill accent-green">Healthy</span>
+            <a class="p2e-button p2e-button-secondary" href="./swap.html" style="min-height: 40px; padding: 0 14px;">管理</a>
+          </div>
+          <div class="p2e-card p2e-list-row">
+            <div class="p2e-list-copy">
+              <strong>TRON</strong>
+              <span>已启用 · 主链</span>
+            </div>
+            <span class="p2e-status-pill accent-green">Healthy</span>
+            <a class="p2e-button p2e-button-secondary" href="./bridge.html" style="min-height: 40px; padding: 0 14px;">管理</a>
+          </div>
+          <div class="p2e-card p2e-list-row">
+            <div class="p2e-list-copy">
+              <strong>Ethereum</strong>
+              <span>已启用 · EVM</span>
+            </div>
+            <span class="p2e-status-pill accent-blue">Healthy</span>
+            <a class="p2e-button p2e-button-secondary" href="./add_custom_token.html" style="min-height: 40px; padding: 0 14px;">管理</a>
+          </div>
+          <div class="p2e-card p2e-list-row">
+            <div class="p2e-list-copy">
+              <strong>Base</strong>
+              <span>已启用 · EVM L2</span>
+            </div>
+            <span class="p2e-status-pill accent-violet">Healthy</span>
+            <a class="p2e-button p2e-button-secondary" href="./add_custom_token.html" style="min-height: 40px; padding: 0 14px;">管理</a>
+          </div>
+          <div class="p2e-card p2e-list-row">
+            <div class="p2e-list-copy">
+              <strong>BNB Chain</strong>
+              <span>可添加</span>
+            </div>
+            <span class="p2e-status-pill is-warm">Optional</span>
+            <a class="p2e-button p2e-button-secondary" href="./add_custom_token.html" style="min-height: 40px; padding: 0 14px;">管理</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

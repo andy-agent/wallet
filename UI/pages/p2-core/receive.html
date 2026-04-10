@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <link rel="stylesheet" href="../../shared/components.css">
+  <link rel="stylesheet" href="../../shared/effects.css">
+  <link rel="stylesheet" href="../../shared/p2-core.css">
+</head>
+<body class="phone-page">
+  <div class="screen-wrap">
+    <main class="screen">
+      <div class="status-bar"><span>18:13</span><div class="status-icons"><span>VPN</span><span>90%</span></div></div>
+      <header class="screen-header">
+        <a class="back-link" href="./asset_detail.html">&lt; Asset Detail</a>
+        <div class="eyebrow">RECEIVE ASSET</div>
+        <h1 class="screen-title">收款</h1>
+        <p class="screen-subtitle">支持复制地址、地址复制、二维码分享与 Memo 提醒。</p>
+        <div class="chip-row">
+          <span class="chip">USDT · TRON</span>
+          <span class="chip chip-soft">二维码收款</span>
+        </div>
+      </header>
+      <section class="screen-body">
+        <article class="page-card qr-card">
+          <div class="qr-code">
+            <span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span>
+            <span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot"></span>
+            <span class="qr-dot fill"></span><span class="qr-dot fill"></span><span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot fill"></span><span class="qr-dot fill"></span>
+            <span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot"></span>
+            <span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot fill"></span><span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span>
+            <span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot fill"></span><span class="qr-dot"></span>
+            <span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span><span class="qr-dot"></span><span class="qr-dot fill"></span>
+          </div>
+          <div class="address-box">
+            <div class="mini-label">Receiving Address</div>
+            <div class="address-text">TQ2xP9v7m5aE2sH1cV4Z9Q6wBBLk3N5xY7</div>
+          </div>
+          <div class="action-row" style="width:100%;">
+            <a class="button-secondary" href="./asset_detail.html">复制地址</a>
+            <a class="button-primary" href="./send.html">分享二维码</a>
+          </div>
+        </article>
+        <article class="page-card">
+          <div class="card-title">注意事项</div>
+          <div class="stack-list" style="margin-top:10px;">
+            <div class="list-row">
+              <div>
+                <div class="row-title">请确认收款网络</div>
+                <div class="row-subtitle">错误链路会导致资产丢失，当前页面固定为 TRON。</div>
+              </div>
+              <div class="row-value">TRON</div>
+            </div>
+            <div class="list-row">
+              <div>
+                <div class="row-title">Memo / Tag</div>
+                <div class="row-subtitle">如对方平台需要附带 Memo，请在转账前确认平台要求。</div>
+              </div>
+              <div class="row-value">Optional</div>
+            </div>
+          </div>
+        </article>
+      </section>
+      <nav class="bottom-nav">
+        <a class="nav-item" href="../../index.html"><span class="nav-icon">H</span><span>Home</span></a>
+        <a class="nav-item" href="../../index.html"><span class="nav-icon">V</span><span>VPN</span></a>
+        <a class="nav-item active" href="./asset_detail.html"><span class="nav-icon">W</span><span>Wallet</span></a>
+        <a class="nav-item" href="./invite_center.html"><span class="nav-icon">E</span><span>Earn</span></a>
+        <a class="nav-item" href="./profile.html"><span class="nav-icon">P</span><span>Profile</span></a>
+      </nav>
+    </main>
+  </div>
+</body>
+</html>

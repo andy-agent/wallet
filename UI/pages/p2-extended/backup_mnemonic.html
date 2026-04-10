@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>备份助记词</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/base.css">
+  <link rel="stylesheet" href="../../shared/components.css">
+  <link rel="stylesheet" href="../../shared/effects.css">
+  <link rel="stylesheet" href="../../shared/p2-extended.css">
+</head>
+<body class="p2e-body">
+  <main class="p2e-shell">
+    <section class="p2e-phone accent-orange">
+      <div class="p2e-layer p2e-layer-dust"></div>
+      <div class="p2e-layer p2e-layer-glow"></div>
+      <svg class="p2e-mesh" viewBox="0 0 220 220" aria-hidden="true">
+        <path d="M22 54L112 18 194 86 212 142 120 166 54 108z"></path>
+        <path d="M112 18L68 120 120 166 194 86"></path>
+        <circle cx="22" cy="54" r="3"></circle>
+        <circle cx="112" cy="18" r="3"></circle>
+        <circle cx="194" cy="86" r="3"></circle>
+        <circle cx="212" cy="142" r="3"></circle>
+        <circle cx="120" cy="166" r="3"></circle>
+        <circle cx="54" cy="108" r="3"></circle>
+        <circle cx="68" cy="120" r="3"></circle>
+      </svg>
+      <div class="p2e-safe">
+        <div class="p2e-status">
+          <div>19:10</div>
+          <div class="p2e-icons">
+            <div class="p2e-signal"><span></span><span></span><span></span><span></span></div>
+            <div class="p2e-wifi"></div>
+            <div class="p2e-battery"></div>
+          </div>
+        </div>
+
+        <header class="p2e-hero">
+          <div class="p2e-kicker">Backup</div>
+          <h1 class="p2e-title">备份助记词</h1>
+          <p class="p2e-subtitle">创建成功后立即完成离线备份，这是恢复资产的唯一方式。</p>
+          <a class="p2e-hub" href="./confirm_mnemonic.html">
+            <span class="p2e-hub-label">高优先级</span>
+            <span class="p2e-hub-orb"></span>
+          </a>
+        </header>
+
+        <section class="p2e-card p2e-panel">
+          <h2 class="p2e-panel-title">请抄写以下 12 个单词</h2>
+          <p class="p2e-panel-copy">不要截屏、不要存云端、不要分享给任何人。</p>
+          <div class="p2e-words">
+            <div class="p2e-word"><small>01</small><strong>ocean</strong></div>
+            <div class="p2e-word"><small>02</small><strong>brick</strong></div>
+            <div class="p2e-word"><small>03</small><strong>velvet</strong></div>
+            <div class="p2e-word"><small>04</small><strong>lamp</strong></div>
+            <div class="p2e-word"><small>05</small><strong>maple</strong></div>
+            <div class="p2e-word"><small>06</small><strong>vivid</strong></div>
+            <div class="p2e-word"><small>07</small><strong>orbit</strong></div>
+            <div class="p2e-word"><small>08</small><strong>coral</strong></div>
+            <div class="p2e-word"><small>09</small><strong>charge</strong></div>
+            <div class="p2e-word"><small>10</small><strong>laptop</strong></div>
+            <div class="p2e-word"><small>11</small><strong>anchor</strong></div>
+            <div class="p2e-word"><small>12</small><strong>glow</strong></div>
+          </div>
+        </section>
+
+        <div class="p2e-page-bottom">
+          <div class="p2e-actions">
+            <a class="p2e-button p2e-button-primary" href="./confirm_mnemonic.html">我已安全备份</a>
+            <a class="p2e-button p2e-button-secondary" download="cryptovpn-mnemonic-template.txt" href="data:text/plain;charset=utf-8,01%20ocean%0A02%20brick%0A03%20velvet%0A04%20lamp%0A05%20maple%0A06%20vivid%0A07%20orbit%0A08%20coral%0A09%20charge%0A10%20laptop%0A11%20anchor%0A12%20glow">导出到离线打印模板</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
