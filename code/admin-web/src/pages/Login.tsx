@@ -4,6 +4,10 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { adminLogin } from '../api';
 
+type ErrorWithMessage = {
+  message?: string;
+};
+
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -20,9 +24,10 @@ const Login: React.FC = () => {
       localStorage.setItem('admin_token', response.accessToken);
       message.success('登录成功');
       navigate('/');
-    } catch (error: any) {
+    } catch (error) {
+      const typedError = error as ErrorWithMessage;
       console.error('登录失败:', error);
-      message.error(error?.message || '登录失败，请检查用户名和密码');
+      message.error(typedError.message || '登录失败，请检查用户名和密码');
     } finally {
       setLoading(false);
     }

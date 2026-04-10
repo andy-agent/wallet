@@ -73,11 +73,14 @@ const normalizePaginatedResult = <T>(
     };
   }
 
+  const pageSize = 'pageSize' in result ? result.pageSize : undefined;
+  const total = 'total' in result ? result.total : undefined;
+
   return {
     items: result.items,
     page: result.page ?? 1,
-    pageSize: result.pageSize ?? result.items.length,
-    total: result.total ?? result.items.length,
+    pageSize: pageSize ?? result.items.length,
+    total: total ?? result.items.length,
   };
 };
 
@@ -90,7 +93,9 @@ export const adminLogin = (
 export const getOrders = async (
   params?: OrderQueryParams,
 ): Promise<OrderListResponse> => {
-  const result = await request.get('/admin/v1/orders', { params });
+  const result = (await request.get('/admin/v1/orders', {
+    params,
+  })) as RawPaginatedResult<Order>;
   return normalizePaginatedResult<Order>(result);
 };
 
@@ -101,14 +106,18 @@ export const getOrderDetail = (orderNo: string): Promise<Order> => {
 export const getPlans = async (
   params?: PlanQueryParams,
 ): Promise<PlanListResponse> => {
-  const result = await request.get('/admin/v1/plans', { params });
+  const result = (await request.get('/admin/v1/plans', {
+    params,
+  })) as RawPaginatedResult<Plan>;
   return normalizePaginatedResult<Plan>(result);
 };
 
 export const getAuditLogs = async (
   params?: AuditLogQueryParams,
 ): Promise<AuditLogListResponse> => {
-  const result = await request.get('/admin/v1/audit-logs', { params });
+  const result = (await request.get('/admin/v1/audit-logs', {
+    params,
+  })) as RawPaginatedResult<AuditLog>;
   return normalizePaginatedResult<AuditLog>(result);
 };
 
@@ -119,7 +128,9 @@ export const getDashboardStats = (): Promise<DashboardSummary> => {
 export const getAccounts = async (
   params?: AccountQueryParams,
 ): Promise<AccountListResponse> => {
-  const result = await request.get('/admin/v1/accounts', { params });
+  const result = (await request.get('/admin/v1/accounts', {
+    params,
+  })) as RawPaginatedResult<AccountDetail>;
   return normalizePaginatedResult<AccountDetail>(result);
 };
 
@@ -130,41 +141,53 @@ export const getAccountDetail = (accountId: string): Promise<AccountDetail> => {
 export const getWithdrawals = async (
   params?: WithdrawalQueryParams,
 ): Promise<WithdrawalListResponse> => {
-  const result = await request.get('/admin/v1/withdrawals', { params });
+  const result = (await request.get('/admin/v1/withdrawals', {
+    params,
+  })) as RawPaginatedResult<WithdrawalListResponse['items'][number]>;
   return normalizePaginatedResult(result);
 };
 
 export const getRegions = async (
   params?: RegionQueryParams,
 ): Promise<RegionListResponse> => {
-  const result = await request.get('/admin/v1/vpn/regions', { params });
+  const result = (await request.get('/admin/v1/vpn/regions', {
+    params,
+  })) as RawPaginatedResult<RegionListResponse['items'][number]>;
   return normalizePaginatedResult(result);
 };
 
 export const getNodes = async (
   params?: NodeQueryParams,
 ): Promise<NodeListResponse> => {
-  const result = await request.get('/admin/v1/vpn/nodes', { params });
+  const result = (await request.get('/admin/v1/vpn/nodes', {
+    params,
+  })) as RawPaginatedResult<NodeListResponse['items'][number]>;
   return normalizePaginatedResult(result);
 };
 
 export const getAppVersions = async (
   params?: VersionQueryParams,
 ): Promise<VersionListResponse> => {
-  const result = await request.get('/admin/v1/app-versions', { params });
+  const result = (await request.get('/admin/v1/app-versions', {
+    params,
+  })) as RawPaginatedResult<AppVersion>;
   return normalizePaginatedResult<AppVersion>(result);
 };
 
 export const getLegalDocuments = async (
   params?: LegalDocumentQueryParams,
 ): Promise<LegalDocumentListResponse> => {
-  const result = await request.get('/admin/v1/legal-documents', { params });
+  const result = (await request.get('/admin/v1/legal-documents', {
+    params,
+  })) as RawPaginatedResult<LegalDocument>;
   return normalizePaginatedResult<LegalDocument>(result);
 };
 
 export const getSystemConfigs = async (
   params?: SystemConfigQueryParams,
 ): Promise<SystemConfigListResponse> => {
-  const result = await request.get('/admin/v1/system-configs', { params });
+  const result = (await request.get('/admin/v1/system-configs', {
+    params,
+  })) as RawPaginatedResult<SystemConfig>;
   return normalizePaginatedResult<SystemConfig>(result);
 };

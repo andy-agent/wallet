@@ -1,32 +1,84 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Table,
-  Card,
-  Select,
+  ReloadOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import {
   Button,
-  Space,
-  Tag,
-  Row,
+  Card,
   Col,
   Input,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
 } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { getNodes } from '../api';
 import { formatDateTime } from '../utils/format';
-import type { NodeListResponse, NodeQueryParams } from '../types';
+import type {
+  NodeHealthStatus,
+  NodeListResponse,
+  NodeQueryParams,
+  NodeStatus,
+  VpnNode,
+} from '../types';
+
+const initialData: NodeListResponse = {
+  items: [],
+  page: 1,
+  pageSize: 20,
+  total: 0,
+};
+
+const initialQueryParams: NodeQueryParams = {
+  page: 1,
+  pageSize: 20,
+};
+
+const statusOptions: Array<{ label: string; value: NodeStatus }> = [
+  { label: '启用', value: 'ACTIVE' },
+  { label: '维护中', value: 'MAINTENANCE' },
+  { label: '禁用', value: 'INACTIVE' },
+];
+
+const healthStatusOptions: Array<{ label: string; value: NodeHealthStatus }> = [
+  { label: '健康', value: 'HEALTHY' },
+  { label: '降级', value: 'DEGRADED' },
+  { label: '异常', value: 'UNHEALTHY' },
+];
+
+const getStatusTag = (status: string) => {
+  const statusMap: Record<string, { text: string; color: string }> = {
+    ACTIVE: { text: '启用', color: 'success' },
+    MAINTENANCE: { text: '维护中', color: 'warning' },
+    INACTIVE: { text: '禁用', color: 'default' },
+  };
+  const { text, color } = statusMap[status] ?? {
+    text: status,
+    color: 'default',
+  };
+  return <Tag color={color}>{text}</Tag>;
+};
+
+const getHealthStatusTag = (healthStatus: string) => {
+  const statusMap: Record<string, { text: string; color: string }> = {
+    HEALTHY: { text: '健康', color: 'success' },
+    DEGRADED: { text: '降级', color: 'warning' },
+    UNHEALTHY: { text: '异常', color: 'error' },
+  };
+  const { text, color } = statusMap[healthStatus] ?? {
+    text: healthStatus,
+    color: 'default',
+  };
+  return <Tag color={color}>{text}</Tag>;
+};
 
 const Nodes: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<NodeListResponse>({
-    items: [],
-    total: 0,
-    page: 1,
-    pageSize: 20,
-  });
-  const [queryParams, setQueryParams] = useState<NodeQueryParams>({
-    page: 1,
-    pageSize: 20,
-  });
+  const [data, setData] = useState<NodeListResponse>(initialData);
+  const [queryParams, setQueryParams] =
+    useState<NodeQueryParams>(initialQueryParams);
 
   const fetchNodes = useCallback(async () => {
     setLoading(true);
@@ -41,46 +93,26 @@ const Nodes: React.FC = () => {
   }, [queryParams]);
 
   useEffect(() => {
-    fetchNodes();
+    void fetchNodes();
   }, [fetchNodes]);
 
   const handleSearch = () => {
-    setQueryParams(prev => ({ ...prev, page: 1 }));
-    fetchNodes();
+    setQueryParams((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleReset = () => {
-    setQueryParams({
-      page: 1,
-      pageSize: 20,
-    });
+    setQueryParams(initialQueryParams);
   };
 
-  const handleTableChange = (pagination: any) => {
-    setQueryParams(prev => ({
+  const handleTableChange = (pagination: {
+    current?: number;
+    pageSize?: number;
+  }) => {
+    setQueryParams((prev) => ({
       ...prev,
-      page: pagination.current,
-      pageSize: pagination.pageSize,
+      page: pagination.current ?? 1,
+      pageSize: pagination.pageSize ?? prev.pageSize,
     }));
-  };
-
-  const getStatusTag = (status: string) => {
-    const statusMap: Record<string, { text: string; color: string }> = {
-      active: { text: '启用', color: 'success' },
-      inactive: { text: '禁用', color: 'default' },
-    };
-    const { text, color } = statusMap[status] || { text: status, color: 'default' };
-    return <Tag color={color}>{text}</Tag>;
-  };
-
-  const getHealthStatusTag = (healthStatus: string) => {
-    const statusMap: Record<string, { text: string; color: string }> = {
-      healthy: { text: '健康', color: 'success' },
-      unhealthy: { text: '异常', color: 'error' },
-      unknown: { text: '未知', color: 'default' },
-    };
-    const { text, color } = statusMap[healthStatus] || { text: healthStatus, color: 'default' };
-    return <Tag color={color}>{text}</Tag>;
   };
 
   const columns = [
@@ -88,59 +120,74 @@ const Nodes: React.FC = () => {
       title: '节点编码',
       dataIndex: 'nodeCode',
       key: 'nodeCode',
-      width: 120,
+      width: 140,
     },
     {
-      title: '区域编码',
-      dataIndex: 'regionCode',
-      key: 'regionCode',
+      title: '显示名称',
+      dataIndex: 'displayName',
+      key: 'displayName',
+      width: 180,
+    },
+    {
+      title: '区域 ID',
+      dataIndex: 'regionId',
+      key: 'regionId',
+      width: 180,
+      ellipsis: true,
+    },
+    {
+      title: '协议',
+      dataIndex: 'protocol',
+      key: 'protocol',
       width: 100,
     },
     {
       title: '主机',
       dataIndex: 'host',
       key: 'host',
-      width: 180,
+      width: 220,
       ellipsis: true,
     },
     {
       title: '端口',
       dataIndex: 'port',
       key: 'port',
-      width: 80,
+      width: 90,
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
+      width: 120,
       render: (status: string) => getStatusTag(status),
     },
     {
       title: '健康状态',
       dataIndex: 'healthStatus',
       key: 'healthStatus',
-      width: 100,
+      width: 120,
       render: (healthStatus: string) => getHealthStatusTag(healthStatus),
     },
     {
-      title: '权重',
-      dataIndex: 'weight',
-      key: 'weight',
-      width: 80,
+      title: '负载',
+      key: 'currentLoad',
+      width: 120,
+      render: (_: unknown, record: VpnNode) =>
+        `${record.currentLoad}/${record.maxCapacity}`,
     },
     {
-      title: '创建时间',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 170,
-      render: (createdAt: string) => formatDateTime(createdAt),
+      title: '最近健康检查',
+      dataIndex: 'lastHealthCheckAt',
+      key: 'lastHealthCheckAt',
+      width: 180,
+      render: (lastHealthCheckAt: string | null) =>
+        formatDateTime(lastHealthCheckAt),
     },
     {
       title: '更新时间',
       dataIndex: 'updatedAt',
       key: 'updatedAt',
-      width: 170,
+      width: 180,
       render: (updatedAt: string) => formatDateTime(updatedAt),
     },
   ];
@@ -149,46 +196,55 @@ const Nodes: React.FC = () => {
     <div>
       <h2 style={{ marginBottom: 24 }}>节点管理</h2>
 
-      {/* 筛选区域 */}
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={16}>
-          <Col xs={24} sm={12} lg={6}>
+          <Col xs={24} sm={12} lg={8}>
             <Input
-              placeholder="区域ID"
+              placeholder="区域 ID"
               value={queryParams.regionId}
-              onChange={(e) => setQueryParams(prev => ({ ...prev, regionId: e.target.value }))}
+              onChange={(event) =>
+                setQueryParams((prev) => ({
+                  ...prev,
+                  regionId: event.target.value || undefined,
+                }))
+              }
               onPressEnter={handleSearch}
               allowClear
             />
           </Col>
-          <Col xs={24} sm={12} lg={6}>
+          <Col xs={24} sm={12} lg={8}>
             <Select
               placeholder="节点状态"
               style={{ width: '100%' }}
               value={queryParams.status}
-              onChange={(value) => setQueryParams(prev => ({ ...prev, status: value }))}
+              onChange={(value) =>
+                setQueryParams((prev) => ({ ...prev, status: value }))
+              }
+              options={statusOptions}
               allowClear
-            >
-              <Select.Option value="active">启用</Select.Option>
-              <Select.Option value="inactive">禁用</Select.Option>
-            </Select>
+            />
           </Col>
-          <Col xs={24} sm={12} lg={6}>
+          <Col xs={24} sm={12} lg={8}>
             <Select
               placeholder="健康状态"
               style={{ width: '100%' }}
               value={queryParams.healthStatus}
-              onChange={(value) => setQueryParams(prev => ({ ...prev, healthStatus: value }))}
+              onChange={(value) =>
+                setQueryParams((prev) => ({ ...prev, healthStatus: value }))
+              }
+              options={healthStatusOptions}
               allowClear
-            >
-              <Select.Option value="healthy">健康</Select.Option>
-              <Select.Option value="unhealthy">异常</Select.Option>
-              <Select.Option value="unknown">未知</Select.Option>
-            </Select>
+            />
           </Col>
-          <Col xs={24} sm={12} lg={6}>
+        </Row>
+        <Row gutter={16} style={{ marginTop: 16 }}>
+          <Col xs={24}>
             <Space>
-              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                onClick={handleSearch}
+              >
                 搜索
               </Button>
               <Button icon={<ReloadOutlined />} onClick={handleReset}>
@@ -199,12 +255,11 @@ const Nodes: React.FC = () => {
         </Row>
       </Card>
 
-      {/* 节点列表 */}
       <Card>
         <Table
           columns={columns}
           dataSource={data.items}
-          rowKey="id"
+          rowKey="nodeId"
           loading={loading}
           pagination={{
             current: data.page,
@@ -215,7 +270,7 @@ const Nodes: React.FC = () => {
             showTotal: (total) => `共 ${total} 条`,
           }}
           onChange={handleTableChange}
-          scroll={{ x: 1100 }}
+          scroll={{ x: 1650 }}
         />
       </Card>
     </div>

@@ -13,6 +13,10 @@ const request: AxiosInstance = axios.create({
   },
 });
 
+type ErrorResponseData = {
+  message?: string;
+};
+
 // 请求拦截器
 request.interceptors.request.use(
   (config) => {
@@ -72,7 +76,10 @@ request.interceptors.response.use(
           message.error('服务器错误，请稍后重试');
           break;
         default:
-          message.error((data as any)?.message || `请求失败 (${status})`);
+          message.error(
+            (data as ErrorResponseData | undefined)?.message ||
+              `请求失败 (${status})`,
+          );
       }
     } else {
       message.error('网络错误，请检查网络连接');

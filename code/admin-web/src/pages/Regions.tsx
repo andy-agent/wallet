@@ -1,31 +1,80 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Table,
-  Card,
-  Select,
+  ReloadOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import {
   Button,
-  Space,
-  Tag,
-  Row,
+  Card,
   Col,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
 } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { getRegions } from '../api';
 import { formatDateTime } from '../utils/format';
-import type { RegionListResponse, RegionQueryParams } from '../types';
+import type {
+  RegionListResponse,
+  RegionQueryParams,
+  RegionStatus,
+  RegionTier,
+} from '../types';
+
+const initialData: RegionListResponse = {
+  items: [],
+  page: 1,
+  pageSize: 20,
+  total: 0,
+};
+
+const initialQueryParams: RegionQueryParams = {
+  page: 1,
+  pageSize: 20,
+};
+
+const tierOptions: Array<{ label: string; value: RegionTier }> = [
+  { label: '基础区', value: 'BASIC' },
+  { label: '高级区', value: 'ADVANCED' },
+];
+
+const statusOptions: Array<{ label: string; value: RegionStatus }> = [
+  { label: '启用', value: 'ACTIVE' },
+  { label: '维护中', value: 'MAINTENANCE' },
+  { label: '禁用', value: 'INACTIVE' },
+];
+
+const getTierTag = (tier: string) => {
+  const tierMap: Record<string, { text: string; color: string }> = {
+    BASIC: { text: '基础区', color: 'blue' },
+    ADVANCED: { text: '高级区', color: 'purple' },
+  };
+  const { text, color } = tierMap[tier] ?? {
+    text: tier,
+    color: 'default',
+  };
+  return <Tag color={color}>{text}</Tag>;
+};
+
+const getStatusTag = (status: string) => {
+  const statusMap: Record<string, { text: string; color: string }> = {
+    ACTIVE: { text: '启用', color: 'success' },
+    MAINTENANCE: { text: '维护中', color: 'warning' },
+    INACTIVE: { text: '禁用', color: 'default' },
+  };
+  const { text, color } = statusMap[status] ?? {
+    text: status,
+    color: 'default',
+  };
+  return <Tag color={color}>{text}</Tag>;
+};
 
 const Regions: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<RegionListResponse>({
-    items: [],
-    total: 0,
-    page: 1,
-    pageSize: 20,
-  });
-  const [queryParams, setQueryParams] = useState<RegionQueryParams>({
-    page: 1,
-    pageSize: 20,
-  });
+  const [data, setData] = useState<RegionListResponse>(initialData);
+  const [queryParams, setQueryParams] =
+    useState<RegionQueryParams>(initialQueryParams);
 
   const fetchRegions = useCallback(async () => {
     setLoading(true);
@@ -40,46 +89,26 @@ const Regions: React.FC = () => {
   }, [queryParams]);
 
   useEffect(() => {
-    fetchRegions();
+    void fetchRegions();
   }, [fetchRegions]);
 
   const handleSearch = () => {
-    setQueryParams(prev => ({ ...prev, page: 1 }));
-    fetchRegions();
+    setQueryParams((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleReset = () => {
-    setQueryParams({
-      page: 1,
-      pageSize: 20,
-    });
+    setQueryParams(initialQueryParams);
   };
 
-  const handleTableChange = (pagination: any) => {
-    setQueryParams(prev => ({
+  const handleTableChange = (pagination: {
+    current?: number;
+    pageSize?: number;
+  }) => {
+    setQueryParams((prev) => ({
       ...prev,
-      page: pagination.current,
-      pageSize: pagination.pageSize,
+      page: pagination.current ?? 1,
+      pageSize: pagination.pageSize ?? prev.pageSize,
     }));
-  };
-
-  const getTierTag = (tier: string) => {
-    const tierMap: Record<string, { text: string; color: string }> = {
-      standard: { text: '标准区', color: 'blue' },
-      premium: { text: '高级区', color: 'purple' },
-    };
-    const { text, color } = tierMap[tier] || { text: tier, color: 'default' };
-    return <Tag color={color}>{text}</Tag>;
-  };
-
-  const getStatusTag = (status: string) => {
-    const statusMap: Record<string, { text: string; color: string }> = {
-      active: { text: '启用', color: 'success' },
-      inactive: { text: '禁用', color: 'default' },
-      maintenance: { text: '维护中', color: 'warning' },
-    };
-    const { text, color } = statusMap[status] || { text: status, color: 'default' };
-    return <Tag color={color}>{text}</Tag>;
   };
 
   const columns = [
@@ -87,47 +116,55 @@ const Regions: React.FC = () => {
       title: '区域编码',
       dataIndex: 'regionCode',
       key: 'regionCode',
-      width: 120,
+      width: 150,
     },
     {
       title: '显示名称',
       dataIndex: 'displayName',
       key: 'displayName',
-      width: 150,
+      width: 180,
     },
     {
       title: '等级',
       dataIndex: 'tier',
       key: 'tier',
-      width: 100,
+      width: 110,
       render: (tier: string) => getTierTag(tier),
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
+      width: 120,
       render: (status: string) => getStatusTag(status),
+    },
+    {
+      title: '备注',
+      dataIndex: 'remark',
+      key: 'remark',
+      width: 180,
+      ellipsis: true,
+      render: (remark: string | null) => remark || '-',
     },
     {
       title: '排序',
       dataIndex: 'sortOrder',
       key: 'sortOrder',
-      width: 80,
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 170,
-      render: (createdAt: string) => formatDateTime(createdAt),
+      width: 90,
     },
     {
       title: '更新时间',
       dataIndex: 'updatedAt',
       key: 'updatedAt',
-      width: 170,
+      width: 180,
       render: (updatedAt: string) => formatDateTime(updatedAt),
+    },
+    {
+      title: '创建时间',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 180,
+      render: (createdAt: string) => formatDateTime(createdAt),
     },
   ];
 
@@ -135,7 +172,6 @@ const Regions: React.FC = () => {
     <div>
       <h2 style={{ marginBottom: 24 }}>区域管理</h2>
 
-      {/* 筛选区域 */}
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={12} lg={8}>
@@ -143,29 +179,32 @@ const Regions: React.FC = () => {
               placeholder="区域等级"
               style={{ width: '100%' }}
               value={queryParams.tier}
-              onChange={(value) => setQueryParams(prev => ({ ...prev, tier: value }))}
+              onChange={(value) =>
+                setQueryParams((prev) => ({ ...prev, tier: value }))
+              }
+              options={tierOptions}
               allowClear
-            >
-              <Select.Option value="standard">标准区</Select.Option>
-              <Select.Option value="premium">高级区</Select.Option>
-            </Select>
+            />
           </Col>
           <Col xs={24} sm={12} lg={8}>
             <Select
               placeholder="区域状态"
               style={{ width: '100%' }}
               value={queryParams.status}
-              onChange={(value) => setQueryParams(prev => ({ ...prev, status: value }))}
+              onChange={(value) =>
+                setQueryParams((prev) => ({ ...prev, status: value }))
+              }
+              options={statusOptions}
               allowClear
-            >
-              <Select.Option value="active">启用</Select.Option>
-              <Select.Option value="inactive">禁用</Select.Option>
-              <Select.Option value="maintenance">维护中</Select.Option>
-            </Select>
+            />
           </Col>
           <Col xs={24} sm={12} lg={8}>
             <Space>
-              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                onClick={handleSearch}
+              >
                 搜索
               </Button>
               <Button icon={<ReloadOutlined />} onClick={handleReset}>
@@ -176,12 +215,11 @@ const Regions: React.FC = () => {
         </Row>
       </Card>
 
-      {/* 区域列表 */}
       <Card>
         <Table
           columns={columns}
           dataSource={data.items}
-          rowKey="id"
+          rowKey="regionId"
           loading={loading}
           pagination={{
             current: data.page,
@@ -192,7 +230,7 @@ const Regions: React.FC = () => {
             showTotal: (total) => `共 ${total} 条`,
           }}
           onChange={handleTableChange}
-          scroll={{ x: 800 }}
+          scroll={{ x: 1300 }}
         />
       </Card>
     </div>

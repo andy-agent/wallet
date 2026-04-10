@@ -1,32 +1,79 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Table,
-  Card,
-  Input,
-  Select,
+  ReloadOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import {
   Button,
-  Space,
-  Tag,
-  Row,
+  Card,
   Col,
+  Input,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
 } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { getWithdrawals } from '../api';
-import { formatDateTime } from '../utils/format';
-import type { WithdrawalListResponse, WithdrawalQueryParams } from '../types';
+import { formatAmount, formatDateTime } from '../utils/format';
+import type {
+  Withdrawal,
+  WithdrawalListResponse,
+  WithdrawalQueryParams,
+  WithdrawalStatus,
+} from '../types';
+
+const initialData: WithdrawalListResponse = {
+  items: [],
+  page: 1,
+  pageSize: 20,
+  total: 0,
+};
+
+const initialQueryParams: WithdrawalQueryParams = {
+  page: 1,
+  pageSize: 20,
+};
+
+const withdrawalStatusOptions: Array<{
+  label: string;
+  value: WithdrawalStatus;
+}> = [
+  { label: '已提交', value: 'SUBMITTED' },
+  { label: '审核中', value: 'UNDER_REVIEW' },
+  { label: '已通过', value: 'APPROVED' },
+  { label: '已拒绝', value: 'REJECTED' },
+  { label: '广播中', value: 'BROADCASTING' },
+  { label: '链上确认中', value: 'CHAIN_CONFIRMING' },
+  { label: '已完成', value: 'COMPLETED' },
+  { label: '失败', value: 'FAILED' },
+  { label: '已取消', value: 'CANCELED' },
+];
+
+const getWithdrawalStatusTag = (status: string) => {
+  const statusMap: Record<string, { text: string; color: string }> = {
+    SUBMITTED: { text: '已提交', color: 'default' },
+    UNDER_REVIEW: { text: '审核中', color: 'warning' },
+    APPROVED: { text: '已通过', color: 'processing' },
+    REJECTED: { text: '已拒绝', color: 'error' },
+    BROADCASTING: { text: '广播中', color: 'processing' },
+    CHAIN_CONFIRMING: { text: '链上确认中', color: 'processing' },
+    COMPLETED: { text: '已完成', color: 'success' },
+    FAILED: { text: '失败', color: 'error' },
+    CANCELED: { text: '已取消', color: 'default' },
+  };
+  const { text, color } = statusMap[status] ?? {
+    text: status,
+    color: 'default',
+  };
+  return <Tag color={color}>{text}</Tag>;
+};
 
 const Withdrawals: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<WithdrawalListResponse>({
-    items: [],
-    total: 0,
-    page: 1,
-    pageSize: 20,
-  });
-  const [queryParams, setQueryParams] = useState<WithdrawalQueryParams>({
-    page: 1,
-    pageSize: 20,
-  });
+  const [data, setData] = useState<WithdrawalListResponse>(initialData);
+  const [queryParams, setQueryParams] =
+    useState<WithdrawalQueryParams>(initialQueryParams);
 
   const fetchWithdrawals = useCallback(async () => {
     setLoading(true);
@@ -41,39 +88,26 @@ const Withdrawals: React.FC = () => {
   }, [queryParams]);
 
   useEffect(() => {
-    fetchWithdrawals();
+    void fetchWithdrawals();
   }, [fetchWithdrawals]);
 
   const handleSearch = () => {
-    setQueryParams(prev => ({ ...prev, page: 1 }));
-    fetchWithdrawals();
+    setQueryParams((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleReset = () => {
-    setQueryParams({
-      page: 1,
-      pageSize: 20,
-    });
+    setQueryParams(initialQueryParams);
   };
 
-  const handleTableChange = (pagination: any) => {
-    setQueryParams(prev => ({
+  const handleTableChange = (pagination: {
+    current?: number;
+    pageSize?: number;
+  }) => {
+    setQueryParams((prev) => ({
       ...prev,
-      page: pagination.current,
-      pageSize: pagination.pageSize,
+      page: pagination.current ?? 1,
+      pageSize: pagination.pageSize ?? prev.pageSize,
     }));
-  };
-
-  const getStatusTag = (status: string) => {
-    const statusMap: Record<string, { text: string; color: string }> = {
-      pending: { text: '待审核', color: 'warning' },
-      approved: { text: '已通过', color: 'processing' },
-      rejected: { text: '已拒绝', color: 'error' },
-      completed: { text: '已完成', color: 'success' },
-      failed: { text: '失败', color: 'error' },
-    };
-    const { text, color } = statusMap[status] || { text: status, color: 'default' };
-    return <Tag color={color}>{text}</Tag>;
   };
 
   const columns = [
@@ -84,53 +118,67 @@ const Withdrawals: React.FC = () => {
       width: 180,
     },
     {
-      title: '用户邮箱',
+      title: '完整邮箱',
       dataIndex: 'accountEmail',
       key: 'accountEmail',
-      width: 200,
+      width: 220,
       ellipsis: true,
     },
     {
       title: '提现金额',
-      dataIndex: 'amountUsdt',
-      key: 'amountUsdt',
-      width: 120,
-      render: (amount: number) => `${amount} USDT`,
+      key: 'amount',
+      width: 140,
+      render: (_: unknown, record: Withdrawal) =>
+        formatAmount(record.amount, record.assetCode),
     },
     {
       title: '网络',
-      dataIndex: 'network',
-      key: 'network',
+      dataIndex: 'networkCode',
+      key: 'networkCode',
       width: 120,
+    },
+    {
+      title: '提现地址',
+      dataIndex: 'payoutAddress',
+      key: 'payoutAddress',
+      width: 220,
+      ellipsis: true,
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
-      render: (status: string) => getStatusTag(status),
-    },
-    {
-      title: '交易哈希',
-      dataIndex: 'txHash',
-      key: 'txHash',
-      width: 200,
-      ellipsis: true,
-      render: (txHash: string) => txHash || '-',
+      width: 140,
+      render: (status: string) => getWithdrawalStatusTag(status),
     },
     {
       title: '申请时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 170,
+      width: 180,
       render: (createdAt: string) => formatDateTime(createdAt),
     },
     {
-      title: '更新时间',
-      dataIndex: 'updatedAt',
-      key: 'updatedAt',
-      width: 170,
-      render: (updatedAt: string) => formatDateTime(updatedAt),
+      title: '审核时间',
+      dataIndex: 'reviewedAt',
+      key: 'reviewedAt',
+      width: 180,
+      render: (reviewedAt: string | null) => formatDateTime(reviewedAt),
+    },
+    {
+      title: '完成时间',
+      dataIndex: 'completedAt',
+      key: 'completedAt',
+      width: 180,
+      render: (completedAt: string | null) => formatDateTime(completedAt),
+    },
+    {
+      title: '交易哈希',
+      dataIndex: 'txHash',
+      key: 'txHash',
+      width: 220,
+      ellipsis: true,
+      render: (txHash: string | null) => txHash || '-',
     },
   ];
 
@@ -138,14 +186,18 @@ const Withdrawals: React.FC = () => {
     <div>
       <h2 style={{ marginBottom: 24 }}>提现审核</h2>
 
-      {/* 筛选区域 */}
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={12} lg={8}>
             <Input
-              placeholder="搜索用户邮箱"
+              placeholder="搜索完整邮箱"
               value={queryParams.accountEmail}
-              onChange={(e) => setQueryParams(prev => ({ ...prev, accountEmail: e.target.value }))}
+              onChange={(event) =>
+                setQueryParams((prev) => ({
+                  ...prev,
+                  accountEmail: event.target.value || undefined,
+                }))
+              }
               onPressEnter={handleSearch}
               allowClear
             />
@@ -155,19 +207,20 @@ const Withdrawals: React.FC = () => {
               placeholder="提现状态"
               style={{ width: '100%' }}
               value={queryParams.status}
-              onChange={(value) => setQueryParams(prev => ({ ...prev, status: value }))}
+              onChange={(value) =>
+                setQueryParams((prev) => ({ ...prev, status: value }))
+              }
+              options={withdrawalStatusOptions}
               allowClear
-            >
-              <Select.Option value="pending">待审核</Select.Option>
-              <Select.Option value="approved">已通过</Select.Option>
-              <Select.Option value="rejected">已拒绝</Select.Option>
-              <Select.Option value="completed">已完成</Select.Option>
-              <Select.Option value="failed">失败</Select.Option>
-            </Select>
+            />
           </Col>
           <Col xs={24} sm={12} lg={8}>
             <Space>
-              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                onClick={handleSearch}
+              >
                 搜索
               </Button>
               <Button icon={<ReloadOutlined />} onClick={handleReset}>
@@ -178,12 +231,11 @@ const Withdrawals: React.FC = () => {
         </Row>
       </Card>
 
-      {/* 提现列表 */}
       <Card>
         <Table
           columns={columns}
           dataSource={data.items}
-          rowKey="id"
+          rowKey="requestNo"
           loading={loading}
           pagination={{
             current: data.page,
@@ -194,7 +246,7 @@ const Withdrawals: React.FC = () => {
             showTotal: (total) => `共 ${total} 条`,
           }}
           onChange={handleTableChange}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 1700 }}
         />
       </Card>
     </div>

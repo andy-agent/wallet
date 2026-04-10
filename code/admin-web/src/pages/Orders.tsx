@@ -1,35 +1,62 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Table,
-  Card,
-  Input,
-  Select,
+  EyeOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import {
   Button,
-  Space,
-  Tag,
-  Modal,
-  Descriptions,
-  Row,
+  Card,
   Col,
+  Descriptions,
+  Input,
+  Modal,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
 } from 'antd';
-import { SearchOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
-import { getOrders, getOrderDetail } from '../api';
-import { formatDateTime, formatAmount, getOrderStatusText } from '../utils/format';
-import type { Order, OrderListResponse, OrderQueryParams } from '../types';
+import { getOrderDetail, getOrders } from '../api';
+import { formatAmount, formatDateTime, getOrderStatusText } from '../utils/format';
+import type {
+  Order,
+  OrderListResponse,
+  OrderQueryParams,
+  OrderStatus,
+} from '../types';
+
+const initialData: OrderListResponse = {
+  items: [],
+  page: 1,
+  pageSize: 20,
+  total: 0,
+};
+
+const initialQueryParams: OrderQueryParams = {
+  page: 1,
+  pageSize: 20,
+};
+
+const orderStatusOptions: Array<{ label: string; value: OrderStatus }> = [
+  { label: '待支付', value: 'AWAITING_PAYMENT' },
+  { label: '已检测支付', value: 'PAYMENT_DETECTED' },
+  { label: '链上确认中', value: 'CONFIRMING' },
+  { label: '已支付', value: 'PAID' },
+  { label: '开通中', value: 'PROVISIONING' },
+  { label: '已完成', value: 'COMPLETED' },
+  { label: '少付待复核', value: 'UNDERPAID_REVIEW' },
+  { label: '多付待复核', value: 'OVERPAID_REVIEW' },
+  { label: '失败', value: 'FAILED' },
+  { label: '已过期', value: 'EXPIRED' },
+  { label: '已取消', value: 'CANCELED' },
+];
 
 const Orders: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<OrderListResponse>({
-    items: [],
-    total: 0,
-    page: 1,
-    page_size: 20,
-  });
-  // NOTE: 对齐后端参数命名: page, pageSize, orderNo, status, email
-  const [queryParams, setQueryParams] = useState<OrderQueryParams>({
-    page: 1,
-    pageSize: 20,
-  });
+  const [data, setData] = useState<OrderListResponse>(initialData);
+  const [queryParams, setQueryParams] =
+    useState<OrderQueryParams>(initialQueryParams);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
@@ -46,26 +73,25 @@ const Orders: React.FC = () => {
   }, [queryParams]);
 
   useEffect(() => {
-    fetchOrders();
+    void fetchOrders();
   }, [fetchOrders]);
 
   const handleSearch = () => {
-    setQueryParams(prev => ({ ...prev, page: 1 }));
-    fetchOrders();
+    setQueryParams((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleReset = () => {
-    setQueryParams({
-      page: 1,
-      pageSize: 20,
-    });
+    setQueryParams(initialQueryParams);
   };
 
-  const handleTableChange = (pagination: any) => {
-    setQueryParams(prev => ({
+  const handleTableChange = (pagination: {
+    current?: number;
+    pageSize?: number;
+  }) => {
+    setQueryParams((prev) => ({
       ...prev,
-      page: pagination.current,
-      pageSize: pagination.pageSize,
+      page: pagination.current ?? 1,
+      pageSize: pagination.pageSize ?? prev.pageSize,
     }));
   };
 
@@ -79,80 +105,89 @@ const Orders: React.FC = () => {
     }
   };
 
-  // NOTE: 以下写操作后端暂未提供，暂时注释掉
-  // const handleManualFulfill = async (id: string) => { ... }
-  // const handleRetryFulfill = async (id: string) => { ... }
-  // const handleIgnore = async (id: string) => { ... }
-
   const columns = [
     {
       title: '订单号',
-      dataIndex: 'out_trade_no',
-      key: 'out_trade_no',
-      width: 180,
+      dataIndex: 'orderNo',
+      key: 'orderNo',
+      width: 220,
+    },
+    {
+      title: '账号邮箱',
+      dataIndex: 'accountEmail',
+      key: 'accountEmail',
+      width: 220,
+      ellipsis: true,
     },
     {
       title: '套餐',
-      dataIndex: 'plan_name',
-      key: 'plan_name',
+      dataIndex: 'planName',
+      key: 'planName',
+      width: 180,
+    },
+    {
+      title: '支付金额',
+      key: 'payableAmount',
       width: 150,
+      render: (_: unknown, record: Order) =>
+        formatAmount(record.payableAmount, record.quoteAssetCode),
     },
     {
-      title: '金额',
-      dataIndex: 'amount',
-      key: 'amount',
-      width: 120,
-      render: (amount: number, record: Order) => formatAmount(amount, record.currency),
+      title: '计价金额',
+      dataIndex: 'quoteUsdAmount',
+      key: 'quoteUsdAmount',
+      width: 130,
+      render: (quoteUsdAmount: string) => formatAmount(quoteUsdAmount, 'USD'),
     },
     {
-      title: '用户',
-      dataIndex: 'user_email',
-      key: 'user_email',
-      width: 200,
-      ellipsis: true,
+      title: '订单类型',
+      dataIndex: 'orderType',
+      key: 'orderType',
+      width: 110,
+      render: (orderType: string) => (
+        <Tag color={orderType === 'NEW' ? 'blue' : 'purple'}>
+          {orderType === 'NEW' ? '新购' : '续费'}
+        </Tag>
+      ),
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
+      width: 150,
       render: (status: string) => {
         const { text, color } = getOrderStatusText(status);
         return <Tag color={color}>{text}</Tag>;
       },
     },
     {
-      title: '支付时间',
-      dataIndex: 'paid_at',
-      key: 'paid_at',
-      width: 170,
-      render: (paid_at: string) => paid_at ? formatDateTime(paid_at) : '-',
+      title: '确认时间',
+      dataIndex: 'confirmedAt',
+      key: 'confirmedAt',
+      width: 180,
+      render: (confirmedAt: string | null) => formatDateTime(confirmedAt),
     },
     {
-      title: '创建时间',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      width: 170,
-      render: (created_at: string) => formatDateTime(created_at),
+      title: '支付截止',
+      dataIndex: 'expiresAt',
+      key: 'expiresAt',
+      width: 180,
+      render: (expiresAt: string) => formatDateTime(expiresAt),
     },
     {
       title: '操作',
       key: 'action',
       width: 100,
       fixed: 'right' as const,
-      render: (_: any, record: Order) => (
+      render: (_: unknown, record: Order) => (
         <Button
           type="link"
           size="small"
           icon={<EyeOutlined />}
-          onClick={() => showDetail(record.out_trade_no)}
+          onClick={() => showDetail(record.orderNo)}
         >
           详情
         </Button>
-        /*
-          NOTE: 人工确认、重试发货、标记忽略等写操作后端暂未提供
-          待后端实现后再开启以下功能
-        */
       ),
     },
   ];
@@ -161,23 +196,32 @@ const Orders: React.FC = () => {
     <div>
       <h2 style={{ marginBottom: 24 }}>订单管理</h2>
 
-      {/* 筛选区域 - 对齐后端参数: orderNo, status, email */}
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={12} lg={8}>
             <Input
               placeholder="搜索订单号"
               value={queryParams.orderNo}
-              onChange={(e) => setQueryParams(prev => ({ ...prev, orderNo: e.target.value }))}
+              onChange={(event) =>
+                setQueryParams((prev) => ({
+                  ...prev,
+                  orderNo: event.target.value || undefined,
+                }))
+              }
               onPressEnter={handleSearch}
               allowClear
             />
           </Col>
           <Col xs={24} sm={12} lg={8}>
             <Input
-              placeholder="搜索用户邮箱"
+              placeholder="搜索账号邮箱"
               value={queryParams.email}
-              onChange={(e) => setQueryParams(prev => ({ ...prev, email: e.target.value }))}
+              onChange={(event) =>
+                setQueryParams((prev) => ({
+                  ...prev,
+                  email: event.target.value || undefined,
+                }))
+              }
               onPressEnter={handleSearch}
               allowClear
             />
@@ -187,21 +231,22 @@ const Orders: React.FC = () => {
               placeholder="订单状态"
               style={{ width: '100%' }}
               value={queryParams.status}
-              onChange={(value) => setQueryParams(prev => ({ ...prev, status: value }))}
+              onChange={(value) =>
+                setQueryParams((prev) => ({ ...prev, status: value }))
+              }
+              options={orderStatusOptions}
               allowClear
-            >
-              <Select.Option value="pending">待支付</Select.Option>
-              <Select.Option value="paid">已支付</Select.Option>
-              <Select.Option value="fulfilled">已完成</Select.Option>
-              <Select.Option value="failed">失败</Select.Option>
-              <Select.Option value="ignored">已忽略</Select.Option>
-            </Select>
+            />
           </Col>
         </Row>
         <Row gutter={16} style={{ marginTop: 16 }}>
-          <Col xs={24} sm={12} lg={8}>
+          <Col xs={24}>
             <Space>
-              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                onClick={handleSearch}
+              >
                 搜索
               </Button>
               <Button icon={<ReloadOutlined />} onClick={handleReset}>
@@ -212,74 +257,83 @@ const Orders: React.FC = () => {
         </Row>
       </Card>
 
-      {/* 订单列表 */}
       <Card>
         <Table
           columns={columns}
           dataSource={data.items}
-          rowKey="id"
+          rowKey="orderId"
           loading={loading}
           pagination={{
             current: data.page,
-            pageSize: data.page_size,
+            pageSize: data.pageSize,
             total: data.total,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条`,
           }}
           onChange={handleTableChange}
-          scroll={{ x: 1100 }}
+          scroll={{ x: 1500 }}
         />
       </Card>
 
-      {/* 订单详情弹窗 */}
       <Modal
         title="订单详情"
         open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
         footer={null}
-        width={700}
+        width={760}
       >
         {selectedOrder && (
           <Descriptions bordered column={2}>
             <Descriptions.Item label="订单号" span={2}>
-              {selectedOrder.out_trade_no}
+              {selectedOrder.orderNo}
             </Descriptions.Item>
-            <Descriptions.Item label="套餐名称">{selectedOrder.plan_name}</Descriptions.Item>
-            <Descriptions.Item label="订单金额">
-              {formatAmount(selectedOrder.amount, selectedOrder.currency)}
+            <Descriptions.Item label="账号邮箱" span={2}>
+              {selectedOrder.accountEmail}
             </Descriptions.Item>
-            <Descriptions.Item label="订单状态">
+            <Descriptions.Item label="账号 ID">
+              {selectedOrder.accountId}
+            </Descriptions.Item>
+            <Descriptions.Item label="订单类型">
+              {selectedOrder.orderType === 'NEW' ? '新购' : '续费'}
+            </Descriptions.Item>
+            <Descriptions.Item label="套餐名称">
+              {selectedOrder.planName}
+            </Descriptions.Item>
+            <Descriptions.Item label="套餐编码">
+              {selectedOrder.planCode}
+            </Descriptions.Item>
+            <Descriptions.Item label="支付金额">
+              {formatAmount(
+                selectedOrder.payableAmount,
+                selectedOrder.quoteAssetCode,
+              )}
+            </Descriptions.Item>
+            <Descriptions.Item label="计价金额">
+              {formatAmount(selectedOrder.quoteUsdAmount, 'USD')}
+            </Descriptions.Item>
+            <Descriptions.Item label="支付网络">
+              {selectedOrder.quoteNetworkCode}
+            </Descriptions.Item>
+            <Descriptions.Item label="状态">
               <Tag color={getOrderStatusText(selectedOrder.status).color}>
                 {getOrderStatusText(selectedOrder.status).text}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="支付方式">
-              {selectedOrder.payment_method || '-'}
+            <Descriptions.Item label="支付截止">
+              {formatDateTime(selectedOrder.expiresAt)}
             </Descriptions.Item>
-            <Descriptions.Item label="用户邮箱" span={2}>
-              {selectedOrder.user_email}
-            </Descriptions.Item>
-            <Descriptions.Item label="Telegram ID">
-              {selectedOrder.telegram_id || '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="付款人">
-              {selectedOrder.payer_name || '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="交易号" span={2}>
-              {selectedOrder.transaction_id || '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="创建时间">
-              {formatDateTime(selectedOrder.created_at)}
-            </Descriptions.Item>
-            <Descriptions.Item label="支付时间">
-              {selectedOrder.paid_at ? formatDateTime(selectedOrder.paid_at) : '-'}
+            <Descriptions.Item label="确认时间">
+              {formatDateTime(selectedOrder.confirmedAt)}
             </Descriptions.Item>
             <Descriptions.Item label="完成时间">
-              {selectedOrder.fulfilled_at ? formatDateTime(selectedOrder.fulfilled_at) : '-'}
+              {formatDateTime(selectedOrder.completedAt)}
             </Descriptions.Item>
-            <Descriptions.Item label="备注" span={2}>
-              {selectedOrder.remark || '-'}
+            <Descriptions.Item label="客户端交易哈希">
+              {selectedOrder.submittedClientTxHash || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="失败原因" span={2}>
+              {selectedOrder.failureReason || '-'}
             </Descriptions.Item>
           </Descriptions>
         )}

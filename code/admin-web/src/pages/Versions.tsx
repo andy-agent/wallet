@@ -1,31 +1,100 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Table,
-  Card,
-  Select,
+  ReloadOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import {
   Button,
-  Space,
-  Tag,
-  Row,
+  Card,
   Col,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
 } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { getAppVersions } from '../api';
 import { formatDateTime } from '../utils/format';
-import type { AppVersion, VersionListResponse, VersionQueryParams } from '../types';
+import type {
+  AppVersion,
+  VersionChannel,
+  VersionListResponse,
+  VersionQueryParams,
+  VersionStatus,
+} from '../types';
+
+const initialData: VersionListResponse = {
+  items: [],
+  page: 1,
+  pageSize: 20,
+  total: 0,
+};
+
+const initialQueryParams: VersionQueryParams = {
+  page: 1,
+  pageSize: 20,
+};
+
+const statusOptions: Array<{ label: string; value: VersionStatus }> = [
+  { label: '草稿', value: 'DRAFT' },
+  { label: '已发布', value: 'PUBLISHED' },
+  { label: '已弃用', value: 'DEPRECATED' },
+];
+
+const channelOptions: Array<{ label: string; value: VersionChannel }> = [
+  { label: '官方', value: 'OFFICIAL' },
+  { label: 'Google Play', value: 'GOOGLE_PLAY' },
+  { label: 'App Store', value: 'APP_STORE' },
+];
+
+const getStatusTag = (status: string, forceUpdate: boolean) => {
+  const statusMap: Record<string, { text: string; color: string }> = {
+    DRAFT: { text: '草稿', color: 'default' },
+    PUBLISHED: { text: '已发布', color: 'success' },
+    DEPRECATED: { text: '已弃用', color: 'warning' },
+  };
+  const { text, color } = statusMap[status] ?? {
+    text: status,
+    color: 'default',
+  };
+  return (
+    <Space size={4}>
+      <Tag color={color}>{text}</Tag>
+      {forceUpdate ? <Tag color="red">强更</Tag> : null}
+    </Space>
+  );
+};
+
+const getPlatformTag = (platform: string) => {
+  const platformMap: Record<string, { text: string; color: string }> = {
+    ANDROID: { text: 'Android', color: 'green' },
+    IOS: { text: 'iOS', color: 'blue' },
+  };
+  const { text, color } = platformMap[platform] ?? {
+    text: platform,
+    color: 'default',
+  };
+  return <Tag color={color}>{text}</Tag>;
+};
+
+const getChannelTag = (channel: string) => {
+  const channelMap: Record<string, { text: string; color: string }> = {
+    OFFICIAL: { text: '官方', color: 'default' },
+    GOOGLE_PLAY: { text: 'Google Play', color: 'green' },
+    APP_STORE: { text: 'App Store', color: 'blue' },
+  };
+  const { text, color } = channelMap[channel] ?? {
+    text: channel,
+    color: 'default',
+  };
+  return <Tag color={color}>{text}</Tag>;
+};
 
 const Versions: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<VersionListResponse>({
-    items: [],
-    total: 0,
-    page: 1,
-    pageSize: 20,
-  });
-  const [queryParams, setQueryParams] = useState<VersionQueryParams>({
-    page: 1,
-    pageSize: 20,
-  });
+  const [data, setData] = useState<VersionListResponse>(initialData);
+  const [queryParams, setQueryParams] =
+    useState<VersionQueryParams>(initialQueryParams);
 
   const fetchVersions = useCallback(async () => {
     setLoading(true);
@@ -40,46 +109,26 @@ const Versions: React.FC = () => {
   }, [queryParams]);
 
   useEffect(() => {
-    fetchVersions();
+    void fetchVersions();
   }, [fetchVersions]);
 
   const handleSearch = () => {
-    setQueryParams(prev => ({ ...prev, page: 1 }));
-    fetchVersions();
+    setQueryParams((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleReset = () => {
-    setQueryParams({
-      page: 1,
-      pageSize: 20,
-    });
+    setQueryParams(initialQueryParams);
   };
 
-  const handleTableChange = (pagination: any) => {
-    setQueryParams(prev => ({
+  const handleTableChange = (pagination: {
+    current?: number;
+    pageSize?: number;
+  }) => {
+    setQueryParams((prev) => ({
       ...prev,
-      page: pagination.current,
-      pageSize: pagination.pageSize,
+      page: pagination.current ?? 1,
+      pageSize: pagination.pageSize ?? prev.pageSize,
     }));
-  };
-
-  const getStatusTag = (status: string) => {
-    const statusMap: Record<string, { text: string; color: string }> = {
-      active: { text: '正常', color: 'success' },
-      deprecated: { text: '已弃用', color: 'default' },
-      force_update: { text: '强制更新', color: 'error' },
-    };
-    const { text, color } = statusMap[status] || { text: status, color: 'default' };
-    return <Tag color={color}>{text}</Tag>;
-  };
-
-  const getPlatformTag = (platform: string) => {
-    const platformMap: Record<string, { text: string; color: string }> = {
-      android: { text: 'Android', color: 'green' },
-      ios: { text: 'iOS', color: 'blue' },
-    };
-    const { text, color } = platformMap[platform] || { text: platform, color: 'default' };
-    return <Tag color={color}>{text}</Tag>;
   };
 
   const columns = [
@@ -87,9 +136,11 @@ const Versions: React.FC = () => {
       title: '版本号',
       dataIndex: 'versionName',
       key: 'versionName',
-      width: 120,
+      width: 140,
       render: (versionName: string, record: AppVersion) => (
-        <span>{versionName} ({record.versionCode})</span>
+        <span>
+          {versionName} ({record.versionCode})
+        </span>
       ),
     },
     {
@@ -103,35 +154,54 @@ const Versions: React.FC = () => {
       title: '渠道',
       dataIndex: 'channel',
       key: 'channel',
-      width: 120,
+      width: 140,
+      render: (channel: string) => getChannelTag(channel),
     },
     {
       title: '状态',
-      dataIndex: 'status',
       key: 'status',
-      width: 120,
-      render: (status: string) => getStatusTag(status),
+      width: 170,
+      render: (_: unknown, record: AppVersion) =>
+        getStatusTag(record.status, record.forceUpdate),
+    },
+    {
+      title: '最低版本要求',
+      key: 'minVersion',
+      width: 180,
+      render: (_: unknown, record: AppVersion) => {
+        if (record.platform === 'ANDROID') {
+          return record.minAndroidVersionCode ?? '-';
+        }
+        return record.minIosVersionCode ?? '-';
+      },
     },
     {
       title: '下载地址',
       dataIndex: 'downloadUrl',
       key: 'downloadUrl',
-      width: 200,
+      width: 180,
       ellipsis: true,
-      render: (url: string) => url ? <a href={url} target="_blank" rel="noopener noreferrer">链接</a> : '-',
+      render: (downloadUrl: string | null) =>
+        downloadUrl ? (
+          <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
+            链接
+          </a>
+        ) : (
+          '-'
+        ),
     },
     {
-      title: '创建时间',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 170,
-      render: (createdAt: string) => formatDateTime(createdAt),
+      title: '发布时间',
+      dataIndex: 'publishedAt',
+      key: 'publishedAt',
+      width: 180,
+      render: (publishedAt: string | null) => formatDateTime(publishedAt),
     },
     {
       title: '更新时间',
       dataIndex: 'updatedAt',
       key: 'updatedAt',
-      width: 170,
+      width: 180,
       render: (updatedAt: string) => formatDateTime(updatedAt),
     },
   ];
@@ -140,7 +210,6 @@ const Versions: React.FC = () => {
     <div>
       <h2 style={{ marginBottom: 24 }}>版本管理</h2>
 
-      {/* 筛选区域 */}
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={12} lg={8}>
@@ -148,30 +217,32 @@ const Versions: React.FC = () => {
               placeholder="版本状态"
               style={{ width: '100%' }}
               value={queryParams.status}
-              onChange={(value) => setQueryParams(prev => ({ ...prev, status: value }))}
+              onChange={(value) =>
+                setQueryParams((prev) => ({ ...prev, status: value }))
+              }
+              options={statusOptions}
               allowClear
-            >
-              <Select.Option value="active">正常</Select.Option>
-              <Select.Option value="deprecated">已弃用</Select.Option>
-              <Select.Option value="force_update">强制更新</Select.Option>
-            </Select>
+            />
           </Col>
           <Col xs={24} sm={12} lg={8}>
             <Select
               placeholder="渠道"
               style={{ width: '100%' }}
               value={queryParams.channel}
-              onChange={(value) => setQueryParams(prev => ({ ...prev, channel: value }))}
+              onChange={(value) =>
+                setQueryParams((prev) => ({ ...prev, channel: value }))
+              }
+              options={channelOptions}
               allowClear
-            >
-              <Select.Option value="official">官方</Select.Option>
-              <Select.Option value="google_play">Google Play</Select.Option>
-              <Select.Option value="app_store">App Store</Select.Option>
-            </Select>
+            />
           </Col>
           <Col xs={24} sm={12} lg={8}>
             <Space>
-              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                onClick={handleSearch}
+              >
                 搜索
               </Button>
               <Button icon={<ReloadOutlined />} onClick={handleReset}>
@@ -182,12 +253,11 @@ const Versions: React.FC = () => {
         </Row>
       </Card>
 
-      {/* 版本列表 */}
       <Card>
         <Table
           columns={columns}
           dataSource={data.items}
-          rowKey="id"
+          rowKey="versionId"
           loading={loading}
           pagination={{
             current: data.page,
@@ -198,7 +268,7 @@ const Versions: React.FC = () => {
             showTotal: (total) => `共 ${total} 条`,
           }}
           onChange={handleTableChange}
-          scroll={{ x: 900 }}
+          scroll={{ x: 1450 }}
         />
       </Card>
     </div>

@@ -1,33 +1,84 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Table,
-  Card,
-  Select,
+  EyeOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import {
   Button,
-  Space,
-  Tag,
-  Row,
+  Card,
   Col,
-  Modal,
   Descriptions,
+  Modal,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
 } from 'antd';
-import { SearchOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
 import { getLegalDocuments } from '../api';
 import { formatDateTime } from '../utils/format';
-import type { LegalDocument, LegalDocumentListResponse, LegalDocumentQueryParams } from '../types';
+import type {
+  LegalDocument,
+  LegalDocumentListResponse,
+  LegalDocumentQueryParams,
+  LegalDocumentStatus,
+  LegalDocumentType,
+} from '../types';
+
+const initialData: LegalDocumentListResponse = {
+  items: [],
+  page: 1,
+  pageSize: 20,
+  total: 0,
+};
+
+const initialQueryParams: LegalDocumentQueryParams = {
+  page: 1,
+  pageSize: 20,
+};
+
+const docTypeOptions: Array<{ label: string; value: LegalDocumentType }> = [
+  { label: '服务条款', value: 'TERMS_OF_SERVICE' },
+  { label: '隐私政策', value: 'PRIVACY_POLICY' },
+  { label: '退款政策', value: 'REFUND_POLICY' },
+  { label: '风险披露', value: 'RISK_DISCLOSURE' },
+];
+
+const statusOptions: Array<{ label: string; value: LegalDocumentStatus }> = [
+  { label: '草稿', value: 'DRAFT' },
+  { label: '已发布', value: 'PUBLISHED' },
+  { label: '已归档', value: 'ARCHIVED' },
+];
+
+const getDocTypeText = (docType: string) => {
+  const typeMap: Record<string, string> = {
+    TERMS_OF_SERVICE: '服务条款',
+    PRIVACY_POLICY: '隐私政策',
+    REFUND_POLICY: '退款政策',
+    RISK_DISCLOSURE: '风险披露',
+  };
+  return typeMap[docType] ?? docType;
+};
+
+const getStatusTag = (status: string) => {
+  const statusMap: Record<string, { text: string; color: string }> = {
+    DRAFT: { text: '草稿', color: 'default' },
+    PUBLISHED: { text: '已发布', color: 'success' },
+    ARCHIVED: { text: '已归档', color: 'warning' },
+  };
+  const { text, color } = statusMap[status] ?? {
+    text: status,
+    color: 'default',
+  };
+  return <Tag color={color}>{text}</Tag>;
+};
 
 const LegalDocs: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<LegalDocumentListResponse>({
-    items: [],
-    total: 0,
-    page: 1,
-    pageSize: 20,
-  });
-  const [queryParams, setQueryParams] = useState<LegalDocumentQueryParams>({
-    page: 1,
-    pageSize: 20,
-  });
+  const [data, setData] = useState<LegalDocumentListResponse>(initialData);
+  const [queryParams, setQueryParams] =
+    useState<LegalDocumentQueryParams>(initialQueryParams);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<LegalDocument | null>(null);
 
@@ -44,52 +95,26 @@ const LegalDocs: React.FC = () => {
   }, [queryParams]);
 
   useEffect(() => {
-    fetchLegalDocuments();
+    void fetchLegalDocuments();
   }, [fetchLegalDocuments]);
 
   const handleSearch = () => {
-    setQueryParams(prev => ({ ...prev, page: 1 }));
-    fetchLegalDocuments();
+    setQueryParams((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleReset = () => {
-    setQueryParams({
-      page: 1,
-      pageSize: 20,
-    });
+    setQueryParams(initialQueryParams);
   };
 
-  const handleTableChange = (pagination: any) => {
-    setQueryParams(prev => ({
+  const handleTableChange = (pagination: {
+    current?: number;
+    pageSize?: number;
+  }) => {
+    setQueryParams((prev) => ({
       ...prev,
-      page: pagination.current,
-      pageSize: pagination.pageSize,
+      page: pagination.current ?? 1,
+      pageSize: pagination.pageSize ?? prev.pageSize,
     }));
-  };
-
-  const showDetail = (doc: LegalDocument) => {
-    setSelectedDoc(doc);
-    setDetailModalVisible(true);
-  };
-
-  const getStatusTag = (status: string) => {
-    const statusMap: Record<string, { text: string; color: string }> = {
-      active: { text: '生效中', color: 'success' },
-      draft: { text: '草稿', color: 'default' },
-      archived: { text: '已归档', color: 'warning' },
-    };
-    const { text, color } = statusMap[status] || { text: status, color: 'default' };
-    return <Tag color={color}>{text}</Tag>;
-  };
-
-  const getDocTypeText = (docType: string) => {
-    const typeMap: Record<string, string> = {
-      terms_of_service: '服务条款',
-      privacy_policy: '隐私政策',
-      refund_policy: '退款政策',
-      user_agreement: '用户协议',
-    };
-    return typeMap[docType] || docType;
   };
 
   const columns = [
@@ -104,54 +129,57 @@ const LegalDocs: React.FC = () => {
       title: '标题',
       dataIndex: 'title',
       key: 'title',
-      width: 200,
+      width: 220,
       ellipsis: true,
     },
     {
       title: '版本',
-      dataIndex: 'version',
-      key: 'version',
+      dataIndex: 'versionNo',
+      key: 'versionNo',
       width: 100,
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
+      width: 120,
       render: (status: string) => getStatusTag(status),
     },
     {
       title: '生效时间',
       dataIndex: 'effectiveAt',
       key: 'effectiveAt',
-      width: 170,
-      render: (effectiveAt: string) => effectiveAt ? formatDateTime(effectiveAt) : '-',
+      width: 180,
+      render: (effectiveAt: string | null) => formatDateTime(effectiveAt),
     },
     {
-      title: '创建时间',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 170,
-      render: (createdAt: string) => formatDateTime(createdAt),
+      title: '更新人',
+      dataIndex: 'updatedBy',
+      key: 'updatedBy',
+      width: 120,
+      render: (updatedBy: string | null) => updatedBy || '-',
     },
     {
       title: '更新时间',
       dataIndex: 'updatedAt',
       key: 'updatedAt',
-      width: 170,
+      width: 180,
       render: (updatedAt: string) => formatDateTime(updatedAt),
     },
     {
       title: '操作',
       key: 'action',
-      width: 120,
+      width: 100,
       fixed: 'right' as const,
-      render: (_: any, record: LegalDocument) => (
+      render: (_: unknown, record: LegalDocument) => (
         <Button
           type="link"
           size="small"
           icon={<EyeOutlined />}
-          onClick={() => showDetail(record)}
+          onClick={() => {
+            setSelectedDoc(record);
+            setDetailModalVisible(true);
+          }}
         >
           详情
         </Button>
@@ -163,7 +191,6 @@ const LegalDocs: React.FC = () => {
     <div>
       <h2 style={{ marginBottom: 24 }}>法务文档</h2>
 
-      {/* 筛选区域 */}
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={12} lg={8}>
@@ -171,31 +198,32 @@ const LegalDocs: React.FC = () => {
               placeholder="文档类型"
               style={{ width: '100%' }}
               value={queryParams.docType}
-              onChange={(value) => setQueryParams(prev => ({ ...prev, docType: value }))}
+              onChange={(value) =>
+                setQueryParams((prev) => ({ ...prev, docType: value }))
+              }
+              options={docTypeOptions}
               allowClear
-            >
-              <Select.Option value="terms_of_service">服务条款</Select.Option>
-              <Select.Option value="privacy_policy">隐私政策</Select.Option>
-              <Select.Option value="refund_policy">退款政策</Select.Option>
-              <Select.Option value="user_agreement">用户协议</Select.Option>
-            </Select>
+            />
           </Col>
           <Col xs={24} sm={12} lg={8}>
             <Select
               placeholder="文档状态"
               style={{ width: '100%' }}
               value={queryParams.status}
-              onChange={(value) => setQueryParams(prev => ({ ...prev, status: value }))}
+              onChange={(value) =>
+                setQueryParams((prev) => ({ ...prev, status: value }))
+              }
+              options={statusOptions}
               allowClear
-            >
-              <Select.Option value="active">生效中</Select.Option>
-              <Select.Option value="draft">草稿</Select.Option>
-              <Select.Option value="archived">已归档</Select.Option>
-            </Select>
+            />
           </Col>
           <Col xs={24} sm={12} lg={8}>
             <Space>
-              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                onClick={handleSearch}
+              >
                 搜索
               </Button>
               <Button icon={<ReloadOutlined />} onClick={handleReset}>
@@ -206,12 +234,11 @@ const LegalDocs: React.FC = () => {
         </Row>
       </Card>
 
-      {/* 文档列表 */}
       <Card>
         <Table
           columns={columns}
           dataSource={data.items}
-          rowKey="id"
+          rowKey="docId"
           loading={loading}
           pagination={{
             current: data.page,
@@ -222,17 +249,16 @@ const LegalDocs: React.FC = () => {
             showTotal: (total) => `共 ${total} 条`,
           }}
           onChange={handleTableChange}
-          scroll={{ x: 1100 }}
+          scroll={{ x: 1350 }}
         />
       </Card>
 
-      {/* 文档详情弹窗 */}
       <Modal
         title="法务文档详情"
         open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
         footer={null}
-        width={700}
+        width={760}
       >
         {selectedDoc && (
           <Descriptions bordered column={1}>
@@ -243,13 +269,13 @@ const LegalDocs: React.FC = () => {
               {selectedDoc.title}
             </Descriptions.Item>
             <Descriptions.Item label="版本">
-              {selectedDoc.version}
+              {selectedDoc.versionNo}
             </Descriptions.Item>
             <Descriptions.Item label="状态">
               {getStatusTag(selectedDoc.status)}
             </Descriptions.Item>
             <Descriptions.Item label="生效时间">
-              {selectedDoc.effectiveAt ? formatDateTime(selectedDoc.effectiveAt) : '-'}
+              {formatDateTime(selectedDoc.effectiveAt)}
             </Descriptions.Item>
             <Descriptions.Item label="创建时间">
               {formatDateTime(selectedDoc.createdAt)}
@@ -257,10 +283,11 @@ const LegalDocs: React.FC = () => {
             <Descriptions.Item label="更新时间">
               {formatDateTime(selectedDoc.updatedAt)}
             </Descriptions.Item>
+            <Descriptions.Item label="更新人">
+              {selectedDoc.updatedBy || '-'}
+            </Descriptions.Item>
             <Descriptions.Item label="内容">
-              <div style={{ maxHeight: 300, overflow: 'auto', whiteSpace: 'pre-wrap' }}>
-                {selectedDoc.content || '暂无内容'}
-              </div>
+              <div style={{ whiteSpace: 'pre-wrap' }}>{selectedDoc.content}</div>
             </Descriptions.Item>
           </Descriptions>
         )}
