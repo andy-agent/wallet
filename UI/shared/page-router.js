@@ -1,8 +1,81 @@
 (function () {
   const PSEUDO_SELECTOR = ".btn, .quick, .nav-item, .pill, .plan, .notice, .list-item, .card.padded";
+  const RESPONSIVE_STYLE_ID = "crypto-vpn-responsive-screen-style";
 
   function isEmbedded() {
     return !!window.parent && window.parent !== window;
+  }
+
+  function ensureResponsiveStyle() {
+    if (document.getElementById(RESPONSIVE_STYLE_ID)) {
+      return;
+    }
+    const style = document.createElement("style");
+    style.id = RESPONSIVE_STYLE_ID;
+    style.textContent = `
+      html, body {
+        width: 100% !important;
+        min-height: 100% !important;
+        height: auto !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+      }
+      body.cvp-fixed-screen-body {
+        margin: 0;
+        padding: 12px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      body.cvp-fixed-screen-body .cvp-screen-stage {
+        position: relative;
+        flex: none;
+      }
+      body.cvp-fixed-screen-body > .cvp-screen-stage > .screen {
+        position: absolute !important;
+        left: 0;
+        top: 0;
+        margin: 0 !important;
+        transform-origin: top left;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function mountResponsiveScreen() {
+    const screen = document.querySelector("body > .screen");
+    if (!screen) {
+      return;
+    }
+    if (screen.parentElement && screen.parentElement.classList.contains("cvp-screen-stage")) {
+      return;
+    }
+
+    ensureResponsiveStyle();
+
+    const stage = document.createElement("div");
+    stage.className = "cvp-screen-stage";
+    const body = document.body;
+    body.classList.add("cvp-fixed-screen-body");
+    body.insertBefore(stage, screen);
+    stage.appendChild(screen);
+
+    const baseWidth = screen.offsetWidth || 1080;
+    const baseHeight = screen.offsetHeight || 2400;
+
+    function applyScale() {
+      const gutter = isEmbedded() ? 0 : 24;
+      const availableWidth = Math.max(320, window.innerWidth - gutter);
+      const scale = Math.min(1, availableWidth / baseWidth);
+      stage.style.width = `${baseWidth * scale}px`;
+      stage.style.height = `${baseHeight * scale}px`;
+      screen.style.width = `${baseWidth}px`;
+      screen.style.height = `${baseHeight}px`;
+      screen.style.transform = `scale(${scale})`;
+    }
+
+    applyScale();
+    window.addEventListener("resize", applyScale);
   }
 
   function projectRoot() {
@@ -196,6 +269,7 @@
   });
 
   window.addEventListener("DOMContentLoaded", () => {
+    mountResponsiveScreen();
     document.querySelectorAll(PSEUDO_SELECTOR).forEach((element) => {
       if (!element.hasAttribute("tabindex")) {
         element.setAttribute("tabindex", "0");
