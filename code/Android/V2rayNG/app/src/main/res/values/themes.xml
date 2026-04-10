@@ -68,6 +68,14 @@
         <item name="windowNoTitle">true</item>
     </style>
 
+    <style name="AppThemeDayNight.ComposeLaunch" parent="AppThemeDayNight.NoActionBar">
+        <item name="android:windowBackground">@drawable/compose_launch_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/md_theme_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+    </style>
+
     <style name="AppThemeDayNight.NoActionBar.Translucent">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:colorBackgroundCacheHint">@null</item>

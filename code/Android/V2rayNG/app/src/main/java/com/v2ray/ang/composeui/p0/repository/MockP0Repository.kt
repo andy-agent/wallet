@@ -19,8 +19,12 @@ class MockP0Repository : P0Repository {
         return SplashUiState(
             checkingSecureBoot = false,
             versionLabel = "v2.4.0",
-            buildStatus = "White-tech shell ready · secure modules online",
-            authResolved = true,
+            buildStatus = "本地安全模块和演示缓存已就绪",
+            progress = 0.12f,
+            progressHeadline = "连接钱包与网络",
+            progressDetail = "初始化加密模块、节点探测与资产索引…",
+            authResolved = false,
+            readyToNavigate = false,
         )
     }
 

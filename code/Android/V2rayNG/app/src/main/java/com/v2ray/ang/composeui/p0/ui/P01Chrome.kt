@@ -106,6 +106,7 @@ fun P01PhoneScaffold(
     currentRoute: String,
     onBottomNav: (String) -> Unit = {},
     destinations: List<P01BottomDestination> = defaultP01Destinations(),
+    showBottomNav: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -132,12 +133,14 @@ fun P01PhoneScaffold(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 content = content,
             )
-            Spacer(modifier = Modifier.height(6.dp))
-            P01BottomNav(
-                currentRoute = currentRoute,
-                destinations = destinations,
-                onNavigate = onBottomNav,
-            )
+            if (showBottomNav) {
+                Spacer(modifier = Modifier.height(6.dp))
+                P01BottomNav(
+                    currentRoute = currentRoute,
+                    destinations = destinations,
+                    onNavigate = onBottomNav,
+                )
+            }
         }
     }
 }

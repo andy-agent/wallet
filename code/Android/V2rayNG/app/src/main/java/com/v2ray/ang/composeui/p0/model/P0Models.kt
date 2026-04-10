@@ -10,7 +10,11 @@ data class SplashUiState(
     val checkingSecureBoot: Boolean = true,
     val versionLabel: String = "v1.0.0",
     val buildStatus: String = "Verifying secure module",
+    val progress: Float = 0.08f,
+    val progressHeadline: String = "系统正在准备",
+    val progressDetail: String = "初始化加密模块、节点探测与资产索引…",
     val authResolved: Boolean = false,
+    val readyToNavigate: Boolean = false,
 )
 
 sealed interface SplashEvent {

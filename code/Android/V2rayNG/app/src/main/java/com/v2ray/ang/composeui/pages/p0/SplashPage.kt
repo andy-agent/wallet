@@ -10,6 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,7 +41,6 @@ import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.repository.MockP0Repository
 import com.v2ray.ang.composeui.p0.viewmodel.SplashViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
-import kotlinx.coroutines.delay
 
 @Composable
 fun SplashRoute(
@@ -45,9 +50,8 @@ fun SplashRoute(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(uiState.authResolved) {
-        if (uiState.authResolved) {
-            delay(900)
+    LaunchedEffect(uiState.readyToNavigate) {
+        if (uiState.readyToNavigate) {
             onFinished()
         }
     }
@@ -63,10 +67,26 @@ fun SplashScreen(
     uiState: com.v2ray.ang.composeui.p0.model.SplashUiState,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = uiState.progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 420),
+        label = "splash_progress",
+    )
+    val infiniteTransition = rememberInfiniteTransition(label = "splash_scan")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearEasing),
+        ),
+        label = "splash_glow",
+    )
+
     P01PhoneScaffold(
         statusTime = "18:05",
         currentRoute = CryptoVpnRouteSpec.vpnHome.name,
         onBottomNav = onBottomNav,
+        showBottomNav = false,
     ) {
         P01Header(
             eyebrow = "CRYPTO • VPN • PRIVATE NETWORK",
@@ -103,20 +123,41 @@ fun SplashScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp)
+                    .height(10.dp)
                     .background(Color(0x1F6880DB), RoundedCornerShape(999.dp)),
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.72f)
-                        .height(8.dp)
+                        .fillMaxWidth(animatedProgress)
+                        .height(10.dp)
                         .background(
                             Brush.horizontalGradient(listOf(Color(0xFF4F7CFF), Color(0xFF20D3EE))),
                             RoundedCornerShape(999.dp),
                         ),
                 )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(animatedProgress)
+                        .height(10.dp)
+                        .padding(end = 4.dp),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.9f),
+                                        Color(0xFF20D3EE).copy(alpha = glowAlpha),
+                                    ),
+                                ),
+                                RoundedCornerShape(999.dp),
+                            ),
+                    )
+                }
             }
-            P01CardCopy("电影级粒子背景、轨道环与发光扫描将在启动过程中持续动态播放。")
+            P01CardCopy("${uiState.progressHeadline} · ${uiState.progressDetail}")
         }
 
         P01Card {

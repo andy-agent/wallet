@@ -30,15 +30,30 @@ class RealP0Repository(context: Context) : P0Repository {
     private val paymentRepository = PaymentRepository(appContext)
 
     override suspend fun getSplashState(): SplashUiState {
+        val cachedUser = paymentRepository.getCachedCurrentUser()
+        val currentUserId = paymentRepository.getCurrentUserId()
+        val cachedOrders = currentUserId?.let { paymentRepository.getCachedOrders(it) }.orEmpty()
+        val sessionLabel = if (paymentRepository.isTokenValid()) "已识别登录会话" else "未登录"
         return SplashUiState(
             checkingSecureBoot = false,
             versionLabel = "v${BuildConfig.VERSION_NAME}",
-            buildStatus = if (paymentRepository.isTokenValid()) {
-                "Real module ready · authenticated session detected"
-            } else {
-                "Real module ready · login required"
+            buildStatus = buildString {
+                append(sessionLabel)
+                cachedUser?.let {
+                    append(" · ")
+                    append(it.username)
+                }
+                if (cachedOrders.isNotEmpty()) {
+                    append(" · ")
+                    append(cachedOrders.size)
+                    append(" 条本地订单缓存")
+                }
             },
-            authResolved = true,
+            progress = 0.12f,
+            progressHeadline = "连接钱包与网络",
+            progressDetail = "初始化加密模块、节点探测与资产索引…",
+            authResolved = false,
+            readyToNavigate = false,
         )
     }
 
