@@ -8,7 +8,15 @@ export class AdminSystemConfigsController {
   constructor(private readonly adminSystemConfigsService: AdminSystemConfigsService) {}
 
   @Get()
-  listSystemConfigs(@Query('scope') scope?: string) {
-    return this.adminSystemConfigsService.listSystemConfigs({ scope });
+  listSystemConfigs(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('scope') scope?: string,
+  ) {
+    return this.adminSystemConfigsService.listSystemConfigs({
+      page: page ? parseInt(page, 10) : undefined,
+      pageSize: pageSize ? parseInt(pageSize, 10) : undefined,
+      scope,
+    });
   }
 }

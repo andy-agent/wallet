@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { FileRuntimeStateRepository } from './file-runtime-state.repository';
+import { PostgresDataAccessService } from './postgres-data-access.service';
 import { PostgresRuntimeStateRepository } from './postgres-runtime-state.repository';
 import { resolveRuntimeStateConfig } from './runtime-state.config';
 import { RuntimeStateRepository } from './runtime-state.repository';
@@ -9,6 +10,7 @@ import { RuntimeStateRepository } from './runtime-state.repository';
 @Module({
   imports: [ConfigModule],
   providers: [
+    PostgresDataAccessService,
     {
       provide: RuntimeStateRepository,
       inject: [ConfigService],
@@ -27,6 +29,6 @@ import { RuntimeStateRepository } from './runtime-state.repository';
       },
     },
   ],
-  exports: [RuntimeStateRepository],
+  exports: [RuntimeStateRepository, PostgresDataAccessService],
 })
 export class DatabaseModule {}

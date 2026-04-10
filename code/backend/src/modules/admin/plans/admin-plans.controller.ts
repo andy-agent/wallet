@@ -8,7 +8,15 @@ export class AdminPlansController {
   constructor(private readonly adminPlansService: AdminPlansService) {}
 
   @Get()
-  listPlans(@Query('status') status?: string) {
-    return this.adminPlansService.listPlans({ status });
+  listPlans(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.adminPlansService.listPlans({
+      page: page ? parseInt(page, 10) : undefined,
+      pageSize: pageSize ? parseInt(pageSize, 10) : undefined,
+      status,
+    });
   }
 }

@@ -19,11 +19,13 @@ export class AdminDashboardService {
       awaitingOrders,
       reviewOrders,
       todayPaidOrders,
+      pendingWithdrawals,
     ] = await Promise.all([
       this.vpnService.getActiveSubscriptionCount(),
       this.ordersService.getAwaitingOrderCount(),
       this.ordersService.getReviewOrderCount(),
       this.ordersService.getTodayPaidOrderCount(),
+      this.withdrawalsService.getPendingWithdrawalCount(),
     ]);
 
     return {
@@ -31,7 +33,7 @@ export class AdminDashboardService {
       activeSubscriptions,
       awaitingOrders,
       reviewOrders,
-      pendingWithdrawals: this.withdrawalsService.getPendingWithdrawalCount(),
+      pendingWithdrawals,
       todayPaidOrders,
     };
   }
