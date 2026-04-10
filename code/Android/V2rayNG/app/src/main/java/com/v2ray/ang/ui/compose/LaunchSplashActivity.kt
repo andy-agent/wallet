@@ -23,10 +23,13 @@ import kotlin.system.measureTimeMillis
 
 class LaunchSplashActivity : ComponentActivity() {
     private lateinit var progressBar: ProgressBar
-    private lateinit var progressDetail: TextView
     private lateinit var hubGlow: View
     private lateinit var hubRingOuter: View
     private lateinit var hubRingInner: View
+    private lateinit var row1Copy: TextView
+    private lateinit var row1Value: TextView
+    private lateinit var row2Copy: TextView
+    private lateinit var row2Value: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,10 +37,13 @@ class LaunchSplashActivity : ComponentActivity() {
         setContentView(R.layout.activity_launch_splash)
 
         progressBar = findViewById(R.id.launch_progress)
-        progressDetail = findViewById(R.id.launch_progress_detail)
         hubGlow = findViewById(R.id.launch_hub_glow)
         hubRingOuter = findViewById(R.id.launch_hub_ring_outer)
         hubRingInner = findViewById(R.id.launch_hub_ring_inner)
+        row1Copy = findViewById(R.id.launch_row_1_copy)
+        row1Value = findViewById(R.id.launch_row_1_value)
+        row2Copy = findViewById(R.id.launch_row_2_copy)
+        row2Value = findViewById(R.id.launch_row_2_value)
 
         startHubAnimation()
 
@@ -55,26 +61,38 @@ class LaunchSplashActivity : ComponentActivity() {
         val elapsed = measureTimeMillis {
             renderStage(
                 progress = 0.12f,
-                detail = "初始化加密模块、节点探测与资产索引…",
+                row1CopyText = "本地密钥环境与生物识别策略正在装载。",
+                row1ValueText = "检查中",
+                row2CopyText = "节点健康探测和智能路由优先级待启动。",
+                row2ValueText = "待启动",
             )
             delay(260)
 
             renderStage(
                 progress = 0.34f,
-                detail = "读取加密存储、配置项与会话凭据…",
+                row1CopyText = "本地密钥环境与生物识别策略已经装载。",
+                row1ValueText = "已就绪",
+                row2CopyText = "节点健康探测和智能路由优先级正在同步。",
+                row2ValueText = "同步中",
             )
             delay(260)
 
             snapshot = snapshotDeferred.await()
             renderStage(
                 progress = 0.58f,
-                detail = "解析钱包账户、订单索引与节点缓存…",
+                row1CopyText = "本地密钥环境与生物识别策略已经装载。",
+                row1ValueText = "已就绪",
+                row2CopyText = "解析钱包账户、订单索引与节点缓存…",
+                row2ValueText = "同步中",
             )
             delay(280)
 
             renderStage(
                 progress = 0.82f,
-                detail = snapshot.buildStatus.ifBlank { "准备主界面与安全通道…" },
+                row1CopyText = "本地密钥环境与生物识别策略已经装载。",
+                row1ValueText = "已就绪",
+                row2CopyText = snapshot.buildStatus.ifBlank { "准备主界面与安全通道…" },
+                row2ValueText = "校验中",
             )
             delay(260)
         }
@@ -85,7 +103,10 @@ class LaunchSplashActivity : ComponentActivity() {
 
         renderStage(
             progress = 1f,
-            detail = "安全通道与钱包环境已就绪，正在进入主界面…",
+            row1CopyText = "本地密钥环境与生物识别策略已经装载。",
+            row1ValueText = "已就绪",
+            row2CopyText = "安全通道与钱包环境已就绪，正在进入主界面…",
+            row2ValueText = "已完成",
         )
         delay(280)
 
@@ -101,9 +122,15 @@ class LaunchSplashActivity : ComponentActivity() {
 
     private fun renderStage(
         progress: Float,
-        detail: String,
+        row1CopyText: String,
+        row1ValueText: String,
+        row2CopyText: String,
+        row2ValueText: String,
     ) {
-        progressDetail.text = detail
+        row1Copy.text = row1CopyText
+        row1Value.text = row1ValueText
+        row2Copy.text = row2CopyText
+        row2Value.text = row2ValueText
         animateProgressTo((progress * 100).toInt())
     }
 
