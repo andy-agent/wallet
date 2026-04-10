@@ -12,61 +12,417 @@
   <link rel="stylesheet" href="../../shared/components.css">
   <link rel="stylesheet" href="../../shared/effects.css">
   <link rel="stylesheet" href="../../shared/p0-p1.css">
+  <style>
+    .p01-body--splash {
+      background:
+        radial-gradient(circle at 82% 8%, rgba(181, 141, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 14% 100%, rgba(32, 196, 244, 0.12), transparent 28%),
+        linear-gradient(180deg, #f6faff 0%, #edf4ff 58%, #e9f1ff 100%);
+    }
+
+    .p01-shell--splash {
+      width: min(100%, 430px);
+      padding: 24px 18px 28px;
+    }
+
+    .p01-screen--splash {
+      min-height: calc(100vh - 52px);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow: visible;
+    }
+
+    .p01-screen--splash::before {
+      display: none;
+    }
+
+    .p01-safe--splash {
+      display: grid;
+      gap: 18px;
+    }
+
+    .p01-header--splash {
+      display: grid;
+      gap: 10px;
+      padding: 2px 2px 0;
+    }
+
+    .p01-title--splash {
+      font-size: 30px;
+      letter-spacing: -0.04em;
+    }
+
+    .p01-subtitle--splash {
+      max-width: 29ch;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .p01-chip-row--splash {
+      gap: 10px;
+    }
+
+    .p01-chip--splash {
+      min-height: 30px;
+      padding: 0 14px;
+      background: rgba(255, 255, 255, 0.74);
+      border: 1px solid rgba(104, 128, 219, 0.12);
+      box-shadow: 0 10px 26px rgba(62, 90, 160, 0.08);
+    }
+
+    .p01-body-grid--splash {
+      margin-top: 0;
+      gap: 16px;
+    }
+
+    .p01-card--primary,
+    .p01-card--status {
+      padding: 20px 18px;
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(244, 249, 255, 0.9));
+      border: 1px solid rgba(104, 128, 219, 0.12);
+      box-shadow: 0 20px 56px rgba(44, 74, 138, 0.08);
+    }
+
+    .p01-card--primary {
+      display: grid;
+      gap: 16px;
+    }
+
+    .p01-card--status {
+      display: grid;
+      gap: 16px;
+    }
+
+    .p01-card-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .p01-card-kicker::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(72, 116, 255, 0.92), rgba(31, 208, 244, 0.9));
+      box-shadow: 0 0 0 6px rgba(72, 116, 255, 0.08);
+    }
+
+    .p01-card-copy--tight {
+      max-width: 32ch;
+      font-size: 13px;
+    }
+
+    .p01-security-panel {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(208, 238, 255, 0.66), transparent 58%),
+        rgba(243, 247, 255, 0.9);
+      border: 1px solid rgba(104, 128, 219, 0.12);
+    }
+
+    .p01-security-ring {
+      position: relative;
+      width: 136px;
+      height: 136px;
+      margin: 0 auto;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, rgba(255, 255, 255, 0.98) 0 34%, rgba(103, 128, 255, 0.18) 34% 44%, rgba(67, 120, 255, 0.08) 44% 58%, rgba(31, 208, 244, 0.14) 58% 72%, rgba(181, 141, 255, 0.09) 72% 100%);
+      box-shadow:
+        0 0 0 14px rgba(255, 255, 255, 0.46),
+        0 0 42px rgba(79, 122, 255, 0.18);
+    }
+
+    .p01-security-ring::after {
+      content: "SECURE";
+      position: absolute;
+      inset: 50% auto auto 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent-blue);
+    }
+
+    .p01-security-copy {
+      display: grid;
+      gap: 10px;
+    }
+
+    .p01-security-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(104, 128, 219, 0.1);
+      color: var(--text-body);
+      font-size: 12px;
+    }
+
+    .p01-security-row:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .p01-security-row strong {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-strong);
+    }
+
+    .p01-metric-grid--splash {
+      gap: 12px;
+    }
+
+    .p01-metric--splash {
+      padding: 16px 14px;
+      border-radius: 20px;
+      background: rgba(248, 251, 255, 0.96);
+    }
+
+    .p01-metric-value--splash {
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .p01-static-note {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(73, 103, 177, 0.06);
+      color: var(--text-body);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .p01-static-note strong {
+      display: block;
+      margin-bottom: 4px;
+      font-family: var(--font-display);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .p01-status-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .p01-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: var(--radius-pill);
+      background: rgba(72, 116, 255, 0.1);
+      color: var(--accent-blue);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .p01-live-badge::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-cyan);
+      animation: splashPulse 1.8s ease-in-out infinite;
+    }
+
+    .p01-progress-panel {
+      display: grid;
+      gap: 10px;
+      padding: 14px 16px;
+      border-radius: 20px;
+      background: rgba(247, 251, 255, 0.94);
+      border: 1px solid rgba(104, 128, 219, 0.12);
+    }
+
+    .p01-progress-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-body);
+    }
+
+    .p01-progress-meta strong {
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: var(--text-strong);
+    }
+
+    .p01-progress-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(104, 128, 219, 0.12);
+      overflow: hidden;
+    }
+
+    .p01-progress-fill {
+      width: 72%;
+      height: 100%;
+      border-radius: inherit;
+      background:
+        linear-gradient(90deg, rgba(72, 116, 255, 0.92), rgba(31, 208, 244, 0.94)),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.3), transparent);
+      position: relative;
+      animation: splashProgress 2.8s ease-in-out infinite;
+    }
+
+    .p01-progress-fill::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.52), transparent);
+      transform: translateX(-100%);
+      animation: splashScan 2.2s linear infinite;
+    }
+
+    .p01-list--status {
+      gap: 0;
+    }
+
+    .p01-row-value--ok {
+      color: var(--text-strong);
+    }
+
+    .p01-row-value--sync {
+      color: var(--accent-blue);
+    }
+
+    @keyframes splashPulse {
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 0.72;
+      }
+
+      50% {
+        transform: scale(1.25);
+        opacity: 1;
+      }
+    }
+
+    @keyframes splashProgress {
+      0%,
+      100% {
+        width: 68%;
+      }
+
+      50% {
+        width: 76%;
+      }
+    }
+
+    @keyframes splashScan {
+      100% {
+        transform: translateX(100%);
+      }
+    }
+  </style>
 </head>
-<body class="p01-body">
-  <main class="p01-shell">
-    <section class="p01-screen">
-      <div class="p01-safe">
-        <div class="p01-status"><span>18:05</span><div class="p01-icons"><span></span><span></span></div></div>
-        <header class="p01-header">
-          <div class="p01-eyebrow">CRYPTO • VPN • PRIVATE NETWORK</div>
-          <h1 class="p01-title">CryptoVPN</h1>
-          <p class="p01-subtitle">多链钱包 + 私密高速网络</p>
-          <div class="p01-chip-row">
-            <span class="p01-chip">安全自托管</span>
-            <span class="p01-chip">全球加速</span>
-            <span class="p01-chip">Solana / TRON /ETH </span>
+<body class="p01-body p01-body--splash">
+  <main class="p01-shell p01-shell--splash">
+    <section class="p01-screen p01-screen--splash">
+      <div class="p01-safe p01-safe--splash">
+        <header class="p01-header p01-header--splash">
+          <div class="p01-eyebrow">Android Startup • Secure Prepare</div>
+          <h1 class="p01-title p01-title--splash">CryptoVPN</h1>
+          <p class="p01-subtitle p01-subtitle--splash">多链钱包与私密网络在进入主界面前完成连接、探测与安全环境校验。</p>
+          <div class="p01-chip-row p01-chip-row--splash">
+            <span class="p01-chip p01-chip--splash">安全自托管</span>
+            <span class="p01-chip p01-chip--splash">全球加速</span>
+            <span class="p01-chip p01-chip--splash">Solana / TRON / ETH</span>
           </div>
         </header>
-        <section class="p01-body-grid">
-          <article class="p01-card p01-hero">
-            <div class="p01-hero-split">
-              <div>
-                <div class="p01-card-title">连接钱包与网络</div>
-                <p class="p01-card-copy">初始化加密模块、节点探测与资产索引，系统准备完成后即可进入主界面。</p>
+        <section class="p01-body-grid p01-body-grid--splash">
+          <article class="p01-card p01-card--primary">
+            <div class="p01-card-kicker">核心初始化</div>
+            <div class="p01-card-title">连接钱包与网络</div>
+            <p class="p01-card-copy p01-card-copy--tight">建立本地密钥容器、节点探测与链上索引基础能力。这个主卡片保持稳定，不承载启动过程中的动态刷新。</p>
+            <div class="p01-security-panel" aria-hidden="true">
+              <div class="p01-security-ring"></div>
+              <div class="p01-security-copy">
+                <div class="p01-security-row">
+                  <span>加密容器</span>
+                  <strong>本地装载</strong>
+                </div>
+                <div class="p01-security-row">
+                  <span>连接策略</span>
+                  <strong>安全握手</strong>
+                </div>
               </div>
-              <div class="p01-orb" aria-hidden="true"></div>
             </div>
-            <div class="p01-metric-grid">
-              <div class="p01-metric">
+            <div class="p01-metric-grid p01-metric-grid--splash">
+              <div class="p01-metric p01-metric--splash">
                 <div class="p01-metric-label">Wallet Layer</div>
-                <div class="p01-metric-value">多链架构</div>
+                <div class="p01-metric-value p01-metric-value--splash">多链架构</div>
               </div>
-              <div class="p01-metric">
+              <div class="p01-metric p01-metric--splash">
                 <div class="p01-metric-label">VPN Layer</div>
-                <div class="p01-metric-value">全球节点</div>
+                <div class="p01-metric-value p01-metric-value--splash">全球节点</div>
               </div>
             </div>
-            <div style="height:8px;border-radius:999px;background:rgba(104,128,219,.12);overflow:hidden;">
-              <div style="width:72%;height:100%;background:linear-gradient(90deg,#4f7cff,#20d3ee);"></div>
+            <div class="p01-static-note">
+              <strong>Static Panel</strong>
+              实时进度、状态文案和阶段切换仅在下方“系统正在准备”卡片更新，避免主面板在启动时跳动。
             </div>
           </article>
-          <article class="p01-card">
-            <div class="p01-card-title">系统正在准备</div>
-            <div class="p01-list" style="margin-top:12px;">
+          <!-- Dynamic startup state stays inside the status card so the main panel remains stable. -->
+          <article class="p01-card p01-card--status" aria-live="polite" data-live-card="startup-status">
+            <div class="p01-status-top">
+              <div>
+                <div class="p01-card-title">系统正在准备</div>
+                <p class="p01-card-copy p01-card-copy--tight">启动期间的动态信息只放在这张卡片里，包括连接阶段、进度条和状态结果。</p>
+              </div>
+              <div class="p01-live-badge" id="startupStage">安全连接中</div>
+            </div>
+            <div class="p01-progress-panel">
+              <div class="p01-progress-meta">
+                <span>Secure connection</span>
+                <strong id="startupProgressValue">72%</strong>
+              </div>
+              <div class="p01-progress-track" aria-hidden="true">
+                <div class="p01-progress-fill" id="startupProgressFill"></div>
+              </div>
+            </div>
+            <div class="p01-list p01-list--status">
               <div class="p01-row">
                 <div>
                   <div class="p01-row-title">安全自托管</div>
-                  <div class="p01-row-copy">本地密钥环境与生物识别策略已经装载。</div>
+                  <div class="p01-row-copy">本地密钥环境与生物识别策略已装载，准备进入受保护会话。</div>
                 </div>
-                <div class="p01-row-value">已就绪</div>
+                <div class="p01-row-value p01-row-value--ok" id="startupWalletState">已装载</div>
               </div>
               <div class="p01-row">
                 <div>
                   <div class="p01-row-title">全球加速</div>
-                  <div class="p01-row-copy">节点健康探测和智能路由优先级正在同步。</div>
+                  <div class="p01-row-copy">节点健康探测与智能路由优先级正在同步，连接完成后进入主页。</div>
                 </div>
-                <div class="p01-row-value">同步中</div>
+                <div class="p01-row-value p01-row-value--sync" id="startupNetworkState">同步中</div>
               </div>
             </div>
           </article>
