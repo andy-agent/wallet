@@ -4,95 +4,147 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import com.cryptovpn.ui.common.repository.CryptoVpnRepository
+import com.cryptovpn.ui.common.repository.MockCryptoVpnRepository
+import com.cryptovpn.ui.common.viewmodel.cryptoVpnViewModelFactory
 import com.cryptovpn.ui.p0.repository.MockP0Repository
 import com.cryptovpn.ui.p0.repository.P0Repository
-import com.cryptovpn.ui.p0.viewmodel.LoginViewModel
-import com.cryptovpn.ui.p0.viewmodel.SplashViewModel
-import com.cryptovpn.ui.p0.viewmodel.VpnHomeViewModel
-import com.cryptovpn.ui.p0.viewmodel.WalletHomeViewModel
-import com.cryptovpn.ui.p0.viewmodel.WalletOnboardingViewModel
-import com.cryptovpn.ui.p0.viewmodel.p0ViewModelFactory
-import com.cryptovpn.ui.pages.p0.EmailLoginRoute
-import com.cryptovpn.ui.pages.p0.SplashRoute
-import com.cryptovpn.ui.pages.p0.VpnHomeRoute
-import com.cryptovpn.ui.pages.p0.WalletHomeRoute
-import com.cryptovpn.ui.pages.p0.WalletOnboardingRoute
-import com.cryptovpn.ui.theme.CryptoVpnTheme
+import com.cryptovpn.ui.p0.viewmodel.*
+import com.cryptovpn.ui.pages.p0.*
 
-fun NavHostController.navigateSingleTop(route: String) {
-    navigate(route) { launchSingleTop = true }
-}
 
 fun NavGraphBuilder.installCryptoVpnP0Routes(
     navController: NavHostController,
-    repository: P0Repository = MockP0Repository(),
+    p0Repository: P0Repository = MockP0Repository(),
+    repository: CryptoVpnRepository = MockCryptoVpnRepository(),
 ) {
-    composable(Routes.SPLASH) {
+    composable(CryptoVpnRouteSpec.splash.pattern) {
         val vm: SplashViewModel = viewModel(
-            factory = p0ViewModelFactory { SplashViewModel(repository) },
+            factory = cryptoVpnViewModelFactory { SplashViewModel(p0Repository) },
         )
-        CryptoVpnTheme {
-            SplashRoute(
-                viewModel = vm,
-                onFinished = { navController.navigateSingleTop(Routes.EMAIL_LOGIN) },
-            )
-        }
+        SplashRoute(
+            viewModel = vm,
+            onFinished = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.emailLogin.pattern)
+            },
+        )
     }
 
-    composable(Routes.EMAIL_LOGIN) {
+    composable(CryptoVpnRouteSpec.emailLogin.pattern) {
         val vm: LoginViewModel = viewModel(
-            factory = p0ViewModelFactory { LoginViewModel(repository) },
+            factory = cryptoVpnViewModelFactory { LoginViewModel(p0Repository) },
         )
-        CryptoVpnTheme {
-            EmailLoginRoute(
-                viewModel = vm,
-                onLoginSuccess = { navController.navigateSingleTop(Routes.VPN_HOME) },
-                onForgotPassword = { navController.navigateSingleTop(Routes.RESET_PASSWORD) },
-                onRegister = { navController.navigateSingleTop(Routes.EMAIL_REGISTER) },
-                onWalletOnboarding = { navController.navigateSingleTop(Routes.WALLET_ONBOARDING) },
-            )
-        }
+        EmailLoginRoute(
+            viewModel = vm,
+            onLoginSuccess = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.vpnHome.pattern)
+            },
+            onForgotPassword = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.resetPassword.pattern)
+            },
+            onRegister = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.emailRegister.pattern)
+            },
+            onWalletOnboarding = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.walletOnboarding.pattern)
+            },
+        )
     }
 
-    composable(Routes.WALLET_ONBOARDING) {
+    composable(CryptoVpnRouteSpec.walletOnboarding.pattern) {
         val vm: WalletOnboardingViewModel = viewModel(
-            factory = p0ViewModelFactory { WalletOnboardingViewModel(repository) },
+            factory = cryptoVpnViewModelFactory { WalletOnboardingViewModel(p0Repository) },
         )
-        CryptoVpnTheme {
-            WalletOnboardingRoute(
-                viewModel = vm,
-                onContinue = { navController.navigateSingleTop(Routes.WALLET_HOME) },
-            )
-        }
+        WalletOnboardingRoute(
+            viewModel = vm,
+            onContinue = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern)
+            },
+        )
     }
 
-    composable(Routes.VPN_HOME) {
+    composable(CryptoVpnRouteSpec.vpnHome.pattern) {
         val vm: VpnHomeViewModel = viewModel(
-            factory = p0ViewModelFactory { VpnHomeViewModel(repository) },
+            factory = cryptoVpnViewModelFactory { VpnHomeViewModel(p0Repository) },
         )
-        CryptoVpnTheme {
-            VpnHomeRoute(
-                currentRoute = Routes.VPN_HOME,
-                viewModel = vm,
-                onBottomNav = { navController.navigateSingleTop(it) },
-                onWalletHome = { navController.navigateSingleTop(Routes.WALLET_HOME) },
-                onPlans = { navController.navigateSingleTop(Routes.PLANS) },
-            )
-        }
+        VpnHomeRoute(
+            currentRoute = CryptoVpnRouteSpec.vpnHome.name,
+            viewModel = vm,
+            onBottomNav = { navController.navigateSingleTop(it) },
+            onWalletHome = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern)
+            },
+            onPlans = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.plans.pattern)
+            },
+        )
     }
 
-    composable(Routes.WALLET_HOME) {
+    composable(CryptoVpnRouteSpec.walletHome.pattern) {
         val vm: WalletHomeViewModel = viewModel(
-            factory = p0ViewModelFactory { WalletHomeViewModel(repository) },
+            factory = cryptoVpnViewModelFactory { WalletHomeViewModel(p0Repository) },
         )
-        CryptoVpnTheme {
-            WalletHomeRoute(
-                currentRoute = Routes.WALLET_HOME,
-                viewModel = vm,
-                onBottomNav = { navController.navigateSingleTop(it) },
-                onReceive = { navController.navigateSingleTop(Routes.RECEIVE) },
-                onSend = { navController.navigateSingleTop(Routes.SEND) },
-            )
-        }
+        WalletHomeRoute(
+            currentRoute = CryptoVpnRouteSpec.walletHome.name,
+            viewModel = vm,
+            onBottomNav = { navController.navigateSingleTop(it) },
+            onReceive = {
+                navController.navigateSingleTop(
+                    CryptoVpnRouteSpec.receiveRoute("USDT", "tron"),
+                )
+            },
+            onSend = {
+                navController.navigateSingleTop(
+                    CryptoVpnRouteSpec.sendRoute("USDT", "tron"),
+                )
+            },
+        )
+    }
+    composable(CryptoVpnRouteSpec.forceUpdate.pattern) {
+        val vm: ForceUpdateViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { ForceUpdateViewModel(repository) },
+        )
+        ForceUpdateRoute(
+            viewModel = vm,
+            onPrimaryAction = {},
+            onSecondaryAction = null,
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
+    }
+
+    composable(CryptoVpnRouteSpec.optionalUpdate.pattern) {
+        val vm: OptionalUpdateViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { OptionalUpdateViewModel(repository) },
+        )
+        OptionalUpdateRoute(
+            viewModel = vm,
+            onPrimaryAction = {},
+            onSecondaryAction = null,
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
+    }
+
+    composable(CryptoVpnRouteSpec.emailRegister.pattern) {
+        val vm: EmailRegisterViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { EmailRegisterViewModel(repository) },
+        )
+        EmailRegisterRoute(
+            viewModel = vm,
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.emailLogin.pattern) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.emailLogin.pattern) },
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
+    }
+
+    composable(CryptoVpnRouteSpec.resetPassword.pattern) {
+        val vm: ResetPasswordViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { ResetPasswordViewModel(repository) },
+        )
+        ResetPasswordRoute(
+            viewModel = vm,
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.emailLogin.pattern) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.emailLogin.pattern) },
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
     }
 }

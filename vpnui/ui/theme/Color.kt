@@ -2,46 +2,31 @@ package com.cryptovpn.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Background Colors
-val BackgroundDeepest = Color(0xFF0B1020)
-val BackgroundPrimary = Color(0xFF111827)
-val BackgroundSecondary = Color(0xFF1F2937)
-val BackgroundTertiary = Color(0xFF374151)
+val AppWhite = Color(0xFFF7FAFF)
+val LayerWhite = Color(0xFFFFFFFF)
+val SurfaceCloud = Color(0xFFF1F5FF)
+val SurfaceGlaze = Color(0xFFE8F0FF)
+val StrokeSoft = Color(0xFFD9E7FF)
 
-// Brand Colors
-val Primary = Color(0xFF1D4ED8)
-val PrimaryHover = Color(0xFF2563EB)
-val PrimaryDisabled = Color(0x801D4ED8)
+val ElectricBlue = Color(0xFF2F6BFF)
+val ElectricCyan = Color(0xFF18C8FF)
+val AuroraPurple = Color(0xFF8B6CFF)
+val SignalGreen = Color(0xFF16C47F)
+val WarningAmber = Color(0xFFFFB020)
+val DangerRed = Color(0xFFFF5D6C)
 
-// Functional Colors
-val Success = Color(0xFF22C55E)
-val Warning = Color(0xFFF59E0B)
-val Error = Color(0xFFEF4444)
-val Info = Color(0xFF3B82F6)
+val TextStrong = Color(0xFF0F172A)
+val TextBody = Color(0xFF334155)
+val TextMuted = Color(0xFF6B7A90)
 
-// VPN Status Colors
-val VPNConnected = Color(0xFF22C55E)
-val VPNConnecting = Color(0xFF3B82F6)
-val VPNDisconnected = Color(0xFF64748B)
+val ShadowBlue = Color(0x142F6BFF)
+val GlowBlue = Color(0x332F6BFF)
+val GlowCyan = Color(0x3318C8FF)
+val GlowPurple = Color(0x338B6CFF)
 
-// Text Colors
-val TextPrimary = Color(0xFFF8FAFC)
-val TextSecondary = Color(0xFF94A3B8)
-val TextTertiary = Color(0xFF64748B)
-val TextDisabled = Color(0xFF475569)
+val SuccessTint = Color(0xFFE8FFF4)
+val WarningTint = Color(0xFFFFF6E5)
+val DangerTint = Color(0xFFFFEEF1)
+val InfoTint = Color(0xFFEEF5FF)
 
-// Border & Divider Colors
-val BorderDefault = Color(0xFF374151)
-val BorderFocus = Color(0xFF1D4ED8)
-val BorderError = Color(0xFFEF4444)
-val DividerColor = Color(0xFF1F2937)
-
-// Chain Colors
-val SolanaPurple = Color(0xFF9945FF)
-val TronRed = Color(0xFFFF060A)
-val USDTGreen = Color(0xFF26A17B)
-
-// Glow Colors
-val GlowBlue = Color(0x401D4ED8)
-val GlowGreen = Color(0x4022C55E)
-val GlowYellow = Color(0x40F59E0B)
+val DividerLight = Color(0xFFE4ECFA)

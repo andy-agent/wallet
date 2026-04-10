@@ -24,7 +24,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.cryptovpn.navigation.Routes
 import com.cryptovpn.ui.components.buttons.SecondaryOutlineButton
 import com.cryptovpn.ui.theme.ElectricBlue
 import com.cryptovpn.ui.theme.LayerWhite
@@ -40,11 +39,11 @@ data class BottomTab(
 )
 
 val defaultTabs = listOf(
-    BottomTab(Routes.VPN_HOME, "Home", Icons.Rounded.Home),
-    BottomTab(Routes.PLANS, "VPN", Icons.Rounded.Language),
-    BottomTab(Routes.WALLET_HOME, "Wallet", Icons.Rounded.Wallet),
-    BottomTab(Routes.INVITE_CENTER, "Earn", Icons.Rounded.Stars),
-    BottomTab(Routes.PROFILE, "Profile", Icons.Rounded.AccountCircle),
+    BottomTab("vpn_home", "Home", Icons.Rounded.Home),
+    BottomTab("plans", "VPN", Icons.Rounded.Language),
+    BottomTab("wallet_home", "Wallet", Icons.Rounded.Wallet),
+    BottomTab("invite_center", "Earn", Icons.Rounded.Stars),
+    BottomTab("profile", "Profile", Icons.Rounded.AccountCircle),
 )
 
 @Composable
