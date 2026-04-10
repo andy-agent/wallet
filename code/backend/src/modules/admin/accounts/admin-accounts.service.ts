@@ -30,7 +30,9 @@ export class AdminAccountsService {
 
     return {
       items: enrichedItems,
-      page: result.page,
+      page: result.page.page,
+      pageSize: result.page.pageSize,
+      total: result.page.total,
     };
   }
 

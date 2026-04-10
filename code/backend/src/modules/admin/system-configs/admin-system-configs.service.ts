@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PostgresDataAccessService } from '../../database/postgres-data-access.service';
 
 export interface SystemConfig {
   configKey: string;
@@ -13,99 +14,24 @@ export interface SystemConfig {
 
 @Injectable()
 export class AdminSystemConfigsService {
-  private readonly configs: SystemConfig[] = [
-    {
-      configKey: 'WITHDRAWAL_MIN_AMOUNT',
-      configValue: '10',
-      valueType: 'NUMBER',
-      description: 'Minimum withdrawal amount in USDT',
-      scope: 'REFERRAL',
-      isEditable: true,
-      updatedAt: new Date().toISOString(),
-      updatedBy: 'admin-001',
-    },
-    {
-      configKey: 'VPN_SESSION_TIMEOUT_MINUTES',
-      configValue: '15',
-      valueType: 'NUMBER',
-      description: 'VPN config validity duration in minutes',
-      scope: 'VPN',
-      isEditable: true,
-      updatedAt: new Date(Date.now() - 86400000).toISOString(),
-      updatedBy: 'admin-001',
-    },
-    {
-      configKey: 'ORDER_EXPIRY_MINUTES',
-      configValue: '30',
-      valueType: 'NUMBER',
-      description: 'Order payment window in minutes',
-      scope: 'PAYMENT',
-      isEditable: true,
-      updatedAt: new Date(Date.now() - 172800000).toISOString(),
-      updatedBy: 'admin-002',
-    },
-    {
-      configKey: 'REFERRAL_COMMISSION_RATE_LEVEL1',
-      configValue: '0.15',
-      valueType: 'NUMBER',
-      description: 'Level 1 referral commission rate',
-      scope: 'REFERRAL',
-      isEditable: true,
-      updatedAt: new Date(Date.now() - 259200000).toISOString(),
-      updatedBy: 'admin-001',
-    },
-    {
-      configKey: 'REFERRAL_COMMISSION_RATE_LEVEL2',
-      configValue: '0.05',
-      valueType: 'NUMBER',
-      description: 'Level 2 referral commission rate',
-      scope: 'REFERRAL',
-      isEditable: true,
-      updatedAt: new Date(Date.now() - 259200000).toISOString(),
-      updatedBy: 'admin-001',
-    },
-    {
-      configKey: 'SYSTEM_MAINTENANCE_MODE',
-      configValue: 'false',
-      valueType: 'BOOLEAN',
-      description: 'Global maintenance mode flag',
-      scope: 'GLOBAL',
-      isEditable: true,
-      updatedAt: new Date().toISOString(),
-      updatedBy: null,
-    },
-  ];
+  constructor(private readonly postgresDataAccessService: PostgresDataAccessService) {}
 
-  listSystemConfigs(params: { scope?: string }) {
-    let items = [...this.configs];
-
-    if (params.scope) {
-      items = items.filter((c) => c.scope === params.scope);
-    }
-
-    return {
-      items,
-      page: {
-        page: 1,
-        pageSize: items.length,
-        total: items.length,
-      },
-    };
+  async listSystemConfigs(params: { page?: number; pageSize?: number; scope?: string }) {
+    return this.postgresDataAccessService.listSystemConfigs(params);
   }
 
-  getConfig(configKey: string): SystemConfig | null {
-    return this.configs.find((c) => c.configKey === configKey) ?? null;
+  async getConfig(configKey: string): Promise<SystemConfig | null> {
+    const result = await this.postgresDataAccessService.listSystemConfigs({});
+    return (
+      (result.items.find((item) => item.configKey === configKey) as SystemConfig | undefined) ??
+      null
+    );
   }
 
   updateConfig(
     configKey: string,
     updates: Partial<Pick<SystemConfig, 'configValue' | 'updatedBy'>>,
   ): SystemConfig | null {
-    const config = this.configs.find((c) => c.configKey === configKey);
-    if (!config || !config.isEditable) {
-      return null;
-    }
-    Object.assign(config, updates, { updatedAt: new Date().toISOString() });
-    return config;
+    return null;
   }
 }

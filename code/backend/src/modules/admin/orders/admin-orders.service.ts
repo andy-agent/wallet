@@ -32,11 +32,9 @@ export class AdminOrdersService {
         // No matching accounts, return empty result
         return {
           items: [],
-          page: {
-            page: params.page ?? 1,
-            pageSize: params.pageSize ?? 20,
-            total: 0,
-          },
+          page: params.page ?? 1,
+          pageSize: params.pageSize ?? 20,
+          total: 0,
         };
       }
     }
@@ -51,7 +49,7 @@ export class AdminOrdersService {
 
     // Enrich with account email
     const enrichedItems = result.items.map((order) => {
-      const email = this.authService.maskEmail(order.accountId);
+      const email = this.authService.getAccountById(order.accountId)?.email ?? 'unknown';
       return {
         ...order,
         accountEmail: email,
@@ -60,13 +58,15 @@ export class AdminOrdersService {
 
     return {
       items: enrichedItems,
-      page: result.page,
+      page: result.page.page,
+      pageSize: result.page.pageSize,
+      total: result.page.total,
     };
   }
 
   async getOrderDetail(orderNo: string) {
     const order = await this.ordersService.getOrderByNo(orderNo);
-    const email = this.authService.maskEmail(order.accountId);
+    const email = this.authService.getAccountById(order.accountId)?.email ?? 'unknown';
 
     return {
       ...order,
