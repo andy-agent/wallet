@@ -1,20 +1,32 @@
 package com.v2ray.ang.composeui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-@Suppress("UNUSED_PARAMETER")
+private val CryptoVpnLightColors = lightColorScheme(
+    primary = ElectricBlue,
+    onPrimary = LayerWhite,
+    secondary = ElectricCyan,
+    tertiary = AuroraPurple,
+    background = AppWhite,
+    surface = LayerWhite,
+    surfaceVariant = SurfaceCloud,
+    onBackground = TextStrong,
+    onSurface = TextStrong,
+    error = DangerRed,
+)
+
 @Composable
-fun CryptoVPNTheme(
-    darkTheme: Boolean = false,
+fun CryptoVpnTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = ControlPlaneTokens.materialColorScheme
-
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = CryptoVPNTypography,
-        shapes = AppShapes,
+        colorScheme = CryptoVpnLightColors,
+        typography = CryptoVpnTypography,
+        shapes = CryptoVpnShapes,
         content = content,
     )
 }

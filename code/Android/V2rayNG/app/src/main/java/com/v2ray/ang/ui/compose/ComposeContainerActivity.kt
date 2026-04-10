@@ -7,37 +7,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.v2ray.ang.composeui.bridge.auth.ComposeAuthBridge
 import com.v2ray.ang.composeui.navigation.AppNavGraph
-import com.v2ray.ang.composeui.navigation.DeepLinkHandler
-import com.v2ray.ang.composeui.navigation.LegacyDestination
-import com.v2ray.ang.composeui.navigation.Routes
-import com.v2ray.ang.composeui.navigation.ShellTab
-import com.v2ray.ang.composeui.pages.splash.ComposeUpdateBridge
-import com.v2ray.ang.composeui.theme.CryptoVPNTheme
-import com.v2ray.ang.ui.AboutActivity
-import com.v2ray.ang.ui.SettingsActivity
-import com.v2ray.ang.util.Utils
+import androidx.navigation.compose.rememberNavController
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 /**
- * ComposeContainerActivity serves as the Compose host for the migrated vpnui routes.
- *
- * Route stack, back behavior, and legacy fallbacks are delegated to AppNavGraph.
+ * Compose host for the full delivery UI replacement.
  */
 class ComposeContainerActivity : ComponentActivity() {
     companion object {
         const val EXTRA_START_ROUTE = "compose_start_route"
-        const val EXTRA_FORCE_UPDATE = "compose_force_update"
 
         fun createIntent(
             context: Context,
-            startRoute: String = Routes.SPLASH,
-            forceUpdate: Boolean = false,
+            startRoute: String = CryptoVpnRouteSpec.splash.pattern,
         ): Intent = Intent(context, ComposeContainerActivity::class.java).apply {
             putExtra(EXTRA_START_ROUTE, startRoute)
-            putExtra(EXTRA_FORCE_UPDATE, forceUpdate)
         }
     }
 
@@ -45,65 +34,21 @@ class ComposeContainerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val deepLinkRoute = when (val parsed = DeepLinkHandler().parse(intent)) {
-            is DeepLinkHandler.DeepLinkType.Navigation -> parsed.route
-            else -> null
-        }
-        val startRoute = when {
-            intent.hasExtra(EXTRA_START_ROUTE) ->
-                Routes.normalize(intent.getStringExtra(EXTRA_START_ROUTE))
-            deepLinkRoute != null ->
-                Routes.normalize(deepLinkRoute)
-            isLauncherEntryIntent() ->
-                Routes.appShell(ShellTab.MARKET)
-            else ->
-                Routes.appShell()
-        }
-        val forceUpdate = intent.getBooleanExtra(EXTRA_FORCE_UPDATE, false)
-        val authBridge = ComposeAuthBridge(this)
-        val updateBridge = ComposeUpdateBridge(forceUpdateFromIntent = forceUpdate)
+        val startRoute = intent.getStringExtra(EXTRA_START_ROUTE)
+            ?: CryptoVpnRouteSpec.splash.pattern
 
         setContent {
-            CryptoVPNTheme {
+            CryptoVpnTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.background,
+                    color = MaterialTheme.colorScheme.background,
                 ) {
+                    val navController = rememberNavController()
                     AppNavGraph(
-                        authBridge = authBridge,
-                        updateBridge = updateBridge,
+                        navController = navController,
                         startDestination = startRoute,
-                        onOpenUrl = { url -> Utils.openUri(this@ComposeContainerActivity, url) },
-                        onOpenLegacyDestination = ::openLegacyDestination,
-                        onExitApp = { finish() },
-                        onAuthSuccess = {},
                     )
                 }
-            }
-        }
-    }
-
-    private fun isLauncherEntryIntent(): Boolean {
-        if (intent.action != Intent.ACTION_MAIN) {
-            return false
-        }
-        val categories = intent.categories ?: return true
-        return categories.contains(Intent.CATEGORY_LAUNCHER) ||
-            categories.contains(Intent.CATEGORY_LEANBACK_LAUNCHER)
-    }
-
-    private fun openLegacyDestination(destination: LegacyDestination) {
-        when (destination) {
-            LegacyDestination.SETTINGS -> {
-                startActivity(Intent(this, SettingsActivity::class.java))
-            }
-
-            LegacyDestination.ABOUT -> {
-                startActivity(Intent(this, AboutActivity::class.java))
-            }
-
-            LegacyDestination.SUPPORT -> {
-                Utils.openUri(this, "mailto:support@cryptovpn.app")
             }
         }
     }

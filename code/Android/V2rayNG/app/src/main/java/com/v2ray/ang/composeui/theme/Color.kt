@@ -2,61 +2,31 @@ package com.v2ray.ang.composeui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// White-base financial control plane colors
-val BackgroundDeepest = ControlPlaneTokens.Ink
-val BackgroundPrimary = ControlPlaneTokens.layer(ControlPlaneLayer.Level0).container
-val BackgroundSecondary = ControlPlaneTokens.layer(ControlPlaneLayer.Level1).container
-val BackgroundTertiary = ControlPlaneTokens.layer(ControlPlaneLayer.Level2).container
-val BackgroundOverlay = ControlPlaneTokens.layer(ControlPlaneLayer.Level3).container
+val AppWhite = Color(0xFFF7FAFF)
+val LayerWhite = Color(0xFFFFFFFF)
+val SurfaceCloud = Color(0xFFF1F5FF)
+val SurfaceGlaze = Color(0xFFE8F0FF)
+val StrokeSoft = Color(0xFFD9E7FF)
 
-// Primary system semantics
-val Primary = ControlPlaneTokens.Infra.accent
-val PrimaryHover = Color(0xFF4F6D91)
-val PrimaryDisabled = Primary.copy(alpha = 0.36f)
-val PrimaryContainerTint = ControlPlaneTokens.Infra.container
+val ElectricBlue = Color(0xFF2F6BFF)
+val ElectricCyan = Color(0xFF18C8FF)
+val AuroraPurple = Color(0xFF8B6CFF)
+val SignalGreen = Color(0xFF16C47F)
+val WarningAmber = Color(0xFFFFB020)
+val DangerRed = Color(0xFFFF5D6C)
 
-// Functional colors aligned to explicit audit semantics
-val Success = ControlPlaneTokens.Settlement.accent
-val Warning = ControlPlaneTokens.Warning.accent
-val Error = ControlPlaneTokens.Critical.accent
-val Info = ControlPlaneTokens.Infra.accent
+val TextStrong = Color(0xFF0F172A)
+val TextBody = Color(0xFF334155)
+val TextMuted = Color(0xFF6B7A90)
 
-// VPN status colors
-val VPNConnected = Success
-val VPNConnecting = Info
-val VPNDisconnected = ControlPlaneTokens.Neutral.accent
+val ShadowBlue = Color(0x142F6BFF)
+val GlowBlue = Color(0x332F6BFF)
+val GlowCyan = Color(0x3318C8FF)
+val GlowPurple = Color(0x338B6CFF)
 
-// Text colors
-val TextPrimary = ControlPlaneTokens.Ink
-val TextSecondary = ControlPlaneTokens.InkSecondary
-val TextTertiary = ControlPlaneTokens.InkTertiary
-val TextDisabled = ControlPlaneTokens.InkDisabled
+val SuccessTint = Color(0xFFE8FFF4)
+val WarningTint = Color(0xFFFFF6E5)
+val DangerTint = Color(0xFFFFEEF1)
+val InfoTint = Color(0xFFEEF5FF)
 
-// Border & divider colors
-val BorderDefault = ControlPlaneTokens.layer(ControlPlaneLayer.Level1).outline
-val BorderFocus = Primary
-val BorderError = Error
-val DividerColor = ControlPlaneTokens.layer(ControlPlaneLayer.Level2).outline
-
-// Accent surfaces
-val AccentSurface = ControlPlaneTokens.Infra.container
-val AccentSurfaceStrong = Color(0xFFE2ECF7)
-val AccentSurfaceInfo = ControlPlaneTokens.Infra.container
-val AccentSurfaceWarm = ControlPlaneTokens.Warning.container
-
-// Chain Colors
-val SolanaPurple = ControlPlaneTokens.Finance.accent
-val TronRed = Color(0xFFFF060A)
-val USDTGreen = Color(0xFF26A17B)
-
-// Low-alpha emphasis washes used instead of cinematic neon
-val GlowBlue = ControlPlaneTokens.Infra.accent.copy(alpha = ControlPlaneTokens.Motion.maxGlowAlpha)
-val GlowGreen =
-    ControlPlaneTokens.Settlement.accent.copy(alpha = ControlPlaneTokens.Motion.maxGlowAlpha)
-val GlowYellow =
-    ControlPlaneTokens.Warning.accent.copy(alpha = ControlPlaneTokens.Motion.maxGlowAlpha)
-
-// Legacy color aliases for backward compatibility
-val TextPrimaryWhite = TextPrimary
-val TextSecondaryGray = TextSecondary
-val TextTertiaryGray = TextTertiary
+val DividerLight = Color(0xFFE4ECFA)
