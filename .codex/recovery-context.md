@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-10T13:52:47Z
+Generated: 2026-04-10T13:57:28Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-2mt.22.4
-- next_task_title: 重建 Android 页面：P2 Core/Extended 按 H5 1:1 接入真实接口与回测数据
+- next_task_id: liaojiang-2mt
+- next_task_title: 新主线：将 full delivery 最新 UI 重写为高保真 HTML5
 
 ## Counters
-- in_progress: 5
+- in_progress: 1
 - ready: 0
-- open: 8
-- closed: 347
-- dirty: 77
+- open: 3
+- closed: 352
+- dirty: 12
 
 ## Next Milestone
 - Continue the next task and complete one milestone
