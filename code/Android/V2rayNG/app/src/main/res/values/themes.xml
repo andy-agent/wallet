@@ -69,7 +69,7 @@
     </style>
 
     <style name="AppThemeDayNight.ComposeLaunch" parent="AppThemeDayNight.NoActionBar">
-        <item name="android:windowBackground">@drawable/launch_splash_window</item>
+        <item name="android:windowBackground">@drawable/launch_splash_window_bg</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@color/md_theme_background</item>
         <item name="android:windowLightStatusBar">true</item>

@@ -1,8 +1,11 @@
 package com.v2ray.ang.ui.compose
 
+import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.os.Bundle
+import android.view.View
 import android.view.animation.DecelerateInterpolator
+import android.view.animation.LinearInterpolator
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.ComponentActivity
@@ -20,12 +23,10 @@ import kotlin.system.measureTimeMillis
 
 class LaunchSplashActivity : ComponentActivity() {
     private lateinit var progressBar: ProgressBar
-    private lateinit var progressHeadline: TextView
     private lateinit var progressDetail: TextView
-    private lateinit var buildStatus: TextView
-    private lateinit var versionLabel: TextView
-    private lateinit var walletMetric: TextView
-    private lateinit var vpnMetric: TextView
+    private lateinit var hubGlow: View
+    private lateinit var hubRingOuter: View
+    private lateinit var hubRingInner: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,15 +34,12 @@ class LaunchSplashActivity : ComponentActivity() {
         setContentView(R.layout.activity_launch_splash)
 
         progressBar = findViewById(R.id.launch_progress)
-        progressHeadline = findViewById(R.id.launch_progress_headline)
         progressDetail = findViewById(R.id.launch_progress_detail)
-        buildStatus = findViewById(R.id.launch_build_status)
-        versionLabel = findViewById(R.id.launch_version_label)
-        walletMetric = findViewById(R.id.launch_wallet_metric)
-        vpnMetric = findViewById(R.id.launch_vpn_metric)
+        hubGlow = findViewById(R.id.launch_hub_glow)
+        hubRingOuter = findViewById(R.id.launch_hub_ring_outer)
+        hubRingInner = findViewById(R.id.launch_hub_ring_inner)
 
-        walletMetric.text = "4 链架构"
-        vpnMetric.text = "62 节点"
+        startHubAnimation()
 
         lifecycleScope.launch {
             runLaunchSequence()
@@ -57,38 +55,26 @@ class LaunchSplashActivity : ComponentActivity() {
         val elapsed = measureTimeMillis {
             renderStage(
                 progress = 0.12f,
-                headline = "连接钱包与网络",
                 detail = "初始化加密模块、节点探测与资产索引…",
-                buildText = "正在建立安全启动环境",
-                versionText = "--",
             )
             delay(260)
 
             renderStage(
                 progress = 0.34f,
-                headline = "装载本地安全环境",
                 detail = "读取加密存储、配置项与会话凭据…",
-                buildText = "正在装载本地凭据与偏好",
-                versionText = "--",
             )
             delay(260)
 
             snapshot = snapshotDeferred.await()
             renderStage(
                 progress = 0.58f,
-                headline = "同步账户与缓存",
                 detail = "解析钱包账户、订单索引与节点缓存…",
-                buildText = snapshot.buildStatus,
-                versionText = snapshot.versionLabel,
             )
             delay(280)
 
             renderStage(
                 progress = 0.82f,
-                headline = "校验安全状态",
                 detail = snapshot.buildStatus.ifBlank { "准备主界面与安全通道…" },
-                buildText = snapshot.buildStatus,
-                versionText = snapshot.versionLabel,
             )
             delay(260)
         }
@@ -99,10 +85,7 @@ class LaunchSplashActivity : ComponentActivity() {
 
         renderStage(
             progress = 1f,
-            headline = "准备完成",
             detail = "安全通道与钱包环境已就绪，正在进入主界面…",
-            buildText = snapshot.buildStatus,
-            versionText = snapshot.versionLabel,
         )
         delay(280)
 
@@ -118,15 +101,9 @@ class LaunchSplashActivity : ComponentActivity() {
 
     private fun renderStage(
         progress: Float,
-        headline: String,
         detail: String,
-        buildText: String,
-        versionText: String,
     ) {
-        progressHeadline.text = headline
         progressDetail.text = detail
-        buildStatus.text = buildText
-        versionLabel.text = versionText
         animateProgressTo((progress * 100).toInt())
     }
 
@@ -136,5 +113,41 @@ class LaunchSplashActivity : ComponentActivity() {
         animator.interpolator = DecelerateInterpolator()
         animator.addUpdateListener { progressBar.progress = it.animatedValue as Int }
         animator.start()
+    }
+
+    private fun startHubAnimation() {
+        ObjectAnimator.ofFloat(hubRingOuter, View.ROTATION, 0f, 360f).apply {
+            duration = 8200L
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = LinearInterpolator()
+            start()
+        }
+        ObjectAnimator.ofFloat(hubRingInner, View.ROTATION, 360f, 0f).apply {
+            duration = 6200L
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = LinearInterpolator()
+            start()
+        }
+        ObjectAnimator.ofFloat(hubGlow, View.ALPHA, 0.45f, 0.9f).apply {
+            duration = 1400L
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            interpolator = DecelerateInterpolator()
+            start()
+        }
+        ObjectAnimator.ofFloat(hubGlow, View.SCALE_X, 0.96f, 1.08f).apply {
+            duration = 1800L
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            interpolator = LinearInterpolator()
+            start()
+        }
+        ObjectAnimator.ofFloat(hubGlow, View.SCALE_Y, 0.96f, 1.08f).apply {
+            duration = 1800L
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            interpolator = LinearInterpolator()
+            start()
+        }
     }
 }
