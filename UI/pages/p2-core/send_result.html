@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Send Result</title>
+  <title>发送完成</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -16,47 +16,41 @@
 <body class="phone-page">
   <div class="screen-wrap">
     <main class="screen">
-      <div class="status-bar"><span>18:18</span><div class="status-icons"><span>Chain</span><span>Done</span></div></div>
+      <div class="status-bar"><span>18:46</span><div class="status-icons"><span></span><span></span></div></div>
       <header class="screen-header">
-        <a class="back-link" href="./send.html">&lt; Send</a>
-        <div class="eyebrow">SEND RESULT</div>
+        <a class="back-link" href="./send.html">&lt;</a>
+        <div class="eyebrow">TRANSFER RESULT</div>
+        <div class="chip-row"><span class="chip">• 广播成功</span></div>
         <h1 class="screen-title">发送完成</h1>
-        <p class="screen-subtitle">交易已广播到链上，页面汇总 TxID、收款地址、矿工费与风险追踪建议。</p>
+        <p class="screen-subtitle">交易已广播到链上，可在资产详情中继续追踪确认状态。</p>
       </header>
       <section class="screen-body">
         <article class="page-card">
-          <div class="page-card-header">
-            <div>
-              <div class="card-title">Broadcast Success</div>
-              <div class="hero-note">Tx Hash · 0x7f9b...c219</div>
-            </div>
-            <span class="status-chip">Confirmed</span>
-          </div>
           <div class="metric-grid">
-            <div class="mini-card"><div class="mini-label">Amount</div><div class="mini-value">580</div></div>
-            <div class="mini-card"><div class="mini-label">Network Fee</div><div class="mini-value">1.24</div></div>
-            <div class="mini-card"><div class="mini-label">ETA</div><div class="mini-value">38s</div></div>
-            <div class="mini-card"><div class="mini-label">Route</div><div class="mini-value">TRON</div></div>
+            <div class="mini-card"><div class="mini-label">12,500USDT</div><div class="mini-value">TRON网络 •预计1个确</div></div>
+            <div class="mini-card"><div class="mini-label">收款地址</div><div class="mini-value">TOX...kJ8V</div></div>
+            <div class="mini-card"><div class="mini-label">矿工费</div><div class="mini-value">1.24 USDT</div></div>
+            <div class="mini-card"><div class="mini-label">交易哈希</div><div class="mini-value">9A2F...C912</div></div>
           </div>
         </article>
         <article class="page-card">
-          <div class="card-title">Post-Transaction Guidance</div>
-          <div class="stack-list" style="margin-top:10px;">
-            <div class="list-row"><div><div class="row-title">等待对方钱包确认</div><div class="row-subtitle">大多数中心化平台会在 1-2 个确认后入账。</div></div><div class="row-value">1/2</div></div>
-            <div class="list-row"><div><div class="row-title">保存 TxID</div><div class="row-subtitle">若对方未到账，请使用交易哈希进行客服排查。</div></div><div class="row-value">Saved</div></div>
+          <div class="card-title">转账详情</div>
+          <p class="card-copy">手续费与到账地址已经锁定，链上确认完成后余额会自动同步。</p>
+          <div class="stack-list" style="margin-top:12px;">
+            <div class="list-row"><div><div class="row-title">状态</div><div class="row-subtitle">等待区块确认</div></div><div class="row-value">1 block</div></div>
           </div>
         </article>
         <div class="action-row">
-          <a class="button-secondary" href="./asset_detail.html">返回资产</a>
-          <a class="button-primary" href="./receive.html">分享记录</a>
+          <a class="button-secondary" href="./asset_detail.html">返回钱包首页</a>
+          <a class="button-primary" href="./receive.html">查看交易哈希</a>
         </div>
       </section>
       <nav class="bottom-nav">
-        <a class="nav-item" href="../../index.html"><span class="nav-icon">H</span><span>Home</span></a>
-        <a class="nav-item" href="../../index.html"><span class="nav-icon">V</span><span>VPN</span></a>
-        <a class="nav-item active" href="./asset_detail.html"><span class="nav-icon">W</span><span>Wallet</span></a>
-        <a class="nav-item" href="./invite_center.html"><span class="nav-icon">E</span><span>Earn</span></a>
-        <a class="nav-item" href="./profile.html"><span class="nav-icon">P</span><span>Profile</span></a>
+        <a class="nav-item" href="../../index.html"><span class="nav-icon"></span><span>总览</span></a>
+        <a class="nav-item" href="../../index.html"><span class="nav-icon"></span><span>VPN</span></a>
+        <a class="nav-item active" href="./asset_detail.html"><span class="nav-icon"></span><span>钱包</span></a>
+        <a class="nav-item" href="./invite_center.html"><span class="nav-icon"></span><span>增长</span></a>
+        <a class="nav-item" href="./profile.html"><span class="nav-icon"></span><span>我的</span></a>
       </nav>
     </main>
   </div>

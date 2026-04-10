@@ -60,6 +60,14 @@
   gap: 8px;
 }
 
+.p01-icons span {
+  display: inline-block;
+  width: 16px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(116, 134, 174, 0.55);
+}
+
 .p01-header {
   display: grid;
   gap: 10px;
@@ -402,6 +410,7 @@
   height: 30px;
   border-radius: 50%;
   background: rgba(72, 116, 255, 0.08);
+  color: transparent;
 }
 
 .p01-success {

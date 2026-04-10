@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VPN Home</title>
+  <title>VPN核心</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -17,54 +17,51 @@
   <main class="p01-shell">
     <section class="p01-screen">
       <div class="p01-safe">
-        <div class="p01-status"><span>18:06</span><div class="p01-icons"><span>VPN</span><span>3 hops</span></div></div>
+        <div class="p01-status"><span>18:30</span><div class="p01-icons"><span></span><span></span></div></div>
         <header class="p01-header">
-          <div class="p01-eyebrow">CONTROL PLANE</div>
-          <h1 class="p01-title">网络与资产总览</h1>
-          <p class="p01-subtitle">把 VPN 连接状态、钱包余额、异常提醒和快捷动作合并在一个控制平面。</p>
-          <div class="p01-search">搜索节点 / 币种 / 订单 / 标签</div>
+          <div class="p01-eyebrow">SECURE TUNNEL</div>
+          <div class="p01-chip-row"><span class="p01-chip">• 已连接</span></div>
+          <h1 class="p01-title">VPN核心</h1>
+          <p class="p01-subtitle">将节点健康、实时延迟、套餐状态与支付续费融合到一屏。</p>
         </header>
         <section class="p01-body-grid">
           <article class="p01-card p01-hero">
-            <div class="p01-hero-split">
-              <div class="p01-orb"></div>
-              <div class="p01-list">
-                <div><div class="p01-card-title">$24,892.42</div><div class="p01-card-copy">总资产 · 24h <span style="color:var(--accent-mint)">+6.24%</span></div></div>
-                <div class="p01-metric-grid">
-                  <div class="p01-metric"><div class="p01-metric-label">Latency</div><div class="p01-metric-value">41ms</div></div>
-                  <div class="p01-metric"><div class="p01-metric-label">Health</div><div class="p01-metric-value">97%</div></div>
-                </div>
-              </div>
+            <div class="p01-card-header"><div class="p01-card-title">当前连接</div><span class="p01-chip">月费 Pro• 剩余23天</span></div>
+            <div class="p01-card-copy">东京• JP-01 • VLESS + Reality</div>
+            <div class="p01-metric-grid">
+              <div class="p01-metric"><div class="p01-metric-label">CONNECTED</div><div class="p01-metric-value">89Mbps</div></div>
+              <div class="p01-metric"><div class="p01-metric-label">延迟</div><div class="p01-metric-value">41ms</div></div>
+              <div class="p01-metric"><div class="p01-metric-label">在线时长</div><div class="p01-metric-value">08h 42m</div></div>
+              <div class="p01-metric"><div class="p01-metric-label">节点评分</div><div class="p01-metric-value">97/100</div></div>
             </div>
             <div class="p01-dual">
               <a class="p01-button-secondary" href="../p1/region_selection.html">切换节点</a>
-              <a class="p01-button-primary" href="../p1/plans.html">断开 / 重连</a>
+              <a class="p01-button-primary" href="../p1/plans.html">断开/重新连接</a>
             </div>
           </article>
           <article class="p01-card">
-            <div class="p01-card-header"><div class="p01-card-title">快捷动作</div><span class="p01-chip">P0 核心</span></div>
-            <div class="p01-quick-grid">
-              <a class="p01-quick" href="../p2-core/receive.html"><span class="p01-quick-icon">R</span><span>收款</span></a>
-              <a class="p01-quick" href="../p2-core/send.html"><span class="p01-quick-icon">S</span><span>发送</span></a>
-              <a class="p01-quick" href="../p1/region_selection.html"><span class="p01-quick-icon">N</span><span>选区</span></a>
-              <a class="p01-quick" href="../p1/plans.html"><span class="p01-quick-icon">P</span><span>买套餐</span></a>
+            <div class="p01-card-title">流量与健康</div>
+            <div class="p01-quick-grid" style="margin-top:12px;">
+              <a class="p01-quick" href="../p2-core/receive.html"><span class="p01-quick-icon"></span><span>12.4 GB</span></a>
+              <a class="p01-quick" href="../p2-core/send.html"><span class="p01-quick-icon"></span><span>82.1 GB</span></a>
+              <a class="p01-quick" href="../p1/region_selection.html"><span class="p01-quick-icon"></span><span>0.2%</span></a>
+              <a class="p01-quick" href="../p1/order_list.html"><span class="p01-quick-icon"></span><span>查看订单</span></a>
             </div>
+            <p class="p01-card-copy" style="margin-top:12px;">今日保护设备4台，智能路由命中率持续提升。</p>
           </article>
           <article class="p01-card">
-            <div class="p01-card-title">实时提醒</div>
+            <div class="p01-card-title">最近提醒</div>
             <div class="p01-list" style="margin-top:10px;">
-              <div class="p01-row"><div><div class="p01-row-title">节点抖动恢复</div><div class="p01-row-copy">东京 01 已回到低延迟状态。</div></div><div class="p01-row-value">已恢复</div></div>
-              <div class="p01-row"><div><div class="p01-row-title">SOL 入账待确认</div><div class="p01-row-copy">0.82 SOL，预计 1 个确认后完成。</div></div><div class="p01-row-value">1 block</div></div>
-              <div class="p01-row"><div><div class="p01-row-title">USDT 余额同步</div><div class="p01-row-copy">钱包侧最近 6 个小时均正常。</div></div><div class="p01-row-value">实时</div></div>
+              <div class="p01-row"><div><div class="p01-row-title">节点抖动已恢复•套餐将在3天后自动续费</div></div><div class="p01-row-value">查看订单</div></div>
             </div>
           </article>
         </section>
         <nav class="p01-bottom-nav">
-          <a class="p01-nav active" href="./vpn_home.html"><span class="p01-nav-icon">H</span><span>Home</span></a>
-          <a class="p01-nav" href="../p1/plans.html"><span class="p01-nav-icon">V</span><span>VPN</span></a>
-          <a class="p01-nav" href="./wallet_home.html"><span class="p01-nav-icon">W</span><span>Wallet</span></a>
-          <a class="p01-nav" href="../p2-core/invite_center.html"><span class="p01-nav-icon">E</span><span>Earn</span></a>
-          <a class="p01-nav" href="../p2-core/profile.html"><span class="p01-nav-icon">P</span><span>Profile</span></a>
+          <a class="p01-nav active" href="./vpn_home.html"><span class="p01-nav-icon"></span><span>总览</span></a>
+          <a class="p01-nav" href="../p1/plans.html"><span class="p01-nav-icon"></span><span>VPN</span></a>
+          <a class="p01-nav" href="./wallet_home.html"><span class="p01-nav-icon"></span><span>钱包</span></a>
+          <a class="p01-nav" href="../p2-core/invite_center.html"><span class="p01-nav-icon"></span><span>增长</span></a>
+          <a class="p01-nav" href="../p2-core/profile.html"><span class="p01-nav-icon"></span><span>我的</span></a>
         </nav>
       </div>
     </section>
