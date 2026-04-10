@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-04-10T15:29:12Z",
+  "generated_at": "2026-04-10T16:00:41Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-2mt.25",
   "next_task_title": "修复冷启动白屏并将启动页改为动态过渡层",
-  "in_progress_count": 2,
+  "in_progress_count": 6,
   "ready_count": 0,
-  "open_count": 4,
-  "closed_count": 354,
-  "dirty_count": 36,
+  "open_count": 9,
+  "closed_count": 356,
+  "dirty_count": 30,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {

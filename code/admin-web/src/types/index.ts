@@ -1,335 +1,320 @@
-// 订单状态
-export type OrderStatus = 'pending' | 'paid' | 'fulfilled' | 'failed' | 'ignored';
-
-// 订单
-export interface Order {
-  id: string;
-  out_trade_no: string;
-  plan_id: number;
-  plan_name: string;
-  amount: number;
-  currency: string;
-  status: OrderStatus;
-  user_email: string;
-  user_id?: string;
-  payer_name?: string;
-  telegram_id?: string;
-  payment_method?: string;
-  transaction_id?: string;
-  paid_at?: string;
-  fulfilled_at?: string;
-  created_at: string;
-  updated_at: string;
-  remark?: string;
-}
-
-// 订单列表响应
-export interface OrderListResponse {
-  items: Order[];
-  total: number;
+export interface PaginatedResult<T> {
+  items: T[];
   page: number;
-  page_size: number;
+  pageSize: number;
+  total: number;
 }
 
-// 订单查询参数 - aligned with backend: page, pageSize, orderNo, status, email
+export type OrderStatus =
+  | 'AWAITING_PAYMENT'
+  | 'PAYMENT_DETECTED'
+  | 'CONFIRMING'
+  | 'PAID'
+  | 'PROVISIONING'
+  | 'COMPLETED'
+  | 'EXPIRED'
+  | 'UNDERPAID_REVIEW'
+  | 'OVERPAID_REVIEW'
+  | 'FAILED'
+  | 'CANCELED';
+
+export interface Order {
+  orderId: string;
+  orderNo: string;
+  accountId: string;
+  accountEmail: string;
+  planCode: string;
+  planName: string;
+  orderType: 'NEW' | 'RENEWAL';
+  quoteAssetCode: 'SOL' | 'USDT';
+  quoteNetworkCode: 'SOLANA' | 'TRON';
+  quoteUsdAmount: string;
+  payableAmount: string;
+  status: OrderStatus;
+  expiresAt: string;
+  confirmedAt: string | null;
+  completedAt: string | null;
+  failureReason: string | null;
+  submittedClientTxHash: string | null;
+}
+
+export type OrderListResponse = PaginatedResult<Order>;
+
 export interface OrderQueryParams {
   page?: number;
   pageSize?: number;
-  status?: string;
+  status?: OrderStatus;
   orderNo?: string;
   email?: string;
-  start_date?: string;
-  end_date?: string;
-  keyword?: string;
 }
 
-// 套餐
-export interface Plan {
-  id: number;
-  name: string;
-  description?: string;
-  price: number;
-  original_price?: number;
-  currency: string;
-  duration_days: number;
-  is_active: boolean;
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
+export interface DashboardSummary {
+  activeAccounts: number;
+  activeSubscriptions: number;
+  awaitingOrders: number;
+  reviewOrders: number;
+  pendingWithdrawals: number;
+  todayPaidOrders: number;
 }
 
-// 创建/更新套餐请求
-export interface PlanFormData {
-  name: string;
-  description?: string;
-  price: number;
-  original_price?: number;
-  currency: string;
-  duration_days: number;
-  is_active: boolean;
-  sort_order: number;
-}
+export type AccountStatus = 'ACTIVE' | 'FROZEN' | 'CLOSED';
 
-// 审计日志
-export interface AuditLog {
-  id: number;
-  action: string;
-  entity_type: string;
-  entity_id: string;
-  operator: string;
-  operator_id?: string;
-  old_value?: string;
-  new_value?: string;
-  ip_address?: string;
-  created_at: string;
-}
+export type SubscriptionStatus =
+  | 'PENDING_ACTIVATION'
+  | 'ACTIVE'
+  | 'EXPIRED'
+  | 'SUSPENDED'
+  | 'CANCELED'
+  | 'NONE';
 
-// 审计日志列表响应
-export interface AuditLogListResponse {
-  items: AuditLog[];
-  total: number;
-  page: number;
-  page_size: number;
+export interface Subscription {
+  subscriptionId: string;
+  planCode: string;
+  status: SubscriptionStatus;
+  startedAt: string | null;
+  expireAt: string | null;
+  daysRemaining: number | null;
+  isUnlimitedTraffic: boolean;
+  maxActiveSessions: number;
 }
-
-// 审计日志查询参数 - aligned with backend: page, pageSize, module, actorType, targetType, dateRange
-export interface AuditLogQueryParams {
-  page?: number;
-  pageSize?: number;
-  entity_type?: string;
-  entity_id?: string;
-  action?: string;
-  module?: string;
-  actorType?: string;
-  targetType?: string;
-  dateRange?: string;
-  start_date?: string;
-  end_date?: string;
-}
-
-// 统计数据
-export interface DashboardStats {
-  today_orders: number;
-  today_revenue: number;
-  pending_orders: number;
-  status_distribution: {
-    status: string;
-    count: number;
-  }[];
-  recent_trend: {
-    date: string;
-    orders: number;
-    revenue: number;
-  }[];
-}
-
-// ==================== 账号相关类型 ====================
 
 export interface Account {
   accountId: string;
   email: string;
-  status: 'active' | 'frozen' | 'pending';
-  planCode?: string;
-  expireAt?: string;
-  lastLoginAt?: string;
-  createdAt: string;
+  status: AccountStatus;
+  referralCode: string;
+  subscription?: Subscription | null;
 }
 
-export interface AccountListResponse {
-  items: Account[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export type AccountListResponse = PaginatedResult<Account>;
 
 export interface AccountQueryParams {
   page?: number;
   pageSize?: number;
   email?: string;
-  status?: string;
+  status?: AccountStatus;
 }
 
-export interface AccountDetail extends Account {
-  subscription?: {
-    planName: string;
-    status: string;
-    expiresAt: string;
-  };
-  referral?: {
-    code: string;
-    inviteCount: number;
-  };
-  commission?: {
-    availableAmount: number;
-    frozenAmount: number;
-  };
-}
+export type AccountDetail = Account;
 
-// ==================== 提现相关类型 ====================
+export type WithdrawalStatus =
+  | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'BROADCASTING'
+  | 'CHAIN_CONFIRMING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELED';
 
 export interface Withdrawal {
-  id: string;
   requestNo: string;
+  accountId: string;
   accountEmail: string;
-  amountUsdt: number;
-  network: string;
-  address: string;
-  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'failed';
-  txHash?: string;
+  amount: string;
+  assetCode: 'USDT';
+  networkCode: 'SOLANA';
+  payoutAddress: string;
+  status: WithdrawalStatus;
+  failReason: string | null;
+  txHash: string | null;
   createdAt: string;
-  updatedAt: string;
+  reviewedAt: string | null;
+  completedAt: string | null;
 }
 
-export interface WithdrawalListResponse {
-  items: Withdrawal[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export type WithdrawalListResponse = PaginatedResult<Withdrawal>;
 
 export interface WithdrawalQueryParams {
   page?: number;
   pageSize?: number;
-  status?: string;
+  status?: WithdrawalStatus;
   accountEmail?: string;
 }
 
-// ==================== VPN 区域相关类型 ====================
+export interface Plan {
+  planId: string;
+  planCode: string;
+  name: string;
+  description: string;
+  billingCycleMonths: number;
+  priceUsd: string;
+  maxActiveSessions: number;
+  regionAccessPolicy: string;
+  includesAdvancedRegions: boolean;
+  allowedRegionIds: string[];
+  displayOrder: number;
+  status: string;
+}
+
+export type PlanListResponse = PaginatedResult<Plan>;
+
+export interface PlanQueryParams {
+  status?: string;
+}
+
+export interface AuditLog {
+  auditId: string;
+  requestId: string;
+  module: string;
+  action: string;
+  actorType: 'ADMIN' | 'SYSTEM' | 'USER';
+  actorId: string;
+  targetType: string;
+  targetId: string;
+  oldValue: Record<string, unknown> | null;
+  newValue: Record<string, unknown> | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+}
+
+export type AuditLogListResponse = PaginatedResult<AuditLog>;
+
+export interface AuditLogQueryParams {
+  page?: number;
+  pageSize?: number;
+  module?: string;
+  actorType?: AuditLog['actorType'];
+  targetType?: string;
+  dateRange?: string;
+}
+
+export type RegionTier = 'BASIC' | 'ADVANCED';
+export type RegionStatus = 'ACTIVE' | 'MAINTENANCE' | 'INACTIVE';
 
 export interface VpnRegion {
-  id: string;
+  regionId: string;
   regionCode: string;
   displayName: string;
-  tier: 'standard' | 'premium';
-  status: 'active' | 'inactive' | 'maintenance';
+  tier: RegionTier;
+  status: RegionStatus;
   sortOrder: number;
+  remark: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface RegionListResponse {
-  items: VpnRegion[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export type RegionListResponse = PaginatedResult<VpnRegion>;
 
 export interface RegionQueryParams {
   page?: number;
   pageSize?: number;
-  tier?: string;
-  status?: string;
+  tier?: RegionTier;
+  status?: RegionStatus;
 }
 
-// ==================== VPN 节点相关类型 ====================
+export type NodeProtocol = 'VLESS' | 'VMESS' | 'TROJAN';
+export type NodeStatus = 'ACTIVE' | 'MAINTENANCE' | 'INACTIVE';
+export type NodeHealthStatus = 'HEALTHY' | 'DEGRADED' | 'UNHEALTHY';
 
 export interface VpnNode {
-  id: string;
+  nodeId: string;
+  regionId: string;
   nodeCode: string;
-  regionCode: string;
+  displayName: string;
   host: string;
   port: number;
-  status: 'active' | 'inactive';
-  healthStatus: 'healthy' | 'unhealthy' | 'unknown';
-  weight: number;
+  protocol: NodeProtocol;
+  status: NodeStatus;
+  healthStatus: NodeHealthStatus;
+  currentLoad: number;
+  maxCapacity: number;
+  lastHealthCheckAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface NodeListResponse {
-  items: VpnNode[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export type NodeListResponse = PaginatedResult<VpnNode>;
 
 export interface NodeQueryParams {
   page?: number;
   pageSize?: number;
   regionId?: string;
-  status?: string;
-  healthStatus?: string;
+  status?: NodeStatus;
+  healthStatus?: NodeHealthStatus;
 }
 
-// ==================== 版本管理相关类型 ====================
+export type VersionPlatform = 'ANDROID' | 'IOS';
+export type VersionChannel = 'GOOGLE_PLAY' | 'APP_STORE' | 'OFFICIAL';
+export type VersionStatus = 'DRAFT' | 'PUBLISHED' | 'DEPRECATED';
 
 export interface AppVersion {
-  id: string;
-  versionCode: number;
+  versionId: string;
+  platform: VersionPlatform;
+  channel: VersionChannel;
   versionName: string;
-  platform: 'android' | 'ios';
-  channel: string;
-  status: 'active' | 'deprecated' | 'force_update';
-  releaseNotes?: string;
-  downloadUrl?: string;
+  versionCode: number;
+  minAndroidVersionCode: number | null;
+  minIosVersionCode: number | null;
+  downloadUrl: string | null;
+  forceUpdate: boolean;
+  releaseNotes: string;
+  status: VersionStatus;
+  publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface VersionListResponse {
-  items: AppVersion[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export type VersionListResponse = PaginatedResult<AppVersion>;
 
 export interface VersionQueryParams {
   page?: number;
   pageSize?: number;
-  status?: string;
-  channel?: string;
+  status?: VersionStatus;
+  channel?: VersionChannel;
 }
 
-// ==================== 法务文档相关类型 ====================
+export type LegalDocumentType =
+  | 'TERMS_OF_SERVICE'
+  | 'PRIVACY_POLICY'
+  | 'REFUND_POLICY'
+  | 'RISK_DISCLOSURE';
+
+export type LegalDocumentStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
 export interface LegalDocument {
-  id: string;
-  docType: string;
+  docId: string;
+  docType: LegalDocumentType;
+  versionNo: string;
   title: string;
-  content?: string;
-  version: string;
-  status: 'active' | 'draft' | 'archived';
-  effectiveAt?: string;
+  content: string;
+  status: LegalDocumentStatus;
+  effectiveAt: string | null;
   createdAt: string;
   updatedAt: string;
+  updatedBy: string | null;
 }
 
-export interface LegalDocumentListResponse {
-  items: LegalDocument[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export type LegalDocumentListResponse = PaginatedResult<LegalDocument>;
 
 export interface LegalDocumentQueryParams {
   page?: number;
   pageSize?: number;
-  docType?: string;
-  status?: string;
+  docType?: LegalDocumentType;
+  status?: LegalDocumentStatus;
 }
 
-// ==================== 系统配置相关类型 ====================
+export type SystemConfigValueType = 'STRING' | 'NUMBER' | 'BOOLEAN' | 'JSON';
+export type SystemConfigScope = 'GLOBAL' | 'VPN' | 'PAYMENT' | 'REFERRAL';
 
 export interface SystemConfig {
-  id: string;
-  key: string;
-  value: string;
-  scope: string;
-  description?: string;
-  createdAt: string;
+  configKey: string;
+  configValue: string;
+  valueType: SystemConfigValueType;
+  description: string;
+  scope: SystemConfigScope;
+  isEditable: boolean;
   updatedAt: string;
+  updatedBy: string | null;
 }
 
-export interface SystemConfigListResponse {
-  items: SystemConfig[];
-  total: number;
-}
+export type SystemConfigListResponse = PaginatedResult<SystemConfig>;
 
 export interface SystemConfigQueryParams {
-  scope?: string;
+  scope?: SystemConfigScope;
 }
-
-// ==================== 登录相关类型 ====================
 
 export interface AdminLoginRequest {
   username: string;
@@ -338,12 +323,13 @@ export interface AdminLoginRequest {
 
 export interface AdminLoginResponse {
   accessToken: string;
-  expiresIn: number;
+  accessTokenExpiresAt: string;
+  adminId: string;
+  role: string;
 }
 
-// API 响应格式
 export interface ApiResponse<T> {
-  code: number;
+  code: number | string;
   message: string;
   data: T;
 }

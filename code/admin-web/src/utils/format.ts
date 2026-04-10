@@ -1,47 +1,82 @@
 import dayjs from 'dayjs';
 
-// 格式化日期时间
-export const formatDateTime = (date: string | Date, format = 'YYYY-MM-DD HH:mm:ss'): string => {
-  if (!date) return '-';
+export const formatDateTime = (
+  date: string | Date | null | undefined,
+  format = 'YYYY-MM-DD HH:mm:ss',
+): string => {
+  if (!date) {
+    return '-';
+  }
   return dayjs(date).format(format);
 };
 
-// 格式化日期
-export const formatDate = (date: string | Date): string => {
-  if (!date) return '-';
+export const formatDate = (date: string | Date | null | undefined): string => {
+  if (!date) {
+    return '-';
+  }
   return dayjs(date).format('YYYY-MM-DD');
 };
 
-// 格式化金额
-export const formatAmount = (amount: number, currency = 'CNY'): string => {
-  if (amount === undefined || amount === null) return '-';
-  const symbol = currency === 'CNY' ? '¥' : currency === 'USD' ? '$' : currency;
-  return `${symbol}${(amount / 100).toFixed(2)}`;
+export const formatAmount = (
+  amount: number | string | null | undefined,
+  currency = 'USD',
+): string => {
+  if (amount === undefined || amount === null || amount === '') {
+    return '-';
+  }
+
+  const numericAmount =
+    typeof amount === 'number' ? amount : Number.parseFloat(amount);
+  const fallbackText = String(amount);
+  const formatted =
+    Number.isFinite(numericAmount)
+      ? numericAmount.toLocaleString('zh-CN', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 8,
+        })
+      : fallbackText;
+
+  if (currency === 'USD') {
+    return `$${formatted}`;
+  }
+
+  if (currency === 'CNY') {
+    return `¥${formatted}`;
+  }
+
+  return `${formatted} ${currency}`;
 };
 
-// 获取订单状态显示
-export const getOrderStatusText = (status: string): { text: string; color: string } => {
+export const getOrderStatusText = (
+  status: string,
+): { text: string; color: string } => {
   const statusMap: Record<string, { text: string; color: string }> = {
-    pending: { text: '待支付', color: 'default' },
-    paid: { text: '已支付', color: 'processing' },
-    fulfilled: { text: '已完成', color: 'success' },
-    failed: { text: '失败', color: 'error' },
-    ignored: { text: '已忽略', color: 'warning' },
+    AWAITING_PAYMENT: { text: '待支付', color: 'default' },
+    PAYMENT_DETECTED: { text: '已检测支付', color: 'processing' },
+    CONFIRMING: { text: '链上确认中', color: 'processing' },
+    PAID: { text: '已支付', color: 'processing' },
+    PROVISIONING: { text: '开通中', color: 'warning' },
+    COMPLETED: { text: '已完成', color: 'success' },
+    EXPIRED: { text: '已过期', color: 'default' },
+    UNDERPAID_REVIEW: { text: '少付待复核', color: 'warning' },
+    OVERPAID_REVIEW: { text: '多付待复核', color: 'warning' },
+    FAILED: { text: '失败', color: 'error' },
+    CANCELED: { text: '已取消', color: 'default' },
   };
-  return statusMap[status] || { text: status, color: 'default' };
+
+  return statusMap[status] ?? { text: status, color: 'default' };
 };
 
-// 获取操作类型显示
 export const getActionText = (action: string): string => {
   const actionMap: Record<string, string> = {
-    create: '创建',
-    update: '更新',
-    delete: '删除',
-    manual_fulfill: '人工确认',
-    retry_fulfill: '重试发货',
-    ignore: '标记忽略',
-    login: '登录',
-    logout: '登出',
+    CREATE: '创建',
+    UPDATE: '更新',
+    DELETE: '删除',
+    MARK_EXCEPTION: '标记异常',
+    APPROVE: '通过',
+    LOGIN: '登录',
+    LOGOUT: '登出',
   };
-  return actionMap[action] || action;
+
+  return actionMap[action] ?? action;
 };
