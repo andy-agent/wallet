@@ -321,10 +321,10 @@ h1{margin:16px 0 0 0;font-size:64px;line-height:1.08;font-weight:900;letter-spac
       </div>
     </div>
     <div class="pill-tabs" style="margin-top:28px">
-      <div class="pill active">主账户</div><div class="pill">硬件钱包</div><div class="pill">观察钱包</div>
+      <div class="pill active" data-toggle-group="wallet-mode" role="button" tabindex="0">主账户</div><div class="pill" data-toggle-group="wallet-mode" role="button" tabindex="0">硬件钱包</div><div class="pill" data-toggle-group="wallet-mode" role="button" tabindex="0">观察钱包</div>
     </div>
     <div class="stack" style="margin-top:24px">
-      <div class="card padded">
+      <div class="card padded" data-href="../p2-extended/backup_mnemonic.html" role="link" tabindex="0">
         <div class="section-title"><h3>创建新钱包</h3><div class="badge blue" style="height:42px;font-size:18px">推荐</div></div>
         <div class="muted">生成助记词并开启云端加密备份提醒。</div>
         <div class="chip-grid" style="margin-top:18px">
@@ -335,7 +335,7 @@ h1{margin:16px 0 0 0;font-size:64px;line-height:1.08;font-weight:900;letter-spac
         <div class="section-title"><h3>导入助记词 / 私钥</h3><div><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#7c8ba4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
         <div class="muted">适合已有钱包用户，自动识别已支持网络与资产。</div>
       </div>
-      <div class="card padded">
+      <div class="card padded" data-href="../p2-extended/import_wallet_method.html" role="link" tabindex="0">
         <div class="section-title"><h3>仅观察模式</h3><div><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#7c8ba4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
         <div class="muted">先查看余额与交易记录，再决定是否迁移资产。</div>
       </div>
@@ -347,7 +347,7 @@ h1{margin:16px 0 0 0;font-size:64px;line-height:1.08;font-weight:900;letter-spac
         <div class="metric"><div class="mt">Backup</div><div class="mv">AES 加密</div><div class="ms">分片提醒</div></div>
       </div>
     </div>
-    <div class="btn" style="position:absolute;left:48px;right:48px;bottom:54px;margin-top:0">继续进入应用</div>
+    <div class="btn" data-href="./vpn_home.html" role="link" tabindex="0" style="position:absolute;left:48px;right:48px;bottom:54px;margin-top:0">继续进入应用</div>
     
   </div>
   

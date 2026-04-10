@@ -451,6 +451,19 @@
   border-color: rgba(72, 116, 255, 0.22);
 }
 
+[data-href],
+[data-action],
+[data-toggle-group] {
+  cursor: pointer;
+}
+
+[data-href]:focus-visible,
+[data-action]:focus-visible,
+[data-toggle-group]:focus-visible {
+  outline: 3px solid rgba(72, 116, 255, 0.28);
+  outline-offset: 3px;
+}
+
 body.p0p1-body {
   min-height: 100vh;
   color: var(--text-strong);
