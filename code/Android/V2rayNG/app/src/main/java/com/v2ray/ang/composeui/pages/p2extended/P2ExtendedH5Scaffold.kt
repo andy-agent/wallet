@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,8 +51,9 @@ internal fun P2ExtendedPageScaffold(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             HeroSection(
                 kicker = kicker,
@@ -60,10 +62,10 @@ internal fun P2ExtendedPageScaffold(
                 hubLabel = hubLabel,
                 onHubClick = onHubClick,
             )
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             ColumnScopeWrapper.content()
             if (primaryActionLabel != null && onPrimaryAction != null) {
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 Button(
                     onClick = onPrimaryAction,
                     modifier = Modifier
@@ -76,7 +78,7 @@ internal fun P2ExtendedPageScaffold(
                 }
             }
             if (secondaryActionLabel != null && onSecondaryAction != null) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 OutlinedButton(
                     onClick = onSecondaryAction,
                     modifier = Modifier
@@ -88,7 +90,7 @@ internal fun P2ExtendedPageScaffold(
                     Text(secondaryActionLabel, color = Color(0xFF3C4D8A), style = MaterialTheme.typography.titleMedium)
                 }
             }
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(14.dp))
         }
     }
 }

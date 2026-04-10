@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -128,9 +129,9 @@ fun P01PhoneScaffold(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .statusBarsPadding()
                     .padding(contentPadding),
             ) {
-                P01StatusBar(time = statusTime)
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -139,7 +140,7 @@ fun P01PhoneScaffold(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                     content = content,
                 )
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 P01BottomNav(
                     currentRoute = currentRoute,
                     destinations = destinations,
@@ -740,10 +741,10 @@ fun P01BottomNav(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(18.dp))
             .background(P01Surface)
-            .border(1.dp, P01Border, RoundedCornerShape(24.dp))
-            .padding(horizontal = 6.dp, vertical = 8.dp),
+            .border(1.dp, P01Border, RoundedCornerShape(18.dp))
+            .padding(horizontal = 5.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         destinations.forEach { item ->
@@ -751,16 +752,16 @@ fun P01BottomNav(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(if (active) P01AccentBlue.copy(alpha = 0.08f) else Color.Transparent)
                     .clickable { onNavigate(item.route) }
-                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                    .padding(vertical = 4.dp, horizontal = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Box(
                     modifier = Modifier
-                        .size(30.dp)
+                        .size(22.dp)
                         .clip(CircleShape)
                         .background(P01AccentBlue.copy(alpha = 0.08f)),
                     contentAlignment = Alignment.Center,
@@ -773,7 +774,7 @@ fun P01BottomNav(
                 Text(
                     text = item.label,
                     color = if (active) P01AccentBlue else P01TextSoft,
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                 )
             }
@@ -948,83 +949,6 @@ private fun DrawScope.drawScreenTexture() {
             radius = 1.6.dp.toPx(),
             center = offset,
         )
-    }
-}
-
-@Composable
-private fun P01StatusBar(time: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = time,
-            color = P01TextSoft,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-        )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Canvas(modifier = Modifier.size(width = 16.dp, height = 10.dp)) {
-                val barWidth = size.width / 6f
-                listOf(0.55f, 0.7f, 0.85f, 1f).forEachIndexed { index, fraction ->
-                    drawRoundRect(
-                        color = P01TextSoft,
-                        topLeft = Offset(index * (barWidth + 2.dp.toPx()), size.height * (1f - fraction)),
-                        size = Size(barWidth, size.height * fraction),
-                        cornerRadius = CornerRadius(barWidth, barWidth),
-                    )
-                }
-            }
-            Canvas(modifier = Modifier.size(width = 18.dp, height = 12.dp)) {
-                val stroke = Stroke(width = 1.8.dp.toPx())
-                drawArc(
-                    color = P01TextSoft,
-                    startAngle = 200f,
-                    sweepAngle = 140f,
-                    useCenter = false,
-                    topLeft = Offset.Zero,
-                    size = size,
-                    style = stroke,
-                )
-                drawArc(
-                    color = P01TextSoft,
-                    startAngle = 210f,
-                    sweepAngle = 120f,
-                    useCenter = false,
-                    topLeft = Offset(size.width * 0.16f, size.height * 0.18f),
-                    size = Size(size.width * 0.68f, size.height * 0.64f),
-                    style = stroke,
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .width(26.dp)
-                    .height(14.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .border(1.8.dp, P01TextSoft, RoundedCornerShape(6.dp))
-                    .padding(2.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Brush.horizontalGradient(listOf(Color(0xFF57C76F), Color(0xFF9CE26F)))),
-                )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .offset(x = 4.dp)
-                        .width(2.dp)
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(P01TextSoft),
-                )
-            }
-        }
     }
 }
 

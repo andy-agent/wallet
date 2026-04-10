@@ -84,27 +84,26 @@ internal fun P2CorePageScaffold(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .statusBarsPadding()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 18.dp, vertical = 10.dp),
+                    .padding(horizontal = 18.dp, vertical = 8.dp),
             ) {
-                CoreStatusBar()
-                Spacer(modifier = Modifier.height(14.dp))
                 Text(kicker, style = MaterialTheme.typography.labelLarge, color = Color(0xFF7381AD))
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = CoreText)
                 Spacer(modifier = Modifier.height(8.dp))
+                Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = CoreText)
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = CoreSubtleText)
                 if (!badge.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     StatusChip(text = badge)
                 }
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 Column(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                     content = content,
                 )
                 if (primaryActionLabel != null && onPrimaryAction != null) {
-                    Spacer(modifier = Modifier.height(18.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     if (secondaryActionLabel != null && onSecondaryAction != null) {
                         CoreActionRow(
                             primaryActionLabel = primaryActionLabel,
@@ -120,32 +119,12 @@ internal fun P2CorePageScaffold(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 CoreBottomNav(
                     activeSection = activeSection,
                     onBottomNav = onBottomNav,
                 )
-                Spacer(modifier = Modifier.height(18.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun CoreStatusBar() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text("18:11", style = MaterialTheme.typography.labelLarge, color = Color(0xFF56617D))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            repeat(2) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 16.dp, height = 10.dp)
-                        .background(Color(0xFFBAC5E2), RoundedCornerShape(999.dp)),
-                )
+                Spacer(modifier = Modifier.height(14.dp))
             }
         }
     }
@@ -483,9 +462,9 @@ private fun CoreBottomNav(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(28.dp))
-            .border(1.dp, CoreCardBorder, RoundedCornerShape(28.dp))
-            .padding(horizontal = 6.dp, vertical = 8.dp),
+            .background(Color.White, RoundedCornerShape(20.dp))
+            .border(1.dp, CoreCardBorder, RoundedCornerShape(20.dp))
+            .padding(horizontal = 5.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Box(modifier = Modifier.weight(1f)) {
@@ -542,13 +521,13 @@ private fun CoreBottomNavItem(
     Column(
         modifier = Modifier
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
+            .padding(vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(32.dp)
+                .size(22.dp)
                 .background(if (active) Color(0xFFEAF0FF) else Color.Transparent, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
