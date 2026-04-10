@@ -1,234 +1,45 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CryptoVPN UI Hub</title>
-    <style>
-      :root {
-        --bg: #f5f9ff;
-        --bg2: #eef5ff;
-        --card: rgba(255, 255, 255, 0.88);
-        --line: rgba(91, 120, 255, 0.12);
-        --text: #10203b;
-        --muted: #7385a2;
-        --blue: #4f7cff;
-        --cyan: #20d3ee;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font-family: "SF Pro Display", "PingFang SC", "Noto Sans SC", sans-serif;
-        color: var(--text);
-        background:
-          radial-gradient(circle at 12% 10%, rgba(79, 124, 255, 0.14), transparent 20%),
-          radial-gradient(circle at 84% 12%, rgba(139, 92, 246, 0.14), transparent 22%),
-          radial-gradient(circle at 78% 86%, rgba(32, 211, 238, 0.16), transparent 18%),
-          linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
-      }
-      .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 20px 56px; }
-      .hero {
-        padding: 28px;
-        border-radius: 32px;
-        border: 1px solid rgba(255, 255, 255, 0.82);
-        background: linear-gradient(135deg, rgba(255,255,255,.92), rgba(243,248,255,.86));
-        box-shadow: 0 24px 60px rgba(31, 56, 110, 0.1);
-      }
-      .eyebrow {
-        color: #6b84b6;
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.24em;
-        text-transform: uppercase;
-      }
-      h1 {
-        margin: 12px 0 0;
-        font-size: 36px;
-        line-height: 1.06;
-      }
-      .sub {
-        margin: 14px 0 0;
-        max-width: 780px;
-        color: var(--muted);
-        font-size: 15px;
-        line-height: 1.75;
-      }
-      .chip-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 18px;
-      }
-      .chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        height: 34px;
-        padding: 0 14px;
-        border-radius: 999px;
-        background: rgba(255,255,255,.74);
-        border: 1px solid rgba(255,255,255,.82);
-        color: #4c6191;
-        font-size: 12px;
-        font-weight: 800;
-      }
-      .chip::before {
-        content: "";
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: currentColor;
-      }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 18px;
-        margin-top: 22px;
-      }
-      .card {
-        padding: 18px;
-        border-radius: 26px;
-        background: var(--card);
-        border: 1px solid var(--line);
-        box-shadow: 0 18px 42px rgba(31, 56, 110, 0.08);
-      }
-      .card.primary {
-        background: linear-gradient(135deg, rgba(255,255,255,.94), rgba(239,245,255,.92));
-      }
-      .card h2 {
-        margin: 0;
-        font-size: 18px;
-      }
-      .card p {
-        margin: 10px 0 0;
-        color: var(--muted);
-        font-size: 13px;
-        line-height: 1.7;
-      }
-      .cta-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 16px;
-      }
-      a.cta {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 120px;
-        height: 42px;
-        padding: 0 16px;
-        border-radius: 999px;
-        font-size: 13px;
-        font-weight: 800;
-        text-decoration: none;
-        color: white;
-        background: linear-gradient(90deg, var(--blue), var(--cyan));
-        box-shadow: 0 14px 28px rgba(79, 124, 255, 0.2);
-      }
-      a.cta.ghost {
-        color: #2f55d8;
-        background: #edf3ff;
-        box-shadow: none;
-      }
-      .metric-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 12px;
-        margin-top: 18px;
-      }
-      .metric {
-        padding: 14px;
-        border-radius: 20px;
-        background: rgba(255,255,255,.76);
-        border: 1px solid rgba(91, 120, 255, 0.08);
-      }
-      .metric strong {
-        display: block;
-        font-size: 24px;
-      }
-      .metric span {
-        display: block;
-        margin-top: 6px;
-        color: var(--muted);
-        font-size: 12px;
-        line-height: 1.6;
-      }
-    </style>
-  </head>
-  <body>
-    <main class="wrap">
-      <section class="hero">
-        <div class="eyebrow">Primary Source · P0 UI · Android Compose</div>
-        <h1>已采纳 ZIP 版 P0 UI 作为当前主事实源</h1>
-        <p class="sub">
-          对比结果已经收口：外部 `cryptovpn_p0_ui_pack.zip` 在页面覆盖、功能匹配度、动态细节和 PNG 对照上都优于当前仓库旧版 `/UI/pages`。
-          后续 Android / Compose 嵌套应优先使用 `p0-pack/` 下的页面与 PNG。
-        </p>
-        <div class="chip-row">
-          <span class="chip">11 页动态 HTML</span>
-          <span class="chip">11 张 PNG 对照</span>
-          <span class="chip">10 页直接匹配 App 功能</span>
-          <span class="chip">55 处动画定义</span>
-          <span class="chip">旧版 `/UI/pages` 已降级为 legacy</span>
-        </div>
-      </section>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CryptoVPN Full Delivery HTML5</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./shared/tokens.css">
+  <link rel="stylesheet" href="./shared/base.css">
+  <link rel="stylesheet" href="./shared/components.css">
+  <link rel="stylesheet" href="./shared/effects.css">
+</head>
+<body class="gallery-body">
+  <div class="gallery-noise"></div>
+  <div class="gallery-aurora gallery-aurora-a"></div>
+  <div class="gallery-aurora gallery-aurora-b"></div>
+  <main class="gallery-shell">
+    <section class="hero-panel glass-panel">
+      <div class="eyebrow">FULL DELIVERY · HTML5 REBUILD</div>
+      <h1>CryptoVPN 全量 HTML5 重建</h1>
+      <p class="hero-copy">
+        视觉真源采用最新 PNG，信息架构采用 `full delivery` 的 51 route + 1 dialog。
+        当前首轮只重建有最新 PNG 支撑的 routed pages，不沿用旧 `/UI/pages`。
+      </p>
+      <div class="hero-stats" id="hero-stats"></div>
+    </section>
 
-      <section class="grid">
-        <article class="card primary">
-          <h2>采用的 P0 包</h2>
-          <p>ZIP 导入后的原型包已放进 `/UI/p0-pack`，包含动态 HTML、对应 PNG 和独立原型入口页。</p>
-          <div class="cta-row">
-            <a class="cta" href="./p0-pack/prototype_index.html">打开主原型</a>
-            <a class="cta ghost" href="./p0-pack/P0_overview.png">查看总览 PNG</a>
-          </div>
-        </article>
+    <section class="gallery-grid" id="phase-grid"></section>
 
-        <article class="card">
-          <h2>采用依据</h2>
-          <p>对比说明见文档，包含与 Android 实际接线路由的匹配度、缺口变化和采用理由。</p>
-          <div class="cta-row">
-            <a class="cta ghost" href="./p0-adoption-decision.md">查看采用结论</a>
-            <a class="cta ghost" href="./app-ui-gap-audit.md">查看缺口审计</a>
-          </div>
-        </article>
-
-        <article class="card">
-          <h2>Compose 接入</h2>
-          <p>继续嵌套前，请先按接入说明和缺口清单补齐页面，再进入 `vpnui` 的 Composable 实现。</p>
-          <div class="cta-row">
-            <a class="cta ghost" href="./compose-integration-notes.md">接入说明</a>
-            <a class="cta ghost" href="./compose-map.md">Composable 映射</a>
-          </div>
-        </article>
-
-        <article class="card">
-          <h2>Legacy 旧版</h2>
-          <p>旧版 `/UI/pages` 保留作参考，但不再作为当前主事实源。</p>
-          <div class="cta-row">
-            <a class="cta ghost" href="./legacy-index.html">打开旧版看板</a>
-          </div>
-        </article>
-      </section>
-
-      <section class="metric-list">
-        <div class="metric">
-          <strong>ZIP 10</strong>
-          <span>直接覆盖 Splash、Login、Wallet Onboarding、Region Selection、Plans、Wallet Home、Asset Detail、Send、Receive、Wallet Payment Confirm。</span>
+    <section class="blocked-panel glass-panel">
+      <div class="section-header">
+        <div>
+          <div class="eyebrow">ROUTES WITHOUT CONFIRMED PNG</div>
+          <h2>待补视觉稿的扩展路由</h2>
         </div>
-        <div class="metric">
-          <strong>ZIP 1</strong>
-          <span>`04_unified_home` 可部分承接 `VPNHomePage`，但仍需拆出更专用的 VPN 主屏。</span>
-        </div>
-        <div class="metric">
-          <strong>Legacy 6</strong>
-          <span>旧版 `/UI/pages` 只有 6 页能直接承接，且包含不在主导航里的 `market-monitor` 页面。</span>
-        </div>
-        <div class="metric">
-          <strong>Gap 16+</strong>
-          <span>即便采用 ZIP，仍有订单结果、列表、详情、增长、法务、Profile 等 UI 缺口要补齐。</span>
-        </div>
-      </section>
-    </main>
-  </body>
+        <span class="status-chip status-chip-warn" id="blocked-count"></span>
+      </div>
+      <div class="blocked-list" id="blocked-list"></div>
+    </section>
+  </main>
+  <script src="./shared/app.js" defer></script>
+</body>
 </html>

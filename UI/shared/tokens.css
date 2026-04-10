@@ -1,0 +1,29 @@
+:root {
+  color-scheme: light;
+  --bg-top: #f8fbff;
+  --bg-bottom: #eef6ff;
+  --surface: rgba(255, 255, 255, 0.78);
+  --surface-strong: rgba(255, 255, 255, 0.92);
+  --surface-border: rgba(104, 128, 219, 0.14);
+  --surface-shadow: 0 24px 80px rgba(64, 92, 168, 0.14);
+  --text-strong: #132748;
+  --text-body: #4d6287;
+  --text-soft: #7b8db0;
+  --line-soft: rgba(117, 141, 221, 0.16);
+  --accent-blue: #4276ff;
+  --accent-cyan: #20c4f4;
+  --accent-mint: #49d89b;
+  --accent-rose: #ff8a9d;
+  --accent-gold: #f6b155;
+  --accent-lilac: #b58dff;
+  --gradient-primary: linear-gradient(90deg, #4874ff 0%, #1fd0f4 100%);
+  --gradient-soft: linear-gradient(135deg, rgba(72, 116, 255, 0.18), rgba(31, 208, 244, 0.08));
+  --gradient-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 250, 255, 0.9));
+  --radius-sm: 16px;
+  --radius-md: 24px;
+  --radius-lg: 32px;
+  --radius-pill: 999px;
+  --page-width: 1280px;
+  --font-display: "Outfit", "Noto Sans SC", sans-serif;
+  --font-body: "Noto Sans SC", sans-serif;
+}

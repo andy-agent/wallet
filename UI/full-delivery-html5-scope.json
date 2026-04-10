@@ -1,0 +1,92 @@
+{
+  "generated_at": "2026-04-10",
+  "visual_sources": [
+    {
+      "path": "/Users/cnyirui/Downloads/cryptovpn_p0_ui_pack.zip",
+      "purpose": "P0 PNG + dynamic HTML truth source"
+    },
+    {
+      "path": "/Users/cnyirui/Downloads/cryptovpn_ui_master_pack_p0_p1_p2.zip",
+      "purpose": "P1/P2 PNG truth source"
+    },
+    {
+      "path": "/Users/cnyirui/Downloads/cryptovpn_compose_full_delivery",
+      "purpose": "route and structure truth source"
+    }
+  ],
+  "counts": {
+    "routed_pages_total": 51,
+    "global_dialog_total": 1,
+    "routed_pages_with_confirmed_png": 38,
+    "routed_pages_missing_confirmed_png": 13,
+    "non_routed_visual_references": 1
+  },
+  "routed_pages_with_png": {
+    "p0": {
+      "splash": "cryptovpn_p0_ui/01_splash.png",
+      "email_login": "cryptovpn_p0_ui/02_login.png",
+      "wallet_onboarding": "cryptovpn_p0_ui/03_wallet_onboarding.png",
+      "vpn_home": "cryptovpn_p1_ui/05_vpn_home.png",
+      "wallet_home": "cryptovpn_p0_ui/07_wallet_home.png",
+      "force_update": "cryptovpn_p1_ui/01_force_update.png",
+      "optional_update": "cryptovpn_p1_ui/02_optional_update.png",
+      "email_register": "cryptovpn_p1_ui/03_register.png",
+      "reset_password": "cryptovpn_p1_ui/04_reset_password.png"
+    },
+    "p1": {
+      "plans": "cryptovpn_p0_ui/06_plans.png",
+      "region_selection": "cryptovpn_p0_ui/05_region_selection.png",
+      "order_checkout": "cryptovpn_p1_ui/06_order_checkout.png",
+      "wallet_payment_confirm": "cryptovpn_p0_ui/11_wallet_payment_confirm.png",
+      "order_result": "cryptovpn_p1_ui/07_order_result.png",
+      "order_list": "cryptovpn_p1_ui/08_order_list.png",
+      "order_detail": "cryptovpn_p1_ui/09_order_detail.png"
+    },
+    "p2_core": {
+      "asset_detail": "cryptovpn_p0_ui/08_asset_detail.png",
+      "receive": "cryptovpn_p0_ui/10_receive.png",
+      "send": "cryptovpn_p0_ui/09_send.png",
+      "send_result": "cryptovpn_p1_ui/10_send_result.png",
+      "invite_center": "cryptovpn_p1_ui/11_invite_center.png",
+      "commission_ledger": "cryptovpn_p1_ui/12_commission_ledger.png",
+      "withdraw": "cryptovpn_p1_ui/13_withdraw.png",
+      "profile": "cryptovpn_p1_ui/14_profile.png",
+      "legal_documents": "cryptovpn_p1_ui/15_legal_documents.png",
+      "legal_document_detail": "cryptovpn_p1_ui/16_legal_detail.png"
+    },
+    "p2_extended": {
+      "import_wallet_method": "cryptovpn_p2_ui/01_import_wallet.png",
+      "import_mnemonic": "cryptovpn_p2_ui/02_import_mnemonic.png",
+      "backup_mnemonic": "cryptovpn_p2_ui/03_backup_phrase.png",
+      "confirm_mnemonic": "cryptovpn_p2_ui/04_confirm_phrase.png",
+      "security_center": "cryptovpn_p2_ui/05_security_center.png",
+      "chain_manager": "cryptovpn_p2_ui/06_chain_manager.png",
+      "add_custom_token": "cryptovpn_p2_ui/07_add_token.png",
+      "swap": "cryptovpn_p2_ui/08_swap.png",
+      "bridge": "cryptovpn_p2_ui/09_bridge.png",
+      "dapp_browser": "cryptovpn_p2_ui/10_dapp_browser.png",
+      "wallet_connect_session": "cryptovpn_p2_ui/11_walletconnect.png",
+      "sign_message_confirm": "cryptovpn_p2_ui/12_sign_request.png"
+    }
+  },
+  "missing_confirmed_png_routes": [
+    "wallet_payment",
+    "subscription_detail",
+    "expiry_reminder",
+    "node_speed_test",
+    "auto_connect_rules",
+    "create_wallet",
+    "import_private_key",
+    "wallet_manager",
+    "address_book",
+    "gas_settings",
+    "risk_authorizations",
+    "nft_gallery",
+    "staking_earn"
+  ],
+  "non_routed_visual_reference": {
+    "name": "unified_home_reference",
+    "asset": "cryptovpn_p0_ui/04_unified_home.png",
+    "note": "Use as visual language reference only, not a first-round routed page."
+  }
+}
