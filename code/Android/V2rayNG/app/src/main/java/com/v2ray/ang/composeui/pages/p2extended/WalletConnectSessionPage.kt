@@ -3,9 +3,13 @@ package com.v2ray.ang.composeui.pages.p2extended
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 import com.v2ray.ang.composeui.p2extended.model.WalletConnectSessionEvent
 import com.v2ray.ang.composeui.p2extended.model.WalletConnectSessionUiState
@@ -40,33 +44,22 @@ fun WalletConnectSessionScreen(
     onEvent: (WalletConnectSessionEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "wallet_connect_session",
-        motionProfile = MotionProfile.L1,
-        onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(WalletConnectSessionEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(WalletConnectSessionEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(WalletConnectSessionEvent.SecondaryActionClicked)
-        },
-    )
+    P2ExtendedPageScaffold(
+        kicker = "WALLETCONNECT",
+        title = "连接会话",
+        subtitle = "管理与 DApp的已连接会话、权限范围与自动断开。",
+        hubLabel = "6 会话",
+        onHubClick = { onEvent(WalletConnectSessionEvent.Refresh) },
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ListRow("Jupiter", "读取余额 / 发起兑换 · 当前网络：Solana", "断开")
+            ListRow("Sunswap", "读取地址 / 发起授权 · 当前网络：TRON", "断开")
+            ListRow("Aave", "读取资产 / 发起存款 · 当前网络：Ethereum", "断开")
+            ListRow("Magic Eden", "读取 NFT / 签名 · 当前网络：Solana", "断开")
+        }
+        Spacer(modifier = Modifier.height(14.dp))
+        NoteCard(title = "会话安全", text = "高风险域名会自动标红并在签名前再次确认")
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

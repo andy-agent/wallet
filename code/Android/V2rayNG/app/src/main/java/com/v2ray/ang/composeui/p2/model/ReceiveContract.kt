@@ -10,34 +10,35 @@ import com.v2ray.ang.composeui.common.model.FeatureMetric
 data class ReceiveRouteArgs(val assetId: String = "USDT", val chainId: String = "tron")
 
 data class ReceiveUiState(
-        val title: String = "收款资产",
-        val subtitle: String = "RECEIVE",
-        val badge: String = "P2 · BASE",
-        val summary: String = "收款页展示当前地址、二维码与可切换网络，方便分享给转账方。",
-        val primaryActionLabel: String = "复制地址并返回",
-        val secondaryActionLabel: String? = "回到钱包首页",
+        val title: String = "收款",
+        val subtitle: String = "RECEIVE ASSET",
+        val badge: String = "USDT · TRON",
+        val summary: String = "支持链切换、地址复制、二维码分享与 Memo 提醒。",
+        val primaryActionLabel: String = "复制地址",
+        val secondaryActionLabel: String? = "分享二维码",
         val heroAccent: String = "receive",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "默认链", value = "TRON"),
-    FeatureMetric(label = "支持网络", value = "4"),
+    FeatureMetric(label = "链", value = "USDT · TRON"),
+    FeatureMetric(label = "备选", value = "USDT · Solana"),
+    FeatureMetric(label = "备选", value = "SOL"),
     FeatureMetric(label = "校验状态", value = "已验证"),
 ),
         val fields: List<FeatureField> = listOf(
-    FeatureField(key = "label", label = "地址标签", value = "我的常用收款地址", supportingText = "仅用于本地标记与识别"),
+    FeatureField(key = "address", label = "收款地址", value = "TQ2xP9v7m5aE2sH1cV4Z9Q6wB8Lk3N5xY7", supportingText = "请确认链一致"),
 ),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "收款页展示当前地址、二维码与可切换网络，方便分享给转账方。", trailing = "receive", badge = "P2 基础文档页"),
-    FeatureListItem(title = "导航参数", subtitle = "assetId / chainId", trailing = "2 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "地址标签", trailing = "1 项", badge = "Form"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
+    FeatureListItem(title = "收款地址", subtitle = "TQ2xP9v7m5aE2sH1cV4Z9Q6wB8Lk3N5xY7", trailing = "已校验"),
+    FeatureListItem(title = "操作", subtitle = "复制地址", trailing = "执行"),
+    FeatureListItem(title = "操作", subtitle = "分享二维码", trailing = "执行"),
+    FeatureListItem(title = "提醒", subtitle = "错误链充值可能造成资产丢失", trailing = "风险"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "收款资产 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 ReceivePreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "createRoute builder 与 NavGraph 参数解析已补齐。"),
+    FeatureBullet(title = "地址", detail = "TQ2xP9v7m5aE2sH1cV4Z9Q6wB8Lk3N5xY7"),
+    FeatureBullet(title = "网络", detail = "USDT · TRON"),
+    FeatureBullet(title = "备选链", detail = "USDT · Solana / SOL"),
+    FeatureBullet(title = "提示", detail = "请确认链一致"),
 ),
-        val note: String = "收款资产 已按 P2 基础文档页 页面补齐，可继续替换为真实业务逻辑与接口数据。",
+        val note: String = "错误链充值可能造成资产丢失",
     )
 
     sealed interface ReceiveEvent {

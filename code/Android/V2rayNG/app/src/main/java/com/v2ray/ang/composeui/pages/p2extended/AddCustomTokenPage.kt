@@ -3,9 +3,11 @@ package com.v2ray.ang.composeui.pages.p2extended
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 import com.v2ray.ang.composeui.p2extended.model.AddCustomTokenEvent
 import com.v2ray.ang.composeui.p2extended.model.AddCustomTokenUiState
@@ -40,33 +42,32 @@ fun AddCustomTokenScreen(
     onEvent: (AddCustomTokenEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "add_custom_token",
-        motionProfile = MotionProfile.L1,
-        onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(AddCustomTokenEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(AddCustomTokenEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(AddCustomTokenEvent.SecondaryActionClicked)
-        },
-    )
+    P2ExtendedPageScaffold(
+        kicker = "Token Discovery",
+        title = "添加自定义代币",
+        subtitle = "为缺失资产补齐展示与余额跟踪。",
+        hubLabel = "手动添加",
+        onHubClick = { onEvent(AddCustomTokenEvent.Refresh) },
+        primaryActionLabel = "添加到资产列表",
+        onPrimaryAction = { onEvent(AddCustomTokenEvent.PrimaryActionClicked) },
+        secondaryActionLabel = "返回链管理",
+        onSecondaryAction = { onEvent(AddCustomTokenEvent.SecondaryActionClicked) },
+    ) {
+        P2Card(
+            title = "代币信息",
+            subtitle = "输入合约地址后自动识别符号、精度与链。",
+        ) {
+            FieldRow(label = "链网络", value = "Base")
+            Spacer(modifier = Modifier.height(8.dp))
+            FieldRow(label = "合约地址", value = "0x8be1...c9Fd")
+            Spacer(modifier = Modifier.height(8.dp))
+            FieldRow(label = "代币符号", value = "USDC.e")
+            Spacer(modifier = Modifier.height(8.dp))
+            FieldRow(label = "精度", value = "6")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        NoteCard(title = "风险检查", text = "合约通过基础校验，但请自行确认来源")
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

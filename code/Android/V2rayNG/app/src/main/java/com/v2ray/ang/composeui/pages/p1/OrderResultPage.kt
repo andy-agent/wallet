@@ -1,16 +1,24 @@
 package com.v2ray.ang.composeui.pages.p1
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
+import com.v2ray.ang.composeui.p0.ui.P01ButtonRow
+import com.v2ray.ang.composeui.p0.ui.P01Card
+import com.v2ray.ang.composeui.p0.ui.P01CardCopy
+import com.v2ray.ang.composeui.p0.ui.P01CardHeader
+import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
+import com.v2ray.ang.composeui.p0.ui.P01SuccessBadge
 import com.v2ray.ang.composeui.p1.model.OrderResultEvent
 import com.v2ray.ang.composeui.p1.model.OrderResultUiState
 import com.v2ray.ang.composeui.p1.model.orderResultPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.OrderResultViewModel
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun OrderResultRoute(
@@ -22,14 +30,10 @@ fun OrderResultRoute(
     val uiState by viewModel.uiState.collectAsState()
     OrderResultScreen(
         uiState = uiState,
-        onEvent = { event ->
-            viewModel.onEvent(event)
-            when (event) {
-                OrderResultEvent.PrimaryActionClicked -> onPrimaryAction()
-                OrderResultEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
-                else -> Unit
-            }
+        onOpenDetail = {
+            onBottomNav(CryptoVpnRouteSpec.orderDetailRoute(extractOrderId(uiState)))
         },
+        onGoHome = { onBottomNav(CryptoVpnRouteSpec.vpnHome.pattern) },
         onBottomNav = onBottomNav,
     )
 }
@@ -37,37 +41,32 @@ fun OrderResultRoute(
 @Composable
 fun OrderResultScreen(
     uiState: OrderResultUiState,
-    onEvent: (OrderResultEvent) -> Unit,
+    onOpenDetail: () -> Unit,
+    onGoHome: () -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "order_result",
-        motionProfile = MotionProfile.L2,
+    P01PhoneScaffold(
+        statusTime = "18:23",
+        currentRoute = CryptoVpnRouteSpec.plans.name,
         onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(OrderResultEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(OrderResultEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(OrderResultEvent.SecondaryActionClicked)
-        },
-    )
+    ) {
+        P01Card(centered = true) {
+            P01SuccessBadge(symbol = "", tint = Color(0xFF49D89B))
+            P01CardHeader(title = "订单已生效")
+            P01CardCopy("套餐与节点权限已经下发，你可以立即开始使用加密网络。")
+            P01ButtonRow(
+                primaryLabel = "开始连接并进入首页",
+                onPrimaryClick = onGoHome,
+                secondaryLabel = "查看订单详情",
+                onSecondaryClick = onOpenDetail,
+            )
+        }
+    }
 }
+
+private fun extractOrderId(uiState: OrderResultUiState): String =
+    uiState.highlights.firstOrNull { it.title.contains("订单号") }?.subtitle
+        ?.takeIf { it.isNotBlank() } ?: uiState.metrics.firstOrNull()?.value ?: "ORD-2025-0001"
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
 @Composable
@@ -75,7 +74,8 @@ private fun OrderResultPreview() {
     CryptoVpnTheme {
         OrderResultScreen(
             uiState = orderResultPreviewState(),
-            onEvent = {},
+            onOpenDetail = {},
+            onGoHome = {},
         )
     }
 }

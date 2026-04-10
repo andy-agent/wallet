@@ -4,13 +4,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
-import com.v2ray.ang.composeui.p1.model.OrderDetailEvent
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
+import com.v2ray.ang.composeui.p0.ui.P01Card
+import com.v2ray.ang.composeui.p0.ui.P01CardCopy
+import com.v2ray.ang.composeui.p0.ui.P01CardHeader
+import com.v2ray.ang.composeui.p0.ui.P01Chip
+import com.v2ray.ang.composeui.p0.ui.P01Header
+import com.v2ray.ang.composeui.p0.ui.P01List
+import com.v2ray.ang.composeui.p0.ui.P01ListRow
+import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p1.model.OrderDetailUiState
 import com.v2ray.ang.composeui.p1.model.orderDetailPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.OrderDetailViewModel
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun OrderDetailRoute(
@@ -22,14 +28,7 @@ fun OrderDetailRoute(
     val uiState by viewModel.uiState.collectAsState()
     OrderDetailScreen(
         uiState = uiState,
-        onEvent = { event ->
-            viewModel.onEvent(event)
-            when (event) {
-                OrderDetailEvent.PrimaryActionClicked -> onPrimaryAction()
-                OrderDetailEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
-                else -> Unit
-            }
-        },
+        onBack = { onBottomNav(CryptoVpnRouteSpec.orderList.pattern) },
         onBottomNav = onBottomNav,
     )
 }
@@ -37,35 +36,45 @@ fun OrderDetailRoute(
 @Composable
 fun OrderDetailScreen(
     uiState: OrderDetailUiState,
-    onEvent: (OrderDetailEvent) -> Unit,
+    onBack: () -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "order_detail",
-        motionProfile = MotionProfile.L2,
+    P01PhoneScaffold(
+        statusTime = "18:42",
+        currentRoute = CryptoVpnRouteSpec.plans.name,
         onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(OrderDetailEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(OrderDetailEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(OrderDetailEvent.SecondaryActionClicked)
-        },
+    ) {
+        P01Header(
+            eyebrow = "ORDER DETAIL",
+            title = "订单详情",
+            subtitle = "追踪支付状态、激活进度与设备生效情况。",
+            chips = listOf("• 已完成"),
+            backLabel = "<",
+            onBack = onBack,
+        )
+
+        P01Card {
+            P01CardHeader(title = "订单摘要")
+            P01CardCopy("订单已完成，全部4台设备权限同步正常。")
+            P01List {
+                detailRows(uiState).forEach { (title, value) ->
+                    P01ListRow(title = title, value = value)
+                }
+            }
+        }
+    }
+}
+
+private fun detailRows(uiState: OrderDetailUiState): List<Pair<String, String>> {
+    val highlightList = uiState.highlights
+    val metricMap = uiState.metrics.associate { it.label to it.value }
+    return listOf(
+        (highlightList.getOrNull(0)?.title ?: "年费 Pro") to (highlightList.getOrNull(0)?.trailing ?: "TRON / 149 USDT"),
+        (highlightList.getOrNull(0)?.subtitle ?: "ORD-2025-08-0224") to "• 创建订单",
+        (highlightList.getOrNull(1)?.trailing ?: "2025-04-09 18:21") to "• 链上转账已广播",
+        ("TXid: ${highlightList.getOrNull(1)?.subtitle ?: "7F3A...901"}") to "• 区块确认完成",
+        ((metricMap["状态"] ?: "TRON． 1/1 block")) to "• 套餐已激活",
+        ("东京/新加坡节点可用") to "• 可用设备 4台",
     )
 }
 
@@ -75,7 +84,7 @@ private fun OrderDetailPreview() {
     CryptoVpnTheme {
         OrderDetailScreen(
             uiState = orderDetailPreviewState(),
-            onEvent = {},
+            onBack = {},
         )
     }
 }

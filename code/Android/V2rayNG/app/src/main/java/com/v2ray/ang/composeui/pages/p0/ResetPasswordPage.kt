@@ -1,16 +1,22 @@
 package com.v2ray.ang.composeui.pages.p0
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.model.ResetPasswordEvent
 import com.v2ray.ang.composeui.p0.model.ResetPasswordUiState
 import com.v2ray.ang.composeui.p0.model.resetPasswordPreviewState
+import com.v2ray.ang.composeui.p0.ui.P01Card
+import com.v2ray.ang.composeui.p0.ui.P01Header
+import com.v2ray.ang.composeui.p0.ui.P01InputField
+import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
+import com.v2ray.ang.composeui.p0.ui.P01PrimaryButton
 import com.v2ray.ang.composeui.p0.viewmodel.ResetPasswordViewModel
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun ResetPasswordRoute(
@@ -22,13 +28,14 @@ fun ResetPasswordRoute(
     val uiState by viewModel.uiState.collectAsState()
     ResetPasswordScreen(
         uiState = uiState,
-        onEvent = { event ->
-            viewModel.onEvent(event)
-            when (event) {
-                ResetPasswordEvent.PrimaryActionClicked -> onPrimaryAction()
-                ResetPasswordEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
-                else -> Unit
-            }
+        onFieldChanged = { key, value -> viewModel.onEvent(ResetPasswordEvent.FieldChanged(key, value)) },
+        onPrimaryAction = {
+            viewModel.onEvent(ResetPasswordEvent.PrimaryActionClicked)
+            onPrimaryAction()
+        },
+        onBack = {
+            viewModel.onEvent(ResetPasswordEvent.SecondaryActionClicked)
+            onSecondaryAction?.invoke()
         },
         onBottomNav = onBottomNav,
     )
@@ -37,37 +44,44 @@ fun ResetPasswordRoute(
 @Composable
 fun ResetPasswordScreen(
     uiState: ResetPasswordUiState,
-    onEvent: (ResetPasswordEvent) -> Unit,
+    onFieldChanged: (String, String) -> Unit,
+    onPrimaryAction: () -> Unit,
+    onBack: () -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "reset_password",
-        motionProfile = MotionProfile.L2,
+    P01PhoneScaffold(
+        statusTime = "18:18",
+        currentRoute = CryptoVpnRouteSpec.vpnHome.name,
         onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(ResetPasswordEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(ResetPasswordEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(ResetPasswordEvent.SecondaryActionClicked)
-        },
-    )
+    ) {
+        P01Header(
+            eyebrow = "RESET PASSWORD",
+            title = "重置密码",
+            backLabel = "<",
+            onBack = onBack,
+        )
+
+        P01Card {
+            resetField(uiState, "email")?.let { field ->
+                P01InputField(field.label, field.value, { onFieldChanged(field.key, it) })
+            }
+            resetField(uiState, "code")?.let { field ->
+                P01InputField(field.label, field.value, { onFieldChanged(field.key, it) })
+            }
+            (resetField(uiState, "confirm") ?: resetField(uiState, "password"))?.let { field ->
+                P01InputField(field.label, field.value, { onFieldChanged(field.key, it) }, password = true)
+            }
+            P01PrimaryButton(
+                text = "更确认密码",
+                onClick = onPrimaryAction,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
 }
+
+private fun resetField(uiState: ResetPasswordUiState, key: String) =
+    uiState.fields.firstOrNull { it.key == key }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
 @Composable
@@ -75,7 +89,9 @@ private fun ResetPasswordPreview() {
     CryptoVpnTheme {
         ResetPasswordScreen(
             uiState = resetPasswordPreviewState(),
-            onEvent = {},
+            onFieldChanged = { _, _ -> },
+            onPrimaryAction = {},
+            onBack = {},
         )
     }
 }

@@ -3,9 +3,11 @@ package com.v2ray.ang.composeui.pages.p2extended
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 import com.v2ray.ang.composeui.p2extended.model.SwapEvent
 import com.v2ray.ang.composeui.p2extended.model.SwapUiState
@@ -40,33 +42,31 @@ fun SwapScreen(
     onEvent: (SwapEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "swap",
-        motionProfile = MotionProfile.L1,
-        onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(SwapEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(SwapEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(SwapEvent.SecondaryActionClicked)
-        },
-    )
+    P2ExtendedPageScaffold(
+        kicker = "Swap",
+        title = "币币兑换",
+        subtitle = "补齐钱包内兑换能力，支持同链资产快速换币。",
+        hubLabel = "低滑点",
+        onHubClick = { onEvent(SwapEvent.Refresh) },
+        primaryActionLabel = "预览兑换并签名",
+        onPrimaryAction = { onEvent(SwapEvent.PrimaryActionClicked) },
+        secondaryActionLabel = "预览兑换并继续",
+        onSecondaryAction = { onEvent(SwapEvent.SecondaryActionClicked) },
+    ) {
+        P2Card(title = "兑换面板", subtitle = "支持 SOL / USDT / ETH / TRX 等常见资产。") {
+            FieldRow("支付", "USDT · TRON · 580")
+            Spacer(modifier = Modifier.height(8.dp))
+            FieldRow("获得", "SOL · Solana · 82.6")
+            Spacer(modifier = Modifier.height(12.dp))
+            KpiRow(
+                listOf(
+                    "滑点" to "0.5%",
+                    "路由" to "2 hops",
+                    "预计到手" to "82.1",
+                ),
+            )
+        }
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

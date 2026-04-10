@@ -1,16 +1,22 @@
 package com.v2ray.ang.composeui.pages.p2
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import com.v2ray.ang.composeui.p2.model.SendEvent
 import com.v2ray.ang.composeui.p2.model.SendUiState
 import com.v2ray.ang.composeui.p2.model.sendPreviewState
 import com.v2ray.ang.composeui.p2.viewmodel.SendViewModel
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun SendRoute(
@@ -40,33 +46,44 @@ fun SendScreen(
     onEvent: (SendEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
+    val amount = uiState.fields.firstOrNull { it.key == "amount" }?.value ?: uiState.metrics.getOrNull(1)?.value.orEmpty()
+    P2CorePageScaffold(
+        kicker = uiState.subtitle,
         title = uiState.title,
-        subtitle = uiState.subtitle,
+        subtitle = uiState.summary,
         badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "send",
-        motionProfile = MotionProfile.L1,
+        activeSection = CoreNavSection.Wallet,
         onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(SendEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(SendEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(SendEvent.SecondaryActionClicked)
-        },
-    )
+        primaryActionLabel = uiState.primaryActionLabel,
+        onPrimaryAction = { onEvent(SendEvent.PrimaryActionClicked) },
+    ) {
+        P2CoreCard {
+            uiState.fields.take(2).forEach { field ->
+                P2CoreField(
+                    label = field.label,
+                    value = field.value,
+                    supportingText = field.supportingText,
+                )
+            }
+            P2CoreChipRow(items = listOf("TRON · Fee 更低", "Solana"), activeIndex = 0)
+        }
+        P2CoreCard {
+            Text(amount, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color(0xFF182345))
+            Text("≈ $amount USDT", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF7783A8))
+            P2CoreMetricGrid(
+                items = listOf(
+                    "网络费" to (uiState.metrics.getOrNull(2)?.value ?: "1.24 USDT"),
+                    "预计到账" to (uiState.metrics.getOrNull(3)?.value ?: "~ 38 秒"),
+                ),
+            )
+        }
+        P2CoreCard {
+            P2CoreCardHeader(title = "安全检查", trailing = "通过 3/4", trailingColor = Color(0xFFEAF6FF))
+            uiState.highlights.forEach { item ->
+                P2CoreListRow(title = item.title, subtitle = item.subtitle)
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

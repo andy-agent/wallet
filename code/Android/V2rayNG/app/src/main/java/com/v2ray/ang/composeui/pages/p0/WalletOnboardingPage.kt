@@ -1,112 +1,152 @@
 package com.v2ray.ang.composeui.pages.p0
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.v2ray.ang.composeui.components.app.TechScaffold
-import com.v2ray.ang.composeui.components.buttons.GradientCTAButton
-import com.v2ray.ang.composeui.components.buttons.SecondaryOutlineButton
-import com.v2ray.ang.composeui.components.cards.TechCard
-import com.v2ray.ang.composeui.components.navigation.CryptoVpnTopBar
-import com.v2ray.ang.composeui.effects.MotionProfile
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.model.WalletCreationMode
 import com.v2ray.ang.composeui.p0.model.WalletOnboardingEvent
+import com.v2ray.ang.composeui.p0.model.WalletOnboardingUiState
+import com.v2ray.ang.composeui.p0.repository.MockP0Repository
+import com.v2ray.ang.composeui.p0.ui.P01Card
+import com.v2ray.ang.composeui.p0.ui.P01CardCopy
+import com.v2ray.ang.composeui.p0.ui.P01CardHeader
+import com.v2ray.ang.composeui.p0.ui.P01Chip
+import com.v2ray.ang.composeui.p0.ui.P01Header
+import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
+import com.v2ray.ang.composeui.p0.ui.P01PrimaryButton
+import com.v2ray.ang.composeui.p0.ui.P01Tab
 import com.v2ray.ang.composeui.p0.viewmodel.WalletOnboardingViewModel
-import com.v2ray.ang.composeui.theme.TextMuted
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun WalletOnboardingRoute(
     viewModel: WalletOnboardingViewModel,
     onContinue: () -> Unit,
+    onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    WalletOnboardingScreen(
+        uiState = uiState,
+        onSelectMode = { viewModel.onEvent(WalletOnboardingEvent.SelectMode(it)) },
+        onContinue = onContinue,
+        onBottomNav = onBottomNav,
+    )
+}
 
-    TechScaffold(
-        motionProfile = MotionProfile.L2,
-        topBar = {
-            CryptoVpnTopBar(
-                title = "Wallet setup",
-                subtitle = "Self-custody core",
-            )
-        },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+@Composable
+fun WalletOnboardingScreen(
+    uiState: WalletOnboardingUiState,
+    onSelectMode: (WalletCreationMode) -> Unit,
+    onContinue: () -> Unit,
+    onBottomNav: (String) -> Unit = {},
+) {
+    P01PhoneScaffold(
+        statusTime = "18:06",
+        currentRoute = CryptoVpnRouteSpec.walletHome.name,
+        onBottomNav = onBottomNav,
+    ) {
+        P01Header(
+            eyebrow = "MULTI-CHAIN WALLET SETUP",
+            title = "配置你的多链钱包",
+            subtitle = "这是对现有文档的补充页：让钱包成为完整产品，而不是附属支付模块。",
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SecondaryOutlineButton(
-                    selected = uiState.selectedMode == WalletCreationMode.CREATE,
-                    onClick = {
-                        viewModel.onEvent(WalletOnboardingEvent.SelectMode(WalletCreationMode.CREATE))
-                    },
-                    label = { Text("Create new wallet") },
-                )
-                SecondaryOutlineButton(
-                    selected = uiState.selectedMode == WalletCreationMode.IMPORT,
-                    onClick = {
-                        viewModel.onEvent(WalletOnboardingEvent.SelectMode(WalletCreationMode.IMPORT))
-                    },
-                    label = { Text("Import existing") },
-                )
-            }
-
-            TechCard {
-                Text(
-                    text = if (uiState.selectedMode == WalletCreationMode.CREATE) {
-                        "Generate a new seed, secure recovery flow, then land on the multichain asset shell."
-                    } else {
-                        "Import seed phrase / private key in P2, then restore supported chains and wallet sessions."
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = TextMuted,
-                )
-            }
-
-            TechCard {
-                Text("P0 supported surfaces", style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(12.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(uiState.focusedChains) { label ->
-                        SecondaryOutlineButton(onClick = {}, selected = false, label = { Text(label) })
-                    }
-                }
-            }
-
-            TechCard {
-                Text("White-tech direction", style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "White background, blue-cyan-purple glow, secure metrics, and restrained card language.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-            GradientCTAButton(
-                text = if (uiState.selectedMode == WalletCreationMode.CREATE) "Create wallet" else "Go to import flow",
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onContinue,
+            P01Tab(
+                text = "主账户",
+                selected = uiState.selectedMode == WalletCreationMode.CREATE,
+                onClick = { onSelectMode(WalletCreationMode.CREATE) },
+            )
+            P01Tab(
+                text = "硬件钱包",
+                selected = false,
+                onClick = { onSelectMode(WalletCreationMode.IMPORT) },
+            )
+            P01Tab(
+                text = "观察钱包",
+                selected = uiState.selectedMode == WalletCreationMode.IMPORT,
+                onClick = { onSelectMode(WalletCreationMode.IMPORT) },
             )
         }
+
+        P01Card(
+            modifier = Modifier.clickable { onSelectMode(WalletCreationMode.CREATE) },
+        ) {
+            P01CardHeader(
+                title = "创建新钱包",
+                trailing = { P01Chip(text = "推荐") },
+            )
+            P01CardCopy("生成助记词并开启云端加密备份提醒。")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Solana", "TRON", "Ethereum", "Base").forEach { label ->
+                    P01Chip(text = label)
+                }
+            }
+        }
+
+        P01Card(
+            modifier = Modifier.clickable { onSelectMode(WalletCreationMode.IMPORT) },
+        ) {
+            P01CardHeader(title = "导入助记词 / 私钥")
+            P01CardCopy("适合已有钱包用户，自动识别已支持网络与资产。")
+        }
+
+        P01Card(
+            modifier = Modifier.clickable { onSelectMode(WalletCreationMode.IMPORT) },
+        ) {
+            P01CardHeader(title = "仅观察模式")
+            P01CardCopy("先查看余额与交易记录，再决定是否迁移资产。")
+        }
+
+        P01Card {
+            P01CardHeader(
+                title = "安全策略",
+                trailing = { P01Chip(text = "自动补齐") },
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                P01Card(
+                    modifier = Modifier.weight(1f),
+                ) {
+                    P01CardCopy("Biometric")
+                    androidx.compose.material3.Text("已开启")
+                }
+                P01Card(
+                    modifier = Modifier.weight(1f),
+                ) {
+                    P01CardCopy("Backup")
+                    androidx.compose.material3.Text("AES 加密")
+                }
+            }
+        }
+
+        P01PrimaryButton(
+            text = "继续进入应用",
+            onClick = onContinue,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 393, heightDp = 852)
+@Composable
+private fun WalletOnboardingPreview() {
+    CryptoVpnTheme {
+        WalletOnboardingScreen(
+            uiState = WalletOnboardingViewModel(MockP0Repository()).uiState.value,
+            onSelectMode = {},
+            onContinue = {},
+        )
     }
 }

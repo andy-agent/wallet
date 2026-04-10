@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-10T13:21:23Z
+Generated: 2026-04-10T13:52:47Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-2mt.22.1
-- next_task_title: 分析并冻结 H5→Android 路由/页面/组件映射
+- next_task_id: liaojiang-2mt.22.4
+- next_task_title: 重建 Android 页面：P2 Core/Extended 按 H5 1:1 接入真实接口与回测数据
 
 ## Counters
-- in_progress: 3
-- ready: 3
-- open: 9
-- closed: 346
-- dirty: 2
+- in_progress: 5
+- ready: 0
+- open: 8
+- closed: 347
+- dirty: 77
 
 ## Next Milestone
 - Continue the next task and complete one milestone

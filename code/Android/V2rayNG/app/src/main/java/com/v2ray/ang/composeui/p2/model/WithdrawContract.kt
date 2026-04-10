@@ -10,33 +10,31 @@ import com.v2ray.ang.composeui.common.model.FeatureMetric
 data class WithdrawUiState(
         val title: String = "提现佣金",
         val subtitle: String = "WITHDRAW",
-        val badge: String = "P2 · BASE",
+        val badge: String = "提现",
         val summary: String = "佣金提现页校验提现地址、金额与网络信息，再提交结算申请。",
         val primaryActionLabel: String = "提交提现申请",
         val secondaryActionLabel: String? = "返回账本",
         val heroAccent: String = "withdraw",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "可提佣金", value = "$580.00"),
-    FeatureMetric(label = "最小提现", value = "50 USDT"),
-    FeatureMetric(label = "网络", value = "TRON"),
+    FeatureMetric(label = "提现余额", value = "$580.00"),
+    FeatureMetric(label = "到账数量", value = "579.00"),
+    FeatureMetric(label = "网络手续费", value = "TRON · 预计 10 分钟内处理"),
 ),
         val fields: List<FeatureField> = listOf(
-    FeatureField(key = "address", label = "提现地址", value = "TQx...ahmUKaE3Mb24Q2vG", supportingText = "支持粘贴或从地址簿选择"),
-    FeatureField(key = "amount", label = "提现金额", value = "580.00", supportingText = "默认提取全部可用佣金"),
+    FeatureField(key = "amount", label = "提现金额", value = "$ 500.00", supportingText = "申请金额"),
+    FeatureField(key = "address", label = "到账地址", value = "TQ2xP9v7m5aE2sH1cV4Z9Q6wBBLk3N5xY7", supportingText = "钱包地址"),
 ),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "佣金提现页校验提现地址、金额与网络信息，再提交结算申请。", trailing = "withdraw", badge = "P2 基础文档页"),
-    FeatureListItem(title = "导航参数", subtitle = "当前页面无必填导航参数", trailing = "0 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "提现地址、提现金额", trailing = "2 项", badge = "Form"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
+    FeatureListItem(title = "风控额度正常", subtitle = "本次提现金额未超过当日安全阈值。", trailing = "PASS"),
+    FeatureListItem(title = "地址已验证", subtitle = "该地址已通过历史白名单校验。", trailing = "SAFE"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "提现佣金 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 WithdrawPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "当前页面无必填参数，但已纳入统一 RouteSpec 台账。"),
+    FeatureBullet(title = "提现余额", detail = "$580.00"),
+    FeatureBullet(title = "到账数量", detail = "579.00"),
+    FeatureBullet(title = "风控", detail = "PASS"),
+    FeatureBullet(title = "地址校验", detail = "SAFE"),
 ),
-        val note: String = "提现佣金 已按 P2 基础文档页 页面补齐，可继续替换为真实业务逻辑与接口数据。",
+        val note: String = "把已结算收益提到你的 TRON / Solana 自托管钱包。",
     )
 
     sealed interface WithdrawEvent {

@@ -11,35 +11,35 @@ data class SendRouteArgs(val assetId: String = "USDT", val chainId: String = "tr
 
 data class SendUiState(
         val title: String = "发送资产",
-        val subtitle: String = "SEND",
-        val badge: String = "P2 · BASE",
-        val summary: String = "发送页校验目标地址、金额、手续费与安全风险后发起链上转账。",
+        val subtitle: String = "SEND ASSET",
+        val badge: String = "风险校验中",
+        val summary: String = "把链、地址、Gas 与隐私网络状态放在一个确认面板里。",
         val primaryActionLabel: String = "确认并发送",
-        val secondaryActionLabel: String? = "Gas 设置",
+        val secondaryActionLabel: String? = "返回资产详情",
         val heroAccent: String = "send",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "发送资产", value = "USDT"),
+    FeatureMetric(label = "发送资产", value = "USDT · TRON 网络优先"),
+    FeatureMetric(label = "发送数量", value = "580"),
     FeatureMetric(label = "预估手续费", value = "1.24 USDT"),
-    FeatureMetric(label = "风控分", value = "38 / 100"),
+    FeatureMetric(label = "预计到账", value = "~ 38 秒"),
 ),
         val fields: List<FeatureField> = listOf(
-    FeatureField(key = "to", label = "收款地址", value = "TQx...uJsv", supportingText = "目标地址或联系人地址"),
-    FeatureField(key = "amount", label = "发送数量", value = "580", supportingText = "默认演示发送数量"),
-    FeatureField(key = "memo", label = "备注", value = "", supportingText = "用于链下对账，链上不一定保留"),
+    FeatureField(key = "asset", label = "选择资产", value = "USDT · TRON 网络优先", supportingText = "TRON · Fee 更低 / Solana"),
+    FeatureField(key = "to", label = "收款地址", value = "TQ2x...8Lk2 · 或扫描二维码", supportingText = "目标地址"),
+    FeatureField(key = "amount", label = "发送数量", value = "580", supportingText = "≈ $580.00 USDT"),
 ),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "发送页校验目标地址、金额、手续费与安全风险后发起链上转账。", trailing = "send", badge = "P2 基础文档页"),
-    FeatureListItem(title = "导航参数", subtitle = "assetId / chainId", trailing = "2 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "收款地址、发送数量、备注", trailing = "3 项", badge = "Form"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
+    FeatureListItem(title = "地址格式正确", subtitle = "与 TRON 主网地址规则匹配", trailing = "通过"),
+    FeatureListItem(title = "历史交互检测", subtitle = "此前已转账 2 次，无异常标签", trailing = "通过"),
+    FeatureListItem(title = "VPN 隐私路由可用", subtitle = "发送请求将通过已连接的安全通道广播", trailing = "通过"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "发送资产 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 SendPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "createRoute builder 与 NavGraph 参数解析已补齐。"),
+    FeatureBullet(title = "网络费", detail = "1.24 USDT"),
+    FeatureBullet(title = "预计到账", detail = "~ 38 秒"),
+    FeatureBullet(title = "安全检查", detail = "通过 3/4"),
+    FeatureBullet(title = "网络选择", detail = "TRON / Solana"),
 ),
-        val note: String = "发送资产 已按 P2 基础文档页 页面补齐，可继续替换为真实业务逻辑与接口数据。",
+        val note: String = "确认后将发起链上广播。",
     )
 
     sealed interface SendEvent {

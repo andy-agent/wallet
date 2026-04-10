@@ -1,16 +1,17 @@
 package com.v2ray.ang.composeui.pages.p2
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import com.v2ray.ang.composeui.p2.model.CommissionLedgerEvent
 import com.v2ray.ang.composeui.p2.model.CommissionLedgerUiState
 import com.v2ray.ang.composeui.p2.model.commissionLedgerPreviewState
 import com.v2ray.ang.composeui.p2.viewmodel.CommissionLedgerViewModel
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun CommissionLedgerRoute(
@@ -40,33 +41,36 @@ fun CommissionLedgerScreen(
     onEvent: (CommissionLedgerEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
+    val total = uiState.metrics.firstOrNull()?.value ?: "$3,481.22"
+    P2CorePageScaffold(
+        kicker = uiState.subtitle,
         title = uiState.title,
-        subtitle = uiState.subtitle,
+        subtitle = uiState.summary,
         badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "commission_ledger",
-        motionProfile = MotionProfile.L1,
+        activeSection = CoreNavSection.Growth,
         onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(CommissionLedgerEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(CommissionLedgerEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(CommissionLedgerEvent.SecondaryActionClicked)
-        },
-    )
+        primaryActionLabel = uiState.primaryActionLabel,
+        onPrimaryAction = { onEvent(CommissionLedgerEvent.PrimaryActionClicked) },
+        secondaryActionLabel = uiState.secondaryActionLabel,
+        onSecondaryAction = { onEvent(CommissionLedgerEvent.SecondaryActionClicked) },
+    ) {
+        P2CoreCard {
+            Text(total, style = MaterialTheme.typography.headlineMedium, color = Color(0xFF182345))
+            Text(uiState.checklist.firstOrNull()?.detail ?: uiState.summary, style = MaterialTheme.typography.bodySmall, color = Color(0xFF6D789E))
+            P2CoreChartPlaceholder(accent = Color(0xFF22C3A0))
+        }
+        P2CoreCard {
+            P2CoreCardHeader(title = uiState.note)
+            uiState.highlights.forEach { item ->
+                P2CoreListRow(
+                    title = item.title,
+                    subtitle = item.subtitle,
+                    trailing = item.trailing,
+                    trailingColor = Color(0xFF16B889),
+                )
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

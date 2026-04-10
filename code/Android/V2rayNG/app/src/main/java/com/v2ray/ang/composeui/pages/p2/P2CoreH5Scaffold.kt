@@ -1,0 +1,563 @@
+package com.v2ray.ang.composeui.pages.p2
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.AutoGraph
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
+
+private val CorePageBackground = Brush.verticalGradient(
+    colors = listOf(
+        Color(0xFFF8FBFF),
+        Color(0xFFF3F6FD),
+        Color(0xFFEAF6FB),
+    ),
+)
+
+private val CoreCardBorder = Color(0xFFE7ECF7)
+private val CoreText = Color(0xFF182345)
+private val CoreSubtleText = Color(0xFF6D789E)
+private val CorePrimary = Color(0xFF2F5BFF)
+private val CoreMint = Color(0xFF23C8A8)
+
+internal enum class CoreNavSection {
+    Overview,
+    Vpn,
+    Wallet,
+    Growth,
+    Profile,
+}
+
+@Composable
+internal fun P2CorePageScaffold(
+    kicker: String,
+    title: String,
+    subtitle: String,
+    badge: String? = null,
+    activeSection: CoreNavSection,
+    onBottomNav: (String) -> Unit,
+    primaryActionLabel: String? = null,
+    onPrimaryAction: (() -> Unit)? = null,
+    secondaryActionLabel: String? = null,
+    onSecondaryAction: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color.Transparent,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(CorePageBackground),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 18.dp, vertical = 10.dp),
+            ) {
+                CoreStatusBar()
+                Spacer(modifier = Modifier.height(14.dp))
+                Text(kicker, style = MaterialTheme.typography.labelLarge, color = Color(0xFF7381AD))
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = CoreText)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = CoreSubtleText)
+                if (!badge.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    StatusChip(text = badge)
+                }
+                Spacer(modifier = Modifier.height(18.dp))
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    content = content,
+                )
+                if (primaryActionLabel != null && onPrimaryAction != null) {
+                    Spacer(modifier = Modifier.height(18.dp))
+                    if (secondaryActionLabel != null && onSecondaryAction != null) {
+                        CoreActionRow(
+                            primaryActionLabel = primaryActionLabel,
+                            onPrimaryAction = onPrimaryAction,
+                            secondaryActionLabel = secondaryActionLabel,
+                            onSecondaryAction = onSecondaryAction,
+                        )
+                    } else {
+                        CorePrimaryButton(
+                            label = primaryActionLabel,
+                            onClick = onPrimaryAction,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(22.dp))
+                CoreBottomNav(
+                    activeSection = activeSection,
+                    onBottomNav = onBottomNav,
+                )
+                Spacer(modifier = Modifier.height(18.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CoreStatusBar() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("18:11", style = MaterialTheme.typography.labelLarge, color = Color(0xFF56617D))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            repeat(2) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 16.dp, height = 10.dp)
+                        .background(Color(0xFFBAC5E2), RoundedCornerShape(999.dp)),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun P2CoreCard(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(16.dp),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(22.dp))
+            .border(1.dp, CoreCardBorder, RoundedCornerShape(22.dp))
+            .padding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        content = content,
+    )
+}
+
+@Composable
+internal fun P2CoreCardHeader(
+    title: String,
+    subtitle: String? = null,
+    trailing: String? = null,
+    trailingColor: Color = Color(0xFF67B6FF),
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = CoreText, fontWeight = FontWeight.SemiBold)
+            if (!subtitle.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = CoreSubtleText)
+            }
+        }
+        if (!trailing.isNullOrBlank()) {
+            StatusChip(text = trailing, color = trailingColor)
+        }
+    }
+}
+
+@Composable
+internal fun P2CoreMetricGrid(
+    items: List<Pair<String, String>>,
+    accentIndexes: Set<Int> = emptySet(),
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        items.chunked(2).forEachIndexed { rowIndex, row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                row.forEachIndexed { itemIndex, item ->
+                    val absoluteIndex = rowIndex * 2 + itemIndex
+                    MetricTile(
+                        label = item.first,
+                        value = item.second,
+                        modifier = Modifier.weight(1f),
+                        accent = accentIndexes.contains(absoluteIndex),
+                    )
+                }
+                if (row.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetricTile(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    accent: Boolean = false,
+) {
+    Column(
+        modifier = modifier
+            .background(Color(0xFFF7F9FF), RoundedCornerShape(14.dp))
+            .padding(12.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = CoreSubtleText)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            value,
+            style = MaterialTheme.typography.titleMedium,
+            color = if (accent) CoreMint else CoreText,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+internal fun P2CoreField(
+    label: String,
+    value: String,
+    supportingText: String? = null,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = CoreSubtleText)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF7F9FF), RoundedCornerShape(14.dp))
+                .padding(14.dp),
+        ) {
+            Text(value, style = MaterialTheme.typography.bodyLarge, color = CoreText)
+            if (!supportingText.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(supportingText, style = MaterialTheme.typography.bodySmall, color = CoreSubtleText)
+            }
+        }
+    }
+}
+
+@Composable
+internal fun P2CoreChipRow(
+    items: List<String>,
+    activeIndex: Int = 0,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items.forEachIndexed { index, item ->
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = if (index == activeIndex) Color(0xFFE7EEFF) else Color(0xFFF1F4FA),
+                        shape = RoundedCornerShape(999.dp),
+                    )
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
+            ) {
+                Text(
+                    item,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (index == activeIndex) CorePrimary else Color(0xFF63709C),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun P2CoreListRow(
+    title: String,
+    subtitle: String,
+    trailing: String? = null,
+    onClick: (() -> Unit)? = null,
+    trailingColor: Color = CoreSubtleText,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(16.dp))
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = CoreText, fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = CoreSubtleText)
+        }
+        if (!trailing.isNullOrBlank()) {
+            Text(trailing, style = MaterialTheme.typography.labelMedium, color = trailingColor)
+        }
+    }
+}
+
+@Composable
+internal fun P2CoreNoteCard(
+    title: String,
+    text: String,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFF7FBFF), RoundedCornerShape(16.dp))
+            .border(1.dp, Color(0xFFDDF1FF), RoundedCornerShape(16.dp))
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(26.dp)
+                .background(Color(0xFFEAF3FF), RoundedCornerShape(8.dp)),
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Column {
+            Text(title, style = MaterialTheme.typography.labelLarge, color = CoreText, fontWeight = FontWeight.SemiBold)
+            Text(text, style = MaterialTheme.typography.bodySmall, color = CoreSubtleText)
+        }
+    }
+}
+
+@Composable
+internal fun P2CoreQrPlaceholder() {
+    Box(
+        modifier = Modifier
+            .size(188.dp)
+            .background(Color(0xFFFCFDFF), RoundedCornerShape(18.dp))
+            .border(1.dp, CoreCardBorder, RoundedCornerShape(18.dp))
+            .padding(18.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val unit = size.minDimension / 7f
+            fun square(x: Int, y: Int, filled: Boolean = true) {
+                if (filled) {
+                    drawRoundRect(
+                        color = CorePrimary,
+                        topLeft = Offset(x * unit, y * unit),
+                        size = androidx.compose.ui.geometry.Size(unit * 0.85f, unit * 0.85f),
+                        cornerRadius = CornerRadius(unit * 0.12f, unit * 0.12f),
+                    )
+                }
+            }
+            square(0, 0); square(1, 0); square(2, 0)
+            square(0, 1); square(2, 1); square(0, 2); square(1, 2); square(2, 2)
+            square(4, 0); square(5, 0); square(6, 0)
+            square(4, 1); square(6, 1); square(4, 2); square(5, 2); square(6, 2)
+            square(0, 4); square(1, 4); square(2, 4)
+            square(0, 5); square(2, 5); square(0, 6); square(1, 6); square(2, 6)
+            listOf(Offset(4f, 4f), Offset(5f, 4f), Offset(4f, 5f), Offset(6f, 5f), Offset(5f, 6f)).forEach {
+                square(it.x.toInt(), it.y.toInt())
+            }
+        }
+    }
+}
+
+@Composable
+internal fun P2CoreChartPlaceholder(
+    accent: Color = CorePrimary,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(122.dp)
+            .background(Color(0xFFF7F9FF), RoundedCornerShape(16.dp))
+            .padding(12.dp),
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val stepX = size.width / 6f
+            val points = listOf(0.72f, 0.68f, 0.74f, 0.61f, 0.58f, 0.34f, 0.22f)
+            for (i in 1 until points.size) {
+                drawLine(
+                    color = accent,
+                    start = Offset(stepX * (i - 1), size.height * points[i - 1]),
+                    end = Offset(stepX * i, size.height * points[i]),
+                    strokeWidth = 7f,
+                    cap = StrokeCap.Round,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun CorePrimaryButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(52.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = CorePrimary),
+    ) {
+        Text(label, color = Color.White, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+internal fun CoreActionRow(
+    primaryActionLabel: String,
+    onPrimaryAction: () -> Unit,
+    secondaryActionLabel: String,
+    onSecondaryAction: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        OutlinedButton(
+            onClick = onSecondaryAction,
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, Color(0xFFD7E3FF)),
+        ) {
+            Text(secondaryActionLabel, color = Color(0xFF506188), style = MaterialTheme.typography.titleSmall)
+        }
+        CorePrimaryButton(
+            label = primaryActionLabel,
+            onClick = onPrimaryAction,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun StatusChip(
+    text: String,
+    color: Color = Color(0xFFE9F2FF),
+) {
+    Box(
+        modifier = Modifier
+            .background(color, RoundedCornerShape(999.dp))
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (color == Color(0xFFE9F2FF)) Color(0xFF4A68D8) else Color.White,
+        )
+    }
+}
+
+@Composable
+private fun CoreBottomNav(
+    activeSection: CoreNavSection,
+    onBottomNav: (String) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(28.dp))
+            .border(1.dp, CoreCardBorder, RoundedCornerShape(28.dp))
+            .padding(horizontal = 6.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Box(modifier = Modifier.weight(1f)) {
+            CoreBottomNavItem(
+                label = "总览",
+                icon = { active, tint -> Icon(Icons.Outlined.Home, contentDescription = null, tint = if (active) tint else Color(0xFF97A4C4)) },
+                active = activeSection == CoreNavSection.Overview,
+                onClick = { onBottomNav(CryptoVpnRouteSpec.vpnHome.pattern) },
+            )
+        }
+        Box(modifier = Modifier.weight(1f)) {
+            CoreBottomNavItem(
+                label = "VPN",
+                icon = { active, tint -> Icon(Icons.Outlined.Shield, contentDescription = null, tint = if (active) tint else Color(0xFF97A4C4)) },
+                active = activeSection == CoreNavSection.Vpn,
+                onClick = { onBottomNav(CryptoVpnRouteSpec.plans.pattern) },
+            )
+        }
+        Box(modifier = Modifier.weight(1f)) {
+            CoreBottomNavItem(
+                label = "钱包",
+                icon = { active, tint -> Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = null, tint = if (active) tint else Color(0xFF97A4C4)) },
+                active = activeSection == CoreNavSection.Wallet,
+                onClick = { onBottomNav(CryptoVpnRouteSpec.assetDetailRoute("USDT", "tron")) },
+            )
+        }
+        Box(modifier = Modifier.weight(1f)) {
+            CoreBottomNavItem(
+                label = "增长",
+                icon = { active, tint -> Icon(Icons.Outlined.AutoGraph, contentDescription = null, tint = if (active) tint else Color(0xFF97A4C4)) },
+                active = activeSection == CoreNavSection.Growth,
+                onClick = { onBottomNav(CryptoVpnRouteSpec.inviteCenter.pattern) },
+            )
+        }
+        Box(modifier = Modifier.weight(1f)) {
+            CoreBottomNavItem(
+                label = "我的",
+                icon = { active, tint -> Icon(Icons.Outlined.PersonOutline, contentDescription = null, tint = if (active) tint else Color(0xFF97A4C4)) },
+                active = activeSection == CoreNavSection.Profile,
+                onClick = { onBottomNav(CryptoVpnRouteSpec.profile.pattern) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun CoreBottomNavItem(
+    label: String,
+    icon: @Composable (Boolean, Color) -> Unit,
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    val activeTint = CorePrimary
+    Column(
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .background(if (active) Color(0xFFEAF0FF) else Color.Transparent, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            icon(active, activeTint)
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (active) activeTint else Color(0xFF8B98BA),
+        )
+    }
+}

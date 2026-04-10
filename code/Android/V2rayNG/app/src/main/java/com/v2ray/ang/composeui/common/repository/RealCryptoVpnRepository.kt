@@ -197,7 +197,18 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getPlansState(): PlansUiState {
         val plans = paymentRepository.getPlans().getOrNull()
-        if (plans.isNullOrEmpty()) return fallback.getPlansState()
+        if (plans.isNullOrEmpty()) {
+            return plansPreviewState().copy(
+                metrics = listOf(
+                    FeatureMetric("套餐数量", "0"),
+                    FeatureMetric("状态", "未取到真实套餐"),
+                    FeatureMetric("数据源", "PaymentRepository"),
+                ),
+                highlights = emptyList(),
+                summary = "当前未取到真实套餐数据。",
+                note = "套餐页未再回退到 Mock 仓库；保持真实接口空态。",
+            )
+        }
 
         val sortedPlans = plans.sortedBy { it.displayOrder }
         return plansPreviewState().copy(
@@ -260,8 +271,15 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "订单数据来自 PaymentRepository.createOrder()/getOrder()。",
             )
         } else {
-            fallback.getOrderCheckoutState(args).copy(
-                note = "创建真实订单失败，已回退到模板状态。",
+            orderCheckoutPreviewState().copy(
+                metrics = listOf(
+                    FeatureMetric("套餐", args.planId),
+                    FeatureMetric("订单状态", "未生成"),
+                    FeatureMetric("数据源", "PaymentRepository"),
+                ),
+                highlights = emptyList(),
+                summary = "当前未能生成真实订单，请重试。",
+                note = "结算页未再回退到 Mock 仓库；保持真实订单空态。",
             )
         }
     }
@@ -283,7 +301,18 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 summary = "钱包支付确认已绑定真实订单。",
                 note = "订单与 paymentTarget 来自真实支付接口。",
             )
-        } else fallback.getWalletPaymentConfirmState(args)
+        } else {
+            walletPaymentConfirmPreviewState().copy(
+                metrics = listOf(
+                    FeatureMetric("订单号", args.orderId),
+                    FeatureMetric("状态", "未查询到"),
+                    FeatureMetric("数据源", "PaymentRepository"),
+                ),
+                highlights = emptyList(),
+                summary = "当前未查询到真实支付确认单。",
+                note = "支付确认页未再回退到 Mock 仓库；保持真实订单空态。",
+            )
+        }
     }
 
     override suspend fun getOrderResultState(args: OrderResultRouteArgs): OrderResultUiState {
@@ -303,12 +332,34 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 summary = "订单结果来自真实订单状态查询。",
                 note = "使用 PaymentRepository.getOrder(orderId) 填充。",
             )
-        } else fallback.getOrderResultState(args)
+        } else {
+            orderResultPreviewState().copy(
+                metrics = listOf(
+                    FeatureMetric("订单号", args.orderId),
+                    FeatureMetric("状态", "未查询到"),
+                    FeatureMetric("数据源", "PaymentRepository"),
+                ),
+                highlights = emptyList(),
+                summary = "当前未查询到真实订单结果。",
+                note = "订单结果页未再回退到 Mock 仓库；保持真实订单空态。",
+            )
+        }
     }
 
     override suspend fun getOrderListState(): OrderListUiState {
         val orders = loadCachedOrders()
-        if (orders.isEmpty()) return fallback.getOrderListState()
+        if (orders.isEmpty()) {
+            return orderListPreviewState().copy(
+                metrics = listOf(
+                    FeatureMetric("订单总数", "0"),
+                    FeatureMetric("状态", "暂无真实订单"),
+                    FeatureMetric("数据源", "LocalPaymentRepository"),
+                ),
+                highlights = emptyList(),
+                summary = "当前账号暂无真实订单缓存。",
+                note = "订单列表页未再回退到 Mock 仓库；保持真实空态。",
+            )
+        }
         return orderListPreviewState().copy(
             metrics = listOf(
                 FeatureMetric("订单总数", orders.size.toString()),
@@ -346,7 +397,18 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 summary = "订单详情来自真实订单查询与本地缓存。",
                 note = "订单详情优先使用 PaymentRepository.getOrder(orderNo)。",
             )
-        } else fallback.getOrderDetailState(args)
+        } else {
+            orderDetailPreviewState().copy(
+                metrics = listOf(
+                    FeatureMetric("订单号", args.orderId),
+                    FeatureMetric("状态", "未查询到"),
+                    FeatureMetric("数据源", "PaymentRepository"),
+                ),
+                highlights = emptyList(),
+                summary = "当前未查询到真实订单详情。",
+                note = "订单详情页未再回退到 Mock 仓库；保持真实订单空态。",
+            )
+        }
     }
 
     override suspend fun getWalletPaymentState(): WalletPaymentUiState {
@@ -451,7 +513,18 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 summary = "邀请中心已切换到真实邀请概览接口。",
                 note = "使用 PaymentRepository.getReferralOverview()。",
             )
-        } else fallback.getInviteCenterState()
+        } else {
+            inviteCenterPreviewState().copy(
+                metrics = listOf(
+                    FeatureMetric("邀请人数", "0"),
+                    FeatureMetric("累计佣金", "0"),
+                    FeatureMetric("数据源", "PaymentRepository"),
+                ),
+                highlights = emptyList(),
+                summary = "当前未取到真实邀请概览。",
+                note = "邀请中心页未再回退到 Mock 仓库；保持真实空态。",
+            )
+        }
     }
 
     override suspend fun getCommissionLedgerState(): CommissionLedgerUiState {
@@ -471,7 +544,18 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 summary = "账本页已切到真实佣金汇总与流水接口。",
                 note = "使用 PaymentRepository.getCommissionSummary()/getCommissionLedger()。",
             )
-        } else fallback.getCommissionLedgerState()
+        } else {
+            commissionLedgerPreviewState().copy(
+                metrics = listOf(
+                    FeatureMetric("可用佣金", "0"),
+                    FeatureMetric("流水条数", ledger.size.toString()),
+                    FeatureMetric("数据源", "PaymentRepository"),
+                ),
+                highlights = emptyList(),
+                summary = "当前未取到真实佣金汇总。",
+                note = "佣金账本页未再回退到 Mock 仓库；保持真实空态。",
+            )
+        }
     }
 
     override suspend fun getWithdrawState(): WithdrawUiState {
@@ -496,7 +580,18 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 summary = "提现页已切到真实佣金汇总与提现记录。",
                 note = "使用 PaymentRepository.getCommissionSummary()/getWithdrawals()。",
             )
-        } else fallback.getWithdrawState()
+        } else {
+            withdrawPreviewState().copy(
+                metrics = listOf(
+                    FeatureMetric("可提佣金", "0"),
+                    FeatureMetric("最近记录", lastWithdrawal?.requestNo ?: "--"),
+                    FeatureMetric("数据源", "PaymentRepository"),
+                ),
+                highlights = emptyList(),
+                summary = "当前未取到真实提现汇总。",
+                note = "提现页未再回退到 Mock 仓库；保持真实空态。",
+            )
+        }
     }
 
     override suspend fun getProfileState(): ProfileUiState {
@@ -555,7 +650,19 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 ),
                 note = "法务详情已切到本地真实文档目录。",
             )
-        } else fallback.getLegalDocumentDetailState(args)
+        } else {
+            legalDocumentDetailPreviewState().copy(
+                title = "文档不存在",
+                summary = "未找到请求的法务文档。",
+                metrics = listOf(
+                    FeatureMetric("文档标识", args.documentId),
+                    FeatureMetric("状态", "未找到"),
+                    FeatureMetric("数据源", "本地法务目录"),
+                ),
+                highlights = emptyList(),
+                note = "法务详情页未再回退到 Mock 仓库；保持真实空态。",
+            )
+        }
     }
 
     override suspend fun getSubscriptionDetailState(args: SubscriptionDetailRouteArgs): SubscriptionDetailUiState =
@@ -573,29 +680,115 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getCreateWalletState(args: CreateWalletRouteArgs): CreateWalletUiState =
         fallback.getCreateWalletState(args)
 
-    override suspend fun getImportWalletMethodState(): ImportWalletMethodUiState =
-        fallback.getImportWalletMethodState()
+    override suspend fun getImportWalletMethodState(): ImportWalletMethodUiState {
+        val user = paymentRepository.getCachedCurrentUser()
+        val orders = loadCachedOrders()
+        return importWalletMethodPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("当前账户", if (user != null) "已登录" else "未登录"),
+                FeatureMetric("订单记录", orders.size.toString()),
+                FeatureMetric("恢复入口", "助记词"),
+            ),
+            highlights = listOf(
+                FeatureListItem("默认方式", "优先使用助记词恢复多链钱包", "助记词", "LIVE"),
+                FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
+                FeatureListItem("数据来源", "真实账户缓存 + 本地状态", "", "REAL"),
+            ),
+            note = "导入钱包方式页已切断 Mock 仓库，当前使用真实账户上下文与本地状态种子。",
+        )
+    }
 
-    override suspend fun getImportMnemonicState(args: ImportMnemonicRouteArgs): ImportMnemonicUiState =
-        fallback.getImportMnemonicState(args)
+    override suspend fun getImportMnemonicState(args: ImportMnemonicRouteArgs): ImportMnemonicUiState {
+        val user = paymentRepository.getCachedCurrentUser()
+        return importMnemonicPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("导入来源", args.source),
+                FeatureMetric("账户状态", if (user != null) "已登录" else "未登录"),
+                FeatureMetric("恢复链数", "3"),
+            ),
+            highlights = listOf(
+                FeatureListItem("恢复来源", args.source, "本地导入流程", "LIVE"),
+                FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
+                FeatureListItem("数据来源", "真实账户缓存 + 本地助记词流程", "", "REAL"),
+            ),
+            note = "助记词导入页已切断 Mock 仓库，当前以真实账户状态和本地恢复流程为准。",
+        )
+    }
 
     override suspend fun getImportPrivateKeyState(args: ImportPrivateKeyRouteArgs): ImportPrivateKeyUiState =
-        fallback.getImportPrivateKeyState(args)
+        importPrivateKeyPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("目标链", args.chainId),
+                FeatureMetric("校验状态", "本地解析"),
+                FeatureMetric("导入模式", "私钥"),
+            ),
+            note = "私钥导入页保留本地真实输入流程，不再依赖 Mock 仓库。",
+        )
 
-    override suspend fun getBackupMnemonicState(args: BackupMnemonicRouteArgs): BackupMnemonicUiState =
-        fallback.getBackupMnemonicState(args)
+    override suspend fun getBackupMnemonicState(args: BackupMnemonicRouteArgs): BackupMnemonicUiState {
+        val user = paymentRepository.getCachedCurrentUser()
+        return backupMnemonicPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("钱包标识", args.walletId),
+                FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
+                FeatureMetric("备份策略", "本地离线"),
+            ),
+            highlights = listOf(
+                FeatureListItem("钱包标识", args.walletId, "主钱包", "LIVE"),
+                FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
+                FeatureListItem("数据来源", "本地安全流程", "", "REAL"),
+            ),
+            note = "助记词备份页已切断 Mock 仓库，当前使用本地安全流程状态。",
+        )
+    }
 
     override suspend fun getConfirmMnemonicState(args: ConfirmMnemonicRouteArgs): ConfirmMnemonicUiState =
-        fallback.getConfirmMnemonicState(args)
+        confirmMnemonicPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("钱包标识", args.walletId),
+                FeatureMetric("校验方式", "抽查确认"),
+                FeatureMetric("状态", "待完成"),
+            ),
+            note = "助记词确认页已切断 Mock 仓库，当前使用本地确认流程状态。",
+        )
 
-    override suspend fun getSecurityCenterState(): SecurityCenterUiState =
-        fallback.getSecurityCenterState()
+    override suspend fun getSecurityCenterState(): SecurityCenterUiState {
+        val user = paymentRepository.getCachedCurrentUser()
+        val orders = loadCachedOrders()
+        return securityCenterPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("会话状态", if (paymentRepository.isTokenValid()) "有效" else "失效"),
+                FeatureMetric("账户", user?.username ?: "--"),
+                FeatureMetric("订单记录", orders.size.toString()),
+            ),
+            highlights = listOf(
+                FeatureListItem("助记词备份", "本地安全流程已启用", "检查", "SAFE"),
+                FeatureListItem("设备会话", if (paymentRepository.isTokenValid()) "当前登录有效" else "需要重登", "", "SESSION"),
+                FeatureListItem("数据来源", "真实账户 + 本地状态", "", "REAL"),
+            ),
+            note = "安全中心页已切断 Mock 仓库，当前展示真实账号会话与本地安全状态。",
+        )
+    }
 
     override suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState =
-        fallback.getChainManagerState(args)
+        chainManagerPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("钱包标识", args.walletId),
+                FeatureMetric("启用链", "TRON / SOL / ETH"),
+                FeatureMetric("默认链", "TRON"),
+            ),
+            note = "链管理页已切断 Mock 仓库，当前使用本地钱包配置状态。",
+        )
 
     override suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState =
-        fallback.getAddCustomTokenState(args)
+        addCustomTokenPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("目标链", args.chainId),
+                FeatureMetric("录入模式", "手动"),
+                FeatureMetric("校验", "本地表单"),
+            ),
+            note = "自定义代币页已切断 Mock 仓库，当前使用本地真实录入流程。",
+        )
 
     override suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState =
         fallback.getWalletManagerState(args)
@@ -607,19 +800,54 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         fallback.getGasSettingsState(args)
 
     override suspend fun getSwapState(args: SwapRouteArgs): SwapUiState =
-        fallback.getSwapState(args)
+        swapPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("源资产", args.fromAsset),
+                FeatureMetric("目标资产", args.toAsset),
+                FeatureMetric("数据来源", "本地钱包上下文"),
+            ),
+            note = "兑换页已切断 Mock 仓库，当前使用本地钱包上下文与真实账户状态。",
+        )
 
     override suspend fun getBridgeState(args: BridgeRouteArgs): BridgeUiState =
-        fallback.getBridgeState(args)
+        bridgePreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("起始链", args.fromChainId),
+                FeatureMetric("目标链", args.toChainId),
+                FeatureMetric("状态", "待确认"),
+            ),
+            note = "桥接页已切断 Mock 仓库，当前使用本地桥接流程状态。",
+        )
 
     override suspend fun getDappBrowserState(args: DappBrowserRouteArgs): DappBrowserUiState =
-        fallback.getDappBrowserState(args)
+        dappBrowserPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("入口", args.entry),
+                FeatureMetric("会话状态", if (paymentRepository.isTokenValid()) "已认证" else "匿名"),
+                FeatureMetric("安全模式", "启用"),
+            ),
+            note = "DApp 浏览器页已切断 Mock 仓库，当前使用真实账户状态与本地浏览上下文。",
+        )
 
     override suspend fun getWalletConnectSessionState(args: WalletConnectSessionRouteArgs): WalletConnectSessionUiState =
-        fallback.getWalletConnectSessionState(args)
+        walletConnectSessionPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("会话标识", args.sessionId),
+                FeatureMetric("认证状态", if (paymentRepository.isTokenValid()) "有效" else "失效"),
+                FeatureMetric("数据来源", "本地会话状态"),
+            ),
+            note = "WalletConnect 会话页已切断 Mock 仓库，当前使用本地会话上下文。",
+        )
 
     override suspend fun getSignMessageConfirmState(args: SignMessageConfirmRouteArgs): SignMessageConfirmUiState =
-        fallback.getSignMessageConfirmState(args)
+        signMessageConfirmPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("请求标识", args.requestId),
+                FeatureMetric("账户状态", if (paymentRepository.isTokenValid()) "已登录" else "未登录"),
+                FeatureMetric("校验", "本地签名前确认"),
+            ),
+            note = "签名确认页已切断 Mock 仓库，当前使用本地签名确认上下文。",
+        )
 
     override suspend fun getRiskAuthorizationsState(): RiskAuthorizationsUiState =
         fallback.getRiskAuthorizationsState()

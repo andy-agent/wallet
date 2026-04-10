@@ -3,9 +3,11 @@ package com.v2ray.ang.composeui.pages.p2extended
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 import com.v2ray.ang.composeui.p2extended.model.BackupMnemonicEvent
 import com.v2ray.ang.composeui.p2extended.model.BackupMnemonicUiState
@@ -40,33 +42,27 @@ fun BackupMnemonicScreen(
     onEvent: (BackupMnemonicEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "backup_mnemonic",
-        motionProfile = MotionProfile.L1,
-        onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(BackupMnemonicEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(BackupMnemonicEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(BackupMnemonicEvent.SecondaryActionClicked)
-        },
-    )
+    P2ExtendedPageScaffold(
+        kicker = "Backup",
+        title = "备份助记词",
+        subtitle = "创建成功后立即完成离线备份，这是恢复资产的唯一方式。",
+        hubLabel = "高优先级",
+        onHubClick = { onEvent(BackupMnemonicEvent.Refresh) },
+        primaryActionLabel = "我已安全备份",
+        onPrimaryAction = { onEvent(BackupMnemonicEvent.PrimaryActionClicked) },
+        secondaryActionLabel = "导出到离线打印模板",
+        onSecondaryAction = { onEvent(BackupMnemonicEvent.SecondaryActionClicked) },
+    ) {
+        P2Card(title = "请抄写以下 12 个单词", subtitle = "不要截屏、不要存云端、不要分享给任何人。") {
+            FieldRow(label = "01-03", value = "ocean · brick · velvet")
+            Spacer(modifier = Modifier.height(8.dp))
+            FieldRow(label = "04-06", value = "lamp · maple · vivid")
+            Spacer(modifier = Modifier.height(8.dp))
+            FieldRow(label = "07-09", value = "orbit · coral · charge")
+            Spacer(modifier = Modifier.height(8.dp))
+            FieldRow(label = "10-12", value = "laptop · anchor · glow")
+        }
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

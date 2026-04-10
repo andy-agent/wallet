@@ -59,7 +59,7 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
         OrderCheckoutRoute(
             viewModel = vm,
             onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletPaymentConfirmRoute("ORD-2025-0001")) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletPayment.pattern) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.plans.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
@@ -140,18 +140,6 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
         OrderDetailRoute(
             viewModel = vm,
             onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.orderList.pattern) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.plans.pattern) },
-            onBottomNav = { navController.navigateSingleTop(it) },
-        )
-    }
-
-    composable(CryptoVpnRouteSpec.walletPayment.pattern) {
-        val vm: WalletPaymentViewModel = viewModel(
-            factory = cryptoVpnViewModelFactory { WalletPaymentViewModel(repository) },
-        )
-        WalletPaymentRoute(
-            viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletPaymentConfirmRoute("ORD-WALLET-0001")) },
             onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.plans.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )

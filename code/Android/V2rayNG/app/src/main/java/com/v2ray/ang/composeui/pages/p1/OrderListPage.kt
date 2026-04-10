@@ -1,16 +1,29 @@
 package com.v2ray.ang.composeui.pages.p1
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
-import com.v2ray.ang.composeui.p1.model.OrderListEvent
+import androidx.compose.ui.unit.dp
+import com.v2ray.ang.composeui.common.model.FeatureListItem
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
+import com.v2ray.ang.composeui.p0.ui.P01Header
+import com.v2ray.ang.composeui.p0.ui.P01Card
+import com.v2ray.ang.composeui.p0.ui.P01List
+import com.v2ray.ang.composeui.p0.ui.P01ListRow
+import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
+import com.v2ray.ang.composeui.p0.ui.P01Tab
 import com.v2ray.ang.composeui.p1.model.OrderListUiState
 import com.v2ray.ang.composeui.p1.model.orderListPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.OrderListViewModel
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun OrderListRoute(
@@ -22,14 +35,7 @@ fun OrderListRoute(
     val uiState by viewModel.uiState.collectAsState()
     OrderListScreen(
         uiState = uiState,
-        onEvent = { event ->
-            viewModel.onEvent(event)
-            when (event) {
-                OrderListEvent.PrimaryActionClicked -> onPrimaryAction()
-                OrderListEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
-                else -> Unit
-            }
-        },
+        onOpenOrder = { orderId -> onBottomNav(CryptoVpnRouteSpec.orderDetailRoute(orderId)) },
         onBottomNav = onBottomNav,
     )
 }
@@ -37,36 +43,54 @@ fun OrderListRoute(
 @Composable
 fun OrderListScreen(
     uiState: OrderListUiState,
-    onEvent: (OrderListEvent) -> Unit,
+    onOpenOrder: (String) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = true,
-        currentRoute = "plans",
-        motionProfile = MotionProfile.L2,
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    val orders = uiState.highlights.ifEmpty {
+        listOf(
+            FeatureListItem("年费 Pro", "TRON / 149 USDT", "已完成", "ORD-2025-0001"),
+            FeatureListItem("月费 Pro", "SOL / 8.90", "待支付", "ORD-2025-0002"),
+        )
+    }
+
+    P01PhoneScaffold(
+        statusTime = "18:24",
+        currentRoute = CryptoVpnRouteSpec.plans.name,
         onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(OrderListEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(OrderListEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(OrderListEvent.SecondaryActionClicked)
-        },
-    )
+    ) {
+        P01Header(
+            eyebrow = "ORDERS",
+            title = "订单中心",
+            backLabel = "<",
+            onBack = { onBottomNav(CryptoVpnRouteSpec.vpnHome.pattern) },
+        )
+
+        P01Card {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                listOf("全部", "已完成", "已退款").forEachIndexed { index, label ->
+                    P01Tab(
+                        text = label,
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                    )
+                }
+            }
+            P01List {
+                orders.forEach { order ->
+                    P01ListRow(
+                        title = order.title,
+                        copy = order.subtitle,
+                        value = order.trailing,
+                        onClick = { onOpenOrder(order.badge.ifBlank { "ORD-2025-0001" }) },
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
@@ -75,7 +99,7 @@ private fun OrderListPreview() {
     CryptoVpnTheme {
         OrderListScreen(
             uiState = orderListPreviewState(),
-            onEvent = {},
+            onOpenOrder = {},
         )
     }
 }

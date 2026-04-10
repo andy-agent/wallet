@@ -1,16 +1,24 @@
 package com.v2ray.ang.composeui.pages.p0
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.model.OptionalUpdateEvent
 import com.v2ray.ang.composeui.p0.model.OptionalUpdateUiState
 import com.v2ray.ang.composeui.p0.model.optionalUpdatePreviewState
+import com.v2ray.ang.composeui.p0.ui.P01ButtonRow
+import com.v2ray.ang.composeui.p0.ui.P01Card
+import com.v2ray.ang.composeui.p0.ui.P01CardCopy
+import com.v2ray.ang.composeui.p0.ui.P01CardHeader
+import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
+import com.v2ray.ang.composeui.p0.ui.P01SuccessBadge
 import com.v2ray.ang.composeui.p0.viewmodel.OptionalUpdateViewModel
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun OptionalUpdateRoute(
@@ -22,13 +30,13 @@ fun OptionalUpdateRoute(
     val uiState by viewModel.uiState.collectAsState()
     OptionalUpdateScreen(
         uiState = uiState,
-        onEvent = { event ->
-            viewModel.onEvent(event)
-            when (event) {
-                OptionalUpdateEvent.PrimaryActionClicked -> onPrimaryAction()
-                OptionalUpdateEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
-                else -> Unit
-            }
+        onPrimaryAction = {
+            viewModel.onEvent(OptionalUpdateEvent.PrimaryActionClicked)
+            onPrimaryAction()
+        },
+        onSecondaryAction = {
+            viewModel.onEvent(OptionalUpdateEvent.SecondaryActionClicked)
+            onSecondaryAction?.invoke()
         },
         onBottomNav = onBottomNav,
     )
@@ -37,36 +45,27 @@ fun OptionalUpdateRoute(
 @Composable
 fun OptionalUpdateScreen(
     uiState: OptionalUpdateUiState,
-    onEvent: (OptionalUpdateEvent) -> Unit,
+    onPrimaryAction: () -> Unit,
+    onSecondaryAction: () -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "optional_update",
-        motionProfile = MotionProfile.L2,
+    P01PhoneScaffold(
+        statusTime = "18:16",
+        currentRoute = CryptoVpnRouteSpec.vpnHome.name,
         onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(OptionalUpdateEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(OptionalUpdateEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(OptionalUpdateEvent.SecondaryActionClicked)
-        },
-    )
+    ) {
+        P01Card(centered = true) {
+            P01SuccessBadge(symbol = "v", tint = Color(0xFF49D89B))
+            P01CardHeader(title = "发现新版本")
+            P01CardCopy("新版本带来更稳定的节点选择、更流畅的钱包图表和更清晰的底部导航。")
+            P01ButtonRow(
+                primaryLabel = "立即更新",
+                onPrimaryClick = onPrimaryAction,
+                secondaryLabel = "稍后提醒我",
+                onSecondaryClick = onSecondaryAction,
+            )
+        }
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
@@ -75,7 +74,8 @@ private fun OptionalUpdatePreview() {
     CryptoVpnTheme {
         OptionalUpdateScreen(
             uiState = optionalUpdatePreviewState(),
-            onEvent = {},
+            onPrimaryAction = {},
+            onSecondaryAction = {},
         )
     }
 }

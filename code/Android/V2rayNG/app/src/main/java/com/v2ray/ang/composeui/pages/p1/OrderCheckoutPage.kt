@@ -1,16 +1,33 @@
 package com.v2ray.ang.composeui.pages.p1
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import androidx.compose.ui.unit.dp
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
+import com.v2ray.ang.composeui.p0.ui.P01Card
+import com.v2ray.ang.composeui.p0.ui.P01CardCopy
+import com.v2ray.ang.composeui.p0.ui.P01CardHeader
+import com.v2ray.ang.composeui.p0.ui.P01Chip
+import com.v2ray.ang.composeui.p0.ui.P01Header
+import com.v2ray.ang.composeui.p0.ui.P01List
+import com.v2ray.ang.composeui.p0.ui.P01ListRow
+import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
+import com.v2ray.ang.composeui.p0.ui.P01PrimaryButton
+import com.v2ray.ang.composeui.p0.ui.P01QrArt
+import com.v2ray.ang.composeui.p0.ui.P01SecondaryButton
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutEvent
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutUiState
 import com.v2ray.ang.composeui.p1.model.orderCheckoutPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.OrderCheckoutViewModel
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun OrderCheckoutRoute(
@@ -22,13 +39,9 @@ fun OrderCheckoutRoute(
     val uiState by viewModel.uiState.collectAsState()
     OrderCheckoutScreen(
         uiState = uiState,
-        onEvent = { event ->
-            viewModel.onEvent(event)
-            when (event) {
-                OrderCheckoutEvent.PrimaryActionClicked -> onPrimaryAction()
-                OrderCheckoutEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
-                else -> Unit
-            }
+        onPrimaryAction = {
+            viewModel.onEvent(OrderCheckoutEvent.PrimaryActionClicked)
+            onPrimaryAction()
         },
         onBottomNav = onBottomNav,
     )
@@ -37,37 +50,85 @@ fun OrderCheckoutRoute(
 @Composable
 fun OrderCheckoutScreen(
     uiState: OrderCheckoutUiState,
-    onEvent: (OrderCheckoutEvent) -> Unit,
+    onPrimaryAction: () -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "order_checkout",
-        motionProfile = MotionProfile.L2,
+    val clipboardManager = LocalClipboardManager.current
+    val orderRows = checkoutRows(uiState)
+    val address = checkoutAddress(uiState)
+
+    P01PhoneScaffold(
+        statusTime = "18:33",
+        currentRoute = CryptoVpnRouteSpec.plans.name,
         onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(OrderCheckoutEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(OrderCheckoutEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(OrderCheckoutEvent.SecondaryActionClicked)
-        },
+    ) {
+        P01Header(
+            eyebrow = "CHECKOUT",
+            title = "订单收银台",
+            subtitle = "确认套餐、支付网络与到账说明。",
+            chips = listOf("• 10分钟有效"),
+            backLabel = "<",
+            onBack = { onBottomNav(CryptoVpnRouteSpec.plans.pattern) },
+        )
+
+        P01Card {
+            P01CardHeader(title = "订单信息")
+            P01CardCopy("选择链上资产完成支付，系统会自动激活对应订阅。")
+            P01List {
+                orderRows.forEach { (title, value) ->
+                    P01ListRow(title = title, value = value)
+                }
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("USDT-TRON", "USDT-Solana", "SOL").forEach { label ->
+                P01Chip(text = label)
+            }
+        }
+
+        P01Card {
+            P01CardHeader(title = "扫码支付")
+            P01CardCopy("使用任意支持 TRON 的钱包完成付款，或复制地址转账。")
+            androidx.compose.foundation.layout.Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                P01QrArt()
+                androidx.compose.material3.Text(text = address, color = androidx.compose.ui.graphics.Color(0xFF7B8DB0))
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                P01SecondaryButton(
+                    text = "复制地址",
+                    onClick = { clipboardManager.setText(AnnotatedString(address)) },
+                    modifier = Modifier.weight(1f),
+                )
+                P01PrimaryButton(
+                    text = "我已完成支付",
+                    onClick = onPrimaryAction,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
+private fun checkoutRows(uiState: OrderCheckoutUiState): List<Pair<String, String>> {
+    val metricMap = uiState.metrics.associate { it.label to it.value }
+    return listOf(
+        "套餐" to (metricMap["套餐"] ?: uiState.highlights.firstOrNull()?.title ?: "年费 Pro"),
+        "支付网络" to (metricMap["网络"] ?: metricMap["支付网络"] ?: "TRON / Solana"),
+        "订单金额" to (metricMap["金额"] ?: "149.00 USDT"),
     )
 }
+
+private fun checkoutAddress(uiState: OrderCheckoutUiState): String =
+    uiState.highlights.firstOrNull { it.title.contains("收款地址") }?.subtitle
+        ?.takeIf { it.isNotBlank() } ?: "TXvM...eR92"
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
 @Composable
@@ -75,7 +136,7 @@ private fun OrderCheckoutPreview() {
     CryptoVpnTheme {
         OrderCheckoutScreen(
             uiState = orderCheckoutPreviewState(),
-            onEvent = {},
+            onPrimaryAction = {},
         )
     }
 }

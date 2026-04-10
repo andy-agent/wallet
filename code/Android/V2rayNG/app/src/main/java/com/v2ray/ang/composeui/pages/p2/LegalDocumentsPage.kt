@@ -1,16 +1,16 @@
 package com.v2ray.ang.composeui.pages.p2
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import androidx.compose.ui.graphics.Color
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p2.model.LegalDocumentsEvent
 import com.v2ray.ang.composeui.p2.model.LegalDocumentsUiState
 import com.v2ray.ang.composeui.p2.model.legalDocumentsPreviewState
 import com.v2ray.ang.composeui.p2.viewmodel.LegalDocumentsViewModel
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun LegalDocumentsRoute(
@@ -40,33 +40,36 @@ fun LegalDocumentsScreen(
     onEvent: (LegalDocumentsEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
+    P2CorePageScaffold(
+        kicker = uiState.subtitle,
         title = uiState.title,
-        subtitle = uiState.subtitle,
+        subtitle = uiState.note,
         badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = true,
-        currentRoute = "profile",
-        motionProfile = MotionProfile.L1,
+        activeSection = CoreNavSection.Profile,
         onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(LegalDocumentsEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(LegalDocumentsEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(LegalDocumentsEvent.SecondaryActionClicked)
-        },
-    )
+        primaryActionLabel = uiState.primaryActionLabel,
+        onPrimaryAction = { onBottomNav(CryptoVpnRouteSpec.legalDocumentDetailRoute("terms_of_service")) },
+        secondaryActionLabel = uiState.secondaryActionLabel,
+        onSecondaryAction = { onBottomNav(CryptoVpnRouteSpec.profile.pattern) },
+    ) {
+        P2CoreCard {
+            uiState.highlights.forEachIndexed { index, item ->
+                val destination = when (index) {
+                    0 -> CryptoVpnRouteSpec.legalDocumentDetailRoute("terms_of_service")
+                    1 -> CryptoVpnRouteSpec.legalDocumentDetailRoute("privacy_policy")
+                    2 -> CryptoVpnRouteSpec.legalDocumentDetailRoute("vpn_service_notice")
+                    else -> null
+                }
+                P2CoreListRow(
+                    title = item.title,
+                    subtitle = item.subtitle,
+                    trailing = item.trailing,
+                    trailingColor = if (index == 0) Color(0xFF2F5BFF) else Color(0xFF66739D),
+                    onClick = destination?.let { { onBottomNav(it) } },
+                )
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

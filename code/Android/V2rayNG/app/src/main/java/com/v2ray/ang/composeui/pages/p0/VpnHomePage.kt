@@ -1,39 +1,41 @@
 package com.v2ray.ang.composeui.pages.p0
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.v2ray.ang.composeui.components.app.TechScaffold
-import com.v2ray.ang.composeui.components.buttons.GradientCTAButton
-import com.v2ray.ang.composeui.components.cards.GradientHeroCard
-import com.v2ray.ang.composeui.components.cards.MiniMetricPill
-import com.v2ray.ang.composeui.components.cards.SettingTileCard
-import com.v2ray.ang.composeui.components.cards.TechCard
-import com.v2ray.ang.composeui.components.listitems.RegionSpeedRow
-import com.v2ray.ang.composeui.components.listitems.WatchSignalRow
-import com.v2ray.ang.composeui.components.navigation.CryptoVpnBottomBar
-import com.v2ray.ang.composeui.components.navigation.CryptoVpnTopBar
-import com.v2ray.ang.composeui.effects.ConnectionHero
-import com.v2ray.ang.composeui.effects.MotionProfile
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
+import com.v2ray.ang.composeui.p0.model.RegionSpeed
 import com.v2ray.ang.composeui.p0.model.VpnConnectionStatus
 import com.v2ray.ang.composeui.p0.model.VpnHomeEvent
+import com.v2ray.ang.composeui.p0.model.VpnHomeUiState
+import com.v2ray.ang.composeui.p0.repository.MockP0Repository
+import com.v2ray.ang.composeui.p0.ui.P01ButtonRow
+import com.v2ray.ang.composeui.p0.ui.P01Card
+import com.v2ray.ang.composeui.p0.ui.P01CardCopy
+import com.v2ray.ang.composeui.p0.ui.P01CardHeader
+import com.v2ray.ang.composeui.p0.ui.P01Chip
+import com.v2ray.ang.composeui.p0.ui.P01Header
+import com.v2ray.ang.composeui.p0.ui.P01List
+import com.v2ray.ang.composeui.p0.ui.P01ListRow
+import com.v2ray.ang.composeui.p0.ui.P01MetricCell
+import com.v2ray.ang.composeui.p0.ui.P01MetricGrid
+import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.viewmodel.VpnHomeViewModel
-import com.v2ray.ang.composeui.theme.TextMuted
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun VpnHomeRoute(
@@ -44,134 +46,157 @@ fun VpnHomeRoute(
     onPlans: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    VpnHomeScreen(
+        currentRoute = currentRoute,
+        uiState = uiState,
+        onToggleConnection = { viewModel.onEvent(VpnHomeEvent.ToggleConnection) },
+        onSelectRegion = { viewModel.onEvent(VpnHomeEvent.RegionSelected(it)) },
+        onBottomNav = onBottomNav,
+        onWalletHome = onWalletHome,
+        onPlans = onPlans,
+    )
+}
 
-    TechScaffold(
-        motionProfile = MotionProfile.L2,
-        showNetwork = true,
-        topBar = {
-            CryptoVpnTopBar(
-                title = "Unified secure home",
-                subtitle = "VPN + wallet shell",
+@Composable
+fun VpnHomeScreen(
+    currentRoute: String,
+    uiState: VpnHomeUiState,
+    onToggleConnection: () -> Unit,
+    onSelectRegion: (RegionSpeed) -> Unit,
+    onBottomNav: (String) -> Unit,
+    onWalletHome: () -> Unit,
+    onPlans: () -> Unit,
+) {
+    P01PhoneScaffold(
+        statusTime = "18:30",
+        currentRoute = currentRoute,
+        onBottomNav = onBottomNav,
+    ) {
+        P01Header(
+            eyebrow = "SECURE TUNNEL",
+            title = "VPN核心",
+            subtitle = "将节点健康、实时延迟、套餐状态与支付续费融合到一屏。",
+            chips = listOf("• ${connectionChipLabel(uiState.connectionStatus)}"),
+        )
+
+        P01Card {
+            P01CardHeader(
+                title = "当前连接",
+                trailing = {
+                    P01Chip(text = "${uiState.subscription.planName}• 剩余${uiState.subscription.expiresInDays}天")
+                },
+                subtitle = "${uiState.selectedRegion.regionName} • ${uiState.selectedRegion.protocol}",
             )
-        },
-        bottomBar = {
-            CryptoVpnBottomBar(
-                currentRoute = currentRoute,
-                onRouteSelected = onBottomNav,
+            P01MetricGrid(
+                items = listOf(
+                    P01MetricCell("CONNECTED", connectionPrimaryValue(uiState)),
+                    P01MetricCell("延迟", "${uiState.selectedRegion.latencyMs}ms"),
+                    P01MetricCell("在线时长", if (uiState.connectionStatus == VpnConnectionStatus.CONNECTED) "08h 42m" else "--"),
+                    P01MetricCell("节点评分", "97/100"),
+                ),
             )
-        },
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            item {
-                ConnectionHero(
-                    status = uiState.connectionStatus,
-                    motionProfile = MotionProfile.L3,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp),
+            P01ButtonRow(
+                primaryLabel = "断开/重新连接",
+                onPrimaryClick = onToggleConnection,
+                secondaryLabel = "切换节点",
+                onSecondaryClick = {
+                    onSelectRegion(uiState.selectedRegion)
+                    onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern)
+                },
+            )
+        }
+
+        P01Card {
+            P01CardHeader(title = "流量与健康")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                VpnQuickCell("12.4 GB", onClick = { onBottomNav(CryptoVpnRouteSpec.receiveRoute("USDT", "tron")) }, modifier = Modifier.weight(1f))
+                VpnQuickCell("82.1 GB", onClick = { onBottomNav(CryptoVpnRouteSpec.sendRoute("USDT", "tron")) }, modifier = Modifier.weight(1f))
+                VpnQuickCell("0.2%", onClick = { onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern) }, modifier = Modifier.weight(1f))
+                VpnQuickCell("查看订单", onClick = { onBottomNav(CryptoVpnRouteSpec.orderList.pattern) }, modifier = Modifier.weight(1f))
+            }
+            P01CardCopy("今日保护设备4台，智能路由命中率持续提升。")
+        }
+
+        P01Card {
+            P01CardHeader(title = "最近提醒")
+            P01List {
+                P01ListRow(
+                    title = "节点抖动已恢复•套餐将在3天后自动续费",
+                    value = "查看订单",
+                    onClick = { onBottomNav(CryptoVpnRouteSpec.orderList.pattern) },
                 )
-                GradientHeroCard(
-                    title = "VPN state",
-                    value = when (uiState.connectionStatus) {
-                        VpnConnectionStatus.DISCONNECTED -> "Offline"
-                        VpnConnectionStatus.CONNECTING -> "Connecting"
-                        VpnConnectionStatus.CONNECTED -> "Protected"
-                    },
-                    subtitle = "${uiState.selectedRegion.regionName} · ${uiState.selectedRegion.latencyMs} ms",
-                    accent = "${uiState.subscription.expiresInDays} days left",
-                )
-            }
-
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MiniMetricPill("Wallet", uiState.walletTotalLabel)
-                    MiniMetricPill("Plan", uiState.subscription.planName)
-                    MiniMetricPill("Renewal", uiState.subscription.nextBillingLabel)
-                }
-            }
-
-            item {
-                GradientCTAButton(
-                    text = uiState.oneTapLabel,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    viewModel.onEvent(VpnHomeEvent.ToggleConnection)
-                }
-            }
-
-            item {
-                SettingTileCard(
-                    title = "Auto-connect rules",
-                    summary = "Connect on insecure Wi-Fi and on app relaunch.",
-                    checked = uiState.autoConnectEnabled,
-                    onCheckedChange = { viewModel.onEvent(VpnHomeEvent.AutoConnectChanged(it)) },
-                )
-            }
-
-            item {
-                TechCard {
-                    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Subscription", style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                "Track expiry and quick upgrade access from the same shell.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextMuted,
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    GradientCTAButton(
-                        text = "Open plans",
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onPlans,
-                    )
-                }
-            }
-
-            item {
-                Text("Fast nodes", style = MaterialTheme.typography.titleLarge)
-            }
-
-            items(uiState.speedNodes) { node ->
-                RegionSpeedRow(
-                    item = node,
-                    modifier = Modifier,
-                )
-            }
-
-            item {
-                Text("Market watch", style = MaterialTheme.typography.titleLarge)
-            }
-
-            items(uiState.watchSignals) { signal ->
-                WatchSignalRow(signal = signal)
-            }
-
-            item {
-                TechCard {
-                    Text("Wallet snapshot", style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        "Enter the multichain asset shell, review balances, and prepare send / receive actions.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextMuted,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    GradientCTAButton(
-                        text = "Open wallet",
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onWalletHome,
-                    )
-                }
-                Spacer(modifier = Modifier.height(20.dp))
             }
         }
+
+        P01Card {
+            P01CardHeader(title = "钱包快照")
+            P01CardCopy("进入多链钱包总览，查看可用于套餐续费的资产与支付网络。")
+            P01ButtonRow(
+                primaryLabel = "打开钱包",
+                onPrimaryClick = onWalletHome,
+                secondaryLabel = "购买套餐",
+                onSecondaryClick = onPlans,
+            )
+        }
+    }
+}
+
+@Composable
+private fun VpnQuickCell(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .background(Color.White.copy(alpha = 0.82f), RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 14.dp, horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        androidx.compose.foundation.Canvas(modifier = Modifier.size(36.dp)) {
+            drawRoundRect(
+                color = Color(0x1A4276FF),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(14.dp.toPx(), 14.dp.toPx()),
+            )
+            drawCircle(
+                color = Color(0xFF4276FF),
+                radius = size.minDimension * 0.12f,
+                center = center,
+            )
+        }
+        androidx.compose.material3.Text(text = label, color = Color(0xFF4D6287))
+    }
+}
+
+private fun connectionChipLabel(status: VpnConnectionStatus): String = when (status) {
+    VpnConnectionStatus.CONNECTED -> "已连接"
+    VpnConnectionStatus.CONNECTING -> "连接中"
+    VpnConnectionStatus.DISCONNECTED -> "未连接"
+}
+
+private fun connectionPrimaryValue(status: VpnHomeUiState): String = when (status.connectionStatus) {
+    VpnConnectionStatus.CONNECTED -> "89Mbps"
+    VpnConnectionStatus.CONNECTING -> "连接中"
+    VpnConnectionStatus.DISCONNECTED -> "0Mbps"
+}
+
+@Preview(showBackground = true, widthDp = 393, heightDp = 852)
+@Composable
+private fun VpnHomePreview() {
+    CryptoVpnTheme {
+        VpnHomeScreen(
+            currentRoute = CryptoVpnRouteSpec.vpnHome.name,
+            uiState = VpnHomeViewModel(MockP0Repository()).uiState.value,
+            onToggleConnection = {},
+            onSelectRegion = {},
+            onBottomNav = {},
+            onWalletHome = {},
+            onPlans = {},
+        )
     }
 }

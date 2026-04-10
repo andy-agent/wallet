@@ -3,9 +3,13 @@ package com.v2ray.ang.composeui.pages.p2extended
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 import com.v2ray.ang.composeui.p2extended.model.DappBrowserEvent
 import com.v2ray.ang.composeui.p2extended.model.DappBrowserUiState
@@ -40,33 +44,29 @@ fun DappBrowserScreen(
     onEvent: (DappBrowserEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "dapp_browser",
-        motionProfile = MotionProfile.L1,
-        onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(DappBrowserEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(DappBrowserEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(DappBrowserEvent.SecondaryActionClicked)
-        },
-    )
+    P2ExtendedPageScaffold(
+        kicker = "DApp Browser",
+        title = "DApp 浏览器",
+        subtitle = "补齐链上应用入口，并统一签名与风险提示体验。",
+        hubLabel = "内置浏览器",
+        onHubClick = { onEvent(DappBrowserEvent.Refresh) },
+        primaryActionLabel = "访问",
+        onPrimaryAction = { onEvent(DappBrowserEvent.PrimaryActionClicked) },
+        secondaryActionLabel = "返回",
+        onSecondaryAction = { onEvent(DappBrowserEvent.SecondaryActionClicked) },
+    ) {
+        P2Card(title = "输入 URL / 搜索 DApp / 输入 ENS") {}
+        Spacer(modifier = Modifier.height(12.dp))
+        ChipRow(items = listOf("精选", "DeFi", "支付", "NFT", "工具"), activeIndex = 0)
+        Spacer(modifier = Modifier.height(14.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ListRow("Jupiter", "Solana 聚合兑换", "92K users")
+            ListRow("Sunswap", "TRON 稳定币兑换", "31K users")
+            ListRow("Aave", "借贷与收益", "120K users")
+            ListRow("OpenOcean", "跨链路由", "58K users")
+            ListRow("Magic Eden", "NFT 市场", "63K users")
+        }
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

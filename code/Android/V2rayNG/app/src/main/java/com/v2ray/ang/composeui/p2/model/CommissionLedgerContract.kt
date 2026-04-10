@@ -10,30 +10,29 @@ import com.v2ray.ang.composeui.common.model.FeatureMetric
 data class CommissionLedgerUiState(
         val title: String = "佣金账本",
         val subtitle: String = "COMMISSION LEDGER",
-        val badge: String = "P2 · BASE",
-        val summary: String = "账本页展示分润流水、待结算项与已结算收益。",
+        val badge: String = "• 本月 +$820",
+        val summary: String = "查看佣金趋势、来源明细和已结算 / 待结算金额。",
         val primaryActionLabel: String = "去提现",
         val secondaryActionLabel: String? = "返回邀请中心",
         val heroAccent: String = "commission_ledger",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "本月收益", value = "+$537.25"),
-    FeatureMetric(label = "待结算", value = "89 USDT"),
-    FeatureMetric(label = "已结算", value = "2,481 USDT"),
+    FeatureMetric(label = "累计佣金", value = "$3,481.22"),
+    FeatureMetric(label = "走势", value = "收入趋势"),
+    FeatureMetric(label = "账目", value = "已结算 / 待结算"),
 ),
         val fields: List<FeatureField> = emptyList(),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "账本页展示分润流水、待结算项与已结算收益。", trailing = "commission_ledger", badge = "P2 基础文档页"),
-    FeatureListItem(title = "导航参数", subtitle = "当前页面无必填导航参数", trailing = "0 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "当前页面以信息展示与确认动作为主", trailing = "0 项", badge = "Info"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
+    FeatureListItem(title = "东京 Pro 年费转化", subtitle = "节点升级与续费分成。", trailing = "+$37.25"),
+    FeatureListItem(title = "新加坡月费转化", subtitle = "多链钱包高级功能开通返佣。", trailing = "+$2.20"),
+    FeatureListItem(title = "年费 Pro 二级佣金", subtitle = "等待用户订单完成后的返佣。", trailing = "+$7.45"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "佣金账本 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 CommissionLedgerPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "当前页面无必填参数，但已纳入统一 RouteSpec 台账。"),
+    FeatureBullet(title = "收入走势", detail = "查看每一笔订阅转化、结算状态与链上提现记录。"),
+    FeatureBullet(title = "结算维度", detail = "按订单来源拆分返佣。"),
+    FeatureBullet(title = "转化明细", detail = "支持结合邀请链路追踪。"),
+    FeatureBullet(title = "提现联动", detail = "佣金可直接进入提现申请。"),
 ),
-        val note: String = "佣金账本 已按 P2 基础文档页 页面补齐，可继续替换为真实业务逻辑与接口数据。",
+        val note: String = "收入走势",
     )
 
     sealed interface CommissionLedgerEvent {

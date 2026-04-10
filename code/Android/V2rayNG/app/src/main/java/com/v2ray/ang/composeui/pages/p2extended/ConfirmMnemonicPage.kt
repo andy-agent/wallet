@@ -3,9 +3,11 @@ package com.v2ray.ang.composeui.pages.p2extended
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 import com.v2ray.ang.composeui.p2extended.model.ConfirmMnemonicEvent
 import com.v2ray.ang.composeui.p2extended.model.ConfirmMnemonicUiState
@@ -40,33 +42,27 @@ fun ConfirmMnemonicScreen(
     onEvent: (ConfirmMnemonicEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
-        title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "confirm_mnemonic",
-        motionProfile = MotionProfile.L1,
-        onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(ConfirmMnemonicEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(ConfirmMnemonicEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(ConfirmMnemonicEvent.SecondaryActionClicked)
-        },
-    )
+    P2ExtendedPageScaffold(
+        kicker = "Verify Backup",
+        title = "确认助记词",
+        subtitle = "通过抽查验证确保你已经正确备份。",
+        hubLabel = "验证中",
+        onHubClick = { onEvent(ConfirmMnemonicEvent.Refresh) },
+        primaryActionLabel = "完成校验并进入钱包",
+        onPrimaryAction = { onEvent(ConfirmMnemonicEvent.PrimaryActionClicked) },
+        secondaryActionLabel = "返回备份页",
+        onSecondaryAction = { onEvent(ConfirmMnemonicEvent.SecondaryActionClicked) },
+    ) {
+        P2Card(title = "按顺序选择缺失的单词", subtitle = "系统会随机抽查3个位置。") {
+            FieldRow("第 2 个单词", "brick")
+            Spacer(modifier = Modifier.height(8.dp))
+            FieldRow("第 7 个单词", "orbit")
+            Spacer(modifier = Modifier.height(8.dp))
+            FieldRow("第 11 个单词", "anchor")
+            Spacer(modifier = Modifier.height(12.dp))
+            ChipRow(items = listOf("brick", "orbit", "anchor", "velvet", "glow", "coral"), activeIndex = 0)
+        }
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

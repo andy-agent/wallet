@@ -11,31 +11,32 @@ data class SendResultRouteArgs(val txId: String = "TX-9F32")
 
 data class SendResultUiState(
         val title: String = "发送完成",
-        val subtitle: String = "SEND RESULT",
-        val badge: String = "P2 · BASE",
-        val summary: String = "展示链上发送结果、交易哈希与后续返回入口。",
+        val subtitle: String = "TRANSFER RESULT",
+        val badge: String = "• 广播成功",
+        val summary: String = "交易已广播到链上，可在资产详情中继续追踪确认状态。",
         val primaryActionLabel: String = "返回钱包首页",
-        val secondaryActionLabel: String? = "查看资产详情",
+        val secondaryActionLabel: String? = "查看交易哈希",
         val heroAccent: String = "send_result",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "交易状态", value = "成功"),
-    FeatureMetric(label = "Tx Hash", value = "TX-9F32"),
+    FeatureMetric(label = "转账", value = "12,500 USDT"),
+    FeatureMetric(label = "网络", value = "TRON 网络 · 预计 1 个确认"),
+    FeatureMetric(label = "收款地址", value = "TOX...kJ8V"),
+    FeatureMetric(label = "矿工费", value = "1.24 USDT"),
     FeatureMetric(label = "手续费", value = "1.24 USDT"),
 ),
         val fields: List<FeatureField> = emptyList(),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "展示链上发送结果、交易哈希与后续返回入口。", trailing = "send_result", badge = "P2 基础文档页"),
-    FeatureListItem(title = "导航参数", subtitle = "txId", trailing = "1 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "当前页面以信息展示与确认动作为主", trailing = "0 项", badge = "Info"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
+    FeatureListItem(title = "状态", subtitle = "等待区块确认", trailing = "1 block"),
+    FeatureListItem(title = "交易哈希", subtitle = "9A2F...C912", trailing = "链上"),
+    FeatureListItem(title = "说明", subtitle = "手续费与到账地址已经锁定", trailing = "已锁定"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "发送完成 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 SendResultPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "createRoute builder 与 NavGraph 参数解析已补齐。"),
+    FeatureBullet(title = "状态", detail = "广播成功"),
+    FeatureBullet(title = "确认", detail = "等待区块确认"),
+    FeatureBullet(title = "追踪", detail = "可在资产详情持续查看"),
+    FeatureBullet(title = "费用", detail = "1.24 USDT"),
 ),
-        val note: String = "发送完成 已按 P2 基础文档页 页面补齐，可继续替换为真实业务逻辑与接口数据。",
+        val note: String = "链上确认完成后余额会自动同步。",
     )
 
     sealed interface SendResultEvent {

@@ -1,16 +1,16 @@
 package com.v2ray.ang.composeui.pages.p2
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p2.model.ProfileEvent
 import com.v2ray.ang.composeui.p2.model.ProfileUiState
 import com.v2ray.ang.composeui.p2.model.profilePreviewState
 import com.v2ray.ang.composeui.p2.viewmodel.ProfileViewModel
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun ProfileRoute(
@@ -40,33 +40,43 @@ fun ProfileScreen(
     onEvent: (ProfileEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
+    P2CorePageScaffold(
+        kicker = uiState.subtitle,
         title = uiState.title,
-        subtitle = uiState.subtitle,
+        subtitle = uiState.note,
         badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
-        metrics = uiState.metrics,
-        fields = uiState.fields,
-        highlights = uiState.highlights,
-        checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = true,
-        currentRoute = "profile",
-        motionProfile = MotionProfile.L1,
+        activeSection = CoreNavSection.Profile,
         onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(ProfileEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(ProfileEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(ProfileEvent.SecondaryActionClicked)
-        },
-    )
+    ) {
+        P2CoreCard {
+            P2CoreCardHeader(
+                title = "账户信息",
+                subtitle = uiState.checklist.firstOrNull()?.detail ?: "hello@cryptovpn.app · GLOW OPS",
+                trailing = uiState.badge,
+                trailingColor = Color(0xFFEAF6FF),
+            )
+            P2CoreMetricGrid(items = uiState.metrics.map { it.label to it.value })
+        }
+        P2CoreCard {
+            uiState.highlights.forEachIndexed { index, item ->
+                val route = when (index) {
+                    0 -> CryptoVpnRouteSpec.securityCenter.pattern
+                    1 -> CryptoVpnRouteSpec.orderList.pattern
+                    2 -> CryptoVpnRouteSpec.inviteCenter.pattern
+                    3 -> CryptoVpnRouteSpec.legalDocuments.pattern
+                    4 -> "about_app"
+                    else -> null
+                }
+                P2CoreListRow(
+                    title = item.title,
+                    subtitle = item.subtitle,
+                    trailing = item.trailing,
+                    trailingColor = Color(0xFF2F5BFF),
+                    onClick = route?.let { { onBottomNav(it) } },
+                )
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

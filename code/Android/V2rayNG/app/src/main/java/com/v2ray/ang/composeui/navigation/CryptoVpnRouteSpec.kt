@@ -165,6 +165,12 @@ object CryptoVpnRouteSpec {
         params = emptyList(),
     )
 
+    val inviteShare = RouteDefinition(
+        name = "invite_share",
+        pattern = "invite_share",
+        params = emptyList(),
+    )
+
     val commissionLedger = RouteDefinition(
         name = "commission_ledger",
         pattern = "commission_ledger",
@@ -180,6 +186,12 @@ object CryptoVpnRouteSpec {
     val profile = RouteDefinition(
         name = "profile",
         pattern = "profile",
+        params = emptyList(),
+    )
+
+    val aboutApp = RouteDefinition(
+        name = "about_app",
+        pattern = "about_app",
         params = emptyList(),
     )
 
@@ -430,9 +442,11 @@ object CryptoVpnRouteSpec {
         send,
         sendResult,
         inviteCenter,
+        inviteShare,
         commissionLedger,
         withdraw,
         profile,
+        aboutApp,
         legalDocuments,
         legalDocumentDetail,
         subscriptionDetail,

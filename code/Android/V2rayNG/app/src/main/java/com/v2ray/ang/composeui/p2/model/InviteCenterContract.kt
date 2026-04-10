@@ -9,31 +9,31 @@ import com.v2ray.ang.composeui.common.model.FeatureMetric
 
 data class InviteCenterUiState(
         val title: String = "邀请中心",
-        val subtitle: String = "INVITE CENTER",
-        val badge: String = "P2 · BASE",
+        val subtitle: String = "GROWTH",
+        val badge: String = "• 一级 25%/二级 5%",
         val summary: String = "邀请中心聚合邀请码、邀请人数、转化率与佣金入口。",
-        val primaryActionLabel: String = "查看佣金账本",
-        val secondaryActionLabel: String? = "返回首页",
+        val primaryActionLabel: String = "复制邀请码",
+        val secondaryActionLabel: String? = "分享推广链接",
         val heroAccent: String = "invite_center",
         val metrics: List<FeatureMetric> = listOf(
     FeatureMetric(label = "累计佣金", value = "$3,480.20"),
-    FeatureMetric(label = "邀请人数", value = "42"),
+    FeatureMetric(label = "待提现", value = "$580.00"),
+    FeatureMetric(label = "本月新增", value = "42人"),
     FeatureMetric(label = "转化率", value = "18.6%"),
 ),
         val fields: List<FeatureField> = emptyList(),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "邀请中心聚合邀请码、邀请人数、转化率与佣金入口。", trailing = "invite_center", badge = "P2 基础文档页"),
-    FeatureListItem(title = "导航参数", subtitle = "当前页面无必填导航参数", trailing = "0 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "当前页面以信息展示与确认动作为主", trailing = "0 项", badge = "Info"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
+    FeatureListItem(title = "CVPN-2025-GLOW", subtitle = "可复制链接、二维码或分享给好友。", trailing = "复制邀请码"),
+    FeatureListItem(title = "一级分佣", subtitle = "25%", trailing = "二级分佣 5%"),
+    FeatureListItem(title = "分享推广链接", subtitle = "今日点击 268", trailing = "进入"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "邀请中心 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 InviteCenterPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "当前页面无必填参数，但已纳入统一 RouteSpec 台账。"),
+    FeatureBullet(title = "邀请收益总览", detail = "邀请新用户购买套餐后，收益将进入你的 Growth 账户。"),
+    FeatureBullet(title = "累计佣金", detail = "$3,480.20"),
+    FeatureBullet(title = "待提现", detail = "$580.00"),
+    FeatureBullet(title = "转化率", detail = "18.6%"),
 ),
-        val note: String = "邀请中心 已按 P2 基础文档页 页面补齐，可继续替换为真实业务逻辑与接口数据。",
+        val note: String = "推广加密网络服务，佣金可直接提到你的多链钱包。",
     )
 
     sealed interface InviteCenterEvent {
