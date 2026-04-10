@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-10T11:35:16Z",
+  "generated_at": "2026-04-10T11:46:51Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-2mt.20",
   "next_task_title": "修复 plans 页面尺寸与底栏位置",
@@ -7,7 +7,7 @@
   "ready_count": 3,
   "open_count": 8,
   "closed_count": 337,
-  "dirty_count": 2,
+  "dirty_count": 3,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
