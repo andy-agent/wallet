@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-10T02:46:19Z
+Generated: 2026-04-10T03:18:28Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-dtg.17.1
-- next_task_title: 修复真机验收被安装器弹窗污染
+- next_task_id: liaojiang-dg6
+- next_task_title: 将 full delivery Compose UI 从 Mock Repository 切到真实业务数据源
 
 ## Counters
-- in_progress: 4
-- ready: 3
-- open: 10
-- closed: 294
-- dirty: 277
+- in_progress: 5
+- ready: 0
+- open: 8
+- closed: 296
+- dirty: 2
 
 ## Next Milestone
 - Continue the next task and complete one milestone
