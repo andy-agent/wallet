@@ -29,13 +29,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -731,34 +738,72 @@ fun P01SuccessBadge(
 
 @Composable
 fun P01Orb(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "p01_orb")
+    val rotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 9000, easing = LinearEasing),
+        ),
+        label = "p01_orb_rotation",
+    )
+    val pulse by transition.animateFloat(
+        initialValue = 0.92f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1800, easing = LinearEasing),
+        ),
+        label = "p01_orb_pulse",
+    )
+    val glowAlpha by transition.animateFloat(
+        initialValue = 0.12f,
+        targetValue = 0.32f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = LinearEasing),
+        ),
+        label = "p01_orb_glow",
+    )
+
     Canvas(
-        modifier = modifier.size(172.dp),
+        modifier = modifier
+            .size(172.dp)
+            .graphicsLayer {
+                rotationZ = rotation
+                scaleX = pulse
+                scaleY = pulse
+            },
     ) {
         val center = center
         drawCircle(
             brush = Brush.radialGradient(
-                colors = listOf(Color.White.copy(alpha = 0.96f), P01AccentBlue.copy(alpha = 0.16f)),
+                colors = listOf(Color.White.copy(alpha = 0.96f), P01AccentBlue.copy(alpha = 0.18f + glowAlpha * 0.12f)),
             ),
             radius = size.minDimension / 2f,
             center = center,
         )
         drawCircle(
-            color = P01AccentBlue.copy(alpha = 0.12f),
+            color = P01AccentBlue.copy(alpha = 0.16f + glowAlpha * 0.14f),
             radius = size.minDimension * 0.34f,
             center = center,
             style = Stroke(width = 18.dp.toPx()),
         )
         drawCircle(
-            color = P01AccentCyan.copy(alpha = 0.16f),
+            color = P01AccentCyan.copy(alpha = 0.22f + glowAlpha * 0.16f),
             radius = size.minDimension * 0.24f,
             center = center,
             style = Stroke(width = 12.dp.toPx()),
         )
         drawCircle(
-            color = P01AccentLilac.copy(alpha = 0.14f),
+            color = P01AccentLilac.copy(alpha = 0.18f + glowAlpha * 0.16f),
             radius = size.minDimension * 0.45f,
             center = center,
             style = Stroke(width = 6.dp.toPx()),
+        )
+        drawCircle(
+            color = P01AccentCyan.copy(alpha = 0.12f + glowAlpha * 0.18f),
+            radius = size.minDimension * 0.49f,
+            center = center,
+            style = Stroke(width = 2.dp.toPx()),
         )
     }
 }

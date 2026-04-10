@@ -1,5 +1,10 @@
 package com.v2ray.ang.composeui.pages.p2extended
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,10 +30,12 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -122,15 +130,104 @@ private fun HeroSection(
             Spacer(modifier = Modifier.height(8.dp))
             Text(subtitle, color = Color(0xFFE3EAFF), style = MaterialTheme.typography.bodyMedium)
         }
-        Button(
-            onClick = onHubClick,
+        Row(
             modifier = Modifier.align(Alignment.TopEnd),
-            shape = RoundedCornerShape(999.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0x26FFFFFF)),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(hubLabel, color = Color.White, style = MaterialTheme.typography.labelMedium)
+            Box(
+                modifier = Modifier
+                    .background(Color(0x26FFFFFF), RoundedCornerShape(999.dp))
+                    .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(999.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+            ) {
+                Text(hubLabel, color = Color.White, style = MaterialTheme.typography.labelMedium)
+            }
+            P2HubOrb(onClick = onHubClick)
         }
+    }
+}
+
+@Composable
+private fun P2HubOrb(
+    onClick: () -> Unit,
+) {
+    val transition = rememberInfiniteTransition(label = "p2e_hub")
+    val rotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 8200, easing = LinearEasing),
+        ),
+        label = "p2e_hub_rotation",
+    )
+    val pulse by transition.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1800, easing = LinearEasing),
+        ),
+        label = "p2e_hub_pulse",
+    )
+    val glow by transition.animateFloat(
+        initialValue = 0.18f,
+        targetValue = 0.36f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = LinearEasing),
+        ),
+        label = "p2e_hub_glow",
+    )
+
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .graphicsLayer {
+                rotationZ = rotation
+                scaleX = pulse
+                scaleY = pulse
+            }
+            .background(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.92f),
+                        Color(0x338D7DFF).copy(alpha = 0.35f + glow),
+                        Color.Transparent,
+                    ),
+                ),
+                shape = CircleShape,
+            )
+            .border(2.dp, Color(0x99B7C6FF), CircleShape)
+            .padding(10.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .border(1.dp, Color(0x66C7D7FF), CircleShape),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(24.dp)
+                .background(Color.White.copy(alpha = 0.96f), CircleShape)
+                .border(1.dp, Color(0x334F7CFF), CircleShape),
+        ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(10.dp)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color(0xFF4F7CFF), Color(0xFF20D3EE)),
+                        ),
+                        shape = CircleShape,
+                    ),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(Color.Transparent, CircleShape),
+        )
     }
 }
 

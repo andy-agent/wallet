@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-10T16:00:41Z
+Generated: 2026-04-10T16:31:45Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-2mt.25
-- next_task_title: 修复冷启动白屏并将启动页改为动态过渡层
+- next_task_id: liaojiang-2mt.26
+- next_task_title: 恢复原设计带 SECURE HUB 页面的动态轨道与发光动画
 
 ## Counters
-- in_progress: 6
+- in_progress: 3
 - ready: 0
-- open: 9
-- closed: 356
-- dirty: 30
+- open: 5
+- closed: 361
+- dirty: 16
 
 ## Next Milestone
 - Continue the next task and complete one milestone
