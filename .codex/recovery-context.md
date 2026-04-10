@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-10T16:31:45Z
+Generated: 2026-04-10T17:04:10Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-2mt.26
-- next_task_title: 恢复原设计带 SECURE HUB 页面的动态轨道与发光动画
+- next_task_id: liaojiang-2mt
+- next_task_title: 新主线：将 full delivery 最新 UI 重写为高保真 HTML5
 
 ## Counters
-- in_progress: 3
+- in_progress: 1
 - ready: 0
-- open: 5
-- closed: 361
-- dirty: 16
+- open: 3
+- closed: 363
+- dirty: 1
 
 ## Next Milestone
 - Continue the next task and complete one milestone
