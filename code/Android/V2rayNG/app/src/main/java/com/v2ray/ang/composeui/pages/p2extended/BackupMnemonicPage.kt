@@ -3,6 +3,8 @@ package com.v2ray.ang.composeui.pages.p2extended
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Modifier
@@ -64,6 +66,26 @@ fun BackupMnemonicScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
             SecurityStatusPill(label = "离线抄写确认", healthy = false)
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        P2Card(title = "备份规范", subtitle = "通过分步约束降低泄露风险。") {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                P2FlowStepCard(
+                    step = "RULE 1",
+                    title = "仅离线载体保存",
+                    detail = "纸质或离线硬件介质，避免截图与云端笔记",
+                    emphasized = true,
+                )
+                P2FlowStepCard(
+                    step = "RULE 2",
+                    title = "至少两份物理备份",
+                    detail = "分地保存，防止单点丢失或损坏",
+                )
+                P2InlineWarningCard(
+                    title = "高风险提醒",
+                    text = "助记词泄露等同资产所有权转移，无法撤销。",
+                )
+            }
         }
     }
 }

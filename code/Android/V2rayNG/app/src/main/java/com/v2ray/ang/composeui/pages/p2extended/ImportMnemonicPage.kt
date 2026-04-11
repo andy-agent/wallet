@@ -3,6 +3,8 @@ package com.v2ray.ang.composeui.pages.p2extended
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Modifier
@@ -71,6 +73,22 @@ fun ImportMnemonicScreen(
                 label = "本地解析模式",
                 healthy = true,
             )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        P2Card(title = "导入安全校验", subtitle = "完成下列检查后再进入下一步。") {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                P2FlowStepCard(
+                    step = "CHECK 1",
+                    title = "词序与校验和验证",
+                    detail = "自动检查长度、词表合法性与顺序完整性",
+                    emphasized = true,
+                )
+                P2FlowStepCard(
+                    step = "CHECK 2",
+                    title = "链账户派生预览",
+                    detail = "仅本地预览 Solana、TRON 与 EVM 地址",
+                )
+            }
         }
     }
 }

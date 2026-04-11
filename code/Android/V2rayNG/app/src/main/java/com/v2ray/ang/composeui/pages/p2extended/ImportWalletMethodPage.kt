@@ -63,7 +63,26 @@ fun ImportWalletMethodScreen(
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
-        OptionCard(title = "观察钱包", subtitle = "只读地址不可签名，适合做资产追踪与风险监控。")
+        P2Card(title = "导入流程", subtitle = "沿用统一风控流程，完成后进入资产页。") {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                P2FlowStepCard(
+                    step = "STEP 1",
+                    title = "选择导入方式",
+                    detail = "助记词、私钥与 Keystore 可并行支持",
+                    emphasized = true,
+                )
+                P2FlowStepCard(
+                    step = "STEP 2",
+                    title = "本地校验与链识别",
+                    detail = "离线解析输入内容并识别可恢复资产",
+                )
+                P2FlowStepCard(
+                    step = "STEP 3",
+                    title = "设置安全策略",
+                    detail = "开启双重验证与风险地址提醒",
+                )
+            }
+        }
     }
 }
 

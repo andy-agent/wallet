@@ -67,11 +67,11 @@ fun SecurityCenterScreen(
         }
         Spacer(modifier = Modifier.height(10.dp))
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ImportMethodOptionCard("管理助记词", "查看备份状态、重新校验", tag = "关键", highlighted = true)
-            ImportMethodOptionCard("已登录设备", "Android · Pixel 8 / Web", tag = "2 台")
-            ImportMethodOptionCard("签名授权记录", "已连接 6 个 DApp")
-            ImportMethodOptionCard("风险地址提醒", "自动拦截诈骗地址", tag = "2 条")
-            ImportMethodOptionCard("生物识别支付", "大额交易需指纹验证")
+            P2SecurityActionCard("管理助记词", "查看备份状态、重新校验", badge = "关键")
+            P2SecurityActionCard("已登录设备", "Android · Pixel 8 / Web", badge = "2 台")
+            P2SecurityActionCard("签名授权记录", "已连接 6 个 DApp")
+            P2SecurityActionCard("风险地址提醒", "自动拦截诈骗地址", badge = "2 条", risk = true)
+            P2SecurityActionCard("生物识别支付", "大额交易需指纹验证")
         }
     }
 }

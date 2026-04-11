@@ -3,6 +3,8 @@ package com.v2ray.ang.composeui.pages.p2extended
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Modifier
@@ -73,6 +75,22 @@ fun ConfirmMnemonicScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
             ChipRow(items = listOf("brick", "orbit", "anchor", "velvet", "glow", "coral"), activeIndex = 0)
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        P2Card(title = "校验状态", subtitle = "逐项通过后才会放行进入钱包。") {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                P2FlowStepCard(
+                    step = "STATE 1",
+                    title = "随机位置抽查",
+                    detail = "至少 3 个位置命中正确单词",
+                    emphasized = true,
+                )
+                P2FlowStepCard(
+                    step = "STATE 2",
+                    title = "顺序一致性检查",
+                    detail = "防止单词正确但顺序错误导致恢复失败",
+                )
+            }
         }
     }
 }
