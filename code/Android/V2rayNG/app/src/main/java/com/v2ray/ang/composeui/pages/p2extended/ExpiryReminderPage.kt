@@ -51,7 +51,7 @@ fun ExpiryReminderScreen(
         highlights = uiState.highlights,
         checklist = uiState.checklist,
         note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
+        primaryActionLabel = uiState.primaryActionLabel.orEmpty(),
         secondaryActionLabel = uiState.secondaryActionLabel,
         showBottomBar = false,
         currentRoute = "expiry_reminder",

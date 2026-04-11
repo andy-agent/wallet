@@ -1,55 +1,49 @@
 package com.v2ray.ang.composeui.p2extended.model
 
-import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
-import com.v2ray.ang.composeui.navigation.RouteDefinition
 import com.v2ray.ang.composeui.common.model.FeatureBullet
 import com.v2ray.ang.composeui.common.model.FeatureField
 import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.common.model.FeatureMetric
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
+import com.v2ray.ang.composeui.navigation.RouteDefinition
 
 data class DappBrowserRouteArgs(val entry: String = "jup.ag")
 
 data class DappBrowserUiState(
-        val title: String = "DApp 浏览器",
-        val subtitle: String = "DAPP BROWSER",
-        val badge: String = "P2 · EXTENDED",
-        val summary: String = "DApp 浏览器页提供搜索、收藏与安全评分入口。",
-        val primaryActionLabel: String? = "查看 WalletConnect 会话",
-        val secondaryActionLabel: String? = "返回钱包首页",
-        val heroAccent: String = "dapp_browser",
-        val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "最近访问", value = "5"),
-    FeatureMetric(label = "安全评分", value = "88"),
-    FeatureMetric(label = "分类", value = "4 类"),
-),
-        val fields: List<FeatureField> = listOf(
-    FeatureField(key = "entry", label = "站点入口", value = "jup.ag", supportingText = "支持 URL、域名或已收藏 DApp"),
-),
-        val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "DApp 浏览器页提供搜索、收藏与安全评分入口。", trailing = "dapp_browser", badge = "P2 扩展页"),
-    FeatureListItem(title = "导航参数", subtitle = "entry", trailing = "1 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "站点入口", trailing = "1 项", badge = "Form"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
-),
-        val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "DApp 浏览器 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 DappBrowserPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "createRoute builder 与 NavGraph 参数解析已补齐。"),
-),
-        val note: String = "DApp 浏览器 已按 P2 扩展页 页面补齐，可继续替换为真实业务逻辑与接口数据。",
-    )
+    val title: String = "DApp 浏览器",
+    val subtitle: String = "DAPP BROWSER",
+    val badge: String = "同步中",
+    val summary: String = "正在读取浏览器入口和会话状态；若容器能力未接通，将显示阻塞说明。",
+    val primaryActionLabel: String? = null,
+    val secondaryActionLabel: String? = null,
+    val heroAccent: String = "dapp_browser",
+    val metrics: List<FeatureMetric> = listOf(
+        FeatureMetric(label = "入口", value = "--"),
+        FeatureMetric(label = "会话状态", value = "读取中"),
+        FeatureMetric(label = "浏览器容器", value = "读取中"),
+    ),
+    val fields: List<FeatureField> = listOf(
+        FeatureField(key = "entry", label = "站点入口", value = "", supportingText = "等待真实浏览器容器或阻塞说明。"),
+    ),
+    val highlights: List<FeatureListItem> = listOf(
+        FeatureListItem(title = "当前状态", subtitle = "正在读取浏览器能力", trailing = "", badge = "LOADING"),
+    ),
+    val checklist: List<FeatureBullet> = listOf(
+        FeatureBullet(title = "说明", detail = "默认态不再展示演示站点评分、收藏数量和假入口。"),
+    ),
+    val note: String = "刷新后会替换为真实状态或明确阻塞说明。",
+)
 
-    sealed interface DappBrowserEvent {
-        data object Refresh : DappBrowserEvent
-        data object PrimaryActionClicked : DappBrowserEvent
-        data object SecondaryActionClicked : DappBrowserEvent
-        data class FieldChanged(
-            val key: String,
-            val value: String,
-        ) : DappBrowserEvent
-    }
+sealed interface DappBrowserEvent {
+    data object Refresh : DappBrowserEvent
+    data object PrimaryActionClicked : DappBrowserEvent
+    data object SecondaryActionClicked : DappBrowserEvent
+    data class FieldChanged(
+        val key: String,
+        val value: String,
+    ) : DappBrowserEvent
+}
 
-    val dappBrowserNavigation: RouteDefinition = CryptoVpnRouteSpec.dappBrowser
+val dappBrowserNavigation: RouteDefinition = CryptoVpnRouteSpec.dappBrowser
 
-    fun dappBrowserPreviewState(): DappBrowserUiState = DappBrowserUiState()
+fun dappBrowserPreviewState(): DappBrowserUiState = DappBrowserUiState()

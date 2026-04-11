@@ -1030,20 +1030,20 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("模式", args.mode),
                 FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
-                FeatureMetric("数据源", "本地占位流程"),
+                FeatureMetric("数据源", "本地阻塞说明"),
             ),
             fields = listOf(
                 FeatureField(
                     key = "name",
                     label = "钱包名称",
                     value = defaultName,
-                    supportingText = "当前使用本地钱包创建流程，不再回退到 Mock 仓库。",
+                    supportingText = "当前只保留账户上下文与阻塞说明，不再展示假创建流程。",
                 ),
             ),
             highlights = listOf(
                 FeatureListItem("创建模式", args.mode, "未接真实钱包引擎", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据源", "本地占位状态", "", "LOCAL"),
+                FeatureListItem("数据源", "本地阻塞状态", "", "LOCAL"),
             ),
             summary = "创建钱包能力当前未接真实钱包引擎，本页只保留阻塞说明。",
             note = "若无真实密钥生成、持久化和备份流程，页面不能继续伪装成可创建钱包。",
@@ -1065,7 +1065,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             highlights = listOf(
                 FeatureListItem("默认方式", "当前没有真实钱包导入引擎", "阻塞", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "真实账户缓存 + 本地占位", "", "LOCAL"),
+                FeatureListItem("数据来源", "真实账户缓存 + 阻塞说明", "", "LOCAL"),
             ),
             summary = "导入钱包方式页当前只暴露阻塞，不再假装助记词/私钥导入能力已可用。",
             note = "真实钱包导入需要本地密钥解析、校验和持久化，当前工程尚未接通。",
@@ -1086,7 +1086,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             highlights = listOf(
                 FeatureListItem("恢复来源", args.source, "没有真实助记词解析/导入能力", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "真实账户缓存 + 本地占位", "", "LOCAL"),
+                FeatureListItem("数据来源", "真实账户缓存 + 阻塞说明", "", "LOCAL"),
             ),
             summary = "助记词导入当前未接真实钱包解析与持久化，只保留阻塞说明。",
             note = "在真实助记词解析、链派生和本地存储接通前，本页不应再伪装成导入流程。",
@@ -1121,7 +1121,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             highlights = listOf(
                 FeatureListItem("钱包标识", args.walletId, "尚无真实助记词可备份", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "本地占位状态", "", "LOCAL"),
+                FeatureListItem("数据来源", "本地阻塞状态", "", "LOCAL"),
             ),
             summary = "助记词备份页当前无真实密钥材料，不再假装可备份。",
             note = "如果真实创建/导入钱包未接通，备份页只能暴露阻塞说明。",
@@ -1154,7 +1154,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 FeatureMetric("订单记录", orders.size.toString()),
             ),
             highlights = listOf(
-                FeatureListItem("助记词备份", "本地安全流程已启用", "检查", "SAFE"),
+                FeatureListItem("助记词备份", "未接真实备份材料", "只读", "BLOCKED"),
                 FeatureListItem("设备会话", if (paymentRepository.isTokenValid()) "当前登录有效" else "需要重登", "", "SESSION"),
                 FeatureListItem("数据来源", "真实账户 + 本地状态", "", "REAL"),
             ),
