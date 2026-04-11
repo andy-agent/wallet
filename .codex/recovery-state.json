@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-04-11T05:09:47Z",
+  "generated_at": "2026-04-11T05:40:11Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-2qo",
   "next_task_title": "Android app：接通真实注册/购买/VPN连接主流程",
-  "in_progress_count": 5,
+  "in_progress_count": 4,
   "ready_count": 3,
-  "open_count": 12,
-  "closed_count": 374,
-  "dirty_count": 2,
+  "open_count": 11,
+  "closed_count": 376,
+  "dirty_count": 82,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {

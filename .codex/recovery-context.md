@@ -1,6 +1,6 @@
 # Recovery Context
 
-Generated: 2026-04-11T05:09:47Z
+Generated: 2026-04-11T05:40:11Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
@@ -8,11 +8,11 @@ Repository: /Users/cnyirui/git/projects/liaojiang
 - next_task_title: Android app：接通真实注册/购买/VPN连接主流程
 
 ## Counters
-- in_progress: 5
+- in_progress: 4
 - ready: 3
-- open: 12
-- closed: 374
-- dirty: 2
+- open: 11
+- closed: 376
+- dirty: 82
 
 ## Next Milestone
 - Continue the next task and complete one milestone
