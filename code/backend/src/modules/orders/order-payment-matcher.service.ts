@@ -149,7 +149,9 @@ export class OrderPaymentMatcherService {
           : null,
       cursor: cursor
         ? {
-            beforeSignature: cursor.beforeSignature,
+            // Drive incremental scans forward by slot floor.
+            // `beforeSignature` is intentionally not reused from persisted cursor.
+            beforeSignature: null,
             minSlotExclusive: cursor.lastSlot,
           }
         : null,

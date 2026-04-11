@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-04-11T10:45:39Z",
+  "generated_at": "2026-04-11T10:50:37Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "next_task_id": "liaojiang-vx4.1",
-  "next_task_title": "Sol-agent：共享地址 SPL Token 入账扫描补齐 owner/ATA 双视角与去重",
+  "next_task_id": "liaojiang-vx4.2",
+  "next_task_title": "Backend：完善共享地址订单自动匹配幂等与状态推进",
   "in_progress_count": 7,
-  "ready_count": 1,
-  "open_count": 13,
-  "closed_count": 391,
-  "dirty_count": 8,
-  "milestone_reached": false,
+  "ready_count": 0,
+  "open_count": 12,
+  "closed_count": 392,
+  "dirty_count": 9,
+  "milestone_reached": true,
   "write_human_docs": false,
   "docs": {
     "current_status": "docs/current-status.md",
@@ -24,10 +24,5 @@
     "mode": "simulate",
     "dispatched_count": 0,
     "max_workers": 3
-  },
-  "last_orchestrator_update": "2026-04-11T18:48:00+08:00",
-  "active_bd_task": "liaojiang-c9x",
-  "accepted_bd_task": "liaojiang-k27",
-  "active_worker_tasks": [],
-  "note": "Server3 now hosts local sol-agent on 127.0.0.1:4000 and backend matcher is enabled. Live register/login/order/payment-target succeeded; positive auto-match remains blocked by funded payment source."
+  }
 }

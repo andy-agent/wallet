@@ -187,12 +187,12 @@ describe('SolanaClientService', () => {
       expect.any(Object),
     );
 
-    expect(result).toMatchObject({
-      networkCode: 'solana-mainnet',
-      collectionAddress: 'SharedAddress111111111111111111111111111111',
-      assetCode: 'USDT',
-      mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
-    });
+    expect(result.networkCode).toBe('solana-mainnet');
+    expect(result.collectionAddress).toBe(
+      'SharedAddress111111111111111111111111111111',
+    );
+    expect(result.assetCode).toBe('USDT');
+    expect(result.mint).toBe('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
     expect(result.nextCursor).toEqual({
       beforeSignature: 'sig-oldest',
       minSlotExclusive: 987,
