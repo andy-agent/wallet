@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-11T11:02:03Z",
+  "generated_at": "2026-04-11T11:03:36Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-njb",
   "next_task_title": "Live funding：完成一次真实 SOLANA/USDT 订单付款并回传 txHash",
@@ -7,8 +7,8 @@
   "ready_count": 0,
   "open_count": 11,
   "closed_count": 394,
-  "dirty_count": 0,
-  "milestone_reached": true,
+  "dirty_count": 4,
+  "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
     "current_status": "docs/current-status.md",

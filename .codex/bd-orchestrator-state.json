@@ -1,21 +1,26 @@
 {
-  "generated_at": "2026-04-11T19:07:00+08:00",
+  "generated_at": "2026-04-11T19:01:46+0800",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-f7p",
-  "accepted_task_id": "liaojiang-vx4.1",
-  "next_task_id": "liaojiang-f7p",
+  "active_task_id": "liaojiang-c9x",
+  "accepted_task_id": "liaojiang-vx4",
+  "next_task_id": "liaojiang-njb",
   "active_worker_task_ids": [],
   "blockers": [
     {
       "task_id": "liaojiang-njb",
       "type": "task",
-      "blocked_by": "Live positive auto-match/provision still requires one funded human-controlled SOLANA/USDT payment to shared collection address EVYe1JoVU9m46o5QLgJdZM6CCG996jfCvYoKu5DTNEjj."
+      "blocked_by": "Final positive auto-match/provision evidence still requires one funded human-controlled SOLANA/USDT payment to shared collection address EVYe1JoVU9m46o5QLgJdZM6CCG996jfCvYoKu5DTNEjj."
+    },
+    {
+      "task_id": "liaojiang-c9x",
+      "type": "task",
+      "blocked_by": "Implementation and live unpaid-path evidence are accepted; final c9x closure is blocked only by liaojiang-njb funded-payment proof."
     }
   ],
   "workers": [],
   "mainline": {
     "feature_id": "liaojiang-26d",
-    "phase_id": "liaojiang-f7p",
-    "policy": "c9x has been deployed to server3 and is blocked only by njb funded-payment evidence. Active implementation focus has moved to f7p; the first P2 core motion slice is now on mainline and compile-accepted, and remaining page-local motion parity work continues."
+    "phase_id": "liaojiang-c9x",
+    "policy": "Shared-address auto-scan payment implementation is accepted on mainline and verified locally plus live up to unpaid-state evidence. No unblocked bd ready task remains on the payment mainline; next progress requires njb funded-payment evidence to close c9x and then 26d/3js."
   }
 }
