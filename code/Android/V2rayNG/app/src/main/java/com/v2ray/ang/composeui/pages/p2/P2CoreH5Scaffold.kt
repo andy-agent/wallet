@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -117,6 +118,8 @@ internal fun P2CorePageScaffold(
     badge: String? = null,
     activeSection: CoreNavSection,
     onBottomNav: (String) -> Unit,
+    showSecureHub: Boolean = true,
+    secureHubLabel: String = "SECURE",
     primaryActionLabel: String? = null,
     onPrimaryAction: (() -> Unit)? = null,
     secondaryActionLabel: String? = null,
@@ -149,14 +152,27 @@ internal fun P2CorePageScaffold(
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
                 ) {
-                    Text(kicker, style = MaterialTheme.typography.labelLarge, color = Color(0xFF7381AD))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = CoreText)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = CoreSubtleText)
-                    if (!badge.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        StatusChip(text = badge)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(kicker, style = MaterialTheme.typography.labelLarge, color = Color(0xFF7381AD))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = CoreText)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = CoreSubtleText)
+                            if (!badge.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                StatusChip(text = badge)
+                            }
+                        }
+                        if (showSecureHub) {
+                            P2CoreSecureHub(label = secureHubLabel)
+                        }
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     Column(
@@ -185,6 +201,103 @@ internal fun P2CorePageScaffold(
                 CoreBottomNav(
                     activeSection = activeSection,
                     onBottomNav = onBottomNav,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun P2CoreSecureHub(
+    label: String,
+) {
+    val transition = rememberInfiniteTransition(label = "p2_core_secure_hub")
+    val rotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 8200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "p2_core_secure_hub_rotation",
+    )
+    val pulse by transition.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "p2_core_secure_hub_pulse",
+    )
+    val glow by transition.animateFloat(
+        initialValue = 0.12f,
+        targetValue = 0.30f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "p2_core_secure_hub_glow",
+    )
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .background(Color(0xFFF1F5FF), RoundedCornerShape(999.dp))
+                .border(1.dp, Color(0xFFD7E3FF), RoundedCornerShape(999.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = CorePrimary,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .graphicsLayer {
+                    rotationZ = rotation
+                    scaleX = pulse
+                    scaleY = pulse
+                }
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.94f),
+                            CorePrimary.copy(alpha = 0.14f + glow * 0.24f),
+                            Color.Transparent,
+                        ),
+                    ),
+                    shape = CircleShape,
+                )
+                .border(1.5.dp, Color(0x66C7D7FF), CircleShape)
+                .padding(10.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .border(1.dp, Color(0x55D1E7FF), CircleShape),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(18.dp)
+                    .background(Color.White.copy(alpha = 0.96f), CircleShape)
+                    .border(1.dp, Color(0x334F7CFF), CircleShape),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(8.dp)
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(CorePrimary, Color(0xFF20D3EE)),
+                            ),
+                            shape = CircleShape,
+                        ),
                 )
             }
         }

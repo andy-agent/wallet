@@ -237,6 +237,7 @@ fun P01Header(
     chips: List<String> = emptyList(),
     backLabel: String? = null,
     onBack: (() -> Unit)? = null,
+    trailing: @Composable (() -> Unit)? = null,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (backLabel != null) {
@@ -248,38 +249,52 @@ fun P01Header(
                 fontWeight = FontWeight.Bold,
             )
         }
-        Text(
-            text = eyebrow,
-            style = TextStyle(
-                color = P01TextSoft,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.4.sp,
-            ),
-        )
-        if (chips.isNotEmpty()) {
-            P01FlowRow(horizontalGap = 8.dp, verticalGap = 8.dp) {
-                chips.forEach { label ->
-                    P01Chip(text = label)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(
+                    text = eyebrow,
+                    style = TextStyle(
+                        color = P01TextSoft,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.4.sp,
+                    ),
+                )
+                if (chips.isNotEmpty()) {
+                    P01FlowRow(horizontalGap = 8.dp, verticalGap = 8.dp) {
+                        chips.forEach { label ->
+                            P01Chip(text = label)
+                        }
+                    }
+                }
+                Text(
+                    text = title,
+                    style = TextStyle(
+                        color = P01TextStrong,
+                        fontSize = 34.sp,
+                        lineHeight = 35.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                    ),
+                )
+                if (!subtitle.isNullOrBlank()) {
+                    Text(
+                        text = subtitle,
+                        color = P01TextBody,
+                        fontSize = 14.sp,
+                        lineHeight = 24.sp,
+                    )
                 }
             }
-        }
-        Text(
-            text = title,
-            style = TextStyle(
-                color = P01TextStrong,
-                fontSize = 34.sp,
-                lineHeight = 35.sp,
-                fontWeight = FontWeight.ExtraBold,
-            ),
-        )
-        if (!subtitle.isNullOrBlank()) {
-            Text(
-                text = subtitle,
-                color = P01TextBody,
-                fontSize = 14.sp,
-                lineHeight = 24.sp,
-            )
+            if (trailing != null) {
+                trailing()
+            }
         }
     }
 }

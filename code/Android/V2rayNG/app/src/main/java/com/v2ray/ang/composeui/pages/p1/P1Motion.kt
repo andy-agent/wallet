@@ -2,6 +2,7 @@ package com.v2ray.ang.composeui.pages.p1
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
@@ -14,13 +15,17 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -36,6 +41,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -241,4 +247,102 @@ internal fun P1PrimaryCta(
             scaleY = scale
         },
     )
+}
+
+@Composable
+internal fun P1SecureHub(
+    label: String = "SECURE",
+) {
+    val transition = rememberInfiniteTransition(label = "p1_secure_hub")
+    val rotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 8200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "p1_secure_hub_rotation",
+    )
+    val pulse by transition.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "p1_secure_hub_pulse",
+    )
+    val glow by transition.animateFloat(
+        initialValue = 0.14f,
+        targetValue = 0.30f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "p1_secure_hub_glow",
+    )
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(999.dp))
+                .border(1.dp, P1AccentBlue.copy(alpha = 0.12f), RoundedCornerShape(999.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        ) {
+            Text(
+                text = label,
+                color = P1AccentBlue,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .graphicsLayer {
+                    rotationZ = rotation
+                    scaleX = pulse
+                    scaleY = pulse
+                }
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.94f),
+                            P1AccentBlue.copy(alpha = 0.12f + glow * 0.24f),
+                            Color.Transparent,
+                        ),
+                    ),
+                    shape = RoundedCornerShape(999.dp),
+                )
+                .border(1.5.dp, Color(0x66C7D7FF), RoundedCornerShape(999.dp))
+                .padding(10.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .border(1.dp, Color(0x55D1E7FF), RoundedCornerShape(999.dp)),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(18.dp)
+                    .background(Color.White.copy(alpha = 0.96f), RoundedCornerShape(999.dp))
+                    .border(1.dp, Color(0x334F7CFF), RoundedCornerShape(999.dp)),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(8.dp)
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(P1AccentBlue, Color(0xFF20D3EE)),
+                            ),
+                            shape = RoundedCornerShape(999.dp),
+                        ),
+                )
+            }
+        }
+    }
 }

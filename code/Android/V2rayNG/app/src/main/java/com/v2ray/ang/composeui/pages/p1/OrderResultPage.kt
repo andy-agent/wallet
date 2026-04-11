@@ -12,6 +12,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.p0.ui.P01CardCopy
 import com.v2ray.ang.composeui.p0.ui.P01CardHeader
+import com.v2ray.ang.composeui.p0.ui.P01Header
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.ui.P01SecondaryButton
 import com.v2ray.ang.composeui.p0.ui.P01SuccessBadge
@@ -52,6 +53,13 @@ fun OrderResultScreen(
         currentRoute = CryptoVpnRouteSpec.plans.name,
         onBottomNav = onBottomNav,
     ) {
+        P01Header(
+            eyebrow = "ORDER RESULT",
+            title = "订单已生效",
+            subtitle = "套餐与节点权限已经下发，正在进入可用状态。",
+            trailing = { P1SecureHub(label = "DONE") },
+        )
+
         P1SelectableCard(
             selected = true,
             centered = true,

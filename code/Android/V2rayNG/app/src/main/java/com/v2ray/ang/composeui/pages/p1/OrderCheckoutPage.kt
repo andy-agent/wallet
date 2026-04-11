@@ -81,6 +81,7 @@ fun OrderCheckoutScreen(
             chips = listOf("• 10分钟有效"),
             backLabel = "<",
             onBack = { onBottomNav(CryptoVpnRouteSpec.plans.pattern) },
+            trailing = { P1SecureHub(label = "PAY") },
         )
 
         P01Card {

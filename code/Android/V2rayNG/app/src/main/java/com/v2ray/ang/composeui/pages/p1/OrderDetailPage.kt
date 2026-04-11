@@ -56,6 +56,7 @@ fun OrderDetailScreen(
             chips = listOf("• 已完成"),
             backLabel = "<",
             onBack = onBack,
+            trailing = { P1SecureHub(label = "TRACE") },
         )
 
         P1SelectableCard(

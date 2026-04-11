@@ -71,6 +71,7 @@ fun WalletPaymentConfirmScreen(
             title = "钱包支付确认",
             subtitle = "把 VPN 续费变成标准的钱包支付流，而不是额外弹窗。",
             chips = listOf("链路安全"),
+            trailing = { P1SecureHub(label = "SAFE") },
         )
 
         P01Card {

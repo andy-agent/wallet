@@ -68,6 +68,7 @@ fun OrderListScreen(
             title = "订单中心",
             backLabel = "<",
             onBack = { onBottomNav(CryptoVpnRouteSpec.vpnHome.pattern) },
+            trailing = { P1SecureHub(label = "LIST") },
         )
 
         P1SelectableCard(

@@ -90,6 +90,7 @@ fun RegionSelectionScreen(
             eyebrow = "SMART ROUTING",
             title = "选择最佳节点",
             subtitle = "用延迟、速度、用途标签来选区，而不是只看国家名。",
+            trailing = { P1SecureHub(label = "ROUTE") },
         )
 
         P01SearchField(

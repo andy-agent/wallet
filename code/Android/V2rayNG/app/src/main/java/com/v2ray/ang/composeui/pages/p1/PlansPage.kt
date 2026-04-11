@@ -79,6 +79,7 @@ fun PlansScreen(
             title = "购买你的套餐",
             subtitle = "VPN 是核心服务，钱包是支付与资产层。这里把它们真正融合。",
             chips = listOf("支持钱包直付"),
+            trailing = { P1SecureHub(label = "PLANS") },
         )
 
         P01Card {
