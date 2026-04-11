@@ -55,6 +55,12 @@ fun ProfileScreen(
                 trailing = uiState.badge,
                 trailingColor = Color(0xFFEAF6FF),
             )
+            P2CoreHeroValue(
+                label = "当前套餐",
+                value = uiState.metrics.firstOrNull()?.value ?: "--",
+                caption = "设备在线: ${uiState.checklist.getOrNull(1)?.detail ?: "--"}",
+                accent = Color(0xFF2F5BFF),
+            )
             P2CoreMetricGrid(items = uiState.metrics.map { it.label to it.value })
         }
         P2CoreCard {

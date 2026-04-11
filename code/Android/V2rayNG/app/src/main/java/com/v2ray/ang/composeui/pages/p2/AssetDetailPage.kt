@@ -1,17 +1,10 @@
 package com.v2ray.ang.composeui.pages.p2
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import com.v2ray.ang.composeui.p2.model.AssetDetailEvent
 import com.v2ray.ang.composeui.p2.model.AssetDetailUiState
 import com.v2ray.ang.composeui.p2.model.assetDetailPreviewState
@@ -63,12 +56,13 @@ fun AssetDetailScreen(
         secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(AssetDetailEvent.SecondaryActionClicked) },
     ) {
-        P2CoreCard {
-            Text(balance, style = MaterialTheme.typography.headlineMedium, color = Color(0xFF182345), fontWeight = FontWeight.Bold)
-            Text("余额 $balance · 今日 $change", style = MaterialTheme.typography.bodySmall, color = Color(0xFF6D789E))
-            P2CoreChartPlaceholder()
-            P2CoreChipRow(items = listOf("24H", "7D", "30D", "入账/出账"))
-        }
+        P2CoreTrendCard(
+            title = "资产走势",
+            value = balance,
+            caption = "余额 $balance · 今日 $change",
+            accent = Color(0xFF2F5BFF),
+        )
+        P2CoreChipRow(items = listOf("24H", "7D", "30D", "入账/出账"))
         if (distribution.isNotEmpty()) {
             P2CoreMetricGrid(items = distribution, accentIndexes = setOf(2))
         }

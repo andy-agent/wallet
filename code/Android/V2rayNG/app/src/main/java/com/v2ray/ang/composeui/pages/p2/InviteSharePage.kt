@@ -4,9 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.ui.graphics.Color
 import com.v2ray.ang.composeui.p2.model.InviteShareEvent
 import com.v2ray.ang.composeui.p2.model.InviteShareUiState
 import com.v2ray.ang.composeui.p2.model.inviteSharePreviewState
@@ -43,6 +40,7 @@ fun InviteShareScreen(
 ) {
     val primaryMetric = uiState.metrics.firstOrNull()
     val link = uiState.highlights.firstOrNull()?.subtitle ?: primaryMetric?.value ?: ""
+    val inviteCode = uiState.metrics.getOrNull(1)?.value ?: "--"
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -55,11 +53,29 @@ fun InviteShareScreen(
         secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(InviteShareEvent.SecondaryActionClicked) },
     ) {
-        P2CoreCard {
-            P2CoreQrPlaceholder()
-            Text(primaryMetric?.label ?: "分享信息", style = MaterialTheme.typography.labelMedium, color = Color(0xFF6D789E))
-            Text(link, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF182345))
+        P2CoreQrAddressCard(
+            title = primaryMetric?.label ?: "分享信息",
+            subtitle = uiState.summary,
+            status = "可复制",
+            address = link,
+        ) {
+            P2CoreActionValueRow(
+                label = "邀请码",
+                value = inviteCode,
+                actionLabel = uiState.primaryActionLabel,
+                onAction = { onEvent(InviteShareEvent.PrimaryActionClicked) },
+            )
         }
+        P2CoreAddressModule(
+            title = "邀请状态",
+            value = uiState.highlights.firstOrNull()?.title ?: inviteCode,
+            supportingText = "分享链接可追踪转化与佣金",
+            status = uiState.highlights.firstOrNull()?.trailing ?: "跟踪中",
+            primaryActionLabel = uiState.primaryActionLabel,
+            onPrimaryAction = { onEvent(InviteShareEvent.PrimaryActionClicked) },
+            secondaryActionLabel = uiState.secondaryActionLabel,
+            onSecondaryAction = { onEvent(InviteShareEvent.SecondaryActionClicked) },
+        )
     }
 }
 

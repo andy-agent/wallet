@@ -51,33 +51,30 @@ fun InviteCenterScreen(
         secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onBottomNav("invite_share") },
     ) {
+        P2CoreHeroValueCard(
+            label = "邀请收益总览",
+            value = uiState.metrics.firstOrNull()?.value ?: "--",
+            supportingText = uiState.summary,
+            highlight = uiState.badge,
+            highlightColor = Color(0x26FFF5E7),
+            stats = uiState.metrics.drop(1).take(2).map { it.label to it.value },
+        )
+        P2CoreAddressModule(
+            title = "我的邀请码",
+            value = uiState.highlights.firstOrNull()?.title ?: "--",
+            supportingText = uiState.highlights.firstOrNull()?.subtitle ?: uiState.note,
+            status = uiState.highlights.firstOrNull()?.trailing,
+            primaryActionLabel = uiState.primaryActionLabel,
+            onPrimaryAction = { onEvent(InviteCenterEvent.PrimaryActionClicked) },
+            secondaryActionLabel = uiState.secondaryActionLabel,
+            onSecondaryAction = { onBottomNav("invite_share") },
+        )
         P2CoreCard {
-            P2CoreCardHeader(
-                title = "邀请收益总览",
-                subtitle = uiState.summary,
-                trailing = uiState.badge,
-                trailingColor = Color(0xFFFFF2E7),
-            )
+            P2CoreCardHeader(title = "增长指标", trailing = "实时同步", trailingColor = Color(0xFFEAF6FF))
             P2CoreMetricGrid(
                 items = uiState.metrics.map { it.label to it.value },
                 accentIndexes = setOf(1),
             )
-        }
-        P2CoreCard {
-            P2CoreCardHeader(title = "我的邀请码")
-            uiState.highlights.forEachIndexed { index, item ->
-                P2CoreListRow(
-                    title = item.title,
-                    subtitle = item.subtitle,
-                    trailing = item.trailing,
-                    trailingColor = if (index == 0) Color(0xFF2F5BFF) else Color(0xFF66739D),
-                    onClick = when (index) {
-                        0 -> { { onEvent(InviteCenterEvent.PrimaryActionClicked) } }
-                        2 -> { { onBottomNav("invite_share") } }
-                        else -> null
-                    },
-                )
-            }
         }
     }
 }
