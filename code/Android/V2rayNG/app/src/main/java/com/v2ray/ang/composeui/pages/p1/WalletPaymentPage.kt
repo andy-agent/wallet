@@ -7,6 +7,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
 import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.composeui.p1.model.P1ScreenState
 import com.v2ray.ang.composeui.p1.model.WalletPaymentEvent
 import com.v2ray.ang.composeui.p1.model.WalletPaymentUiState
 import com.v2ray.ang.composeui.p1.model.walletPaymentPreviewState
@@ -40,18 +41,19 @@ fun WalletPaymentScreen(
     onEvent: (WalletPaymentEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val stateInfo = uiState.stateInfo
     FeaturePageTemplate(
         title = uiState.title,
         subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
+        badge = uiState.badge.takeIf { stateInfo.state == P1ScreenState.Content } ?: stateInfo.title.ifBlank { uiState.badge },
+        summary = stateInfo.message.ifBlank { uiState.summary },
         heroAccent = uiState.heroAccent,
         metrics = uiState.metrics,
         fields = uiState.fields,
         highlights = uiState.highlights,
         checklist = uiState.checklist,
-        note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
+        note = stateInfo.message.ifBlank { uiState.note },
+        primaryActionLabel = if (uiState.order != null) uiState.primaryActionLabel else "",
         secondaryActionLabel = uiState.secondaryActionLabel,
         showBottomBar = false,
         currentRoute = "wallet_payment",

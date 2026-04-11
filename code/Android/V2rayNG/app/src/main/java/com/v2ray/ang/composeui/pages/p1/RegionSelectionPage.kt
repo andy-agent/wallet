@@ -29,7 +29,9 @@ import com.v2ray.ang.composeui.p0.ui.P01MetricGrid
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.ui.P01SearchField
 import com.v2ray.ang.composeui.p0.ui.P01Tab
+import com.v2ray.ang.composeui.p1.model.P1ScreenState
 import com.v2ray.ang.composeui.p1.model.RegionSelectionEvent
+import com.v2ray.ang.composeui.p1.model.P1RegionOption
 import com.v2ray.ang.composeui.p1.model.RegionSelectionUiState
 import com.v2ray.ang.composeui.p1.model.regionSelectionPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.RegionSelectionViewModel
@@ -63,6 +65,7 @@ fun RegionSelectionScreen(
 ) {
     val searchValue = uiState.fields.firstOrNull()?.value.orEmpty()
     val nodes = regionNodes(uiState)
+    val stateInfo = uiState.stateInfo
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
     var selectedNodeId by rememberSaveable { mutableStateOf(nodes.firstOrNull()?.id.orEmpty()) }
     val filteredNodes = remember(nodes, selectedTabIndex, searchValue) {
@@ -88,8 +91,8 @@ fun RegionSelectionScreen(
     ) {
         P01Header(
             eyebrow = "SMART ROUTING",
-            title = "选择最佳节点",
-            subtitle = "用延迟、速度、用途标签来选区，而不是只看国家名。",
+            title = uiState.title,
+            subtitle = uiState.summary,
             trailing = { P1SecureHub(label = regionHubLabel(selectedNode)) },
         )
 
@@ -113,24 +116,27 @@ fun RegionSelectionScreen(
         }
 
         P1SelectableCard(
-            selected = true,
+            selected = selectedNode != null && stateInfo.state == P1ScreenState.Content,
             accentColor = Color(0xFF20C4F4),
         ) {
             P01CardHeader(
                 title = "当前最优",
                 trailing = {
                     P01Chip(
-                        text = if (selectedNode == nodes.firstOrNull()) "AI排序" else "已选择",
+                        text = if (selectedNode == nodes.firstOrNull() && nodes.isNotEmpty()) "真实排序" else "已选择",
                     )
                 },
-                subtitle = selectedNode?.subtitle ?: "暂无本地节点数据",
+                subtitle = selectedNode?.subtitle ?: stateInfo.message.ifBlank { "当前暂无真实区域数据" },
             )
             P01MetricGrid(
                 items = listOf(
                     P01MetricCell("Latency", selectedNode?.latencyText ?: "--"),
-                    P01MetricCell("Speed", selectedNode?.speedText ?: "--"),
+                    P01MetricCell("状态", selectedNode?.statusText ?: "--"),
                 ),
             )
+            if (stateInfo.message.isNotBlank()) {
+                P01CardCopy(stateInfo.message)
+            }
         }
 
         P01Card {
@@ -168,67 +174,26 @@ private data class RegionNodeUi(
     val title: String,
     val subtitle: String,
     val latencyText: String,
-    val speedText: String,
+    val statusText: String,
     val region: String,
 )
 
 private fun regionNodes(uiState: RegionSelectionUiState): List<RegionNodeUi> {
-    val contentNodes = uiState.highlights.p1ContentItems()
-    if (contentNodes.isNotEmpty()) {
-        return contentNodes.mapIndexed { index, item ->
-            RegionNodeUi(
-                id = item.badge.ifBlank { "node-$index" },
-                title = item.title,
-                subtitle = item.subtitle,
-                latencyText = item.trailing.ifBlank { "${48 + (index * 9)} ms" },
-                speedText = listOf("89 Mbps", "76 Mbps", "61 Mbps", "54 Mbps", "72 Mbps")[index % 5],
-                region = inferRegion(item.title),
-            )
-        }
-    }
-    return listOf(
-        RegionNodeUi(
-            id = "jp-01",
-            title = "东京 · JP-01",
-            subtitle = "最快 · 入口/出口已双向检测",
-            latencyText = "41 ms",
-            speedText = "89 Mbps",
-            region = "亚洲",
-        ),
-        RegionNodeUi(
-            id = "sg-09",
-            title = "新加坡 · SG-09",
-            subtitle = "稳定 · 入口/出口已双向检测",
-            latencyText = "52 ms",
-            speedText = "76 Mbps",
-            region = "亚洲",
-        ),
-        RegionNodeUi(
-            id = "de-03",
-            title = "法兰克福 · DE-03",
-            subtitle = "低拥堵 · 入口/出口已双向检测",
-            latencyText = "138 ms",
-            speedText = "61 Mbps",
-            region = "欧洲",
-        ),
-        RegionNodeUi(
-            id = "us-12",
-            title = "洛杉矶 · US-12",
-            subtitle = "流媒体 · 入口/出口已双向检测",
-            latencyText = "168 ms",
-            speedText = "54 Mbps",
-            region = "美洲",
-        ),
-        RegionNodeUi(
-            id = "hk-06",
-            title = "香港 · HK-06",
-            subtitle = "智能分流 · 入口/出口已双向检测",
-            latencyText = "46 ms",
-            speedText = "72 Mbps",
-            region = "亚洲",
-        ),
-    )
+    return uiState.regions.map(::toRegionNodeUi)
 }
+
+private fun toRegionNodeUi(region: P1RegionOption): RegionNodeUi =
+    RegionNodeUi(
+        id = region.regionCode,
+        title = region.title,
+        subtitle = region.subtitle,
+        latencyText = region.trailing,
+        statusText = listOf(region.status, region.tier)
+            .filter { it.isNotBlank() }
+            .joinToString(" · ")
+            .ifBlank { if (region.isAllowed) "可用" else "不可用" },
+        region = inferRegion(region.title),
+    )
 
 private fun filterRegionNodes(
     nodes: List<RegionNodeUi>,
