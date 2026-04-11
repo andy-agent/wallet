@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientCatalogService } from './client-catalog.service';
 import { FileRuntimeStateRepository } from './file-runtime-state.repository';
 import { PostgresDataAccessService } from './postgres-data-access.service';
 import { PostgresRuntimeStateRepository } from './postgres-runtime-state.repository';
@@ -10,6 +11,7 @@ import { RuntimeStateRepository } from './runtime-state.repository';
 @Module({
   imports: [ConfigModule],
   providers: [
+    ClientCatalogService,
     PostgresDataAccessService,
     {
       provide: RuntimeStateRepository,
@@ -29,6 +31,6 @@ import { RuntimeStateRepository } from './runtime-state.repository';
       },
     },
   ],
-  exports: [RuntimeStateRepository, PostgresDataAccessService],
+  exports: [RuntimeStateRepository, PostgresDataAccessService, ClientCatalogService],
 })
 export class DatabaseModule {}

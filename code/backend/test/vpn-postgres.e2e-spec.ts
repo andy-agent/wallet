@@ -10,6 +10,11 @@ jest.mock('pg', () => runtimeDb.adapters.createPg());
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { ResponseEnvelopeInterceptor } from '../src/common/interceptors/response-envelope.interceptor';
+import {
+  cleanupClientCatalogTables,
+  ensureClientCatalogSchema,
+  seedClientCatalogData,
+} from './support/client-catalog.fixture';
 
 describe('VPN Postgres runtime state (e2e)', () => {
   let app: INestApplication;
@@ -23,6 +28,8 @@ describe('VPN Postgres runtime state (e2e)', () => {
     delete process.env.RUNTIME_STATE_BACKEND;
     delete process.env.RUNTIME_STATE_FILE;
 
+    ensureClientCatalogSchema(runtimeDb);
+    seedClientCatalogData(runtimeDb);
     app = await bootstrapApp();
 
     await request(app.getHttpServer())
@@ -75,6 +82,7 @@ describe('VPN Postgres runtime state (e2e)', () => {
   afterEach(async () => {
     await app.close();
     cleanupRuntimeTables();
+    cleanupClientCatalogTables(runtimeDb);
     delete process.env.NODE_ENV;
     delete process.env.DATABASE_URL;
     delete process.env.RUNTIME_STATE_BACKEND;
@@ -82,6 +90,23 @@ describe('VPN Postgres runtime state (e2e)', () => {
   });
 
   it('keeps fulfillment, subscription reads, and vpn access restart-safe in Postgres', async () => {
+    const plans = await request(app.getHttpServer())
+      .get('/api/client/v1/plans')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(plans.body.data.items).toEqual([
+      expect.objectContaining({
+        planCode: 'BASIC_1M',
+        name: '数据库基础版-1个月',
+        priceUsd: '11.50',
+      }),
+      expect.objectContaining({
+        planCode: 'PRO_12M_DB',
+        name: '数据库专业版-12个月',
+      }),
+    ]);
+
     const order = await request(app.getHttpServer())
       .get(`/api/client/v1/orders/${orderNo}`)
       .set('authorization', `Bearer ${accessToken}`)
@@ -95,6 +120,7 @@ describe('VPN Postgres runtime state (e2e)', () => {
       .expect(200);
 
     expect(subscription.body.data.status).toBe('ACTIVE');
+    expect(subscription.body.data.maxActiveSessions).toBe(2);
 
     await app.close();
     app = await bootstrapApp();
@@ -111,18 +137,44 @@ describe('VPN Postgres runtime state (e2e)', () => {
       .set('authorization', `Bearer ${accessToken}`)
       .expect(200);
 
-    expect(regions.body.data.items[0].regionCode).toBe('JP_BASIC');
+    expect(regions.body.data.items).toEqual([
+      expect.objectContaining({
+        regionCode: 'JP_DB_BASIC',
+        displayName: '日本-数据库基础线路',
+        isAllowed: true,
+      }),
+      expect.objectContaining({
+        regionCode: 'US_DB_ADV',
+        displayName: '美国-数据库高速线路',
+        isAllowed: false,
+      }),
+    ]);
 
     const issue = await request(app.getHttpServer())
       .post('/api/client/v1/vpn/config/issue')
       .set('authorization', `Bearer ${accessToken}`)
       .send({
-        regionCode: 'JP_BASIC',
+        regionCode: 'JP_DB_BASIC',
         connectionMode: 'global',
       })
       .expect(201);
 
-    expect(issue.body.data.regionCode).toBe('JP_BASIC');
+    expect(issue.body.data.regionCode).toBe('JP_DB_BASIC');
+    expect(issue.body.data.configPayload).toContain('jp-db-01.example.com');
+    expect(issue.body.data.configPayload).toContain('security=reality');
+    expect(issue.body.data.configPayload).toContain('pbk=public-key-jp-db');
+    expect(issue.body.data.configPayload).toContain('sid=jpdb01');
+
+    const forbiddenIssue = await request(app.getHttpServer())
+      .post('/api/client/v1/vpn/config/issue')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        regionCode: 'US_DB_ADV',
+        connectionMode: 'global',
+      })
+      .expect(403);
+
+    expect(forbiddenIssue.body.code).toBe('VPN_REGION_FORBIDDEN');
 
     const status = await request(app.getHttpServer())
       .get('/api/client/v1/vpn/status')
@@ -130,6 +182,7 @@ describe('VPN Postgres runtime state (e2e)', () => {
       .expect(200);
 
     expect(status.body.data.canIssueConfig).toBe(true);
+    expect(status.body.data.currentRegionCode).toBe('JP_DB_BASIC');
   });
 });
 

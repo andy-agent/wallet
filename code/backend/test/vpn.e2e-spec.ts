@@ -83,6 +83,13 @@ describe('PlansSubscriptionVpn (e2e)', () => {
       .expect(200);
 
     expect(plans.body.data.items).toHaveLength(1);
+    expect(plans.body.data.items[0]).toEqual(
+      expect.objectContaining({
+        planCode: 'BASIC_1M',
+        name: '基础版-1个月',
+        priceUsd: '9.99',
+      }),
+    );
 
     const order = await request(app.getHttpServer())
       .get(`/api/client/v1/orders/${orderNo}`)
@@ -125,6 +132,10 @@ describe('PlansSubscriptionVpn (e2e)', () => {
       .expect(201);
 
     expect(issue.body.data.regionCode).toBe('JP_BASIC');
+    expect(issue.body.data.configPayload).toContain('bootstrap.jp.example.com');
+    expect(issue.body.data.configPayload).toContain('security=reality');
+    expect(issue.body.data.configPayload).toContain('pbk=bootstrap-jp-public-key');
+    expect(issue.body.data.configPayload).toContain('sid=jpbasic');
 
     const status = await request(app.getHttpServer())
       .get('/api/client/v1/vpn/status')

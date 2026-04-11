@@ -10,6 +10,11 @@ jest.mock('pg', () => runtimeDb.adapters.createPg());
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { ResponseEnvelopeInterceptor } from '../src/common/interceptors/response-envelope.interceptor';
+import {
+  cleanupClientCatalogTables,
+  ensureClientCatalogSchema,
+  seedClientCatalogData,
+} from './support/client-catalog.fixture';
 
 describe('Orders Postgres runtime state (e2e)', () => {
   let app: INestApplication;
@@ -22,6 +27,8 @@ describe('Orders Postgres runtime state (e2e)', () => {
     delete process.env.RUNTIME_STATE_BACKEND;
     delete process.env.RUNTIME_STATE_FILE;
 
+    ensureClientCatalogSchema(runtimeDb);
+    seedClientCatalogData(runtimeDb);
     app = await bootstrapApp();
 
     await request(app.getHttpServer())
@@ -45,6 +52,7 @@ describe('Orders Postgres runtime state (e2e)', () => {
   afterEach(async () => {
     await app.close();
     cleanupRuntimeTables();
+    cleanupClientCatalogTables(runtimeDb);
     delete process.env.NODE_ENV;
     delete process.env.DATABASE_URL;
     delete process.env.RUNTIME_STATE_BACKEND;
@@ -63,6 +71,9 @@ describe('Orders Postgres runtime state (e2e)', () => {
         quoteNetworkCode: 'TRON',
       })
       .expect(201);
+
+    expect(createResponse.body.data.planName).toBe('数据库基础版-1个月');
+    expect(createResponse.body.data.quoteUsdAmount).toBe('11.50');
 
     const orderNo = createResponse.body.data.orderNo;
 

@@ -5,22 +5,24 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
-import { PostgresDataAccessService } from '../database/postgres-data-access.service';
+import { ClientCatalogService } from '../database/client-catalog.service';
+import {
+  ClientCatalogPlan,
+  ClientCatalogVpnNode,
+  ClientCatalogVpnRegion,
+} from '../database/client-catalog.types';
 import { RuntimeStateRepository } from '../database/runtime-state.repository';
 import {
   PersistedSubscriptionRecord,
   SubscriptionState,
 } from './vpn.types';
 
-const TEST_BASIC_REGION_ID = '33333333-3333-3333-3333-333333333333';
-const TEST_ADVANCED_REGION_ID = '22222222-2222-2222-2222-222222222222';
-
 @Injectable()
 export class VpnService {
   constructor(
     private readonly authService: AuthService,
+    private readonly clientCatalogService: ClientCatalogService,
     private readonly runtimeStateRepository: RuntimeStateRepository,
-    private readonly postgresDataAccessService: PostgresDataAccessService,
   ) {}
 
   async getCurrentSubscription(accessToken: string) {
@@ -37,70 +39,21 @@ export class VpnService {
         message: 'Subscription required',
       });
     }
-    if (!this.postgresDataAccessService.isEnabled()) {
-      if (process.env.NODE_ENV === 'test') {
-        return {
-          items: [
-            {
-              regionId: TEST_BASIC_REGION_ID,
-              regionCode: 'JP_BASIC',
-              displayName: '日本-基础线路',
-              tier: 'BASIC',
-              status: 'ACTIVE',
-              isAllowed: true,
-              remark: '基础可用区域',
-            },
-            {
-              regionId: TEST_ADVANCED_REGION_ID,
-              regionCode: 'US_LOW_LATENCY',
-              displayName: '美国-低延迟',
-              tier: 'ADVANCED',
-              status: 'ACTIVE',
-              isAllowed: false,
-              remark: '当前套餐无权限',
-            },
-          ],
-        };
-      }
-      return { items: [] };
-    }
 
-    const plans = await this.postgresDataAccessService.listPlans({
-      page: 1,
-      pageSize: 100,
-    });
-    const plan = plans.items.find(
-      (item) => (item as { planCode?: string }).planCode === subscription.planCode,
-    ) as
-      | {
-          planCode: string;
-          regionAccessPolicy: string;
-          includesAdvancedRegions: boolean;
-          allowedRegionIds: string[];
-        }
-      | undefined;
-
-    const regions = await this.postgresDataAccessService.listVpnRegions({
-      page: 1,
-      pageSize: 100,
-      status: 'ACTIVE',
-    });
+    const [plan, regions] = await Promise.all([
+      this.clientCatalogService.findPlanByCode(subscription.planCode, {
+        status: 'ACTIVE',
+      }),
+      this.clientCatalogService.listRegions({
+        status: 'ACTIVE',
+      }),
+    ]);
 
     return {
-      items: regions.items.map((region) => {
-        const typedRegion = region as {
-          regionId: string;
-          regionCode: string;
-          displayName: string;
-          tier: string;
-          status: string;
-          remark: string | null;
-        };
-        return {
-          ...typedRegion,
-          isAllowed: this.isRegionAllowed(plan, typedRegion),
-        };
-      }),
+      items: regions.map((region) => ({
+        ...region,
+        isAllowed: this.isRegionAllowed(plan, region),
+      })),
     };
   }
 
@@ -108,7 +61,6 @@ export class VpnService {
     accessToken: string,
     params: { regionCode: string; connectionMode: 'global' | 'rule' },
   ) {
-    const session = this.authService.getSessionSummary(accessToken);
     const account = this.authService.getMe(accessToken);
     const subscription = await this.getSubscriptionByAccountId(account.accountId);
     if (subscription.status !== 'ACTIVE') {
@@ -117,17 +69,10 @@ export class VpnService {
         message: 'Subscription required',
       });
     }
+
     const regions = (await this.listRegions(accessToken)).items;
     const region = regions.find((item) => item.regionCode === params.regionCode);
-
-    if (!region) {
-      throw new ConflictException({
-        code: 'VPN_REGION_UNAVAILABLE',
-        message: 'Region unavailable',
-      });
-    }
-
-    if (region.status !== 'ACTIVE') {
+    if (!region || region.status !== 'ACTIVE') {
       throw new ConflictException({
         code: 'VPN_REGION_UNAVAILABLE',
         message: 'Region unavailable',
@@ -141,7 +86,10 @@ export class VpnService {
       });
     }
 
-    const node = await this.pickRegionNode(region.regionId);
+    const [node, issueMinutes] = await Promise.all([
+      this.clientCatalogService.selectIssueNode(region.regionId),
+      this.clientCatalogService.getConfigIssueMinutes(),
+    ]);
     if (!node) {
       throw new ConflictException({
         code: 'VPN_REGION_UNAVAILABLE',
@@ -149,17 +97,18 @@ export class VpnService {
       });
     }
 
+    const issuedAt = new Date();
+
     return {
       regionCode: region.regionCode,
       connectionMode: params.connectionMode,
       configPayload: this.buildVlessConfigPayload({
         subscriptionId: subscription.subscriptionId,
         regionCode: region.regionCode,
-        host: node.host,
-        port: node.port,
+        node,
       }),
-      issuedAt: new Date().toISOString(),
-      expireAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+      issuedAt: issuedAt.toISOString(),
+      expireAt: new Date(issuedAt.getTime() + issueMinutes * 60 * 1000).toISOString(),
     };
   }
 
@@ -169,17 +118,16 @@ export class VpnService {
     const session = this.authService.getSessionSummary(accessToken);
     const allowedRegions =
       subscription.status === 'ACTIVE' ? (await this.listRegions(accessToken)).items : [];
-    const currentRegionCode =
-      allowedRegions.find((item) => item.isAllowed)?.regionCode ?? null;
+    const currentRegion = allowedRegions.find((item) => item.isAllowed) ?? null;
 
     return {
       subscriptionStatus: subscription.status,
-      currentRegionCode,
+      currentRegionCode: currentRegion?.regionCode ?? null,
       connectionMode: subscription.status === 'ACTIVE' ? 'global' : null,
       canIssueConfig:
         subscription.status === 'ACTIVE' &&
         session.status === 'ACTIVE' &&
-        currentRegionCode !== null,
+        currentRegion !== null,
       sessionStatus: session.status,
     };
   }
@@ -199,24 +147,36 @@ export class VpnService {
       return this.toSubscriptionState(existing);
     }
 
+    const plan = await this.clientCatalogService.findPlanByCode(planCode);
     const now = new Date();
-    const expireAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const expireAt = this.addMonths(now, plan?.billingCycleMonths ?? 1);
     const subscription: PersistedSubscriptionRecord = {
       accountId,
       orderNo,
       createdAt: existing?.createdAt ?? now.toISOString(),
       updatedAt: now.toISOString(),
-      subscriptionId: randomUUID(),
+      subscriptionId: existing?.subscriptionId ?? randomUUID(),
       planCode,
       status: 'ACTIVE',
       startedAt: now.toISOString(),
       expireAt: expireAt.toISOString(),
-      daysRemaining: 30,
-      isUnlimitedTraffic: true,
-      maxActiveSessions: 1,
+      daysRemaining: this.calculateDaysRemaining(now, expireAt),
+      isUnlimitedTraffic: plan?.isUnlimitedTraffic ?? true,
+      maxActiveSessions: plan?.maxActiveSessions ?? 1,
     };
 
     await this.runtimeStateRepository.upsertSubscription(subscription);
+    return this.toSubscriptionState(subscription);
+  }
+
+  async getSubscriptionByAccountIdForAdmin(
+    accountId: string,
+  ): Promise<SubscriptionState | null> {
+    const subscription =
+      await this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
+    if (!subscription || subscription.status === 'NONE') {
+      return null;
+    }
     return this.toSubscriptionState(subscription);
   }
 
@@ -244,22 +204,16 @@ export class VpnService {
     return this.toSubscriptionState(subscription);
   }
 
-  async getSubscriptionByAccountIdForAdmin(
-    accountId: string,
-  ): Promise<SubscriptionState | null> {
-    const subscription =
-      await this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
-    if (!subscription || subscription.status === 'NONE') {
-      return null;
-    }
-    return this.toSubscriptionState(subscription);
-  }
-
   private toSubscriptionState(
     subscription: PersistedSubscriptionRecord,
   ): SubscriptionState {
-    const { accountId: _accountId, createdAt: _createdAt, orderNo: _orderNo, updatedAt: _updatedAt, ...publicSubscription } =
-      subscription;
+    const {
+      accountId: _accountId,
+      createdAt: _createdAt,
+      orderNo: _orderNo,
+      updatedAt: _updatedAt,
+      ...publicSubscription
+    } = subscription;
     return publicSubscription;
   }
 
@@ -277,14 +231,8 @@ export class VpnService {
   }
 
   private isRegionAllowed(
-    plan:
-      | {
-          regionAccessPolicy: string;
-          includesAdvancedRegions: boolean;
-          allowedRegionIds: string[];
-        }
-      | undefined,
-    region: { regionId: string; tier: string },
+    plan: ClientCatalogPlan | null,
+    region: Pick<ClientCatalogVpnRegion, 'regionId' | 'tier'>,
   ) {
     if (!plan) {
       return false;
@@ -302,43 +250,65 @@ export class VpnService {
       return true;
     }
 
-    return region.tier === 'BASIC';
-  }
-
-  private async pickRegionNode(regionId: string) {
-    if (!this.postgresDataAccessService.isEnabled()) {
-      if (process.env.NODE_ENV === 'test') {
-        return {
-          host: 'jp-basic.example.com',
-          port: 443,
-        };
-      }
-      return null;
-    }
-
-    const nodes = await this.postgresDataAccessService.listVpnNodes({
-      page: 1,
-      pageSize: 20,
-      regionId,
-      status: 'ACTIVE',
-    });
-
-    return nodes.items[0] as
-      | {
-          host: string;
-          port: number;
-        }
-      | undefined
-      | null;
+    return region.tier.toUpperCase() === 'BASIC';
   }
 
   private buildVlessConfigPayload(input: {
     subscriptionId: string;
     regionCode: string;
-    host: string;
-    port: number;
+    node: ClientCatalogVpnNode;
   }) {
+    const query = new URLSearchParams({
+      encryption: 'none',
+      security: input.node.securityType.toLowerCase(),
+      type: input.node.transportProtocol.toLowerCase(),
+    });
+
+    if (input.node.realityPublicKey) {
+      query.set('pbk', input.node.realityPublicKey);
+      query.set('fp', 'chrome');
+    }
+
+    if (input.node.serverName) {
+      query.set('sni', input.node.serverName);
+    }
+
+    if (input.node.shortId) {
+      query.set('sid', input.node.shortId);
+    }
+
+    const normalizedFlow = this.normalizeFlow(input.node.flow);
+    if (normalizedFlow) {
+      query.set('flow', normalizedFlow);
+    }
+
     const remark = encodeURIComponent(`CryptoVPN-${input.regionCode}`);
-    return `vless://${input.subscriptionId}@${input.host}:${input.port}?encryption=none&security=none&type=tcp#${remark}`;
+    return `vless://${input.subscriptionId}@${input.node.host}:${input.node.port}?${query.toString()}#${remark}`;
+  }
+
+  private normalizeFlow(flow: string | null) {
+    if (!flow) {
+      return null;
+    }
+
+    const normalized = flow.trim().toUpperCase();
+    if (normalized === 'XTLS_VISION') {
+      return 'xtls-rprx-vision';
+    }
+
+    return flow.trim().toLowerCase();
+  }
+
+  private addMonths(value: Date, months: number) {
+    const next = new Date(value);
+    next.setMonth(next.getMonth() + months);
+    return next;
+  }
+
+  private calculateDaysRemaining(startAt: Date, expireAt: Date) {
+    return Math.max(
+      1,
+      Math.ceil((expireAt.getTime() - startAt.getTime()) / (24 * 60 * 60 * 1000)),
+    );
   }
 }

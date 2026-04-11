@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
+import { ClientCatalogService } from '../database/client-catalog.service';
 import { RuntimeStateRepository } from '../database/runtime-state.repository';
 import { StoredOrderRecord } from '../database/runtime-state.types';
 import { ProvisioningService } from '../provisioning/provisioning.service';
@@ -21,6 +22,7 @@ export class OrdersService {
 
   constructor(
     private readonly authService: AuthService,
+    private readonly clientCatalogService: ClientCatalogService,
     private readonly runtimeStateRepository: RuntimeStateRepository,
     private readonly provisioningService: ProvisioningService,
     private readonly solanaClient: SolanaClientService,
@@ -40,6 +42,16 @@ export class OrdersService {
       });
     }
 
+    const plan = await this.clientCatalogService.findPlanByCode(dto.planCode, {
+      status: 'ACTIVE',
+    });
+    if (!plan) {
+      throw new NotFoundException({
+        code: 'PLAN_NOT_FOUND',
+        message: 'Plan not found',
+      });
+    }
+
     const orderId = randomUUID();
     const orderNo = `ORD-${Date.now()}-${orderId.slice(0, 8).toUpperCase()}`;
     const storedOrder: StoredOrderRecord = {
@@ -51,12 +63,15 @@ export class OrdersService {
       orderNo,
       accountId: account.accountId,
       planCode: dto.planCode,
-      planName: dto.planCode === 'BASIC_1M' ? '基础版-1个月' : dto.planCode,
+      planName: plan.name,
       orderType: dto.orderType,
       quoteAssetCode: dto.quoteAssetCode,
       quoteNetworkCode: dto.quoteNetworkCode,
-      quoteUsdAmount: '9.99',
-      payableAmount: dto.quoteAssetCode === 'SOL' ? '0.04500000' : '9.990000',
+      quoteUsdAmount: plan.priceUsd,
+      payableAmount:
+        dto.quoteAssetCode === 'SOL'
+          ? '0.04500000'
+          : Number(plan.priceUsd).toFixed(6),
       status: 'AWAITING_PAYMENT',
       expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
       confirmedAt: null,

@@ -23,6 +23,7 @@ type PlanRow = QueryResultRow & {
   description: string | null;
   billing_cycle_months: number;
   price_usd: string;
+  is_unlimited_traffic: boolean;
   max_active_sessions: number;
   region_access_policy: string;
   includes_advanced_regions: boolean;
@@ -103,6 +104,13 @@ type VpnNodeRow = QueryResultRow & {
   host: string;
   port: number;
   protocol: string;
+  transport_protocol: string;
+  security_type: string;
+  reality_public_key: string | null;
+  server_name: string | null;
+  short_id: string | null;
+  flow: string | null;
+  weight: number;
   status: string;
   health_status: string;
   current_load: number;
@@ -180,6 +188,7 @@ export class PostgresDataAccessService {
           description,
           billing_cycle_months,
           price_usd::text AS price_usd,
+          is_unlimited_traffic,
           max_active_sessions,
           region_access_policy::text AS region_access_policy,
           includes_advanced_regions,
@@ -220,7 +229,8 @@ export class PostgresDataAccessService {
         name: row.name,
         description: row.description,
         billingCycleMonths: row.billing_cycle_months,
-        priceUsd: row.price_usd,
+        priceUsd: this.formatMoney(row.price_usd),
+        isUnlimitedTraffic: row.is_unlimited_traffic,
         maxActiveSessions: row.max_active_sessions,
         regionAccessPolicy: row.region_access_policy,
         includesAdvancedRegions: row.includes_advanced_regions,
@@ -642,6 +652,13 @@ export class PostgresDataAccessService {
           n.host,
           n.port,
           n.protocol,
+          n.transport_protocol,
+          n.security_type,
+          n.reality_public_key,
+          n.server_name,
+          n.short_id,
+          n.flow,
+          n.weight,
           n.status::text AS status,
           n.health_status::text AS health_status,
           0::int AS current_load,
@@ -666,6 +683,13 @@ export class PostgresDataAccessService {
         host: row.host,
         port: row.port,
         protocol: row.protocol,
+        transportProtocol: row.transport_protocol,
+        securityType: row.security_type,
+        realityPublicKey: row.reality_public_key,
+        serverName: row.server_name,
+        shortId: row.short_id,
+        flow: row.flow,
+        weight: row.weight,
         status: this.normalizeNodeStatus(row.status),
         healthStatus: this.normalizeNodeHealthStatus(row.health_status),
         currentLoad: row.current_load,
@@ -868,6 +892,26 @@ export class PostgresDataAccessService {
     );
   }
 
+  async getSystemConfigValue(scope: string, configKey: string): Promise<string | null> {
+    if (!this.pool) {
+      return null;
+    }
+
+    const rows = await this.fetchRows<QueryResultRow & { config_value: string }>(
+      `
+        SELECT config_value
+        FROM system_configs
+        WHERE UPPER(scope::text) = ANY($1::text[])
+          AND UPPER(config_key) = UPPER($2)
+        ORDER BY updated_at DESC
+        LIMIT 1
+      `,
+      [this.expandConfigScopes(scope).map((item) => item.toUpperCase()), configKey],
+    );
+
+    return rows[0]?.config_value ?? null;
+  }
+
   private async fetchRows<T extends QueryResultRow>(
     text: string,
     values: unknown[],
@@ -927,6 +971,20 @@ export class PostgresDataAccessService {
       return 'JSON';
     }
     return 'STRING';
+  }
+
+  private formatMoney(value: string) {
+    const trimmed = value.trim();
+    if (!trimmed.includes('.')) {
+      return `${trimmed}.00`;
+    }
+
+    const [, fraction = ''] = trimmed.split('.', 2);
+    if (fraction.length >= 2) {
+      return trimmed;
+    }
+
+    return `${trimmed}${'0'.repeat(2 - fraction.length)}`;
   }
 
   private normalizeVersionChannel(channel: string) {
