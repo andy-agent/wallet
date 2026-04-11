@@ -499,11 +499,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             ),
             highlights = relatedOrders.take(3).map {
                 FeatureListItem(it.planName, it.orderNo, "${it.amount} ${it.assetCode}", it.status)
-            }.ifEmpty {
-                assetDetailPreviewState().highlights
             },
             summary = "资产详情按真实订单缓存统计 ${args.assetId} 相关记录。",
-            note = "当前工程暂无链上钱包资产仓储，先以真实订单/账户上下文映射资产视图。",
+            note = "当前工程暂无链上钱包资产仓储；当前页只基于真实订单缓存映射资产视图，不再回退 preview 样本。",
         )
     }
 
@@ -589,15 +587,21 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getInviteShareState(): InviteShareUiState {
         val overview = paymentRepository.getReferralOverview().getOrNull()
         val referralCode = overview?.referralCode ?: "--"
+        val shareLink = if (overview != null) {
+            AppConfig.APP_URL.trimEnd('/') + "/invite/" + referralCode
+        } else {
+            ""
+        }
 
         return InviteShareUiState(
             metrics = listOf(
+                FeatureMetric("链接", shareLink.ifBlank { "--" }),
                 FeatureMetric("邀请码", referralCode),
-                FeatureMetric("一级邀请", overview?.level1InviteCount?.toString() ?: "0"),
-                FeatureMetric("二级邀请", overview?.level2InviteCount?.toString() ?: "0"),
+                FeatureMetric("渠道", "系统分享"),
             ),
             highlights = listOf(
-                FeatureListItem("邀请码", referralCode, "复制", "LIVE"),
+                FeatureListItem("推广链接", shareLink.ifBlank { "--" }, "复制", "LIVE"),
+                FeatureListItem("邀请码", referralCode, "复制", "CODE"),
                 FeatureListItem(
                     "一级邀请",
                     overview?.level1InviteCount?.toString() ?: "0",
@@ -612,9 +616,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 ),
             ),
             summary = if (overview != null) {
-                "分享页已切换到真实邀请码与邀请概览上下文。"
+                "分享页已切换到真实邀请码、分享链接与邀请概览上下文。"
             } else {
-                "当前未取到真实邀请码，页面显示明确空态。"
+                "当前未取到真实邀请码与分享链接，页面显示明确空态。"
             },
             note = "邀请分享数据来自 PaymentRepository.getReferralOverview()。",
         )

@@ -38,10 +38,9 @@ fun InviteShareScreen(
     onEvent: (InviteShareEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    val primaryMetric = uiState.metrics.firstOrNull()
-    val link = uiState.highlights.firstOrNull()?.subtitle ?: primaryMetric?.value ?: ""
-    val inviteCode = uiState.metrics.getOrNull(1)?.value ?: "--"
-    val channel = uiState.metrics.getOrNull(2)?.value ?: "分享"
+    val link = uiState.metrics.firstOrNull { it.label == "链接" }?.value.orEmpty()
+    val inviteCode = uiState.metrics.firstOrNull { it.label == "邀请码" }?.value ?: "--"
+    val channel = uiState.metrics.firstOrNull { it.label == "渠道" }?.value ?: "分享"
     val shareFocus = rememberCoreLoopingIndex(itemCount = 2, durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
@@ -71,7 +70,7 @@ fun InviteShareScreen(
             subtitle = "扫码后自动带入邀请关系",
             status = "Share Ready",
             address = link,
-            addressLabel = primaryMetric?.label ?: "推广链接",
+            addressLabel = "推广链接",
             supportingText = uiState.note,
         ) {
             if (inviteCode.isNotBlank()) {

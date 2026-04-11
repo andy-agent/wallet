@@ -7,7 +7,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.v2ray.ang.composeui.common.repository.RealCryptoVpnRepository
@@ -27,12 +30,10 @@ class ComposeRouteHarnessActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val route = intent.getStringExtra(EXTRA_ROUTE)
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-            ?: CryptoVpnRouteSpec.splash.pattern
+        var routeState = resolveRoute(intent)
 
         setContent {
+            var route by remember { mutableStateOf(routeState) }
             CryptoVpnTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -50,5 +51,18 @@ class ComposeRouteHarnessActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        recreate()
+    }
+
+    private fun resolveRoute(intent: android.content.Intent?): String {
+        return intent?.getStringExtra(EXTRA_ROUTE)
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: CryptoVpnRouteSpec.splash.pattern
     }
 }

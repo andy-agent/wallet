@@ -41,11 +41,11 @@ fun AssetDetailScreen(
 ) {
     val metricMap = uiState.metrics.associate { it.label to it.value }
     val walletTitle = metricMap["资产"] ?: uiState.title
-    val balance = metricMap["余额"] ?: "12,840 USDT"
-    val change = metricMap["今日"] ?: "+0.12%"
+    val balance = metricMap["持仓"] ?: "--"
+    val change = metricMap["订单数"]?.let { "$it orders" } ?: "--"
     val distribution = uiState.checklist.take(3).map { it.title to it.detail }
-    val changeColor = if (change.startsWith("-")) Color(0xFFFFEEE9) else Color(0xFFE6FFF6)
-    val chartAccent = if (change.startsWith("-")) Color(0xFFE86767) else Color(0xFF23C8A8)
+    val changeColor = if (uiState.highlights.isEmpty()) Color(0xFFEAF1FF) else Color(0xFFE6FFF6)
+    val chartAccent = if (uiState.highlights.isEmpty()) Color(0xFF4276FF) else Color(0xFF23C8A8)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = walletTitle,
@@ -79,6 +79,14 @@ fun AssetDetailScreen(
         )
         P2CoreCard {
             P2CoreCardHeader(title = "最近交易", trailing = "3 笔待确认", trailingColor = Color(0xFFEAF6FF))
+            if (uiState.highlights.isEmpty()) {
+                P2CoreListRow(
+                    title = "当前暂无真实资产交易记录",
+                    subtitle = "钱包资产域尚未接入，页面仅显示真实订单缓存映射。",
+                    trailing = "EMPTY",
+                    emphasis = P2CoreRowEmphasis.Brand,
+                )
+            }
             uiState.highlights.forEach { item ->
                 P2CoreListRow(
                     title = item.title,
