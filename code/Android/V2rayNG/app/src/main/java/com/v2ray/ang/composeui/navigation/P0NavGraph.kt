@@ -130,7 +130,7 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
         )
         EmailRegisterRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.emailLogin.pattern) },
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.vpnHome.pattern) },
             onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.emailLogin.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )

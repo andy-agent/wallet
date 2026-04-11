@@ -92,6 +92,7 @@ data class VpnHomeUiState(
 
 sealed interface VpnHomeEvent {
     data object ToggleConnection : VpnHomeEvent
+    data object Refresh : VpnHomeEvent
     data class AutoConnectChanged(val value: Boolean) : VpnHomeEvent
     data class RegionSelected(val value: RegionSpeed) : VpnHomeEvent
 }

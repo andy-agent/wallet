@@ -1,5 +1,9 @@
 package com.v2ray.ang.composeui.pages.p0
 
+import android.net.VpnService
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,8 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,6 +45,11 @@ import com.v2ray.ang.composeui.p0.ui.P01MetricGrid
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.viewmodel.VpnHomeViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.handler.MmkvManager
+import com.v2ray.ang.handler.SettingsManager
+import com.v2ray.ang.handler.V2RayServiceManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 @Composable
 fun VpnHomeRoute(
@@ -49,10 +60,54 @@ fun VpnHomeRoute(
     onPlans: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val requestVpnPermission = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            V2RayServiceManager.startVService(context)
+        }
+        viewModel.onEvent(VpnHomeEvent.Refresh)
+    }
+
+    fun toggleRealConnection() {
+        if (V2RayServiceManager.isRunning()) {
+            V2RayServiceManager.stopVService(context)
+            viewModel.onEvent(VpnHomeEvent.Refresh)
+            return
+        }
+
+        if (MmkvManager.getSelectServer().isNullOrEmpty()) {
+            Toast.makeText(context, "暂无可连接节点，请先完成购买并导入配置。", Toast.LENGTH_SHORT).show()
+            onPlans()
+            return
+        }
+
+        if (SettingsManager.isVpnMode()) {
+            val prepareIntent = VpnService.prepare(context)
+            if (prepareIntent == null) {
+                V2RayServiceManager.startVService(context)
+                viewModel.onEvent(VpnHomeEvent.Refresh)
+            } else {
+                requestVpnPermission.launch(prepareIntent)
+            }
+        } else {
+            V2RayServiceManager.startVService(context)
+            viewModel.onEvent(VpnHomeEvent.Refresh)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            delay(1500)
+            viewModel.onEvent(VpnHomeEvent.Refresh)
+        }
+    }
+
     VpnHomeScreen(
         currentRoute = currentRoute,
         uiState = uiState,
-        onToggleConnection = { viewModel.onEvent(VpnHomeEvent.ToggleConnection) },
+        onToggleConnection = ::toggleRealConnection,
         onSelectRegion = { viewModel.onEvent(VpnHomeEvent.RegionSelected(it)) },
         onBottomNav = onBottomNav,
         onWalletHome = onWalletHome,

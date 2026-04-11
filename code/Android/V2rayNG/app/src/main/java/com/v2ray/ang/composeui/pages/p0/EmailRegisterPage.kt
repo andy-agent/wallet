@@ -1,9 +1,12 @@
 package com.v2ray.ang.composeui.pages.p0
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
@@ -17,6 +20,7 @@ import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.ui.P01PrimaryButton
 import com.v2ray.ang.composeui.p0.viewmodel.EmailRegisterViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.payment.ui.activity.LoginActivity
 
 @Composable
 fun EmailRegisterRoute(
@@ -26,12 +30,20 @@ fun EmailRegisterRoute(
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val registerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        if (result.resultCode == LoginActivity.RESULT_CODE_LOGIN_SUCCESS) {
+            onPrimaryAction()
+        }
+    }
     EmailRegisterScreen(
         uiState = uiState,
         onFieldChanged = { key, value -> viewModel.onEvent(EmailRegisterEvent.FieldChanged(key, value)) },
         onPrimaryAction = {
             viewModel.onEvent(EmailRegisterEvent.PrimaryActionClicked)
-            onPrimaryAction()
+            registerLauncher.launch(LoginActivity.createRegisterIntent(context))
         },
         onBack = {
             viewModel.onEvent(EmailRegisterEvent.SecondaryActionClicked)

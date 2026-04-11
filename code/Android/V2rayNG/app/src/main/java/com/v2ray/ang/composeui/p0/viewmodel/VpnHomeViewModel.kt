@@ -2,7 +2,6 @@ package com.v2ray.ang.composeui.p0.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.v2ray.ang.composeui.p0.model.VpnConnectionStatus
 import com.v2ray.ang.composeui.p0.model.VpnHomeEvent
 import com.v2ray.ang.composeui.p0.model.VpnHomeUiState
 import com.v2ray.ang.composeui.p0.repository.P0Repository
@@ -19,21 +18,13 @@ class VpnHomeViewModel(
     val uiState: StateFlow<VpnHomeUiState> = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            _uiState.value = repository.getVpnHomeState()
-        }
+        refresh()
     }
 
     fun onEvent(event: VpnHomeEvent) {
         when (event) {
-            VpnHomeEvent.ToggleConnection -> {
-                val next = when (_uiState.value.connectionStatus) {
-                    VpnConnectionStatus.DISCONNECTED -> VpnConnectionStatus.CONNECTING
-                    VpnConnectionStatus.CONNECTING -> VpnConnectionStatus.CONNECTED
-                    VpnConnectionStatus.CONNECTED -> VpnConnectionStatus.DISCONNECTED
-                }
-                _uiState.value = _uiState.value.copy(connectionStatus = next)
-            }
+            VpnHomeEvent.ToggleConnection -> refresh()
+            VpnHomeEvent.Refresh -> refresh()
 
             is VpnHomeEvent.AutoConnectChanged -> {
                 _uiState.value = _uiState.value.copy(autoConnectEnabled = event.value)
@@ -42,6 +33,12 @@ class VpnHomeViewModel(
             is VpnHomeEvent.RegionSelected -> {
                 _uiState.value = _uiState.value.copy(selectedRegion = event.value)
             }
+        }
+    }
+
+    private fun refresh() {
+        viewModelScope.launch {
+            _uiState.value = repository.getVpnHomeState()
         }
     }
 }
