@@ -62,7 +62,7 @@ fun WalletOnboardingScreen(
         P01Header(
             eyebrow = "MULTI-CHAIN WALLET SETUP",
             title = "配置你的多链钱包",
-            subtitle = "这是对现有文档的补充页：让钱包成为完整产品，而不是附属支付模块。",
+            subtitle = uiState.statusMessage ?: "当前钱包能力仍在逐步接入，先按真实状态引导你进入后续页面。",
         )
 
         P01Card(centered = true) {
@@ -102,9 +102,9 @@ fun WalletOnboardingScreen(
         ) {
             P01CardHeader(
                 title = "创建新钱包",
-                trailing = { P01Chip(text = "推荐") },
+                trailing = { P01Chip(text = if (uiState.selectedMode == WalletCreationMode.CREATE) "当前选择" else "未接入") },
             )
-            P01CardCopy("生成助记词并开启云端加密备份提醒。")
+            P01CardCopy("当前尚未接入真实钱包创建引擎；本页只保留后续流程入口与状态说明。")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Solana", "TRON", "Ethereum", "Base").forEach { label ->
                     P01Chip(text = label)
@@ -116,39 +116,39 @@ fun WalletOnboardingScreen(
             modifier = Modifier.clickable { onSelectMode(WalletCreationMode.IMPORT) },
         ) {
             P01CardHeader(title = "导入助记词 / 私钥")
-            P01CardCopy("适合已有钱包用户，自动识别已支持网络与资产。")
+            P01CardCopy("导入相关页面当前只暴露阻塞和本地状态，不再伪装成已完成的钱包恢复能力。")
         }
 
         P01Card(
             modifier = Modifier.clickable { onSelectMode(WalletCreationMode.IMPORT) },
         ) {
             P01CardHeader(title = "仅观察模式")
-            P01CardCopy("先查看余额与交易记录，再决定是否迁移资产。")
+            P01CardCopy("观察模式仍待真实钱包地址源接入；当前仅保留路线入口。")
         }
 
         P01Card {
             P01CardHeader(
                 title = "安全策略",
-                trailing = { P01Chip(text = "自动补齐") },
+                trailing = { P01Chip(text = "本地状态") },
             )
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 P01Card(
                     modifier = Modifier.weight(1f),
                 ) {
                     P01CardCopy("Biometric")
-                    androidx.compose.material3.Text("已开启")
+                    androidx.compose.material3.Text("待接真实策略")
                 }
                 P01Card(
                     modifier = Modifier.weight(1f),
                 ) {
                     P01CardCopy("Backup")
-                    androidx.compose.material3.Text("AES 加密")
+                    androidx.compose.material3.Text("仅流程说明")
                 }
             }
         }
 
         P01PrimaryButton(
-            text = "继续进入应用",
+            text = uiState.primaryActionLabel,
             onClick = onContinue,
             modifier = Modifier.fillMaxWidth(),
         )

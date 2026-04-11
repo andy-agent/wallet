@@ -115,7 +115,7 @@ fun FeaturePageTemplate(
             if (fields.isNotEmpty()) {
                 item {
                     TechCard {
-                        Text("表单占位", style = MaterialTheme.typography.titleMedium)
+                        Text("当前信息", style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(12.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             fields.forEach { field ->
@@ -139,7 +139,7 @@ fun FeaturePageTemplate(
 
             if (highlights.isNotEmpty()) {
                 item {
-                    Text("关键模块", style = MaterialTheme.typography.titleLarge)
+                    Text("关键对象", style = MaterialTheme.typography.titleLarge)
                 }
                 items(highlights) { item ->
                     FeatureListItemRow(item = item)
@@ -149,7 +149,7 @@ fun FeaturePageTemplate(
             if (checklist.isNotEmpty()) {
                 item {
                     TechCard {
-                        Text("交付检查", style = MaterialTheme.typography.titleMedium)
+                        Text("状态说明", style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(12.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             checklist.forEach { bullet ->
@@ -174,7 +174,7 @@ fun FeaturePageTemplate(
 
             item {
                 TechCard {
-                    Text("交付备注", style = MaterialTheme.typography.titleMedium)
+                    Text("补充说明", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = note,
