@@ -41,6 +41,7 @@ fun ReceiveScreen(
     val chips = uiState.metrics.take(3).map { it.value }
     val address = uiState.fields.firstOrNull()?.value ?: "--"
     val status = uiState.metrics.getOrNull(3)?.value ?: "已校验"
+    val addressPreview = if (address.length > 14) "${address.take(6)}...${address.takeLast(6)}" else address
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -49,39 +50,36 @@ fun ReceiveScreen(
         activeSection = CoreNavSection.Wallet,
         onBottomNav = onBottomNav,
     ) {
-        if (chips.isNotEmpty()) {
-            P2CoreChipRow(items = chips, activeIndex = 0)
-        }
-        P2CoreQrAddressCard(
-            title = "收款二维码",
-            subtitle = "扫码转账前请确认网络与资产一致",
-            status = status,
-            address = address,
-        ) {
-            P2CoreActionValueRow(
-                label = "收款地址",
-                value = address,
-                actionLabel = uiState.secondaryActionLabel ?: "分享二维码",
-                onAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
-            )
-        }
         P2CoreHeroValueCard(
-            label = "到账预估",
-            value = uiState.metrics.firstOrNull()?.value ?: "--",
+            label = "当前收款网络",
+            value = chips.firstOrNull() ?: (uiState.badge ?: "--"),
             supportingText = uiState.summary,
             highlight = uiState.badge,
-            stats = uiState.metrics.drop(1).take(2).map { it.label to it.value },
+            stats = listOf(
+                "地址尾号" to addressPreview,
+                "校验状态" to status,
+            ),
         )
-        P2CoreAddressModule(
-            title = "收款地址",
-            value = address,
-            supportingText = uiState.note,
+        P2CoreQrAddressCard(
+            title = "收款二维码",
+            subtitle = "扫码或复制地址进行转账",
             status = status,
-            primaryActionLabel = uiState.secondaryActionLabel ?: "分享二维码",
-            onPrimaryAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
-            secondaryActionLabel = uiState.primaryActionLabel,
-            onSecondaryAction = { onEvent(ReceiveEvent.PrimaryActionClicked) },
-        )
+            statusColor = androidx.compose.ui.graphics.Color(0xFFE6FFF6),
+            address = address,
+            addressLabel = "收款地址",
+            supportingText = uiState.note,
+        ) {
+            if (chips.isNotEmpty()) {
+                P2CoreChipRow(items = chips, activeIndex = 0)
+            }
+            CoreActionRow(
+                primaryActionLabel = uiState.secondaryActionLabel ?: "分享二维码",
+                onPrimaryAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
+                secondaryActionLabel = uiState.primaryActionLabel,
+                onSecondaryAction = { onEvent(ReceiveEvent.PrimaryActionClicked) },
+            )
+            P2CoreNoteCard(title = "请确认链一致", text = uiState.note)
+        }
     }
 }
 

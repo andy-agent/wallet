@@ -44,6 +44,8 @@ fun AssetDetailScreen(
     val balance = metricMap["余额"] ?: "12,840 USDT"
     val change = metricMap["今日"] ?: "+0.12%"
     val distribution = uiState.checklist.take(3).map { it.title to it.detail }
+    val changeColor = if (change.startsWith("-")) Color(0xFFFFEEE9) else Color(0xFFE6FFF6)
+    val chartAccent = if (change.startsWith("-")) Color(0xFFE86767) else Color(0xFF23C8A8)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = walletTitle,
@@ -57,19 +59,23 @@ fun AssetDetailScreen(
         onSecondaryAction = { onEvent(AssetDetailEvent.SecondaryActionClicked) },
     ) {
         P2CoreHeroValueCard(
-            label = "资产总览",
+            label = walletTitle,
             value = balance,
-            supportingText = "余额 $balance · 今日 $change",
+            supportingText = "今日 $change · ${uiState.summary}",
             highlight = uiState.badge,
-            stats = distribution.take(2),
+            stats = listOf(
+                "24H" to change,
+                "常用场景" to uiState.note,
+            ),
         )
         P2CoreChartInfoBlock(
             title = "资产走势",
-            subtitle = uiState.summary,
+            subtitle = "24H 余额与入账趋势",
             chips = listOf("24H", "7D", "30D", "入账/出账"),
             infoItems = distribution,
-            highlight = "同步中",
-            accent = Color(0xFF2F5BFF),
+            highlight = change,
+            highlightColor = changeColor,
+            accent = chartAccent,
         )
         P2CoreCard {
             P2CoreCardHeader(title = "最近交易", trailing = "3 笔待确认", trailingColor = Color(0xFFEAF6FF))
@@ -78,7 +84,11 @@ fun AssetDetailScreen(
                     title = item.title,
                     subtitle = item.subtitle,
                     trailing = item.trailing,
-                    trailingColor = if (item.trailing.contains("成功")) Color(0xFF17B48A) else Color(0xFF66739D),
+                    trailingColor = when {
+                        item.trailing.contains("成功") -> Color(0xFF17B48A)
+                        item.trailing.contains("确认") -> Color(0xFFE39B22)
+                        else -> Color(0xFF66739D)
+                    },
                 )
             }
         }
