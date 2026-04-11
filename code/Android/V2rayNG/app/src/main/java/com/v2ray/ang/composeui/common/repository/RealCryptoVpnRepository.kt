@@ -154,7 +154,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     private val paymentRepository = PaymentRepository(context.applicationContext)
 
     override suspend fun getForceUpdateState(): ForceUpdateUiState {
-        return forceUpdatePreviewState().copy(
+        return ForceUpdateUiState(
             metrics = listOf(
                 FeatureMetric("当前版本", BuildConfig.VERSION_NAME),
                 FeatureMetric("分发渠道", BuildConfig.DISTRIBUTION),
@@ -165,7 +165,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getOptionalUpdateState(): OptionalUpdateUiState {
-        return optionalUpdatePreviewState().copy(
+        return OptionalUpdateUiState(
             metrics = listOf(
                 FeatureMetric("当前版本", BuildConfig.VERSION_NAME),
                 FeatureMetric("分发渠道", BuildConfig.DISTRIBUTION),
@@ -177,7 +177,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getEmailRegisterState(): EmailRegisterUiState {
         val cached = paymentRepository.getCachedCurrentUser()
-        return emailRegisterPreviewState().copy(
+        return EmailRegisterUiState(
             fields = listOf(
                 FeatureField("email", "邮箱", cached?.email ?: "", "将作为登录与找回凭据"),
                 FeatureField("code", "验证码", "", "真实接口支持发送邮箱验证码"),
@@ -190,7 +190,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getResetPasswordState(): ResetPasswordUiState {
         val cached = paymentRepository.getCachedCurrentUser()
-        return resetPasswordPreviewState().copy(
+        return ResetPasswordUiState(
             fields = listOf(
                 FeatureField("email", "邮箱", cached?.email ?: "", "会向该邮箱发送验证码"),
                 FeatureField("code", "验证码", "", "请填写收到的验证码"),
@@ -203,7 +203,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getPlansState(): PlansUiState {
         val plans = paymentRepository.getPlans().getOrNull()
         if (plans.isNullOrEmpty()) {
-            return plansPreviewState().copy(
+            return PlansUiState(
                 metrics = listOf(
                     FeatureMetric("套餐数量", "0"),
                     FeatureMetric("状态", "未取到真实套餐"),
@@ -216,7 +216,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         }
 
         val sortedPlans = plans.sortedBy { it.displayOrder }
-        return plansPreviewState().copy(
+        return PlansUiState(
             metrics = sortedPlans.take(3).map {
                 FeatureMetric(it.getDurationDisplay(), "$${it.priceUsd}")
             },
@@ -238,7 +238,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val bestLatency = nodes.mapNotNull { it.latencyMs }.minOrNull()
         val preferredProtocol = nodes.firstOrNull()?.protocol ?: "--"
 
-        return regionSelectionPreviewState().copy(
+        return RegionSelectionUiState(
             metrics = listOf(
                 FeatureMetric("最佳延迟", bestLatency?.let { "$it ms" } ?: "--"),
                 FeatureMetric("可用节点", nodes.size.toString()),
@@ -273,7 +273,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val order = resolveCheckoutOrder(args.planId)
         val plan = paymentRepository.getPlans().getOrNull()?.firstOrNull { it.planCode == args.planId }
         return if (order != null) {
-            orderCheckoutPreviewState().copy(
+            OrderCheckoutUiState(
                 metrics = listOf(
                     FeatureMetric("套餐", order.planName),
                     FeatureMetric("金额", "${order.payment.amountCrypto} ${order.payment.assetCode}"),
@@ -292,7 +292,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "订单数据来自 PaymentRepository.createOrder()/getOrder()。",
             )
         } else {
-            orderCheckoutPreviewState().copy(
+            OrderCheckoutUiState(
                 metrics = listOf(
                     FeatureMetric("套餐", args.planId),
                     FeatureMetric("订单状态", "未生成"),
@@ -308,7 +308,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getWalletPaymentConfirmState(args: WalletPaymentConfirmRouteArgs): WalletPaymentConfirmUiState {
         val order = paymentRepository.getOrder(args.orderId).getOrNull()
         return if (order != null) {
-            walletPaymentConfirmPreviewState().copy(
+            WalletPaymentConfirmUiState(
                 metrics = listOf(
                     FeatureMetric("订单号", order.orderNo),
                     FeatureMetric("支付币种", order.payment.assetCode),
@@ -323,7 +323,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "订单与 paymentTarget 来自真实支付接口。",
             )
         } else {
-            walletPaymentConfirmPreviewState().copy(
+            WalletPaymentConfirmUiState(
                 metrics = listOf(
                     FeatureMetric("订单号", args.orderId),
                     FeatureMetric("状态", "未查询到"),
@@ -339,7 +339,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getOrderResultState(args: OrderResultRouteArgs): OrderResultUiState {
         val order = paymentRepository.getOrder(args.orderId).getOrNull()
         return if (order != null) {
-            orderResultPreviewState().copy(
+            OrderResultUiState(
                 metrics = listOf(
                     FeatureMetric("状态", order.statusText),
                     FeatureMetric("剩余时长", order.completedAt?.let { "已完成" } ?: order.expiresAt.take(10)),
@@ -354,7 +354,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "使用 PaymentRepository.getOrder(orderId) 填充。",
             )
         } else {
-            orderResultPreviewState().copy(
+            OrderResultUiState(
                 metrics = listOf(
                     FeatureMetric("订单号", args.orderId),
                     FeatureMetric("状态", "未查询到"),
@@ -370,7 +370,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getOrderListState(): OrderListUiState {
         val orders = loadCachedOrders()
         if (orders.isEmpty()) {
-            return orderListPreviewState().copy(
+            return OrderListUiState(
                 metrics = listOf(
                     FeatureMetric("订单总数", "0"),
                     FeatureMetric("状态", "暂无真实订单"),
@@ -381,7 +381,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "订单列表页未再回退到 Mock 仓库；保持真实空态。",
             )
         }
-        return orderListPreviewState().copy(
+        return OrderListUiState(
             metrics = listOf(
                 FeatureMetric("订单总数", orders.size.toString()),
                 FeatureMetric("生效中", orders.count { it.status in liveStatuses }.toString()),
@@ -404,7 +404,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val order = paymentRepository.getOrder(args.orderId).getOrNull()
             ?: loadCachedOrders().firstOrNull { it.orderNo == args.orderId }?.toOrder()
         return if (order != null) {
-            orderDetailPreviewState().copy(
+            OrderDetailUiState(
                 metrics = listOf(
                     FeatureMetric("订单金额", "${order.payment.amountCrypto} ${order.payment.assetCode}"),
                     FeatureMetric("状态", order.statusText),
@@ -419,7 +419,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "订单详情优先使用 PaymentRepository.getOrder(orderNo)。",
             )
         } else {
-            orderDetailPreviewState().copy(
+            OrderDetailUiState(
                 metrics = listOf(
                     FeatureMetric("订单号", args.orderId),
                     FeatureMetric("状态", "未查询到"),
@@ -435,7 +435,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getWalletPaymentState(): WalletPaymentUiState {
         val currentOrder = paymentRepository.getCurrentOrderId()?.let { paymentRepository.getOrder(it).getOrNull() }
         val currentUser = paymentRepository.getCachedCurrentUser()
-        return walletPaymentPreviewState().copy(
+        return WalletPaymentUiState(
             metrics = listOf(
                 FeatureMetric("可用余额", currentOrder?.quoteUsdAmount ?: "--"),
                 FeatureMetric("默认网络", currentOrder?.quoteNetworkCode ?: "TRON"),
@@ -453,7 +453,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState {
         val relatedOrders = loadCachedOrders().filter { it.assetCode.equals(args.assetId, ignoreCase = true) }
         val total = relatedOrders.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
-        return assetDetailPreviewState().copy(
+        return AssetDetailUiState(
             metrics = listOf(
                 FeatureMetric("资产", args.assetId),
                 FeatureMetric("持仓", if (total > 0) String.format(Locale.US, "%.2f", total) else "0"),
@@ -471,7 +471,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getReceiveState(args: ReceiveRouteArgs): ReceiveUiState {
         val user = paymentRepository.getCachedCurrentUser()
-        return receivePreviewState().copy(
+        return ReceiveUiState(
             metrics = listOf(
                 FeatureMetric("默认链", args.chainId.uppercase(Locale.ROOT)),
                 FeatureMetric("支持网络", "1"),
@@ -488,7 +488,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getSendState(args: SendRouteArgs): SendUiState {
         val relatedOrders = loadCachedOrders().filter { it.assetCode.equals(args.assetId, ignoreCase = true) }
         val total = relatedOrders.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
-        return sendPreviewState().copy(
+        return SendUiState(
             metrics = listOf(
                 FeatureMetric("发送资产", args.assetId),
                 FeatureMetric("预估手续费", relatedOrders.firstOrNull()?.amount ?: "0"),
@@ -506,7 +506,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getSendResultState(args: SendResultRouteArgs): SendResultUiState {
         val currentOrder = paymentRepository.getCurrentOrderId()?.let { paymentRepository.getOrder(it).getOrNull() }
-        return sendResultPreviewState().copy(
+        return SendResultUiState(
             metrics = listOf(
                 FeatureMetric("交易状态", currentOrder?.statusText ?: "已提交"),
                 FeatureMetric("Tx Hash", args.txId),
@@ -520,7 +520,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getInviteCenterState(): InviteCenterUiState {
         val overview = paymentRepository.getReferralOverview().getOrNull()
         return if (overview != null) {
-            inviteCenterPreviewState().copy(
+            InviteCenterUiState(
                 metrics = listOf(
                     FeatureMetric("累计佣金", "$${overview.availableAmountUsdt}"),
                     FeatureMetric("邀请人数", (overview.level1InviteCount + overview.level2InviteCount).toString()),
@@ -535,7 +535,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "使用 PaymentRepository.getReferralOverview()。",
             )
         } else {
-            inviteCenterPreviewState().copy(
+            InviteCenterUiState(
                 metrics = listOf(
                     FeatureMetric("邀请人数", "0"),
                     FeatureMetric("累计佣金", "0"),
@@ -552,7 +552,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val overview = paymentRepository.getReferralOverview().getOrNull()
         val referralCode = overview?.referralCode ?: "--"
 
-        return inviteSharePreviewState().copy(
+        return InviteShareUiState(
             metrics = listOf(
                 FeatureMetric("邀请码", referralCode),
                 FeatureMetric("一级邀请", overview?.level1InviteCount?.toString() ?: "0"),
@@ -586,7 +586,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val summary = paymentRepository.getCommissionSummary().getOrNull()
         val ledger = paymentRepository.getCommissionLedger().getOrNull()?.items.orEmpty()
         return if (summary != null) {
-            commissionLedgerPreviewState().copy(
+            CommissionLedgerUiState(
                 metrics = ledgerMetrics(summary),
                 highlights = ledger.take(4).map {
                     FeatureListItem(
@@ -600,7 +600,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "使用 PaymentRepository.getCommissionSummary()/getCommissionLedger()。",
             )
         } else {
-            commissionLedgerPreviewState().copy(
+            CommissionLedgerUiState(
                 metrics = listOf(
                     FeatureMetric("可用佣金", "0"),
                     FeatureMetric("流水条数", ledger.size.toString()),
@@ -617,7 +617,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val summary = paymentRepository.getCommissionSummary().getOrNull()
         val lastWithdrawal = paymentRepository.getWithdrawals().getOrNull()?.items?.firstOrNull()
         return if (summary != null) {
-            withdrawPreviewState().copy(
+            WithdrawUiState(
                 metrics = listOf(
                     FeatureMetric("可提佣金", "${summary.availableAmount} ${summary.settlementAssetCode}"),
                     FeatureMetric("最小提现", "50 ${summary.settlementAssetCode}"),
@@ -636,7 +636,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "使用 PaymentRepository.getCommissionSummary()/getWithdrawals()。",
             )
         } else {
-            withdrawPreviewState().copy(
+            WithdrawUiState(
                 metrics = listOf(
                     FeatureMetric("可提佣金", "0"),
                     FeatureMetric("最近记录", lastWithdrawal?.requestNo ?: "--"),
@@ -653,7 +653,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val user = paymentRepository.getCachedCurrentUser()
         val me = paymentRepository.getMe().getOrNull()
         val orders = user?.userId?.let { paymentRepository.getCachedOrders(it) }.orEmpty()
-        return profilePreviewState().copy(
+        return ProfileUiState(
             metrics = listOf(
                 FeatureMetric("当前套餐", me?.subscription?.planCode ?: "未订阅"),
                 FeatureMetric("设备数量", me?.subscription?.maxActiveSessions?.toString() ?: "0"),
@@ -671,7 +671,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getLegalDocumentsState(): LegalDocumentsUiState {
         val docs = localLegalDocs()
-        return legalDocumentsPreviewState().copy(
+        return LegalDocumentsUiState(
             metrics = listOf(
                 FeatureMetric("文档总数", docs.size.toString()),
                 FeatureMetric("最近更新", docs.maxOfOrNull { it.lastUpdated } ?: "--"),
@@ -690,7 +690,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val cachedUser = paymentRepository.getCachedCurrentUser()
         val versionLabel = "v${BuildConfig.VERSION_NAME}"
 
-        return aboutAppPreviewState().copy(
+        return AboutAppUiState(
             metrics = listOf(
                 FeatureMetric("应用", "v2rayNG"),
                 FeatureMetric("版本", versionLabel),
@@ -710,7 +710,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             it.id == args.documentId || normalizeDocId(it.id) == args.documentId
         }
         return if (doc != null) {
-            legalDocumentDetailPreviewState().copy(
+            LegalDocumentDetailUiState(
                 title = doc.title,
                 summary = doc.description,
                 metrics = listOf(
@@ -726,7 +726,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "法务详情已切到本地资源与配置驱动的数据源。",
             )
         } else {
-            legalDocumentDetailPreviewState().copy(
+            LegalDocumentDetailUiState(
                 title = "文档不存在",
                 summary = "未找到请求的法务文档。",
                 metrics = listOf(
@@ -748,7 +748,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val expireAt = subscription?.expireAt ?: "--"
         val daysRemaining = subscription?.daysRemaining?.let { "$it 天" } ?: "未知"
 
-        return subscriptionDetailPreviewState().copy(
+        return SubscriptionDetailUiState(
             metrics = listOf(
                 FeatureMetric("当前计划", plan?.name ?: subscription?.planCode ?: "未订阅"),
                 FeatureMetric("剩余时间", daysRemaining),
@@ -775,7 +775,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val daysLeft = subscription?.daysRemaining?.toString() ?: args.daysLeft
         val renewAmount = plan?.priceUsd?.let { "US$$it" } ?: "待定"
 
-        return expiryReminderPreviewState().copy(
+        return ExpiryReminderUiState(
             metrics = listOf(
                 FeatureMetric("剩余天数", daysLeft),
                 FeatureMetric("续费金额", renewAmount),
@@ -799,7 +799,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val nodes = localServerSnapshots()
         val bestLatency = nodes.mapNotNull { it.latencyMs }.minOrNull()?.let { "$it ms" } ?: "--"
 
-        return nodeSpeedTestPreviewState().copy(
+        return NodeSpeedTestUiState(
             metrics = listOf(
                 FeatureMetric("已测速", nodes.count { it.latencyMs != null }.toString()),
                 FeatureMetric("最佳延迟", bestLatency),
@@ -822,7 +822,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val tokenValid = paymentRepository.isTokenValid()
         val orders = loadCachedOrders()
 
-        return autoConnectRulesPreviewState().copy(
+        return AutoConnectRulesUiState(
             metrics = listOf(
                 FeatureMetric("规则数量", if (tokenValid) "1" else "0"),
                 FeatureMetric("会话状态", if (tokenValid) "有效" else "未登录"),
@@ -849,7 +849,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val user = paymentRepository.getCachedCurrentUser()
         val defaultName = user?.username?.let { "$it Wallet" } ?: "Primary Wallet"
 
-        return createWalletPreviewState().copy(
+        return CreateWalletUiState(
             metrics = listOf(
                 FeatureMetric("模式", args.mode),
                 FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
@@ -875,7 +875,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getImportWalletMethodState(): ImportWalletMethodUiState {
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
-        return importWalletMethodPreviewState().copy(
+        return ImportWalletMethodUiState(
             metrics = listOf(
                 FeatureMetric("当前账户", if (user != null) "已登录" else "未登录"),
                 FeatureMetric("订单记录", orders.size.toString()),
@@ -892,7 +892,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getImportMnemonicState(args: ImportMnemonicRouteArgs): ImportMnemonicUiState {
         val user = paymentRepository.getCachedCurrentUser()
-        return importMnemonicPreviewState().copy(
+        return ImportMnemonicUiState(
             metrics = listOf(
                 FeatureMetric("导入来源", args.source),
                 FeatureMetric("账户状态", if (user != null) "已登录" else "未登录"),
@@ -908,7 +908,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getImportPrivateKeyState(args: ImportPrivateKeyRouteArgs): ImportPrivateKeyUiState =
-        importPrivateKeyPreviewState().copy(
+        ImportPrivateKeyUiState(
             metrics = listOf(
                 FeatureMetric("目标链", args.chainId),
                 FeatureMetric("校验状态", "本地解析"),
@@ -919,7 +919,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getBackupMnemonicState(args: BackupMnemonicRouteArgs): BackupMnemonicUiState {
         val user = paymentRepository.getCachedCurrentUser()
-        return backupMnemonicPreviewState().copy(
+        return BackupMnemonicUiState(
             metrics = listOf(
                 FeatureMetric("钱包标识", args.walletId),
                 FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
@@ -935,7 +935,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getConfirmMnemonicState(args: ConfirmMnemonicRouteArgs): ConfirmMnemonicUiState =
-        confirmMnemonicPreviewState().copy(
+        ConfirmMnemonicUiState(
             metrics = listOf(
                 FeatureMetric("钱包标识", args.walletId),
                 FeatureMetric("校验方式", "抽查确认"),
@@ -947,7 +947,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getSecurityCenterState(): SecurityCenterUiState {
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
-        return securityCenterPreviewState().copy(
+        return SecurityCenterUiState(
             metrics = listOf(
                 FeatureMetric("会话状态", if (paymentRepository.isTokenValid()) "有效" else "失效"),
                 FeatureMetric("账户", user?.username ?: "--"),
@@ -963,7 +963,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState =
-        chainManagerPreviewState().copy(
+        ChainManagerUiState(
             metrics = listOf(
                 FeatureMetric("钱包标识", args.walletId),
                 FeatureMetric("启用链", "TRON / SOL / ETH"),
@@ -973,7 +973,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState =
-        addCustomTokenPreviewState().copy(
+        AddCustomTokenUiState(
             metrics = listOf(
                 FeatureMetric("目标链", args.chainId),
                 FeatureMetric("录入模式", "手动"),
@@ -986,7 +986,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
 
-        return walletManagerPreviewState().copy(
+        return WalletManagerUiState(
             metrics = listOf(
                 FeatureMetric("钱包数量", "1"),
                 FeatureMetric("默认钱包", args.walletId),
@@ -1003,7 +1003,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getAddressBookState(args: AddressBookRouteArgs): AddressBookUiState =
-        addressBookPreviewState().copy(
+        AddressBookUiState(
             metrics = listOf(
                 FeatureMetric("已保存", "0"),
                 FeatureMetric("最近使用", "0"),
@@ -1032,7 +1032,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getGasSettingsState(args: GasSettingsRouteArgs): GasSettingsUiState =
-        gasSettingsPreviewState().copy(
+        GasSettingsUiState(
             metrics = listOf(
                 FeatureMetric("目标链", args.chainId),
                 FeatureMetric("估算状态", "未接入"),
@@ -1061,7 +1061,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getSwapState(args: SwapRouteArgs): SwapUiState =
-        swapPreviewState().copy(
+        SwapUiState(
             metrics = listOf(
                 FeatureMetric("源资产", args.fromAsset),
                 FeatureMetric("目标资产", args.toAsset),
@@ -1071,7 +1071,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getBridgeState(args: BridgeRouteArgs): BridgeUiState =
-        bridgePreviewState().copy(
+        BridgeUiState(
             metrics = listOf(
                 FeatureMetric("起始链", args.fromChainId),
                 FeatureMetric("目标链", args.toChainId),
@@ -1081,7 +1081,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getDappBrowserState(args: DappBrowserRouteArgs): DappBrowserUiState =
-        dappBrowserPreviewState().copy(
+        DappBrowserUiState(
             metrics = listOf(
                 FeatureMetric("入口", args.entry),
                 FeatureMetric("会话状态", if (paymentRepository.isTokenValid()) "已认证" else "匿名"),
@@ -1091,7 +1091,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getWalletConnectSessionState(args: WalletConnectSessionRouteArgs): WalletConnectSessionUiState =
-        walletConnectSessionPreviewState().copy(
+        WalletConnectSessionUiState(
             metrics = listOf(
                 FeatureMetric("会话标识", args.sessionId),
                 FeatureMetric("认证状态", if (paymentRepository.isTokenValid()) "有效" else "失效"),
@@ -1101,7 +1101,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getSignMessageConfirmState(args: SignMessageConfirmRouteArgs): SignMessageConfirmUiState =
-        signMessageConfirmPreviewState().copy(
+        SignMessageConfirmUiState(
             metrics = listOf(
                 FeatureMetric("请求标识", args.requestId),
                 FeatureMetric("账户状态", if (paymentRepository.isTokenValid()) "已登录" else "未登录"),
@@ -1111,7 +1111,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getRiskAuthorizationsState(): RiskAuthorizationsUiState =
-        riskAuthorizationsPreviewState().copy(
+        RiskAuthorizationsUiState(
             metrics = listOf(
                 FeatureMetric("授权总数", "0"),
                 FeatureMetric("高风险", "0"),
@@ -1126,7 +1126,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getNftGalleryState(): NftGalleryUiState =
-        nftGalleryPreviewState().copy(
+        NftGalleryUiState(
             metrics = listOf(
                 FeatureMetric("收藏系列", "0"),
                 FeatureMetric("地板价", "--"),
@@ -1141,7 +1141,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getStakingEarnState(): StakingEarnUiState =
-        stakingEarnPreviewState().copy(
+        StakingEarnUiState(
             metrics = listOf(
                 FeatureMetric("APR", "--"),
                 FeatureMetric("已质押", "0"),
@@ -1156,7 +1156,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getSessionEvictedDialogState(): SessionEvictedDialogUiState {
-        return sessionEvictedDialogPreviewState().copy(
+        return SessionEvictedDialogUiState(
             title = if (paymentRepository.isTokenValid()) "会话安全提醒" else "会话已失效",
             message = if (paymentRepository.isTokenValid()) {
                 "当前账号已登录，但建议定期校验设备与授权状态。"
