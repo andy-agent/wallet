@@ -239,23 +239,6 @@ export class SolanaClientService {
     try {
       const network = this.getEffectiveNetwork(request.network);
       const networkCode = this.toNetworkCode(network);
-      const txStatus = await this.getTransactionStatus({
-        signature: request.signature,
-        network,
-      });
-
-      if (txStatus.status === 'failed' || txStatus.status === 'pending') {
-        return {
-          signature: request.signature,
-          status: txStatus.status,
-          confirmations: txStatus.confirmations,
-          verified: false,
-          error: txStatus.error,
-          blockTime: txStatus.blockTime,
-          slot: txStatus.slot,
-        };
-      }
-
       const payload = await this.verifyWithFallback({
         signature: request.signature,
         recipientAddress: request.recipientAddress,
@@ -264,6 +247,19 @@ export class SolanaClientService {
         expectedAmount: request.expectedAmount,
         networkCode,
       });
+
+      let txStatus: GetTransactionStatusResponse | null = null;
+      try {
+        txStatus = await this.getTransactionStatus({
+          signature: request.signature,
+          network,
+        });
+      } catch (error) {
+        this.logger.warn(
+          'Transaction status lookup failed during verifyIncomingTransfer; continuing with verify payload',
+          error instanceof Error ? error.message : String(error),
+        );
+      }
 
       return this.normalizeVerifyIncomingTransferResponse(
         payload,
@@ -467,7 +463,7 @@ export class SolanaClientService {
       | VerifyPaymentResponse
       | LegacyPaymentDetectResponse,
     request: VerifyIncomingTransferRequest,
-    txStatus: GetTransactionStatusResponse,
+    txStatus: GetTransactionStatusResponse | null,
   ): VerifyIncomingTransferResponse {
     if ('verified' in payload && typeof payload.verified === 'boolean') {
       return {
@@ -482,8 +478,8 @@ export class SolanaClientService {
         mismatchCode: payload.mismatchCode,
         error: payload.error,
         failureReason: payload.failureReason,
-        blockTime: payload.blockTime ?? txStatus.blockTime,
-        slot: payload.slot ?? txStatus.slot,
+        blockTime: payload.blockTime ?? txStatus?.blockTime,
+        slot: payload.slot ?? txStatus?.slot,
       };
     }
 
@@ -499,11 +495,11 @@ export class SolanaClientService {
         return {
           signature: request.signature,
           status: verifyPayload.status,
-          confirmations: txStatus.confirmations,
+          confirmations: txStatus?.confirmations ?? 0,
           verified: false,
-          error: verifyPayload.error ?? txStatus.error,
-          blockTime: (verifyPayload.blockTime ?? undefined) ?? txStatus.blockTime,
-          slot: (verifyPayload.slot ?? undefined) ?? txStatus.slot,
+          error: verifyPayload.error ?? txStatus?.error,
+          blockTime: (verifyPayload.blockTime ?? undefined) ?? txStatus?.blockTime,
+          slot: (verifyPayload.slot ?? undefined) ?? txStatus?.slot,
         };
       }
 
@@ -515,6 +511,10 @@ export class SolanaClientService {
       const recipientMatched = verifyPayload.recipientMatched !== false;
       const amountSatisfied = verifyPayload.amountSatisfied !== false && !amountUnder;
       const verified = verifyPayload.status === 'verified' && recipientMatched && amountSatisfied;
+      const status =
+        txStatus?.status === 'finalized'
+          ? 'finalized'
+          : 'confirmed';
 
       let mismatchCode: VerifyIncomingTransferResponse['mismatchCode'];
       if (!verified) {
@@ -531,8 +531,8 @@ export class SolanaClientService {
 
       return {
         signature: verifyPayload.signature ?? request.signature,
-        status: txStatus.status,
-        confirmations: txStatus.confirmations,
+        status,
+        confirmations: txStatus?.confirmations ?? 1,
         verified,
         recipientAddress: verifyPayload.recipientAddress ?? request.recipientAddress,
         assetCode: verified ? request.assetCode : undefined,
@@ -549,8 +549,8 @@ export class SolanaClientService {
                 ? 'Submitted transaction amount is below the expected payment target'
                 : 'Submitted transaction asset does not match the expected payment asset',
         error: verifyPayload.error,
-        blockTime: (verifyPayload.blockTime ?? undefined) ?? txStatus.blockTime,
-        slot: (verifyPayload.slot ?? undefined) ?? txStatus.slot,
+        blockTime: (verifyPayload.blockTime ?? undefined) ?? txStatus?.blockTime,
+        slot: (verifyPayload.slot ?? undefined) ?? txStatus?.slot,
       };
     }
 
@@ -571,8 +571,8 @@ export class SolanaClientService {
 
     return {
       signature: request.signature,
-      status: txStatus.status,
-      confirmations: txStatus.confirmations,
+      status: txStatus?.status === 'finalized' ? 'finalized' : 'confirmed',
+      confirmations: txStatus?.confirmations ?? 1,
       verified,
       recipientAddress: detectPayload.address ?? request.recipientAddress,
       assetCode: verified ? request.assetCode : undefined,
@@ -593,8 +593,8 @@ export class SolanaClientService {
             : 'Submitted transaction was not detected on the configured collection address'
           : 'Chain-side detect response does not include asset-level verification for this payment',
       error: detectPayload.error,
-      blockTime: txStatus.blockTime,
-      slot: txStatus.slot,
+      blockTime: txStatus?.blockTime,
+      slot: txStatus?.slot,
     };
   }
 
@@ -610,7 +610,7 @@ export class SolanaClientService {
       signature: request.signature,
       recipientAddress: request.recipientAddress,
       assetCode: request.assetCode,
-      mint: request.mint,
+      mintAddress: request.mint,
       expectedAmount: request.expectedAmount,
       networkCode: request.networkCode,
     };

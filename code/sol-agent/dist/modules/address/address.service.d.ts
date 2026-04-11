@@ -6,12 +6,11 @@ export declare class AddressService {
     private addressStore;
     constructor(solanaRpc: SolanaRpcService);
     generateAddress(body: GenerateAddressRequestDto): {
-        accountId: string;
-        networkCode: string;
-        address: string;
-        publicKey: string;
-        createdAt: string;
+        [x: string]: any;
     };
-    getAddress(accountId: string): any;
+    getAddress(accountId: string): {
+        [x: string]: any;
+    };
     getAddressInternal(accountId: string): any | null;
+    private sanitizeAddressData;
 }

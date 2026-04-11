@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-11T14:19:00+08:00",
+  "generated_at": "2026-04-11T14:28:00+08:00",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "active_task_id": "liaojiang-g9e",
   "accepted_task_id": "liaojiang-4iz",
@@ -28,11 +28,12 @@
       "scope": "code/sol-agent",
       "branch": "codex/liaojiang-g9e-sol",
       "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-g9e-sol",
-      "status": "running"
+      "status": "completed",
+      "commit": "c89a67daddb2633085babaa87b0b7fbe12a0e015"
     },
     {
-      "agent_id": "019d7b29-c2c3-7461-b020-a565d81200ac",
-      "nickname": "Maxwell",
+      "agent_id": "019d7b36-fb8f-79e0-bd23-6cca9db8a201",
+      "nickname": "Gauss",
       "task_id": "liaojiang-g9e",
       "scope": "code/backend",
       "branch": "codex/liaojiang-g9e-backend",

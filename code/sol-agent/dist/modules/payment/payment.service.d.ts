@@ -1,5 +1,8 @@
 import { SolanaRpcService } from '../solana/solana.rpc.service';
 import { DetectPaymentRequestDto } from './dto/detect-payment.request';
+import { VerifyTransactionRequestDto } from './dto/verify-transaction.request';
+type VerifyStatus = 'pending' | 'failed' | 'mismatch' | 'verified';
+type AssetKind = 'NATIVE_SOL' | 'SPL_TOKEN';
 export declare class PaymentService {
     private readonly solanaRpc;
     private readonly logger;
@@ -48,4 +51,35 @@ export declare class PaymentService {
         error: string;
         updatedAt: string;
     }>;
+    verifyTransaction(body: VerifyTransactionRequestDto): Promise<{
+        signature: string;
+        networkCode: string;
+        status: VerifyStatus;
+        recipientAddress: string;
+        assetCode: string;
+        assetKind: AssetKind;
+        mintAddress: string | null;
+        decimals: number;
+        expectedAmount: string;
+        expectedAmountRaw: string;
+        receivedAmount: string;
+        receivedAmountRaw: string;
+        recipientMatched: boolean;
+        amountSatisfied: boolean;
+        matchedAccounts: string[];
+        slot: number | null;
+        blockTime: number | null;
+        error: string | undefined;
+        verifiedAt: string;
+    }>;
+    private buildVerificationResult;
+    private resolveAsset;
+    private extractSolReceipt;
+    private extractSplReceipt;
+    private normalizeTokenBalances;
+    private getAccountKeys;
+    private assertPublicKey;
+    private toBaseUnits;
+    private fromBaseUnits;
 }
+export {};

@@ -18,6 +18,7 @@ const swagger_1 = require("@nestjs/swagger");
 const internal_auth_guard_1 = require("../../common/guards/internal-auth.guard");
 const payment_service_1 = require("./payment.service");
 const detect_payment_request_1 = require("./dto/detect-payment.request");
+const verify_transaction_request_1 = require("./dto/verify-transaction.request");
 let PaymentController = class PaymentController {
     constructor(paymentService) {
         this.paymentService = paymentService;
@@ -27,6 +28,9 @@ let PaymentController = class PaymentController {
     }
     async detectPayment(body) {
         return this.paymentService.detectPayment(body);
+    }
+    async verifyTransaction(body) {
+        return this.paymentService.verifyTransaction(body);
     }
 };
 exports.PaymentController = PaymentController;
@@ -48,6 +52,17 @@ __decorate([
     __metadata("design:paramtypes", [detect_payment_request_1.DetectPaymentRequestDto]),
     __metadata("design:returntype", Promise)
 ], PaymentController.prototype, "detectPayment", null);
+__decorate([
+    (0, common_1.Post)('verify'),
+    (0, common_1.HttpCode)(200),
+    (0, swagger_1.ApiOperation)({
+        summary: '按签名校验交易是否向目标地址支付了指定 SOL/SPL 金额',
+    }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [verify_transaction_request_1.VerifyTransactionRequestDto]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "verifyTransaction", null);
 exports.PaymentController = PaymentController = __decorate([
     (0, swagger_1.ApiTags)('Payment'),
     (0, common_1.UseGuards)(internal_auth_guard_1.InternalAuthGuard),

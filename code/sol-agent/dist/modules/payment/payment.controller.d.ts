@@ -1,5 +1,6 @@
 import { PaymentService } from './payment.service';
 import { DetectPaymentRequestDto } from './dto/detect-payment.request';
+import { VerifyTransactionRequestDto } from './dto/verify-transaction.request';
 export declare class PaymentController {
     private readonly paymentService;
     constructor(paymentService: PaymentService);
@@ -45,5 +46,26 @@ export declare class PaymentController {
         confirmations: number;
         error: string;
         updatedAt: string;
+    }>;
+    verifyTransaction(body: VerifyTransactionRequestDto): Promise<{
+        signature: string;
+        networkCode: string;
+        status: "pending" | "failed" | "mismatch" | "verified";
+        recipientAddress: string;
+        assetCode: string;
+        assetKind: "NATIVE_SOL" | "SPL_TOKEN";
+        mintAddress: string | null;
+        decimals: number;
+        expectedAmount: string;
+        expectedAmountRaw: string;
+        receivedAmount: string;
+        receivedAmountRaw: string;
+        recipientMatched: boolean;
+        amountSatisfied: boolean;
+        matchedAccounts: string[];
+        slot: number | null;
+        blockTime: number | null;
+        error: string | undefined;
+        verifiedAt: string;
     }>;
 }

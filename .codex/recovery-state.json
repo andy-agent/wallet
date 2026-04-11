@@ -1,16 +1,13 @@
 {
-  "generated_at": "2026-04-11T06:19:00Z",
+  "generated_at": "2026-04-11T06:46:16Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-g9e",
-  "active_task_title": "Backend/链侧：补齐 Solana 订单实单核验能力",
-  "accepted_task_id": "liaojiang-4iz",
   "next_task_id": "liaojiang-g9e",
   "next_task_title": "Backend/链侧：补齐 Solana 订单实单核验能力",
   "in_progress_count": 5,
   "ready_count": 3,
   "open_count": 12,
   "closed_count": 376,
-  "dirty_count": 2,
+  "dirty_count": 20,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
@@ -21,31 +18,11 @@
     "status_docs_written": false,
     "development_log_appended": false
   },
-  "auto_created_task_id": "liaojiang-g9e",
+  "auto_created_task_id": null,
   "dispatch": {
     "requested": true,
-    "mode": "active",
-    "dispatched_count": 2,
+    "mode": "simulate",
+    "dispatched_count": 0,
     "max_workers": 3
-  },
-  "workers": [
-    {
-      "task_id": "liaojiang-g9e",
-      "scope": "code/sol-agent",
-      "agent_id": "019d7b29-c201-7ed3-970f-08193ec29a80",
-      "nickname": "Cicero",
-      "branch": "codex/liaojiang-g9e-sol",
-      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-g9e-sol",
-      "status": "running"
-    },
-    {
-      "task_id": "liaojiang-g9e",
-      "scope": "code/backend",
-      "agent_id": "019d7b29-c2c3-7461-b020-a565d81200ac",
-      "nickname": "Maxwell",
-      "branch": "codex/liaojiang-g9e-backend",
-      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-g9e-backend",
-      "status": "running"
-    }
-  ]
+  }
 }

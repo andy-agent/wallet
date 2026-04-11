@@ -4,11 +4,9 @@ export declare class AddressController {
     private readonly addressService;
     constructor(addressService: AddressService);
     generateAddress(body: GenerateAddressRequestDto): {
-        accountId: string;
-        networkCode: string;
-        address: string;
-        publicKey: string;
-        createdAt: string;
+        [x: string]: any;
     };
-    getAddress(accountId: string): any;
+    getAddress(accountId: string): {
+        [x: string]: any;
+    };
 }

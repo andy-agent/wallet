@@ -32,14 +32,12 @@ let AddressService = AddressService_1 = class AddressService {
         };
         this.addressStore.set(body.accountId, addressData);
         this.logger.log(`Generated Solana address for account ${body.accountId}: ${keypair.address}`);
-        const { secretKey, ...result } = addressData;
-        return result;
+        return this.sanitizeAddressData(addressData);
     }
     getAddress(accountId) {
         const stored = this.addressStore.get(accountId);
         if (stored) {
-            const { secretKey, ...result } = stored;
-            return result;
+            return this.sanitizeAddressData(stored);
         }
         return {
             accountId,
@@ -52,6 +50,11 @@ let AddressService = AddressService_1 = class AddressService {
     }
     getAddressInternal(accountId) {
         return this.addressStore.get(accountId) || null;
+    }
+    sanitizeAddressData(addressData) {
+        const sanitized = { ...addressData };
+        delete sanitized.secretKey;
+        return sanitized;
     }
 };
 exports.AddressService = AddressService;

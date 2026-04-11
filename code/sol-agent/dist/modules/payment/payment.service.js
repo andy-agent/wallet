@@ -12,7 +12,12 @@ var PaymentService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentService = void 0;
 const common_1 = require("@nestjs/common");
+const web3_js_1 = require("@solana/web3.js");
 const solana_rpc_service_1 = require("../solana/solana.rpc.service");
+const DEFAULT_NETWORK_CODE = 'solana-mainnet';
+const MAINNET_USDT_MINT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
+const SOL_DECIMALS = 9;
+const USDT_DECIMALS = 6;
 let PaymentService = PaymentService_1 = class PaymentService {
     constructor(solanaRpc) {
         this.solanaRpc = solanaRpc;
@@ -20,7 +25,7 @@ let PaymentService = PaymentService_1 = class PaymentService {
         this.paymentStore = new Map();
     }
     async getPaymentStatus(address, networkCode) {
-        const effectiveNetworkCode = networkCode ?? 'solana-mainnet';
+        const effectiveNetworkCode = networkCode ?? DEFAULT_NETWORK_CODE;
         try {
             const balanceInfo = await this.solanaRpc.getBalance(address, effectiveNetworkCode);
             const txInfo = await this.solanaRpc.getRecentTransactions(address, effectiveNetworkCode, 5);
@@ -64,13 +69,15 @@ let PaymentService = PaymentService_1 = class PaymentService {
         }
     }
     async detectPayment(body) {
-        const effectiveNetworkCode = body.networkCode ?? 'solana-mainnet';
+        const effectiveNetworkCode = body.networkCode ?? DEFAULT_NETWORK_CODE;
         try {
             this.logger.log(`Detecting payment for ${body.address} on ${effectiveNetworkCode}`);
             const balanceInfo = await this.solanaRpc.getBalance(body.address, effectiveNetworkCode);
             const txInfo = await this.solanaRpc.getRecentTransactions(body.address, effectiveNetworkCode, 10);
             const receivedAmount = parseFloat(balanceInfo.balanceInSOL);
-            const expectedAmount = body.expectedAmount ? parseFloat(body.expectedAmount) : null;
+            const expectedAmount = body.expectedAmount
+                ? parseFloat(body.expectedAmount)
+                : null;
             let status = 'pending';
             if (expectedAmount !== null && receivedAmount >= expectedAmount) {
                 status = 'confirmed';
@@ -107,6 +114,238 @@ let PaymentService = PaymentService_1 = class PaymentService {
                 updatedAt: new Date().toISOString(),
             };
         }
+    }
+    async verifyTransaction(body) {
+        const networkCode = body.networkCode ?? DEFAULT_NETWORK_CODE;
+        const recipientAddress = this.assertPublicKey(body.recipientAddress, 'recipientAddress');
+        const asset = this.resolveAsset(body, networkCode);
+        const expectedAmountRaw = this.toBaseUnits(body.expectedAmount, asset.decimals, 'expectedAmount');
+        try {
+            const txResult = await this.solanaRpc.getParsedTransaction(body.signature, networkCode);
+            if (!txResult.transaction) {
+                return this.buildVerificationResult({
+                    body,
+                    asset,
+                    recipientAddress,
+                    expectedAmountRaw,
+                    status: 'pending',
+                    receivedAmountRaw: 0n,
+                    matchedAccounts: [],
+                    slot: null,
+                    blockTime: null,
+                });
+            }
+            const parsedTx = txResult.transaction;
+            if (parsedTx.meta?.err) {
+                return this.buildVerificationResult({
+                    body,
+                    asset,
+                    recipientAddress,
+                    expectedAmountRaw,
+                    status: 'failed',
+                    receivedAmountRaw: 0n,
+                    matchedAccounts: [],
+                    slot: parsedTx.slot,
+                    blockTime: parsedTx.blockTime ?? null,
+                    error: JSON.stringify(parsedTx.meta.err),
+                });
+            }
+            const paymentMatch = asset.assetKind === 'NATIVE_SOL'
+                ? this.extractSolReceipt(parsedTx, recipientAddress)
+                : this.extractSplReceipt(parsedTx, recipientAddress, asset.mintAddress);
+            const status = paymentMatch.receivedAmountRaw >= expectedAmountRaw &&
+                paymentMatch.receivedAmountRaw > 0n
+                ? 'verified'
+                : 'mismatch';
+            return this.buildVerificationResult({
+                body,
+                asset,
+                recipientAddress,
+                expectedAmountRaw,
+                status,
+                receivedAmountRaw: paymentMatch.receivedAmountRaw,
+                matchedAccounts: paymentMatch.matchedAccounts,
+                slot: parsedTx.slot,
+                blockTime: parsedTx.blockTime ?? null,
+            });
+        }
+        catch (error) {
+            this.logger.error(`Transaction verification failed for ${body.signature}:`, error);
+            throw error;
+        }
+    }
+    buildVerificationResult(input) {
+        return {
+            signature: input.body.signature,
+            networkCode: input.body.networkCode ?? DEFAULT_NETWORK_CODE,
+            status: input.status,
+            recipientAddress: input.recipientAddress,
+            assetCode: input.asset.assetCode,
+            assetKind: input.asset.assetKind,
+            mintAddress: input.asset.mintAddress,
+            decimals: input.asset.decimals,
+            expectedAmount: input.body.expectedAmount,
+            expectedAmountRaw: input.expectedAmountRaw.toString(),
+            receivedAmount: this.fromBaseUnits(input.receivedAmountRaw, input.asset.decimals),
+            receivedAmountRaw: input.receivedAmountRaw.toString(),
+            recipientMatched: input.receivedAmountRaw > 0n,
+            amountSatisfied: input.receivedAmountRaw >= input.expectedAmountRaw,
+            matchedAccounts: input.matchedAccounts,
+            slot: input.slot,
+            blockTime: input.blockTime,
+            error: input.error,
+            verifiedAt: new Date().toISOString(),
+        };
+    }
+    resolveAsset(body, networkCode) {
+        const assetCode = body.assetCode.trim().toUpperCase();
+        if (!assetCode) {
+            throw new common_1.BadRequestException('assetCode is required');
+        }
+        if (assetCode === 'SOL') {
+            return {
+                assetCode,
+                assetKind: 'NATIVE_SOL',
+                mintAddress: null,
+                decimals: SOL_DECIMALS,
+            };
+        }
+        let mintAddress = body.mintAddress?.trim() ?? null;
+        if (!mintAddress &&
+            assetCode === 'USDT' &&
+            networkCode === DEFAULT_NETWORK_CODE) {
+            mintAddress = MAINNET_USDT_MINT;
+        }
+        if (!mintAddress) {
+            throw new common_1.BadRequestException('mintAddress is required for SPL token verification');
+        }
+        const decimals = body.assetDecimals ?? (assetCode === 'USDT' ? USDT_DECIMALS : undefined);
+        if (decimals === undefined) {
+            throw new common_1.BadRequestException('assetDecimals is required for non-USDT SPL token verification');
+        }
+        return {
+            assetCode,
+            assetKind: 'SPL_TOKEN',
+            mintAddress: this.assertPublicKey(mintAddress, 'mintAddress'),
+            decimals,
+        };
+    }
+    extractSolReceipt(tx, recipientAddress) {
+        const accountKeys = this.getAccountKeys(tx);
+        const recipientIndex = accountKeys.findIndex((accountKey) => accountKey === recipientAddress);
+        if (recipientIndex < 0) {
+            return {
+                matchedAccounts: [],
+                receivedAmountRaw: 0n,
+            };
+        }
+        const preBalance = BigInt(tx.meta?.preBalances?.[recipientIndex] ?? 0);
+        const postBalance = BigInt(tx.meta?.postBalances?.[recipientIndex] ?? 0);
+        const delta = postBalance - preBalance;
+        return {
+            matchedAccounts: delta > 0n ? [recipientAddress] : [],
+            receivedAmountRaw: delta > 0n ? delta : 0n,
+        };
+    }
+    extractSplReceipt(tx, recipientAddress, mintAddress) {
+        const accountKeys = this.getAccountKeys(tx);
+        const preBalances = this.normalizeTokenBalances(tx.meta?.preTokenBalances, accountKeys);
+        const postBalances = this.normalizeTokenBalances(tx.meta?.postTokenBalances, accountKeys);
+        const matchedAccounts = new Set();
+        let receivedAmountRaw = 0n;
+        const candidateIndices = new Set([
+            ...Array.from(preBalances.keys()),
+            ...Array.from(postBalances.keys()),
+        ]);
+        for (const accountIndex of candidateIndices) {
+            const before = preBalances.get(accountIndex);
+            const after = postBalances.get(accountIndex);
+            const balance = after ?? before;
+            if (!balance || balance.mint !== mintAddress) {
+                continue;
+            }
+            const accountMatchesRecipient = balance.accountAddress === recipientAddress ||
+                balance.owner === recipientAddress;
+            if (!accountMatchesRecipient) {
+                continue;
+            }
+            const preAmount = before?.amount ?? 0n;
+            const postAmount = after?.amount ?? 0n;
+            const delta = postAmount - preAmount;
+            if (delta > 0n) {
+                receivedAmountRaw += delta;
+                matchedAccounts.add(balance.accountAddress);
+            }
+        }
+        return {
+            matchedAccounts: Array.from(matchedAccounts),
+            receivedAmountRaw,
+        };
+    }
+    normalizeTokenBalances(tokenBalances, accountKeys) {
+        const balances = new Map();
+        for (const tokenBalance of tokenBalances ?? []) {
+            balances.set(tokenBalance.accountIndex, {
+                accountAddress: accountKeys[tokenBalance.accountIndex] ?? '',
+                owner: tokenBalance.owner ?? null,
+                mint: tokenBalance.mint,
+                amount: BigInt(tokenBalance.uiTokenAmount.amount ?? '0'),
+                decimals: tokenBalance.uiTokenAmount.decimals,
+            });
+        }
+        return balances;
+    }
+    getAccountKeys(tx) {
+        return tx.transaction.message.accountKeys.map((accountKey) => {
+            if (accountKey instanceof web3_js_1.PublicKey) {
+                return accountKey.toBase58();
+            }
+            const parsedAccount = accountKey;
+            return typeof parsedAccount.pubkey === 'string'
+                ? parsedAccount.pubkey
+                : parsedAccount.pubkey.toBase58();
+        });
+    }
+    assertPublicKey(address, fieldName) {
+        try {
+            return new web3_js_1.PublicKey(address).toBase58();
+        }
+        catch {
+            throw new common_1.BadRequestException(`${fieldName} must be a valid Solana public key`);
+        }
+    }
+    toBaseUnits(amount, decimals, fieldName) {
+        const normalized = amount.trim();
+        if (!/^\d+(\.\d+)?$/.test(normalized)) {
+            throw new common_1.BadRequestException(`${fieldName} must be a non-negative decimal string`);
+        }
+        const [wholePart, fractionalPart = ''] = normalized.split('.');
+        if (fractionalPart.length > decimals) {
+            throw new common_1.BadRequestException(`${fieldName} has more than ${decimals} decimal places`);
+        }
+        const paddedFraction = fractionalPart
+            .padEnd(decimals, '0')
+            .slice(0, decimals);
+        return (BigInt(wholePart) * 10n ** BigInt(decimals) +
+            BigInt(paddedFraction || '0'));
+    }
+    fromBaseUnits(amount, decimals) {
+        if (amount === 0n) {
+            return '0';
+        }
+        const negative = amount < 0n;
+        const absoluteAmount = negative ? -amount : amount;
+        const factor = 10n ** BigInt(decimals);
+        const wholePart = absoluteAmount / factor;
+        const fractionalPart = absoluteAmount % factor;
+        if (fractionalPart === 0n) {
+            return `${negative ? '-' : ''}${wholePart.toString()}`;
+        }
+        const paddedFraction = fractionalPart
+            .toString()
+            .padStart(decimals, '0')
+            .replace(/0+$/, '');
+        return `${negative ? '-' : ''}${wholePart.toString()}.${paddedFraction}`;
     }
 };
 exports.PaymentService = PaymentService;
