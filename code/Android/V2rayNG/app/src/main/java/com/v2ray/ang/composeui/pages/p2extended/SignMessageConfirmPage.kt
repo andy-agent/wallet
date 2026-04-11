@@ -54,15 +54,28 @@ fun SignMessageConfirmScreen(
         onSecondaryAction = { onEvent(SignMessageConfirmEvent.SecondaryActionClicked) },
     ) {
         P2Card(title = "Jupiter 请求签名", subtitle = "请检查合约、数量、网络与 gas 费用。") {
-            FieldRow("操作类型", "Swap Exact In")
+            SwapAssetBlock(
+                label = "支付",
+                symbol = "USDT",
+                chain = "TRON",
+                amount = "580.00",
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("网络", "Solana")
+            SwapArrowConnector()
             Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("支付资产", "580 USDT")
+            SwapAssetBlock(
+                label = "接收",
+                symbol = "SOL",
+                chain = "Solana",
+                amount = "82.60",
+                emphasized = true,
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("目标资产", "82.6 SOL")
+            DetailRow("操作类型", "Swap Exact In")
             Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("预估费用", "0.0012 SOL")
+            DetailRow("网络", "Solana")
+            Spacer(modifier = Modifier.height(8.dp))
+            DetailRow("预估费用", "0.0012 SOL")
             Spacer(modifier = Modifier.height(12.dp))
             NoteCard(title = "风险提示", text = "授权范围为本次交易，未检测到无限授权")
         }

@@ -832,4 +832,212 @@ internal fun P2InlineWarningCard(
     }
 }
 
+@Composable
+internal fun SearchShell(
+    placeholder: String,
+    hint: String? = null,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0xFFE7ECFB), RoundedCornerShape(14.dp))
+            .padding(12.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF5F8FF), RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0xFFE4EAFE), RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .background(Color(0xFFE8EEFF), CircleShape),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = placeholder,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF6D78A6),
+            )
+        }
+        if (hint != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = hint,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF7A85B1),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun SwapAssetBlock(
+    label: String,
+    symbol: String,
+    chain: String,
+    amount: String,
+    emphasized: Boolean = false,
+) {
+    val border = if (emphasized) Color(0xFFBFD0FF) else Color(0xFFE6EBFA)
+    val background = if (emphasized) Color(0xFFF0F5FF) else Color(0xFFF8FAFF)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(background, RoundedCornerShape(14.dp))
+            .border(1.dp, border, RoundedCornerShape(14.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(30.dp)
+                .background(Color.White, RoundedCornerShape(9.dp))
+                .border(1.dp, Color(0xFFDCE4FF), RoundedCornerShape(9.dp)),
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6472A5))
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                text = "$symbol · $chain",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF1F2A52),
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Text(
+            text = amount,
+            style = MaterialTheme.typography.titleMedium,
+            color = Color(0xFF2B3D87),
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+internal fun SwapDirectionPill(label: String) {
+    Box(
+        modifier = Modifier
+            .background(Color(0xFFEAF0FF), RoundedCornerShape(999.dp))
+            .border(1.dp, Color(0xFFD4DEFF), RoundedCornerShape(999.dp))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF3553D1))
+    }
+}
+
+@Composable
+internal fun SwapArrowConnector() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .background(Color.White, RoundedCornerShape(999.dp))
+                .border(1.dp, Color(0xFFDDE5FF), RoundedCornerShape(999.dp))
+                .padding(horizontal = 12.dp, vertical = 5.dp),
+        ) {
+            Text("↓", style = MaterialTheme.typography.labelLarge, color = Color(0xFF4A63CC))
+        }
+    }
+}
+
+@Composable
+internal fun DetailRow(
+    label: String,
+    value: String,
+    emphasized: Boolean = false,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFF6D78A6),
+        )
+        Text(
+            text = value,
+            style = if (emphasized) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium,
+            color = if (emphasized) Color(0xFF253A88) else Color(0xFF233061),
+            fontWeight = if (emphasized) FontWeight.SemiBold else FontWeight.Medium,
+        )
+    }
+}
+
+@Composable
+internal fun DappBadgeRow(
+    title: String,
+    subtitle: String,
+    users: String,
+    verified: Boolean = true,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0xFFE8ECFA), RoundedCornerShape(14.dp))
+            .padding(horizontal = 12.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .background(Color(0xFFEAF0FF), RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0xFFD9E2FF), RoundedCornerShape(10.dp)),
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color(0xFF1E274D),
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (verified) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFFEAFBF1), RoundedCornerShape(999.dp))
+                            .border(1.dp, Color(0xFFC7F0D8), RoundedCornerShape(999.dp))
+                            .padding(horizontal = 7.dp, vertical = 3.dp),
+                    ) {
+                        Text("已认证", style = MaterialTheme.typography.labelSmall, color = Color(0xFF177245))
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF68739E))
+        }
+        Text(users, style = MaterialTheme.typography.labelMedium, color = Color(0xFF7380AE))
+    }
+}
+
+@Composable
+internal fun DisconnectPill(
+    label: String = "断开",
+    warm: Boolean = true,
+) {
+    val bg = if (warm) Color(0xFFFFF3EA) else Color(0xFFEFF2FD)
+    val border = if (warm) Color(0xFFFFDEC8) else Color(0xFFDCE4FA)
+    val text = if (warm) Color(0xFFAA5C2A) else Color(0xFF4B5F9F)
+    Box(
+        modifier = Modifier
+            .background(bg, RoundedCornerShape(999.dp))
+            .border(1.dp, border, RoundedCornerShape(999.dp))
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = text)
+    }
+}
+
 internal object ColumnScopeWrapper

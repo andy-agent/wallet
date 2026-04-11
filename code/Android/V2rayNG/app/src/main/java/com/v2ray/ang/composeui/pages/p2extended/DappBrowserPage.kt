@@ -55,16 +55,19 @@ fun DappBrowserScreen(
         secondaryActionLabel = "返回",
         onSecondaryAction = { onEvent(DappBrowserEvent.SecondaryActionClicked) },
     ) {
-        P2Card(title = "输入 URL / 搜索 DApp / 输入 ENS") {}
+        SearchShell(
+            placeholder = "输入 URL / 搜索 DApp / 输入 ENS",
+            hint = "支持 ENS / Lens / Solana Name Service",
+        )
         Spacer(modifier = Modifier.height(12.dp))
         ChipRow(items = listOf("精选", "DeFi", "支付", "NFT", "工具"), activeIndex = 0)
         Spacer(modifier = Modifier.height(14.dp))
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ListRow("Jupiter", "Solana 聚合兑换", "92K users")
-            ListRow("Sunswap", "TRON 稳定币兑换", "31K users")
-            ListRow("Aave", "借贷与收益", "120K users")
-            ListRow("OpenOcean", "跨链路由", "58K users")
-            ListRow("Magic Eden", "NFT 市场", "63K users")
+            DappBadgeRow("Jupiter", "Solana 聚合兑换", "92K users", verified = true)
+            DappBadgeRow("Sunswap", "TRON 稳定币兑换", "31K users", verified = true)
+            DappBadgeRow("Aave", "借贷与收益", "120K users", verified = true)
+            DappBadgeRow("OpenOcean", "跨链路由", "58K users", verified = false)
+            DappBadgeRow("Magic Eden", "NFT 市场", "63K users", verified = true)
         }
     }
 }

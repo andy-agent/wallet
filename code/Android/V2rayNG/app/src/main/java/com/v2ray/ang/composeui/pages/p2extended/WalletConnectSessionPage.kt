@@ -51,11 +51,40 @@ fun WalletConnectSessionScreen(
         hubLabel = "6 会话",
         onHubClick = { onEvent(WalletConnectSessionEvent.Refresh) },
     ) {
+        SearchShell(
+            placeholder = "搜索会话 / 域名 / 钱包地址",
+            hint = "高风险域名会在列表内标橙提醒",
+        )
+        Spacer(modifier = Modifier.height(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ListRow("Jupiter", "读取余额 / 发起兑换 · 当前网络：Solana", "断开")
-            ListRow("Sunswap", "读取地址 / 发起授权 · 当前网络：TRON", "断开")
-            ListRow("Aave", "读取资产 / 发起存款 · 当前网络：Ethereum", "断开")
-            ListRow("Magic Eden", "读取 NFT / 签名 · 当前网络：Solana", "断开")
+            P2Card(title = "Jupiter", subtitle = "读取余额 / 发起兑换 · 当前网络：Solana") {
+                DetailRow("会话时长", "2h 14m")
+                Spacer(modifier = Modifier.height(8.dp))
+                DetailRow("最近请求", "3 min ago")
+                Spacer(modifier = Modifier.height(10.dp))
+                DisconnectPill()
+            }
+            P2Card(title = "Sunswap", subtitle = "读取地址 / 发起授权 · 当前网络：TRON") {
+                DetailRow("会话时长", "1h 42m")
+                Spacer(modifier = Modifier.height(8.dp))
+                DetailRow("最近请求", "9 min ago")
+                Spacer(modifier = Modifier.height(10.dp))
+                DisconnectPill()
+            }
+            P2Card(title = "Aave", subtitle = "读取资产 / 发起存款 · 当前网络：Ethereum") {
+                DetailRow("会话时长", "34m")
+                Spacer(modifier = Modifier.height(8.dp))
+                DetailRow("最近请求", "1 min ago")
+                Spacer(modifier = Modifier.height(10.dp))
+                DisconnectPill()
+            }
+            P2Card(title = "Magic Eden", subtitle = "读取 NFT / 签名 · 当前网络：Solana") {
+                DetailRow("会话时长", "5h 02m")
+                Spacer(modifier = Modifier.height(8.dp))
+                DetailRow("最近请求", "19 min ago")
+                Spacer(modifier = Modifier.height(10.dp))
+                DisconnectPill()
+            }
         }
         Spacer(modifier = Modifier.height(14.dp))
         NoteCard(title = "会话安全", text = "高风险域名会自动标红并在签名前再次确认")

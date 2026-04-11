@@ -54,17 +54,30 @@ fun SwapScreen(
         onSecondaryAction = { onEvent(SwapEvent.SecondaryActionClicked) },
     ) {
         P2Card(title = "兑换面板", subtitle = "支持 SOL / USDT / ETH / TRX 等常见资产。") {
-            FieldRow("支付", "USDT · TRON · 580")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("获得", "SOL · Solana · 82.6")
-            Spacer(modifier = Modifier.height(12.dp))
-            KpiRow(
-                listOf(
-                    "滑点" to "0.5%",
-                    "路由" to "2 hops",
-                    "预计到手" to "82.1",
-                ),
+            SwapAssetBlock(
+                label = "支付",
+                symbol = "USDT",
+                chain = "TRON",
+                amount = "580.00",
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            SwapArrowConnector()
+            Spacer(modifier = Modifier.height(8.dp))
+            SwapAssetBlock(
+                label = "获得",
+                symbol = "SOL",
+                chain = "Solana",
+                amount = "82.60",
+                emphasized = true,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            SwapDirectionPill(label = "TRON -> Solana · Route B")
+            Spacer(modifier = Modifier.height(10.dp))
+            DetailRow("滑点", "0.50%")
+            Spacer(modifier = Modifier.height(6.dp))
+            DetailRow("路由", "2 hops")
+            Spacer(modifier = Modifier.height(6.dp))
+            DetailRow("预计到账", "82.10 SOL", emphasized = true)
         }
     }
 }

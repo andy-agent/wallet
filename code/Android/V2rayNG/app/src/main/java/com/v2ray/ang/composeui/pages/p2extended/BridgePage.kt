@@ -54,21 +54,30 @@ fun BridgeScreen(
         onSecondaryAction = { onEvent(BridgeEvent.SecondaryActionClicked) },
     ) {
         P2Card(title = "桥接面板", subtitle = "支持常用主流链之间的稳定币与主资产桥接。") {
-            FieldRow("来源链", "TRON")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("目标链", "Solana")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("资产", "USDT")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("数量", "580.00")
-            Spacer(modifier = Modifier.height(12.dp))
-            KpiRow(
-                listOf(
-                    "桥接费用" to "$1.9",
-                    "预计用时" to "3 min",
-                    "到账数量" to "578.1",
-                ),
+            SwapAssetBlock(
+                label = "来源",
+                symbol = "USDT",
+                chain = "TRON",
+                amount = "580.00",
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            SwapArrowConnector()
+            Spacer(modifier = Modifier.height(8.dp))
+            SwapAssetBlock(
+                label = "目标",
+                symbol = "USDT",
+                chain = "Solana",
+                amount = "578.10",
+                emphasized = true,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            SwapDirectionPill(label = "Bridge Relay · v3")
+            Spacer(modifier = Modifier.height(8.dp))
+            DetailRow("桥接费用", "$1.90")
+            Spacer(modifier = Modifier.height(6.dp))
+            DetailRow("预计用时", "3 min")
+            Spacer(modifier = Modifier.height(6.dp))
+            DetailRow("到账数量", "578.10 USDT", emphasized = true)
         }
     }
 }
