@@ -1,49 +1,26 @@
 {
-  "generated_at": "2026-04-11T14:28:00+08:00",
+  "generated_at": "2026-04-11T14:50:00+08:00",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-g9e",
-  "accepted_task_id": "liaojiang-4iz",
-  "next_task_id": "liaojiang-g9e",
-  "active_worker_task_ids": [
-    "liaojiang-g9e:code/sol-agent",
-    "liaojiang-g9e:code/backend"
-  ],
+  "active_task_id": "liaojiang-26d",
+  "accepted_task_id": "liaojiang-g9e",
+  "next_task_id": "liaojiang-njb",
+  "active_worker_task_ids": [],
   "blockers": [
     {
-      "task_id": "liaojiang-26d",
-      "type": "feature",
-      "blocked_by": "Need real Solana payment verification plus a real receiving address before register-login-purchase-VPN can be accepted as non-mock."
+      "task_id": "liaojiang-njb",
+      "type": "task",
+      "blocked_by": "Need one real human-controlled SOLANA/USDT payment against a fresh order and the resulting txHash to finish the positive path."
     },
     {
       "task_id": "liaojiang-3js",
       "type": "task",
-      "blocked_by": "Depends on liaojiang-26d; final live closed-loop acceptance waits on g9e implementation and deployment."
+      "blocked_by": "Depends on liaojiang-26d; final live closed-loop acceptance now waits only on liaojiang-njb."
     }
   ],
-  "workers": [
-    {
-      "agent_id": "019d7b29-c201-7ed3-970f-08193ec29a80",
-      "nickname": "Cicero",
-      "task_id": "liaojiang-g9e",
-      "scope": "code/sol-agent",
-      "branch": "codex/liaojiang-g9e-sol",
-      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-g9e-sol",
-      "status": "completed",
-      "commit": "c89a67daddb2633085babaa87b0b7fbe12a0e015"
-    },
-    {
-      "agent_id": "019d7b36-fb8f-79e0-bd23-6cca9db8a201",
-      "nickname": "Gauss",
-      "task_id": "liaojiang-g9e",
-      "scope": "code/backend",
-      "branch": "codex/liaojiang-g9e-backend",
-      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-g9e-backend",
-      "status": "running"
-    }
-  ],
+  "workers": [],
   "mainline": {
     "feature_id": "liaojiang-26d",
-    "phase_id": "liaojiang-g9e",
-    "policy": "Primary path is real register-login-plans-order-vpn on the live servers. No mock runtime data is allowed. Backend and chain-side must verify real SOLANA/USDT payments before provisioning VPN access."
+    "phase_id": "liaojiang-njb",
+    "policy": "Primary path is real register-login-plans-order-vpn on the live servers. No mock runtime data is allowed. The implementation is accepted; the only remaining blocker is one real funded SOLANA/USDT payment that produces a valid txHash for positive-path provisioning."
   }
 }
