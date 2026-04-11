@@ -1,26 +1,21 @@
 {
-  "generated_at": "2026-04-11T19:01:46+0800",
+  "generated_at": "2026-04-11T22:21:00+0800",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-c9x",
-  "accepted_task_id": "liaojiang-vx4",
-  "next_task_id": "liaojiang-njb",
+  "active_task_id": "liaojiang-0jp",
+  "accepted_task_id": "liaojiang-0jp.3",
+  "next_task_id": "liaojiang-0jp",
   "active_worker_task_ids": [],
   "blockers": [
     {
-      "task_id": "liaojiang-njb",
-      "type": "task",
-      "blocked_by": "Final positive auto-match/provision evidence still requires one funded human-controlled SOLANA/USDT payment to shared collection address EVYe1JoVU9m46o5QLgJdZM6CCG996jfCvYoKu5DTNEjj."
-    },
-    {
-      "task_id": "liaojiang-c9x",
-      "type": "task",
-      "blocked_by": "Implementation and live unpaid-path evidence are accepted; final c9x closure is blocked only by liaojiang-njb funded-payment proof."
+      "task_id": "liaojiang-0jp",
+      "type": "feature",
+      "blocked_by": "Page-by-page audit is complete, but direct Compose realification edits are currently unsafe because concurrent unreviewed UI animation/structure changes overlap the same P0/P1/P2 page files."
     }
   ],
   "workers": [],
   "mainline": {
-    "feature_id": "liaojiang-26d",
-    "phase_id": "liaojiang-c9x",
-    "policy": "Shared-address auto-scan payment implementation is accepted on mainline and verified locally plus live up to unpaid-state evidence. No unblocked bd ready task remains on the payment mainline; next progress requires njb funded-payment evidence to close c9x and then 26d/3js."
+    "feature_id": "liaojiang-0jp",
+    "phase_id": "liaojiang-0jp",
+    "policy": "Use the new strict A/B/C/D page reality standard. Audit is complete: 46 pages audited, A=0, B=11, C=17, D=18. Next phase is page-by-page rework, but current worktree overlap with another UI thread must be reconciled before trustworthy implementation and acceptance can proceed."
   }
 }

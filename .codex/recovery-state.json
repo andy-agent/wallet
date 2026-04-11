@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-04-11T11:46:31Z",
+  "generated_at": "2026-04-11T14:21:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "next_task_id": "liaojiang-njb",
-  "next_task_title": "Live funding：完成一次真实 SOLANA/USDT 订单付款并回传 txHash",
-  "in_progress_count": 5,
+  "next_task_id": "liaojiang-0jp",
+  "next_task_title": "Android app：移除运行时剩余 mock 数据并接入真实落地数据",
+  "in_progress_count": 4,
   "ready_count": 1,
-  "open_count": 11,
-  "closed_count": 395,
-  "dirty_count": 2,
-  "milestone_reached": false,
+  "open_count": 1,
+  "closed_count": 401,
+  "dirty_count": 0,
+  "milestone_reached": true,
   "write_human_docs": false,
   "docs": {
     "current_status": "docs/current-status.md",
@@ -24,5 +24,9 @@
     "mode": "simulate",
     "dispatched_count": 0,
     "max_workers": 3
-  }
+  },
+  "last_orchestrator_update": "2026-04-11T22:21:00+0800",
+  "active_bd_task": "liaojiang-0jp",
+  "active_worker_tasks": [],
+  "note": "Compose page-by-page reality audit completed under the new standard. Results are recorded in docs/COMPOSE_UI_REALIFICATION_AUDIT_2026-04-11.md and docs/COMPOSE_UI_REALIFICATION_EXECUTION_LOG_2026-04-11.md. Totals: A=0, B=11, C=17, D=18 across 46 audited pages. Direct rework is the next phase, but current page-file overlap with another UI animation thread makes immediate page edits unsafe until those overlapping changes are reconciled."
 }
