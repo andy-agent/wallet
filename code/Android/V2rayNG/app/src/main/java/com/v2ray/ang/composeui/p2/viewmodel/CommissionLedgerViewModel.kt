@@ -4,10 +4,12 @@ import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.CommissionLedgerEvent
 import com.v2ray.ang.composeui.p2.model.CommissionLedgerUiState
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class CommissionLedgerViewModel(
     private val repository: CryptoVpnRepository,
-) : BaseFeatureViewModel<CommissionLedgerUiState>(CommissionLedgerUiState()) {
+) : BaseFeatureViewModel<CommissionLedgerUiState>(initialCommissionLedgerState()) {
 
     init {
         refresh()
@@ -30,8 +32,23 @@ class CommissionLedgerViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getCommissionLedgerState()
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, emptyMessage = null)
+        viewModelScope.launch {
+            runCatching { repository.getCommissionLedgerState() }
+                .onSuccess { _uiState.value = it.copy(isLoading = false) }
+                .onFailure { _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = it.message ?: "加载佣金账本失败") }
         }
     }
 }
+
+private fun initialCommissionLedgerState() = CommissionLedgerUiState(
+    badge = "",
+    summary = "",
+    primaryActionLabel = null,
+    secondaryActionLabel = null,
+    metrics = emptyList(),
+    highlights = emptyList(),
+    checklist = emptyList(),
+    note = "",
+    isLoading = true,
+)

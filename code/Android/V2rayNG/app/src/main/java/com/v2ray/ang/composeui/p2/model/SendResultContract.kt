@@ -14,7 +14,7 @@ data class SendResultUiState(
         val subtitle: String = "TRANSFER RESULT",
         val badge: String = "• 广播成功",
         val summary: String = "交易已广播到链上，可在资产详情中继续追踪确认状态。",
-        val primaryActionLabel: String = "返回钱包首页",
+        val primaryActionLabel: String? = "返回钱包首页",
         val secondaryActionLabel: String? = "查看交易哈希",
         val heroAccent: String = "send_result",
         val metrics: List<FeatureMetric> = listOf(
@@ -37,6 +37,11 @@ data class SendResultUiState(
     FeatureBullet(title = "费用", detail = "1.24 USDT"),
 ),
         val note: String = "链上确认完成后余额会自动同步。",
+        val isLoading: Boolean = false,
+        val errorMessage: String? = null,
+        val emptyMessage: String? = null,
+        val blockerTitle: String? = null,
+        val blockerMessage: String? = null,
     )
 
     sealed interface SendResultEvent {

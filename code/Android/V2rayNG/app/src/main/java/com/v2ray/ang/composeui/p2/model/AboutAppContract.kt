@@ -10,7 +10,7 @@ data class AboutAppUiState(
     val subtitle: String = "ABOUT APP",
     val badge: String = "最新",
     val summary: String = "版本、更新记录、支持入口与产品信息。",
-    val primaryActionLabel: String = "查看更新记录",
+    val primaryActionLabel: String? = "查看更新记录",
     val secondaryActionLabel: String? = "帮助与支持",
     val heroAccent: String = "about_app",
     val metrics: List<FeatureMetric> = listOf(
@@ -31,6 +31,11 @@ data class AboutAppUiState(
         FeatureBullet(title = "信息", detail = "关于应用"),
     ),
     val note: String = "版本、更新记录、支持入口与产品信息。",
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val emptyMessage: String? = null,
+    val blockerTitle: String? = null,
+    val blockerMessage: String? = null,
 )
 
 sealed interface AboutAppEvent {

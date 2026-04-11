@@ -12,7 +12,7 @@ data class ProfileUiState(
         val subtitle: String = "PROFILE",
         val badge: String = "•4台设备在线。",
         val summary: String = "个人中心聚合账户信息、设备、安全、法务与钱包管理入口。",
-        val primaryActionLabel: String = "进入安全中心",
+        val primaryActionLabel: String? = "进入安全中心",
         val secondaryActionLabel: String? = "进入法务文档",
         val heroAccent: String = "profile",
         val metrics: List<FeatureMetric> = listOf(
@@ -36,6 +36,11 @@ data class ProfileUiState(
     FeatureBullet(title = "安全级别", detail = "A级"),
 ),
         val note: String = "账户、设备安全、订阅与法务入口在这里统一管理。",
+        val isLoading: Boolean = false,
+        val errorMessage: String? = null,
+        val emptyMessage: String? = null,
+        val blockerTitle: String? = null,
+        val blockerMessage: String? = null,
     )
 
     sealed interface ProfileEvent {

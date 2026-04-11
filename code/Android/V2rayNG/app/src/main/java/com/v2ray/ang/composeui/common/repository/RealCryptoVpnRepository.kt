@@ -489,67 +489,127 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState {
-        val relatedOrders = loadCachedOrders().filter { it.assetCode.equals(args.assetId, ignoreCase = true) }
+        val relatedOrders = loadCachedOrders()
+            .filter { it.assetCode.equals(args.assetId, ignoreCase = true) }
+            .sortedByDescending { it.createdAt }
         val total = relatedOrders.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
+        val assetCode = args.assetId.uppercase(Locale.ROOT)
         return AssetDetailUiState(
+            badge = if (relatedOrders.isEmpty()) "订单视角" else "${relatedOrders.size} 笔真实记录",
+            primaryActionLabel = if (relatedOrders.isNotEmpty()) "发送资产" else null,
+            secondaryActionLabel = if (relatedOrders.isNotEmpty()) "收款" else null,
             metrics = listOf(
-                FeatureMetric("资产", args.assetId),
-                FeatureMetric("持仓", if (total > 0) String.format(Locale.US, "%.2f", total) else "0"),
-                FeatureMetric("订单数", relatedOrders.size.toString()),
+                FeatureMetric("资产", assetCode),
+                FeatureMetric("订单金额", formatAssetAmount(total, assetCode)),
+                FeatureMetric("相关订单", relatedOrders.size.toString()),
             ),
             highlights = relatedOrders.take(3).map {
-                FeatureListItem(it.planName, it.orderNo, "${it.amount} ${it.assetCode}", it.status)
+                FeatureListItem(
+                    title = it.planName,
+                    subtitle = it.orderNo,
+                    trailing = "${it.amount} ${it.assetCode}",
+                    badge = it.status,
+                )
             },
-            summary = "资产详情按真实订单缓存统计 ${args.assetId} 相关记录。",
-            note = "当前工程暂无链上钱包资产仓储；当前页只基于真实订单缓存映射资产视图，不再回退 preview 样本。",
+            checklist = listOf(
+                FeatureBullet("数据源", "真实订单缓存"),
+                FeatureBullet("范围", "仅展示当前账号与支付/订阅相关的 $assetCode 记录"),
+                FeatureBullet("限制", "未接入真实链上钱包余额接口"),
+            ),
+            summary = "当前资产详情仅基于真实订单/支付记录，不再伪装成链上钱包总资产。",
+            note = "缺少真实链上钱包资产仓储前，本页只展示与当前账号相关的真实订单流水。",
+            emptyMessage = if (relatedOrders.isEmpty()) "当前账号还没有与 $assetCode 相关的真实订单记录。" else null,
         )
     }
 
     override suspend fun getReceiveState(args: ReceiveRouteArgs): ReceiveUiState {
-        val user = paymentRepository.getCachedCurrentUser()
+        val me = paymentRepository.getMe().getOrNull()
         return ReceiveUiState(
+            badge = if (paymentRepository.isTokenValid()) "地址未就绪" else "未登录",
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
             metrics = listOf(
-                FeatureMetric("默认链", args.chainId.uppercase(Locale.ROOT)),
-                FeatureMetric("支持网络", "1"),
-                FeatureMetric("校验状态", if (user != null) "已登录" else "未登录"),
+                FeatureMetric("资产", args.assetId.uppercase(Locale.ROOT)),
+                FeatureMetric("链", args.chainId.uppercase(Locale.ROOT)),
+                FeatureMetric("账户", me?.email ?: "未登录"),
             ),
-            fields = listOf(
-                FeatureField("label", "地址标签", walletAddress(user), "当前账户衍生地址标签"),
+            fields = emptyList(),
+            highlights = emptyList(),
+            checklist = listOf(
+                FeatureBullet("状态", "当前客户端没有真实钱包地址源"),
+                FeatureBullet("限制", "不能继续展示派生占位地址"),
+                FeatureBullet("后续", "需接入钱包地址查询或生成接口"),
             ),
-            summary = "收款页已绑定真实账户上下文。",
-            note = "当前地址使用账户派生占位，待接入真实链上钱包地址源。",
+            summary = "当前客户端尚未接入真实钱包地址生成/查询能力，本页不再展示假收款地址。",
+            note = "只有接入真实钱包地址 API 后，收款二维码和复制地址动作才会恢复。",
+            blockerTitle = "真实收款地址未接入",
+            blockerMessage = "Android 客户端当前没有真实钱包收款地址来源，不能继续展示 acct: 派生占位地址。",
         )
     }
 
     override suspend fun getSendState(args: SendRouteArgs): SendUiState {
-        val relatedOrders = loadCachedOrders().filter { it.assetCode.equals(args.assetId, ignoreCase = true) }
-        val total = relatedOrders.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
         return SendUiState(
+            badge = "能力缺失",
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
             metrics = listOf(
-                FeatureMetric("发送资产", args.assetId),
-                FeatureMetric("预估手续费", relatedOrders.firstOrNull()?.amount ?: "0"),
-                FeatureMetric("真实记录", "${relatedOrders.size} orders"),
+                FeatureMetric("资产", args.assetId.uppercase(Locale.ROOT)),
+                FeatureMetric("链", args.chainId.uppercase(Locale.ROOT)),
+                FeatureMetric("广播能力", "未接入"),
             ),
-            fields = listOf(
-                FeatureField("to", "收款地址", "", "请填写真实目标地址"),
-                FeatureField("amount", "发送数量", if (total > 0) String.format(Locale.US, "%.2f", total) else "", "来自当前资产相关记录估算"),
-                FeatureField("memo", "备注", paymentRepository.getCurrentOrderId() ?: "", "真实订单号可用于对账"),
+            fields = emptyList(),
+            highlights = emptyList(),
+            checklist = listOf(
+                FeatureBullet("状态", "当前 Compose 发送页未接入真实链上广播"),
+                FeatureBullet("限制", "不能再显示预估手续费/到账时间等假结果"),
+                FeatureBullet("兜底", "如需真实发送，需补齐客户端 wallet/broadcast 能力"),
             ),
-            summary = "发送页已使用真实账户/订单上下文预填。",
-            note = "当前尚未接入真实链上转账能力，先以真实账户与订单数据生成表单种子。",
+            summary = "发送页已停止伪造广播成功前的业务语义，当前明确标记为未接入真实转账能力。",
+            note = "在客户端真实链上转账能力补齐前，本页只保留阻塞说明，不再伪装成可发送表单。",
+            blockerTitle = "真实链上发送未接入",
+            blockerMessage = "当前 Android 客户端没有真实 wallet broadcast / 风控 / gas 估算能力，不能发起真实转账。",
         )
     }
 
     override suspend fun getSendResultState(args: SendResultRouteArgs): SendResultUiState {
         val currentOrder = paymentRepository.getCurrentOrderId()?.let { paymentRepository.getOrder(it).getOrNull() }
         return SendResultUiState(
+            title = "发送结果",
+            badge = if (looksLikeSampleTxId(args.txId)) "未接入" else "只读",
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
             metrics = listOf(
-                FeatureMetric("交易状态", currentOrder?.statusText ?: "已提交"),
-                FeatureMetric("Tx Hash", args.txId),
-                FeatureMetric("手续费", currentOrder?.paymentTarget?.uniqueAmountDelta ?: "0"),
+                FeatureMetric("路由 Tx", args.txId.takeIf { !looksLikeSampleTxId(it) } ?: "--"),
+                FeatureMetric("当前订单", currentOrder?.orderNo ?: "--"),
+                FeatureMetric("订单状态", currentOrder?.statusText ?: "--"),
             ),
-            summary = "发送结果页已绑定真实交易上下文。",
-            note = "当前优先展示路由传入 txId，并结合当前订单状态补充说明。",
+            highlights = listOfNotNull(
+                currentOrder?.let {
+                    FeatureListItem(
+                        title = "当前订单",
+                        subtitle = it.orderNo,
+                        trailing = it.statusText,
+                        badge = it.quoteAssetCode,
+                    )
+                },
+                args.txId.takeIf { !looksLikeSampleTxId(it) }?.let {
+                    FeatureListItem(
+                        title = "外部交易标识",
+                        subtitle = it,
+                        trailing = "只读",
+                        badge = "TX",
+                    )
+                },
+            ),
+            checklist = listOf(
+                FeatureBullet("状态", "本页未接入真实发送主流程"),
+                FeatureBullet("说明", "仅展示路由传入的交易标识和当前订单上下文"),
+                FeatureBullet("限制", "不能将其解释为本页完成了真实广播"),
+            ),
+            summary = "发送结果页不再默认宣称“广播成功”，只保留路由参数与当前订单的只读上下文。",
+            note = "若需要真实发送结果页，必须先接通客户端真实链上转账能力。",
+            blockerTitle = "发送结果主流程未接入",
+            blockerMessage = "当前 Compose 发送页不会生成真实链上交易，本页不能继续伪装成广播成功结果。",
         )
     }
 
@@ -557,70 +617,66 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val overview = paymentRepository.getReferralOverview().getOrNull()
         return if (overview != null) {
             InviteCenterUiState(
+                badge = "真实邀请",
+                primaryActionLabel = "复制邀请码",
+                secondaryActionLabel = "分享推广链接",
                 metrics = listOf(
-                    FeatureMetric("累计佣金", "$${overview.availableAmountUsdt}"),
+                    FeatureMetric("邀请码", overview.referralCode),
+                    FeatureMetric("可用佣金", "${overview.availableAmountUsdt} USDT"),
                     FeatureMetric("邀请人数", (overview.level1InviteCount + overview.level2InviteCount).toString()),
-                    FeatureMetric("转化率", if (overview.level1InviteCount > 0) "${overview.level2InviteCount * 100 / overview.level1InviteCount}%" else "0%"),
                 ),
                 highlights = listOf(
                     FeatureListItem("邀请码", overview.referralCode, overview.accountId, "LIVE"),
-                    FeatureListItem("一级邀请", overview.level1InviteCount.toString(), overview.level1IncomeUsdt, "L1"),
-                    FeatureListItem("二级邀请", overview.level2InviteCount.toString(), overview.level2IncomeUsdt, "L2"),
+                    FeatureListItem("一级邀请", overview.level1InviteCount.toString(), "${overview.level1IncomeUsdt} USDT", "L1"),
+                    FeatureListItem("二级邀请", overview.level2InviteCount.toString(), "${overview.level2IncomeUsdt} USDT", "L2"),
                 ),
                 summary = "邀请中心已切换到真实邀请概览接口。",
-                note = "使用 PaymentRepository.getReferralOverview()。",
+                note = "邀请码、邀请人数与可用佣金均来自 PaymentRepository.getReferralOverview()。",
             )
         } else {
             InviteCenterUiState(
+                badge = "空态",
+                primaryActionLabel = null,
+                secondaryActionLabel = null,
                 metrics = listOf(
+                    FeatureMetric("邀请码", "--"),
                     FeatureMetric("邀请人数", "0"),
-                    FeatureMetric("累计佣金", "0"),
                     FeatureMetric("数据源", "PaymentRepository"),
                 ),
                 highlights = emptyList(),
                 summary = "当前未取到真实邀请概览。",
                 note = "邀请中心页未再回退到 Mock 仓库；保持真实空态。",
+                emptyMessage = "当前账号还没有可展示的真实邀请概览。",
             )
         }
     }
 
     override suspend fun getInviteShareState(): InviteShareUiState {
         val overview = paymentRepository.getReferralOverview().getOrNull()
-        val referralCode = overview?.referralCode ?: "--"
-        val shareLink = if (overview != null) {
-            AppConfig.APP_URL.trimEnd('/') + "/invite/" + referralCode
-        } else {
-            ""
-        }
+        val referralCode = overview?.referralCode.orEmpty()
+        val inviteLink = referralCode.takeIf { it.isNotBlank() }?.let(::inviteLinkFor).orEmpty()
 
         return InviteShareUiState(
+            badge = if (inviteLink.isNotBlank()) "真实链接" else "空态",
+            primaryActionLabel = if (inviteLink.isNotBlank()) "复制链接" else null,
+            secondaryActionLabel = if (referralCode.isNotBlank()) "复制邀请码" else null,
             metrics = listOf(
-                FeatureMetric("链接", shareLink.ifBlank { "--" }),
-                FeatureMetric("邀请码", referralCode),
-                FeatureMetric("渠道", "系统分享"),
+                FeatureMetric("链接", inviteLink.ifBlank { "--" }),
+                FeatureMetric("邀请码", referralCode.ifBlank { "--" }),
+                FeatureMetric("渠道", "App 邀请"),
             ),
             highlights = listOf(
-                FeatureListItem("推广链接", shareLink.ifBlank { "--" }, "复制", "LIVE"),
-                FeatureListItem("邀请码", referralCode, "复制", "CODE"),
-                FeatureListItem(
-                    "一级邀请",
-                    overview?.level1InviteCount?.toString() ?: "0",
-                    overview?.level1IncomeUsdt ?: "0",
-                    "L1",
-                ),
-                FeatureListItem(
-                    "二级邀请",
-                    overview?.level2InviteCount?.toString() ?: "0",
-                    overview?.level2IncomeUsdt ?: "0",
-                    "L2",
-                ),
+                FeatureListItem("推广链接", inviteLink.ifBlank { "未生成" }, "复制", "LINK"),
+                FeatureListItem("邀请码", referralCode.ifBlank { "--" }, "复制", "CODE"),
+                FeatureListItem("邀请统计", "${overview?.level1InviteCount ?: 0} / ${overview?.level2InviteCount ?: 0}", "L1 / L2", "LIVE"),
             ),
             summary = if (overview != null) {
-                "分享页已切换到真实邀请码、分享链接与邀请概览上下文。"
+                "分享页已切换到真实邀请码，并根据真实 referralCode 生成推广链接。"
             } else {
-                "当前未取到真实邀请码与分享链接，页面显示明确空态。"
+                "当前未取到真实邀请码，页面保持明确空态。"
             },
-            note = "邀请分享数据来自 PaymentRepository.getReferralOverview()。",
+            note = "链接格式为 ${AppConfig.APP_URL}/invite/{referralCode}，数据来自 PaymentRepository.getReferralOverview()。",
+            emptyMessage = if (overview == null) "当前账号还没有可分享的邀请码。" else null,
         )
     }
 
@@ -629,20 +685,31 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val ledger = paymentRepository.getCommissionLedger().getOrNull()?.items.orEmpty()
         return if (summary != null) {
             CommissionLedgerUiState(
+                badge = if (ledger.isEmpty()) "空账本" else "真实流水",
+                primaryActionLabel = if ((summary.availableAmount.toDoubleOrNull() ?: 0.0) > 0.0) "去提现" else null,
+                secondaryActionLabel = "返回邀请中心",
                 metrics = ledgerMetrics(summary),
-                highlights = ledger.take(4).map {
+                highlights = ledger.take(6).map {
                     FeatureListItem(
                         title = it.sourceOrderNo,
-                        subtitle = it.sourceAccountMasked,
+                        subtitle = "${it.commissionLevel}级 · ${it.sourceAccountMasked}",
                         trailing = "${it.settlementAmountUsdt} ${summary.settlementAssetCode}",
                         badge = it.status,
                     )
                 },
-                summary = "账本页已切到真实佣金汇总与流水接口。",
+                summary = if (ledger.isEmpty()) {
+                    "当前账号还没有真实佣金流水。"
+                } else {
+                    "账本页已切到真实佣金汇总与流水接口，当前展示 ${ledger.size} 条记录。"
+                },
                 note = "使用 PaymentRepository.getCommissionSummary()/getCommissionLedger()。",
+                emptyMessage = if (ledger.isEmpty()) "当前账号还没有真实佣金账本记录。" else null,
             )
         } else {
             CommissionLedgerUiState(
+                badge = "空态",
+                primaryActionLabel = null,
+                secondaryActionLabel = "返回邀请中心",
                 metrics = listOf(
                     FeatureMetric("可用佣金", "0"),
                     FeatureMetric("流水条数", ledger.size.toString()),
@@ -651,6 +718,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 highlights = emptyList(),
                 summary = "当前未取到真实佣金汇总。",
                 note = "佣金账本页未再回退到 Mock 仓库；保持真实空态。",
+                emptyMessage = "当前无法加载真实佣金汇总。",
             )
         }
     }
@@ -659,26 +727,45 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val summary = paymentRepository.getCommissionSummary().getOrNull()
         val lastWithdrawal = paymentRepository.getWithdrawals().getOrNull()?.items?.firstOrNull()
         return if (summary != null) {
+            val availableAmount = summary.availableAmount.toDoubleOrNull() ?: 0.0
+            val supportsSubmission = summary.settlementNetworkCode.equals("SOLANA", ignoreCase = true)
             WithdrawUiState(
+                badge = if (availableAmount > 0.0) "真实提现" else "暂无可提",
+                primaryActionLabel = if (availableAmount > 0.0 && supportsSubmission) "提交提现申请" else null,
+                secondaryActionLabel = "返回账本",
                 metrics = listOf(
                     FeatureMetric("可提佣金", "${summary.availableAmount} ${summary.settlementAssetCode}"),
-                    FeatureMetric("最小提现", "50 ${summary.settlementAssetCode}"),
+                    FeatureMetric("提现中", "${summary.withdrawingAmount} ${summary.settlementAssetCode}"),
                     FeatureMetric("网络", summary.settlementNetworkCode),
                 ),
                 fields = listOf(
                     FeatureField("address", "提现地址", lastWithdrawal?.payoutAddress ?: "", "最近一次提现地址或留空"),
-                    FeatureField("amount", "提现金额", summary.availableAmount, "默认取当前可提现金额"),
+                    FeatureField("amount", "提现金额", if (availableAmount > 0.0) summary.availableAmount else "", "默认取当前可提现金额"),
                 ),
                 highlights = listOf(
-                    FeatureListItem("冻结金额", summary.frozenAmount, "", "FROZEN"),
-                    FeatureListItem("提现中", summary.withdrawingAmount, "", "PENDING"),
-                    FeatureListItem("累计提现", summary.withdrawnTotal, "", "DONE"),
+                    FeatureListItem("冻结金额", "${summary.frozenAmount} ${summary.settlementAssetCode}", "", "FROZEN"),
+                    FeatureListItem("最近提现", lastWithdrawal?.requestNo ?: "--", lastWithdrawal?.status ?: "NONE", "LAST"),
+                    FeatureListItem("累计提现", "${summary.withdrawnTotal} ${summary.settlementAssetCode}", "", "DONE"),
                 ),
-                summary = "提现页已切到真实佣金汇总与提现记录。",
-                note = "使用 PaymentRepository.getCommissionSummary()/getWithdrawals()。",
+                summary = if (availableAmount > 0.0) {
+                    "提现页已切到真实佣金汇总与提现记录，可提交真实提现申请。"
+                } else {
+                    "当前账号没有可提现佣金。"
+                },
+                note = "提现提交通道使用 PaymentRepository.createWithdrawal()，最近记录来自 getWithdrawals()。",
+                emptyMessage = if (availableAmount <= 0.0) "当前没有可提现余额。" else null,
+                blockerTitle = if (!supportsSubmission) "提现网络未接入" else null,
+                blockerMessage = if (!supportsSubmission) {
+                    "当前 Android 客户端只接通了 SOLANA 提现提交通道，不能伪装成支持 ${summary.settlementNetworkCode}。"
+                } else {
+                    null
+                },
             )
         } else {
             WithdrawUiState(
+                badge = "空态",
+                primaryActionLabel = null,
+                secondaryActionLabel = "返回账本",
                 metrics = listOf(
                     FeatureMetric("可提佣金", "0"),
                     FeatureMetric("最近记录", lastWithdrawal?.requestNo ?: "--"),
@@ -687,6 +774,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 highlights = emptyList(),
                 summary = "当前未取到真实提现汇总。",
                 note = "提现页未再回退到 Mock 仓库；保持真实空态。",
+                emptyMessage = "当前无法加载真实提现汇总。",
             )
         }
     }
@@ -696,17 +784,26 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val me = paymentRepository.getMe().getOrNull()
         val orders = user?.userId?.let { paymentRepository.getCachedOrders(it) }.orEmpty()
         return ProfileUiState(
+            badge = me?.status ?: "未登录",
             metrics = listOf(
                 FeatureMetric("当前套餐", me?.subscription?.planCode ?: "未订阅"),
-                FeatureMetric("设备数量", me?.subscription?.maxActiveSessions?.toString() ?: "0"),
-                FeatureMetric("安全评分", if (paymentRepository.isTokenValid()) "A" else "C"),
+                FeatureMetric("账号状态", me?.status ?: "未登录"),
+                FeatureMetric("订单数量", orders.size.toString()),
             ),
             highlights = listOf(
-                FeatureListItem("账户", user?.username ?: me?.email ?: "--", user?.userId ?: me?.accountId ?: "--", "LIVE"),
-                FeatureListItem("订单数", orders.size.toString(), orders.firstOrNull()?.orderNo ?: "", "ORDER"),
-                FeatureListItem("订阅到期", me?.subscription?.expireAt ?: "--", me?.status ?: "--", "SUB"),
+                FeatureListItem("账户", me?.email ?: user?.email ?: "--", me?.accountId ?: user?.userId ?: "--", "LIVE"),
+                FeatureListItem("安全中心", "登录状态：${if (paymentRepository.isTokenValid()) "有效" else "失效"}", me?.status ?: "--", "SEC"),
+                FeatureListItem("订单列表", "${orders.size} 笔订单", orders.firstOrNull()?.orderNo ?: "暂无订单", "ORDER"),
+                FeatureListItem("邀请中心", me?.referralCode ?: "--", "查看佣金与邀请", "INVITE"),
+                FeatureListItem("法务文档", "查看服务协议与隐私政策", "内置链接", "LEGAL"),
+                FeatureListItem("关于应用", "版本 ${BuildConfig.VERSION_NAME}", BuildConfig.DISTRIBUTION, "APP"),
             ),
-            summary = "个人中心已切到真实账户与订阅数据。",
+            checklist = listOf(
+                FeatureBullet("邮箱", me?.email ?: user?.email ?: "--"),
+                FeatureBullet("订阅到期", me?.subscription?.expireAt ?: "--"),
+                FeatureBullet("推荐码", me?.referralCode ?: "--"),
+            ),
+            summary = "个人中心已切到真实账户、订阅与订单缓存数据。",
             note = "使用 PaymentRepository.getMe()/getCachedCurrentUser()/getCachedOrders()。",
         )
     }
@@ -714,17 +811,20 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getLegalDocumentsState(): LegalDocumentsUiState {
         val docs = localLegalDocs()
         return LegalDocumentsUiState(
+            badge = "内置链接",
+            primaryActionLabel = docs.firstOrNull()?.let { "查看${it.title}" },
+            secondaryActionLabel = "返回个人中心",
             metrics = listOf(
                 FeatureMetric("文档总数", docs.size.toString()),
                 FeatureMetric("最近更新", docs.maxOfOrNull { it.lastUpdated } ?: "--"),
-                FeatureMetric("来源", "本地资源/配置"),
+                FeatureMetric("来源", "AppConfig"),
             ),
             fields = emptyList(),
             highlights = docs.take(4).map {
                 FeatureListItem(it.title, it.description, it.lastUpdated, "DOC")
             },
-            summary = "法务文档页已切换到本地资源与配置驱动的数据源。",
-            note = "文档入口来自 AppConfig 与本地应用资源，不再写死在仓库方法内。",
+            summary = "当前法务页只提供应用内置链接与说明，不再伪装成服务端法务正文列表。",
+            note = "缺少服务端法务文档接口前，本页仅展示 AppConfig 驱动的外部文档入口。",
         )
     }
 
@@ -733,15 +833,19 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val versionLabel = "v${BuildConfig.VERSION_NAME}"
 
         return AboutAppUiState(
+            badge = BuildConfig.DISTRIBUTION,
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
+            summary = "关于页展示当前构建版本、项目入口与支持链接，不再伪造“更新记录已接入”。",
             metrics = listOf(
                 FeatureMetric("应用", "v2rayNG"),
                 FeatureMetric("版本", versionLabel),
                 FeatureMetric("渠道", BuildConfig.DISTRIBUTION),
             ),
             highlights = listOf(
-                FeatureListItem("当前版本", "$versionLabel · ${BuildConfig.DISTRIBUTION}", "最新", "LIVE"),
-                FeatureListItem("源码仓库", AppConfig.APP_URL, "查看", "SRC"),
-                FeatureListItem("帮助与支持", AppConfig.APP_ISSUES_URL, "进入", "SUPPORT"),
+                FeatureListItem("项目主页", AppConfig.APP_URL, "打开", "WEB"),
+                FeatureListItem("帮助与支持", AppConfig.APP_ISSUES_URL, "打开", "SUPPORT"),
+                FeatureListItem("隐私政策", AppConfig.APP_PRIVACY_POLICY, "打开", "LEGAL"),
             ),
             note = cachedUser?.let { "当前账号：${it.username}" } ?: "当前未缓存登录账号。",
         )
@@ -755,31 +859,42 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             LegalDocumentDetailUiState(
                 title = doc.title,
                 summary = doc.description,
+                badge = "内置链接",
+                primaryActionLabel = "返回文档列表",
+                secondaryActionLabel = "打开原文",
                 metrics = listOf(
                     FeatureMetric("文档版本", doc.lastUpdated),
                     FeatureMetric("文档标识", doc.id),
-                    FeatureMetric("来源", "本地资源/配置"),
+                    FeatureMetric("来源", "AppConfig"),
                 ),
                 highlights = listOf(
                     FeatureListItem("文档标识", doc.id, doc.lastUpdated, "DOC"),
                     FeatureListItem("说明", doc.content, "", "TEXT"),
-                    FeatureListItem("来源链接", doc.link, "打开外部原文", "LINK"),
+                    FeatureListItem("原文链接", doc.link, "打开外部原文", "LINK"),
                 ),
-                note = "法务详情已切到本地资源与配置驱动的数据源。",
+                note = "当前仅展示 AppConfig 提供的法务链接与说明，未接入服务端正文下发。",
             )
         } else {
             LegalDocumentDetailUiState(
                 title = "文档不存在",
                 summary = "未找到请求的法务文档。",
+                badge = "未找到",
+                primaryActionLabel = "返回文档列表",
+                secondaryActionLabel = null,
                 metrics = listOf(
                     FeatureMetric("文档标识", args.documentId),
                     FeatureMetric("状态", "未找到"),
-                    FeatureMetric("数据源", "本地资源/配置"),
+                    FeatureMetric("数据源", "AppConfig"),
                 ),
                 highlights = emptyList(),
                 note = "法务详情页未再回退到 Mock 仓库；保持真实空态。",
+                emptyMessage = "未找到对应的法务文档入口。",
             )
         }
+    }
+
+    suspend fun submitWithdrawal(amount: String, payoutAddress: String): Result<WithdrawalItem> {
+        return paymentRepository.createWithdrawal(amount = amount, payoutAddress = payoutAddress)
     }
 
     override suspend fun getSubscriptionDetailState(args: SubscriptionDetailRouteArgs): SubscriptionDetailUiState {
@@ -1242,6 +1357,15 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         FeatureMetric("待结算", "${summary.frozenAmount} ${summary.settlementAssetCode}"),
         FeatureMetric("已结算", "${summary.withdrawnTotal} ${summary.settlementAssetCode}"),
     )
+
+    private fun inviteLinkFor(referralCode: String): String =
+        "${AppConfig.APP_URL.trimEnd('/')}/invite/$referralCode"
+
+    private fun formatAssetAmount(value: Double, assetCode: String): String =
+        String.format(Locale.US, "%.2f %s", value, assetCode)
+
+    private fun looksLikeSampleTxId(txId: String): Boolean =
+        txId.isBlank() || txId == "TX-9F32"
 
     private fun walletAddress(user: UserEntity?): String {
         if (user == null) return "--"

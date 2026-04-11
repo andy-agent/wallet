@@ -5,11 +5,13 @@ import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.AssetDetailEvent
 import com.v2ray.ang.composeui.p2.model.AssetDetailUiState
 import com.v2ray.ang.composeui.p2.model.AssetDetailRouteArgs
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class AssetDetailViewModel(
     private val repository: CryptoVpnRepository,
     private val routeArgs: AssetDetailRouteArgs = AssetDetailRouteArgs(),
-) : BaseFeatureViewModel<AssetDetailUiState>(AssetDetailUiState()) {
+) : BaseFeatureViewModel<AssetDetailUiState>(initialAssetDetailState()) {
 
     init {
         refresh()
@@ -32,8 +34,23 @@ class AssetDetailViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getAssetDetailState(routeArgs)
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, emptyMessage = null)
+        viewModelScope.launch {
+            runCatching { repository.getAssetDetailState(routeArgs) }
+                .onSuccess { _uiState.value = it.copy(isLoading = false) }
+                .onFailure { _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = it.message ?: "加载资产详情失败") }
         }
     }
 }
+
+private fun initialAssetDetailState() = AssetDetailUiState(
+    badge = "",
+    summary = "",
+    primaryActionLabel = null,
+    secondaryActionLabel = null,
+    metrics = emptyList(),
+    highlights = emptyList(),
+    checklist = emptyList(),
+    note = "",
+    isLoading = true,
+)

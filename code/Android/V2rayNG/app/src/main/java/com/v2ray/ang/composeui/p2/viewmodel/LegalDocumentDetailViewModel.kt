@@ -5,11 +5,13 @@ import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.LegalDocumentDetailEvent
 import com.v2ray.ang.composeui.p2.model.LegalDocumentDetailUiState
 import com.v2ray.ang.composeui.p2.model.LegalDocumentDetailRouteArgs
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class LegalDocumentDetailViewModel(
     private val repository: CryptoVpnRepository,
     private val routeArgs: LegalDocumentDetailRouteArgs = LegalDocumentDetailRouteArgs(),
-) : BaseFeatureViewModel<LegalDocumentDetailUiState>(LegalDocumentDetailUiState()) {
+) : BaseFeatureViewModel<LegalDocumentDetailUiState>(initialLegalDocumentDetailState()) {
 
     init {
         refresh()
@@ -32,8 +34,23 @@ class LegalDocumentDetailViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getLegalDocumentDetailState(routeArgs)
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, emptyMessage = null)
+        viewModelScope.launch {
+            runCatching { repository.getLegalDocumentDetailState(routeArgs) }
+                .onSuccess { _uiState.value = it.copy(isLoading = false) }
+                .onFailure { _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = it.message ?: "加载法务详情失败") }
         }
     }
 }
+
+private fun initialLegalDocumentDetailState() = LegalDocumentDetailUiState(
+    badge = "",
+    summary = "",
+    primaryActionLabel = null,
+    secondaryActionLabel = null,
+    metrics = emptyList(),
+    highlights = emptyList(),
+    checklist = emptyList(),
+    note = "",
+    isLoading = true,
+)

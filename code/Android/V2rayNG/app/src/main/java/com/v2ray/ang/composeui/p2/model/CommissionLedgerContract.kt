@@ -12,7 +12,7 @@ data class CommissionLedgerUiState(
         val subtitle: String = "COMMISSION LEDGER",
         val badge: String = "• 本月 +$820",
         val summary: String = "查看佣金趋势、来源明细和已结算 / 待结算金额。",
-        val primaryActionLabel: String = "去提现",
+        val primaryActionLabel: String? = "去提现",
         val secondaryActionLabel: String? = "返回邀请中心",
         val heroAccent: String = "commission_ledger",
         val metrics: List<FeatureMetric> = listOf(
@@ -33,6 +33,11 @@ data class CommissionLedgerUiState(
     FeatureBullet(title = "提现联动", detail = "佣金可直接进入提现申请。"),
 ),
         val note: String = "收入走势",
+        val isLoading: Boolean = false,
+        val errorMessage: String? = null,
+        val emptyMessage: String? = null,
+        val blockerTitle: String? = null,
+        val blockerMessage: String? = null,
     )
 
     sealed interface CommissionLedgerEvent {

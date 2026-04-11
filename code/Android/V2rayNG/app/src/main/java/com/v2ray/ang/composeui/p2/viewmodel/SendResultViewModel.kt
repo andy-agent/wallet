@@ -5,11 +5,13 @@ import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.SendResultEvent
 import com.v2ray.ang.composeui.p2.model.SendResultUiState
 import com.v2ray.ang.composeui.p2.model.SendResultRouteArgs
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class SendResultViewModel(
     private val repository: CryptoVpnRepository,
     private val routeArgs: SendResultRouteArgs = SendResultRouteArgs(),
-) : BaseFeatureViewModel<SendResultUiState>(SendResultUiState()) {
+) : BaseFeatureViewModel<SendResultUiState>(initialSendResultState()) {
 
     init {
         refresh()
@@ -32,8 +34,23 @@ class SendResultViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getSendResultState(routeArgs)
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, emptyMessage = null)
+        viewModelScope.launch {
+            runCatching { repository.getSendResultState(routeArgs) }
+                .onSuccess { _uiState.value = it.copy(isLoading = false) }
+                .onFailure { _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = it.message ?: "加载发送结果失败") }
         }
     }
 }
+
+private fun initialSendResultState() = SendResultUiState(
+    badge = "",
+    summary = "",
+    primaryActionLabel = null,
+    secondaryActionLabel = null,
+    metrics = emptyList(),
+    highlights = emptyList(),
+    checklist = emptyList(),
+    note = "",
+    isLoading = true,
+)
