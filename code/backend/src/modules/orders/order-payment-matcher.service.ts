@@ -4,8 +4,10 @@ import {
   PaymentScanCursorRecord,
   RuntimeStatePaymentContext,
   StoredOnchainReceiptRecord,
+  StoredOrderRecord,
 } from '../database/runtime-state.types';
 import { RuntimeStateRepository } from '../database/runtime-state.repository';
+import { ProvisioningService } from '../provisioning/provisioning.service';
 import { SolanaClientService } from '../solana-client/solana-client.service';
 import {
   NormalizedIncomingTransfer,
@@ -30,6 +32,7 @@ export class OrderPaymentMatcherService {
     private readonly configService: ConfigService,
     private readonly runtimeStateRepository: RuntimeStateRepository,
     private readonly solanaClient: SolanaClientService,
+    private readonly provisioningService: ProvisioningService,
   ) {}
 
   isEnabled(): boolean {
@@ -71,14 +74,36 @@ export class OrderPaymentMatcherService {
           continue;
         }
 
+        const candidateOrders =
+          await this.runtimeStateRepository.listActiveOrdersForPaymentContext({
+            collectionAddress: context.collectionAddress,
+            quoteAssetCode: context.quoteAssetCode,
+            quoteNetworkCode: context.quoteNetworkCode,
+            statuses: MATCHER_SCAN_STATUSES,
+            activeAfter: Date.now(),
+          });
         const cursor =
           await this.runtimeStateRepository.findPaymentScanCursor(context);
         const response = await this.scanContext(context, cursor);
 
         for (const event of response.events) {
-          await this.runtimeStateRepository.upsertOnchainReceipt(
-            this.toOnchainReceipt(context, event),
-          );
+          const receipt = this.toOnchainReceipt(context, event);
+          const match = this.matchOrder(candidateOrders, event);
+
+          if (match.kind === 'matched') {
+            receipt.matchedOrderNo = match.order.orderNo;
+            receipt.matchStatus = 'MATCHED';
+            receipt.matcherRemark = 'AUTO_MATCHED_BY_SHARED_ADDRESS';
+            await this.applyMatchedOrder(match.order, event);
+          } else if (match.kind === 'ambiguous') {
+            receipt.matchStatus = 'AMBIGUOUS';
+            receipt.matcherRemark = 'MULTIPLE_PENDING_ORDERS_MATCHED';
+          } else {
+            receipt.matchStatus = 'UNMATCHED';
+            receipt.matcherRemark = 'NO_PENDING_ORDER_MATCHED';
+          }
+
+          await this.runtimeStateRepository.upsertOnchainReceipt(receipt);
           storedEvents += 1;
         }
 
@@ -193,5 +218,98 @@ export class OrderPaymentMatcherService {
       context.quoteAssetCode,
       context.collectionAddress,
     ].join(':');
+  }
+
+  private matchOrder(
+    orders: StoredOrderRecord[],
+    event: NormalizedIncomingTransfer,
+  ) {
+    const observedAtMs =
+      typeof event.blockTime === 'number'
+        ? event.blockTime * 1000
+        : Date.now();
+
+    const candidates = orders.filter((order) => {
+      const payableAmountMinor = this.toMinorUnits(
+        order.payableAmount,
+        event.decimals,
+      );
+      const createdAtMs = new Date(order.createdAt).getTime();
+      const expiresAtMs = new Date(order.expiresAt).getTime();
+
+      return (
+        order.matchedOnchainTxHash === null &&
+        createdAtMs <= observedAtMs &&
+        observedAtMs <= expiresAtMs &&
+        payableAmountMinor === BigInt(event.amountRaw)
+      );
+    });
+
+    if (candidates.length === 1) {
+      return {
+        kind: 'matched' as const,
+        order: candidates[0],
+      };
+    }
+
+    if (candidates.length > 1) {
+      return {
+        kind: 'ambiguous' as const,
+      };
+    }
+
+    return {
+      kind: 'unmatched' as const,
+    };
+  }
+
+  private async applyMatchedOrder(
+    order: StoredOrderRecord,
+    event: NormalizedIncomingTransfer,
+  ) {
+    const matchedAt =
+      typeof event.blockTime === 'number'
+        ? new Date(event.blockTime * 1000).toISOString()
+        : new Date().toISOString();
+    const nextOrder: StoredOrderRecord = {
+      ...order,
+      matchedOnchainTxHash: event.signature,
+      paymentMatchedAt: matchedAt,
+      matcherRemark: 'AUTO_MATCHED_BY_SHARED_ADDRESS',
+      failureReason: null,
+    };
+
+    if (
+      event.confirmationStatus === 'confirmed' ||
+      event.confirmationStatus === 'finalized'
+    ) {
+      nextOrder.status = 'PAID';
+      nextOrder.confirmedAt = matchedAt;
+      await this.runtimeStateRepository.saveOrder(nextOrder);
+
+      nextOrder.status = 'PROVISIONING';
+      await this.runtimeStateRepository.saveOrder(nextOrder);
+      await this.provisioningService.provisionPaidOrder({
+        accountId: nextOrder.accountId,
+        planCode: nextOrder.planCode,
+        orderNo: nextOrder.orderNo,
+        sourceAssetCode: nextOrder.quoteAssetCode,
+        sourceAmount: nextOrder.quoteUsdAmount,
+      });
+      nextOrder.status = 'COMPLETED';
+      nextOrder.completedAt = new Date().toISOString();
+      await this.runtimeStateRepository.saveOrder(nextOrder);
+      return;
+    }
+
+    nextOrder.status = 'CONFIRMING';
+    await this.runtimeStateRepository.saveOrder(nextOrder);
+  }
+
+  private toMinorUnits(amount: string, decimals: number) {
+    const [wholePart, fractionPart = ''] = amount.trim().split('.');
+    const whole = wholePart === '' ? '0' : wholePart;
+    const fraction = fractionPart.padEnd(decimals, '0').slice(0, decimals);
+    return BigInt(`${whole}${fraction}`);
   }
 }

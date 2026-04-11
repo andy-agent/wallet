@@ -100,4 +100,100 @@ describe('SolanaClientService', () => {
     });
     expect(httpService.post).not.toHaveBeenCalled();
   });
+
+  it('normalizes the shared-address scan response from sol-agent', async () => {
+    const httpService = {
+      post: jest.fn().mockReturnValue(
+        of({
+          data: {
+            networkCode: 'solana-mainnet',
+            collectionAddress:
+              'SharedAddress111111111111111111111111111111',
+            assetCode: 'USDT',
+            mintAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+            nextBeforeSignature: 'sig-oldest',
+            items: [
+              {
+                signature: 'sig-newest',
+                slot: 987,
+                blockTime: 1775897000,
+                confirmationStatus: 'confirmed',
+                collectionAddress:
+                  'SharedAddress111111111111111111111111111111',
+                assetCode: 'USDT',
+                mintAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+                decimals: 6,
+                amount: '58.000123',
+                amountRaw: '58000123',
+                matchedAccounts: ['TokenAccount111'],
+              },
+            ],
+          },
+        }),
+      ),
+      get: jest.fn(),
+    };
+
+    const config = {
+      isEnabled: () => true,
+      getTimeoutMs: () => 1000,
+      getApiKey: () => 'test-token',
+      useDevnet: () => false,
+      getBaseUrl: () => 'https://sol.residential-agent.com',
+      getMaxRetries: () => 3,
+    };
+
+    const service = new SolanaClientService(
+      httpService as never,
+      config as never,
+    );
+
+    const result = await service.scanIncomingTransfers({
+      collectionAddress: 'SharedAddress111111111111111111111111111111',
+      assetCode: 'USDT',
+      mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+      cursor: {
+        beforeSignature: 'sig-previous',
+        minSlotExclusive: 123,
+      },
+      limit: 25,
+    });
+
+    expect(httpService.post).toHaveBeenCalledWith(
+      'https://sol.residential-agent.com/api/internal/v1/payment/scan-incoming',
+      expect.objectContaining({
+        networkCode: 'solana-mainnet',
+        collectionAddress: 'SharedAddress111111111111111111111111111111',
+        assetCode: 'USDT',
+        mintAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+        beforeSignature: 'sig-previous',
+        limit: 25,
+      }),
+      expect.any(Object),
+    );
+
+    expect(result).toMatchObject({
+      networkCode: 'solana-mainnet',
+      collectionAddress: 'SharedAddress111111111111111111111111111111',
+      assetCode: 'USDT',
+      mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+      nextCursor: {
+        beforeSignature: 'sig-oldest',
+        minSlotExclusive: 987,
+      },
+      events: [
+        {
+          signature: 'sig-newest',
+          eventIndex: 0,
+          recipientOwnerAddress:
+            'SharedAddress111111111111111111111111111111',
+          recipientTokenAccount: 'TokenAccount111',
+          assetCode: 'USDT',
+          amount: '58.000123',
+          amountRaw: '58000123',
+          confirmationStatus: 'confirmed',
+        },
+      ],
+    });
+  });
 });

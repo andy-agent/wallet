@@ -26,6 +26,7 @@ import type {
   GetBalanceResponse,
   GetTransactionStatusRequest,
   GetTransactionStatusResponse,
+  NormalizedIncomingTransfer,
   SolanaServiceHealth,
   ScanIncomingTransfersRequest,
   ScanIncomingTransfersResponse,
@@ -65,6 +66,29 @@ interface VerifyPaymentResponse {
   error?: string;
   blockTime?: number | null;
   slot?: number | null;
+}
+
+interface ScanIncomingApiItem {
+  signature: string;
+  slot?: number | null;
+  blockTime?: number | null;
+  confirmationStatus?: string | null;
+  collectionAddress?: string;
+  assetCode?: string;
+  mintAddress?: string | null;
+  decimals?: number;
+  amount?: string;
+  amountRaw?: string;
+  matchedAccounts?: string[];
+}
+
+interface ScanIncomingApiResponse {
+  networkCode?: string;
+  collectionAddress?: string;
+  assetCode?: string;
+  mintAddress?: string | null;
+  nextBeforeSignature?: string | null;
+  items?: ScanIncomingApiItem[];
 }
 
 @Injectable()
@@ -309,7 +333,7 @@ export class SolanaClientService {
             collectionAddress: request.collectionAddress,
             assetCode: request.assetCode,
             mintAddress: request.mint ?? null,
-            cursor: request.cursor ?? null,
+            beforeSignature: request.cursor?.beforeSignature ?? null,
             limit: request.limit ?? 50,
           },
           {
@@ -319,10 +343,16 @@ export class SolanaClientService {
         ),
       );
 
-      return this.unwrapResponse<ScanIncomingTransfersResponse>(
+      const payload = this.unwrapResponse<ScanIncomingApiResponse>(
         response as AxiosResponse<
-          ScanIncomingTransfersResponse | EnvelopeResponse<ScanIncomingTransfersResponse>
+          ScanIncomingApiResponse | EnvelopeResponse<ScanIncomingApiResponse>
         >,
+      );
+
+      return this.normalizeScanIncomingTransfersResponse(
+        payload,
+        request,
+        networkCode,
       );
     } catch (error) {
       this.logger.error('Scan incoming transfers failed', error);
@@ -513,6 +543,67 @@ export class SolanaClientService {
     const baseUrl = this.config.getBaseUrl().replace(/\/+$/, '');
     const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
     return `${apiBaseUrl}/${path.replace(/^\/+/, '')}`;
+  }
+
+  private normalizeScanIncomingTransfersResponse(
+    payload: ScanIncomingApiResponse,
+    request: ScanIncomingTransfersRequest,
+    fallbackNetworkCode: string,
+  ): ScanIncomingTransfersResponse {
+    const items = payload.items ?? [];
+    const events = items.map((item, index) => ({
+      signature: item.signature,
+      eventIndex: index,
+      slot: item.slot ?? null,
+      blockTime: item.blockTime ?? null,
+      confirmationStatus: this.normalizeScanConfirmationStatus(
+        item.confirmationStatus,
+      ),
+      recipientOwnerAddress:
+        item.collectionAddress ??
+        payload.collectionAddress ??
+        request.collectionAddress,
+      recipientTokenAccount: item.matchedAccounts?.[0] ?? null,
+      fromAddress: null,
+      assetCode: item.assetCode ?? payload.assetCode ?? request.assetCode,
+      mint: item.mintAddress ?? payload.mintAddress ?? request.mint ?? null,
+      decimals: item.decimals ?? (request.mint ? 6 : 9),
+      amount: item.amount ?? '0',
+      amountRaw: item.amountRaw ?? '0',
+      rawPayload: {
+        matchedAccounts: item.matchedAccounts ?? [],
+      },
+    }));
+    const oldestEvent = events[events.length - 1];
+
+    return {
+      networkCode: payload.networkCode ?? fallbackNetworkCode,
+      collectionAddress:
+        payload.collectionAddress ?? request.collectionAddress,
+      assetCode: payload.assetCode ?? request.assetCode,
+      mint: payload.mintAddress ?? request.mint ?? null,
+      events,
+      nextCursor: {
+        beforeSignature: payload.nextBeforeSignature ?? null,
+        minSlotExclusive:
+          oldestEvent?.slot ?? request.cursor?.minSlotExclusive ?? null,
+      },
+      scannedAt: new Date().toISOString(),
+    };
+  }
+
+  private normalizeScanConfirmationStatus(
+    status: string | null | undefined,
+  ): NormalizedIncomingTransfer['confirmationStatus'] {
+    switch (status) {
+      case 'processed':
+      case 'confirmed':
+      case 'finalized':
+      case 'failed':
+        return status;
+      default:
+        return 'unknown';
+    }
   }
 
   private normalizeVerifyIncomingTransferResponse(
