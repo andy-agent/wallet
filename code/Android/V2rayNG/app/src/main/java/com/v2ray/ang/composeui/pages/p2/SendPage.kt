@@ -50,10 +50,16 @@ fun SendScreen(
         primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(SendEvent.PrimaryActionClicked) },
     ) {
+        uiState.blockerTitle?.let { title ->
+            P2CoreNoteCard(title = title, text = uiState.blockerMessage ?: uiState.note)
+        }
+        uiState.emptyMessage?.let {
+            P2CoreNoteCard(title = "当前空态", text = it)
+        }
         P2CoreHeroValueCard(
             label = "发送概览",
             value = amount,
-            supportingText = "≈ $amount USDT · 广播后不可撤回",
+            supportingText = uiState.note.ifBlank { "广播后不可撤回" },
             highlight = uiState.badge,
             stats = listOf(
                 "网络费" to (uiState.metrics.getOrNull(2)?.value ?: "1.24 USDT"),

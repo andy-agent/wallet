@@ -52,6 +52,18 @@ fun WithdrawScreen(
         secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(WithdrawEvent.SecondaryActionClicked) },
     ) {
+        uiState.errorMessage?.let {
+            P2CoreNoteCard(title = "提交失败", text = it)
+        }
+        uiState.feedbackMessage?.let {
+            P2CoreNoteCard(title = "提交结果", text = it)
+        }
+        uiState.blockerTitle?.let {
+            P2CoreNoteCard(title = it, text = uiState.blockerMessage ?: uiState.note)
+        }
+        uiState.emptyMessage?.let {
+            P2CoreNoteCard(title = "当前空态", text = it)
+        }
         P2CoreMetricGrid(
             items = uiState.metrics.take(2).map { it.label to it.value } + listOf("网络手续费" to (uiState.metrics.getOrNull(2)?.value ?: "")),
             accentIndexes = setOf(riskFocus % 3),

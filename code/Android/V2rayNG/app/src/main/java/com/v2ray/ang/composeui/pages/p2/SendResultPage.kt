@@ -53,6 +53,9 @@ fun SendResultScreen(
         secondaryActionLabel = uiState.primaryActionLabel,
         onSecondaryAction = { onEvent(SendResultEvent.PrimaryActionClicked) },
     ) {
+        uiState.blockerTitle?.let { title ->
+            P2CoreNoteCard(title = title, text = uiState.blockerMessage ?: uiState.note)
+        }
         P2CoreHeroValueCard(
             label = "到账金额",
             value = amount,
@@ -69,8 +72,8 @@ fun SendResultScreen(
         P2CoreActionValueRow(
             label = "交易状态",
             value = uiState.highlights.firstOrNull()?.title ?: "链上确认中",
-            actionLabel = uiState.secondaryActionLabel ?: "查看哈希",
-            onAction = { onEvent(SendResultEvent.SecondaryActionClicked) },
+            actionLabel = uiState.secondaryActionLabel,
+            onAction = uiState.secondaryActionLabel?.let { { onEvent(SendResultEvent.SecondaryActionClicked) } },
             valueColor = Color(0xFF1BBF93),
         )
     }

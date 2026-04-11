@@ -51,6 +51,15 @@ fun ReceiveScreen(
         onBottomNav = onBottomNav,
         secureHubLabel = receiveHubLabel(status, chips.firstOrNull()),
     ) {
+        uiState.blockerTitle?.let { title ->
+            P2CoreNoteCard(
+                title = title,
+                text = uiState.blockerMessage ?: uiState.note,
+            )
+        }
+        uiState.emptyMessage?.let {
+            P2CoreNoteCard(title = "当前空态", text = it)
+        }
         P2CoreHeroValueCard(
             label = "当前收款网络",
             value = chips.firstOrNull() ?: (uiState.badge ?: "--"),
@@ -63,7 +72,7 @@ fun ReceiveScreen(
         )
         P2CoreQrAddressCard(
             title = "收款二维码",
-            subtitle = "扫码或复制地址进行转账",
+            subtitle = if (uiState.blockerTitle == null) "扫码或复制地址进行转账" else "当前仅展示阻塞说明",
             status = status,
             statusColor = androidx.compose.ui.graphics.Color(0xFFE6FFF6),
             address = address,
@@ -73,12 +82,14 @@ fun ReceiveScreen(
             if (chips.isNotEmpty()) {
                 P2CoreChipRow(items = chips, activeIndex = 0)
             }
-            CoreActionRow(
-                primaryActionLabel = uiState.primaryActionLabel ?: "分享二维码",
-                onPrimaryAction = { onEvent(ReceiveEvent.PrimaryActionClicked) },
-                secondaryActionLabel = uiState.secondaryActionLabel ?: "复制地址",
-                onSecondaryAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
-            )
+            if (!uiState.primaryActionLabel.isNullOrBlank() && !uiState.secondaryActionLabel.isNullOrBlank()) {
+                CoreActionRow(
+                    primaryActionLabel = uiState.primaryActionLabel,
+                    onPrimaryAction = { onEvent(ReceiveEvent.PrimaryActionClicked) },
+                    secondaryActionLabel = uiState.secondaryActionLabel,
+                    onSecondaryAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
+                )
+            }
             P2CoreNoteCard(title = "请确认链一致", text = uiState.note)
         }
     }
