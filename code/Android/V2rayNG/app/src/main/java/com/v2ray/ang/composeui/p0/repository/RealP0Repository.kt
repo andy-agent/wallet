@@ -243,11 +243,11 @@ class RealP0Repository(context: Context) : P0Repository {
 
         return WalletHomeUiState(
             isLoading = false,
-            totalBalanceText = "${assetCodeTotals.size} 个已缓存资产",
+            totalBalanceText = "${assetCodeTotals.size} 个订单映射资产",
             selectedChainId = selectedChainId ?: chains.firstOrNull()?.chainId ?: "all",
             chains = chains,
             assets = assets,
-            alertBanner = currentUser?.let { "Account ${it.username} · ${orders.size} 笔订单缓存" }
+            alertBanner = currentUser?.let { "当前仅基于 ${orders.size} 笔真实订单缓存映射资产视图" }
                 ?: "当前未缓存账号",
             accountLabel = currentUser?.username ?: currentUser?.email.orEmpty(),
             defaultAddressCount = 0,
@@ -304,7 +304,7 @@ class RealP0Repository(context: Context) : P0Repository {
     private fun buildWatchSignals(orders: List<Order>): List<WatchSignal> {
         if (orders.isEmpty()) {
             return listOf(
-                WatchSignal("USDT", "No real wallet flow yet", "0.0%", "$0", true),
+                WatchSignal("订单", "当前暂无真实订单缓存", "0", "--", false),
             )
         }
         return orders.take(3).mapIndexed { index, order ->
@@ -335,9 +335,9 @@ class RealP0Repository(context: Context) : P0Repository {
     }
 
     private fun chainAccent(chainId: String): String = when (chainId.lowercase(Locale.ROOT)) {
-        "tron" -> "来自真实订单支付网络"
-        "solana" -> "来自真实订单支付网络"
-        else -> "来自本地资产统计"
+        "tron" -> "来自真实订单缓存"
+        "solana" -> "来自真实订单缓存"
+        else -> "来自订单映射资产视图"
     }
 
     private fun formatMoney(value: Double): String = "$" + String.format(Locale.US, "%.2f", value)

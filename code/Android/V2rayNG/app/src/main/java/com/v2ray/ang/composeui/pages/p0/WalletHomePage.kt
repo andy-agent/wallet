@@ -71,23 +71,24 @@ fun WalletHomeScreen(
         P01Card {
             P01CardHeader(
                 title = uiState.totalBalanceText,
-                trailing = { P01Chip(text = "${uiState.chains.count()} 链已激活") },
+                trailing = { P01Chip(text = "${uiState.chains.count()} 条支付网络缓存") },
                 subtitle = uiState.alertBanner,
             )
             P01MetricGrid(
                 items = listOf(
-                    P01MetricCell("可用余额", uiState.totalBalanceText),
+                    P01MetricCell("资产视图", uiState.totalBalanceText),
                     P01MetricCell("资产数量", uiState.assets.size.toString()),
-                    P01MetricCell("已激活链", uiState.chains.size.toString()),
-                    P01MetricCell("当前网络", uiState.chains.firstOrNull()?.label ?: "未配置"),
+                    P01MetricCell("支付网络", uiState.chains.size.toString()),
+                    P01MetricCell("当前筛选", uiState.chains.firstOrNull()?.label ?: "未配置"),
                 ),
             )
+            uiState.emptyMessage?.let { P01CardCopy(it) }
         }
 
         P01Card {
             P01CardHeader(
                 title = "网络筛选",
-                trailing = { P01Chip(text = "自动补齐") },
+                trailing = { P01Chip(text = "真实缓存") },
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -139,17 +140,17 @@ fun WalletHomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 com.v2ray.ang.composeui.p0.ui.P01SecondaryButton(
-                    text = "收款",
+                    text = "收款状态",
                     onClick = onReceive,
                     modifier = Modifier.weight(1f),
                 )
                 com.v2ray.ang.composeui.p0.ui.P01PrimaryButton(
-                    text = "发送",
+                    text = "发送状态",
                     onClick = onSend,
                     modifier = Modifier.weight(1f),
                 )
             }
-            P01CardCopy(uiState.alertBanner)
+            P01CardCopy("当前收款/发送能力仍受真实钱包地址与链上广播能力限制。")
         }
     }
 }

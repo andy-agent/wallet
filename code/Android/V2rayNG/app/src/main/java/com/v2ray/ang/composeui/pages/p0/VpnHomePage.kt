@@ -141,7 +141,7 @@ fun VpnHomeScreen(
             P01CardHeader(
                 title = "当前连接",
                 trailing = {
-                    P01Chip(text = "${uiState.subscription.planName}• 剩余${uiState.subscription.expiresInDays}天")
+                    P01Chip(text = "${uiState.subscription.planName} • ${uiState.subscription.statusLabel}")
                 },
                 subtitle = "${uiState.selectedRegion.regionName} • ${uiState.selectedRegion.protocol}",
             )
@@ -161,11 +161,12 @@ fun VpnHomeScreen(
             P01MetricGrid(
                 items = listOf(
                     P01MetricCell("CONNECTED", connectionPrimaryValue(uiState)),
-                    P01MetricCell("延迟", "${uiState.selectedRegion.latencyMs}ms"),
+                    P01MetricCell("延迟", regionLatencyLabel(uiState.selectedRegion)),
                     P01MetricCell("剩余天数", "${uiState.subscription.expiresInDays}天"),
                     P01MetricCell("节点负载", uiState.selectedRegion.load),
                 ),
             )
+            uiState.emptyMessage?.let { P01CardCopy(it) }
             P01ButtonRow(
                 primaryLabel = "断开/重新连接",
                 onPrimaryClick = onToggleConnection,
@@ -183,9 +184,9 @@ fun VpnHomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                VpnQuickCell("${uiState.importedConfigCount} 配置", onClick = { onBottomNav(CryptoVpnRouteSpec.receiveRoute("USDT", "tron")) }, modifier = Modifier.weight(1f))
-                VpnQuickCell("${uiState.speedNodes.size} 节点", onClick = { onBottomNav(CryptoVpnRouteSpec.sendRoute("USDT", "tron")) }, modifier = Modifier.weight(1f))
-                VpnQuickCell("${uiState.subscription.expiresInDays}天", onClick = { onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern) }, modifier = Modifier.weight(1f))
+                VpnQuickCell("${uiState.importedConfigCount} 配置", onClick = { onBottomNav(CryptoVpnRouteSpec.orderList.pattern) }, modifier = Modifier.weight(1f))
+                VpnQuickCell("${uiState.speedNodes.size} 节点", onClick = { onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern) }, modifier = Modifier.weight(1f))
+                VpnQuickCell("${uiState.subscription.expiresInDays}天", onClick = onPlans, modifier = Modifier.weight(1f))
                 VpnQuickCell("查看订单", onClick = { onBottomNav(CryptoVpnRouteSpec.orderList.pattern) }, modifier = Modifier.weight(1f))
             }
             P01CardCopy(uiState.watchSignals.firstOrNull()?.reason ?: "当前暂无链路提醒。")
@@ -255,6 +256,9 @@ private fun connectionPrimaryValue(status: VpnHomeUiState): String = when (statu
     VpnConnectionStatus.CONNECTING -> "连接中"
     VpnConnectionStatus.DISCONNECTED -> "0Mbps"
 }
+
+private fun regionLatencyLabel(region: RegionSpeed): String =
+    region.latencyMs?.let { "${it}ms" } ?: "未测速"
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
 @Composable
