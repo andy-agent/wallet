@@ -179,11 +179,21 @@ let PaymentService = PaymentService_1 = class PaymentService {
         const collectionAddress = this.assertPublicKey(body.collectionAddress, 'collectionAddress');
         const asset = this.resolveAsset(body, networkCode);
         const limit = body.limit ?? 20;
-        const signatureResult = await this.solanaRpc.getSignatureInfos(collectionAddress, networkCode, {
+        const minSlotExclusive = body.minSlotExclusive;
+        const signatureScanSources = await this.collectSignatureScanSources({
+            collectionAddress,
+            networkCode,
+            assetKind: asset.assetKind,
+            mintAddress: asset.mintAddress,
             limit,
             beforeSignature: body.beforeSignature,
         });
-        if (signatureResult.signatures.length === 0) {
+        const mergedSignatures = this.mergeSignatureSources(signatureScanSources);
+        const filteredSignatures = minSlotExclusive === undefined
+            ? mergedSignatures
+            : mergedSignatures.filter((signatureInfo) => signatureInfo.slot !== null &&
+                signatureInfo.slot > minSlotExclusive);
+        if (filteredSignatures.length === 0) {
             return {
                 collectionAddress,
                 networkCode,
@@ -197,9 +207,9 @@ let PaymentService = PaymentService_1 = class PaymentService {
                 items: [],
             };
         }
-        const parsedTransactions = await this.solanaRpc.getParsedTransactions(signatureResult.signatures.map((item) => item.signature), networkCode);
+        const parsedTransactions = await this.solanaRpc.getParsedTransactions(filteredSignatures.map((item) => item.signature), networkCode);
         const transactionMap = new Map(parsedTransactions.transactions.map((item) => [item.signature, item]));
-        const items = signatureResult.signatures
+        const items = filteredSignatures
             .map((signatureInfo) => {
             if (signatureInfo.err) {
                 return null;
@@ -237,12 +247,59 @@ let PaymentService = PaymentService_1 = class PaymentService {
             assetKind: asset.assetKind,
             mintAddress: asset.mintAddress,
             decimals: asset.decimals,
-            scannedSignatures: signatureResult.signatures.length,
+            scannedSignatures: filteredSignatures.length,
             matchedTransfers: items.length,
-            nextBeforeSignature: signatureResult.signatures[signatureResult.signatures.length - 1]
-                ?.signature ?? null,
+            nextBeforeSignature: filteredSignatures[filteredSignatures.length - 1]?.signature ?? null,
             items,
         };
+    }
+    async collectSignatureScanSources(input) {
+        const ownerSignatures = await this.solanaRpc.getSignatureInfos(input.collectionAddress, input.networkCode, {
+            limit: input.limit,
+            beforeSignature: input.beforeSignature,
+        });
+        const sources = [
+            {
+                sourceAddress: input.collectionAddress,
+                signatures: ownerSignatures.signatures,
+            },
+        ];
+        if (input.assetKind !== 'SPL_TOKEN' || !input.mintAddress) {
+            return sources;
+        }
+        const associatedTokenAddress = this.solanaRpc.deriveAssociatedTokenAddress(input.collectionAddress, input.mintAddress);
+        const ataSignatures = await this.solanaRpc.getSignatureInfos(associatedTokenAddress, input.networkCode, {
+            limit: input.limit,
+            beforeSignature: input.beforeSignature,
+        });
+        sources.push({
+            sourceAddress: associatedTokenAddress,
+            signatures: ataSignatures.signatures,
+        });
+        return sources;
+    }
+    mergeSignatureSources(sources) {
+        const merged = new Map();
+        for (const source of sources) {
+            for (const signatureInfo of source.signatures) {
+                if (!merged.has(signatureInfo.signature)) {
+                    merged.set(signatureInfo.signature, signatureInfo);
+                }
+            }
+        }
+        return Array.from(merged.values()).sort((left, right) => {
+            const leftSlot = left.slot ?? Number.MIN_SAFE_INTEGER;
+            const rightSlot = right.slot ?? Number.MIN_SAFE_INTEGER;
+            if (rightSlot !== leftSlot) {
+                return rightSlot - leftSlot;
+            }
+            const leftBlockTime = left.blockTime ?? Number.MIN_SAFE_INTEGER;
+            const rightBlockTime = right.blockTime ?? Number.MIN_SAFE_INTEGER;
+            if (rightBlockTime !== leftBlockTime) {
+                return rightBlockTime - leftBlockTime;
+            }
+            return right.signature.localeCompare(left.signature);
+        });
     }
     buildVerificationResult(input) {
         return {

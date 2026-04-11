@@ -75,6 +75,8 @@ export declare class PaymentService {
         verifiedAt: string;
     }>;
     scanIncomingTransfers(body: ScanIncomingTransfersRequestDto): Promise<ScanIncomingTransfersResponseDto>;
+    private collectSignatureScanSources;
+    private mergeSignatureSources;
     private buildVerificationResult;
     private resolveAsset;
     private extractSolReceipt;

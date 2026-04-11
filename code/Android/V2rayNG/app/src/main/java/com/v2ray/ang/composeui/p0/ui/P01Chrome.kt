@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,7 +30,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -379,17 +382,32 @@ fun P01Tab(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (selected) P01AccentBlue.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.82f),
+        animationSpec = tween(durationMillis = 220),
+        label = "p01_tab_bg",
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) P01AccentBlue.copy(alpha = 0.12f) else P01Border,
+        animationSpec = tween(durationMillis = 220),
+        label = "p01_tab_border",
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (selected) P01AccentBlue else P01TextSoft,
+        animationSpec = tween(durationMillis = 220),
+        label = "p01_tab_text",
+    )
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(999.dp))
-            .background(if (selected) P01AccentBlue.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.82f))
-            .border(1.dp, if (selected) Color.Transparent else P01Border, RoundedCornerShape(999.dp))
+            .background(backgroundColor)
+            .border(1.dp, borderColor, RoundedCornerShape(999.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 7.dp),
     ) {
         Text(
             text = text,
-            color = if (selected) P01AccentBlue else P01TextSoft,
+            color = textColor,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
         )
@@ -464,10 +482,21 @@ fun P01ListRow(
     onClick: (() -> Unit)? = null,
 ) {
     val interaction = remember { MutableInteractionSource() }
+    val isPressed by interaction.collectIsPressedAsState()
+    val rowBackground by animateColorAsState(
+        targetValue = when {
+            onClick == null -> Color.Transparent
+            isPressed -> P01AccentBlue.copy(alpha = 0.08f)
+            else -> Color.Transparent
+        },
+        animationSpec = tween(durationMillis = 140),
+        label = "p01_list_row_bg",
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
+            .background(rowBackground)
             .clickable(
                 enabled = onClick != null,
                 interactionSource = interaction,
@@ -749,13 +778,37 @@ fun P01SuccessBadge(
     symbol: String,
     tint: Color = P01AccentMint,
 ) {
+    val transition = rememberInfiniteTransition(label = "p01_success_badge")
+    val pulse by transition.animateFloat(
+        initialValue = 0.92f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1800, easing = LinearEasing),
+        ),
+        label = "p01_success_badge_pulse",
+    )
+    val glow by transition.animateFloat(
+        initialValue = 0.18f,
+        targetValue = 0.34f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = LinearEasing),
+        ),
+        label = "p01_success_badge_glow",
+    )
     Box(
         modifier = Modifier
             .size(88.dp)
+            .graphicsLayer {
+                scaleX = pulse
+                scaleY = pulse
+            }
             .clip(CircleShape)
             .background(
                 Brush.radialGradient(
-                    colors = listOf(tint.copy(alpha = 0.22f), P01SurfaceStrong),
+                    colors = listOf(
+                        tint.copy(alpha = 0.22f + glow * 0.18f),
+                        P01SurfaceStrong,
+                    ),
                 ),
             ),
         contentAlignment = Alignment.Center,

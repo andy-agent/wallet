@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-04-11T10:52:12Z",
+  "generated_at": "2026-04-11T10:58:46Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-vx4.2",
   "next_task_title": "Backend：完善共享地址订单自动匹配幂等与状态推进",
-  "in_progress_count": 7,
+  "in_progress_count": 8,
   "ready_count": 0,
-  "open_count": 12,
+  "open_count": 13,
   "closed_count": 392,
-  "dirty_count": 5,
+  "dirty_count": 16,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {

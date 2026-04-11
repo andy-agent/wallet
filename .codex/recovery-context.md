@@ -1,6 +1,6 @@
 # Recovery Context
 
-Generated: 2026-04-11T10:52:12Z
+Generated: 2026-04-11T10:58:46Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
@@ -8,11 +8,11 @@ Repository: /Users/cnyirui/git/projects/liaojiang
 - next_task_title: Backend：完善共享地址订单自动匹配幂等与状态推进
 
 ## Counters
-- in_progress: 7
+- in_progress: 8
 - ready: 0
-- open: 12
+- open: 13
 - closed: 392
-- dirty: 5
+- dirty: 16
 
 ## Next Milestone
 - Continue the next task and complete one milestone
