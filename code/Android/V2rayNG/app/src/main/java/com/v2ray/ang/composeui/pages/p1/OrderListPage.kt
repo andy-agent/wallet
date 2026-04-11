@@ -14,14 +14,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.ui.P01Header
 import com.v2ray.ang.composeui.p0.ui.P01Card
+import com.v2ray.ang.composeui.p0.ui.P01CardCopy
 import com.v2ray.ang.composeui.p0.ui.P01List
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.ui.P01Tab
+import com.v2ray.ang.composeui.p1.model.P1ScreenState
 import com.v2ray.ang.composeui.p1.model.OrderListUiState
+import com.v2ray.ang.composeui.p1.model.P1OrderSummary
 import com.v2ray.ang.composeui.p1.model.orderListPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.OrderListViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
@@ -50,10 +52,11 @@ fun OrderListScreen(
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val orders = orderListItems(uiState)
     var selectedOrderId by rememberSaveable { mutableStateOf(orders.firstOrNull()?.orderId.orEmpty()) }
+    val stateInfo = uiState.stateInfo
     val filteredOrders = orders.filter { order ->
         when (selectedTab) {
-            1 -> order.status == "已完成"
-            2 -> order.status == "已退款"
+            1 -> order.status == "已完成" || order.status == "COMPLETED"
+            2 -> order.status == "已退款" || order.status == "REFUNDED"
             else -> true
         }
     }
@@ -65,14 +68,14 @@ fun OrderListScreen(
     ) {
         P01Header(
             eyebrow = "ORDERS",
-            title = "订单中心",
+            title = uiState.title,
             backLabel = "<",
             onBack = { onBottomNav(CryptoVpnRouteSpec.vpnHome.pattern) },
             trailing = { P1SecureHub(label = orderListHubLabel(selectedTab)) },
         )
 
         P1SelectableCard(
-            selected = filteredOrders.isNotEmpty(),
+            selected = filteredOrders.isNotEmpty() && stateInfo.state == P1ScreenState.Content,
             accentColor = Color(0xFF4276FF),
         ) {
             Row(
@@ -86,6 +89,9 @@ fun OrderListScreen(
                         onClick = { selectedTab = index },
                     )
                 }
+            }
+            if (stateInfo.message.isNotBlank()) {
+                P01CardCopy(stateInfo.message)
             }
             P01List {
                 filteredOrders.forEach { order ->
@@ -104,8 +110,8 @@ fun OrderListScreen(
                 }
                 if (filteredOrders.isEmpty()) {
                     P1FeedbackRow(
-                        title = "当前筛选下暂无订单",
-                        copy = "切换标签后可查看其他状态的订阅订单。",
+                        title = stateInfo.title.ifBlank { "当前筛选下暂无订单" },
+                        copy = stateInfo.message.ifBlank { "当前账号暂无符合条件的真实订单。" },
                         accentColor = Color(0xFF7B8DB0),
                     )
                 }
@@ -122,37 +128,17 @@ private data class OrderListItemUi(
     val accentColor: Color,
 )
 
-private fun orderListItems(uiState: OrderListUiState): List<OrderListItemUi> {
-    val contentItems = uiState.highlights.p1ContentItems()
-    if (contentItems.isNotEmpty()) {
-        return contentItems.mapIndexed { index, item ->
-            val status = item.trailing.ifBlank { if (index == 0) "已完成" else "待支付" }
-            OrderListItemUi(
-                title = item.title,
-                copy = item.subtitle,
-                status = status,
-                orderId = item.badge.ifBlank { "ORD-2025-000${index + 1}" },
-                accentColor = orderStatusColor(status),
-            )
-        }
-    }
-    return listOf(
-        OrderListItemUi(
-            title = "年费 Pro",
-            copy = "TRON / 149 USDT",
-            status = "已完成",
-            orderId = "ORD-2025-0001",
-            accentColor = orderStatusColor("已完成"),
-        ),
-        OrderListItemUi(
-            title = "月费 Pro",
-            copy = "SOL / 8.90",
-            status = "待支付",
-            orderId = "ORD-2025-0002",
-            accentColor = orderStatusColor("待支付"),
-        ),
+private fun orderListItems(uiState: OrderListUiState): List<OrderListItemUi> =
+    uiState.orders.map(::toOrderListItem)
+
+private fun toOrderListItem(order: P1OrderSummary): OrderListItemUi =
+    OrderListItemUi(
+        title = order.planName,
+        copy = "${order.networkCode} / ${order.amountText}",
+        status = order.statusText.ifBlank { order.status },
+        orderId = order.orderNo,
+        accentColor = orderStatusColor(order.statusText.ifBlank { order.status }),
     )
-}
 
 private fun orderStatusColor(status: String): Color =
     when (status) {

@@ -20,6 +20,7 @@ import com.v2ray.ang.composeui.p0.ui.P01List
 import com.v2ray.ang.composeui.p0.ui.P01MetricCell
 import com.v2ray.ang.composeui.p0.ui.P01MetricGrid
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
+import com.v2ray.ang.composeui.p1.model.P1ScreenState
 import com.v2ray.ang.composeui.p1.model.WalletPaymentConfirmEvent
 import com.v2ray.ang.composeui.p1.model.WalletPaymentConfirmUiState
 import com.v2ray.ang.composeui.p1.model.walletPaymentConfirmPreviewState
@@ -55,6 +56,7 @@ fun WalletPaymentConfirmScreen(
         mutableIntStateOf(rows.summaryRows.indexOfFirst { it.first == "支付金额" }.coerceAtLeast(0))
     }
     var selectedRiskIndex by rememberSaveable { mutableIntStateOf(-1) }
+    val stateInfo = uiState.stateInfo
     val summaryAccent = if (focusedSummaryIndex == rows.summaryRows.indexOfFirst { it.first == "支付金额" }) {
         Color(0xFFF6B155)
     } else {
@@ -68,8 +70,8 @@ fun WalletPaymentConfirmScreen(
     ) {
         P01Header(
             eyebrow = "WALLET PAYMENT",
-            title = "钱包支付确认",
-            subtitle = "把 VPN 续费变成标准的钱包支付流，而不是额外弹窗。",
+            title = uiState.title,
+            subtitle = uiState.summary,
             chips = listOf("链路安全"),
             trailing = { P1SecureHub(label = paymentConfirmHubLabel(selectedRiskIndex, focusedSummaryIndex)) },
         )
@@ -79,36 +81,36 @@ fun WalletPaymentConfirmScreen(
                 title = "订单摘要",
                 trailing = { P01Chip(text = rows.orderNoLabel) },
             )
-            P01List {
-                rows.summaryRows.forEachIndexed { index, (title, value) ->
-                    P1FeedbackRow(
-                        title = title,
-                        value = value,
-                        selected = index == focusedSummaryIndex,
-                        accentColor = if (title == "支付金额") Color(0xFFF6B155) else summaryAccent,
-                        valueColor = if (title == "支付金额") Color(0xFFF6B155) else summaryAccent,
-                        onClick = { focusedSummaryIndex = index },
-                    )
+            if (rows.summaryRows.isEmpty()) {
+                P01CardCopy(stateInfo.message.ifBlank { "当前未查询到真实支付确认单。" })
+            } else {
+                P01List {
+                    rows.summaryRows.forEachIndexed { index, (title, value) ->
+                        P1FeedbackRow(
+                            title = title,
+                            value = value,
+                            selected = index == focusedSummaryIndex,
+                            accentColor = if (title == "支付金额") Color(0xFFF6B155) else summaryAccent,
+                            valueColor = if (title == "支付金额") Color(0xFFF6B155) else summaryAccent,
+                            onClick = { focusedSummaryIndex = index },
+                        )
+                    }
                 }
             }
         }
 
         P1SelectableCard(
-            selected = true,
+            selected = uiState.order != null && stateInfo.state == P1ScreenState.Content,
             accentColor = Color(0xFF49D89B),
         ) {
             P01MetricGrid(
                 items = listOf(
-                    P01MetricCell("剩余余额", rows.balanceText),
-                    P01MetricCell("路由状态", "已加密"),
+                    P01MetricCell("订单状态", uiState.order?.statusText ?: "--"),
+                    P01MetricCell("支付网络", uiState.order?.networkCode ?: "--"),
                 ),
             )
             P01CardCopy(
-                if (selectedRiskIndex >= 0) {
-                    "风控项已确认 · VPN 广播交易。"
-                } else {
-                    "支付后 · VPN 广播交易。"
-                },
+                stateInfo.message.ifBlank { uiState.note.ifBlank { uiState.summary } },
             )
         }
 
@@ -123,10 +125,12 @@ fun WalletPaymentConfirmScreen(
                 },
             )
             P01List {
-                listOf(
-                    "收款地址已绑定官方商户" to "避免因中间人攻击造成错误转账。",
-                    "当前节点延迟稳定" to "提交交易不会因重试产生重复扣款。",
-                ).forEachIndexed { index, (title, copy) ->
+                val risks = if (uiState.riskLines.isEmpty()) {
+                    listOf("当前无额外风控提示" to "页面仅展示真实订单状态，不伪装自动开通成功。")
+                } else {
+                    uiState.riskLines.map { it.label to it.value }
+                }
+                risks.forEachIndexed { index, (title, copy) ->
                     P1FeedbackRow(
                         title = title,
                         copy = copy,
@@ -138,37 +142,33 @@ fun WalletPaymentConfirmScreen(
             }
         }
 
-        P1PrimaryCta(
-            text = "确认支付并开通",
-            onClick = onPrimaryAction,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        if (uiState.primaryActionLabel.isNotBlank()) {
+            P1PrimaryCta(
+                text = uiState.primaryActionLabel,
+                onClick = onPrimaryAction,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 
 private data class WalletPaymentConfirmRows(
     val orderNoLabel: String,
-    val balanceText: String,
     val summaryRows: List<Pair<String, String>>,
 )
 
 private fun paymentConfirmRows(uiState: WalletPaymentConfirmUiState): WalletPaymentConfirmRows {
-    val metrics = uiState.metrics.associate { it.label to it.value }
-    val contentHighlights = uiState.highlights.p1ContentItems()
-    val highlightMap = contentHighlights.associateBy { it.title }
-    val planTitle = highlightMap.keys.firstOrNull { !it.contains("收款地址") && !it.contains("订单状态") }
+    val order = uiState.order
     return WalletPaymentConfirmRows(
-        orderNoLabel = metrics["订单号"]?.let { "订单 #$it" } ?: "订单 #CVP-2409",
-        balanceText = "12,781.99",
-        summaryRows = listOf(
-            "套餐" to (planTitle ?: "年度 Pro"),
-            "可用设备" to "5 台",
-            "节点权益" to "高速专线 + 智能分流",
-            "支付资产" to ((metrics["支付币种"] ?: "USDT") + " · TRON"),
-            "支付金额" to (highlightMap[planTitle]?.trailing ?: "58.00 USDT"),
-            "网络费" to (metrics["网络手续费"] ?: "1.24 USDT"),
-            "预计开通" to "1 分钟内",
-        ),
+        orderNoLabel = order?.orderNo?.let { "订单 #$it" } ?: "订单未找到",
+        summaryRows = buildList {
+            if (order != null) {
+                add("套餐" to order.planName)
+                add("订单状态" to order.statusText.ifBlank { order.status })
+                add("支付资产" to "${order.assetCode} · ${order.networkCode}")
+            }
+            uiState.detailLines.forEach { add(it.label to it.value) }
+        },
     )
 }
 

@@ -15,6 +15,8 @@ import com.v2ray.ang.composeui.p0.ui.P01Chip
 import com.v2ray.ang.composeui.p0.ui.P01Header
 import com.v2ray.ang.composeui.p0.ui.P01List
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
+import com.v2ray.ang.composeui.p1.model.P1DetailLine
+import com.v2ray.ang.composeui.p1.model.P1ScreenState
 import com.v2ray.ang.composeui.p1.model.OrderDetailUiState
 import com.v2ray.ang.composeui.p1.model.orderDetailPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.OrderDetailViewModel
@@ -43,6 +45,7 @@ fun OrderDetailScreen(
 ) {
     val rows = detailRows(uiState)
     var highlightedRowIndex by rememberSaveable { mutableIntStateOf(rows.lastIndex.coerceAtLeast(0)) }
+    val stateInfo = uiState.stateInfo
 
     P01PhoneScaffold(
         statusTime = "18:42",
@@ -51,30 +54,38 @@ fun OrderDetailScreen(
     ) {
         P01Header(
             eyebrow = "ORDER DETAIL",
-            title = "订单详情",
-            subtitle = "追踪支付状态、激活进度与设备生效情况。",
-            chips = listOf("• 已完成"),
+            title = uiState.title,
+            subtitle = uiState.summary,
+            chips = listOf("• ${uiState.order?.statusText ?: stateInfo.title.ifBlank { "订单状态" }}"),
             backLabel = "<",
             onBack = onBack,
             trailing = { P1SecureHub(label = orderDetailHubLabel(highlightedRowIndex)) },
         )
 
         P1SelectableCard(
-            selected = true,
+            selected = uiState.order != null && stateInfo.state == P1ScreenState.Content,
             accentColor = rows.getOrNull(highlightedRowIndex)?.accentColor ?: Color(0xFF49D89B),
         ) {
             P01CardHeader(title = "订单摘要")
-            P01CardCopy("订单已完成，全部4台设备权限同步正常。")
+            P01CardCopy(stateInfo.message.ifBlank { uiState.note.ifBlank { uiState.summary } })
             P01List {
-                rows.forEachIndexed { index, row ->
+                if (rows.isEmpty()) {
                     P1FeedbackRow(
-                        title = row.title,
-                        value = row.value,
-                        selected = index == highlightedRowIndex,
-                        accentColor = row.accentColor,
-                        valueColor = row.accentColor,
-                        onClick = { highlightedRowIndex = index },
+                        title = stateInfo.title.ifBlank { "当前没有真实订单详情" },
+                        copy = stateInfo.message.ifBlank { "未查询到可展示的真实订单对象。" },
+                        accentColor = Color(0xFF7B8DB0),
                     )
+                } else {
+                    rows.forEachIndexed { index, row ->
+                        P1FeedbackRow(
+                            title = row.title,
+                            value = row.value,
+                            selected = index == highlightedRowIndex,
+                            accentColor = row.accentColor,
+                            valueColor = row.accentColor,
+                            onClick = { highlightedRowIndex = index },
+                        )
+                    }
                 }
             }
         }
@@ -88,40 +99,26 @@ private data class OrderDetailRowUi(
 )
 
 private fun detailRows(uiState: OrderDetailUiState): List<OrderDetailRowUi> {
-    val highlightList = uiState.highlights.p1ContentItems()
-    val metricMap = uiState.metrics.associate { it.label to it.value }
-    return listOf(
+    val order = uiState.order
+    if (order == null && uiState.detailLines.isEmpty()) return emptyList()
+    val detailLines = buildList {
+        if (order != null) {
+            add(P1DetailLine(order.planName, "${order.networkCode} / ${order.amountText}"))
+            add(P1DetailLine(order.orderNo, order.statusText.ifBlank { order.status }))
+        }
+        addAll(uiState.detailLines)
+    }
+    return detailLines.map { line ->
         OrderDetailRowUi(
-            title = highlightList.getOrNull(0)?.title ?: "年费 Pro",
-            value = highlightList.getOrNull(0)?.trailing ?: "TRON / 149 USDT",
-            accentColor = Color(0xFF4276FF),
-        ),
-        OrderDetailRowUi(
-            title = highlightList.getOrNull(0)?.subtitle ?: "ORD-2025-08-0224",
-            value = "• 创建订单",
-            accentColor = Color(0xFF7B8DB0),
-        ),
-        OrderDetailRowUi(
-            title = highlightList.getOrNull(1)?.trailing ?: "2025-04-09 18:21",
-            value = "• 链上转账已广播",
-            accentColor = Color(0xFF20C4F4),
-        ),
-        OrderDetailRowUi(
-            title = "TXid: ${highlightList.getOrNull(1)?.subtitle ?: "7F3A...901"}",
-            value = "• 区块确认完成",
-            accentColor = Color(0xFF4276FF),
-        ),
-        OrderDetailRowUi(
-            title = metricMap["状态"] ?: "TRON． 1/1 block",
-            value = "• 套餐已激活",
-            accentColor = Color(0xFF49D89B),
-        ),
-        OrderDetailRowUi(
-            title = "东京/新加坡节点可用",
-            value = "• 可用设备 4台",
-            accentColor = Color(0xFF49D89B),
-        ),
-    )
+            title = line.label,
+            value = line.value,
+            accentColor = when {
+                line.label.contains("状态") || line.label.contains("订阅") -> Color(0xFF49D89B)
+                line.label.contains("交易") || line.label.contains("TX") -> Color(0xFF20C4F4)
+                else -> Color(0xFF4276FF)
+            },
+        )
+    }
 }
 
 private fun orderDetailHubLabel(index: Int): String = when (index) {
