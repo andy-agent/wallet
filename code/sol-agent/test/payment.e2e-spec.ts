@@ -213,7 +213,7 @@ describe('PaymentController (e2e)', () => {
     expect(response.body.data.scannedSignatures).toBe(2);
     expect(response.body.data.matchedTransfers).toBe(1);
     expect(response.body.data.nextBeforeSignature).toBe(
-      'scan-ignored-signature',
+      'scan-sol-signature',
     );
     expect(response.body.data.items).toEqual([
       expect.objectContaining({
@@ -367,6 +367,7 @@ describe('PaymentController (e2e)', () => {
     expect(response.body.data.mintAddress).toBe(MAINNET_USDT_MINT);
     expect(response.body.data.scannedSignatures).toBe(2);
     expect(response.body.data.matchedTransfers).toBe(1);
+    expect(response.body.data.nextBeforeSignature).toBe('ata-only-signature');
     expect(response.body.data.items).toEqual([
       expect.objectContaining({
         signature: 'ata-only-signature',
@@ -374,6 +375,179 @@ describe('PaymentController (e2e)', () => {
         amountRaw: '1500000',
         matchedAccounts: [ataAddress],
       }),
+    ]);
+  }, 30000);
+
+  it('POST /api/internal/v1/payment/scan-incoming - minSlotExclusive 在 owner+ATA 合并后过滤并保持确定排序', async () => {
+    const recipientOwner = Keypair.generate().publicKey.toBase58();
+    const sourceTokenAccount = Keypair.generate().publicKey.toBase58();
+    const ataAddress = solanaRpc.deriveAssociatedTokenAddress(
+      recipientOwner,
+      MAINNET_USDT_MINT,
+    );
+
+    jest.spyOn(solanaRpc, 'getSignatureInfos').mockImplementation(
+      async (address: string) => {
+        if (address === recipientOwner) {
+          return {
+            address,
+            networkCode: 'solana-mainnet',
+            signatures: [
+              {
+                signature: 'slot-5000-from-owner',
+                slot: 5000,
+                err: null,
+                memo: null,
+                blockTime: 1712800500,
+                confirmationStatus: 'confirmed',
+              },
+              {
+                signature: 'slot-4998-should-filtered',
+                slot: 4998,
+                err: null,
+                memo: null,
+                blockTime: 1712800490,
+                confirmationStatus: 'confirmed',
+              },
+            ],
+          };
+        }
+
+        if (address === ataAddress) {
+          return {
+            address,
+            networkCode: 'solana-mainnet',
+            signatures: [
+              {
+                signature: 'slot-5001-from-ata',
+                slot: 5001,
+                err: null,
+                memo: null,
+                blockTime: 1712800510,
+                confirmationStatus: 'confirmed',
+              },
+              {
+                signature: 'slot-5000-from-owner',
+                slot: 5000,
+                err: null,
+                memo: null,
+                blockTime: 1712800500,
+                confirmationStatus: 'confirmed',
+              },
+            ],
+          };
+        }
+
+        return {
+          address,
+          networkCode: 'solana-mainnet',
+          signatures: [],
+        };
+      },
+    );
+
+    jest.spyOn(solanaRpc, 'getParsedTransactions').mockResolvedValue({
+      networkCode: 'solana-mainnet',
+      transactions: [
+        {
+          signature: 'slot-5001-from-ata',
+          transaction: {
+            slot: 5001,
+            blockTime: 1712800510,
+            meta: {
+              err: null,
+              preBalances: [0, 0],
+              postBalances: [0, 0],
+              preTokenBalances: [
+                {
+                  accountIndex: 1,
+                  mint: MAINNET_USDT_MINT,
+                  owner: recipientOwner,
+                  uiTokenAmount: {
+                    amount: '2000000',
+                    decimals: 6,
+                  },
+                },
+              ],
+              postTokenBalances: [
+                {
+                  accountIndex: 1,
+                  mint: MAINNET_USDT_MINT,
+                  owner: recipientOwner,
+                  uiTokenAmount: {
+                    amount: '3000000',
+                    decimals: 6,
+                  },
+                },
+              ],
+            },
+            transaction: {
+              message: {
+                accountKeys: [{ pubkey: sourceTokenAccount }, { pubkey: ataAddress }],
+              },
+            },
+          } as never,
+        },
+        {
+          signature: 'slot-5000-from-owner',
+          transaction: {
+            slot: 5000,
+            blockTime: 1712800500,
+            meta: {
+              err: null,
+              preBalances: [0, 0],
+              postBalances: [0, 0],
+              preTokenBalances: [
+                {
+                  accountIndex: 1,
+                  mint: MAINNET_USDT_MINT,
+                  owner: recipientOwner,
+                  uiTokenAmount: {
+                    amount: '1000000',
+                    decimals: 6,
+                  },
+                },
+              ],
+              postTokenBalances: [
+                {
+                  accountIndex: 1,
+                  mint: MAINNET_USDT_MINT,
+                  owner: recipientOwner,
+                  uiTokenAmount: {
+                    amount: '2000000',
+                    decimals: 6,
+                  },
+                },
+              ],
+            },
+            transaction: {
+              message: {
+                accountKeys: [{ pubkey: sourceTokenAccount }, { pubkey: ataAddress }],
+              },
+            },
+          } as never,
+        },
+      ],
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/api/internal/v1/payment/scan-incoming')
+      .set('X-Internal-Auth', `Bearer ${token}`)
+      .send({
+        collectionAddress: recipientOwner,
+        assetCode: 'USDT',
+        limit: 10,
+        minSlotExclusive: 4999,
+      })
+      .expect(200);
+
+    expect(response.body.code).toBe('OK');
+    expect(response.body.data.scannedSignatures).toBe(2);
+    expect(response.body.data.matchedTransfers).toBe(2);
+    expect(response.body.data.nextBeforeSignature).toBe('slot-5000-from-owner');
+    expect(response.body.data.items.map((item: { signature: string }) => item.signature)).toEqual([
+      'slot-5001-from-ata',
+      'slot-5000-from-owner',
     ]);
   }, 30000);
 

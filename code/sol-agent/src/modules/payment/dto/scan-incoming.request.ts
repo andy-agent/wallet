@@ -53,6 +53,15 @@ export class ScanIncomingTransfersRequestDto {
   beforeSignature?: string;
 
   @ApiPropertyOptional({
+    description: '仅返回 slot 大于该值的入账事件；用于多轮扫描去重',
+  })
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  minSlotExclusive?: number;
+
+  @ApiPropertyOptional({
     description: '单次扫描的最大签名数，默认 20，最大 100',
   })
   @Type(() => Number)

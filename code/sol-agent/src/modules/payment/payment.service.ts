@@ -300,6 +300,7 @@ export class PaymentService {
     );
     const asset = this.resolveAsset(body, networkCode);
     const limit = body.limit ?? 20;
+    const minSlotExclusive = body.minSlotExclusive;
 
     const signatureScanSources = await this.collectSignatureScanSources({
       collectionAddress,
@@ -310,8 +311,16 @@ export class PaymentService {
       beforeSignature: body.beforeSignature,
     });
     const mergedSignatures = this.mergeSignatureSources(signatureScanSources);
+    const filteredSignatures =
+      minSlotExclusive === undefined
+        ? mergedSignatures
+        : mergedSignatures.filter(
+            (signatureInfo) =>
+              signatureInfo.slot !== null &&
+              signatureInfo.slot > minSlotExclusive,
+          );
 
-    if (mergedSignatures.length === 0) {
+    if (filteredSignatures.length === 0) {
       return {
         collectionAddress,
         networkCode,
@@ -327,14 +336,14 @@ export class PaymentService {
     }
 
     const parsedTransactions = await this.solanaRpc.getParsedTransactions(
-      mergedSignatures.map((item) => item.signature),
+      filteredSignatures.map((item) => item.signature),
       networkCode,
     );
     const transactionMap = new Map(
       parsedTransactions.transactions.map((item) => [item.signature, item]),
     );
 
-    const items = mergedSignatures
+    const items = filteredSignatures
       .map<ScanIncomingTransferItemDto | null>((signatureInfo) => {
         if (signatureInfo.err) {
           return null;
@@ -386,10 +395,10 @@ export class PaymentService {
       assetKind: asset.assetKind,
       mintAddress: asset.mintAddress,
       decimals: asset.decimals,
-      scannedSignatures: mergedSignatures.length,
+      scannedSignatures: filteredSignatures.length,
       matchedTransfers: items.length,
       nextBeforeSignature:
-        mergedSignatures[mergedSignatures.length - 1]?.signature ?? null,
+        filteredSignatures[filteredSignatures.length - 1]?.signature ?? null,
       items,
     };
   }
@@ -457,7 +466,21 @@ export class PaymentService {
       }
     }
 
-    return Array.from(merged.values());
+    return Array.from(merged.values()).sort((left, right) => {
+      const leftSlot = left.slot ?? Number.MIN_SAFE_INTEGER;
+      const rightSlot = right.slot ?? Number.MIN_SAFE_INTEGER;
+      if (rightSlot !== leftSlot) {
+        return rightSlot - leftSlot;
+      }
+
+      const leftBlockTime = left.blockTime ?? Number.MIN_SAFE_INTEGER;
+      const rightBlockTime = right.blockTime ?? Number.MIN_SAFE_INTEGER;
+      if (rightBlockTime !== leftBlockTime) {
+        return rightBlockTime - leftBlockTime;
+      }
+
+      return right.signature.localeCompare(left.signature);
+    });
   }
 
   private buildVerificationResult(input: {
