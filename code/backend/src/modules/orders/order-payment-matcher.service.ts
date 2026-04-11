@@ -82,19 +82,32 @@ export class OrderPaymentMatcherService {
             statuses: MATCHER_SCAN_STATUSES,
             activeAfter: Date.now(),
           });
+        const claimedOrderNos = new Set<string>();
         const cursor =
           await this.runtimeStateRepository.findPaymentScanCursor(context);
         const response = await this.scanContext(context, cursor);
 
         for (const event of response.events) {
           const receipt = this.toOnchainReceipt(context, event);
-          const match = this.matchOrder(candidateOrders, event);
+          const match = this.matchOrder(
+            candidateOrders,
+            event,
+            context,
+            claimedOrderNos,
+          );
 
           if (match.kind === 'matched') {
             receipt.matchedOrderNo = match.order.orderNo;
             receipt.matchStatus = 'MATCHED';
             receipt.matcherRemark = 'AUTO_MATCHED_BY_SHARED_ADDRESS';
-            await this.applyMatchedOrder(match.order, event);
+            const updatedOrder = await this.applyMatchedOrder(match.order, event);
+            claimedOrderNos.add(updatedOrder.orderNo);
+            const matchedIndex = candidateOrders.findIndex(
+              (order) => order.orderNo === updatedOrder.orderNo,
+            );
+            if (matchedIndex >= 0) {
+              candidateOrders[matchedIndex] = updatedOrder;
+            }
           } else if (match.kind === 'ambiguous') {
             receipt.matchStatus = 'AMBIGUOUS';
             receipt.matcherRemark = 'MULTIPLE_PENDING_ORDERS_MATCHED';
@@ -223,13 +236,28 @@ export class OrderPaymentMatcherService {
   private matchOrder(
     orders: StoredOrderRecord[],
     event: NormalizedIncomingTransfer,
+    context: RuntimeStatePaymentContext,
+    claimedOrderNos: Set<string>,
   ) {
+    if (
+      event.confirmationStatus !== 'confirmed' &&
+      event.confirmationStatus !== 'finalized'
+    ) {
+      return {
+        kind: 'unmatched' as const,
+      };
+    }
+
     const observedAtMs =
       typeof event.blockTime === 'number'
         ? event.blockTime * 1000
         : Date.now();
 
     const candidates = orders.filter((order) => {
+      if (claimedOrderNos.has(order.orderNo)) {
+        return false;
+      }
+
       const payableAmountMinor = this.toMinorUnits(
         order.payableAmount,
         event.decimals,
@@ -238,6 +266,10 @@ export class OrderPaymentMatcherService {
       const expiresAtMs = new Date(order.expiresAt).getTime();
 
       return (
+        order.collectionAddress === context.collectionAddress &&
+        order.quoteAssetCode === context.quoteAssetCode &&
+        order.quoteNetworkCode === context.quoteNetworkCode &&
+        MATCHER_SCAN_STATUSES.includes(order.status) &&
         order.matchedOnchainTxHash === null &&
         createdAtMs <= observedAtMs &&
         observedAtMs <= expiresAtMs &&
@@ -266,7 +298,7 @@ export class OrderPaymentMatcherService {
   private async applyMatchedOrder(
     order: StoredOrderRecord,
     event: NormalizedIncomingTransfer,
-  ) {
+  ): Promise<StoredOrderRecord> {
     const matchedAt =
       typeof event.blockTime === 'number'
         ? new Date(event.blockTime * 1000).toISOString()
@@ -299,11 +331,12 @@ export class OrderPaymentMatcherService {
       nextOrder.status = 'COMPLETED';
       nextOrder.completedAt = new Date().toISOString();
       await this.runtimeStateRepository.saveOrder(nextOrder);
-      return;
+      return nextOrder;
     }
 
     nextOrder.status = 'CONFIRMING';
     await this.runtimeStateRepository.saveOrder(nextOrder);
+    return nextOrder;
   }
 
   private toMinorUnits(amount: string, decimals: number) {
