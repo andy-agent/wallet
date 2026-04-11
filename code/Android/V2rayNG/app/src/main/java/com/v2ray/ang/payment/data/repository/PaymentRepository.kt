@@ -390,8 +390,9 @@ class PaymentRepository(context: Context) {
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val order = response.body()?.data
                 if (order != null) {
-                    val paymentTarget = api.getPaymentTarget("Bearer $token", order.orderNo)
-                    val finalOrder = order.copy(paymentTarget = paymentTarget.body()?.data)
+                    val finalOrder = order.copy(
+                        paymentTarget = order.paymentTarget ?: fetchPaymentTargetSafe(token, order.orderNo),
+                    )
                     saveCurrentOrderId(finalOrder.orderNo)
                     // 缓存订单到本地
                     getCurrentUserId()?.let { userId ->
@@ -418,9 +419,11 @@ class PaymentRepository(context: Context) {
                 ?: return@withContext Result.failure(Exception("未登录"))
             val response = api.refreshOrderStatus("Bearer $token", orderNo)
             if (response.isSuccessful && response.body()?.code == "OK") {
-                val order = response.body()?.data?.copy(
-                    paymentTarget = api.getPaymentTarget("Bearer $token", orderNo).body()?.data
-                )
+                val order = response.body()?.data?.let { latest ->
+                    latest.copy(
+                        paymentTarget = latest.paymentTarget ?: fetchPaymentTargetSafe(token, orderNo),
+                    )
+                }
                 if (order != null) {
                     // 更新本地订单状态
                     getCurrentUserId()?.let { userId ->
@@ -709,10 +712,23 @@ class PaymentRepository(context: Context) {
             if (response.isSuccessful && response.body()?.code == "OK") {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(response.body()?.message ?: "提交交易哈希失败"))
+                Result.failure(Exception(response.body()?.message ?: "提交交易哈希失败（兜底）"))
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    private suspend fun fetchPaymentTargetSafe(token: String, orderNo: String): PaymentTarget? {
+        return try {
+            val paymentTargetResponse = api.getPaymentTarget("Bearer $token", orderNo)
+            if (paymentTargetResponse.isSuccessful && paymentTargetResponse.body()?.code == "OK") {
+                paymentTargetResponse.body()?.data
+            } else {
+                null
+            }
+        } catch (_: Exception) {
+            null
         }
     }
 

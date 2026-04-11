@@ -47,6 +47,7 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
     private var currentOrder: Order? = null
     private var countDownTimer: CountDownTimer? = null
+    private var currentPayableAmountRaw: String = ""
 
     private data class QuoteSelection(
         val assetCode: String,
@@ -109,17 +110,20 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
         // 复制金额按钮
         binding.buttonCopyAmount.setOnClickListener {
-            copyToClipboard("支付金额", binding.textAmount.text.toString())
+            val amount = currentPayableAmountRaw.ifBlank { currentOrder?.payment?.amountCrypto.orEmpty() }
+            copyToClipboard(getString(com.v2ray.ang.R.string.payment_amount_copy_label), amount)
         }
 
         // 刷新状态按钮
         binding.buttonRefresh.setOnClickListener {
             currentOrder?.let { order ->
-                if (order.submittedClientTxHash.isNullOrBlank()) {
-                    promptForTransactionHash(order)
-                } else {
-                    pollingUseCase.pollImmediately(order.orderNo)
-                }
+                pollingUseCase.pollImmediately(order.orderNo)
+            }
+        }
+
+        binding.buttonSubmitTxFallback.setOnClickListener {
+            currentOrder?.let { order ->
+                promptForTransactionHash(order)
             }
         }
     }
@@ -215,12 +219,28 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
         binding.layoutPaymentDetails.visibility = View.VISIBLE
 
         // 显示支付信息
-        binding.textOrderNo.text = "订单号: ${order.orderNo}"
-        binding.textAssetCode.text = "支付方式: ${getPaymentMethodDisplay(order.payment.assetCode, order.paymentTarget?.networkCode)}"
+        binding.textOrderNo.text = order.orderNo
+        binding.textAssetCode.text = getString(
+            com.v2ray.ang.R.string.payment_method_value,
+            getPaymentMethodDisplay(order.payment.assetCode, order.paymentTarget?.networkCode),
+        )
         
-        // 格式化金额显示，添加等值信息
-        val amountDisplay = formatAmountDisplay(order.payment.assetCode, order.payment.amountCrypto)
-        binding.textAmount.text = amountDisplay
+        currentPayableAmountRaw = order.payment.amountCrypto
+        binding.textAmount.text = getString(
+            com.v2ray.ang.R.string.payment_amount_value,
+            order.payment.amountCrypto,
+            order.payment.assetCode,
+        )
+        binding.textBaseAmount.text = getString(
+            com.v2ray.ang.R.string.payment_base_amount_value,
+            order.paymentTarget?.baseAmount ?: order.baseAmount ?: order.quoteUsdAmount,
+            order.payment.assetCode,
+        )
+        binding.textUniqueDelta.text = getString(
+            com.v2ray.ang.R.string.payment_unique_delta_value,
+            order.paymentTarget?.uniqueAmountDelta ?: order.uniqueAmountDelta ?: "0",
+            order.payment.assetCode,
+        )
         
         binding.textReceiveAddress.text = order.payment.receiveAddress
 
@@ -279,23 +299,23 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
     private fun promptForTransactionHash(order: Order) {
         val input = EditText(this).apply {
-            hint = "请输入已支付交易哈希"
+            hint = getString(com.v2ray.ang.R.string.payment_txhash_input_hint)
             setText(order.submittedClientTxHash.orEmpty())
         }
 
         AlertDialog.Builder(this)
-            .setTitle("提交交易哈希")
-            .setMessage("完成链上支付后，提交真实 tx hash 以便后端确认订单。")
+            .setTitle(com.v2ray.ang.R.string.payment_txhash_fallback_title)
+            .setMessage(com.v2ray.ang.R.string.payment_txhash_fallback_message)
             .setView(input)
-            .setPositiveButton("提交") { _, _ ->
+            .setPositiveButton(com.v2ray.ang.R.string.payment_submit_fallback) { _, _ ->
                 val txHash = input.text?.toString()?.trim().orEmpty()
                 if (txHash.isBlank()) {
-                    Toast.makeText(this, "交易哈希不能为空", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, com.v2ray.ang.R.string.payment_txhash_empty, Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
                 submitClientTransaction(order, txHash)
             }
-            .setNegativeButton("取消", null)
+            .setNegativeButton(com.v2ray.ang.R.string.cancel, null)
             .show()
     }
 
@@ -311,12 +331,12 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
             submitResult.onSuccess {
                 currentOrder = order.copy(submittedClientTxHash = txHash)
-                binding.textStatus.text = "状态: 已提交交易哈希"
+                binding.textStatus.text = getString(com.v2ray.ang.R.string.payment_status_fallback_submitted)
                 pollingUseCase.pollImmediately(order.orderNo)
             }.onFailure { error ->
                 Toast.makeText(
                     this@PaymentActivity,
-                    "提交交易哈希失败: ${error.message}",
+                    getString(com.v2ray.ang.R.string.payment_submit_txhash_failed, error.message),
                     Toast.LENGTH_LONG,
                 ).show()
             }
@@ -373,7 +393,10 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
     // PollingCallback 实现
     override fun onStatusUpdate(order: Order) {
-        binding.textStatus.text = "状态: ${order.statusText}"
+        val txSuffix = order.matchedOnchainTxHash?.takeLast(6)?.let {
+            getString(com.v2ray.ang.R.string.payment_status_auto_matched_suffix, it)
+        }.orEmpty()
+        binding.textStatus.text = getString(com.v2ray.ang.R.string.payment_status_value, "${order.statusText}$txSuffix")
     }
 
     override fun onPaymentSuccess(order: Order) {
