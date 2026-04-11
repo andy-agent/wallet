@@ -45,6 +45,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.v2ray.ang.composeui.common.model.FeatureBullet
+import com.v2ray.ang.composeui.common.model.FeatureField
+import com.v2ray.ang.composeui.common.model.FeatureListItem
+import com.v2ray.ang.composeui.common.model.FeatureMetric
 import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.effects.TechParticleBackground
 
@@ -110,6 +114,84 @@ internal fun P2ExtendedPageScaffold(
                 }
                 Spacer(modifier = Modifier.height(14.dp))
             }
+        }
+    }
+}
+
+@Composable
+internal fun P2ExtendedFeatureTemplate(
+    kicker: String,
+    title: String,
+    subtitle: String,
+    hubLabel: String,
+    onHubClick: () -> Unit,
+    primaryActionLabel: String? = null,
+    onPrimaryAction: (() -> Unit)? = null,
+    secondaryActionLabel: String? = null,
+    onSecondaryAction: (() -> Unit)? = null,
+    metrics: List<FeatureMetric> = emptyList(),
+    fields: List<FeatureField> = emptyList(),
+    highlights: List<FeatureListItem> = emptyList(),
+    checklist: List<FeatureBullet> = emptyList(),
+    note: String = "",
+) {
+    P2ExtendedPageScaffold(
+        kicker = kicker,
+        title = title,
+        subtitle = subtitle,
+        hubLabel = hubLabel,
+        onHubClick = onHubClick,
+        primaryActionLabel = primaryActionLabel,
+        onPrimaryAction = onPrimaryAction,
+        secondaryActionLabel = secondaryActionLabel,
+        onSecondaryAction = onSecondaryAction,
+    ) {
+        if (metrics.isNotEmpty()) {
+            KpiRow(items = metrics.take(3).map { it.label to it.value })
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+        if (fields.isNotEmpty()) {
+            P2Card(title = "表单状态", subtitle = "当前真实数据/能力上下文") {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    fields.forEach { field ->
+                        FieldRow(
+                            label = field.label,
+                            value = field.value.ifBlank { field.supportingText ?: "--" },
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+        if (highlights.isNotEmpty()) {
+            P2Card(title = "关键对象", subtitle = "当前页绑定的真实对象或明确空态") {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    highlights.forEach { item ->
+                        ListRow(
+                            title = item.title,
+                            subtitle = item.subtitle,
+                            trailing = listOf(item.badge, item.trailing)
+                                .filter { it.isNotBlank() }
+                                .joinToString(" · ")
+                                .ifBlank { null },
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+        if (checklist.isNotEmpty()) {
+            P2Card(title = "状态说明", subtitle = "真实能力与阻塞说明") {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    checklist.forEach { bullet ->
+                        NoteCard(title = bullet.title, text = bullet.detail)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+        if (note.isNotBlank()) {
+            NoteCard(title = "备注", text = note)
         }
     }
 }

@@ -44,46 +44,22 @@ fun ImportWalletMethodScreen(
     onEvent: (ImportWalletMethodEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    P2ExtendedPageScaffold(
-        kicker = "WALLET IMPORT",
-        title = "导入多链钱包",
-        subtitle = "补齐完整钱包能力：创建、导入、恢复与地址隔离。",
-        hubLabel = "新增能力",
+    P2ExtendedFeatureTemplate(
+        kicker = uiState.subtitle,
+        title = uiState.title,
+        subtitle = uiState.summary,
+        hubLabel = uiState.badge,
         onHubClick = { onEvent(ImportWalletMethodEvent.Refresh) },
-        primaryActionLabel = "继续导入",
+        primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(ImportWalletMethodEvent.PrimaryActionClicked) },
-        secondaryActionLabel = "返回钱包引导",
+        secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(ImportWalletMethodEvent.SecondaryActionClicked) },
-    ) {
-        P2Card(title = "选择导入方式", subtitle = "支持助记词、私钥、Keystore 与观察钱包。") {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OptionCard(title = "助记词导入", subtitle = "适合完整恢复多链资产", selected = true, badge = "推荐")
-                OptionCard(title = "私钥导入", subtitle = "适合单地址快速恢复")
-                OptionCard(title = "Keystore / JSON", subtitle = "适合 EVM 系资产")
-            }
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        P2Card(title = "导入流程", subtitle = "沿用统一风控流程，完成后进入资产页。") {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                P2FlowStepCard(
-                    step = "STEP 1",
-                    title = "选择导入方式",
-                    detail = "助记词、私钥与 Keystore 可并行支持",
-                    emphasized = true,
-                )
-                P2FlowStepCard(
-                    step = "STEP 2",
-                    title = "本地校验与链识别",
-                    detail = "离线解析输入内容并识别可恢复资产",
-                )
-                P2FlowStepCard(
-                    step = "STEP 3",
-                    title = "设置安全策略",
-                    detail = "开启双重验证与风险地址提醒",
-                )
-            }
-        }
-    }
+        metrics = uiState.metrics,
+        fields = uiState.fields,
+        highlights = uiState.highlights,
+        checklist = uiState.checklist,
+        note = uiState.note,
+    )
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

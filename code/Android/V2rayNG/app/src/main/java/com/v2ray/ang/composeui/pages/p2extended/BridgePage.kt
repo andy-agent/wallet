@@ -42,41 +42,22 @@ fun BridgeScreen(
     onEvent: (BridgeEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    P2ExtendedPageScaffold(
-        kicker = "BRIDGE",
-        title = "跨链桥接",
-        subtitle = "补齐多链钱包核心能力：资产跨链迁移与到账追踪。",
-        hubLabel = "BRIDGE",
+    P2ExtendedFeatureTemplate(
+        kicker = uiState.subtitle,
+        title = uiState.title,
+        subtitle = uiState.summary,
+        hubLabel = uiState.badge,
         onHubClick = { onEvent(BridgeEvent.Refresh) },
-        primaryActionLabel = "预览桥接并继续",
+        primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(BridgeEvent.PrimaryActionClicked) },
-        secondaryActionLabel = "返回 Swap",
+        secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(BridgeEvent.SecondaryActionClicked) },
-    ) {
-        P2BridgeFlowCard(
-            sourceChain = "TRON",
-            targetChain = "Solana",
-            asset = "USDT",
-            amount = "580.00",
-            eta = "3 min",
-            fee = "$1.90",
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        P2Card(title = "桥接参数", subtitle = "执行前确认到账链与最小到账数量。") {
-            KpiRow(
-                listOf(
-                    "最小到账" to "578.10",
-                    "桥接路由" to "Stargate",
-                    "状态" to "可执行",
-                ),
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            P2InlineWarningCard(
-                title = "跨链提醒",
-                text = "桥接提交后不可撤销，请确认目标地址网络一致。",
-            )
-        }
-    }
+        metrics = uiState.metrics,
+        fields = uiState.fields,
+        highlights = uiState.highlights,
+        checklist = uiState.checklist,
+        note = uiState.note,
+    )
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

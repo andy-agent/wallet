@@ -44,60 +44,22 @@ fun BackupMnemonicScreen(
     onEvent: (BackupMnemonicEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    val wordFocus = rememberLoopingIndex(itemCount = 12, durationMillis = 7200)
-    val ruleFocus = rememberLoopingIndex(itemCount = 2, durationMillis = 3600)
-    val backupMetrics = uiState.metrics.take(3).map { it.label to it.value }
-    val metricFocus = if (backupMetrics.isNotEmpty()) wordFocus % backupMetrics.size else -1
-    P2ExtendedPageScaffold(
-        kicker = "Backup",
-        title = "备份助记词",
-        subtitle = "创建成功后立即完成离线备份，这是恢复资产的唯一方式。",
-        hubLabel = "高优先级",
+    P2ExtendedFeatureTemplate(
+        kicker = uiState.subtitle,
+        title = uiState.title,
+        subtitle = uiState.summary,
+        hubLabel = uiState.badge,
         onHubClick = { onEvent(BackupMnemonicEvent.Refresh) },
-        primaryActionLabel = "我已安全备份",
+        primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(BackupMnemonicEvent.PrimaryActionClicked) },
-        secondaryActionLabel = "导出到离线打印模板",
+        secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(BackupMnemonicEvent.SecondaryActionClicked) },
-    ) {
-        KpiRow(items = backupMetrics, activeIndex = metricFocus)
-        Spacer(modifier = Modifier.height(12.dp))
-        P2Card(title = "请抄写以下 12 个单词", subtitle = "不要截屏、不要存云端、不要分享给任何人。") {
-            MnemonicGrid(
-                words = listOf(
-                    "ocean", "brick", "velvet",
-                    "lamp", "maple", "vivid",
-                    "orbit", "coral", "charge",
-                    "laptop", "anchor", "glow",
-                ),
-                focusIndex = wordFocus,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            SecurityStatusPill(label = "离线抄写确认", healthy = false, animated = true)
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        P2Card(title = "备份规范", subtitle = "通过分步约束降低泄露风险。") {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                P2FlowStepCard(
-                    step = "RULE 1",
-                    title = "仅离线载体保存",
-                    detail = "纸质或离线硬件介质，避免截图与云端笔记",
-                    emphasized = ruleFocus == 0,
-                    animated = true,
-                )
-                P2FlowStepCard(
-                    step = "RULE 2",
-                    title = "至少两份物理备份",
-                    detail = "分地保存，防止单点丢失或损坏",
-                    emphasized = ruleFocus == 1,
-                    animated = true,
-                )
-                P2InlineWarningCard(
-                    title = "高风险提醒",
-                    text = "助记词泄露等同资产所有权转移，无法撤销。",
-                )
-            }
-        }
-    }
+        metrics = uiState.metrics,
+        fields = uiState.fields,
+        highlights = uiState.highlights,
+        checklist = uiState.checklist,
+        note = uiState.note,
+    )
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

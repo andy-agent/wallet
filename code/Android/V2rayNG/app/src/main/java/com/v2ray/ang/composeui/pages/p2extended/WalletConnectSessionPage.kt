@@ -44,51 +44,22 @@ fun WalletConnectSessionScreen(
     onEvent: (WalletConnectSessionEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    P2ExtendedPageScaffold(
-        kicker = "WALLETCONNECT",
-        title = "连接会话",
-        subtitle = "管理与 DApp的已连接会话、权限范围与自动断开。",
-        hubLabel = "6 会话",
+    P2ExtendedFeatureTemplate(
+        kicker = uiState.subtitle,
+        title = uiState.title,
+        subtitle = uiState.summary,
+        hubLabel = uiState.badge,
         onHubClick = { onEvent(WalletConnectSessionEvent.Refresh) },
-        primaryActionLabel = "批量审计会话",
+        primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(WalletConnectSessionEvent.PrimaryActionClicked) },
-        secondaryActionLabel = "断开全部高风险",
+        secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(WalletConnectSessionEvent.SecondaryActionClicked) },
-    ) {
-        P2SearchShell(
-            placeholder = "搜索 DApp / 会话地址",
-            quickHint = "按链与风险等级筛选，避免过期授权长期保留。",
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            P2SessionAppCard(
-                title = "Jupiter",
-                subtitle = "读取余额 / 发起兑换",
-                network = "Solana",
-            )
-            P2SessionAppCard(
-                title = "Sunswap",
-                subtitle = "读取地址 / 发起授权",
-                network = "TRON",
-            )
-            P2SessionAppCard(
-                title = "Aave",
-                subtitle = "读取资产 / 发起存款",
-                network = "Ethereum",
-            )
-            P2SessionAppCard(
-                title = "Unknown DEX",
-                subtitle = "合约写入 / 签名请求",
-                network = "Polygon",
-                riskFlag = true,
-            )
-        }
-        Spacer(modifier = Modifier.height(14.dp))
-        P2InlineWarningCard(
-            title = "会话安全",
-            text = "高风险域名会自动标红并在签名前再次确认。",
-        )
-    }
+        metrics = uiState.metrics,
+        fields = uiState.fields,
+        highlights = uiState.highlights,
+        checklist = uiState.checklist,
+        note = uiState.note,
+    )
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

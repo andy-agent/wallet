@@ -44,36 +44,22 @@ fun SecurityCenterScreen(
     onEvent: (SecurityCenterEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    P2ExtendedPageScaffold(
-        kicker = "Security Center",
-        title = "安全中心",
-        subtitle = "管理助记词、设备、签名授权与高风险地址提醒。",
-        hubLabel = "A级",
+    P2ExtendedFeatureTemplate(
+        kicker = uiState.subtitle,
+        title = uiState.title,
+        subtitle = uiState.summary,
+        hubLabel = uiState.badge,
         onHubClick = { onEvent(SecurityCenterEvent.Refresh) },
-    ) {
-        KpiRow(
-            listOf(
-                "助记词状态" to "已备份",
-                "双重验证" to "已开启",
-                "风险地址" to "2 条",
-            ),
-        )
-        Spacer(modifier = Modifier.height(14.dp))
-        P2Card(title = "实时安全状态", subtitle = "关键防护项与风险项会在这里持续刷新。") {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SecurityStatusPill(label = "助记词完整性已验证", healthy = true)
-                SecurityStatusPill(label = "风险地址提醒命中 2 条", healthy = false)
-            }
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            P2SecurityActionCard("管理助记词", "查看备份状态、重新校验", badge = "关键")
-            P2SecurityActionCard("已登录设备", "Android · Pixel 8 / Web", badge = "2 台")
-            P2SecurityActionCard("签名授权记录", "已连接 6 个 DApp")
-            P2SecurityActionCard("风险地址提醒", "自动拦截诈骗地址", badge = "2 条", risk = true)
-            P2SecurityActionCard("生物识别支付", "大额交易需指纹验证")
-        }
-    }
+        primaryActionLabel = uiState.primaryActionLabel,
+        onPrimaryAction = { onEvent(SecurityCenterEvent.PrimaryActionClicked) },
+        secondaryActionLabel = uiState.secondaryActionLabel,
+        onSecondaryAction = { onEvent(SecurityCenterEvent.SecondaryActionClicked) },
+        metrics = uiState.metrics,
+        fields = uiState.fields,
+        highlights = uiState.highlights,
+        checklist = uiState.checklist,
+        note = uiState.note,
+    )
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

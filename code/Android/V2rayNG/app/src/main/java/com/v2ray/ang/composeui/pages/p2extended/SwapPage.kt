@@ -42,56 +42,22 @@ fun SwapScreen(
     onEvent: (SwapEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    val routeFocus = rememberLoopingIndex(itemCount = 3, durationMillis = 4200)
-    val headlineMetrics = uiState.metrics.take(3).map { it.label to it.value }
-    val metricFocus = if (headlineMetrics.isNotEmpty()) routeFocus % headlineMetrics.size else -1
-    val routeStates = listOf("询价中", "聚合路由确认", "模拟成交校验")
-    val routeDetails = listOf(
-        "Jupiter -> Orca 两跳聚合，正在刷新报价与池深。",
-        "Jupiter -> Orca 两跳聚合，预计成交价偏差 0.42%。",
-        "已完成最小到账模拟，当前滑点保护可覆盖路由波动。",
-    )
-    P2ExtendedPageScaffold(
-        kicker = "Swap",
-        title = "币币兑换",
-        subtitle = "补齐钱包内兑换能力，支持同链资产快速换币。",
-        hubLabel = "低滑点",
+    P2ExtendedFeatureTemplate(
+        kicker = uiState.subtitle,
+        title = uiState.title,
+        subtitle = uiState.summary,
+        hubLabel = uiState.badge,
         onHubClick = { onEvent(SwapEvent.Refresh) },
-        primaryActionLabel = "预览兑换并签名",
+        primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(SwapEvent.PrimaryActionClicked) },
-        secondaryActionLabel = "预览兑换并继续",
+        secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(SwapEvent.SecondaryActionClicked) },
-    ) {
-        KpiRow(items = headlineMetrics, activeIndex = metricFocus)
-        Spacer(modifier = Modifier.height(12.dp))
-        P2SwapPairCard(
-            payToken = "USDT",
-            payChain = "TRON",
-            payAmount = "580.00",
-            receiveToken = "SOL",
-            receiveChain = "Solana",
-            receiveAmount = "82.60",
-            routeDetail = routeDetails[routeFocus],
-            routeStateLabel = routeStates[routeFocus],
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        P2Card(title = "兑换控制", subtitle = "确认滑点与路由后再发起签名。") {
-            ChipRow(
-                items = listOf("0.3%", "0.5%", "1.0%"),
-                activeIndex = routeFocus,
-                animated = true,
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            KpiRow(
-                listOf(
-                    "价格影响" to "0.19%",
-                    "最小到账" to "82.10 SOL",
-                    "网络费" to "0.0012 SOL",
-                ),
-                activeIndex = routeFocus,
-            )
-        }
-    }
+        metrics = uiState.metrics,
+        fields = uiState.fields,
+        highlights = uiState.highlights,
+        checklist = uiState.checklist,
+        note = uiState.note,
+    )
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
