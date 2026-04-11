@@ -260,6 +260,34 @@
     - `1.24 USDT`
   - 修复：改为用 `uiState.order + detailLines + riskLines + primaryActionLabel`
 
+### P0 首页真实回归
+- 新增运行级证据：
+  - `vpn_home`
+    - 初始证据：`/tmp/compose-realify-20260412-p0/vpn_home.png`
+    - 修复后证据：`/tmp/compose-realify-20260412-p0b/vpn_home.png`
+  - `wallet_home`
+    - 初始证据：`/tmp/compose-realify-20260412-p0/wallet_home.png`
+    - 修复后证据：`/tmp/compose-realify-20260412-p0b/wallet_home.png`
+- 本轮修复的问题：
+  - `VpnHomePage`
+    - 真实截图中出现 `nullms`
+    - 现已改成显式 `未测速`
+    - 同时把快捷操作从误导性的收款/发送跳转改成更贴近当前真实能力的订单/节点/续费入口
+  - `WalletHomePage`
+    - 真实截图仍使用“1链已激活 / 自动补齐”这类偏完成态文案
+    - 现已改成“订单映射资产 / 支付网络缓存 / 真实缓存 / 收款状态 / 发送状态”这类如实语义
+
+### P2Extended 第三批收口的运行证据
+- `auto_connect_rules`
+  - `/tmp/compose-realify-20260412-route5/auto_connect_rules.png`
+- `wallet_manager/primary_wallet`
+  - `/tmp/compose-realify-20260412-route6/wallet_manager_primary_wallet.png`
+- `address_book/send`
+  - `/tmp/compose-realify-20260412-route6/address_book_send.png`
+- 说明：
+  - 这 3 页都已在最新 fdroidDebug 包上确认进入 `ComposeContainerActivity`
+  - `wallet_manager` 与 `address_book` 之前的运行失败不是入口问题，而是 `P2ExtendedNavGraph` 缺路由；现已修复
+
 ### 当前仍未完成的事
 - 这轮只拿到了“页面能打开”的真实证据，还没有把所有页面的主动作、loading、error、retry 全量跑完。
 - P2 Extended 仍有一批自定义页没切完 `uiState` 驱动。
