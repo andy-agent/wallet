@@ -103,3 +103,74 @@
   - 页面只读 Room/MMKV 缓存，不读真实业务对象
   - preview fallback 仍进入生产仓库逻辑
 - 在逐页清掉模板态、本地拼装态、preview/mock contract 态之前，不应再声称“当前新 UI 已完成真实落地”。
+
+## 2026-04-12 运行级返工与回归
+
+### 本轮代码改造
+- P2 Core clean worktree `codex/liaojiang-0jp-p2core` 已形成可编译提交：
+  - `d9ce058a` `feat(android): realify p2 core compose states and actions`
+- integration worktree `codex/liaojiang-0jp-integrate` 已并入：
+  - `acfdeeda` `feat(android): realify p2 core compose states and actions`
+  - `506ec757` `feat(android): realify p2 extended screens from ui state`
+- 本轮又追加了真实回归入口和页面级 crash 修复：
+  - debug-only `ComposeRouteOverrideReceiver`，通过广播写入一次性目标路由
+  - `LaunchSplashActivity` 改为读取 route override 并透传
+  - `ComposeContainerActivity` 改为最终消费 route override，避免 OEM 环境下 activity extra 丢失导致的默认落回登录页
+  - `PlansPage` 修掉真实空数据下 `cards.first()` 导致的 `NoSuchElementException`
+
+### 删除/收口的伪真实路径
+- P2 Core：
+  - `Receive` 不再继续显示派生占位收款地址
+  - `Send` / `SendResult` 不再伪装成真实可广播/可成功结果页
+  - `InviteShare` 改为真实邀请码 + 真实推广链接语义
+  - `Withdraw` 开始绑定真实提交动作，而不是只展示假表单
+- P2 Extended：
+  - `SecurityCenter`
+  - `Swap`
+  - `Bridge`
+  - `DappBrowser`
+  - `WalletConnectSession`
+  - `SignMessageConfirm`
+  - `ImportMnemonic`
+  - `BackupMnemonic`
+  - `ImportWalletMethod`
+  都已从页面内硬编码“完整功能故事”切回 `uiState` 驱动渲染，不再自己拼一套假业务内容。
+
+### 真机回归入口修复
+- 原始 blocker：
+  - Oppo 测试机上，`adb shell am start ... ComposeRouteHarnessActivity` 会把 fdroidDebug 包顶回 launcher，导致逐页截图证据不可信。
+- 当前修复：
+  - 不再依赖 shell 直起目标页面
+  - 改为 `broadcast route override -> launcher 启动 fdroidDebug -> ComposeContainerActivity 消费 route` 的链路
+  - 实测 `monkey -p com.v2ray.ang.fdroid -c android.intent.category.LAUNCHER 1` 需要最多 1~2 次尝试才能把 app 拉到前台，因此当前回归脚本使用循环重试而不是单次启动
+
+### 真实运行结果
+- `plans`
+  - 初次真实回归暴露了真实 crash：
+    - `java.util.NoSuchElementException: List is empty.`
+    - 位置：`PlansPage.kt:68`
+    - 原因：真实套餐列表为空时仍直接 `cards.first()`
+  - 修复后重新安装并回归，页面可稳定打开
+  - 当前证据：
+    - 截图：`/tmp/compose-realify-20260412-route/plans.retry.png`
+    - 前台 activity：`ComposeContainerActivity`
+- `email_register`
+  - 通过 route override + launcher loop 打开
+  - 当前证据：
+    - 截图：`/tmp/compose-realify-20260412-route2/email_register.png`
+    - 前台 activity：`ComposeContainerActivity`
+- `subscription_detail/current_subscription`
+  - 通过 route override + launcher loop 打开
+  - 当前证据：
+    - 截图：`/tmp/compose-realify-20260412-route2/subscription_detail_current_subscription.png`
+    - 前台 activity：`ComposeContainerActivity`
+
+### 当前仍未完成的事
+- 这轮只拿到了“页面能打开”的真实证据，还没有把所有页面的主动作、loading、error、retry 全量跑完。
+- P2 Extended 仍有一批自定义页没切完 `uiState` 驱动。
+- 运行级回归虽然已建立可用入口，但仍受 Oppo 设备 launcher 行为影响，当前脚本必须重试启动。
+
+### 当前新增 BD 任务
+- `liaojiang-0jp.8`
+  - `Compose UI：建立稳定真机路由回归入口并沉淀逐页证据`
+  - 该任务专门承接 Phase 3 的真实运行证据，不再把回归混在实现批里。

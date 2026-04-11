@@ -1,6 +1,6 @@
 # Recovery Context
 
-Generated: 2026-04-11T17:45:00Z
+Generated: 2026-04-11T18:05:00Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
@@ -43,4 +43,17 @@ Repository: /Users/cnyirui/git/projects/liaojiang
     - compile passed: `:app:compileFdroidDebugKotlin`
 - Current blocker changed:
   - It is no longer “write overlap with another UI thread”.
-  - The remaining blocker is reliable device-side route verification on the Oppo test phone. The fdroid debug app launches correctly through the normal launcher path, but explicit `adb shell am start ... ComposeRouteHarnessActivity` attempts are bounced back to launcher, so page-by-page runtime screenshots cannot yet rely on shell-started route harness runs.
+  - A new bd task `liaojiang-0jp.8` now tracks Phase 3 runtime verification.
+  - The old shell-started route harness remains unreliable on the Oppo phone, but the current launcher-driven path is working:
+    - debug-only `ComposeRouteOverrideReceiver` writes a one-shot route override
+    - `LaunchSplashActivity` forwards that override
+    - `ComposeContainerActivity` consumes it as a fallback start route
+    - launcher startup is retried until `com.v2ray.ang.fdroid` reaches foreground
+  - Real runtime evidence now exists for:
+    - `plans` via `/tmp/compose-realify-20260412-route/plans.retry.png`
+    - `email_register` via `/tmp/compose-realify-20260412-route2/email_register.png`
+    - `subscription_detail/current_subscription` via `/tmp/compose-realify-20260412-route2/subscription_detail_current_subscription.png`
+  - This runtime path also surfaced a real crash:
+    - `PlansPage.kt:68`
+    - `java.util.NoSuchElementException: List is empty.`
+    - fixed by making the plans page render a true empty/error state instead of calling `cards.first()`
