@@ -1,17 +1,14 @@
 {
-  "generated_at": "2026-04-11T07:45:00Z",
+  "generated_at": "2026-04-11T07:50:05Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-26d",
-  "active_task_title": "Android app：打通注册-登录-套餐购买-VPN连接闭环",
-  "accepted_task_id": "liaojiang-vfy",
   "next_task_id": "liaojiang-njb",
   "next_task_title": "Live funding：完成一次真实 SOLANA/USDT 订单付款并回传 txHash",
-  "in_progress_count": 2,
+  "in_progress_count": 4,
   "ready_count": 0,
   "open_count": 8,
   "closed_count": 386,
   "dirty_count": 2,
-  "milestone_reached": true,
+  "milestone_reached": false,
   "write_human_docs": false,
   "docs": {
     "current_status": "docs/current-status.md",
@@ -24,15 +21,8 @@
   "auto_created_task_id": null,
   "dispatch": {
     "requested": true,
-    "mode": "blocked_on_real_funding",
+    "mode": "simulate",
     "dispatched_count": 0,
     "max_workers": 3
-  },
-  "workers": [],
-  "blockers": [
-    {
-      "task_id": "liaojiang-njb",
-      "reason": "No funded Solana wallet is available on accessible hosts. Positive-path closure requires an external funded payment or explicit approval to use a funded wallet once provided."
-    }
-  ]
+  }
 }
