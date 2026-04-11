@@ -3,7 +3,6 @@ package com.v2ray.ang.composeui.pages.p2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.v2ray.ang.composeui.p2.model.SendEvent
 import com.v2ray.ang.composeui.p2.model.SendUiState
@@ -39,42 +38,35 @@ fun SendScreen(
     onEvent: (SendEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    val amount = uiState.fields.firstOrNull { it.key == "amount" }?.value ?: uiState.metrics.getOrNull(1)?.value.orEmpty()
-    P2CorePageScaffold(
-        kicker = uiState.subtitle,
-        title = uiState.title,
-        subtitle = uiState.summary,
+    val truthState = buildP2TruthState(
         badge = uiState.badge,
-        activeSection = CoreNavSection.Wallet,
-        onBottomNav = onBottomNav,
+        summary = uiState.summary,
+        note = uiState.note,
+        checklist = uiState.checklist,
+        isLoading = uiState.isLoading,
+        errorMessage = uiState.errorMessage,
+        emptyMessage = uiState.emptyMessage,
+        blockerTitle = uiState.blockerTitle,
+        blockerMessage = uiState.blockerMessage,
         primaryActionLabel = uiState.primaryActionLabel,
+        secondaryActionLabel = uiState.secondaryActionLabel,
+    )
+    P2TruthFeaturePage(
+        title = uiState.title,
+        subtitle = uiState.subtitle,
+        heroAccent = uiState.heroAccent,
+        metrics = uiState.metrics,
+        fields = uiState.fields,
+        highlights = uiState.highlights,
+        truthState = truthState,
+        currentRoute = "wallet_home",
+        onBottomNav = onBottomNav,
+        onFieldChanged = { key, value ->
+            onEvent(SendEvent.FieldChanged(key = key, value = value))
+        },
         onPrimaryAction = { onEvent(SendEvent.PrimaryActionClicked) },
-    ) {
-        P2CoreHeroValueCard(
-            label = "发送概览",
-            value = amount,
-            supportingText = "≈ $amount USDT · 广播后不可撤回",
-            highlight = uiState.badge,
-            stats = listOf(
-                "网络费" to (uiState.metrics.getOrNull(2)?.value ?: "1.24 USDT"),
-                "预计到账" to (uiState.metrics.getOrNull(3)?.value ?: "~ 38 秒"),
-            ),
-        )
-        P2CoreChartInfoBlock(
-            title = "链路走势",
-            subtitle = "Gas 波动与广播速度",
-            chips = listOf("TRON · Fee 更低", "Solana"),
-            infoItems = uiState.fields.take(2).map { it.label to it.value },
-            highlight = "实时",
-            accent = Color(0xFF19B78C),
-        )
-        P2CoreCard {
-            P2CoreCardHeader(title = "安全检查", trailing = "通过 3/4", trailingColor = Color(0xFFEAF6FF))
-            uiState.highlights.forEach { item ->
-                P2CoreListRow(title = item.title, subtitle = item.subtitle)
-            }
-        }
-    }
+        onSecondaryAction = { onEvent(SendEvent.SecondaryActionClicked) },
+    )
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

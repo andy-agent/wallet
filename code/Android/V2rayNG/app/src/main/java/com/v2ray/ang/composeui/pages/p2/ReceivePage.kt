@@ -38,59 +38,35 @@ fun ReceiveScreen(
     onEvent: (ReceiveEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    val chips = uiState.metrics.take(3).map { it.value }
-    val address = uiState.fields.firstOrNull()?.value ?: "--"
-    val status = uiState.metrics.getOrNull(3)?.value ?: "已校验"
-    val addressPreview = if (address.length > 14) "${address.take(6)}...${address.takeLast(6)}" else address
-    P2CorePageScaffold(
-        kicker = uiState.subtitle,
-        title = uiState.title,
-        subtitle = uiState.summary,
+    val truthState = buildP2TruthState(
         badge = uiState.badge,
-        activeSection = CoreNavSection.Wallet,
+        summary = uiState.summary,
+        note = uiState.note,
+        checklist = uiState.checklist,
+        isLoading = uiState.isLoading,
+        errorMessage = uiState.errorMessage,
+        emptyMessage = uiState.emptyMessage,
+        blockerTitle = uiState.blockerTitle,
+        blockerMessage = uiState.blockerMessage,
+        primaryActionLabel = uiState.primaryActionLabel,
+        secondaryActionLabel = uiState.secondaryActionLabel,
+    )
+    P2TruthFeaturePage(
+        title = uiState.title,
+        subtitle = uiState.subtitle,
+        heroAccent = uiState.heroAccent,
+        metrics = uiState.metrics,
+        fields = uiState.fields,
+        highlights = uiState.highlights,
+        truthState = truthState,
+        currentRoute = "wallet_home",
         onBottomNav = onBottomNav,
-        secureHubLabel = receiveHubLabel(status, chips.firstOrNull()),
-    ) {
-        P2CoreHeroValueCard(
-            label = "当前收款网络",
-            value = chips.firstOrNull() ?: (uiState.badge ?: "--"),
-            supportingText = uiState.summary,
-            highlight = uiState.badge,
-            stats = listOf(
-                "地址尾号" to addressPreview,
-                "校验状态" to status,
-            ),
-        )
-        P2CoreQrAddressCard(
-            title = "收款二维码",
-            subtitle = "扫码或复制地址进行转账",
-            status = status,
-            statusColor = androidx.compose.ui.graphics.Color(0xFFE6FFF6),
-            address = address,
-            addressLabel = "收款地址",
-            supportingText = uiState.note,
-        ) {
-            if (chips.isNotEmpty()) {
-                P2CoreChipRow(items = chips, activeIndex = 0)
-            }
-            CoreActionRow(
-                primaryActionLabel = uiState.primaryActionLabel ?: "分享二维码",
-                onPrimaryAction = { onEvent(ReceiveEvent.PrimaryActionClicked) },
-                secondaryActionLabel = uiState.secondaryActionLabel ?: "复制地址",
-                onSecondaryAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
-            )
-            P2CoreNoteCard(title = "请确认链一致", text = uiState.note)
-        }
-    }
-}
-
-private fun receiveHubLabel(
-    status: String,
-    network: String?,
-): String = when {
-    status.contains("校验") -> "READY"
-    !network.isNullOrBlank() -> network.take(4).uppercase()
-    else -> "SCAN"
+        onFieldChanged = { key, value ->
+            onEvent(ReceiveEvent.FieldChanged(key = key, value = value))
+        },
+        onPrimaryAction = { onEvent(ReceiveEvent.PrimaryActionClicked) },
+        onSecondaryAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
+    )
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

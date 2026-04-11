@@ -50,12 +50,11 @@ fun LegalDocumentDetailScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
-    val version = uiState.metrics.firstOrNull { it.label.contains("版本") }?.value ?: "--"
-    val documentId = uiState.metrics.firstOrNull { it.label.contains("标识") }?.value
+    val version = uiState.metrics.firstOrNull { it.label == "文档版本" || it.label == "版本" }?.value ?: "--"
+    val documentId = uiState.metrics.firstOrNull { it.label == "文档标识" || it.label == "标识" }?.value
         ?: uiState.highlights.firstOrNull { it.badge == "DOC" }?.subtitle
         ?: "--"
     val externalLink = uiState.highlights.firstOrNull { it.badge == "LINK" }?.subtitle
-        ?: uiState.highlights.firstOrNull { it.title.contains("原文链接") }?.subtitle
     val sectionFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,

@@ -49,7 +49,7 @@ fun AboutAppScreen(
         kicker = uiState.subtitle,
         title = uiState.title,
         subtitle = uiState.summary,
-        badge = null,
+        badge = uiState.badge.takeIf { it.isNotBlank() },
         activeSection = CoreNavSection.Profile,
         onBottomNav = onBottomNav,
         secureHubLabel = aboutHubLabel(aboutFocus),
@@ -74,7 +74,7 @@ fun AboutAppScreen(
                     title = item.title,
                     subtitle = item.subtitle,
                     trailing = item.trailing,
-                    trailingColor = if (index == 1) Color(0xFF66739D) else Color(0xFF2F5BFF),
+                    trailingColor = if (onClick != null) Color(0xFF2F5BFF) else Color(0xFF66739D),
                     onClick = onClick,
                 )
             }

@@ -41,6 +41,12 @@ fun ProfileScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     val profileFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
+    val accountInfo = uiState.checklist.firstOrNull { it.title == "邮箱" }?.detail
+        ?: uiState.highlights.firstOrNull { it.badge == "LIVE" }?.title
+        ?: "--"
+    val onlineDevices = uiState.metrics.firstOrNull { it.label == "订单数量" }?.value ?: "--"
+    val currentPlan = uiState.metrics.firstOrNull { it.label == "当前套餐" }?.value ?: "--"
+    val accountStatus = uiState.metrics.firstOrNull { it.label == "账号状态" }?.value ?: "--"
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -52,21 +58,21 @@ fun ProfileScreen(
         P2CoreCard {
             P2CoreCardHeader(
                 title = "账户信息",
-                subtitle = uiState.checklist.firstOrNull()?.detail ?: "hello@cryptovpn.app · GLOW OPS",
+                subtitle = accountInfo,
                 trailing = uiState.badge,
                 trailingColor = Color(0xFFEAF6FF),
             )
             P2CoreHeroValueCard(
                 label = "当前套餐",
-                value = uiState.metrics.firstOrNull()?.value ?: "--",
-                supportingText = "设备在线: ${uiState.checklist.getOrNull(1)?.detail ?: "--"}",
+                value = currentPlan,
+                supportingText = "订单数: $onlineDevices",
                 highlight = uiState.badge,
                 stats = uiState.metrics.drop(1).take(2).map { it.label to it.value },
             )
             P2CoreActionValueRow(
                 label = "账号状态",
-                value = uiState.metrics.firstOrNull { it.label == "账号状态" }?.value ?: "--",
-                actionLabel = "安全中心",
+                value = accountStatus,
+                actionLabel = uiState.primaryActionLabel,
                 onAction = { onBottomNav(CryptoVpnRouteSpec.securityCenter.pattern) },
                 valueColor = Color(0xFF2F5BFF),
             )
