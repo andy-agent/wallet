@@ -1,19 +1,19 @@
 # Recovery Context
 
-Generated: 2026-04-11T11:07:00Z
+Generated: 2026-04-11T11:02:03Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-f7p
-- next_task_title: Continue full page-by-page prototype motion parity restoration
+- next_task_id: liaojiang-njb
+- next_task_title: Live funding：完成一次真实 SOLANA/USDT 订单付款并回传 txHash
 
 ## Counters
-- in_progress: 8
+- in_progress: 6
 - ready: 0
-- open: 13
-- closed: 392
+- open: 11
+- closed: 394
 - dirty: 0
 
 ## Next Milestone
-- c9x is already deployed and waiting only on njb funded-payment evidence. Continue f7p from the first P2 core motion slice now landed on mainline, then advance the next page-local parity slice.
+- Continue the next task and complete one milestone
 - After milestone, refresh docs/current-status.md + handoff/progress.md + docs/development-log.md + handoff/task-state.md only when human docs are explicitly requested
