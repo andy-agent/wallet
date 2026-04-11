@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -61,6 +62,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.v2ray.ang.composeui.effects.MotionProfile
+import com.v2ray.ang.composeui.effects.TechParticleBackground
 import kotlin.math.min
 
 private val P01BgTop = Color(0xFFF8FBFF)
@@ -81,7 +84,6 @@ private val P01AccentLilac = Color(0xFFB58DFF)
 private val P01AccentDeep = Color(0xFF3454D2)
 private val P01AccentNavy = Color(0xFF243A8F)
 
-private val P01OuterBrush = Brush.verticalGradient(listOf(P01BgTop, P01BgBottom))
 private val P01InnerBrush = Brush.verticalGradient(
     colors = listOf(Color(0xF2FFFFFF), Color(0xEBF3FAFF)),
 )
@@ -118,17 +120,20 @@ fun P01PhoneScaffold(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(P01OuterBrush)
-            .drawBehind {
-                drawDecorativeDots()
-                drawScreenTexture()
-            },
+        modifier = Modifier.fillMaxSize(),
     ) {
+        TechParticleBackground(
+            motionProfile = MotionProfile.L1,
+            modifier = Modifier.fillMaxSize(),
+            showNetwork = true,
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .drawBehind {
+                    drawDecorativeDots()
+                    drawScreenTexture()
+                }
                 .statusBarsPadding()
                 .padding(contentPadding),
         ) {
@@ -639,10 +644,38 @@ fun P01PrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val transition = rememberInfiniteTransition(label = "p01_primary_button")
+    val scanOffset by transition.animateFloat(
+        initialValue = -0.45f,
+        targetValue = 1.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = LinearEasing),
+        ),
+        label = "p01_primary_button_scan",
+    )
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(999.dp))
             .background(P01PrimaryBrush)
+            .drawWithContent {
+                drawContent()
+                val scanWidth = size.width * 0.38f
+                drawRoundRect(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.42f),
+                            Color.Transparent,
+                        ),
+                    ),
+                    topLeft = Offset(
+                        x = size.width * scanOffset - scanWidth,
+                        y = 0f,
+                    ),
+                    size = Size(scanWidth, size.height),
+                    cornerRadius = CornerRadius(size.height / 2f, size.height / 2f),
+                )
+            }
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
@@ -737,7 +770,7 @@ fun P01SuccessBadge(
 }
 
 @Composable
-fun P01Orb(modifier: Modifier = Modifier) {
+fun P01Orb(modifier: Modifier = Modifier.size(172.dp)) {
     val transition = rememberInfiniteTransition(label = "p01_orb")
     val rotation by transition.animateFloat(
         initialValue = 0f,
@@ -766,7 +799,6 @@ fun P01Orb(modifier: Modifier = Modifier) {
 
     Canvas(
         modifier = modifier
-            .size(172.dp)
             .graphicsLayer {
                 rotationZ = rotation
                 scaleX = pulse
