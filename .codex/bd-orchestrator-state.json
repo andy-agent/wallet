@@ -1,21 +1,48 @@
 {
-  "generated_at": "2026-04-09T10:08:00+08:00",
+  "generated_at": "2026-04-11T14:19:00+08:00",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-rcb.20.2",
-  "accepted_task_id": "liaojiang-rcb.20.4.3",
-  "next_task_id": null,
-  "active_worker_task_ids": [],
+  "active_task_id": "liaojiang-g9e",
+  "accepted_task_id": "liaojiang-4iz",
+  "next_task_id": "liaojiang-g9e",
+  "active_worker_task_ids": [
+    "liaojiang-g9e:code/sol-agent",
+    "liaojiang-g9e:code/backend"
+  ],
   "blockers": [
     {
-      "task_id": "liaojiang-rcb.20.2",
+      "task_id": "liaojiang-26d",
+      "type": "feature",
+      "blocked_by": "Need real Solana payment verification plus a real receiving address before register-login-purchase-VPN can be accepted as non-mock."
+    },
+    {
+      "task_id": "liaojiang-3js",
       "type": "task",
-      "blocked_by": "auth blocker is cleared again; the only remaining blocker is the human-controlled real payment step and resulting txHash for order ORD-1775650877315-64DA3EFB"
+      "blocked_by": "Depends on liaojiang-26d; final live closed-loop acceptance waits on g9e implementation and deployment."
     }
   ],
-  "workers": [],
+  "workers": [
+    {
+      "agent_id": "019d7b29-c201-7ed3-970f-08193ec29a80",
+      "nickname": "Cicero",
+      "task_id": "liaojiang-g9e",
+      "scope": "code/sol-agent",
+      "branch": "codex/liaojiang-g9e-sol",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-g9e-sol",
+      "status": "running"
+    },
+    {
+      "agent_id": "019d7b29-c2c3-7461-b020-a565d81200ac",
+      "nickname": "Maxwell",
+      "task_id": "liaojiang-g9e",
+      "scope": "code/backend",
+      "branch": "codex/liaojiang-g9e-backend",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-g9e-backend",
+      "status": "running"
+    }
+  ],
   "mainline": {
-    "feature_id": "liaojiang-rcb",
-    "phase_id": "liaojiang-rcb.20.2",
-    "policy": "The recurring system login regression is fixed and verified across restart. Market token+contract scope remains accepted, stock lane is intentionally deferred, and the only remaining blocker under rcb is the human-controlled funding step for rcb.20.2."
+    "feature_id": "liaojiang-26d",
+    "phase_id": "liaojiang-g9e",
+    "policy": "Primary path is real register-login-plans-order-vpn on the live servers. No mock runtime data is allowed. Backend and chain-side must verify real SOLANA/USDT payments before provisioning VPN access."
   }
 }
