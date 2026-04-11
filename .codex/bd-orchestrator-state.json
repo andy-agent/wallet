@@ -1,21 +1,32 @@
 {
-  "generated_at": "2026-04-12T02:05:00+0800",
+  "generated_at": "2026-04-12T06:35:00+0800",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "active_task_id": "liaojiang-0jp",
-  "accepted_task_id": "liaojiang-0jp.3",
+  "accepted_task_id": "liaojiang-0jp.5",
   "next_task_id": "liaojiang-0jp",
-  "active_worker_task_ids": [],
+  "active_worker_task_ids": [
+    "liaojiang-0jp.8"
+  ],
   "blockers": [
     {
       "task_id": "liaojiang-0jp",
       "type": "verification",
-      "blocked_by": "A launcher-driven runtime verification path now exists and has produced evidence for email_register, plans, and subscription_detail/current_subscription, but full page-by-page coverage is still incomplete. Remaining blocker is finishing P2 Extended realification and scaling route-by-route runtime evidence across all audited pages."
+      "blocked_by": "Remaining work is no longer implementation decomposition; it is finishing residual de-template cleanup on a last set of P2Extended pages and extending route-by-route runtime evidence to all audited pages. Launcher-driven verification is working, but coverage is still incomplete."
     }
   ],
-  "workers": [],
+  "workers": [
+    {
+      "task_id": "liaojiang-0jp.8",
+      "role": "worker",
+      "agent_id": "019d7eb8-fceb-70a3-9f78-cff714c1154a",
+      "branch": "codex/liaojiang-0jp-p2ext-cleanup",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-0jp-p2ext-cleanup",
+      "status": "running"
+    }
+  ],
   "mainline": {
     "feature_id": "liaojiang-0jp",
     "phase_id": "liaojiang-0jp",
-    "policy": "Use the strict A/B/C/D page reality standard. Audit is complete: 46 pages audited, A=0, B=11, C=17, D=18. Rework is active: P0/P1 slices compile in clean worktrees; P2 Core was accepted into integration; P2 Extended screen rendering is being switched from hardcoded pseudo-business copy to uiState-driven rendering. Runtime verification now has a launcher-driven entry tracked under liaojiang-0jp.8, and it has already uncovered and fixed a real plans-route crash. The remaining task is to expand that evidence to all remaining pages, not to re-audit."
+    "policy": "Use the strict A/B/C/D page reality standard. Audit is complete: 46 pages audited, A=0, B=11, C=17, D=18. Implementation batches liaojiang-0jp.4, .5, .6, and .7 have been accepted and closed by the main orchestrator after compile and runtime evidence. Main remaining work is under liaojiang-0jp.8: scale launcher-driven runtime verification across all routes, surface any remaining runtime/template defects, and finish the last P2Extended cleanup slice."
   }
 }

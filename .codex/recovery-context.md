@@ -1,6 +1,6 @@
 # Recovery Context
 
-Generated: 2026-04-11T18:05:00Z
+Generated: 2026-04-11T22:35:00Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
@@ -42,18 +42,43 @@ Repository: /Users/cnyirui/git/projects/liaojiang
     - integration branch now contains P0/P1 plus P2 Core and a first P2 Extended rendering slice that swaps hardcoded pseudo-business copy for `uiState`-driven rendering on `SecurityCenter` / `Swap` / `Bridge` / `DappBrowser` / `WalletConnectSession` / `SignMessageConfirm` / `ImportMnemonic` / `BackupMnemonic` / `ImportWalletMethod`
     - compile passed: `:app:compileFdroidDebugKotlin`
 - Current blocker changed:
-  - It is no longer “write overlap with another UI thread”.
-  - A new bd task `liaojiang-0jp.8` now tracks Phase 3 runtime verification.
-  - The old shell-started route harness remains unreliable on the Oppo phone, but the current launcher-driven path is working:
+  - `liaojiang-0jp.4`, `.5`, `.6`, `.7` are now accepted and closed.
+  - The remaining active subtask is `liaojiang-0jp.8`, which owns Phase 3 runtime verification and any defects found by those runs.
+  - The launcher-driven verification path is established and working:
     - debug-only `ComposeRouteOverrideReceiver` writes a one-shot route override
     - `LaunchSplashActivity` forwards that override
     - `ComposeContainerActivity` consumes it as a fallback start route
     - launcher startup is retried until `com.v2ray.ang.fdroid` reaches foreground
-  - Real runtime evidence now exists for:
-    - `plans` via `/tmp/compose-realify-20260412-route/plans.retry.png`
-    - `email_register` via `/tmp/compose-realify-20260412-route2/email_register.png`
-    - `subscription_detail/current_subscription` via `/tmp/compose-realify-20260412-route2/subscription_detail_current_subscription.png`
-  - This runtime path also surfaced a real crash:
-    - `PlansPage.kt:68`
-    - `java.util.NoSuchElementException: List is empty.`
-    - fixed by making the plans page render a true empty/error state instead of calling `cards.first()`
+  - Verified runtime/screenshots already exist for a broad route set including:
+    - `email_register`
+    - `plans`
+    - `region_selection`
+    - `order_checkout/BASIC_1M`
+    - `order_list`
+    - `order_detail/ORD-1775909049741-BF4BAF37`
+    - `wallet_payment_confirm/ORD-1775909049741-BF4BAF37`
+    - `order_result/ORD-1775909049741-BF4BAF37`
+    - `wallet_payment`
+    - `wallet_onboarding`
+    - `vpn_home`
+    - `wallet_home`
+    - `profile`
+    - `about_app`
+    - `legal_documents`
+    - `legal_document_detail/terms_of_service`
+    - `subscription_detail/current_subscription`
+    - `auto_connect_rules`
+    - `chain_manager/primary_wallet`
+    - `add_custom_token/base`
+    - `confirm_mnemonic/primary_wallet`
+    - `wallet_manager/primary_wallet`
+    - `address_book/send`
+    - `receive/USDT/tron`
+    - `send/USDT/tron`
+    - `send_result/TX-9F32`
+    - `withdraw`
+    - `force_update`
+    - `optional_update`
+  - Action-level proof also exists:
+    - `about_app` external link opens system browser to `https://github.com/2dust/v2rayNG`
+  - Current remaining blocker is not the route-launch mechanism; it is finishing the last residual template cleanup on some P2Extended pages and closing the remaining coverage gap across all audited routes.
