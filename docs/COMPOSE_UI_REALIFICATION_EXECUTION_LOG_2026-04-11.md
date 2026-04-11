@@ -190,6 +190,39 @@
   - 页面展示对象改为跟随 repository/viewmodel 状态
   - 即使当前仍是 D 类，也会真实暴露“本地状态 / 未接能力 / 阻塞说明”，而不是继续伪装成功能完整
 
+### P2Extended 第三批收口
+- 以下页面也已统一切到 `P2ExtendedFeatureTemplate`，不再留在旧 `FeaturePageTemplate` 路径上：
+  - `AutoConnectRules`
+  - `CreateWallet`
+  - `ImportPrivateKey`
+  - `WalletManager`
+  - `AddressBook`
+  - `GasSettings`
+  - `RiskAuthorizations`
+  - `NftGallery`
+  - `StakingEarn`
+- 同时对对应 `UiState` 合同做了 CTA 可空化，repository 现在会明确关闭未接能力页的假按钮。
+
+### 新发现并修复的真实问题
+- `wallet_manager/primary_wallet`
+  - 初次运行时真实崩溃
+  - 原因：`P2ExtendedNavGraph` 没有安装 `wallet_manager/{walletId}`，直接 start route 会报：
+    - `IllegalArgumentException: navigation destination wallet_manager/primary_wallet is not a direct child of this NavGraph`
+  - 已修复：补齐 `create_wallet / import_private_key / wallet_manager / address_book / gas_settings` 路由安装
+- `address_book/send`
+  - 同属上述导航缺口，已随 nav graph 补齐一起修复
+
+### 新增真机证据
+- `auto_connect_rules`
+  - 最新截图：`/tmp/compose-realify-20260412-route5/auto_connect_rules.png`
+  - 前台 activity：`ComposeContainerActivity`
+- `wallet_manager/primary_wallet`
+  - 最新截图：`/tmp/compose-realify-20260412-route6/wallet_manager_primary_wallet.png`
+  - 前台 activity：`ComposeContainerActivity`
+- `address_book/send`
+  - 最新截图：`/tmp/compose-realify-20260412-route6/address_book_send.png`
+  - 前台 activity：`ComposeContainerActivity`
+
 ### 当前仍未完成的事
 - 这轮只拿到了“页面能打开”的真实证据，还没有把所有页面的主动作、loading、error、retry 全量跑完。
 - P2 Extended 仍有一批自定义页没切完 `uiState` 驱动。
