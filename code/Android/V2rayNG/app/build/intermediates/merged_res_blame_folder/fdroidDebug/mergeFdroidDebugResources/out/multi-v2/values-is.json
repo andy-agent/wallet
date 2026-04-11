@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-76:/values-is/values-is.xml",
+            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-81:/values-is/values-is.xml",
             "map": [
                 {
                     "source": "/Users/cnyirui/.gradle/caches/9.3.1/transforms/e0e9d89090908a7e4fe86b96e3440e78/transformed/material3-release/res/values-is/values-is.xml",

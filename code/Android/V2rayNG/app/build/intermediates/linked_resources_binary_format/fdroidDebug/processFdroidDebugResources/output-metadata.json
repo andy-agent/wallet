@@ -33,19 +33,6 @@
       "filters": [
         {
           "filterType": "ABI",
-          "value": "arm64-v8a"
-        }
-      ],
-      "attributes": [],
-      "versionCode": 5071701,
-      "versionName": "2.0.17",
-      "outputFile": "linked-resources-binary-format-fdroidArm64-v8aDebug.ap_"
-    },
-    {
-      "type": "ONE_OF_MANY",
-      "filters": [
-        {
-          "filterType": "ABI",
           "value": "armeabi-v7a"
         }
       ],
@@ -53,6 +40,19 @@
       "versionCode": 5071702,
       "versionName": "2.0.17",
       "outputFile": "linked-resources-binary-format-fdroidArmeabi-v7aDebug.ap_"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "arm64-v8a"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 5071701,
+      "versionName": "2.0.17",
+      "outputFile": "linked-resources-binary-format-fdroidArm64-v8aDebug.ap_"
     },
     {
       "type": "ONE_OF_MANY",

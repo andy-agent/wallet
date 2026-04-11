@@ -97,12 +97,12 @@ fun RegionSelectionScreen(
             P01CardHeader(
                 title = "当前最优",
                 trailing = { P01Chip(text = "AI排序") },
-                subtitle = nodes.firstOrNull()?.subtitle ?: "东京 · JP-01 · 专线出口 · 视频流媒体 · 钱包交易确认优先",
+                subtitle = nodes.firstOrNull()?.subtitle ?: "暂无本地节点数据",
             )
             P01MetricGrid(
                 items = listOf(
-                    P01MetricCell("Latency", uiState.metrics.getOrNull(0)?.value ?: "41 ms"),
-                    P01MetricCell("Speed", "89 Mbps"),
+                    P01MetricCell(uiState.metrics.getOrNull(0)?.label ?: "Latency", uiState.metrics.getOrNull(0)?.value ?: "--"),
+                    P01MetricCell(uiState.metrics.getOrNull(1)?.label ?: "节点数", uiState.metrics.getOrNull(1)?.value ?: "0"),
                 ),
             )
         }
@@ -110,7 +110,7 @@ fun RegionSelectionScreen(
         P01Card {
             P01CardHeader(
                 title = "全部节点",
-                trailing = { P01Chip(text = "${nodes.size.coerceAtLeast(62)} 可用") },
+                trailing = { P01Chip(text = "${nodes.size} 可用") },
             )
             P01List {
                 nodes.forEach { node ->
@@ -131,11 +131,7 @@ fun RegionSelectionScreen(
 private fun regionNodes(uiState: RegionSelectionUiState): List<FeatureListItem> =
     uiState.highlights.ifEmpty {
         listOf(
-            FeatureListItem("东京 · JP-01", "最快 · 入口/出口已双向检测", "41 ms", "PREMIUM"),
-            FeatureListItem("新加坡 · SG-09", "稳定 · 入口/出口已双向检测", "52 ms", "PREMIUM"),
-            FeatureListItem("法兰克福 · DE-03", "低拥堵 · 入口/出口已双向检测", "138 ms", "STANDARD"),
-            FeatureListItem("洛杉矶 · US-12", "流媒体 · 入口/出口已双向检测", "168 ms", "STANDARD"),
-            FeatureListItem("香港 · HK-06", "智能分流 · 入口/出口已双向检测", "46 ms", "PREMIUM"),
+            FeatureListItem("暂无本地节点", "等待导入或订阅同步", "--", "EMPTY"),
         )
     }
 

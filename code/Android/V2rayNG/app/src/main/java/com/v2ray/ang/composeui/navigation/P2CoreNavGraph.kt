@@ -163,7 +163,9 @@ fun NavGraphBuilder.installCryptoVpnP2CoreRoutes(
     }
 
     composable(CryptoVpnRouteSpec.inviteShare.pattern) {
-        val vm: InviteShareViewModel = viewModel()
+        val vm: InviteShareViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { InviteShareViewModel(repository) },
+        )
         InviteShareRoute(
             viewModel = vm,
             onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.inviteCenter.pattern) },
@@ -221,7 +223,9 @@ fun NavGraphBuilder.installCryptoVpnP2CoreRoutes(
     }
 
     composable(CryptoVpnRouteSpec.aboutApp.pattern) {
-        val vm: AboutAppViewModel = viewModel()
+        val vm: AboutAppViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { AboutAppViewModel(repository) },
+        )
         AboutAppRoute(
             viewModel = vm,
             onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.legalDocuments.pattern) },

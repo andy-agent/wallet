@@ -72,14 +72,14 @@ fun WalletHomeScreen(
             P01CardHeader(
                 title = uiState.totalBalanceText,
                 trailing = { P01Chip(text = "${uiState.chains.count()} 链已激活") },
-                subtitle = "24H +6.24% · 可直接支付 VPN 套餐与续费",
+                subtitle = uiState.alertBanner,
             )
             P01MetricGrid(
                 items = listOf(
                     P01MetricCell("可用余额", uiState.totalBalanceText),
-                    P01MetricCell("待确认", "${uiState.assets.size.coerceAtMost(3)} 笔"),
-                    P01MetricCell("链路状态", "健康"),
-                    P01MetricCell("隐藏小额资产", "已开启"),
+                    P01MetricCell("资产数量", uiState.assets.size.toString()),
+                    P01MetricCell("已激活链", uiState.chains.size.toString()),
+                    P01MetricCell("当前网络", uiState.chains.firstOrNull()?.label ?: "未配置"),
                 ),
             )
         }
@@ -113,7 +113,7 @@ fun WalletHomeScreen(
             )
             P01List {
                 uiState.assets.ifEmpty {
-                    listOf(AssetHolding("USDT", "TRON / Solana", "0.00", "$0.00", "暂无资产", true))
+                    listOf(AssetHolding("--", "暂无资产缓存", "--", "--", "等待真实资产或订单记录", true))
                 }.forEach { asset ->
                     P01ListRow(
                         title = asset.symbol,

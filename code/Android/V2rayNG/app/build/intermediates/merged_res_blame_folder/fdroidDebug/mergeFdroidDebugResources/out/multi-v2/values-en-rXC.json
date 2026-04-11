@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-76:/values-en-rXC/values-en-rXC.xml",
+            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-81:/values-en-rXC/values-en-rXC.xml",
             "map": [
                 {
                     "source": "/Users/cnyirui/.gradle/caches/9.3.1/transforms/aec75260de508bdf7cc756747dad2a48/transformed/preference-1.2.1/res/values-en-rXC/values-en-rXC.xml",

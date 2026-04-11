@@ -24,10 +24,12 @@ interface CryptoVpnRepository {
     suspend fun getSendState(args: SendRouteArgs): SendUiState
     suspend fun getSendResultState(args: SendResultRouteArgs): SendResultUiState
     suspend fun getInviteCenterState(): InviteCenterUiState
+    suspend fun getInviteShareState(): InviteShareUiState
     suspend fun getCommissionLedgerState(): CommissionLedgerUiState
     suspend fun getWithdrawState(): WithdrawUiState
     suspend fun getProfileState(): ProfileUiState
     suspend fun getLegalDocumentsState(): LegalDocumentsUiState
+    suspend fun getAboutAppState(): AboutAppUiState
     suspend fun getLegalDocumentDetailState(args: LegalDocumentDetailRouteArgs): LegalDocumentDetailUiState
     suspend fun getSubscriptionDetailState(args: SubscriptionDetailRouteArgs): SubscriptionDetailUiState
     suspend fun getExpiryReminderState(args: ExpiryReminderRouteArgs): ExpiryReminderUiState

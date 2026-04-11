@@ -99,6 +99,10 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         return inviteCenterPreviewState()
     }
 
+    override suspend fun getInviteShareState(): InviteShareUiState {
+        return inviteSharePreviewState()
+    }
+
     override suspend fun getCommissionLedgerState(): CommissionLedgerUiState {
         return commissionLedgerPreviewState()
     }
@@ -113,6 +117,10 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
 
     override suspend fun getLegalDocumentsState(): LegalDocumentsUiState {
         return legalDocumentsPreviewState()
+    }
+
+    override suspend fun getAboutAppState(): AboutAppUiState {
+        return aboutAppPreviewState()
     }
 
     override suspend fun getLegalDocumentDetailState(args: LegalDocumentDetailRouteArgs): LegalDocumentDetailUiState {

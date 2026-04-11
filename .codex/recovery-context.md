@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-11T01:58:39Z
+Generated: 2026-04-11T02:29:32Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-2mt
-- next_task_title: 新主线：将 full delivery 最新 UI 重写为高保真 HTML5
+- next_task_id: liaojiang-80n
+- next_task_title: Replace image-based launch splash with native Android layout
 
 ## Counters
-- in_progress: 1
+- in_progress: 3
 - ready: 0
-- open: 3
-- closed: 365
-- dirty: 2
+- open: 7
+- closed: 366
+- dirty: 805
 
 ## Next Milestone
 - Continue the next task and complete one milestone

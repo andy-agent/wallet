@@ -14,6 +14,7 @@ import com.v2ray.ang.composeui.p0.model.WalletChainSummary
 import com.v2ray.ang.composeui.p0.model.WalletHomeUiState
 import com.v2ray.ang.composeui.p0.model.WalletOnboardingUiState
 import com.v2ray.ang.composeui.p0.model.WatchSignal
+import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.repository.PaymentRepository
@@ -111,6 +112,14 @@ class RealP0Repository(context: Context) : P0Repository {
         val subscription = paymentRepository.getSubscription().getOrNull() ?: me?.subscription
         val orders = loadOrders()
         val latestOrder = orders.maxByOrNull { it.createdAt }
+        val regions = localRegions()
+        val selectedRegion = regions.firstOrNull()
+            ?: RegionSpeed(
+                regionName = "暂无本地节点",
+                protocol = "等待导入或订阅同步",
+                latencyMs = 0,
+                load = "空态",
+            )
 
         return VpnHomeUiState(
             connectionStatus = if (paymentRepository.isTokenValid()) {
@@ -118,21 +127,16 @@ class RealP0Repository(context: Context) : P0Repository {
             } else {
                 VpnConnectionStatus.DISCONNECTED
             },
-            selectedRegion = RegionSpeed(
-                regionName = subscription?.planCode ?: "Default secure route",
-                protocol = "VLESS / Reality",
-                latencyMs = 48,
-                load = "Real module",
-            ),
+            selectedRegion = selectedRegion,
             subscription = SubscriptionSummary(
-                planName = subscription?.planCode ?: latestOrder?.planName ?: "No active subscription",
+                planName = subscription?.planCode ?: latestOrder?.planName ?: "暂无有效订阅",
                 expiresInDays = subscription?.daysRemaining ?: 0,
                 autoRenew = false,
-                nextBillingLabel = subscription?.expireAt?.let(::formatDateLabel) ?: "Renewal unavailable",
+                nextBillingLabel = subscription?.expireAt?.let(::formatDateLabel) ?: "等待续费",
             ),
             autoConnectEnabled = paymentRepository.isTokenValid(),
             oneTapLabel = if (paymentRepository.isTokenValid()) "Protected session active" else "Reconnect and secure",
-            speedNodes = defaultRegions(),
+            speedNodes = regions,
             watchSignals = buildWatchSignals(orders),
             walletTotalLabel = orders.sumOf { it.payment.amountCrypto.toDoubleOrNull() ?: 0.0 }
                 .let { "$" + String.format(Locale.US, "%.2f", it) },
@@ -148,12 +152,16 @@ class RealP0Repository(context: Context) : P0Repository {
         val chainTotals = orders.groupBy { it.quoteNetworkCode.lowercase(Locale.ROOT) }
             .mapValues { (_, items) -> items.sumOf { it.payment.amountCrypto.toDoubleOrNull() ?: 0.0 } }
 
-        val chains = listOf(
-            WalletChainSummary("ethereum", "ETH", "$0.00", "No wallet bridge yet"),
-            WalletChainSummary("tron", "TRON", formatMoney(chainTotals["tron"] ?: 0.0), "Derived from payment activity"),
-            WalletChainSummary("solana", "Solana", formatMoney(chainTotals["solana"] ?: 0.0), "Derived from payment activity"),
-            WalletChainSummary("base", "Base", "$0.00", "P2 extension pending"),
-        )
+        val chains = chainTotals.entries
+            .sortedByDescending { it.value }
+            .map { (chainId, total) ->
+                WalletChainSummary(
+                    chainId = chainId,
+                    label = chainLabel(chainId),
+                    balanceText = formatMoney(total),
+                    accent = chainAccent(chainId),
+                )
+            }
 
         val assets = assetCodeTotals.entries.sortedByDescending { it.value }.map { (asset, amount) ->
             AssetHolding(
@@ -164,19 +172,15 @@ class RealP0Repository(context: Context) : P0Repository {
                 changeText = orders.count { it.quoteAssetCode == asset }.toString() + " orders",
                 changePositive = true,
             )
-        }.ifEmpty {
-            listOf(
-                AssetHolding("USDT", "TRON", "0.00 USDT", "$0.00", "No orders yet", true),
-            )
         }
 
         return WalletHomeUiState(
             totalBalanceText = formatMoney(assetCodeTotals.values.sum()),
-            selectedChainId = chains.first().chainId,
+            selectedChainId = chains.firstOrNull()?.chainId ?: "",
             chains = chains,
             assets = assets,
-            alertBanner = currentUser?.let { "Account ${it.username} · ${assets.size} tracked assets" }
-                ?: "No cached account yet",
+            alertBanner = currentUser?.let { "Account ${it.username} · ${orders.size} 笔订单缓存" }
+                ?: "当前未缓存账号",
         )
     }
 
@@ -204,11 +208,22 @@ class RealP0Repository(context: Context) : P0Repository {
         }
     }
 
-    private fun defaultRegions(): List<RegionSpeed> = listOf(
-        RegionSpeed("Singapore - Premium", "VLESS / Reality", 28, "22% load"),
-        RegionSpeed("Tokyo - Ultra", "XTLS / Vision", 46, "31% load"),
-        RegionSpeed("Frankfurt - Mesh", "VLESS / TCP", 118, "44% load"),
-    )
+    private fun localRegions(): List<RegionSpeed> {
+        return MmkvManager.decodeAllServerList().mapNotNull { guid ->
+            val profile = MmkvManager.decodeServerConfig(guid) ?: return@mapNotNull null
+            val latency = MmkvManager.decodeServerAffiliationInfo(guid)
+                ?.testDelayMillis
+                ?.takeIf { it > 0L }
+                ?.toInt()
+                ?: 0
+            RegionSpeed(
+                regionName = profile.remarks.ifBlank { profile.server ?: guid.take(8) },
+                protocol = profile.configType.name,
+                latencyMs = latency,
+                load = if (latency > 0) "${latency}ms" else "未测速",
+            )
+        }.sortedBy { if (it.latencyMs > 0) it.latencyMs else Int.MAX_VALUE }
+    }
 
     private fun buildWatchSignals(orders: List<Order>): List<WatchSignal> {
         if (orders.isEmpty()) {
@@ -233,6 +248,20 @@ class RealP0Repository(context: Context) : P0Repository {
         } else {
             PaymentConfig.NetworkCode.TRON
         }
+    }
+
+    private fun chainLabel(chainId: String): String = when (chainId.lowercase(Locale.ROOT)) {
+        "tron" -> "TRON"
+        "solana" -> "Solana"
+        "ethereum" -> "Ethereum"
+        "base" -> "Base"
+        else -> chainId.uppercase(Locale.ROOT)
+    }
+
+    private fun chainAccent(chainId: String): String = when (chainId.lowercase(Locale.ROOT)) {
+        "tron" -> "来自真实订单支付网络"
+        "solana" -> "来自真实订单支付网络"
+        else -> "来自本地资产统计"
     }
 
     private fun formatMoney(value: Double): String = "$" + String.format(Locale.US, "%.2f", value)

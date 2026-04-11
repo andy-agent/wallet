@@ -1,10 +1,17 @@
 package com.v2ray.ang.composeui.p2.viewmodel
 
+import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.InviteShareEvent
 import com.v2ray.ang.composeui.p2.model.InviteShareUiState
 
-class InviteShareViewModel : BaseFeatureViewModel<InviteShareUiState>(InviteShareUiState()) {
+class InviteShareViewModel(
+    private val repository: CryptoVpnRepository,
+) : BaseFeatureViewModel<InviteShareUiState>(InviteShareUiState()) {
+
+    init {
+        refresh()
+    }
 
     fun onEvent(event: InviteShareEvent) {
         when (event) {
@@ -17,7 +24,13 @@ class InviteShareViewModel : BaseFeatureViewModel<InviteShareUiState>(InviteShar
             }
             InviteShareEvent.PrimaryActionClicked -> Unit
             InviteShareEvent.SecondaryActionClicked -> Unit
-            InviteShareEvent.Refresh -> Unit
+            InviteShareEvent.Refresh -> refresh()
+        }
+    }
+
+    private fun refresh() {
+        launchLoad {
+            repository.getInviteShareState()
         }
     }
 }

@@ -61,14 +61,17 @@ fun LegalDocumentDetailScreen(
     ) {
         P2CoreCard {
             P2CoreChipRow(items = listOf("• $version", "生效日期：$effective"), activeIndex = 0)
-            Text("1. 服务范围", style = MaterialTheme.typography.titleSmall, color = Color(0xFF182345))
-            Text("CryptoVPN 提供基于订阅的 VPN 网络接入服务，以及配套的非托管钱包支付能力。", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF56627F))
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("2. 付款与退款", style = MaterialTheme.typography.titleSmall, color = Color(0xFF182345))
-            Text("链上支付一经广播不可撤回；若出现技术故障，平台按退款政策处理。", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF56627F))
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("3. 钱包责任", style = MaterialTheme.typography.titleSmall, color = Color(0xFF182345))
-            Text("助记词与私钥由用户自持；如遗失，平台无法帮助恢复资产。", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF56627F))
+            uiState.highlights.forEachIndexed { index, item ->
+                Text(item.title, style = MaterialTheme.typography.titleSmall, color = Color(0xFF182345))
+                Text(
+                    item.subtitle.ifBlank { item.trailing },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF56627F),
+                )
+                if (index != uiState.highlights.lastIndex) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
         }
     }
 }

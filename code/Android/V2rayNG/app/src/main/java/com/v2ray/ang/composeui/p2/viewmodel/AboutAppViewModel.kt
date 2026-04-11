@@ -1,10 +1,17 @@
 package com.v2ray.ang.composeui.p2.viewmodel
 
+import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.AboutAppEvent
 import com.v2ray.ang.composeui.p2.model.AboutAppUiState
 
-class AboutAppViewModel : BaseFeatureViewModel<AboutAppUiState>(AboutAppUiState()) {
+class AboutAppViewModel(
+    private val repository: CryptoVpnRepository,
+) : BaseFeatureViewModel<AboutAppUiState>(AboutAppUiState()) {
+
+    init {
+        refresh()
+    }
 
     fun onEvent(event: AboutAppEvent) {
         when (event) {
@@ -17,7 +24,13 @@ class AboutAppViewModel : BaseFeatureViewModel<AboutAppUiState>(AboutAppUiState(
             }
             AboutAppEvent.PrimaryActionClicked -> Unit
             AboutAppEvent.SecondaryActionClicked -> Unit
-            AboutAppEvent.Refresh -> Unit
+            AboutAppEvent.Refresh -> refresh()
+        }
+    }
+
+    private fun refresh() {
+        launchLoad {
+            repository.getAboutAppState()
         }
     }
 }

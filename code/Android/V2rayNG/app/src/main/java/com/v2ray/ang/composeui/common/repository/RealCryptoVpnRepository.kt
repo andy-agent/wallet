@@ -1,6 +1,7 @@
 package com.v2ray.ang.composeui.common.repository
 
 import android.content.Context
+import com.v2ray.ang.AppConfig
 import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.composeui.common.model.FeatureBullet
 import com.v2ray.ang.composeui.common.model.FeatureField
@@ -38,8 +39,10 @@ import com.v2ray.ang.composeui.p1.model.walletPaymentConfirmPreviewState
 import com.v2ray.ang.composeui.p1.model.walletPaymentPreviewState
 import com.v2ray.ang.composeui.p2.model.AssetDetailRouteArgs
 import com.v2ray.ang.composeui.p2.model.AssetDetailUiState
+import com.v2ray.ang.composeui.p2.model.AboutAppUiState
 import com.v2ray.ang.composeui.p2.model.CommissionLedgerUiState
 import com.v2ray.ang.composeui.p2.model.InviteCenterUiState
+import com.v2ray.ang.composeui.p2.model.InviteShareUiState
 import com.v2ray.ang.composeui.p2.model.LegalDocumentDetailRouteArgs
 import com.v2ray.ang.composeui.p2.model.LegalDocumentDetailUiState
 import com.v2ray.ang.composeui.p2.model.LegalDocumentsUiState
@@ -51,9 +54,11 @@ import com.v2ray.ang.composeui.p2.model.SendResultUiState
 import com.v2ray.ang.composeui.p2.model.SendRouteArgs
 import com.v2ray.ang.composeui.p2.model.SendUiState
 import com.v2ray.ang.composeui.p2.model.WithdrawUiState
+import com.v2ray.ang.composeui.p2.model.aboutAppPreviewState
 import com.v2ray.ang.composeui.p2.model.assetDetailPreviewState
 import com.v2ray.ang.composeui.p2.model.commissionLedgerPreviewState
 import com.v2ray.ang.composeui.p2.model.inviteCenterPreviewState
+import com.v2ray.ang.composeui.p2.model.inviteSharePreviewState
 import com.v2ray.ang.composeui.p2.model.legalDocumentDetailPreviewState
 import com.v2ray.ang.composeui.p2.model.legalDocumentsPreviewState
 import com.v2ray.ang.composeui.p2.model.profilePreviewState
@@ -139,6 +144,7 @@ import com.v2ray.ang.payment.data.local.entity.UserEntity
 import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.model.Plan
 import com.v2ray.ang.payment.data.repository.PaymentRepository
+import com.v2ray.ang.handler.MmkvManager
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -146,7 +152,6 @@ import java.util.Locale
 
 class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     private val paymentRepository = PaymentRepository(context.applicationContext)
-    private val fallback = MockCryptoVpnRepository()
 
     override suspend fun getForceUpdateState(): ForceUpdateUiState {
         return forceUpdatePreviewState().copy(
@@ -229,22 +234,38 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getRegionSelectionState(): RegionSelectionUiState {
-        val regions = defaultRegions()
+        val nodes = localServerSnapshots()
+        val bestLatency = nodes.mapNotNull { it.latencyMs }.minOrNull()
+        val preferredProtocol = nodes.firstOrNull()?.protocol ?: "--"
+
         return regionSelectionPreviewState().copy(
             metrics = listOf(
-                FeatureMetric("节点数", regions.size.toString()),
-                FeatureMetric("最低延迟", "${regions.minOf { it.latency }}ms"),
-                FeatureMetric("高级节点", regions.count { it.isPremium }.toString()),
+                FeatureMetric("最佳延迟", bestLatency?.let { "$it ms" } ?: "--"),
+                FeatureMetric("可用节点", nodes.size.toString()),
+                FeatureMetric("优先协议", preferredProtocol),
             ),
-            highlights = regions.take(4).map {
+            fields = listOf(
+                FeatureField(
+                    key = "search",
+                    label = "节点搜索",
+                    value = "",
+                    supportingText = "当前基于本地节点列表过滤，不再使用固定演示节点。",
+                ),
+            ),
+            highlights = nodes.map {
                 FeatureListItem(
-                    title = it.name,
-                    subtitle = "${it.countryCode} · ${it.city}",
-                    trailing = "${it.latency} ms",
-                    badge = if (it.isPremium) "PREMIUM" else "STANDARD",
+                    title = it.displayName,
+                    subtitle = it.description,
+                    trailing = it.latencyMs?.let { latency -> "$latency ms" } ?: "--",
+                    badge = it.protocol,
                 )
             },
-            note = "节点数据来自真实模块内置节点目录（原 RegionSelectionProvider）。",
+            summary = if (nodes.isNotEmpty()) {
+                "节点选择页已切换到本地真实节点列表。"
+            } else {
+                "当前未导入本地节点，页面保持明确空态。"
+            },
+            note = "节点数据来自 MmkvManager 本地服务器列表与测速缓存。",
         )
     }
 
@@ -527,6 +548,40 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         }
     }
 
+    override suspend fun getInviteShareState(): InviteShareUiState {
+        val overview = paymentRepository.getReferralOverview().getOrNull()
+        val referralCode = overview?.referralCode ?: "--"
+
+        return inviteSharePreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("邀请码", referralCode),
+                FeatureMetric("一级邀请", overview?.level1InviteCount?.toString() ?: "0"),
+                FeatureMetric("二级邀请", overview?.level2InviteCount?.toString() ?: "0"),
+            ),
+            highlights = listOf(
+                FeatureListItem("邀请码", referralCode, "复制", "LIVE"),
+                FeatureListItem(
+                    "一级邀请",
+                    overview?.level1InviteCount?.toString() ?: "0",
+                    overview?.level1IncomeUsdt ?: "0",
+                    "L1",
+                ),
+                FeatureListItem(
+                    "二级邀请",
+                    overview?.level2InviteCount?.toString() ?: "0",
+                    overview?.level2IncomeUsdt ?: "0",
+                    "L2",
+                ),
+            ),
+            summary = if (overview != null) {
+                "分享页已切换到真实邀请码与邀请概览上下文。"
+            } else {
+                "当前未取到真实邀请码，页面显示明确空态。"
+            },
+            note = "邀请分享数据来自 PaymentRepository.getReferralOverview()。",
+        )
+    }
+
     override suspend fun getCommissionLedgerState(): CommissionLedgerUiState {
         val summary = paymentRepository.getCommissionSummary().getOrNull()
         val ledger = paymentRepository.getCommissionLedger().getOrNull()?.items.orEmpty()
@@ -615,40 +670,60 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getLegalDocumentsState(): LegalDocumentsUiState {
-        val docs = legalDocs()
+        val docs = localLegalDocs()
         return legalDocumentsPreviewState().copy(
             metrics = listOf(
                 FeatureMetric("文档总数", docs.size.toString()),
                 FeatureMetric("最近更新", docs.maxOfOrNull { it.lastUpdated } ?: "--"),
-                FeatureMetric("语言", "CN"),
+                FeatureMetric("来源", "本地资源/配置"),
             ),
-            fields = listOf(
-                FeatureField("search", "搜索文档", docs.joinToString(" / ") { it.title.take(2) }, "当前来自本地法务文档目录"),
-            ),
+            fields = emptyList(),
             highlights = docs.take(4).map {
                 FeatureListItem(it.title, it.description, it.lastUpdated, "DOC")
             },
-            summary = "法务文档来自真实模块本地文档目录。",
-            note = "使用内置 LegalDocumentProvider 数据。",
+            summary = "法务文档页已切换到本地资源与配置驱动的数据源。",
+            note = "文档入口来自 AppConfig 与本地应用资源，不再写死在仓库方法内。",
+        )
+    }
+
+    override suspend fun getAboutAppState(): AboutAppUiState {
+        val cachedUser = paymentRepository.getCachedCurrentUser()
+        val versionLabel = "v${BuildConfig.VERSION_NAME}"
+
+        return aboutAppPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("应用", "v2rayNG"),
+                FeatureMetric("版本", versionLabel),
+                FeatureMetric("渠道", BuildConfig.DISTRIBUTION),
+            ),
+            highlights = listOf(
+                FeatureListItem("当前版本", "$versionLabel · ${BuildConfig.DISTRIBUTION}", "最新", "LIVE"),
+                FeatureListItem("源码仓库", AppConfig.APP_URL, "查看", "SRC"),
+                FeatureListItem("帮助与支持", AppConfig.APP_ISSUES_URL, "进入", "SUPPORT"),
+            ),
+            note = cachedUser?.let { "当前账号：${it.username}" } ?: "当前未缓存登录账号。",
         )
     }
 
     override suspend fun getLegalDocumentDetailState(args: LegalDocumentDetailRouteArgs): LegalDocumentDetailUiState {
-        val doc = legalDocs().firstOrNull { it.id == args.documentId || normalizeDocId(it.id) == args.documentId }
+        val doc = localLegalDocs().firstOrNull {
+            it.id == args.documentId || normalizeDocId(it.id) == args.documentId
+        }
         return if (doc != null) {
             legalDocumentDetailPreviewState().copy(
                 title = doc.title,
                 summary = doc.description,
                 metrics = listOf(
                     FeatureMetric("文档版本", doc.lastUpdated),
-                    FeatureMetric("当前章节", "全文"),
-                    FeatureMetric("发布状态", "Published"),
+                    FeatureMetric("文档标识", doc.id),
+                    FeatureMetric("来源", "本地资源/配置"),
                 ),
                 highlights = listOf(
                     FeatureListItem("文档标识", doc.id, doc.lastUpdated, "DOC"),
-                    FeatureListItem("正文预览", doc.content.take(60), "", "TEXT"),
+                    FeatureListItem("说明", doc.content, "", "TEXT"),
+                    FeatureListItem("来源链接", doc.link, "打开外部原文", "LINK"),
                 ),
-                note = "法务详情已切到本地真实文档目录。",
+                note = "法务详情已切到本地资源与配置驱动的数据源。",
             )
         } else {
             legalDocumentDetailPreviewState().copy(
@@ -657,7 +732,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 metrics = listOf(
                     FeatureMetric("文档标识", args.documentId),
                     FeatureMetric("状态", "未找到"),
-                    FeatureMetric("数据源", "本地法务目录"),
+                    FeatureMetric("数据源", "本地资源/配置"),
                 ),
                 highlights = emptyList(),
                 note = "法务详情页未再回退到 Mock 仓库；保持真实空态。",
@@ -665,20 +740,137 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         }
     }
 
-    override suspend fun getSubscriptionDetailState(args: SubscriptionDetailRouteArgs): SubscriptionDetailUiState =
-        fallback.getSubscriptionDetailState(args)
+    override suspend fun getSubscriptionDetailState(args: SubscriptionDetailRouteArgs): SubscriptionDetailUiState {
+        val subscription = currentSubscription()
+        val planCode = subscription?.planCode
+        val plan = if (planCode != null) findPlanByCode(planCode) else null
+        val displayId = subscription?.subscriptionId ?: args.subscriptionId
+        val expireAt = subscription?.expireAt ?: "--"
+        val daysRemaining = subscription?.daysRemaining?.let { "$it 天" } ?: "未知"
 
-    override suspend fun getExpiryReminderState(args: ExpiryReminderRouteArgs): ExpiryReminderUiState =
-        fallback.getExpiryReminderState(args)
+        return subscriptionDetailPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("当前计划", plan?.name ?: subscription?.planCode ?: "未订阅"),
+                FeatureMetric("剩余时间", daysRemaining),
+                FeatureMetric("自动续费", "未接入"),
+            ),
+            highlights = listOf(
+                FeatureListItem("订阅标识", displayId, subscription?.status ?: "NONE", "LIVE"),
+                FeatureListItem("到期时间", expireAt, subscription?.planCode ?: "--", "SUB"),
+                FeatureListItem("并发设备", subscription?.maxActiveSessions?.toString() ?: "0", "", "DEVICE"),
+            ),
+            summary = if (subscription != null) {
+                "订阅详情已切到真实账户订阅上下文。"
+            } else {
+                "当前账号暂无真实订阅，页面保持明确空态。"
+            },
+            note = "不再回退到 Mock 仓库；优先使用 PaymentRepository.getSubscription()/getMe()。",
+        )
+    }
 
-    override suspend fun getNodeSpeedTestState(args: NodeSpeedTestRouteArgs): NodeSpeedTestUiState =
-        fallback.getNodeSpeedTestState(args)
+    override suspend fun getExpiryReminderState(args: ExpiryReminderRouteArgs): ExpiryReminderUiState {
+        val subscription = currentSubscription()
+        val planCode = subscription?.planCode
+        val plan = if (planCode != null) findPlanByCode(planCode) else null
+        val daysLeft = subscription?.daysRemaining?.toString() ?: args.daysLeft
+        val renewAmount = plan?.priceUsd?.let { "US$$it" } ?: "待定"
 
-    override suspend fun getAutoConnectRulesState(): AutoConnectRulesUiState =
-        fallback.getAutoConnectRulesState()
+        return expiryReminderPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("剩余天数", daysLeft),
+                FeatureMetric("续费金额", renewAmount),
+                FeatureMetric("自动续费", "未接入"),
+            ),
+            highlights = listOf(
+                FeatureListItem("当前计划", plan?.name ?: subscription?.planCode ?: "未订阅", daysLeft, "LIVE"),
+                FeatureListItem("到期时间", subscription?.expireAt ?: "--", subscription?.status ?: "NONE", "SUB"),
+                FeatureListItem("数据源", "真实订阅上下文", "", "REAL"),
+            ),
+            summary = if (subscription != null) {
+                "到期提醒已切到真实订阅信息。"
+            } else {
+                "当前账号暂无真实订阅，页面显示空态提醒。"
+            },
+            note = "不再回退到 Mock 仓库；金额优先取真实套餐价格。",
+        )
+    }
 
-    override suspend fun getCreateWalletState(args: CreateWalletRouteArgs): CreateWalletUiState =
-        fallback.getCreateWalletState(args)
+    override suspend fun getNodeSpeedTestState(args: NodeSpeedTestRouteArgs): NodeSpeedTestUiState {
+        val nodes = localServerSnapshots()
+        val bestLatency = nodes.mapNotNull { it.latencyMs }.minOrNull()?.let { "$it ms" } ?: "--"
+
+        return nodeSpeedTestPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("已测速", nodes.count { it.latencyMs != null }.toString()),
+                FeatureMetric("最佳延迟", bestLatency),
+                FeatureMetric("节点分组", args.nodeGroupId),
+            ),
+            highlights = nodes.map {
+                FeatureListItem(
+                    title = it.displayName,
+                    subtitle = it.description,
+                    trailing = it.latencyMs?.let { latency -> "$latency ms" } ?: "--",
+                    badge = it.protocol,
+                )
+            },
+            summary = "节点测速页已切断 Mock 仓库，当前使用本地节点列表与测速缓存。",
+            note = "后续可继续替换为真实测速服务结果。",
+        )
+    }
+
+    override suspend fun getAutoConnectRulesState(): AutoConnectRulesUiState {
+        val tokenValid = paymentRepository.isTokenValid()
+        val orders = loadCachedOrders()
+
+        return autoConnectRulesPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("规则数量", if (tokenValid) "1" else "0"),
+                FeatureMetric("会话状态", if (tokenValid) "有效" else "未登录"),
+                FeatureMetric("订单记录", orders.size.toString()),
+            ),
+            fields = listOf(
+                FeatureField(
+                    key = "rule",
+                    label = "默认规则",
+                    value = if (tokenValid) "不安全网络自动提醒" else "",
+                    supportingText = "当前先使用本地运行时规则状态。",
+                ),
+            ),
+            highlights = listOf(
+                FeatureListItem("默认策略", if (tokenValid) "检测到账号会话后允许自动提醒" else "未配置", "", "REAL"),
+                FeatureListItem("会话状态", if (tokenValid) "已登录" else "需登录后配置", "", "SESSION"),
+                FeatureListItem("数据源", "本地运行时状态", "", "LOCAL"),
+            ),
+            note = "不再回退到 Mock 仓库；当前页面先使用本地运行时规则状态。",
+        )
+    }
+
+    override suspend fun getCreateWalletState(args: CreateWalletRouteArgs): CreateWalletUiState {
+        val user = paymentRepository.getCachedCurrentUser()
+        val defaultName = user?.username?.let { "$it Wallet" } ?: "Primary Wallet"
+
+        return createWalletPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("模式", args.mode),
+                FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
+                FeatureMetric("数据源", "本地钱包流程"),
+            ),
+            fields = listOf(
+                FeatureField(
+                    key = "name",
+                    label = "钱包名称",
+                    value = defaultName,
+                    supportingText = "当前使用本地钱包创建流程，不再回退到 Mock 仓库。",
+                ),
+            ),
+            highlights = listOf(
+                FeatureListItem("创建模式", args.mode, "本地流程", "LIVE"),
+                FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
+                FeatureListItem("数据源", "本地钱包状态", "", "LOCAL"),
+            ),
+            note = "不再回退到 Mock 仓库；当前页面使用本地钱包创建上下文。",
+        )
+    }
 
     override suspend fun getImportWalletMethodState(): ImportWalletMethodUiState {
         val user = paymentRepository.getCachedCurrentUser()
@@ -790,14 +982,83 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             note = "自定义代币页已切断 Mock 仓库，当前使用本地真实录入流程。",
         )
 
-    override suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState =
-        fallback.getWalletManagerState(args)
+    override suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState {
+        val user = paymentRepository.getCachedCurrentUser()
+        val orders = loadCachedOrders()
+
+        return walletManagerPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("钱包数量", "1"),
+                FeatureMetric("默认钱包", args.walletId),
+                FeatureMetric("关联订单", orders.size.toString()),
+            ),
+            highlights = listOf(
+                FeatureListItem("默认钱包", args.walletId, "本地主钱包", "LIVE"),
+                FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
+                FeatureListItem("数据源", "本地钱包管理状态", "", "LOCAL"),
+            ),
+            summary = "钱包管理页已切断 Mock 仓库，当前使用本地钱包状态。",
+            note = "后续可继续接入多钱包持久化数据。",
+        )
+    }
 
     override suspend fun getAddressBookState(args: AddressBookRouteArgs): AddressBookUiState =
-        fallback.getAddressBookState(args)
+        addressBookPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("已保存", "0"),
+                FeatureMetric("最近使用", "0"),
+                FeatureMetric("模式", args.mode),
+            ),
+            fields = listOf(
+                FeatureField(
+                    key = "name",
+                    label = "联系人名称",
+                    value = "",
+                    supportingText = "当前地址簿尚未接入持久化数据。",
+                ),
+                FeatureField(
+                    key = "address",
+                    label = "钱包地址",
+                    value = "",
+                    supportingText = "保持明确空态，不再回退到 Mock 仓库。",
+                ),
+            ),
+            highlights = listOf(
+                FeatureListItem("地址簿状态", "暂无本地地址记录", args.mode, "EMPTY"),
+                FeatureListItem("数据源", "本地地址簿空态", "", "LOCAL"),
+            ),
+            summary = "地址簿页已切断 Mock 仓库，当前显示明确空态。",
+            note = "后续可接入本地持久化地址簿。",
+        )
 
     override suspend fun getGasSettingsState(args: GasSettingsRouteArgs): GasSettingsUiState =
-        fallback.getGasSettingsState(args)
+        gasSettingsPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("目标链", args.chainId),
+                FeatureMetric("估算状态", "未接入"),
+                FeatureMetric("数据源", "本地设置"),
+            ),
+            fields = listOf(
+                FeatureField(
+                    key = "maxFee",
+                    label = "Max Fee",
+                    value = "",
+                    supportingText = "当前未接链上估算，保持空态。",
+                ),
+                FeatureField(
+                    key = "priorityFee",
+                    label = "Priority Fee",
+                    value = "",
+                    supportingText = "不再回退到 Mock 仓库。",
+                ),
+            ),
+            highlights = listOf(
+                FeatureListItem("Gas 状态", "等待真实链上估算", args.chainId, "PENDING"),
+                FeatureListItem("数据源", "本地设置空态", "", "LOCAL"),
+            ),
+            summary = "Gas 设置页已切断 Mock 仓库，当前保持明确空态。",
+            note = "后续可接入真实 gas estimator。",
+        )
 
     override suspend fun getSwapState(args: SwapRouteArgs): SwapUiState =
         swapPreviewState().copy(
@@ -850,13 +1111,49 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
 
     override suspend fun getRiskAuthorizationsState(): RiskAuthorizationsUiState =
-        fallback.getRiskAuthorizationsState()
+        riskAuthorizationsPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("授权总数", "0"),
+                FeatureMetric("高风险", "0"),
+                FeatureMetric("会话状态", if (paymentRepository.isTokenValid()) "已登录" else "未登录"),
+            ),
+            highlights = listOf(
+                FeatureListItem("授权状态", "当前未接入真实授权列表", "", "EMPTY"),
+                FeatureListItem("数据源", "本地安全状态", "", "LOCAL"),
+            ),
+            summary = "风险授权页已切断 Mock 仓库，当前显示明确空态。",
+            note = "后续可接入 WalletConnect/DApp 授权记录。",
+        )
 
     override suspend fun getNftGalleryState(): NftGalleryUiState =
-        fallback.getNftGalleryState()
+        nftGalleryPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("收藏系列", "0"),
+                FeatureMetric("地板价", "--"),
+                FeatureMetric("在售数量", "0"),
+            ),
+            highlights = listOf(
+                FeatureListItem("NFT 状态", "当前未接入真实 NFT 数据源", "", "EMPTY"),
+                FeatureListItem("数据源", "本地空态", "", "LOCAL"),
+            ),
+            summary = "NFT 画廊页已切断 Mock 仓库，当前显示明确空态。",
+            note = "后续可接入链上资产/NFT 索引。",
+        )
 
     override suspend fun getStakingEarnState(): StakingEarnUiState =
-        fallback.getStakingEarnState()
+        stakingEarnPreviewState().copy(
+            metrics = listOf(
+                FeatureMetric("APR", "--"),
+                FeatureMetric("已质押", "0"),
+                FeatureMetric("待领取", "0"),
+            ),
+            highlights = listOf(
+                FeatureListItem("质押状态", "当前未接入真实质押数据源", "", "EMPTY"),
+                FeatureListItem("数据源", "本地空态", "", "LOCAL"),
+            ),
+            summary = "质押赚币页已切断 Mock 仓库，当前显示明确空态。",
+            note = "后续可接入真实 Earn/Staking 数据。",
+        )
 
     override suspend fun getSessionEvictedDialogState(): SessionEvictedDialogUiState {
         return sessionEvictedDialogPreviewState().copy(
@@ -887,6 +1184,17 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         return paymentRepository.getCachedOrders(userId)
     }
 
+    private suspend fun currentSubscription(): CurrentSubscriptionData? {
+        return paymentRepository.getSubscription().getOrNull()
+            ?: paymentRepository.getMe().getOrNull()?.subscription
+    }
+
+    private suspend fun findPlanByCode(planCode: String): Plan? {
+        return paymentRepository.getPlans().getOrNull()?.firstOrNull {
+            it.planCode == planCode
+        }
+    }
+
     private fun ledgerMetrics(summary: CommissionSummaryData): List<FeatureMetric> = listOf(
         FeatureMetric("可用佣金", "${summary.availableAmount} ${summary.settlementAssetCode}"),
         FeatureMetric("待结算", "${summary.frozenAmount} ${summary.settlementAssetCode}"),
@@ -898,22 +1206,70 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         return "acct:${user.userId.take(6)}...${user.userId.takeLast(4)}"
     }
 
-    private fun defaultRegions(): List<RealRegion> = listOf(
-        RealRegion("us-la", "美国 - 洛杉矶", "US", "洛杉矶", 45, 35, false),
-        RealRegion("us-sf", "美国 - 旧金山", "US", "旧金山", 52, 28, true),
-        RealRegion("jp-tok", "日本 - 东京", "JP", "东京", 35, 62, true),
-        RealRegion("sg-sin", "新加坡", "SG", "新加坡", 25, 70, false),
-    )
+    private fun localServerSnapshots(): List<LocalServerSnapshot> {
+        return MmkvManager.decodeAllServerList().mapNotNull { guid ->
+            val profile = MmkvManager.decodeServerConfig(guid) ?: return@mapNotNull null
+            val subscriptionRemarks = profile.subscriptionId
+                .takeIf { it.isNotBlank() }
+                ?.let { MmkvManager.decodeSubscription(it)?.remarks }
+                .orEmpty()
+            val latency = MmkvManager.decodeServerAffiliationInfo(guid)
+                ?.testDelayMillis
+                ?.takeIf { it > 0L }
+                ?.toInt()
+            val displayName = profile.remarks.ifBlank {
+                subscriptionRemarks.ifBlank { profile.server ?: guid.take(8) }
+            }
+            val description = listOfNotNull(
+                subscriptionRemarks.takeIf { it.isNotBlank() },
+                profile.server,
+                profile.serverPort?.let { "端口 $it" },
+            ).joinToString(" · ").ifBlank { "本地节点配置" }
 
-    private fun legalDocs(): List<RealLegalDoc> = listOf(
-        RealLegalDoc("terms_of_service", "用户协议", "使用服务的条款和条件", "2026-04-01", "请遵守适用法律法规，不得将服务用于违法用途。"),
-        RealLegalDoc("privacy", "隐私政策", "数据收集、使用和保护说明", "2026-04-01", "我们仅在提供服务必要范围内处理账户与订单相关数据。"),
-        RealLegalDoc("refund", "退款政策", "订单退款规则与流程", "2026-04-01", "符合条件的订单可按平台规则申请退款。"),
-        RealLegalDoc("affiliate", "推广协议", "邀请推广计划规则与佣金说明", "2026-04-01", "推广奖励按活动规则结算，异常行为会触发风控审查。"),
+            LocalServerSnapshot(
+                guid = guid,
+                displayName = displayName,
+                description = description,
+                protocol = profile.configType.name,
+                latencyMs = latency,
+            )
+        }.sortedWith(
+            compareBy<LocalServerSnapshot> { it.latencyMs == null }
+                .thenBy { it.latencyMs ?: Int.MAX_VALUE }
+                .thenBy { it.displayName },
+        )
+    }
+
+    private fun localLegalDocs(): List<RealLegalDoc> = listOf(
+        RealLegalDoc(
+            id = "terms_of_service",
+            title = "服务协议",
+            description = "应用与服务使用说明",
+            lastUpdated = BuildConfig.VERSION_NAME,
+            content = "通过项目主页查看最新服务说明与发行信息。",
+            link = AppConfig.APP_URL,
+        ),
+        RealLegalDoc(
+            id = "privacy_policy",
+            title = "隐私政策",
+            description = "查看当前隐私政策原文链接",
+            lastUpdated = BuildConfig.VERSION_NAME,
+            content = "隐私政策由应用配置提供，点击链接查看原文。",
+            link = AppConfig.APP_PRIVACY_POLICY,
+        ),
+        RealLegalDoc(
+            id = "vpn_service_notice",
+            title = "VPN 服务说明",
+            description = "节点、线路与模式说明",
+            lastUpdated = BuildConfig.VERSION_NAME,
+            content = "查看模式说明与线路使用指引。",
+            link = AppConfig.APP_WIKI_MODE,
+        ),
     )
 
     private fun normalizeDocId(id: String): String = when (id) {
         "terms" -> "terms_of_service"
+        "privacy" -> "privacy_policy"
         else -> id
     }
 
@@ -945,20 +1301,19 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     )
 }
 
-private data class RealRegion(
-    val id: String,
-    val name: String,
-    val countryCode: String,
-    val city: String,
-    val latency: Int,
-    val load: Int,
-    val isPremium: Boolean,
-)
-
 private data class RealLegalDoc(
     val id: String,
     val title: String,
     val description: String,
     val lastUpdated: String,
     val content: String,
+    val link: String,
+)
+
+private data class LocalServerSnapshot(
+    val guid: String,
+    val displayName: String,
+    val description: String,
+    val protocol: String,
+    val latencyMs: Int?,
 )

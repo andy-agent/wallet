@@ -41,7 +41,8 @@ fun InviteShareScreen(
     onEvent: (InviteShareEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    val link = uiState.highlights.firstOrNull()?.subtitle ?: uiState.metrics.firstOrNull()?.value ?: ""
+    val primaryMetric = uiState.metrics.firstOrNull()
+    val link = uiState.highlights.firstOrNull()?.subtitle ?: primaryMetric?.value ?: ""
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -56,7 +57,7 @@ fun InviteShareScreen(
     ) {
         P2CoreCard {
             P2CoreQrPlaceholder()
-            Text("推广链接", style = MaterialTheme.typography.labelMedium, color = Color(0xFF6D789E))
+            Text(primaryMetric?.label ?: "分享信息", style = MaterialTheme.typography.labelMedium, color = Color(0xFF6D789E))
             Text(link, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF182345))
         }
     }

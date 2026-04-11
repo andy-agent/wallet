@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-76:/values-sw360dp-v13/values-sw360dp-v13.xml",
+            "outputFile": "com.v2ray.ang.app-mergeFdroidDebugResources-81:/values-sw360dp-v13/values-sw360dp-v13.xml",
             "map": [
                 {
                     "source": "/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/res/values-sw360dp-v13/values-preference.xml",

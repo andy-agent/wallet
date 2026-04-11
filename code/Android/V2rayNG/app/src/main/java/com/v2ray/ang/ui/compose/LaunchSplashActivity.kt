@@ -4,12 +4,14 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.v2ray.ang.R
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
@@ -33,8 +35,12 @@ class LaunchSplashActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        )
         setContentView(R.layout.activity_launch_splash)
+        hideSystemBars()
 
         progressBar = findViewById(R.id.launch_progress)
         hubGlow = findViewById(R.id.launch_hub_glow)
@@ -49,6 +55,13 @@ class LaunchSplashActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             runLaunchSequence()
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            hideSystemBars()
         }
     }
 
@@ -175,6 +188,22 @@ class LaunchSplashActivity : ComponentActivity() {
             repeatMode = ValueAnimator.REVERSE
             interpolator = LinearInterpolator()
             start()
+        }
+    }
+
+    private fun hideSystemBars() {
+        @Suppress("DEPRECATION")
+        window.decorView.systemUiVisibility =
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 }
