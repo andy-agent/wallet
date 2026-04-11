@@ -184,12 +184,14 @@ fun FeaturePageTemplate(
                 }
             }
 
-            item {
-                GradientCTAButton(
-                    text = primaryActionLabel,
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onPrimaryAction,
-                )
+            if (primaryActionLabel.isNotBlank()) {
+                item {
+                    GradientCTAButton(
+                        text = primaryActionLabel,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onPrimaryAction,
+                    )
+                }
             }
 
             if (!secondaryActionLabel.isNullOrBlank() && onSecondaryAction != null) {

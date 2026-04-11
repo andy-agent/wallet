@@ -44,7 +44,7 @@ fun ProfileScreen(
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
-        subtitle = uiState.note,
+        subtitle = uiState.summary,
         badge = uiState.badge,
         activeSection = CoreNavSection.Profile,
         onBottomNav = onBottomNav,
@@ -65,7 +65,7 @@ fun ProfileScreen(
             )
             P2CoreActionValueRow(
                 label = "账号状态",
-                value = uiState.note,
+                value = uiState.metrics.firstOrNull { it.label == "账号状态" }?.value ?: "--",
                 actionLabel = "安全中心",
                 onAction = { onBottomNav(CryptoVpnRouteSpec.securityCenter.pattern) },
                 valueColor = Color(0xFF2F5BFF),
@@ -73,12 +73,12 @@ fun ProfileScreen(
         }
         P2CoreCard {
             uiState.highlights.forEachIndexed { index, item ->
-                val route = when (index) {
-                    0 -> CryptoVpnRouteSpec.securityCenter.pattern
-                    1 -> CryptoVpnRouteSpec.orderList.pattern
-                    2 -> CryptoVpnRouteSpec.inviteCenter.pattern
-                    3 -> CryptoVpnRouteSpec.legalDocuments.pattern
-                    4 -> "about_app"
+                val route = when (item.badge) {
+                    "SEC" -> CryptoVpnRouteSpec.securityCenter.pattern
+                    "ORDER" -> CryptoVpnRouteSpec.orderList.pattern
+                    "INVITE" -> CryptoVpnRouteSpec.inviteCenter.pattern
+                    "LEGAL" -> CryptoVpnRouteSpec.legalDocuments.pattern
+                    "APP" -> CryptoVpnRouteSpec.aboutApp.pattern
                     else -> null
                 }
                 P2CoreListRow(

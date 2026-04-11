@@ -1,16 +1,20 @@
 package com.v2ray.ang.composeui.pages.p2
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.unit.dp
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p2.model.LegalDocumentDetailEvent
 import com.v2ray.ang.composeui.p2.model.LegalDocumentDetailUiState
 import com.v2ray.ang.composeui.p2.model.legalDocumentDetailPreviewState
@@ -45,8 +49,13 @@ fun LegalDocumentDetailScreen(
     onEvent: (LegalDocumentDetailEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    val version = uiState.metrics.firstOrNull()?.value ?: "v2025.04"
-    val effective = uiState.highlights.firstOrNull()?.trailing?.ifBlank { "2025-04-01" } ?: "2025-04-01"
+    val context = LocalContext.current
+    val version = uiState.metrics.firstOrNull { it.label.contains("版本") }?.value ?: "--"
+    val documentId = uiState.metrics.firstOrNull { it.label.contains("标识") }?.value
+        ?: uiState.highlights.firstOrNull { it.badge == "DOC" }?.subtitle
+        ?: "--"
+    val externalLink = uiState.highlights.firstOrNull { it.badge == "LINK" }?.subtitle
+        ?: uiState.highlights.firstOrNull { it.title.contains("原文链接") }?.subtitle
     val sectionFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
@@ -57,12 +66,19 @@ fun LegalDocumentDetailScreen(
         onBottomNav = onBottomNav,
         secureHubLabel = legalDetailHubLabel(sectionFocus),
         primaryActionLabel = uiState.primaryActionLabel,
-        onPrimaryAction = { onEvent(LegalDocumentDetailEvent.PrimaryActionClicked) },
+        onPrimaryAction = { onBottomNav(CryptoVpnRouteSpec.legalDocuments.pattern) },
         secondaryActionLabel = uiState.secondaryActionLabel,
-        onSecondaryAction = { onEvent(LegalDocumentDetailEvent.SecondaryActionClicked) },
+        onSecondaryAction = {
+            val url = externalLink?.takeIf { it.startsWith("http") }
+            if (url != null) {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            } else {
+                onEvent(LegalDocumentDetailEvent.SecondaryActionClicked)
+            }
+        },
     ) {
         P2CoreCard {
-            P2CoreChipRow(items = listOf("• $version", "生效日期：$effective"), activeIndex = 0)
+            P2CoreChipRow(items = listOf("• $version", "文档标识：$documentId"), activeIndex = 0)
             uiState.highlights.forEachIndexed { index, item ->
                 Text(item.title, style = MaterialTheme.typography.titleSmall, color = Color(0xFF182345))
                 Text(

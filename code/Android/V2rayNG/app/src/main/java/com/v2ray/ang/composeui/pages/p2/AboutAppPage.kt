@@ -1,8 +1,11 @@
 package com.v2ray.ang.composeui.pages.p2
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
@@ -40,6 +43,7 @@ fun AboutAppScreen(
     onEvent: (AboutAppEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val context = LocalContext.current
     val aboutFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
@@ -56,16 +60,22 @@ fun AboutAppScreen(
     ) {
         P2CoreCard {
             uiState.highlights.forEachIndexed { index, item ->
+                val onClick: (() -> Unit)? = when (item.badge) {
+                    "LEGAL" -> ({ onBottomNav(CryptoVpnRouteSpec.legalDocuments.pattern) })
+                    "WEB", "SUPPORT" -> ({
+                        val url = item.subtitle.takeIf { it.startsWith("http") }
+                        if (url != null) {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                        }
+                    })
+                    else -> null
+                }
                 P2CoreListRow(
                     title = item.title,
                     subtitle = item.subtitle,
                     trailing = item.trailing,
                     trailingColor = if (index == 1) Color(0xFF66739D) else Color(0xFF2F5BFF),
-                    onClick = when (index) {
-                        1 -> { { onEvent(AboutAppEvent.PrimaryActionClicked) } }
-                        2 -> { { onBottomNav(CryptoVpnRouteSpec.legalDocuments.pattern) } }
-                        else -> null
-                    },
+                    onClick = onClick,
                 )
             }
         }

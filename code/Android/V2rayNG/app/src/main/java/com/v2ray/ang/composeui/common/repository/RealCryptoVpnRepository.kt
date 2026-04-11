@@ -474,17 +474,28 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             } else {
                 P1StateInfo(P1ScreenState.Empty, title = "暂无支付上下文", message = "当前没有可继续的钱包支付订单。")
             },
+            primaryActionLabel = if (currentOrder != null) "进入支付确认" else "",
             metrics = listOf(
-                FeatureMetric("可用余额", currentOrder?.quoteUsdAmount ?: "--"),
-                FeatureMetric("默认网络", currentOrder?.quoteNetworkCode ?: "TRON"),
-                FeatureMetric("预估手续费", currentOrder?.paymentTarget?.uniqueAmountDelta ?: "0"),
+                FeatureMetric("当前订单", currentOrder?.orderNo ?: "--"),
+                FeatureMetric("支付网络", currentOrder?.quoteNetworkCode ?: "--"),
+                FeatureMetric("支付币种", currentOrder?.payment?.assetCode ?: "--"),
             ),
             fields = listOf(
-                FeatureField("source", "扣款钱包", walletAddress(currentUser), "来自当前账号缓存信息"),
-                FeatureField("memo", "支付备注", currentOrder?.orderNo ?: "", "真实订单号用于对账"),
+                FeatureField(
+                    "source",
+                    "当前账号",
+                    currentUser?.email ?: currentUser?.username.orEmpty(),
+                    "当前工程未接真实钱包地址源，支付上下文以账号和订单为主。",
+                ),
+                FeatureField("memo", "订单备注", currentOrder?.orderNo ?: "", "真实订单号用于对账"),
             ),
-            summary = "钱包支付页已绑定真实账户与当前订单上下文。",
-            note = "当前页使用当前订单和当前用户缓存进行填充。",
+            detailLines = listOfNotNull(
+                currentOrder?.let { P1DetailLine("支付金额", "${it.payment.amountCrypto} ${it.payment.assetCode}") },
+                currentOrder?.let { P1DetailLine("订单状态", it.statusText) },
+                currentOrder?.let { P1DetailLine("收款地址", it.payment.receiveAddress.ifBlank { "--" }) },
+            ),
+            summary = "钱包支付页当前只展示真实订单支付上下文，不再伪装成真实钱包资产总览。",
+            note = "当前页以账号缓存 + 当前订单为准；真实钱包地址与链上广播能力仍未接入。",
         )
     }
 
@@ -821,7 +832,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             ),
             fields = emptyList(),
             highlights = docs.take(4).map {
-                FeatureListItem(it.title, it.description, it.lastUpdated, "DOC")
+                FeatureListItem(it.title, it.description, it.lastUpdated, it.id)
             },
             summary = "当前法务页只提供应用内置链接与说明，不再伪装成服务端法务正文列表。",
             note = "缺少服务端法务文档接口前，本页仅展示 AppConfig 驱动的外部文档入口。",

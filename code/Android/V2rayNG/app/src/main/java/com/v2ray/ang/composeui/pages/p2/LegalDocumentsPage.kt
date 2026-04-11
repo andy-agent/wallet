@@ -49,18 +49,15 @@ fun LegalDocumentsScreen(
         activeSection = CoreNavSection.Profile,
         onBottomNav = onBottomNav,
         primaryActionLabel = uiState.primaryActionLabel,
-        onPrimaryAction = { onBottomNav(CryptoVpnRouteSpec.legalDocumentDetailRoute("terms_of_service")) },
+        onPrimaryAction = {
+            uiState.highlights.firstOrNull()?.badge?.let { onBottomNav(CryptoVpnRouteSpec.legalDocumentDetailRoute(it)) }
+        },
         secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onBottomNav(CryptoVpnRouteSpec.profile.pattern) },
     ) {
         P2CoreCard {
             uiState.highlights.forEachIndexed { index, item ->
-                val destination = when (index) {
-                    0 -> CryptoVpnRouteSpec.legalDocumentDetailRoute("terms_of_service")
-                    1 -> CryptoVpnRouteSpec.legalDocumentDetailRoute("privacy_policy")
-                    2 -> CryptoVpnRouteSpec.legalDocumentDetailRoute("vpn_service_notice")
-                    else -> null
-                }
+                val destination = item.badge.takeIf { it.isNotBlank() }?.let(CryptoVpnRouteSpec::legalDocumentDetailRoute)
                 P2CoreListRow(
                     title = item.title,
                     subtitle = item.subtitle,

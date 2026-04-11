@@ -155,4 +155,22 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
         )
     }
 
+    composable(CryptoVpnRouteSpec.walletPayment.pattern) {
+        val vm: WalletPaymentViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { WalletPaymentViewModel(repository) },
+        )
+        val uiState by vm.uiState.collectAsState()
+        WalletPaymentRoute(
+            viewModel = vm,
+            onPrimaryAction = {
+                val orderNo = uiState.order?.orderNo
+                if (!orderNo.isNullOrBlank()) {
+                    navController.navigateSingleTop(CryptoVpnRouteSpec.walletPaymentConfirmRoute(orderNo))
+                }
+            },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.plans.pattern) },
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
+    }
+
 }
