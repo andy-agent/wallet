@@ -273,6 +273,9 @@
   - `wallet_home`
     - 初始证据：`/tmp/compose-realify-20260412-p0/wallet_home.png`
     - 修复后证据：`/tmp/compose-realify-20260412-p0b/wallet_home.png`
+  - `wallet_onboarding`
+    - 初始证据：`/tmp/compose-realify-20260412-next/wallet_onboarding.png`
+    - 修复后证据：`/tmp/compose-realify-20260412-next2/wallet_onboarding.png`
 - 本轮修复的问题：
   - `VpnHomePage`
     - 真实截图中出现 `nullms`
@@ -281,6 +284,9 @@
   - `WalletHomePage`
     - 真实截图仍使用“1链已激活 / 自动补齐”这类偏完成态文案
     - 现已改成“订单映射资产 / 支付网络缓存 / 真实缓存 / 收款状态 / 发送状态”这类如实语义
+  - `WalletOnboardingPage`
+    - 真实截图仍宣称“生成助记词并开启云端加密备份提醒”
+    - 现已改成明确阻塞说明：当前未接入真实钱包创建/导入引擎，只保留后续入口与状态说明
 
 ### P2Extended 第三批收口的运行证据
 - `auto_connect_rules`
@@ -313,7 +319,8 @@
 - `legal_document_detail/terms_of_service`
   - `/tmp/compose-realify-20260412-p2d/legal_document_detail_terms_of_service.png`
 - `wallet_payment`
-  - `/tmp/compose-realify-20260412-p2c/wallet_payment.png`
+  - 初始证据：`/tmp/compose-realify-20260412-p2c/wallet_payment.png`
+  - 修复后证据：`/tmp/compose-realify-20260412-next2/wallet_payment.png`
 
 ### 本轮新增问题与修复
 - `wallet_payment`
