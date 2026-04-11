@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-04-11T15:45:00+08:00",
+  "generated_at": "2026-04-11T16:30:00+08:00",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "active_task_id": "liaojiang-26d",
-  "accepted_task_id": "liaojiang-vfy",
+  "accepted_task_id": "liaojiang-xms",
   "next_task_id": "liaojiang-njb",
   "active_worker_task_ids": [],
   "blockers": [
     {
       "task_id": "liaojiang-njb",
       "type": "task",
-      "blocked_by": "Need one real human-controlled SOLANA/USDT payment against a fresh order and the resulting txHash to finish the positive path."
+      "blocked_by": "Positive path now needs a real funded SOLANA/USDT payment. Collection address has been rotated to EVYe1JoVU9m46o5QLgJdZM6CCG996jfCvYoKu5DTNEjj and verified live, but the wallet remains unfunded."
     },
     {
       "task_id": "liaojiang-3js",
