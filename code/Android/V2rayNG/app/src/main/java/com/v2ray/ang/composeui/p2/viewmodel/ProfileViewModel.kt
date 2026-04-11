@@ -4,10 +4,12 @@ import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.ProfileEvent
 import com.v2ray.ang.composeui.p2.model.ProfileUiState
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class ProfileViewModel(
     private val repository: CryptoVpnRepository,
-) : BaseFeatureViewModel<ProfileUiState>(ProfileUiState()) {
+) : BaseFeatureViewModel<ProfileUiState>(initialProfileState()) {
 
     init {
         refresh()
@@ -30,8 +32,23 @@ class ProfileViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getProfileState()
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, emptyMessage = null)
+        viewModelScope.launch {
+            runCatching { repository.getProfileState() }
+                .onSuccess { _uiState.value = it.copy(isLoading = false) }
+                .onFailure { _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = it.message ?: "加载个人中心失败") }
         }
     }
 }
+
+private fun initialProfileState() = ProfileUiState(
+    badge = "",
+    summary = "",
+    primaryActionLabel = null,
+    secondaryActionLabel = null,
+    metrics = emptyList(),
+    highlights = emptyList(),
+    checklist = emptyList(),
+    note = "",
+    isLoading = true,
+)

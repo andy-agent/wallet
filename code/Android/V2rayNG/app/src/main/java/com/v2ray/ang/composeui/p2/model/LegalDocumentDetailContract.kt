@@ -14,7 +14,7 @@ data class LegalDocumentDetailUiState(
         val subtitle: String = "LEGAL DETAIL",
         val badge: String = "• v2025.04",
         val summary: String = "用于展示 Markdown 法务正文、版本时间与风险提示。",
-        val primaryActionLabel: String = "返回文档列表",
+        val primaryActionLabel: String? = "返回文档列表",
         val secondaryActionLabel: String? = "完成阅读",
         val heroAccent: String = "legal_document_detail",
         val metrics: List<FeatureMetric> = listOf(
@@ -35,6 +35,11 @@ data class LegalDocumentDetailUiState(
     FeatureBullet(title = "生效", detail = "2025-04-01"),
 ),
         val note: String = "生效日期：2025-04-01",
+        val isLoading: Boolean = false,
+        val errorMessage: String? = null,
+        val emptyMessage: String? = null,
+        val blockerTitle: String? = null,
+        val blockerMessage: String? = null,
     )
 
     sealed interface LegalDocumentDetailEvent {

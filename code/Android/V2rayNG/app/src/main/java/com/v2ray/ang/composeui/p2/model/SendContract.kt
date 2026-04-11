@@ -14,7 +14,7 @@ data class SendUiState(
         val subtitle: String = "SEND ASSET",
         val badge: String = "风险校验中",
         val summary: String = "把链、地址、Gas 与隐私网络状态放在一个确认面板里。",
-        val primaryActionLabel: String = "确认并发送",
+        val primaryActionLabel: String? = "确认并发送",
         val secondaryActionLabel: String? = "返回资产详情",
         val heroAccent: String = "send",
         val metrics: List<FeatureMetric> = listOf(
@@ -40,6 +40,11 @@ data class SendUiState(
     FeatureBullet(title = "网络选择", detail = "TRON / Solana"),
 ),
         val note: String = "确认后将发起链上广播。",
+        val isLoading: Boolean = false,
+        val errorMessage: String? = null,
+        val emptyMessage: String? = null,
+        val blockerTitle: String? = null,
+        val blockerMessage: String? = null,
     )
 
     sealed interface SendEvent {

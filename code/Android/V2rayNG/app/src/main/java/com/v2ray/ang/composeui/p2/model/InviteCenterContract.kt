@@ -12,7 +12,7 @@ data class InviteCenterUiState(
         val subtitle: String = "GROWTH",
         val badge: String = "• 一级 25%/二级 5%",
         val summary: String = "邀请中心聚合邀请码、邀请人数、转化率与佣金入口。",
-        val primaryActionLabel: String = "复制邀请码",
+        val primaryActionLabel: String? = "复制邀请码",
         val secondaryActionLabel: String? = "分享推广链接",
         val heroAccent: String = "invite_center",
         val metrics: List<FeatureMetric> = listOf(
@@ -34,6 +34,11 @@ data class InviteCenterUiState(
     FeatureBullet(title = "转化率", detail = "18.6%"),
 ),
         val note: String = "推广加密网络服务，佣金可直接提到你的多链钱包。",
+        val isLoading: Boolean = false,
+        val errorMessage: String? = null,
+        val emptyMessage: String? = null,
+        val blockerTitle: String? = null,
+        val blockerMessage: String? = null,
     )
 
     sealed interface InviteCenterEvent {

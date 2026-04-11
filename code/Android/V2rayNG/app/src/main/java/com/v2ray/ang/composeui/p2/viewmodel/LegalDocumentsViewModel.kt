@@ -4,10 +4,12 @@ import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.LegalDocumentsEvent
 import com.v2ray.ang.composeui.p2.model.LegalDocumentsUiState
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class LegalDocumentsViewModel(
     private val repository: CryptoVpnRepository,
-) : BaseFeatureViewModel<LegalDocumentsUiState>(LegalDocumentsUiState()) {
+) : BaseFeatureViewModel<LegalDocumentsUiState>(initialLegalDocumentsState()) {
 
     init {
         refresh()
@@ -30,8 +32,23 @@ class LegalDocumentsViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getLegalDocumentsState()
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, emptyMessage = null)
+        viewModelScope.launch {
+            runCatching { repository.getLegalDocumentsState() }
+                .onSuccess { _uiState.value = it.copy(isLoading = false) }
+                .onFailure { _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = it.message ?: "加载法务文档失败") }
         }
     }
 }
+
+private fun initialLegalDocumentsState() = LegalDocumentsUiState(
+    badge = "",
+    summary = "",
+    primaryActionLabel = null,
+    secondaryActionLabel = null,
+    metrics = emptyList(),
+    highlights = emptyList(),
+    checklist = emptyList(),
+    note = "",
+    isLoading = true,
+)

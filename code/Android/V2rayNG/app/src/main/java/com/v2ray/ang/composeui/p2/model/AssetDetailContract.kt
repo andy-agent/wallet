@@ -14,7 +14,7 @@ data class AssetDetailUiState(
         val subtitle: String = "ASSET DETAIL",
         val badge: String = "稳定币",
         val summary: String = "稳定币资产详情与最近交易，支持直接衔接到发送、收款和订单链路。",
-        val primaryActionLabel: String = "发送资产",
+        val primaryActionLabel: String? = "发送资产",
         val secondaryActionLabel: String? = "收款",
         val heroAccent: String = "asset_detail",
         val metrics: List<FeatureMetric> = listOf(
@@ -35,6 +35,11 @@ data class AssetDetailUiState(
     FeatureBullet(title = "区间", detail = "24H / 7D / 30D / 入账出账"),
 ),
         val note: String = "用于续费最多",
+        val isLoading: Boolean = false,
+        val errorMessage: String? = null,
+        val emptyMessage: String? = null,
+        val blockerTitle: String? = null,
+        val blockerMessage: String? = null,
     )
 
     sealed interface AssetDetailEvent {

@@ -1,5 +1,6 @@
 package com.v2ray.ang.composeui.navigation
 
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -187,8 +188,9 @@ fun NavGraphBuilder.installCryptoVpnP2CoreRoutes(
     }
 
     composable(CryptoVpnRouteSpec.withdraw.pattern) {
+        val context = LocalContext.current
         val vm: WithdrawViewModel = viewModel(
-            factory = cryptoVpnViewModelFactory { WithdrawViewModel(repository) },
+            factory = cryptoVpnViewModelFactory { WithdrawViewModel(repository, context) },
         )
         WithdrawRoute(
             viewModel = vm,

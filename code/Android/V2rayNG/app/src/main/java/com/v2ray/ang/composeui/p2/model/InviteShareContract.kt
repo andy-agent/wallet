@@ -10,7 +10,7 @@ data class InviteShareUiState(
     val subtitle: String = "SHARE LINK",
     val badge: String = "推广",
     val summary: String = "生成推广链接与二维码，便于复制或转发。",
-    val primaryActionLabel: String = "复制链接",
+    val primaryActionLabel: String? = "复制链接",
     val secondaryActionLabel: String? = "复制邀请码",
     val heroAccent: String = "invite_share",
     val metrics: List<FeatureMetric> = listOf(
@@ -31,6 +31,11 @@ data class InviteShareUiState(
         FeatureBullet(title = "复制邀请码", detail = "一键复制"),
     ),
     val note: String = "生成推广链接与二维码，便于复制或转发。",
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val emptyMessage: String? = null,
+    val blockerTitle: String? = null,
+    val blockerMessage: String? = null,
 )
 
 sealed interface InviteShareEvent {

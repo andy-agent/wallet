@@ -4,10 +4,12 @@ import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.AboutAppEvent
 import com.v2ray.ang.composeui.p2.model.AboutAppUiState
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class AboutAppViewModel(
     private val repository: CryptoVpnRepository,
-) : BaseFeatureViewModel<AboutAppUiState>(AboutAppUiState()) {
+) : BaseFeatureViewModel<AboutAppUiState>(initialAboutAppState()) {
 
     init {
         refresh()
@@ -29,8 +31,23 @@ class AboutAppViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getAboutAppState()
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, emptyMessage = null)
+        viewModelScope.launch {
+            runCatching { repository.getAboutAppState() }
+                .onSuccess { _uiState.value = it.copy(isLoading = false) }
+                .onFailure { _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = it.message ?: "加载关于页失败") }
         }
     }
 }
+
+private fun initialAboutAppState() = AboutAppUiState(
+    badge = "",
+    summary = "",
+    primaryActionLabel = null,
+    secondaryActionLabel = null,
+    metrics = emptyList(),
+    highlights = emptyList(),
+    checklist = emptyList(),
+    note = "",
+    isLoading = true,
+)

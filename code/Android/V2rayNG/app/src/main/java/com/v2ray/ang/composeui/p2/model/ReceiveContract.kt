@@ -14,7 +14,7 @@ data class ReceiveUiState(
         val subtitle: String = "RECEIVE ASSET",
         val badge: String = "USDT · TRON",
         val summary: String = "支持链切换、地址复制、二维码分享与 Memo 提醒。",
-        val primaryActionLabel: String = "复制地址",
+        val primaryActionLabel: String? = "复制地址",
         val secondaryActionLabel: String? = "分享二维码",
         val heroAccent: String = "receive",
         val metrics: List<FeatureMetric> = listOf(
@@ -39,6 +39,11 @@ data class ReceiveUiState(
     FeatureBullet(title = "提示", detail = "请确认链一致"),
 ),
         val note: String = "错误链充值可能造成资产丢失",
+        val isLoading: Boolean = false,
+        val errorMessage: String? = null,
+        val emptyMessage: String? = null,
+        val blockerTitle: String? = null,
+        val blockerMessage: String? = null,
     )
 
     sealed interface ReceiveEvent {

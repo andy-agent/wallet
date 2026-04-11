@@ -12,7 +12,7 @@ data class LegalDocumentsUiState(
         val subtitle: String = "LEGAL",
         val badge: String = "法务",
         val summary: String = "法务文档列表页提供服务协议、隐私政策与风险披露等入口。",
-        val primaryActionLabel: String = "查看服务协议",
+        val primaryActionLabel: String? = "查看服务协议",
         val secondaryActionLabel: String? = "返回个人中心",
         val heroAccent: String = "legal_documents",
         val metrics: List<FeatureMetric> = listOf(
@@ -33,6 +33,11 @@ data class LegalDocumentsUiState(
     FeatureBullet(title = "风险提示", detail = "链上支付免责声明在文档中统一维护。"),
 ),
         val note: String = "所有协议、隐私、风险说明与链上支付免责声明。",
+        val isLoading: Boolean = false,
+        val errorMessage: String? = null,
+        val emptyMessage: String? = null,
+        val blockerTitle: String? = null,
+        val blockerMessage: String? = null,
     )
 
     sealed interface LegalDocumentsEvent {

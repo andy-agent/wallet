@@ -12,7 +12,7 @@ data class WithdrawUiState(
         val subtitle: String = "WITHDRAW",
         val badge: String = "提现",
         val summary: String = "佣金提现页校验提现地址、金额与网络信息，再提交结算申请。",
-        val primaryActionLabel: String = "提交提现申请",
+        val primaryActionLabel: String? = "提交提现申请",
         val secondaryActionLabel: String? = "返回账本",
         val heroAccent: String = "withdraw",
         val metrics: List<FeatureMetric> = listOf(
@@ -35,6 +35,13 @@ data class WithdrawUiState(
     FeatureBullet(title = "地址校验", detail = "SAFE"),
 ),
         val note: String = "把已结算收益提到你的 TRON / Solana 自托管钱包。",
+        val isLoading: Boolean = false,
+        val isSubmitting: Boolean = false,
+        val errorMessage: String? = null,
+        val emptyMessage: String? = null,
+        val blockerTitle: String? = null,
+        val blockerMessage: String? = null,
+        val feedbackMessage: String? = null,
     )
 
     sealed interface WithdrawEvent {

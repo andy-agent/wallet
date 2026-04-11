@@ -5,11 +5,13 @@ import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.ReceiveEvent
 import com.v2ray.ang.composeui.p2.model.ReceiveUiState
 import com.v2ray.ang.composeui.p2.model.ReceiveRouteArgs
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class ReceiveViewModel(
     private val repository: CryptoVpnRepository,
     private val routeArgs: ReceiveRouteArgs = ReceiveRouteArgs(),
-) : BaseFeatureViewModel<ReceiveUiState>(ReceiveUiState()) {
+) : BaseFeatureViewModel<ReceiveUiState>(initialReceiveState()) {
 
     init {
         refresh()
@@ -32,8 +34,24 @@ class ReceiveViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getReceiveState(routeArgs)
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, emptyMessage = null)
+        viewModelScope.launch {
+            runCatching { repository.getReceiveState(routeArgs) }
+                .onSuccess { _uiState.value = it.copy(isLoading = false) }
+                .onFailure { _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = it.message ?: "加载收款页失败") }
         }
     }
 }
+
+private fun initialReceiveState() = ReceiveUiState(
+    badge = "",
+    summary = "",
+    primaryActionLabel = null,
+    secondaryActionLabel = null,
+    metrics = emptyList(),
+    fields = emptyList(),
+    highlights = emptyList(),
+    checklist = emptyList(),
+    note = "",
+    isLoading = true,
+)
