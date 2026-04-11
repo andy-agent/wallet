@@ -334,3 +334,13 @@
     - `ProfilePage` 按真实 `badge` 进入安全中心/订单/邀请/法务/关于
     - `LegalDocumentsPage` 按真实文档 `id` 进入详情，不再按列表序号猜路由
     - `LegalDocumentDetailPage` 改正“文档标识被当作生效日期”的错误语义
+- `RegionSelectionPage`
+  - 问题：页面层仍保留整套假节点 fallback，并把第二个指标伪装成 Mbps 速度
+  - 修复：改为直接用 `uiState.regions`，空态读 `stateInfo`，第二个指标改成真实状态/层级
+  - 最新证据：
+    - `/tmp/compose-realify-20260412-latest/region_selection.png`
+- `WalletPaymentPage`
+  - 问题：页面状态消息不显式，无订单时仍可能保留不准确的主按钮语义
+  - 修复：让 `stateInfo` 进入页面 summary/note，并在无 `order` 时隐藏主按钮
+  - 最新证据：
+    - `/tmp/compose-realify-20260412-latest/wallet_payment.png`
