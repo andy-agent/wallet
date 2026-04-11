@@ -46,6 +46,13 @@ class UtilsTest {
     }
 
     @Test
+    fun test_isIpAddress_acceptsBracketedIpv6WithPort() {
+        assertTrue(Utils.isIpAddress("[::1]:80"))
+        assertTrue(Utils.isIpAddress("[2605:2700:0:3::4713:93e3]:80"))
+        assertTrue(Utils.isIpAddress("[::ffff:192.168.173.22]:80"))
+    }
+
+    @Test
     fun test_IsIpInCidr() {
         assertTrue(Utils.isIpInCidr("192.168.1.1", "192.168.1.0/24"))
         assertTrue(Utils.isIpInCidr("192.168.1.254", "192.168.1.0/24"))
@@ -57,6 +64,13 @@ class UtilsTest {
 
         assertFalse(Utils.isIpInCidr("invalid-ip", "192.168.1.0/24"))
         assertFalse(Utils.isIpInCidr("192.168.1.1", "invalid-cidr"))
+    }
+
+    @Test
+    fun test_isIpInCidr_rejectsMalformedCidr() {
+        assertFalse(Utils.isIpInCidr("192.168.1.1", "invalid-cidr"))
+        assertFalse(Utils.isIpInCidr("192.168.1.1", "192.168.1.0/not-a-prefix"))
+        assertFalse(Utils.isIpInCidr("192.168.1.1", "192.168.1.0/33"))
     }
 
 }
