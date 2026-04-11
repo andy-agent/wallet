@@ -58,11 +58,22 @@ export class OrdersService {
 
     const orderId = randomUUID();
     const orderNo = `ORD-${Date.now()}-${orderId.slice(0, 8).toUpperCase()}`;
+    const collectionAddress = this.resolveCollectionAddress(dto.quoteNetworkCode);
+    const baseAmount = this.resolveBaseAmount(dto.quoteAssetCode, plan.priceUsd);
+    const uniqueAmountDelta = await this.allocateUniqueAmountDelta({
+      collectionAddress,
+      quoteAssetCode: dto.quoteAssetCode,
+      quoteNetworkCode: dto.quoteNetworkCode,
+      baseAmount,
+    });
+    const payableAmount =
+      dto.quoteNetworkCode === 'SOLANA'
+        ? this.addDecimalAmounts(baseAmount, uniqueAmountDelta)
+        : baseAmount;
     const storedOrder: StoredOrderRecord = {
       createdAt: new Date().toISOString(),
       idempotencyKey: compositeKey,
-      collectionAddress: this.resolveCollectionAddress(dto.quoteNetworkCode),
-      uniqueAmountDelta: this.buildUniqueAmountDelta(orderId),
+      collectionAddress,
       orderId,
       orderNo,
       accountId: account.accountId,
@@ -72,16 +83,18 @@ export class OrdersService {
       quoteAssetCode: dto.quoteAssetCode,
       quoteNetworkCode: dto.quoteNetworkCode,
       quoteUsdAmount: plan.priceUsd,
-      payableAmount:
-        dto.quoteAssetCode === 'SOL'
-          ? '0.04500000'
-          : Number(plan.priceUsd).toFixed(6),
+      baseAmount,
+      uniqueAmountDelta,
+      payableAmount,
       status: 'AWAITING_PAYMENT',
       expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
       confirmedAt: null,
       completedAt: null,
       failureReason: null,
       submittedClientTxHash: null,
+      matchedOnchainTxHash: null,
+      paymentMatchedAt: null,
+      matcherRemark: null,
     };
 
     const order = await this.runtimeStateRepository.createOrder(
@@ -110,6 +123,7 @@ export class OrdersService {
       networkCode: order.quoteNetworkCode,
       assetCode: order.quoteAssetCode,
       collectionAddress: order.collectionAddress,
+      baseAmount: order.baseAmount,
       payableAmount: order.payableAmount,
       uniqueAmountDelta: order.uniqueAmountDelta,
       qrText: this.buildPaymentQrText(order),
@@ -293,6 +307,9 @@ export class OrdersService {
     if (order.status !== 'PAID' && order.status !== 'PROVISIONING' && order.status !== 'COMPLETED') {
       order.status = 'PAID';
       order.confirmedAt = new Date().toISOString();
+      order.paymentMatchedAt = order.paymentMatchedAt ?? order.confirmedAt;
+      order.matchedOnchainTxHash =
+        order.matchedOnchainTxHash ?? order.submittedClientTxHash;
       await this.runtimeStateRepository.saveOrder(order);
     }
 
@@ -315,7 +332,7 @@ export class OrdersService {
   }
 
   private toOrderRecord(order: StoredOrderRecord): OrderRecord {
-    const { collectionAddress: _collectionAddress, createdAt: _createdAt, idempotencyKey: _idempotencyKey, uniqueAmountDelta: _uniqueAmountDelta, ...publicOrder } =
+    const { collectionAddress: _collectionAddress, createdAt: _createdAt, idempotencyKey: _idempotencyKey, ...publicOrder } =
       order;
     return publicOrder;
   }
@@ -350,12 +367,53 @@ export class OrdersService {
     return 'TR7NhqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
   }
 
-  private buildUniqueAmountDelta(seed: string) {
-    let accumulator = 0;
-    for (const char of seed) {
-      accumulator = (accumulator + char.charCodeAt(0)) % 999999;
+  private async allocateUniqueAmountDelta(input: {
+    collectionAddress: string;
+    quoteAssetCode: StoredOrderRecord['quoteAssetCode'];
+    quoteNetworkCode: StoredOrderRecord['quoteNetworkCode'];
+    baseAmount: string;
+  }) {
+    if (input.quoteNetworkCode !== 'SOLANA') {
+      return this.zeroMinorUnits(input.quoteAssetCode);
     }
-    return `0.${String(accumulator + 1).padStart(6, '0')}`;
+
+    const decimals = this.getAssetDecimals(
+      input.quoteNetworkCode,
+      input.quoteAssetCode,
+    );
+    const baseAmountMinor = this.toMinorUnits(input.baseAmount, decimals);
+    const activeOrders =
+      await this.runtimeStateRepository.listActiveOrdersForPaymentContext({
+        collectionAddress: input.collectionAddress,
+        quoteAssetCode: input.quoteAssetCode,
+        quoteNetworkCode: input.quoteNetworkCode,
+        statuses: [
+          'AWAITING_PAYMENT',
+          'PAYMENT_DETECTED',
+          'CONFIRMING',
+          'UNDERPAID_REVIEW',
+          'OVERPAID_REVIEW',
+        ],
+        activeAfter: Date.now(),
+      });
+
+    const reservedPayableMinor = new Set(
+      activeOrders.map((order) =>
+        this.toMinorUnits(order.payableAmount, decimals).toString(),
+      ),
+    );
+
+    for (let deltaMinor = 1n; deltaMinor <= 9999n; deltaMinor++) {
+      const payableMinor = baseAmountMinor + deltaMinor;
+      if (!reservedPayableMinor.has(payableMinor.toString())) {
+        return this.fromMinorUnits(deltaMinor, decimals);
+      }
+    }
+
+    throw new ConflictException({
+      code: 'ORDER_DELTA_POOL_EXHAUSTED',
+      message: 'No unique payable amount is available in the current payment window',
+    });
   }
 
   private buildPaymentQrText(order: StoredOrderRecord) {
@@ -380,5 +438,63 @@ export class OrdersService {
     return verification.mismatchCode === 'AMOUNT_OVER'
       ? 'OVERPAID_REVIEW'
       : 'UNDERPAID_REVIEW';
+  }
+
+  private resolveBaseAmount(
+    assetCode: StoredOrderRecord['quoteAssetCode'],
+    planPriceUsd: string,
+  ) {
+    if (assetCode === 'SOL') {
+      return '0.045000000';
+    }
+    return Number(planPriceUsd).toFixed(6);
+  }
+
+  private getAssetDecimals(
+    networkCode: StoredOrderRecord['quoteNetworkCode'],
+    assetCode: StoredOrderRecord['quoteAssetCode'],
+  ) {
+    if (networkCode === 'SOLANA' && assetCode === 'SOL') {
+      return 9;
+    }
+    return 6;
+  }
+
+  private toMinorUnits(amount: string, decimals: number) {
+    const normalized = amount.trim();
+    const negative = normalized.startsWith('-');
+    const unsigned = negative ? normalized.slice(1) : normalized;
+    const [wholePart, fractionPart = ''] = unsigned.split('.');
+    const whole = wholePart === '' ? '0' : wholePart;
+    const fraction = fractionPart.padEnd(decimals, '0').slice(0, decimals);
+    const minor = BigInt(`${whole}${fraction}`);
+    return negative ? minor * -1n : minor;
+  }
+
+  private fromMinorUnits(amountMinor: bigint, decimals: number) {
+    const negative = amountMinor < 0n;
+    const normalized = negative ? amountMinor * -1n : amountMinor;
+    const raw = normalized.toString().padStart(decimals + 1, '0');
+    const whole = raw.slice(0, raw.length - decimals);
+    const fraction = raw.slice(raw.length - decimals);
+    return `${negative ? '-' : ''}${whole}.${fraction}`;
+  }
+
+  private zeroMinorUnits(assetCode: StoredOrderRecord['quoteAssetCode']) {
+    return this.fromMinorUnits(
+      0n,
+      assetCode === 'SOL' ? 9 : 6,
+    );
+  }
+
+  private addDecimalAmounts(left: string, right: string) {
+    const decimals = Math.max(
+      left.split('.')[1]?.length ?? 0,
+      right.split('.')[1]?.length ?? 0,
+    );
+    return this.fromMinorUnits(
+      this.toMinorUnits(left, decimals) + this.toMinorUnits(right, decimals),
+      decimals,
+    );
   }
 }

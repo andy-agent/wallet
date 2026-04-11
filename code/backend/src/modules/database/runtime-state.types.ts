@@ -10,7 +10,6 @@ export interface StoredOrderRecord extends OrderRecord {
   createdAt: string;
   idempotencyKey: string;
   collectionAddress: string;
-  uniqueAmountDelta: string;
 }
 
 export interface RuntimeStateSnapshot {

@@ -35,6 +35,14 @@ export abstract class RuntimeStateRepository {
 
   abstract saveOrder(order: StoredOrderRecord): Promise<StoredOrderRecord>;
 
+  abstract listActiveOrdersForPaymentContext(params: {
+    collectionAddress: string;
+    quoteAssetCode: StoredOrderRecord['quoteAssetCode'];
+    quoteNetworkCode: StoredOrderRecord['quoteNetworkCode'];
+    statuses: OrderStatus[];
+    activeAfter: number;
+  }): Promise<StoredOrderRecord[]>;
+
   abstract listOrders(
     params: RuntimeStateListOrdersParams,
   ): Promise<RuntimeStateListOrdersResult>;

@@ -74,6 +74,9 @@ describe('Orders Postgres runtime state (e2e)', () => {
 
     expect(createResponse.body.data.planName).toBe('数据库基础版-1个月');
     expect(createResponse.body.data.quoteUsdAmount).toBe('11.50');
+    expect(createResponse.body.data.baseAmount).toBe('11.500000');
+    expect(createResponse.body.data.uniqueAmountDelta).toBe('0.000000');
+    expect(createResponse.body.data.payableAmount).toBe('11.500000');
 
     const orderNo = createResponse.body.data.orderNo;
 

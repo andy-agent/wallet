@@ -99,6 +99,11 @@ describe('Orders (e2e)', () => {
     expect(firstPaymentTarget.body.data.uniqueAmountDelta).not.toBe(
       secondPaymentTarget.body.data.uniqueAmountDelta,
     );
+    expect(firstPaymentTarget.body.data.baseAmount).toBe('9.990000');
+    expect(secondPaymentTarget.body.data.baseAmount).toBe('9.990000');
+    expect(firstPaymentTarget.body.data.payableAmount).not.toBe(
+      secondPaymentTarget.body.data.payableAmount,
+    );
     expect(firstPaymentTarget.body.data.qrText).toBe(
       `solana:${solanaCollectionAddress}?amount=${firstPaymentTarget.body.data.payableAmount}`,
     );
@@ -248,14 +253,14 @@ describe('Orders (e2e)', () => {
       recipientAddress: solanaCollectionAddress,
       assetCode: 'USDT',
       mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
-      expectedAmount: '9.990000',
+      expectedAmount: createResponse.body.data.payableAmount,
     });
     expect(verifyIncomingTransfer).toHaveBeenNthCalledWith(2, {
       signature: 'good-sol-tx',
       recipientAddress: solanaCollectionAddress,
       assetCode: 'USDT',
       mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
-      expectedAmount: '9.990000',
+      expectedAmount: createResponse.body.data.payableAmount,
     });
   });
 

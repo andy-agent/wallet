@@ -56,6 +56,8 @@ const ORDER_COLUMNS = `
   quote_asset_code,
   quote_network_code,
   quote_usd_amount,
+  base_amount,
+  unique_amount_delta,
   payable_amount,
   status,
   expires_at,
@@ -63,10 +65,12 @@ const ORDER_COLUMNS = `
   completed_at,
   failure_reason,
   submitted_client_tx_hash,
+  matched_onchain_tx_hash,
+  payment_matched_at,
+  matcher_remark,
   created_at,
   idempotency_key,
-  collection_address,
-  unique_amount_delta
+  collection_address
 `;
 const SUBSCRIPTION_COLUMNS = `
   account_id,
@@ -93,6 +97,8 @@ interface RuntimeStateOrderRow {
   quote_asset_code: 'SOL' | 'USDT';
   quote_network_code: 'SOLANA' | 'TRON';
   quote_usd_amount: string;
+  base_amount: string;
+  unique_amount_delta: string;
   payable_amount: string;
   status: StoredOrderRecord['status'];
   expires_at: Date | string;
@@ -100,10 +106,12 @@ interface RuntimeStateOrderRow {
   completed_at: Date | string | null;
   failure_reason: string | null;
   submitted_client_tx_hash: string | null;
+  matched_onchain_tx_hash: string | null;
+  payment_matched_at: Date | string | null;
+  matcher_remark: string | null;
   created_at: Date | string;
   idempotency_key: string;
   collection_address: string;
-  unique_amount_delta: string;
 }
 
 interface RuntimeStateSubscriptionRow {
@@ -401,6 +409,8 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           quote_asset_code,
           quote_network_code,
           quote_usd_amount,
+          base_amount,
+          unique_amount_delta,
           payable_amount,
           status,
           expires_at,
@@ -408,11 +418,13 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           completed_at,
           failure_reason,
           submitted_client_tx_hash,
+          matched_onchain_tx_hash,
+          payment_matched_at,
+          matcher_remark,
           created_at,
           updated_at,
           idempotency_key,
-          collection_address,
-          unique_amount_delta
+          collection_address
         )
         VALUES (
           $1,
@@ -435,7 +447,11 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           $18,
           $19,
           $20,
-          $21
+          $21,
+          $22,
+          $23,
+          $24,
+          $25
         )
         ON CONFLICT (idempotency_key) DO NOTHING
         RETURNING ${ORDER_COLUMNS}
@@ -494,6 +510,8 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           quote_asset_code,
           quote_network_code,
           quote_usd_amount,
+          base_amount,
+          unique_amount_delta,
           payable_amount,
           status,
           expires_at,
@@ -501,11 +519,13 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           completed_at,
           failure_reason,
           submitted_client_tx_hash,
+          matched_onchain_tx_hash,
+          payment_matched_at,
+          matcher_remark,
           created_at,
           updated_at,
           idempotency_key,
-          collection_address,
-          unique_amount_delta
+          collection_address
         )
         VALUES (
           $1,
@@ -528,7 +548,11 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           $18,
           $19,
           $20,
-          $21
+          $21,
+          $22,
+          $23,
+          $24,
+          $25
         )
         ON CONFLICT (order_no) DO UPDATE
         SET
@@ -540,6 +564,8 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           quote_asset_code = EXCLUDED.quote_asset_code,
           quote_network_code = EXCLUDED.quote_network_code,
           quote_usd_amount = EXCLUDED.quote_usd_amount,
+          base_amount = EXCLUDED.base_amount,
+          unique_amount_delta = EXCLUDED.unique_amount_delta,
           payable_amount = EXCLUDED.payable_amount,
           status = EXCLUDED.status,
           expires_at = EXCLUDED.expires_at,
@@ -547,17 +573,49 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           completed_at = EXCLUDED.completed_at,
           failure_reason = EXCLUDED.failure_reason,
           submitted_client_tx_hash = EXCLUDED.submitted_client_tx_hash,
+          matched_onchain_tx_hash = EXCLUDED.matched_onchain_tx_hash,
+          payment_matched_at = EXCLUDED.payment_matched_at,
+          matcher_remark = EXCLUDED.matcher_remark,
           created_at = EXCLUDED.created_at,
           updated_at = EXCLUDED.updated_at,
           idempotency_key = EXCLUDED.idempotency_key,
-          collection_address = EXCLUDED.collection_address,
-          unique_amount_delta = EXCLUDED.unique_amount_delta
+          collection_address = EXCLUDED.collection_address
         RETURNING ${ORDER_COLUMNS}
       `,
       this.toOrderValues(order, order.idempotencyKey),
     );
 
     return this.mapOrder(result.rows[0]);
+  }
+
+  async listActiveOrdersForPaymentContext(params: {
+    collectionAddress: string;
+    quoteAssetCode: StoredOrderRecord['quoteAssetCode'];
+    quoteNetworkCode: StoredOrderRecord['quoteNetworkCode'];
+    statuses: OrderStatus[];
+    activeAfter: number;
+  }): Promise<StoredOrderRecord[]> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateOrderRow>(
+      `
+        SELECT ${ORDER_COLUMNS}
+        FROM ${ORDERS_TABLE}
+        WHERE collection_address = $1
+          AND quote_asset_code = $2
+          AND quote_network_code = $3
+          AND status = ANY($4::text[])
+          AND expires_at > $5
+        ORDER BY created_at ASC
+      `,
+      [
+        params.collectionAddress,
+        params.quoteAssetCode,
+        params.quoteNetworkCode,
+        params.statuses,
+        new Date(params.activeAfter).toISOString(),
+      ],
+    );
+    return result.rows.map((row) => this.mapOrder(row));
   }
 
   async listOrders(
@@ -834,6 +892,8 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
         quote_asset_code text NOT NULL,
         quote_network_code text NOT NULL,
         quote_usd_amount text NOT NULL,
+        base_amount text NOT NULL DEFAULT '0',
+        unique_amount_delta text NOT NULL DEFAULT '0',
         payable_amount text NOT NULL,
         status text NOT NULL,
         expires_at timestamptz NOT NULL,
@@ -841,12 +901,34 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
         completed_at timestamptz NULL,
         failure_reason text NULL,
         submitted_client_tx_hash text NULL,
+        matched_onchain_tx_hash text NULL,
+        payment_matched_at timestamptz NULL,
+        matcher_remark text NULL,
         created_at timestamptz NOT NULL,
         updated_at timestamptz NOT NULL DEFAULT NOW(),
         idempotency_key text NOT NULL UNIQUE,
-        collection_address text NOT NULL,
-        unique_amount_delta text NOT NULL
+        collection_address text NOT NULL
       )
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${ORDERS_TABLE}
+      ADD COLUMN IF NOT EXISTS base_amount text NOT NULL DEFAULT '0'
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${ORDERS_TABLE}
+      ADD COLUMN IF NOT EXISTS unique_amount_delta text NOT NULL DEFAULT '0'
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${ORDERS_TABLE}
+      ADD COLUMN IF NOT EXISTS matched_onchain_tx_hash text NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${ORDERS_TABLE}
+      ADD COLUMN IF NOT EXISTS payment_matched_at timestamptz NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${ORDERS_TABLE}
+      ADD COLUMN IF NOT EXISTS matcher_remark text NULL
     `);
 
     await this.pool.query(`
@@ -860,6 +942,10 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     await this.pool.query(`
       CREATE INDEX IF NOT EXISTS idx_runtime_state_orders_confirmed_at
       ON ${ORDERS_TABLE} (confirmed_at)
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_orders_payment_context
+      ON ${ORDERS_TABLE} (collection_address, quote_asset_code, quote_network_code, status, expires_at)
     `);
 
     await this.pool.query(`
@@ -1017,6 +1103,8 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       order.quoteAssetCode,
       order.quoteNetworkCode,
       order.quoteUsdAmount,
+      order.baseAmount,
+      order.uniqueAmountDelta,
       order.payableAmount,
       order.status,
       order.expiresAt,
@@ -1024,11 +1112,13 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       order.completedAt,
       order.failureReason,
       order.submittedClientTxHash,
+      order.matchedOnchainTxHash,
+      order.paymentMatchedAt,
+      order.matcherRemark,
       order.createdAt,
       new Date().toISOString(),
       compositeIdempotencyKey,
       order.collectionAddress,
-      order.uniqueAmountDelta,
     ];
   }
 
@@ -1043,6 +1133,8 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       quoteAssetCode: row.quote_asset_code,
       quoteNetworkCode: row.quote_network_code,
       quoteUsdAmount: row.quote_usd_amount,
+      baseAmount: row.base_amount,
+      uniqueAmountDelta: row.unique_amount_delta,
       payableAmount: row.payable_amount,
       status: row.status,
       expiresAt: this.toIsoString(row.expires_at)!,
@@ -1050,10 +1142,12 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       completedAt: this.toIsoString(row.completed_at),
       failureReason: row.failure_reason,
       submittedClientTxHash: row.submitted_client_tx_hash,
+      matchedOnchainTxHash: row.matched_onchain_tx_hash,
+      paymentMatchedAt: this.toIsoString(row.payment_matched_at),
+      matcherRemark: row.matcher_remark,
       createdAt: this.toIsoString(row.created_at)!,
       idempotencyKey: row.idempotency_key,
       collectionAddress: row.collection_address,
-      uniqueAmountDelta: row.unique_amount_delta,
     };
   }
 

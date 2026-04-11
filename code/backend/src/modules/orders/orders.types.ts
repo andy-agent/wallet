@@ -21,6 +21,8 @@ export interface OrderRecord {
   quoteAssetCode: 'SOL' | 'USDT';
   quoteNetworkCode: 'SOLANA' | 'TRON';
   quoteUsdAmount: string;
+  baseAmount: string;
+  uniqueAmountDelta: string;
   payableAmount: string;
   status: OrderStatus;
   expiresAt: string;
@@ -28,4 +30,7 @@ export interface OrderRecord {
   completedAt: string | null;
   failureReason: string | null;
   submittedClientTxHash: string | null;
+  matchedOnchainTxHash: string | null;
+  paymentMatchedAt: string | null;
+  matcherRemark: string | null;
 }

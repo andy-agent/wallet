@@ -138,6 +138,24 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
     return order;
   }
 
+  async listActiveOrdersForPaymentContext(params: {
+    collectionAddress: string;
+    quoteAssetCode: StoredOrderRecord['quoteAssetCode'];
+    quoteNetworkCode: StoredOrderRecord['quoteNetworkCode'];
+    statuses: OrderStatus[];
+    activeAfter: number;
+  }): Promise<StoredOrderRecord[]> {
+    return this.readSnapshot().orders.filter((order) => {
+      return (
+        order.collectionAddress === params.collectionAddress &&
+        order.quoteAssetCode === params.quoteAssetCode &&
+        order.quoteNetworkCode === params.quoteNetworkCode &&
+        params.statuses.includes(order.status) &&
+        new Date(order.expiresAt).getTime() > params.activeAfter
+      );
+    });
+  }
+
   async listOrders(
     params: RuntimeStateListOrdersParams,
   ): Promise<RuntimeStateListOrdersResult> {
