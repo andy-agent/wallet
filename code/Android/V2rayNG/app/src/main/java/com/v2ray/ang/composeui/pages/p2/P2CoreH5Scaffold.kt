@@ -41,14 +41,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -212,29 +216,38 @@ private fun P2CoreSecureHub(
     label: String,
 ) {
     val transition = rememberInfiniteTransition(label = "p2_core_secure_hub")
-    val rotation by transition.animateFloat(
+    val outerRotation by transition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8200, easing = LinearEasing),
+            animation = tween(durationMillis = 12000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
-        label = "p2_core_secure_hub_rotation",
+        label = "p2_core_secure_hub_outer_rotation",
     )
-    val pulse by transition.animateFloat(
-        initialValue = 0.94f,
-        targetValue = 1.08f,
+    val middleRotation by transition.animateFloat(
+        initialValue = 360f,
+        targetValue = 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1800, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
+            animation = tween(durationMillis = 18000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
         ),
-        label = "p2_core_secure_hub_pulse",
+        label = "p2_core_secure_hub_middle_rotation",
     )
-    val glow by transition.animateFloat(
-        initialValue = 0.12f,
+    val innerRotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = -360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 22000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "p2_core_secure_hub_inner_rotation",
+    )
+    val glowAlpha by transition.animateFloat(
+        initialValue = 0.18f,
         targetValue = 0.30f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2200, easing = LinearEasing),
+            animation = tween(durationMillis = 2600, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "p2_core_secure_hub_glow",
@@ -257,50 +270,174 @@ private fun P2CoreSecureHub(
         }
         Box(
             modifier = Modifier
-                .size(64.dp)
-                .graphicsLayer {
-                    rotationZ = rotation
-                    scaleX = pulse
-                    scaleY = pulse
-                }
-                .background(
+                .size(84.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val orbPrimary = Color(0xFF4F7CFF)
+                val orbCyan = Color(0xFF20D3EE)
+                val orbViolet = Color(0xFF8B5CF6)
+                val minDim = size.minDimension
+                val bodyRadius = minDim * 0.33f
+                val innerCoreRadius = minDim * 0.21f
+                val dashedStroke = minDim * 0.022f
+
+                drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.94f),
-                            CorePrimary.copy(alpha = 0.14f + glow * 0.24f),
+                            orbPrimary.copy(alpha = glowAlpha),
+                            orbCyan.copy(alpha = glowAlpha * 0.58f),
                             Color.Transparent,
                         ),
+                        center = center,
+                        radius = minDim * 0.52f,
                     ),
-                    shape = CircleShape,
+                    radius = minDim * 0.44f,
                 )
-                .border(1.5.dp, Color(0x66C7D7FF), CircleShape)
-                .padding(10.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .border(1.dp, Color(0x55D1E7FF), CircleShape),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(18.dp)
-                    .background(Color.White.copy(alpha = 0.96f), CircleShape)
-                    .border(1.dp, Color(0x334F7CFF), CircleShape),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(8.dp)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(CorePrimary, Color(0xFF20D3EE)),
-                            ),
-                            shape = CircleShape,
+                drawCircle(
+                    brush = Brush.sweepGradient(
+                        colors = listOf(
+                            orbPrimary.copy(alpha = 0.92f),
+                            orbCyan.copy(alpha = 0.72f),
+                            orbViolet.copy(alpha = 0.68f),
+                            orbPrimary.copy(alpha = 0.92f),
                         ),
+                        center = center,
+                    ),
+                    radius = bodyRadius,
+                )
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.96f),
+                            Color.White.copy(alpha = 0.78f),
+                            orbPrimary.copy(alpha = 0.34f),
+                            orbCyan.copy(alpha = 0.20f),
+                            Color.Transparent,
+                        ),
+                        center = center,
+                        radius = bodyRadius,
+                    ),
+                    radius = bodyRadius,
+                )
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.72f),
+                    radius = bodyRadius,
+                    style = Stroke(width = minDim * 0.03f),
+                )
+                drawCircle(
+                    color = orbPrimary.copy(alpha = 0.16f),
+                    radius = bodyRadius + minDim * 0.09f,
+                    style = Stroke(width = minDim * 0.02f),
+                )
+                drawCircle(
+                    color = orbCyan.copy(alpha = 0.15f),
+                    radius = bodyRadius + minDim * 0.16f,
+                    style = Stroke(width = minDim * 0.02f),
+                )
+
+                rotate(degrees = outerRotation, pivot = center) {
+                    drawCircle(
+                        color = orbPrimary.copy(alpha = 0.34f),
+                        radius = bodyRadius + minDim * 0.04f,
+                        style = Stroke(
+                            width = dashedStroke,
+                            pathEffect = PathEffect.dashPathEffect(
+                                intervals = floatArrayOf(minDim * 0.055f, minDim * 0.032f),
+                            ),
+                        ),
+                    )
+                }
+                rotate(degrees = middleRotation, pivot = center) {
+                    drawCircle(
+                        color = orbCyan.copy(alpha = 0.28f),
+                        radius = bodyRadius + minDim * 0.11f,
+                        style = Stroke(
+                            width = dashedStroke,
+                            pathEffect = PathEffect.dashPathEffect(
+                                intervals = floatArrayOf(minDim * 0.045f, minDim * 0.03f),
+                            ),
+                        ),
+                    )
+                }
+                rotate(degrees = innerRotation, pivot = center) {
+                    drawCircle(
+                        color = orbViolet.copy(alpha = 0.24f),
+                        radius = bodyRadius - minDim * 0.08f,
+                        style = Stroke(
+                            width = minDim * 0.018f,
+                            pathEffect = PathEffect.dashPathEffect(
+                                intervals = floatArrayOf(minDim * 0.036f, minDim * 0.026f),
+                            ),
+                        ),
+                    )
+                }
+
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.98f),
+                            Color(0xFFF3F7FF).copy(alpha = 0.96f),
+                            orbPrimary.copy(alpha = 0.18f),
+                        ),
+                        center = center,
+                        radius = innerCoreRadius,
+                    ),
+                    radius = innerCoreRadius,
+                )
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.75f),
+                    radius = innerCoreRadius - minDim * 0.018f,
+                    style = Stroke(width = minDim * 0.02f),
                 )
             }
+            P2CoreSecureHubWalletGlyph(
+                modifier = Modifier.size(22.dp),
+            )
         }
+    }
+}
+
+@Composable
+private fun P2CoreSecureHubWalletGlyph(
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val unit = size.minDimension / 24f
+        val stroke = unit * 1.9f
+        val walletBlue = Color(0xFF244FD6)
+
+        drawRoundRect(
+            color = walletBlue,
+            topLeft = Offset(3f * unit, 6f * unit),
+            size = Size(18f * unit, 13f * unit),
+            cornerRadius = CornerRadius(3f * unit, 3f * unit),
+            style = Stroke(width = stroke),
+        )
+
+        val pocketPath = Path().apply {
+            moveTo(16f * unit, 10f * unit)
+            lineTo(21f * unit, 10f * unit)
+            lineTo(21f * unit, 15f * unit)
+            lineTo(16f * unit, 15f * unit)
+            quadraticTo(13.5f * unit, 15f * unit, 13.5f * unit, 12.5f * unit)
+            quadraticTo(13.5f * unit, 10f * unit, 16f * unit, 10f * unit)
+            close()
+        }
+        drawPath(
+            path = pocketPath,
+            color = walletBlue,
+            style = Stroke(
+                width = stroke,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            ),
+        )
+        drawCircle(
+            color = walletBlue,
+            radius = unit * 0.95f,
+            center = Offset(16.5f * unit, 12.5f * unit),
+        )
     }
 }
 

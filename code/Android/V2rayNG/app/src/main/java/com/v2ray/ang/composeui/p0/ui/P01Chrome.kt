@@ -47,12 +47,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -840,70 +842,275 @@ fun P01SuccessBadge(
 @Composable
 fun P01Orb(modifier: Modifier = Modifier.size(172.dp)) {
     val transition = rememberInfiniteTransition(label = "p01_orb")
-    val rotation by transition.animateFloat(
+    val outerRotation by transition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 9000, easing = LinearEasing),
+            animation = tween(durationMillis = 12000, easing = LinearEasing),
         ),
-        label = "p01_orb_rotation",
+        label = "p01_orb_outer_rotation",
     )
-    val pulse by transition.animateFloat(
-        initialValue = 0.92f,
-        targetValue = 1.08f,
+    val midRotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1800, easing = LinearEasing),
+            animation = tween(durationMillis = 18000, easing = LinearEasing),
         ),
-        label = "p01_orb_pulse",
+        label = "p01_orb_mid_rotation",
+    )
+    val innerRotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 22000, easing = LinearEasing),
+        ),
+        label = "p01_orb_inner_rotation",
     )
     val glowAlpha by transition.animateFloat(
-        initialValue = 0.12f,
-        targetValue = 0.32f,
+        initialValue = 0.14f,
+        targetValue = 0.24f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2200, easing = LinearEasing),
+            animation = tween(durationMillis = 2600, easing = LinearEasing),
         ),
         label = "p01_orb_glow",
     )
 
-    Canvas(
-        modifier = modifier
-            .graphicsLayer {
-                rotationZ = rotation
-                scaleX = pulse
-                scaleY = pulse
-            },
+    BoxWithConstraints(
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
     ) {
-        val center = center
+        val totalSize = minOf(maxWidth, maxHeight)
+        val bodySize = totalSize / 1.29f
+        val coreSize = bodySize * 0.72f
+
+        Box(
+            modifier = Modifier
+                .size(bodySize * 1.18f)
+                .drawBehind {
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                P01AccentBlue.copy(alpha = 0.16f + glowAlpha * 0.24f),
+                                P01AccentCyan.copy(alpha = 0.08f + glowAlpha * 0.10f),
+                                Color.Transparent,
+                            ),
+                        ),
+                        radius = size.minDimension / 2f,
+                        center = center,
+                    )
+                },
+        )
+
+        P01OrbStaticRing(
+            modifier = Modifier.size(totalSize),
+            color = P01AccentCyan.copy(alpha = 0.15f),
+            strokeRatio = 0.012f,
+        )
+        P01OrbStaticRing(
+            modifier = Modifier.size(bodySize * 1.14f),
+            color = P01AccentBlue.copy(alpha = 0.16f),
+            strokeRatio = 0.014f,
+        )
+
+        P01OrbDashedRing(
+            modifier = Modifier
+                .size(bodySize * 1.08f)
+                .graphicsLayer(rotationZ = outerRotation),
+            color = P01AccentBlue.copy(alpha = 0.34f),
+            strokeRatio = 0.016f,
+            dashRatio = 0.11f,
+            gapRatio = 0.085f,
+        )
+        P01OrbDashedRing(
+            modifier = Modifier
+                .size(bodySize * 1.23f)
+                .graphicsLayer(rotationZ = midRotation),
+            color = P01AccentCyan.copy(alpha = 0.25f),
+            strokeRatio = 0.015f,
+            dashRatio = 0.12f,
+            gapRatio = 0.09f,
+        )
+        P01OrbDashedRing(
+            modifier = Modifier
+                .size(bodySize * 0.92f)
+                .graphicsLayer(rotationZ = -innerRotation),
+            color = P01AccentLilac.copy(alpha = 0.22f),
+            strokeRatio = 0.017f,
+            dashRatio = 0.095f,
+            gapRatio = 0.082f,
+        )
+
+        Box(
+            modifier = Modifier
+                .size(bodySize)
+                .shadow(bodySize * 0.12f, CircleShape, clip = false)
+                .clip(CircleShape)
+                .drawBehind {
+                    val radius = size.minDimension / 2f
+                    drawCircle(
+                        brush = Brush.sweepGradient(
+                            colors = listOf(
+                                P01AccentBlue.copy(alpha = 0.90f),
+                                P01AccentCyan.copy(alpha = 0.72f),
+                                P01AccentLilac.copy(alpha = 0.68f),
+                                P01AccentBlue.copy(alpha = 0.90f),
+                            ),
+                            center = center,
+                        ),
+                        radius = radius,
+                        center = center,
+                    )
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.98f),
+                                Color.White.copy(alpha = 0.82f),
+                                P01AccentBlue.copy(alpha = 0.34f),
+                                P01AccentCyan.copy(alpha = 0.20f),
+                                P01AccentLilac.copy(alpha = 0.16f),
+                                Color.Transparent,
+                            ),
+                            center = center,
+                            radius = radius,
+                        ),
+                        radius = radius,
+                        center = center,
+                    )
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.66f),
+                        radius = radius * 0.96f,
+                        center = center,
+                        style = Stroke(width = radius * 0.17f),
+                    )
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color.White.copy(alpha = 0.74f), Color.Transparent),
+                            center = center,
+                            radius = radius * 0.46f,
+                        ),
+                        radius = radius * 0.46f,
+                        center = center,
+                    )
+                },
+        )
+
+        Box(
+            modifier = Modifier
+                .size(coreSize)
+                .clip(CircleShape)
+                .drawBehind {
+                    val radius = size.minDimension / 2f
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.98f),
+                                Color(0xFFF3F7FF).copy(alpha = 0.96f),
+                                P01AccentBlue.copy(alpha = 0.18f),
+                            ),
+                            center = center,
+                            radius = radius,
+                        ),
+                        radius = radius,
+                        center = center,
+                    )
+                    drawCircle(
+                        color = P01AccentBlue.copy(alpha = 0.12f),
+                        radius = radius * 0.96f,
+                        center = center,
+                        style = Stroke(width = radius * 0.10f),
+                    )
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color.White.copy(alpha = 0.80f), Color.Transparent),
+                            center = center,
+                            radius = radius * 0.52f,
+                        ),
+                        radius = radius * 0.52f,
+                        center = center,
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            P01OrbWalletGlyph(modifier = Modifier.size(coreSize * 0.44f))
+        }
+    }
+}
+
+@Composable
+private fun P01OrbStaticRing(
+    modifier: Modifier,
+    color: Color,
+    strokeRatio: Float,
+) {
+    Canvas(modifier = modifier) {
+        val strokeWidth = size.minDimension * strokeRatio
         drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(Color.White.copy(alpha = 0.96f), P01AccentBlue.copy(alpha = 0.18f + glowAlpha * 0.12f)),
+            color = color,
+            radius = size.minDimension / 2f - strokeWidth / 2f,
+            center = center,
+            style = Stroke(width = strokeWidth),
+        )
+    }
+}
+
+@Composable
+private fun P01OrbDashedRing(
+    modifier: Modifier,
+    color: Color,
+    strokeRatio: Float,
+    dashRatio: Float,
+    gapRatio: Float,
+) {
+    Canvas(modifier = modifier) {
+        val strokeWidth = size.minDimension * strokeRatio
+        drawCircle(
+            color = color,
+            radius = size.minDimension / 2f - strokeWidth / 2f,
+            center = center,
+            style = Stroke(
+                width = strokeWidth,
+                cap = StrokeCap.Round,
+                pathEffect = PathEffect.dashPathEffect(
+                    intervals = floatArrayOf(
+                        size.minDimension * dashRatio,
+                        size.minDimension * gapRatio,
+                    ),
+                ),
             ),
-            radius = size.minDimension / 2f,
-            center = center,
+        )
+    }
+}
+
+@Composable
+private fun P01OrbWalletGlyph(
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val stroke = Stroke(
+            width = size.minDimension * 0.08f,
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round,
+        )
+        val corner = CornerRadius(size.minDimension * 0.12f, size.minDimension * 0.12f)
+        drawRoundRect(
+            color = P01AccentDeep,
+            topLeft = Offset(size.width * 0.12f, size.height * 0.22f),
+            size = Size(size.width * 0.76f, size.height * 0.56f),
+            cornerRadius = corner,
+            style = stroke,
+        )
+        drawRoundRect(
+            color = P01AccentDeep,
+            topLeft = Offset(size.width * 0.60f, size.height * 0.38f),
+            size = Size(size.width * 0.30f, size.height * 0.22f),
+            cornerRadius = corner,
+            style = stroke,
         )
         drawCircle(
-            color = P01AccentBlue.copy(alpha = 0.16f + glowAlpha * 0.14f),
-            radius = size.minDimension * 0.34f,
-            center = center,
-            style = Stroke(width = 18.dp.toPx()),
-        )
-        drawCircle(
-            color = P01AccentCyan.copy(alpha = 0.22f + glowAlpha * 0.16f),
-            radius = size.minDimension * 0.24f,
-            center = center,
-            style = Stroke(width = 12.dp.toPx()),
-        )
-        drawCircle(
-            color = P01AccentLilac.copy(alpha = 0.18f + glowAlpha * 0.16f),
-            radius = size.minDimension * 0.45f,
-            center = center,
-            style = Stroke(width = 6.dp.toPx()),
-        )
-        drawCircle(
-            color = P01AccentCyan.copy(alpha = 0.12f + glowAlpha * 0.18f),
-            radius = size.minDimension * 0.49f,
-            center = center,
-            style = Stroke(width = 2.dp.toPx()),
+            color = P01AccentDeep,
+            radius = size.minDimension * 0.04f,
+            center = Offset(size.width * 0.69f, size.height * 0.49f),
+            style = Fill,
         )
     }
 }

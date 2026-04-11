@@ -10,6 +10,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,13 +45,20 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.p0.ui.P01Card
+import com.v2ray.ang.composeui.p0.ui.P01BottomIcon
+import com.v2ray.ang.composeui.p0.ui.P01BottomIconKind
 import com.v2ray.ang.composeui.p0.ui.P01PrimaryButton
 
 private val P1AccentBlue = Color(0xFF4276FF)
+private val P1AccentCyan = Color(0xFF20D3EE)
+private val P1AccentViolet = Color(0xFF8B5CF6)
+private val P1HubGlyphBlue = Color(0xFF244FD6)
 private val P1TextStrong = Color(0xFF132748)
 private val P1TextBody = Color(0xFF4D6287)
 private val P1CardShape = RoundedCornerShape(28.dp)
@@ -254,95 +263,195 @@ internal fun P1SecureHub(
     label: String = "SECURE",
 ) {
     val transition = rememberInfiniteTransition(label = "p1_secure_hub")
-    val rotation by transition.animateFloat(
+    val outerRingRotation by transition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8200, easing = LinearEasing),
+            animation = tween(durationMillis = 12000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
-        label = "p1_secure_hub_rotation",
+        label = "p1_secure_hub_outer_ring_rotation",
     )
-    val pulse by transition.animateFloat(
-        initialValue = 0.94f,
-        targetValue = 1.08f,
+    val innerRingRotation by transition.animateFloat(
+        initialValue = 360f,
+        targetValue = 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1800, easing = LinearEasing),
+            animation = tween(durationMillis = 18000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "p1_secure_hub_inner_ring_rotation",
+    )
+    val glowScale by transition.animateFloat(
+        initialValue = 0.96f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2400, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
-        label = "p1_secure_hub_pulse",
+        label = "p1_secure_hub_glow_scale",
     )
-    val glow by transition.animateFloat(
-        initialValue = 0.14f,
-        targetValue = 0.30f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2200, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "p1_secure_hub_glow",
-    )
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(999.dp))
-                .border(1.dp, P1AccentBlue.copy(alpha = 0.12f), RoundedCornerShape(999.dp))
+                .background(Color.White.copy(alpha = 0.82f), RoundedCornerShape(999.dp))
+                .border(1.dp, P1AccentBlue.copy(alpha = 0.16f), RoundedCornerShape(999.dp))
                 .padding(horizontal = 10.dp, vertical = 6.dp),
         ) {
             Text(
                 text = label,
-                color = P1AccentBlue,
+                color = P1HubGlyphBlue,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
             )
         }
+        P1ConfirmedOrb(
+            outerRingRotation = outerRingRotation,
+            innerRingRotation = innerRingRotation,
+            glowScale = glowScale,
+        )
+    }
+}
+
+@Composable
+private fun P1ConfirmedOrb(
+    outerRingRotation: Float,
+    innerRingRotation: Float,
+    glowScale: Float,
+) {
+    Box(
+        modifier = Modifier.size(64.dp),
+    ) {
         Box(
             modifier = Modifier
-                .size(60.dp)
+                .fillMaxSize()
                 .graphicsLayer {
-                    rotationZ = rotation
-                    scaleX = pulse
-                    scaleY = pulse
+                    scaleX = glowScale
+                    scaleY = glowScale
                 }
                 .background(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.94f),
-                            P1AccentBlue.copy(alpha = 0.12f + glow * 0.24f),
+                            P1AccentBlue.copy(alpha = 0.16f),
+                            P1AccentCyan.copy(alpha = 0.12f),
                             Color.Transparent,
                         ),
                     ),
-                    shape = RoundedCornerShape(999.dp),
+                    shape = CircleShape,
+                ),
+        )
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokeWidth = 1.2.dp.toPx()
+            drawCircle(
+                color = P1AccentBlue.copy(alpha = 0.15f),
+                radius = size.minDimension * 0.40f,
+                style = Stroke(width = strokeWidth),
+            )
+            drawCircle(
+                color = P1AccentCyan.copy(alpha = 0.14f),
+                radius = size.minDimension * 0.48f,
+                style = Stroke(width = strokeWidth),
+            )
+        }
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { rotationZ = outerRingRotation },
+        ) {
+            drawCircle(
+                color = P1AccentBlue.copy(alpha = 0.34f),
+                radius = size.minDimension * 0.42f,
+                style = Stroke(
+                    width = 1.5.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(
+                        intervals = floatArrayOf(6.dp.toPx(), 7.dp.toPx()),
+                    ),
+                ),
+            )
+        }
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { rotationZ = innerRingRotation },
+        ) {
+            drawCircle(
+                color = P1AccentCyan.copy(alpha = 0.28f),
+                radius = size.minDimension * 0.48f,
+                style = Stroke(
+                    width = 1.3.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(
+                        intervals = floatArrayOf(5.dp.toPx(), 6.dp.toPx()),
+                    ),
+                ),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(44.dp)
+                .background(
+                    brush = Brush.sweepGradient(
+                        colors = listOf(
+                            P1AccentBlue.copy(alpha = 0.94f),
+                            P1AccentCyan.copy(alpha = 0.76f),
+                            P1AccentViolet.copy(alpha = 0.72f),
+                            P1AccentBlue.copy(alpha = 0.94f),
+                        ),
+                    ),
+                    shape = CircleShape,
                 )
-                .border(1.5.dp, Color(0x66C7D7FF), RoundedCornerShape(999.dp))
-                .padding(10.dp),
+                .border(1.dp, Color.White.copy(alpha = 0.36f), CircleShape),
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .border(1.dp, Color(0x55D1E7FF), RoundedCornerShape(999.dp)),
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.96f),
+                                Color.White.copy(alpha = 0.78f),
+                                P1AccentBlue.copy(alpha = 0.28f),
+                                Color.Transparent,
+                            ),
+                        ),
+                        shape = CircleShape,
+                    ),
             )
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(26.dp)
+                .clip(CircleShape)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.98f),
+                            Color(0xFFF3F7FF),
+                            P1AccentBlue.copy(alpha = 0.18f),
+                        ),
+                    ),
+                    shape = CircleShape,
+                )
+                .border(1.dp, Color.White.copy(alpha = 0.78f), CircleShape),
+        ) {
             Box(
                 modifier = Modifier
+                    .fillMaxSize()
+                    .padding(2.dp)
+                    .clip(CircleShape)
+                    .border(1.dp, P1AccentBlue.copy(alpha = 0.16f), CircleShape),
+            )
+            P01BottomIcon(
+                kind = P01BottomIconKind.WALLET,
+                tint = P1HubGlyphBlue,
+                modifier = Modifier
                     .align(Alignment.Center)
-                    .size(18.dp)
-                    .background(Color.White.copy(alpha = 0.96f), RoundedCornerShape(999.dp))
-                    .border(1.dp, Color(0x334F7CFF), RoundedCornerShape(999.dp)),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(8.dp)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(P1AccentBlue, Color(0xFF20D3EE)),
-                            ),
-                            shape = RoundedCornerShape(999.dp),
-                        ),
-                )
-            }
+                    .size(15.dp),
+            )
         }
     }
 }

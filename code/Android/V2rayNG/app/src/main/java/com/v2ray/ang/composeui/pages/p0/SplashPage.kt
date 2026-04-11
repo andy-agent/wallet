@@ -226,7 +226,7 @@ private fun SplashMainCard() {
                 )
             }
             SplashSecureGraphic(
-                modifier = Modifier.size(138.dp),
+                modifier = Modifier.size(148.dp),
             )
         }
 
@@ -306,15 +306,7 @@ private fun SplashSecureGraphic(
         modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            P01Orb(modifier = Modifier.fillMaxSize())
-        }
-        Text(
-            text = "SECURE",
-            color = SplashBlue,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.ExtraBold,
-        )
+        P01Orb(modifier = Modifier.fillMaxSize())
     }
 }
 

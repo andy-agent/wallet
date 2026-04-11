@@ -70,7 +70,7 @@ fun WalletOnboardingScreen(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center,
             ) {
-                Box(modifier = Modifier.size(148.dp)) {
+                Box(modifier = Modifier.size(170.dp)) {
                     P01Orb(modifier = Modifier.fillMaxSize())
                 }
             }
