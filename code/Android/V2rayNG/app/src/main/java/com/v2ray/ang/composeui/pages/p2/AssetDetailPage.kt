@@ -84,6 +84,11 @@ fun AssetDetailScreen(
                     title = item.title,
                     subtitle = item.subtitle,
                     trailing = item.trailing,
+                    emphasis = when {
+                        item.trailing.contains("成功") -> P2CoreRowEmphasis.Success
+                        item.trailing.contains("确认") -> P2CoreRowEmphasis.Warning
+                        else -> P2CoreRowEmphasis.Brand
+                    },
                     trailingColor = when {
                         item.trailing.contains("成功") -> Color(0xFF17B48A)
                         item.trailing.contains("确认") -> Color(0xFFE39B22)

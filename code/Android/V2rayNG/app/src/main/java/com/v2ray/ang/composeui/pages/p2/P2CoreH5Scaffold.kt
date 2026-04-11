@@ -10,8 +10,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.ArrowForwardIos
 import androidx.compose.material.icons.outlined.AutoGraph
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PersonOutline
@@ -26,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -75,6 +78,13 @@ internal enum class CoreNavSection {
     Wallet,
     Growth,
     Profile,
+}
+
+internal enum class P2CoreRowEmphasis {
+    Neutral,
+    Brand,
+    Success,
+    Warning,
 }
 
 @Composable
@@ -321,8 +331,16 @@ internal fun P2CoreActionValueRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF7F9FF), RoundedCornerShape(14.dp))
-            .border(1.dp, Color(0xFFE7ECF7), RoundedCornerShape(14.dp))
+            .background(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(
+                        Color(0xFFF7F9FF),
+                        Color(0xFFF2F6FF),
+                    ),
+                ),
+                shape = RoundedCornerShape(18.dp),
+            )
+            .border(1.dp, Color(0xFFDCE5FB), RoundedCornerShape(18.dp))
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -499,10 +517,23 @@ internal fun P2CoreChipRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items.forEachIndexed { index, item ->
+            val background by animateColorAsState(
+                targetValue = if (index == activeIndex) Color(0xFFE7EEFF) else Color(0xFFF1F4FA),
+                label = "p2_core_chip_bg_$index",
+            )
+            val textColor by animateColorAsState(
+                targetValue = if (index == activeIndex) CorePrimary else Color(0xFF63709C),
+                label = "p2_core_chip_text_$index",
+            )
             Box(
                 modifier = Modifier
                     .background(
-                        color = if (index == activeIndex) Color(0xFFE7EEFF) else Color(0xFFF1F4FA),
+                        color = background,
+                        shape = RoundedCornerShape(999.dp),
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = if (index == activeIndex) Color(0xFFC8D7FF) else Color.Transparent,
                         shape = RoundedCornerShape(999.dp),
                     )
                     .padding(horizontal = 12.dp, vertical = 7.dp),
@@ -510,7 +541,7 @@ internal fun P2CoreChipRow(
                 Text(
                     item,
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (index == activeIndex) CorePrimary else Color(0xFF63709C),
+                    color = textColor,
                 )
             }
         }
@@ -524,14 +555,35 @@ internal fun P2CoreListRow(
     trailing: String? = null,
     onClick: (() -> Unit)? = null,
     trailingColor: Color = CoreSubtleText,
+    emphasis: P2CoreRowEmphasis = P2CoreRowEmphasis.Neutral,
 ) {
+    val borderColor = when (emphasis) {
+        P2CoreRowEmphasis.Success -> Color(0xFFD9F4EB)
+        P2CoreRowEmphasis.Warning -> Color(0xFFFBE5C4)
+        P2CoreRowEmphasis.Brand -> Color(0xFFD9E4FF)
+        P2CoreRowEmphasis.Neutral -> Color(0xFFE7ECF7)
+    }
+    val backgroundBrush = when (emphasis) {
+        P2CoreRowEmphasis.Success -> Brush.horizontalGradient(listOf(Color(0xFFF7FFFB), Color(0xFFEEFFF7)))
+        P2CoreRowEmphasis.Warning -> Brush.horizontalGradient(listOf(Color(0xFFFFFBF4), Color(0xFFFFF6E5)))
+        P2CoreRowEmphasis.Brand -> Brush.horizontalGradient(listOf(Color(0xFFF8FAFF), Color(0xFFF1F5FF)))
+        P2CoreRowEmphasis.Neutral -> Brush.horizontalGradient(listOf(Color.White, Color(0xFFF9FBFF)))
+    }
+    val trailingChipColor = when (emphasis) {
+        P2CoreRowEmphasis.Success -> Color(0xFFE6FFF5)
+        P2CoreRowEmphasis.Warning -> Color(0xFFFFF1D8)
+        P2CoreRowEmphasis.Brand -> Color(0xFFE9F0FF)
+        P2CoreRowEmphasis.Neutral -> Color(0xFFF1F4FA)
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(16.dp))
+            .background(backgroundBrush, RoundedCornerShape(18.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(18.dp))
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(vertical = 4.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge, color = CoreText, fontWeight = FontWeight.SemiBold)
@@ -539,7 +591,21 @@ internal fun P2CoreListRow(
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = CoreSubtleText)
         }
         if (!trailing.isNullOrBlank()) {
-            Text(trailing, style = MaterialTheme.typography.labelMedium, color = trailingColor)
+            Box(
+                modifier = Modifier
+                    .background(trailingChipColor, RoundedCornerShape(999.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+            ) {
+                Text(trailing, style = MaterialTheme.typography.labelMedium, color = trailingColor)
+            }
+        }
+        if (onClick != null) {
+            Icon(
+                imageVector = Icons.Outlined.ArrowForwardIos,
+                contentDescription = null,
+                tint = Color(0xFF9AA8CC),
+                modifier = Modifier.size(14.dp),
+            )
         }
     }
 }
@@ -572,6 +638,25 @@ internal fun P2CoreNoteCard(
 
 @Composable
 internal fun P2CoreQrPlaceholder() {
+    val transition = rememberInfiniteTransition(label = "p2_core_qr")
+    val sweep by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2400, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "p2_core_qr_sweep",
+    )
+    val pulse by transition.animateFloat(
+        initialValue = 0.92f,
+        targetValue = 1.04f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "p2_core_qr_pulse",
+    )
     Box(
         modifier = Modifier
             .size(188.dp)
@@ -582,12 +667,13 @@ internal fun P2CoreQrPlaceholder() {
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val unit = size.minDimension / 7f
+            val inset = (size.minDimension * (1f - pulse)) / 2f
             fun square(x: Int, y: Int, filled: Boolean = true) {
                 if (filled) {
                     drawRoundRect(
                         color = CorePrimary,
-                        topLeft = Offset(x * unit, y * unit),
-                        size = androidx.compose.ui.geometry.Size(unit * 0.85f, unit * 0.85f),
+                        topLeft = Offset(x * unit + inset, y * unit + inset),
+                        size = androidx.compose.ui.geometry.Size(unit * 0.82f * pulse, unit * 0.82f * pulse),
                         cornerRadius = CornerRadius(unit * 0.12f, unit * 0.12f),
                     )
                 }
@@ -601,6 +687,19 @@ internal fun P2CoreQrPlaceholder() {
             listOf(Offset(4f, 4f), Offset(5f, 4f), Offset(4f, 5f), Offset(6f, 5f), Offset(5f, 6f)).forEach {
                 square(it.x.toInt(), it.y.toInt())
             }
+            val scanTop = size.height * sweep - size.height * 0.24f
+            drawRoundRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        Color(0x552F5BFF),
+                        Color.Transparent,
+                    ),
+                ),
+                topLeft = Offset(0f, scanTop.coerceIn(0f, size.height)),
+                size = Size(size.width, size.height * 0.2f),
+                cornerRadius = CornerRadius(24f, 24f),
+            )
         }
     }
 }
@@ -664,16 +763,56 @@ internal fun P2CoreQrAddressCard(
 internal fun P2CoreChartPlaceholder(
     accent: Color = CorePrimary,
 ) {
+    val transition = rememberInfiniteTransition(label = "p2_core_chart")
+    val sweep by transition.animateFloat(
+        initialValue = -0.35f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2600, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "p2_core_chart_sweep",
+    )
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(122.dp)
-            .background(Color(0xFFF7F9FF), RoundedCornerShape(16.dp))
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFF7F9FF),
+                        Color(0xFFF0F5FF),
+                    ),
+                ),
+                shape = RoundedCornerShape(18.dp),
+            )
+            .border(1.dp, Color(0xFFE3EAF9), RoundedCornerShape(18.dp))
             .padding(12.dp),
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val stepX = size.width / 6f
             val points = listOf(0.72f, 0.68f, 0.74f, 0.61f, 0.58f, 0.34f, 0.22f)
+            for (grid in 1..3) {
+                drawLine(
+                    color = Color(0xFFE5ECFA),
+                    start = Offset(0f, size.height * grid / 4f),
+                    end = Offset(size.width, size.height * grid / 4f),
+                    strokeWidth = 2f,
+                )
+            }
+            val sweepWidth = size.width * 0.28f
+            drawRoundRect(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        accent.copy(alpha = 0.09f),
+                        Color.Transparent,
+                    ),
+                ),
+                topLeft = Offset(size.width * sweep - sweepWidth, 0f),
+                size = Size(sweepWidth, size.height),
+                cornerRadius = CornerRadius(18.dp.toPx(), 18.dp.toPx()),
+            )
             for (i in 1 until points.size) {
                 drawLine(
                     color = accent,
@@ -681,6 +820,18 @@ internal fun P2CoreChartPlaceholder(
                     end = Offset(stepX * i, size.height * points[i]),
                     strokeWidth = 7f,
                     cap = StrokeCap.Round,
+                )
+            }
+            points.forEachIndexed { index, point ->
+                drawCircle(
+                    color = Color.White,
+                    radius = 8f,
+                    center = Offset(stepX * index, size.height * point),
+                )
+                drawCircle(
+                    color = accent,
+                    radius = 5f,
+                    center = Offset(stepX * index, size.height * point),
                 )
             }
         }

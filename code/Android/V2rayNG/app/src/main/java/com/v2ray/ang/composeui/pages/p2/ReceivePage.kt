@@ -73,10 +73,10 @@ fun ReceiveScreen(
                 P2CoreChipRow(items = chips, activeIndex = 0)
             }
             CoreActionRow(
-                primaryActionLabel = uiState.secondaryActionLabel ?: "分享二维码",
-                onPrimaryAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
-                secondaryActionLabel = uiState.primaryActionLabel,
-                onSecondaryAction = { onEvent(ReceiveEvent.PrimaryActionClicked) },
+                primaryActionLabel = uiState.primaryActionLabel ?: "分享二维码",
+                onPrimaryAction = { onEvent(ReceiveEvent.PrimaryActionClicked) },
+                secondaryActionLabel = uiState.secondaryActionLabel ?: "复制地址",
+                onSecondaryAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
             )
             P2CoreNoteCard(title = "请确认链一致", text = uiState.note)
         }

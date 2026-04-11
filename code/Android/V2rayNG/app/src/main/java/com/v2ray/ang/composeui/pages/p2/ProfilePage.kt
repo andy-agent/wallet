@@ -84,6 +84,7 @@ fun ProfileScreen(
                     title = item.title,
                     subtitle = item.subtitle,
                     trailing = item.trailing,
+                    emphasis = P2CoreRowEmphasis.Brand,
                     trailingColor = Color(0xFF2F5BFF),
                     onClick = route?.let { { onBottomNav(it) } },
                 )

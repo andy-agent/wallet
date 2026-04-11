@@ -81,6 +81,11 @@ fun CommissionLedgerScreen(
                     title = item.title,
                     subtitle = item.subtitle,
                     trailing = item.trailing,
+                    emphasis = if (item.trailing.contains("+")) {
+                        P2CoreRowEmphasis.Success
+                    } else {
+                        P2CoreRowEmphasis.Warning
+                    },
                     trailingColor = Color(0xFF16B889),
                 )
             }
