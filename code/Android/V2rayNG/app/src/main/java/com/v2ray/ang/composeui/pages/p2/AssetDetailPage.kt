@@ -56,16 +56,21 @@ fun AssetDetailScreen(
         secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(AssetDetailEvent.SecondaryActionClicked) },
     ) {
-        P2CoreTrendCard(
-            title = "资产走势",
+        P2CoreHeroValueCard(
+            label = "资产总览",
             value = balance,
-            caption = "余额 $balance · 今日 $change",
+            supportingText = "余额 $balance · 今日 $change",
+            highlight = uiState.badge,
+            stats = distribution.take(2),
+        )
+        P2CoreChartInfoBlock(
+            title = "资产走势",
+            subtitle = uiState.summary,
+            chips = listOf("24H", "7D", "30D", "入账/出账"),
+            infoItems = distribution,
+            highlight = "同步中",
             accent = Color(0xFF2F5BFF),
         )
-        P2CoreChipRow(items = listOf("24H", "7D", "30D", "入账/出账"))
-        if (distribution.isNotEmpty()) {
-            P2CoreMetricGrid(items = distribution, accentIndexes = setOf(2))
-        }
         P2CoreCard {
             P2CoreCardHeader(title = "最近交易", trailing = "3 笔待确认", trailingColor = Color(0xFFEAF6FF))
             uiState.highlights.forEach { item ->

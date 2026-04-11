@@ -53,20 +53,25 @@ fun SendResultScreen(
         secondaryActionLabel = uiState.primaryActionLabel,
         onSecondaryAction = { onEvent(SendResultEvent.PrimaryActionClicked) },
     ) {
-        P2CoreHeroValue(
+        P2CoreHeroValueCard(
             label = "到账金额",
             value = amount,
-            caption = uiState.summary,
-            accent = Color(0xFF1BBF93),
-        )
-        P2CoreMetricGrid(
-            items = uiState.metrics.take(4).map { it.label to it.value },
+            supportingText = uiState.summary,
+            highlight = uiState.badge,
+            stats = uiState.metrics.drop(1).take(2).map { it.label to it.value },
         )
         P2CoreAddressModule(
             title = "交易哈希",
             value = txHash,
             supportingText = "可复制哈希到链上浏览器追踪确认进度",
             status = uiState.badge,
+        )
+        P2CoreActionValueRow(
+            label = "交易状态",
+            value = uiState.highlights.firstOrNull()?.title ?: "链上确认中",
+            actionLabel = uiState.secondaryActionLabel ?: "查看哈希",
+            onAction = { onEvent(SendResultEvent.SecondaryActionClicked) },
+            valueColor = Color(0xFF1BBF93),
         )
     }
 }

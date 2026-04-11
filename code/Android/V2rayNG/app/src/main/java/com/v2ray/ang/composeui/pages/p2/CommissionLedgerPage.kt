@@ -52,17 +52,27 @@ fun CommissionLedgerScreen(
         secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(CommissionLedgerEvent.SecondaryActionClicked) },
     ) {
-        P2CoreTrendCard(
-            title = uiState.note,
+        P2CoreHeroValueCard(
+            label = uiState.note,
             value = total,
-            caption = uiState.checklist.firstOrNull()?.detail ?: uiState.summary,
+            supportingText = uiState.checklist.firstOrNull()?.detail ?: uiState.summary,
+            highlight = uiState.badge,
+            stats = uiState.metrics.drop(1).take(2).map { it.label to it.value },
+        )
+        P2CoreChartInfoBlock(
+            title = "佣金趋势",
+            subtitle = "按来源拆分统计",
+            chips = listOf("今日", "本周", "本月"),
+            infoItems = uiState.metrics.take(3).map { it.label to it.value },
+            highlight = "更新中",
             accent = Color(0xFF22C3A0),
         )
-        P2CoreHeroValue(
+        P2CoreActionValueRow(
             label = "月度新增",
             value = uiState.badge,
-            caption = "按订单来源拆分返佣并同步提现状态",
-            accent = Color(0xFF16B889),
+            actionLabel = uiState.secondaryActionLabel,
+            onAction = { onEvent(CommissionLedgerEvent.SecondaryActionClicked) },
+            valueColor = Color(0xFF16B889),
         )
         P2CoreCard {
             P2CoreCardHeader(title = uiState.note)
