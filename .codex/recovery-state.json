@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-11T14:21:00Z",
+  "generated_at": "2026-04-11T17:45:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "next_task_id": "liaojiang-0jp",
   "next_task_title": "Android app：移除运行时剩余 mock 数据并接入真实落地数据",
@@ -25,8 +25,8 @@
     "dispatched_count": 0,
     "max_workers": 3
   },
-  "last_orchestrator_update": "2026-04-11T22:21:00+0800",
+  "last_orchestrator_update": "2026-04-12T01:45:00+0800",
   "active_bd_task": "liaojiang-0jp",
   "active_worker_tasks": [],
-  "note": "Compose page-by-page reality audit completed under the new standard. Results are recorded in docs/COMPOSE_UI_REALIFICATION_AUDIT_2026-04-11.md and docs/COMPOSE_UI_REALIFICATION_EXECUTION_LOG_2026-04-11.md. Totals: A=0, B=11, C=17, D=18 across 46 audited pages. Direct rework is the next phase, but current page-file overlap with another UI animation thread makes immediate page edits unsafe until those overlapping changes are reconciled."
+  "note": "Compose realification is now in active implementation, not audit-only. Clean worktrees produced compiled P0/P1 slices, accepted P2 Core commit d9ce058a on branch codex/liaojiang-0jp-p2core, and integration branch codex/liaojiang-0jp-integrate now contains P0/P1 plus P2 Core commit acfdeeda and P2 Extended uiState-driven screen commit 506ec757. Integration compile passes with :app:compileFdroidDebugKotlin. The current blocker is no longer page overlap; it is device-side route-harness regression on the Oppo test phone, where adb shell launch of the debug harness is bounced back to launcher, so per-route runtime evidence must currently use launcher/manual navigation or a more robust debug entrypoint."
 }

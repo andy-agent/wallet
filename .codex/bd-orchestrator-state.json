@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-11T22:21:00+0800",
+  "generated_at": "2026-04-12T01:45:00+0800",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "active_task_id": "liaojiang-0jp",
   "accepted_task_id": "liaojiang-0jp.3",
@@ -8,14 +8,14 @@
   "blockers": [
     {
       "task_id": "liaojiang-0jp",
-      "type": "feature",
-      "blocked_by": "Page-by-page audit is complete, but direct Compose realification edits are currently unsafe because concurrent unreviewed UI animation/structure changes overlap the same P0/P1/P2 page files."
+      "type": "verification",
+      "blocked_by": "Android code realification is proceeding in clean worktrees and integration compile passes, but device-side per-route runtime verification is blocked by Oppo shell-launch behavior: adb explicit starts of the fdroid debug ComposeRouteHarnessActivity are bounced back to launcher after startup. Launcher-path startup still works, so the remaining blocker is a robust debug entrypoint or manual launcher-driven route verification for page-level acceptance."
     }
   ],
   "workers": [],
   "mainline": {
     "feature_id": "liaojiang-0jp",
     "phase_id": "liaojiang-0jp",
-    "policy": "Use the new strict A/B/C/D page reality standard. Audit is complete: 46 pages audited, A=0, B=11, C=17, D=18. Next phase is page-by-page rework, but current worktree overlap with another UI thread must be reconciled before trustworthy implementation and acceptance can proceed."
+    "policy": "Use the strict A/B/C/D page reality standard. Audit is complete: 46 pages audited, A=0, B=11, C=17, D=18. Rework is now active: P0/P1 slices compile in clean worktrees; P2 Core was accepted into integration; P2 Extended screen rendering is being switched from hardcoded pseudo-business copy to uiState-driven rendering. Main remaining risk is route-level runtime evidence on the Oppo device, not audit or write-scope overlap."
   }
 }
