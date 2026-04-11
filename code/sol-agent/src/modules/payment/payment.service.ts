@@ -39,6 +39,13 @@ interface PaymentMatch {
   receivedAmountRaw: bigint;
 }
 
+interface SignatureScanSource {
+  sourceAddress: string;
+  signatures: Awaited<
+    ReturnType<SolanaRpcService['getSignatureInfos']>
+  >['signatures'];
+}
+
 interface ParsedTokenBalanceEntry {
   accountIndex: number;
   mint: string;
@@ -294,16 +301,17 @@ export class PaymentService {
     const asset = this.resolveAsset(body, networkCode);
     const limit = body.limit ?? 20;
 
-    const signatureResult = await this.solanaRpc.getSignatureInfos(
+    const signatureScanSources = await this.collectSignatureScanSources({
       collectionAddress,
       networkCode,
-      {
-        limit,
-        beforeSignature: body.beforeSignature,
-      },
-    );
+      assetKind: asset.assetKind,
+      mintAddress: asset.mintAddress,
+      limit,
+      beforeSignature: body.beforeSignature,
+    });
+    const mergedSignatures = this.mergeSignatureSources(signatureScanSources);
 
-    if (signatureResult.signatures.length === 0) {
+    if (mergedSignatures.length === 0) {
       return {
         collectionAddress,
         networkCode,
@@ -319,14 +327,14 @@ export class PaymentService {
     }
 
     const parsedTransactions = await this.solanaRpc.getParsedTransactions(
-      signatureResult.signatures.map((item) => item.signature),
+      mergedSignatures.map((item) => item.signature),
       networkCode,
     );
     const transactionMap = new Map(
       parsedTransactions.transactions.map((item) => [item.signature, item]),
     );
 
-    const items = signatureResult.signatures
+    const items = mergedSignatures
       .map<ScanIncomingTransferItemDto | null>((signatureInfo) => {
         if (signatureInfo.err) {
           return null;
@@ -378,13 +386,78 @@ export class PaymentService {
       assetKind: asset.assetKind,
       mintAddress: asset.mintAddress,
       decimals: asset.decimals,
-      scannedSignatures: signatureResult.signatures.length,
+      scannedSignatures: mergedSignatures.length,
       matchedTransfers: items.length,
       nextBeforeSignature:
-        signatureResult.signatures[signatureResult.signatures.length - 1]
-          ?.signature ?? null,
+        mergedSignatures[mergedSignatures.length - 1]?.signature ?? null,
       items,
     };
+  }
+
+  private async collectSignatureScanSources(input: {
+    collectionAddress: string;
+    networkCode: string;
+    assetKind: AssetKind;
+    mintAddress: string | null;
+    limit: number;
+    beforeSignature?: string;
+  }): Promise<SignatureScanSource[]> {
+    const ownerSignatures = await this.solanaRpc.getSignatureInfos(
+      input.collectionAddress,
+      input.networkCode,
+      {
+        limit: input.limit,
+        beforeSignature: input.beforeSignature,
+      },
+    );
+    const sources: SignatureScanSource[] = [
+      {
+        sourceAddress: input.collectionAddress,
+        signatures: ownerSignatures.signatures,
+      },
+    ];
+
+    if (input.assetKind !== 'SPL_TOKEN' || !input.mintAddress) {
+      return sources;
+    }
+
+    const associatedTokenAddress = this.solanaRpc.deriveAssociatedTokenAddress(
+      input.collectionAddress,
+      input.mintAddress,
+    );
+    const ataSignatures = await this.solanaRpc.getSignatureInfos(
+      associatedTokenAddress,
+      input.networkCode,
+      {
+        limit: input.limit,
+        beforeSignature: input.beforeSignature,
+      },
+    );
+    sources.push({
+      sourceAddress: associatedTokenAddress,
+      signatures: ataSignatures.signatures,
+    });
+
+    return sources;
+  }
+
+  private mergeSignatureSources(
+    sources: SignatureScanSource[],
+  ): Awaited<ReturnType<SolanaRpcService['getSignatureInfos']>>['signatures'] {
+    const merged = new Map<
+      string,
+      Awaited<ReturnType<SolanaRpcService['getSignatureInfos']>>['signatures'][number]
+    >();
+
+    for (const source of sources) {
+      for (const signatureInfo of source.signatures) {
+        if (!merged.has(signatureInfo.signature)) {
+          merged.set(signatureInfo.signature, signatureInfo);
+        }
+      }
+    }
+
+    return Array.from(merged.values());
   }
 
   private buildVerificationResult(input: {

@@ -8,6 +8,13 @@ import {
   clusterApiUrl,
 } from '@solana/web3.js';
 
+const TOKEN_PROGRAM_ID = new PublicKey(
+  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+);
+const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
+  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+);
+
 export interface RpcSignatureInfo {
   signature: string;
   slot: number;
@@ -370,5 +377,18 @@ export class SolanaRpcService {
         transaction: transactions[index] ?? null,
       })),
     };
+  }
+
+  deriveAssociatedTokenAddress(
+    ownerAddress: string,
+    mintAddress: string,
+  ): string {
+    const owner = new PublicKey(ownerAddress);
+    const mint = new PublicKey(mintAddress);
+    const [associatedTokenAddress] = PublicKey.findProgramAddressSync(
+      [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+    );
+    return associatedTokenAddress.toBase58();
   }
 }

@@ -226,6 +226,157 @@ describe('PaymentController (e2e)', () => {
     ]);
   }, 30000);
 
+  it('POST /api/internal/v1/payment/scan-incoming - USDT 扫描覆盖 owner+ATA 并按 signature 去重', async () => {
+    const recipientOwner = Keypair.generate().publicKey.toBase58();
+    const sourceTokenAccount = Keypair.generate().publicKey.toBase58();
+    const ataAddress = solanaRpc.deriveAssociatedTokenAddress(
+      recipientOwner,
+      MAINNET_USDT_MINT,
+    );
+
+    jest.spyOn(solanaRpc, 'getSignatureInfos').mockImplementation(
+      async (address: string) => {
+        if (address === recipientOwner) {
+          return {
+            address,
+            networkCode: 'solana-mainnet',
+            signatures: [
+              {
+                signature: 'shared-signature',
+                slot: 52345,
+                err: null,
+                memo: null,
+                blockTime: 1712800400,
+                confirmationStatus: 'confirmed',
+              },
+            ],
+          };
+        }
+
+        if (address === ataAddress) {
+          return {
+            address,
+            networkCode: 'solana-mainnet',
+            signatures: [
+              {
+                signature: 'ata-only-signature',
+                slot: 52344,
+                err: null,
+                memo: null,
+                blockTime: 1712800399,
+                confirmationStatus: 'confirmed',
+              },
+              {
+                signature: 'shared-signature',
+                slot: 52345,
+                err: null,
+                memo: null,
+                blockTime: 1712800400,
+                confirmationStatus: 'confirmed',
+              },
+            ],
+          };
+        }
+
+        return {
+          address,
+          networkCode: 'solana-mainnet',
+          signatures: [],
+        };
+      },
+    );
+
+    jest.spyOn(solanaRpc, 'getParsedTransactions').mockResolvedValue({
+      networkCode: 'solana-mainnet',
+      transactions: [
+        {
+          signature: 'shared-signature',
+          transaction: {
+            slot: 52345,
+            blockTime: 1712800400,
+            meta: {
+              err: null,
+              preBalances: [0, 0],
+              postBalances: [0, 0],
+              preTokenBalances: [],
+              postTokenBalances: [],
+            },
+            transaction: {
+              message: {
+                accountKeys: [{ pubkey: sourceTokenAccount }, { pubkey: ataAddress }],
+              },
+            },
+          } as never,
+        },
+        {
+          signature: 'ata-only-signature',
+          transaction: {
+            slot: 52344,
+            blockTime: 1712800399,
+            meta: {
+              err: null,
+              preBalances: [0, 0],
+              postBalances: [0, 0],
+              preTokenBalances: [
+                {
+                  accountIndex: 1,
+                  mint: MAINNET_USDT_MINT,
+                  owner: recipientOwner,
+                  uiTokenAmount: {
+                    amount: '1000000',
+                    decimals: 6,
+                  },
+                },
+              ],
+              postTokenBalances: [
+                {
+                  accountIndex: 1,
+                  mint: MAINNET_USDT_MINT,
+                  owner: recipientOwner,
+                  uiTokenAmount: {
+                    amount: '2500000',
+                    decimals: 6,
+                  },
+                },
+              ],
+            },
+            transaction: {
+              message: {
+                accountKeys: [{ pubkey: sourceTokenAccount }, { pubkey: ataAddress }],
+              },
+            },
+          } as never,
+        },
+      ],
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/api/internal/v1/payment/scan-incoming')
+      .set('X-Internal-Auth', `Bearer ${token}`)
+      .send({
+        collectionAddress: recipientOwner,
+        assetCode: 'USDT',
+        limit: 10,
+      })
+      .expect(200);
+
+    expect(response.body.code).toBe('OK');
+    expect(response.body.data.collectionAddress).toBe(recipientOwner);
+    expect(response.body.data.assetCode).toBe('USDT');
+    expect(response.body.data.assetKind).toBe('SPL_TOKEN');
+    expect(response.body.data.mintAddress).toBe(MAINNET_USDT_MINT);
+    expect(response.body.data.scannedSignatures).toBe(2);
+    expect(response.body.data.matchedTransfers).toBe(1);
+    expect(response.body.data.items).toEqual([
+      expect.objectContaining({
+        signature: 'ata-only-signature',
+        amount: '1.5',
+        amountRaw: '1500000',
+        matchedAccounts: [ataAddress],
+      }),
+    ]);
+  }, 30000);
+
   it('POST /api/internal/v1/payment/verify - 可校验原生 SOL 到账', async () => {
     const sender = Keypair.generate().publicKey.toBase58();
     const recipient = Keypair.generate().publicKey.toBase58();
