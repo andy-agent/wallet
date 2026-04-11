@@ -19,6 +19,10 @@ data class Order(
     val quoteNetworkCode: String,
     @SerializedName("quoteUsdAmount")
     val quoteUsdAmount: String,
+    @SerializedName("baseAmount")
+    val baseAmount: String? = null,
+    @SerializedName("uniqueAmountDelta")
+    val uniqueAmountDelta: String? = null,
     @SerializedName("payableAmount")
     val payableAmount: String,
     val status: String,
@@ -32,6 +36,10 @@ data class Order(
     val failureReason: String? = null,
     @SerializedName("submittedClientTxHash")
     val submittedClientTxHash: String? = null,
+    @SerializedName("matchedOnchainTxHash")
+    val matchedOnchainTxHash: String? = null,
+    @SerializedName("paymentMatchedAt")
+    val paymentMatchedAt: String? = null,
     @SerializedName("createdAt")
     val createdAt: String = expiresAt,
     val paymentTarget: PaymentTarget? = null,
@@ -62,8 +70,8 @@ data class Order(
             amountCrypto = paymentTarget?.payableAmount ?: payableAmount,
             receiveAddress = paymentTarget?.collectionAddress.orEmpty(),
             qrText = paymentTarget?.qrText.orEmpty(),
-            txHash = submittedClientTxHash,
-            confirmedAt = confirmedAt
+            txHash = matchedOnchainTxHash ?: submittedClientTxHash,
+            confirmedAt = paymentMatchedAt ?: confirmedAt
         )
 
     val fulfillment: FulfillmentInfo?
@@ -113,8 +121,12 @@ data class PaymentTarget(
     val collectionAddress: String,
     @SerializedName("payableAmount")
     val payableAmount: String,
+    @SerializedName("baseAmount")
+    val baseAmount: String? = null,
     @SerializedName("uniqueAmountDelta")
     val uniqueAmountDelta: String,
+    @SerializedName("serviceEnabled")
+    val serviceEnabled: Boolean? = null,
     @SerializedName("qrText")
     val qrText: String,
     @SerializedName("expiresAt")
