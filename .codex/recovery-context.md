@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-11T09:23:37Z
+Generated: 2026-04-11T09:55:04Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-njb
-- next_task_title: Live funding：完成一次真实 SOLANA/USDT 订单付款并回传 txHash
+- next_task_id: liaojiang-5cv
+- next_task_title: Backend支付：订单模型改造为共享地址+尾差金额
 
 ## Counters
-- in_progress: 4
+- in_progress: 7
 - ready: 0
-- open: 8
+- open: 12
 - closed: 387
-- dirty: 2
+- dirty: 3
 
 ## Next Milestone
 - Continue the next task and complete one milestone

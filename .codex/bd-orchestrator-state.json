@@ -1,10 +1,13 @@
 {
-  "generated_at": "2026-04-11T16:30:00+08:00",
+  "generated_at": "2026-04-11T18:05:00+08:00",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-26d",
+  "active_task_id": "liaojiang-5cv",
   "accepted_task_id": "liaojiang-xms",
-  "next_task_id": "liaojiang-njb",
-  "active_worker_task_ids": [],
+  "next_task_id": "liaojiang-5cv",
+  "active_worker_task_ids": [
+    "liaojiang-5cv+liaojiang-vx4",
+    "liaojiang-2n5"
+  ],
   "blockers": [
     {
       "task_id": "liaojiang-njb",
@@ -17,10 +20,29 @@
       "blocked_by": "Depends on liaojiang-26d; final live closed-loop acceptance waits on liaojiang-njb funded payment."
     }
   ],
-  "workers": [],
+  "workers": [
+    {
+      "agent_id": "019d7bf6-2dd5-74e3-bbd5-482ea5488975",
+      "nickname": "Volta",
+      "task_id": "liaojiang-5cv+liaojiang-vx4",
+      "scope": "backend+sol-agent sharedpay",
+      "branch": "codex/liaojiang-sharedpay-backend",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-sharedpay-backend",
+      "status": "running"
+    },
+    {
+      "agent_id": "019d7bf3-3c1e-7b90-9f19-8684386c9e32",
+      "nickname": "Ampere",
+      "task_id": "liaojiang-2n5",
+      "scope": "android payment auto-scan-first UX",
+      "branch": "codex/liaojiang-sharedpay-android",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-sharedpay-android",
+      "status": "running"
+    }
+  ],
   "mainline": {
     "feature_id": "liaojiang-26d",
-    "phase_id": "liaojiang-njb",
-    "policy": "Implementation and UI parity verification are accepted on mainline. The only remaining blocker is one real funded SOLANA/USDT payment that produces a valid txHash for positive-path provisioning."
+    "phase_id": "liaojiang-5cv",
+    "policy": "Implement shared-address + unique-delta + automatic chain-match first, then deploy/verify, then return to positive-path funding blocker only if no code work remains."
   }
 }
