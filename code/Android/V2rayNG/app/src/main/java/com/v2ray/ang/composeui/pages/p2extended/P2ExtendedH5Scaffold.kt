@@ -33,11 +33,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.v2ray.ang.composeui.effects.MotionProfile
+import com.v2ray.ang.composeui.effects.TechParticleBackground
 
 @Composable
 internal fun P2ExtendedPageScaffold(
@@ -54,52 +60,99 @@ internal fun P2ExtendedPageScaffold(
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF5F7FC),
+        color = Color.Transparent,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-        ) {
-            HeroSection(
-                kicker = kicker,
-                title = title,
-                subtitle = subtitle,
-                hubLabel = hubLabel,
-                onHubClick = onHubClick,
+        Box(modifier = Modifier.fillMaxSize()) {
+            TechParticleBackground(
+                motionProfile = MotionProfile.L1,
+                modifier = Modifier.fillMaxSize(),
+                showNetwork = true,
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            ColumnScopeWrapper.content()
-            if (primaryActionLabel != null && onPrimaryAction != null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                HeroSection(
+                    kicker = kicker,
+                    title = title,
+                    subtitle = subtitle,
+                    hubLabel = hubLabel,
+                    onHubClick = onHubClick,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                ColumnScopeWrapper.content()
+                if (primaryActionLabel != null && onPrimaryAction != null) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    ExtendedPrimaryButton(
+                        label = primaryActionLabel,
+                        onClick = onPrimaryAction,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                if (secondaryActionLabel != null && onSecondaryAction != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = onSecondaryAction,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD6DDFE)),
+                    ) {
+                        Text(secondaryActionLabel, color = Color(0xFF3C4D8A), style = MaterialTheme.typography.titleMedium)
+                    }
+                }
                 Spacer(modifier = Modifier.height(14.dp))
-                Button(
-                    onClick = onPrimaryAction,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F5BFF)),
-                ) {
-                    Text(primaryActionLabel, color = Color.White, style = MaterialTheme.typography.titleMedium)
-                }
             }
-            if (secondaryActionLabel != null && onSecondaryAction != null) {
-                Spacer(modifier = Modifier.height(10.dp))
-                OutlinedButton(
-                    onClick = onSecondaryAction,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD6DDFE)),
-                ) {
-                    Text(secondaryActionLabel, color = Color(0xFF3C4D8A), style = MaterialTheme.typography.titleMedium)
-                }
-            }
-            Spacer(modifier = Modifier.height(14.dp))
         }
+    }
+}
+
+@Composable
+private fun ExtendedPrimaryButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val transition = rememberInfiniteTransition(label = "p2e_primary_button")
+    val scanOffset by transition.animateFloat(
+        initialValue = -0.45f,
+        targetValue = 1.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = LinearEasing),
+        ),
+        label = "p2e_primary_button_scan",
+    )
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .height(52.dp)
+            .drawWithContent {
+                drawContent()
+                val scanWidth = size.width * 0.34f
+                drawRoundRect(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.36f),
+                            Color.Transparent,
+                        ),
+                    ),
+                    topLeft = Offset(
+                        x = size.width * scanOffset - scanWidth,
+                        y = 0f,
+                    ),
+                    size = Size(scanWidth, size.height),
+                    cornerRadius = CornerRadius(size.height / 2f, size.height / 2f),
+                )
+            },
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F5BFF)),
+    ) {
+        Text(label, color = Color.White, style = MaterialTheme.typography.titleMedium)
     }
 }
 

@@ -24,17 +24,27 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.v2ray.ang.composeui.effects.MotionProfile
+import com.v2ray.ang.composeui.effects.TechParticleBackground
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 
 private val CorePageBackground = Brush.verticalGradient(
@@ -78,10 +88,13 @@ internal fun P2CorePageScaffold(
         color = Color.Transparent,
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(CorePageBackground),
+            modifier = Modifier.fillMaxSize(),
         ) {
+            TechParticleBackground(
+                motionProfile = MotionProfile.L1,
+                modifier = Modifier.fillMaxSize(),
+                showNetwork = true,
+            )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -403,9 +416,38 @@ internal fun CorePrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val transition = rememberInfiniteTransition(label = "p2_core_primary_button")
+    val scanOffset by transition.animateFloat(
+        initialValue = -0.45f,
+        targetValue = 1.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = LinearEasing),
+        ),
+        label = "p2_core_primary_button_scan",
+    )
     Button(
         onClick = onClick,
-        modifier = modifier.height(52.dp),
+        modifier = modifier
+            .height(52.dp)
+            .drawWithContent {
+                drawContent()
+                val scanWidth = size.width * 0.34f
+                drawRoundRect(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.36f),
+                            Color.Transparent,
+                        ),
+                    ),
+                    topLeft = Offset(
+                        x = size.width * scanOffset - scanWidth,
+                        y = 0f,
+                    ),
+                    size = Size(scanWidth, size.height),
+                    cornerRadius = CornerRadius(size.height / 2f, size.height / 2f),
+                )
+            },
         shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(containerColor = CorePrimary),
     ) {
