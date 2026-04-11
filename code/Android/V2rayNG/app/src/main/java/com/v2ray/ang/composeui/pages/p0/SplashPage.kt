@@ -129,7 +129,7 @@ private fun SplashScaffold(
                     radius = size.minDimension * 0.34f,
                     center = Offset(size.width * 0.12f, size.height * 0.92f),
                 )
-            },
+            }
     ) {
         Column(
             modifier = Modifier
@@ -376,7 +376,7 @@ private fun SplashStaticProgressBar(progress: Float) {
                         size = Size(scanWidth, size.height),
                         cornerRadius = CornerRadius(size.height / 2f, size.height / 2f),
                     )
-                },
+                }
         )
     }
 }
