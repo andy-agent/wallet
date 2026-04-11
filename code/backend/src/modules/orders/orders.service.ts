@@ -418,7 +418,15 @@ export class OrdersService {
 
   private buildPaymentQrText(order: StoredOrderRecord) {
     if (order.quoteNetworkCode === 'SOLANA') {
-      return `solana:${order.collectionAddress}?amount=${order.payableAmount}`;
+      const params = new URLSearchParams({
+        amount: order.payableAmount,
+      });
+
+      if (order.quoteAssetCode === 'USDT') {
+        params.set('spl-token', this.solanaClient.getUsdtMint());
+      }
+
+      return `solana:${order.collectionAddress}?${params.toString()}`;
     }
     return `${order.quoteNetworkCode}:${order.orderNo}:${order.payableAmount}`;
   }

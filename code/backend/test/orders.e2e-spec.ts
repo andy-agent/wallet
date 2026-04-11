@@ -105,7 +105,7 @@ describe('Orders (e2e)', () => {
       secondPaymentTarget.body.data.payableAmount,
     );
     expect(firstPaymentTarget.body.data.qrText).toBe(
-      `solana:${solanaCollectionAddress}?amount=${firstPaymentTarget.body.data.payableAmount}`,
+      `solana:${solanaCollectionAddress}?amount=${firstPaymentTarget.body.data.payableAmount}&spl-token=Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB`,
     );
 
     await app.close();
