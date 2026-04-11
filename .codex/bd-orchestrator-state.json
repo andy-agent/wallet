@@ -1,10 +1,14 @@
 {
-  "generated_at": "2026-04-11T15:02:00+08:00",
+  "generated_at": "2026-04-11T15:31:00+0800",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-26d",
+  "active_task_id": "liaojiang-mwe",
   "accepted_task_id": "liaojiang-g9e",
-  "next_task_id": "liaojiang-njb",
-  "active_worker_task_ids": [],
+  "next_task_id": "liaojiang-mwe",
+  "active_worker_task_ids": [
+    "liaojiang-9bk",
+    "liaojiang-0ij",
+    "liaojiang-vfy"
+  ],
   "blockers": [
     {
       "task_id": "liaojiang-njb",
@@ -17,10 +21,38 @@
       "blocked_by": "Depends on liaojiang-26d; final live closed-loop acceptance waits on liaojiang-njb funded payment."
     }
   ],
-  "workers": [],
+  "workers": [
+    {
+      "agent_id": "019d7b64-a33f-7321-8c72-be81a056aebc",
+      "nickname": "Meitner",
+      "task_id": "liaojiang-9bk",
+      "scope": "p2extended",
+      "branch": "codex/liaojiang-mwe-extended",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-mwe-extended",
+      "status": "running"
+    },
+    {
+      "agent_id": "019d7b65-2af7-73a3-91b8-2756509d8632",
+      "nickname": "Noether",
+      "task_id": "liaojiang-0ij",
+      "scope": "p2core",
+      "branch": "codex/liaojiang-mwe-core",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-mwe-core",
+      "status": "running"
+    },
+    {
+      "agent_id": "019d7b64-e6e0-7920-89e4-65964c2c0322",
+      "nickname": "Locke",
+      "task_id": "liaojiang-vfy",
+      "scope": "verification-prep",
+      "branch": "codex/android-demock-live-data-v2",
+      "worktree": "/Users/cnyirui/git/projects/liaojiang",
+      "status": "running"
+    }
+  ],
   "mainline": {
     "feature_id": "liaojiang-26d",
-    "phase_id": "liaojiang-njb",
-    "policy": "Implementation is accepted and deployed. Remaining blocker is a real funded SOLANA/USDT payment from an external wallet, or explicit approval to spend real funds from a wallet once one is provided."
+    "phase_id": "liaojiang-mwe",
+    "policy": "Payment mainline remains blocked on liaojiang-njb real funding, so the active unblocked work is liaojiang-mwe: parallel P2Extended/P2Core animation parity implementation with main-agent acceptance."
   }
 }
