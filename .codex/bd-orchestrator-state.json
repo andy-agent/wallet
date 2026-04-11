@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-11T14:50:00+08:00",
+  "generated_at": "2026-04-11T15:02:00+08:00",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "active_task_id": "liaojiang-26d",
   "accepted_task_id": "liaojiang-g9e",
@@ -9,18 +9,18 @@
     {
       "task_id": "liaojiang-njb",
       "type": "task",
-      "blocked_by": "Need one real human-controlled SOLANA/USDT payment against a fresh order and the resulting txHash to finish the positive path."
+      "blocked_by": "Positive path now needs a real funded SOLANA/USDT payment. Environment scan found only the new collection wallet on server1 and it has 0 SOL; no funded Solana hot wallet or private key was discovered on server1/server3."
     },
     {
       "task_id": "liaojiang-3js",
       "type": "task",
-      "blocked_by": "Depends on liaojiang-26d; final live closed-loop acceptance now waits only on liaojiang-njb."
+      "blocked_by": "Depends on liaojiang-26d; final live closed-loop acceptance waits on liaojiang-njb funded payment."
     }
   ],
   "workers": [],
   "mainline": {
     "feature_id": "liaojiang-26d",
     "phase_id": "liaojiang-njb",
-    "policy": "Primary path is real register-login-plans-order-vpn on the live servers. No mock runtime data is allowed. The implementation is accepted; the only remaining blocker is one real funded SOLANA/USDT payment that produces a valid txHash for positive-path provisioning."
+    "policy": "Implementation is accepted and deployed. Remaining blocker is a real funded SOLANA/USDT payment from an external wallet, or explicit approval to spend real funds from a wallet once one is provided."
   }
 }

@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-04-11T06:52:24Z",
+  "generated_at": "2026-04-11T07:02:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "next_task_id": "liaojiang-26d",
-  "next_task_title": "Android app：打通注册-登录-套餐购买-VPN连接闭环",
-  "in_progress_count": 3,
-  "ready_count": 4,
-  "open_count": 11,
-  "closed_count": 378,
-  "dirty_count": 0,
-  "milestone_reached": false,
+  "next_task_id": "liaojiang-njb",
+  "next_task_title": "Live funding：完成一次真实 SOLANA/USDT 订单付款并回传 txHash",
+  "in_progress_count": 2,
+  "ready_count": 3,
+  "open_count": 10,
+  "closed_count": 379,
+  "dirty_count": 3,
+  "milestone_reached": true,
   "write_human_docs": false,
   "docs": {
     "current_status": "docs/current-status.md",
@@ -18,11 +18,21 @@
     "status_docs_written": false,
     "development_log_appended": false
   },
-  "auto_created_task_id": null,
+  "auto_created_task_id": "liaojiang-njb",
   "dispatch": {
     "requested": true,
-    "mode": "simulate",
+    "mode": "blocked_on_missing_funds",
     "dispatched_count": 0,
     "max_workers": 3
-  }
+  },
+  "active_task_id": "liaojiang-26d",
+  "active_task_title": "Android app：打通注册-登录-套餐购买-VPN连接闭环",
+  "accepted_task_id": "liaojiang-g9e",
+  "workers": [],
+  "blockers": [
+    {
+      "task_id": "liaojiang-njb",
+      "reason": "Environment scan found no funded Solana wallet on server1/server3. Positive path requires external funding or explicit approval to spend real funds from a wallet once provided."
+    }
+  ]
 }
