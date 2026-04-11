@@ -39,8 +39,8 @@ class LaunchSplashActivity : ComponentActivity() {
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
         )
-        setContentView(R.layout.activity_launch_splash)
         hideSystemBars()
+        setContentView(R.layout.activity_launch_splash)
 
         progressBar = findViewById(R.id.launch_progress)
         hubGlow = findViewById(R.id.launch_hub_glow)
@@ -63,6 +63,11 @@ class LaunchSplashActivity : ComponentActivity() {
         if (hasFocus) {
             hideSystemBars()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        hideSystemBars()
     }
 
     private suspend fun runLaunchSequence() {
