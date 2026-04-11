@@ -1,6 +1,6 @@
 # Recovery Context
 
-Generated: 2026-04-11T01:25:37Z
+Generated: 2026-04-11T01:58:39Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
@@ -8,10 +8,10 @@ Repository: /Users/cnyirui/git/projects/liaojiang
 - next_task_title: 新主线：将 full delivery 最新 UI 重写为高保真 HTML5
 
 ## Counters
-- in_progress: 2
+- in_progress: 1
 - ready: 0
-- open: 4
-- closed: 364
+- open: 3
+- closed: 365
 - dirty: 2
 
 ## Next Milestone
