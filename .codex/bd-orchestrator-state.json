@@ -1,21 +1,38 @@
 {
   "generated_at": "2026-04-11T15:53:00+0800",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "accepted_task_id": "liaojiang-g9e",
-  "active_task_id": "liaojiang-njb",
-  "next_task_id": null,
-  "ready_task_count": 0,
-  "active_worker_task_ids": [],
+  "active_task_id": "liaojiang-vfy",
+  "accepted_task_id": "liaojiang-tqu",
+  "next_task_id": "liaojiang-vfy.1",
+  "active_worker_task_ids": [
+    "liaojiang-vfy.1"
+  ],
   "blockers": [
     {
       "task_id": "liaojiang-njb",
       "type": "task",
-      "blocked_by": "Positive path needs one real funded SOLANA/USDT payment with txHash. sol.residential-agent.com currently resolves to 198.18.0.23 (internal), available local SSH keys cannot access likely sol-agent hosts, and reachable server3 has no funded wallet source."
+      "blocked_by": "Positive path now needs a real funded SOLANA/USDT payment. Environment scan found only the new collection wallet on server1 and it has 0 SOL; no funded Solana hot wallet or private key was discovered on server1/server3."
+    },
+    {
+      "task_id": "liaojiang-3js",
+      "type": "task",
+      "blocked_by": "Depends on liaojiang-26d; final live closed-loop acceptance waits on liaojiang-njb funded payment."
     }
   ],
-  "workers": [],
+  "workers": [
+    {
+      "agent_id": "019d7b74-36b5-7882-b8b8-cbf2575f053f",
+      "nickname": "Dewey",
+      "task_id": "liaojiang-vfy.1",
+      "scope": "debug-route-harness",
+      "branch": "codex/liaojiang-vfy-harness",
+      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-vfy-harness",
+      "status": "running"
+    }
+  ],
   "mainline": {
     "feature_id": "liaojiang-26d",
-    "policy": "Continue autonomous orchestration whenever bd has unblocked tasks; stop only on real external blockers."
+    "phase_id": "liaojiang-vfy",
+    "policy": "Payment mainline remains blocked on liaojiang-njb real funding. UI parity implementation is accepted on mainline; the active unblocked work is liaojiang-vfy, currently unblocked via child task liaojiang-vfy.1 to add a debug-only route harness for adb screenshot acceptance."
   }
 }
