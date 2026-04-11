@@ -173,6 +173,20 @@ object Utils {
                 }
             }
 
+            if (addr.startsWith("[")) {
+                val closingBracket = addr.indexOf(']')
+                if (closingBracket <= 0) return false
+
+                val suffix = addr.substring(closingBracket + 1)
+                if (suffix.isNotEmpty()) {
+                    if (!suffix.startsWith(":")) return false
+                    val port = suffix.drop(1)
+                    if (port.isEmpty() || port.toIntOrNull() == null) return false
+                }
+
+                addr = addr.substring(1, closingBracket)
+            }
+
             // Handle IPv4-mapped IPv6 addresses
             if (addr.startsWith("::ffff:") && '.' in addr) {
                 addr = addr.drop(7)
@@ -566,11 +580,17 @@ object Utils {
      */
     fun isIpInCidr(ip: String, cidr: String): Boolean {
         try {
-            if (!isIpAddress(ip)) return false
+            if (!isIpv4Address(ip)) return false
 
             // Parse CIDR (e.g., "192.168.1.0/24")
-            val (cidrIp, prefixLen) = cidr.split("/")
-            val prefixLength = prefixLen.toInt()
+            val cidrParts = cidr.split("/")
+            if (cidrParts.size != 2) return false
+
+            val cidrIp = cidrParts[0]
+            if (!isIpv4Address(cidrIp)) return false
+
+            val prefixLength = cidrParts[1].toIntOrNull() ?: return false
+            if (prefixLength !in 0..32) return false
 
             // Convert IP and CIDR's IP portion to Long
             val ipLong = inetAddressToLong(InetAddress.getByName(ip))
