@@ -1,5 +1,12 @@
 package com.v2ray.ang.composeui.pages.p0
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,8 +39,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -41,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.v2ray.ang.composeui.p0.ui.P01Orb
 import com.v2ray.ang.composeui.p0.model.SplashUiState
 import com.v2ray.ang.composeui.p0.repository.MockP0Repository
 import com.v2ray.ang.composeui.p0.viewmodel.SplashViewModel
@@ -295,31 +306,8 @@ private fun SplashSecureGraphic(
         modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val center = center
-            drawCircle(
-                color = SplashCyan.copy(alpha = 0.14f),
-                radius = size.minDimension * 0.49f,
-                center = center,
-                style = Stroke(width = 19.dp.toPx()),
-            )
-            drawCircle(
-                color = SplashBlue.copy(alpha = 0.12f),
-                radius = size.minDimension * 0.34f,
-                center = center,
-                style = Stroke(width = 16.dp.toPx()),
-            )
-            drawCircle(
-                color = SplashBlueDeep.copy(alpha = 0.12f),
-                radius = size.minDimension * 0.18f,
-                center = center,
-                style = Stroke(width = 14.dp.toPx()),
-            )
-            drawCircle(
-                color = Color.White.copy(alpha = 0.92f),
-                radius = size.minDimension * 0.18f,
-                center = center,
-            )
+        Box(modifier = Modifier.fillMaxSize()) {
+            P01Orb(modifier = Modifier.fillMaxSize())
         }
         Text(
             text = "SECURE",
@@ -332,6 +320,27 @@ private fun SplashSecureGraphic(
 
 @Composable
 private fun SplashStaticProgressBar(progress: Float) {
+    val transition = rememberInfiniteTransition(label = "splash_progress")
+    val progressDrift = transition.animateFloat(
+        initialValue = progress - 0.04f,
+        targetValue = progress + 0.04f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "splash_progress_drift",
+    )
+    val scanOffset = transition.animateFloat(
+        initialValue = -0.32f,
+        targetValue = 1.16f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "splash_progress_scan",
+    )
+    val animatedProgress = progressDrift.value.coerceIn(0f, 1f)
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -341,14 +350,33 @@ private fun SplashStaticProgressBar(progress: Float) {
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(progress)
+                .fillMaxWidth(animatedProgress)
                 .height(7.dp)
                 .clip(RoundedCornerShape(999.dp))
                 .background(
                     Brush.horizontalGradient(
                         colors = listOf(SplashBlue, SplashCyan),
                     ),
-                ),
+                )
+                .drawWithContent {
+                    drawContent()
+                    val scanWidth = size.width * 0.42f
+                    drawRoundRect(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.White.copy(alpha = 0.58f),
+                                Color.Transparent,
+                            ),
+                        ),
+                        topLeft = Offset(
+                            x = size.width * scanOffset.value - scanWidth,
+                            y = 0f,
+                        ),
+                        size = Size(scanWidth, size.height),
+                        cornerRadius = CornerRadius(size.height / 2f, size.height / 2f),
+                    )
+                },
         )
     }
 }

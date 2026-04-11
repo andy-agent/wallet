@@ -2,12 +2,16 @@ package com.v2ray.ang.composeui.pages.p0
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -24,6 +28,7 @@ import com.v2ray.ang.composeui.p0.ui.P01Header
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.ui.P01PrimaryButton
 import com.v2ray.ang.composeui.p0.ui.P01Tab
+import com.v2ray.ang.composeui.p0.ui.P01Orb
 import com.v2ray.ang.composeui.p0.viewmodel.WalletOnboardingViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
@@ -59,6 +64,17 @@ fun WalletOnboardingScreen(
             title = "配置你的多链钱包",
             subtitle = "这是对现有文档的补充页：让钱包成为完整产品，而不是附属支付模块。",
         )
+
+        P01Card(centered = true) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.size(148.dp)) {
+                    P01Orb(modifier = Modifier.fillMaxSize())
+                }
+            }
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
