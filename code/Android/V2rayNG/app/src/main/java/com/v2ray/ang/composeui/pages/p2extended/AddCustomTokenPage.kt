@@ -42,32 +42,22 @@ fun AddCustomTokenScreen(
     onEvent: (AddCustomTokenEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    P2ExtendedPageScaffold(
-        kicker = "Token Discovery",
-        title = "添加自定义代币",
-        subtitle = "为缺失资产补齐展示与余额跟踪。",
-        hubLabel = "手动添加",
+    P2ExtendedFeatureTemplate(
+        kicker = uiState.subtitle,
+        title = uiState.title,
+        subtitle = uiState.summary,
+        hubLabel = uiState.badge,
         onHubClick = { onEvent(AddCustomTokenEvent.Refresh) },
-        primaryActionLabel = "添加到资产列表",
+        primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(AddCustomTokenEvent.PrimaryActionClicked) },
-        secondaryActionLabel = "返回链管理",
+        secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(AddCustomTokenEvent.SecondaryActionClicked) },
-    ) {
-        P2Card(
-            title = "代币信息",
-            subtitle = "输入合约地址后自动识别符号、精度与链。",
-        ) {
-            FieldRow(label = "链网络", value = "Base")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow(label = "合约地址", value = "0x8be1...c9Fd")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow(label = "代币符号", value = "USDC.e")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow(label = "精度", value = "6")
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        NoteCard(title = "风险检查", text = "合约通过基础校验，但请自行确认来源")
-    }
+        metrics = uiState.metrics,
+        fields = uiState.fields,
+        highlights = uiState.highlights,
+        checklist = uiState.checklist,
+        note = uiState.note,
+    )
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

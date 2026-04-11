@@ -44,27 +44,22 @@ fun ChainManagerScreen(
     onEvent: (ChainManagerEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    P2ExtendedPageScaffold(
-        kicker = "Chain Manager",
-        title = "链管理",
-        subtitle = "为完整多链钱包补齐网络启用、排序与默认链切换。",
-        hubLabel = "多链扩展",
+    P2ExtendedFeatureTemplate(
+        kicker = uiState.subtitle,
+        title = uiState.title,
+        subtitle = uiState.summary,
+        hubLabel = uiState.badge,
         onHubClick = { onEvent(ChainManagerEvent.Refresh) },
-        primaryActionLabel = "添加自定义代币",
+        primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(ChainManagerEvent.PrimaryActionClicked) },
-        secondaryActionLabel = "返回钱包首页",
+        secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(ChainManagerEvent.SecondaryActionClicked) },
-    ) {
-        ChipRow(items = listOf("已启用", "可添加", "测试网"), activeIndex = 0)
-        Spacer(modifier = Modifier.height(14.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ListRow("Solana", "已启用 · 主链", "Healthy")
-            ListRow("TRON", "已启用 · 主链", "Healthy")
-            ListRow("Ethereum", "已启用 · EVM", "Healthy")
-            ListRow("Base", "已启用 · EVM L2", "Healthy")
-            ListRow("BNB Chain", "可添加", "Optional")
-        }
-    }
+        metrics = uiState.metrics,
+        fields = uiState.fields,
+        highlights = uiState.highlights,
+        checklist = uiState.checklist,
+        note = uiState.note,
+    )
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
