@@ -16,11 +16,15 @@ import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.api.CommissionLedgerPageData
 import com.v2ray.ang.payment.data.api.CommissionSummaryData
 import com.v2ray.ang.payment.data.api.CurrentSubscriptionData
+import com.v2ray.ang.payment.data.api.IssueVpnConfigRequest
 import com.v2ray.ang.payment.data.api.MeData
 import com.v2ray.ang.payment.data.api.PaymentApi
 import com.v2ray.ang.payment.data.api.RegisterEmailCodeRequest
 import com.v2ray.ang.payment.data.api.ReferralBindRequest
 import com.v2ray.ang.payment.data.api.ReferralOverviewData
+import com.v2ray.ang.payment.data.api.VpnConfigIssueData
+import com.v2ray.ang.payment.data.api.VpnRegionItem
+import com.v2ray.ang.payment.data.api.VpnStatusData
 import com.v2ray.ang.payment.data.api.WithdrawalItem
 import com.v2ray.ang.payment.data.api.WithdrawalPageData
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
@@ -621,6 +625,45 @@ class PaymentRepository(context: Context) {
         }
     }
 
+    suspend fun register(
+        email: String,
+        password: String,
+        code: String,
+    ): Result<AuthData> = withContext(Dispatchers.IO) {
+        try {
+            val response = api.register(
+                UUID.randomUUID().toString(),
+                RegisterRequest(
+                    email = email,
+                    code = code,
+                    password = password,
+                    installationId = getDeviceId(),
+                ),
+            )
+
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { authData ->
+                    saveAuthResponse(authData)
+                    val userEntity = UserEntity(
+                        userId = authData.userId,
+                        username = email,
+                        email = email,
+                        accessToken = authData.accessToken,
+                        refreshToken = authData.refreshToken,
+                        loginAt = System.currentTimeMillis(),
+                    )
+                    localRepository.saveUser(userEntity)
+                    saveCurrentUserId(authData.userId)
+                    Result.success(authData)
+                } ?: Result.failure(Exception("注册响应为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "注册失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getMe(): Result<MeData> = withContext(Dispatchers.IO) {
         try {
             if (!refreshTokenIfNeeded()) {
@@ -638,6 +681,100 @@ class PaymentRepository(context: Context) {
                 }
             } else {
                 Result.failure(Exception(response.body()?.message ?: "获取用户信息失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun submitClientTx(
+        orderNo: String,
+        txHash: String,
+        networkCode: String,
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.submitClientTx(
+                authorization = "Bearer $token",
+                orderNo = orderNo,
+                request = com.v2ray.ang.payment.data.api.SubmitClientTxRequest(
+                    txHash = txHash,
+                    networkCode = networkCode,
+                ),
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "提交交易哈希失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getVpnRegions(): Result<List<VpnRegionItem>> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getVpnRegions("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                Result.success(response.body()?.data?.items.orEmpty())
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取 VPN 区域失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun issueVpnConfig(
+        regionCode: String,
+        connectionMode: String = "global",
+    ): Result<VpnConfigIssueData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.issueVpnConfig(
+                authorization = "Bearer $token",
+                request = IssueVpnConfigRequest(
+                    regionCode = regionCode,
+                    connectionMode = connectionMode,
+                ),
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("VPN 配置为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "签发 VPN 配置失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getVpnStatus(): Result<VpnStatusData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getVpnStatus("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("VPN 状态为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取 VPN 状态失败"))
             }
         } catch (e: Exception) {
             Result.failure(e)

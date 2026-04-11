@@ -61,6 +61,22 @@ interface PaymentApi {
         @Body request: RefreshOrderStatusRequest = RefreshOrderStatusRequest()
     ): Response<GetOrderResponse>
 
+    @GET("${PaymentConfig.API_VERSION}/vpn/regions")
+    suspend fun getVpnRegions(
+        @Header("Authorization") authorization: String
+    ): Response<VpnRegionsResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/vpn/config/issue")
+    suspend fun issueVpnConfig(
+        @Header("Authorization") authorization: String,
+        @Body request: IssueVpnConfigRequest
+    ): Response<IssueVpnConfigResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/vpn/status")
+    suspend fun getVpnStatus(
+        @Header("Authorization") authorization: String
+    ): Response<VpnStatusResponse>
+
     @GET("${PaymentConfig.API_VERSION}/subscriptions/current")
     suspend fun getSubscription(
         @Header("Authorization") authorization: String
@@ -177,6 +193,75 @@ data class SubmitClientTxRequest(
 data class RefreshOrderStatusRequest(
     @SerializedName("clientObservedStatus")
     val clientObservedStatus: String? = null
+)
+
+data class IssueVpnConfigRequest(
+    @SerializedName("regionCode")
+    val regionCode: String,
+    @SerializedName("connectionMode")
+    val connectionMode: String = "global"
+)
+
+data class VpnRegionsResponse(
+    val code: String,
+    val message: String,
+    val data: VpnRegionsData?
+)
+
+data class VpnRegionsData(
+    val items: List<VpnRegionItem>
+)
+
+data class VpnRegionItem(
+    @SerializedName("regionId")
+    val regionId: String,
+    @SerializedName("regionCode")
+    val regionCode: String,
+    @SerializedName("displayName")
+    val displayName: String,
+    val tier: String,
+    val status: String,
+    @SerializedName("isAllowed")
+    val isAllowed: Boolean,
+    val remark: String? = null,
+)
+
+data class IssueVpnConfigResponse(
+    val code: String,
+    val message: String,
+    val data: VpnConfigIssueData?
+)
+
+data class VpnConfigIssueData(
+    @SerializedName("regionCode")
+    val regionCode: String,
+    @SerializedName("connectionMode")
+    val connectionMode: String,
+    @SerializedName("configPayload")
+    val configPayload: String,
+    @SerializedName("issuedAt")
+    val issuedAt: String,
+    @SerializedName("expireAt")
+    val expireAt: String,
+)
+
+data class VpnStatusResponse(
+    val code: String,
+    val message: String,
+    val data: VpnStatusData?
+)
+
+data class VpnStatusData(
+    @SerializedName("subscriptionStatus")
+    val subscriptionStatus: String,
+    @SerializedName("currentRegionCode")
+    val currentRegionCode: String? = null,
+    @SerializedName("connectionMode")
+    val connectionMode: String? = null,
+    @SerializedName("canIssueConfig")
+    val canIssueConfig: Boolean,
+    @SerializedName("sessionStatus")
+    val sessionStatus: String,
 )
 
 data class CurrentSubscriptionResponse(

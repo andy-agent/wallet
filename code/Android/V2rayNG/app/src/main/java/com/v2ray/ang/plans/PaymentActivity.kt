@@ -7,21 +7,30 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.net.VpnService
 import android.view.MenuItem
 import android.view.View
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.v2ray.ang.handler.AngConfigManager
+import com.v2ray.ang.handler.MmkvManager
+import com.v2ray.ang.handler.SettingsManager
+import com.v2ray.ang.handler.V2RayServiceManager
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.v2ray.ang.databinding.ActivityPaymentBinding
+import com.v2ray.ang.fmt.VlessFmt
 import com.v2ray.ang.payment.PaymentConfig
+import com.v2ray.ang.payment.data.api.VpnConfigIssueData
 import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.repository.PaymentRepository
 import com.v2ray.ang.payment.ui.OrderPollingUseCase
 import com.v2ray.ang.payment.ui.activity.LoginActivity
+import com.v2ray.ang.util.Utils
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -55,6 +64,18 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
         } else {
             // 登录取消或失败，返回上一页
             Toast.makeText(this, "登录已取消", Toast.LENGTH_SHORT).show()
+            finish()
+        }
+    }
+
+    private val requestVpnPermission = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            V2RayServiceManager.startVService(this)
+        } else {
+            Toast.makeText(this, "VPN 权限未授予，配置已导入，可稍后手动连接。", Toast.LENGTH_LONG).show()
+            setResult(RESULT_OK)
             finish()
         }
     }
@@ -94,7 +115,11 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
         // 刷新状态按钮
         binding.buttonRefresh.setOnClickListener {
             currentOrder?.let { order ->
-                pollingUseCase.pollImmediately(order.orderNo)
+                if (order.submittedClientTxHash.isNullOrBlank()) {
+                    promptForTransactionHash(order)
+                } else {
+                    pollingUseCase.pollImmediately(order.orderNo)
+                }
             }
         }
     }
@@ -252,6 +277,52 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
         pollingUseCase.startPolling(order.orderNo)
     }
 
+    private fun promptForTransactionHash(order: Order) {
+        val input = EditText(this).apply {
+            hint = "请输入已支付交易哈希"
+            setText(order.submittedClientTxHash.orEmpty())
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("提交交易哈希")
+            .setMessage("完成链上支付后，提交真实 tx hash 以便后端确认订单。")
+            .setView(input)
+            .setPositiveButton("提交") { _, _ ->
+                val txHash = input.text?.toString()?.trim().orEmpty()
+                if (txHash.isBlank()) {
+                    Toast.makeText(this, "交易哈希不能为空", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                submitClientTransaction(order, txHash)
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun submitClientTransaction(order: Order, txHash: String) {
+        lifecycleScope.launch {
+            binding.progressBar.visibility = View.VISIBLE
+            val submitResult = repository.submitClientTx(
+                orderNo = order.orderNo,
+                txHash = txHash,
+                networkCode = order.quoteNetworkCode,
+            )
+            binding.progressBar.visibility = View.GONE
+
+            submitResult.onSuccess {
+                currentOrder = order.copy(submittedClientTxHash = txHash)
+                binding.textStatus.text = "状态: 已提交交易哈希"
+                pollingUseCase.pollImmediately(order.orderNo)
+            }.onFailure { error ->
+                Toast.makeText(
+                    this@PaymentActivity,
+                    "提交交易哈希失败: ${error.message}",
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
+    }
+
     private fun generateQRCode(content: String): Bitmap? {
         return try {
             val writer = QRCodeWriter()
@@ -307,19 +378,9 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
     override fun onPaymentSuccess(order: Order) {
         binding.textStatus.text = "支付成功"
-        AlertDialog.Builder(this@PaymentActivity)
-            .setTitle("支付成功")
-            .setMessage("您的订阅已开通。\n\n当前版本流程已切换为选择区域后签发 VPN 配置，不再自动导入旧式订阅链接。\n\n请返回首页继续。")
-            .setPositiveButton("返回首页") { _, _ ->
-                setResult(RESULT_OK)
-                finish()
-            }
-            .setNegativeButton("稍后再说") { _, _ ->
-                setResult(RESULT_OK)
-                finish()
-            }
-            .setCancelable(false)
-            .show()
+        lifecycleScope.launch {
+            provisionVpnAndConnect(order)
+        }
     }
 
     override fun onPaymentFailed(error: String) {
@@ -366,6 +427,86 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
         super.onDestroy()
         pollingUseCase.stopPolling()
         countDownTimer?.cancel()
+    }
+
+    private suspend fun provisionVpnAndConnect(order: Order) {
+        binding.progressBar.visibility = View.VISIBLE
+        val regionResult = repository.getVpnRegions()
+        val region = regionResult.getOrNull()
+            ?.firstOrNull { it.isAllowed && it.status == "ACTIVE" }
+
+        if (region == null) {
+            binding.progressBar.visibility = View.GONE
+            AlertDialog.Builder(this@PaymentActivity)
+                .setTitle("支付成功")
+                .setMessage("订单已完成，但当前没有可用 VPN 区域。\n\n${regionResult.exceptionOrNull()?.message ?: "请稍后在首页重试连接。"}")
+                .setPositiveButton("返回首页") { _, _ ->
+                    setResult(RESULT_OK)
+                    finish()
+                }
+                .show()
+            return
+        }
+
+        val configResult = repository.issueVpnConfig(region.regionCode)
+        binding.progressBar.visibility = View.GONE
+
+        configResult.onSuccess { vpnConfig ->
+            if (importIssuedVpnConfig(vpnConfig)) {
+                startVpnConnection()
+            } else {
+                AlertDialog.Builder(this@PaymentActivity)
+                    .setTitle("支付成功")
+                    .setMessage("订单已完成，但 VPN 配置导入失败。请稍后在首页重试连接。")
+                    .setPositiveButton("返回首页") { _, _ ->
+                        setResult(RESULT_OK)
+                        finish()
+                    }
+                    .show()
+            }
+        }.onFailure { error ->
+            AlertDialog.Builder(this@PaymentActivity)
+                .setTitle("支付成功")
+                .setMessage("订单已完成，但 VPN 配置签发失败：${error.message}")
+                .setPositiveButton("返回首页") { _, _ ->
+                    setResult(RESULT_OK)
+                    finish()
+                }
+                .show()
+        }
+    }
+
+    private fun importIssuedVpnConfig(config: VpnConfigIssueData): Boolean {
+        val profile = VlessFmt.parse(config.configPayload) ?: return false
+        profile.remarks = "Purchase ${config.regionCode}"
+        profile.description = AngConfigManager.generateDescription(profile)
+        val guid = MmkvManager.encodeServerConfig("", profile)
+        MmkvManager.setSelectServer(guid)
+        return true
+    }
+
+    private fun startVpnConnection() {
+        if (MmkvManager.getSelectServer().isNullOrEmpty()) {
+            Toast.makeText(this, "没有可连接的 VPN 配置", Toast.LENGTH_LONG).show()
+            setResult(RESULT_OK)
+            finish()
+            return
+        }
+
+        if (SettingsManager.isVpnMode()) {
+            val intent = VpnService.prepare(this)
+            if (intent == null) {
+                V2RayServiceManager.startVService(this)
+                setResult(RESULT_OK)
+                finish()
+            } else {
+                requestVpnPermission.launch(intent)
+            }
+        } else {
+            V2RayServiceManager.startVService(this)
+            setResult(RESULT_OK)
+            finish()
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

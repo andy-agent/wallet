@@ -1,18 +1,18 @@
 # Recovery Context
 
-Generated: 2026-04-11T03:34:40Z
+Generated: 2026-04-11T04:06:16Z
 Repository: /Users/cnyirui/git/projects/liaojiang
 
 ## Critical Path
-- next_task_id: liaojiang-zpo
-- next_task_title: Audit P0/P1/P2 animation parity against overview prototypes
+- next_task_id: liaojiang-26d
+- next_task_title: Android app：打通注册-登录-套餐购买-VPN连接闭环
 
 ## Counters
-- in_progress: 2
-- ready: 2
-- open: 6
-- closed: 373
-- dirty: 6
+- in_progress: 3
+- ready: 3
+- open: 10
+- closed: 374
+- dirty: 4
 
 ## Next Milestone
 - Continue the next task and complete one milestone
