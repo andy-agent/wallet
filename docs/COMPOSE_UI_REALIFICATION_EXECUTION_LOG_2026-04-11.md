@@ -223,6 +223,43 @@
   - 最新截图：`/tmp/compose-realify-20260412-route6/address_book_send.png`
   - 前台 activity：`ComposeContainerActivity`
 
+### P1 真实回归扩展
+- 新增运行级证据：
+  - `region_selection`
+    - `/tmp/compose-realify-20260412-p1/region_selection.png`
+  - `order_checkout/BASIC_1M`
+    - `/tmp/compose-realify-20260412-p1/order_checkout_BASIC_1M.png`
+  - `order_list`
+    - 初始证据：`/tmp/compose-realify-20260412-p1/order_list.png`
+    - 修复后证据：`/tmp/compose-realify-20260412-p1b/order_list.png`
+  - `order_detail/ORD-1775909049741-BF4BAF37`
+    - 初始证据：`/tmp/compose-realify-20260412-p1/order_detail_ORD-1775909049741-BF4BAF37.png`
+    - 修复后证据：`/tmp/compose-realify-20260412-p1b/order_detail_ORD-1775909049741-BF4BAF37.png`
+  - `wallet_payment_confirm/ORD-1775909049741-BF4BAF37`
+    - 初始证据：`/tmp/compose-realify-20260412-p1/wallet_payment_confirm_ORD-1775909049741-BF4BAF37.png`
+    - 修复后证据：`/tmp/compose-realify-20260412-p1b/wallet_payment_confirm_ORD-1775909049741-BF4BAF37.png`
+
+### 新发现并修复的 P1 伪真实问题
+- `OrderListPage`
+  - 问题：真实 `uiState.orders` 为空或可用时，页面仍会回退到硬编码样本：
+    - `年费 Pro`
+    - `月费 Pro`
+    - `ORD-2025-0001 / 0002`
+  - 修复：移除 fallback 样本，直接渲染 `uiState.orders`，空态读 `stateInfo`
+- `OrderDetailPage`
+  - 问题：页面主体仍硬编码：
+    - `ORD-2025-08-0224`
+    - `TXid: 7F3A...901`
+    - `东京/新加坡节点可用`
+  - 修复：改为用 `uiState.order + detailLines + stateInfo`
+- `WalletPaymentConfirmPage`
+  - 问题：页面仍硬编码：
+    - `订单 #CVP-2409`
+    - `年度 Pro`
+    - `58.00 USDT`
+    - `1.24 USDT`
+  - 修复：改为用 `uiState.order + detailLines + riskLines + primaryActionLabel`
+
 ### 当前仍未完成的事
 - 这轮只拿到了“页面能打开”的真实证据，还没有把所有页面的主动作、loading、error、retry 全量跑完。
 - P2 Extended 仍有一批自定义页没切完 `uiState` 驱动。
