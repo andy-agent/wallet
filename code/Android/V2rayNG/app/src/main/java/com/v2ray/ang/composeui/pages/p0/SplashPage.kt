@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import com.v2ray.ang.composeui.p0.ui.P01Orb
 import com.v2ray.ang.composeui.p0.model.SplashUiState
 import com.v2ray.ang.composeui.p0.repository.MockP0Repository
+import com.v2ray.ang.composeui.p0.ui.P01PrimaryButton
 import com.v2ray.ang.composeui.p0.viewmodel.SplashViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
@@ -86,15 +87,21 @@ fun SplashRoute(
         }
     }
 
-    SplashScreen(uiState = uiState)
+    SplashScreen(
+        uiState = uiState,
+        onRetry = { viewModel.onEvent(com.v2ray.ang.composeui.p0.model.SplashEvent.Refresh) },
+    )
 }
 
 @Composable
-fun SplashScreen(uiState: SplashUiState) {
+fun SplashScreen(
+    uiState: SplashUiState,
+    onRetry: () -> Unit = {},
+) {
     SplashScaffold {
         SplashHeader()
-        SplashMainCard()
-        SplashStatusCard(uiState = uiState)
+        SplashMainCard(uiState = uiState)
+        SplashStatusCard(uiState = uiState, onRetry = onRetry)
     }
 }
 
@@ -200,7 +207,7 @@ private fun SplashChip(text: String) {
 }
 
 @Composable
-private fun SplashMainCard() {
+private fun SplashMainCard(uiState: SplashUiState) {
     SplashCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -212,14 +219,14 @@ private fun SplashMainCard() {
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    text = "连接钱包与网络",
+                    text = uiState.progressHeadline,
                     color = SplashTextStrong,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.ExtraBold,
                     lineHeight = 29.sp,
                 )
                 Text(
-                    text = "初始化加密模块、节点探测与资产索引，系统准备完成后即可进入主界面。",
+                    text = uiState.progressDetail,
                     color = SplashTextBody,
                     fontSize = 13.sp,
                     lineHeight = 22.sp,
@@ -236,17 +243,17 @@ private fun SplashMainCard() {
         ) {
             SplashMetricCard(
                 modifier = Modifier.weight(1f),
-                label = "WALLET LAYER",
-                value = "多链架构",
+                label = "APP VERSION",
+                value = uiState.versionLabel,
             )
             SplashMetricCard(
                 modifier = Modifier.weight(1f),
-                label = "VPN LAYER",
-                value = "全球节点",
+                label = "SESSION",
+                value = if (uiState.authResolved) "已就绪" else "检查中",
             )
         }
 
-        SplashStaticProgressBar(progress = MainCardProgress)
+        SplashStaticProgressBar(progress = if (uiState.progress > 0f) uiState.progress else MainCardProgress)
     }
 }
 
@@ -374,28 +381,45 @@ private fun SplashStaticProgressBar(progress: Float) {
 }
 
 @Composable
-private fun SplashStatusCard(uiState: SplashUiState) {
+private fun SplashStatusCard(
+    uiState: SplashUiState,
+    onRetry: () -> Unit,
+) {
     SplashCard {
         Text(
-            text = "系统正在准备",
+            text = "启动状态",
             color = SplashTextStrong,
             fontSize = 20.sp,
             fontWeight = FontWeight.ExtraBold,
             lineHeight = 24.sp,
         )
         SplashStatusRow(
-            title = "安全自托管",
-            detail = "本地密钥环境与生物识别策略已经装载。",
+            title = "本地会话",
+            detail = uiState.buildStatus.ifBlank { "正在读取本地账号和订单缓存。" },
             value = securityStatus(uiState),
             valueColor = if (uiState.authResolved) SplashTextStrong else SplashBlueDeep,
         )
         HorizontalDivider(color = SplashDivider)
         SplashStatusRow(
-            title = "全球加速",
-            detail = "节点健康探测和智能路由优先级正在同步。",
+            title = "首页入口",
+            detail = uiState.progressDetail,
             value = networkStatus(uiState),
             valueColor = if (uiState.readyToNavigate) SplashMint else SplashBlue,
         )
+        uiState.errorMessage?.let { error ->
+            HorizontalDivider(color = SplashDivider)
+            Text(
+                text = error,
+                color = SplashBlueDeep,
+                fontSize = 13.sp,
+                lineHeight = 20.sp,
+            )
+            P01PrimaryButton(
+                text = uiState.retryLabel,
+                onClick = onRetry,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 

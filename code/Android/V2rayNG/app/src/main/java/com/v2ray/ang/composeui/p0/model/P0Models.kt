@@ -12,7 +12,7 @@ data class SplashUiState(
     val buildStatus: String = "Verifying secure module",
     val progress: Float = 0.08f,
     val progressHeadline: String = "系统正在准备",
-    val progressDetail: String = "初始化加密模块、节点探测与资产索引…",
+    val progressDetail: String = "读取本地会话、订单缓存和节点索引…",
     val authResolved: Boolean = false,
     val readyToNavigate: Boolean = false,
     val nextRoute: String? = null,
@@ -57,7 +57,7 @@ data class WalletOnboardingUiState(
     val errorMessage: String? = null,
     val emptyMessage: String? = null,
     val unavailableMessage: String? = null,
-    val primaryActionLabel: String = "继续",
+    val primaryActionLabel: String? = null,
 )
 
 sealed interface WalletOnboardingEvent {

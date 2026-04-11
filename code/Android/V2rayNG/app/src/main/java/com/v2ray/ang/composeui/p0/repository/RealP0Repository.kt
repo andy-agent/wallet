@@ -38,7 +38,7 @@ class RealP0Repository(context: Context) : P0Repository {
         val cachedUser = paymentRepository.getCachedCurrentUser()
         val currentUserId = paymentRepository.getCurrentUserId()
         val cachedOrders = currentUserId?.let { paymentRepository.getCachedOrders(it) }.orEmpty()
-        val sessionLabel = if (paymentRepository.isTokenValid()) "已识别登录会话" else "未登录"
+        val sessionLabel = if (paymentRepository.isTokenValid()) "已识别本地登录会话" else "未识别有效登录会话"
         return SplashUiState(
             checkingSecureBoot = false,
             versionLabel = "v${BuildConfig.VERSION_NAME}",
@@ -55,8 +55,8 @@ class RealP0Repository(context: Context) : P0Repository {
                 }
             },
             progress = 0.12f,
-            progressHeadline = "连接钱包与网络",
-            progressDetail = "初始化加密模块、节点探测与资产索引…",
+            progressHeadline = "校验本地会话与缓存",
+            progressDetail = "读取账号、订单缓存和本地节点索引，准备进入真实首页。",
             authResolved = false,
             readyToNavigate = false,
         )
@@ -152,14 +152,26 @@ class RealP0Repository(context: Context) : P0Repository {
 
     override suspend fun getWalletOnboardingState(selectedMode: WalletCreationMode?): WalletOnboardingUiState {
         val currentUser = paymentRepository.getCachedCurrentUser()
+        val mode = selectedMode ?: WalletCreationMode.CREATE
         return WalletOnboardingUiState(
-            selectedMode = selectedMode ?: WalletCreationMode.CREATE,
+            selectedMode = mode,
             accountLabel = currentUser?.username ?: currentUser?.email.orEmpty(),
-            statusMessage = if (currentUser != null) {
-                "当前账号已登录，可继续进入真实钱包创建或导入流程。"
-            } else {
-                "建议先登录真实账号，再继续钱包流程。"
+            statusMessage = when {
+                currentUser == null -> "当前未识别真实登录账号，钱包流程保持只读。"
+                mode == WalletCreationMode.CREATE -> "钱包创建引擎尚未接入，本页当前只展示真实阻塞和后续入口。"
+                else -> "导入助记词/私钥流程尚未接入真实解析与持久化能力。"
             },
+            unavailableMessage = if (currentUser == null) {
+                "缺少真实登录会话，创建/导入按钮不会开放。"
+            } else {
+                null
+            },
+            emptyMessage = if (mode == WalletCreationMode.IMPORT) {
+                "当前没有可导入的钱包数据源或公开地址缓存。"
+            } else {
+                null
+            },
+            primaryActionLabel = if (currentUser != null) "查看钱包状态" else null,
         )
     }
 
@@ -201,12 +213,17 @@ class RealP0Repository(context: Context) : P0Repository {
                 canIssueConfig = subscription?.status == "ACTIVE",
             ),
             autoConnectEnabled = paymentRepository.isTokenValid(),
-            oneTapLabel = if (V2RayServiceManager.isRunning()) "VPN tunnel active" else "Connect and secure",
+            oneTapLabel = when {
+                V2RayServiceManager.isRunning() -> "断开当前连接"
+                subscription?.status == "ACTIVE" -> "连接当前节点"
+                else -> "先购买套餐"
+            },
             speedNodes = regions,
             watchSignals = buildWatchSignals(orders),
             importedConfigCount = MmkvManager.decodeAllServerList().size,
             availableRegionCount = regions.count { it.isAllowed },
             emptyMessage = if (subscription == null && orders.isEmpty()) "当前暂无订阅与订单，请先购买套餐。" else null,
+            unavailableMessage = if (!paymentRepository.isTokenValid()) "未识别有效登录会话，当前只展示本地节点和缓存状态。" else null,
         )
     }
 
@@ -243,16 +260,17 @@ class RealP0Repository(context: Context) : P0Repository {
 
         return WalletHomeUiState(
             isLoading = false,
-            totalBalanceText = "${assetCodeTotals.size} 个订单映射资产",
+            totalBalanceText = if (assets.isEmpty()) "暂无资产映射" else "${assets.size} 项资产映射",
             selectedChainId = selectedChainId ?: chains.firstOrNull()?.chainId ?: "all",
             chains = chains,
             assets = assets,
-            alertBanner = currentUser?.let { "当前仅基于 ${orders.size} 笔真实订单缓存映射资产视图" }
-                ?: "当前未缓存账号",
+            alertBanner = currentUser?.let { "当前视图仅基于 ${orders.size} 笔真实订单缓存映射，不代表链上实时余额。" }
+                ?: "未识别真实账号，钱包页当前只展示阻塞和空态。",
             accountLabel = currentUser?.username ?: currentUser?.email.orEmpty(),
             defaultAddressCount = 0,
             supportedRailCount = chainTotals.size,
             emptyMessage = if (orders.isEmpty()) "当前暂无真实订单或钱包公开地址缓存。" else null,
+            unavailableMessage = if (currentUser == null) "缺少真实登录账号，收款和发送能力保持只读。" else null,
         )
     }
 
@@ -311,7 +329,7 @@ class RealP0Repository(context: Context) : P0Repository {
             WatchSignal(
                 symbol = order.quoteAssetCode,
                 reason = "${order.planName} · ${order.statusText}",
-                changeText = if (index == 0) "+1.0%" else "0.0%",
+                changeText = order.statusText,
                 volumeText = order.payment.amountCrypto,
                 isPositive = order.status !in setOf("FAILED", "EXPIRED", "CANCELED"),
             )
