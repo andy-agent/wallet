@@ -3,12 +3,10 @@ action#com.v2ray.ang.fdroid.action.widget.click
 INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:255:17-79
 	android:name
 		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:255:25-76
 action#com.v2ray.ang.fdroid.action.activity
 INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:256:17-75
 	android:name
 		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:256:25-72
 provider#androidx.startup.InitializationProvider
 INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:303:9-314:20
 MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:29:9-37:20
@@ -23,31 +21,18 @@ MERGED from [com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/c
 MERGED from [com.squareup.okhttp3:okhttp-android:5.3.2] /Users/cnyirui/.gradle/caches/9.3.1/transforms/d63fdb38be57f3a36bded23aff507d81/transformed/okhttp-release/AndroidManifest.xml:11:9-19:20
 MERGED from [androidx.startup:startup-runtime:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/545258f823e45de20f3c4835673049b3/transformed/startup-runtime-1.2.0/AndroidManifest.xml:24:9-28:34
 MERGED from [androidx.startup:startup-runtime:1.2.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/545258f823e45de20f3c4835673049b3/transformed/startup-runtime-1.2.0/AndroidManifest.xml:24:9-28:34
-	tools:node
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:307:13-31
 	android:authorities
 		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:305:13-68
-	android:exported
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:306:13-37
-	android:name
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:304:13-67
 provider#androidx.core.content.FileProvider
 INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:316:9-324:20
-	android:grantUriPermissions
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:320:13-47
 	android:authorities
 		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:318:13-57
-	android:exported
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:319:13-37
-	android:name
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:317:13-62
 manifest
 ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-328:12
-INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-328:12
-INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-328:12
-INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-328:12
+MERGED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:1-328:12
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml:2:1-10:12
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml:2:1-10:12
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml:2:1-10:12
 MERGED from [libv2ray.aar] /Users/cnyirui/.gradle/caches/9.3.1/transforms/600036bff801234e051cffd539b38369/transformed/libv2ray/AndroidManifest.xml:1:1-2:50
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:2:1-22:12
 MERGED from [androidx.databinding:viewbinding:9.1.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/3d54b4b7b03ea69c20d466ec6d395088/transformed/viewbinding-9.1.0/AndroidManifest.xml:2:1-7:12
@@ -164,16 +149,18 @@ MERGED from [androidx.exifinterface:exifinterface:1.3.7] /Users/cnyirui/.gradle/
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:17:1-56:12
 MERGED from [androidx.multidex:multidex:2.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7193c0f649a0a0976cb6bbb625287c4e/transformed/multidex-2.0.1/AndroidManifest.xml:17:1-22:12
 	package
-		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml
 	android:versionName
-		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml
 	xmlns:tools
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:3:5-51
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:3:5-51
 	android:versionCode
-		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml
 	xmlns:android
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:2:11-69
 	tools:ignore
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:4:5-43
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:4:5-43
 supports-screens
 ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:6:5-11:40
@@ -279,7 +266,9 @@ MERGED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:42:22-78
 application
 ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:44:5-326:19
-INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:44:5-326:19
+MERGED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:44:5-326:19
+MERGED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:44:5-326:19
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml:3:5-9:19
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:14:5-20:19
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:14:5-20:19
 MERGED from [com.google.android.material:material:1.13.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/6bf2437b324d4fd198247962e46d81de/transformed/material-1.13.0/AndroidManifest.xml:22:5-20
@@ -319,26 +308,35 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/cnyi
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:46:5-54:19
 MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/93ccc623c54fb8591ba25ff3d03be14b/transformed/zxing-android-embedded-4.3.0/AndroidManifest.xml:46:5-54:19
 	android:extractNativeLibs
-		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.17.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/dbf91cfc6ebc0c9781aa28e78b55dfc1/transformed/core-1.17.0/AndroidManifest.xml:28:18-86
 	android:supportsRtl
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:51:9-35
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:51:9-35
 	android:label
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:49:9-41
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:49:9-41
 	android:icon
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:48:9-43
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:48:9-43
 	android:allowBackup
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:46:9-35
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:46:9-35
 	android:banner
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:47:9-43
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:47:9-43
 	android:theme
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:52:9-60
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:52:9-60
 	android:networkSecurityConfig
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:50:9-69
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:50:9-69
 	android:usesCleartextTraffic
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:53:9-44
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:53:9-44
 	android:name
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:45:9-39
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:45:9-39
 activity#com.v2ray.ang.ui.MainActivity
 ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:55:9-66:20
@@ -480,10 +478,6 @@ ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/ma
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:125:27-73
 data
 ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:126:17-55
-	android:host
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:135:23-52
-	android:scheme
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:134:23-47
 	android:mimeType
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:126:23-52
 intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:install-config+data:host:install-sub+data:scheme:v2rayng
@@ -778,25 +772,20 @@ action#com.twofortyfouram.locale.intent.action.FIRE_SETTING
 ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:299:17-95
 	android:name
 		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:299:25-92
-meta-data#androidx.work.WorkManagerInitializer
-ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:309:13-312:39
-REJECTED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:34:13-36:52
-	tools:node
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:312:17-36
-	android:value
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:311:17-49
+activity#com.v2ray.ang.ui.compose.debug.ComposeRouteHarnessActivity
+ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml:4:9-8:67
+	android:label
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml:7:13-50
+	android:exported
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml:6:13-36
+	android:theme
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml:8:13-64
 	android:name
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:310:17-68
-meta-data#android.support.FILE_PROVIDER_PATHS
-ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:321:13-323:55
-	android:resource
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:323:17-52
-	android:name
-		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml:322:17-67
+		ADDED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml:5:13-73
 uses-sdk
-INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
-INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
-INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml
+INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml
 MERGED from [libv2ray.aar] /Users/cnyirui/.gradle/caches/9.3.1/transforms/600036bff801234e051cffd539b38369/transformed/libv2ray/AndroidManifest.xml:2:1-39
 MERGED from [libv2ray.aar] /Users/cnyirui/.gradle/caches/9.3.1/transforms/600036bff801234e051cffd539b38369/transformed/libv2ray/AndroidManifest.xml:2:1-39
 MERGED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:6:5-44
@@ -1028,9 +1017,9 @@ MERGED from [com.journeyapps:zxing-android-embedded:4.3.0] /Users/cnyirui/.gradl
 MERGED from [androidx.multidex:multidex:2.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7193c0f649a0a0976cb6bbb625287c4e/transformed/multidex-2.0.1/AndroidManifest.xml:20:5-43
 MERGED from [androidx.multidex:multidex:2.0.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/7193c0f649a0a0976cb6bbb625287c4e/transformed/multidex-2.0.1/AndroidManifest.xml:20:5-43
 	android:targetSdkVersion
-		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml
 	android:minSdkVersion
-		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/debug/AndroidManifest.xml
 activity#io.github.g00fy2.quickie.QRScannerActivity
 ADDED from [com.github.T8RIN.QuickieExtended:quickie-foss:1.14.0] /Users/cnyirui/.gradle/caches/9.3.1/transforms/1d7e9e2614d953987e074258c9a40583/transformed/quickie-foss-1.14.0/AndroidManifest.xml:15:9-19:45
 	android:screenOrientation
@@ -1071,6 +1060,8 @@ uses-permission#android.permission.WAKE_LOCK
 ADDED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:23:5-68
 	android:name
 		ADDED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:23:22-65
+meta-data#androidx.work.WorkManagerInitializer
+REJECTED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:34:13-36:52
 service#androidx.work.impl.background.systemjob.SystemJobService
 ADDED from [androidx.work:work-runtime:2.11.1] /Users/cnyirui/.gradle/caches/9.3.1/transforms/c2976c3fd09255f02cc55766b05502aa/transformed/work-runtime-2.11.1/AndroidManifest.xml:39:9-45:35
 	android:enabled

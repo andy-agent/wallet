@@ -12,14 +12,62 @@ export interface StoredOrderRecord extends OrderRecord {
   collectionAddress: string;
 }
 
+export interface RuntimeStatePaymentContext {
+  collectionAddress: string;
+  quoteAssetCode: StoredOrderRecord['quoteAssetCode'];
+  quoteNetworkCode: StoredOrderRecord['quoteNetworkCode'];
+}
+
+export type StoredOnchainReceiptMatchStatus =
+  | 'UNMATCHED'
+  | 'MATCHED'
+  | 'AMBIGUOUS'
+  | 'IGNORED';
+
+export type StoredOnchainReceiptConfirmationStatus =
+  | 'processed'
+  | 'confirmed'
+  | 'finalized'
+  | 'failed'
+  | 'unknown';
+
+export interface StoredOnchainReceiptRecord extends RuntimeStatePaymentContext {
+  receiptId: string;
+  txHash: string;
+  eventIndex: number;
+  recipientTokenAccount: string | null;
+  fromAddress: string | null;
+  mint: string | null;
+  amount: string;
+  amountMinor: string;
+  confirmationStatus: StoredOnchainReceiptConfirmationStatus;
+  slot: number | null;
+  blockTime: string | null;
+  observedAt: string;
+  matchedOrderNo: string | null;
+  matchStatus: StoredOnchainReceiptMatchStatus;
+  matcherRemark: string | null;
+  rawPayload: Record<string, unknown> | null;
+}
+
+export interface PaymentScanCursorRecord extends RuntimeStatePaymentContext {
+  cursorKey: string;
+  beforeSignature: string | null;
+  lastSignature: string | null;
+  lastSlot: number | null;
+  updatedAt: string;
+}
+
 export interface RuntimeStateSnapshot {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   orders: StoredOrderRecord[];
   idempotencyIndex: Record<string, string>;
   subscriptions: PersistedSubscriptionRecord[];
   accounts: AuthAccount[];
   sessions: AuthSession[];
   verificationCodes: VerificationCodeRecord[];
+  onchainReceipts: StoredOnchainReceiptRecord[];
+  paymentScanCursors: PaymentScanCursorRecord[];
 }
 
 export interface RuntimeStateListOrdersParams {

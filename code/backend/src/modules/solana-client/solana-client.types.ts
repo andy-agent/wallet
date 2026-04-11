@@ -104,6 +104,47 @@ export interface VerifyIncomingTransferResponse {
   slot?: number;
 }
 
+export interface ScanIncomingTransfersCursor {
+  beforeSignature?: string | null;
+  minSlotExclusive?: number | null;
+}
+
+export interface ScanIncomingTransfersRequest {
+  collectionAddress: string;
+  assetCode: string;
+  mint?: string | null;
+  network?: 'mainnet' | 'devnet';
+  cursor?: ScanIncomingTransfersCursor | null;
+  limit?: number;
+}
+
+export interface NormalizedIncomingTransfer {
+  signature: string;
+  eventIndex: number;
+  slot: number | null;
+  blockTime: number | null;
+  confirmationStatus: 'processed' | 'confirmed' | 'finalized' | 'failed' | 'unknown';
+  recipientOwnerAddress: string;
+  recipientTokenAccount?: string | null;
+  fromAddress?: string | null;
+  assetCode: string;
+  mint?: string | null;
+  decimals: number;
+  amount: string;
+  amountRaw: string;
+  rawPayload?: Record<string, unknown> | null;
+}
+
+export interface ScanIncomingTransfersResponse {
+  networkCode: string;
+  collectionAddress: string;
+  assetCode: string;
+  mint?: string | null;
+  events: NormalizedIncomingTransfer[];
+  nextCursor: ScanIncomingTransfersCursor | null;
+  scannedAt: string;
+}
+
 export interface GetBalanceRequest {
   /** Wallet address */
   address: string;

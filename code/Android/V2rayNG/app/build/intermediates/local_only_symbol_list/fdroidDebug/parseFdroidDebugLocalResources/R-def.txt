@@ -178,6 +178,7 @@ id buttonCopyAmount
 id buttonLogin
 id buttonLogout
 id buttonRefresh
+id buttonSubmitTxFallback
 id buttonSubmitWithdrawal
 id cardBindReferral
 id cardLedger
@@ -401,6 +402,7 @@ id textAmount
 id textAssetCode
 id textAvailableAmount
 id textBadge
+id textBaseAmount
 id textBindingStatus
 id textCommissionLevel
 id textCountdown
@@ -421,6 +423,7 @@ id textLoginTime
 id textMinWithdraw
 id textMinWithdrawAmount
 id textOrderNo
+id textPaymentHint
 id textPaymentMethods
 id textPayoutAddress
 id textPlanDescription
@@ -434,6 +437,7 @@ id textRequestNo
 id textSettlementAsset
 id textSourceAccount
 id textStatus
+id textUniqueDelta
 id textUsername
 id textViewEmpty
 id textViewEmptyMessage
@@ -553,6 +557,7 @@ string bind_referral_code
 string bind_referral_failed
 string bind_referral_success
 string cancel
+string check_payment_status
 string commission_balance
 string commission_ledger
 string commission_summary
@@ -685,8 +690,27 @@ string order_info
 string order_number
 string paid_at
 string payment_amount
+string payment_amount_copy_label
+string payment_amount_value
+string payment_auto_scan_hint
+string payment_base_amount
+string payment_base_amount_value
+string payment_method_value
+string payment_payable_amount
 string payment_sol
 string payment_status
+string payment_status_auto_matched_suffix
+string payment_status_fallback_submitted
+string payment_status_value
+string payment_submit_fallback
+string payment_submit_txhash_failed
+string payment_submit_txhash_fallback
+string payment_txhash_empty
+string payment_txhash_fallback_message
+string payment_txhash_fallback_title
+string payment_txhash_input_hint
+string payment_unique_delta
+string payment_unique_delta_value
 string payment_usdt_solana
 string payment_usdt_trc20
 string payout_address

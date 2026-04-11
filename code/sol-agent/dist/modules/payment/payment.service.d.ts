@@ -1,5 +1,7 @@
 import { SolanaRpcService } from '../solana/solana.rpc.service';
 import { DetectPaymentRequestDto } from './dto/detect-payment.request';
+import { ScanIncomingTransfersRequestDto } from './dto/scan-incoming.request';
+import { ScanIncomingTransfersResponseDto } from './dto/scan-incoming.response';
 import { VerifyTransactionRequestDto } from './dto/verify-transaction.request';
 type VerifyStatus = 'pending' | 'failed' | 'mismatch' | 'verified';
 type AssetKind = 'NATIVE_SOL' | 'SPL_TOKEN';
@@ -72,6 +74,7 @@ export declare class PaymentService {
         error: string | undefined;
         verifiedAt: string;
     }>;
+    scanIncomingTransfers(body: ScanIncomingTransfersRequestDto): Promise<ScanIncomingTransfersResponseDto>;
     private buildVerificationResult;
     private resolveAsset;
     private extractSolReceipt;

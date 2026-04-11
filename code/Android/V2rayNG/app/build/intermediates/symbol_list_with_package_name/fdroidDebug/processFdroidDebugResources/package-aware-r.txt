@@ -4112,6 +4112,7 @@ id buttonLogin
 id buttonLogout
 id buttonPanel
 id buttonRefresh
+id buttonSubmitTxFallback
 id buttonSubmitWithdrawal
 id cache_measures
 id callMeasure
@@ -4732,6 +4733,7 @@ id textAmount
 id textAssetCode
 id textAvailableAmount
 id textBadge
+id textBaseAmount
 id textBindingStatus
 id textCommissionLevel
 id textCountdown
@@ -4753,6 +4755,7 @@ id textLoginTime
 id textMinWithdraw
 id textMinWithdrawAmount
 id textOrderNo
+id textPaymentHint
 id textPaymentMethods
 id textPayoutAddress
 id textPlanDescription
@@ -4770,6 +4773,7 @@ id textSpacerNoTitle
 id textStart
 id textStatus
 id textTop
+id textUniqueDelta
 id textUsername
 id textViewEmpty
 id textViewEmptyMessage
@@ -5236,6 +5240,7 @@ string cancel
 string character_counter_content_description
 string character_counter_overflowed_content_description
 string character_counter_pattern
+string check_payment_status
 string clear_text_end_icon_content_description
 string close_drawer
 string close_sheet
@@ -5566,8 +5571,27 @@ string path_password_eye_mask_strike_through
 string path_password_eye_mask_visible
 string path_password_strike_through
 string payment_amount
+string payment_amount_copy_label
+string payment_amount_value
+string payment_auto_scan_hint
+string payment_base_amount
+string payment_base_amount_value
+string payment_method_value
+string payment_payable_amount
 string payment_sol
 string payment_status
+string payment_status_auto_matched_suffix
+string payment_status_fallback_submitted
+string payment_status_value
+string payment_submit_fallback
+string payment_submit_txhash_failed
+string payment_submit_txhash_fallback
+string payment_txhash_empty
+string payment_txhash_fallback_message
+string payment_txhash_fallback_title
+string payment_txhash_input_hint
+string payment_unique_delta
+string payment_unique_delta_value
 string payment_usdt_solana
 string payment_usdt_trc20
 string payout_address

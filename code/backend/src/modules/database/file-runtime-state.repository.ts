@@ -15,20 +15,25 @@ import { OrderStatus } from '../orders/orders.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 import { RuntimeStateRepository } from './runtime-state.repository';
 import {
+  PaymentScanCursorRecord,
+  RuntimeStatePaymentContext,
   RuntimeStateListOrdersParams,
   RuntimeStateListOrdersResult,
   RuntimeStateSnapshot,
+  StoredOnchainReceiptRecord,
   StoredOrderRecord,
 } from './runtime-state.types';
 
 const EMPTY_RUNTIME_STATE: RuntimeStateSnapshot = {
-  version: 2,
+  version: 3,
   orders: [],
   idempotencyIndex: {},
   subscriptions: [],
   accounts: [],
   sessions: [],
   verificationCodes: [],
+  onchainReceipts: [],
+  paymentScanCursors: [],
 };
 
 export class FileRuntimeStateRepository extends RuntimeStateRepository {
@@ -156,6 +161,75 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
     });
   }
 
+  async listActivePaymentContexts(params: {
+    statuses: OrderStatus[];
+    activeAfter: number;
+  }): Promise<RuntimeStatePaymentContext[]> {
+    const unique = new Map<string, RuntimeStatePaymentContext>();
+    for (const order of this.readSnapshot().orders) {
+      if (
+        !params.statuses.includes(order.status) ||
+        new Date(order.expiresAt).getTime() <= params.activeAfter
+      ) {
+        continue;
+      }
+
+      const key = [
+        order.collectionAddress,
+        order.quoteAssetCode,
+        order.quoteNetworkCode,
+      ].join(':');
+      if (!unique.has(key)) {
+        unique.set(key, {
+          collectionAddress: order.collectionAddress,
+          quoteAssetCode: order.quoteAssetCode,
+          quoteNetworkCode: order.quoteNetworkCode,
+        });
+      }
+    }
+
+    return [...unique.values()];
+  }
+
+  async findPaymentScanCursor(
+    context: RuntimeStatePaymentContext,
+  ): Promise<PaymentScanCursorRecord | null> {
+    return (
+      this.readSnapshot().paymentScanCursors.find(
+        (cursor) =>
+          cursor.collectionAddress === context.collectionAddress &&
+          cursor.quoteAssetCode === context.quoteAssetCode &&
+          cursor.quoteNetworkCode === context.quoteNetworkCode,
+      ) ?? null
+    );
+  }
+
+  async savePaymentScanCursor(
+    cursor: PaymentScanCursorRecord,
+  ): Promise<PaymentScanCursorRecord> {
+    const snapshot = this.readSnapshot();
+    const next = snapshot.paymentScanCursors.filter(
+      (item) => item.cursorKey !== cursor.cursorKey,
+    );
+    next.push(cursor);
+    snapshot.paymentScanCursors = next;
+    this.writeSnapshot(snapshot);
+    return cursor;
+  }
+
+  async upsertOnchainReceipt(
+    receipt: StoredOnchainReceiptRecord,
+  ): Promise<StoredOnchainReceiptRecord> {
+    const snapshot = this.readSnapshot();
+    const next = snapshot.onchainReceipts.filter(
+      (item) => item.receiptId !== receipt.receiptId,
+    );
+    next.push(receipt);
+    snapshot.onchainReceipts = next;
+    this.writeSnapshot(snapshot);
+    return receipt;
+  }
+
   async listOrders(
     params: RuntimeStateListOrdersParams,
   ): Promise<RuntimeStateListOrdersResult> {
@@ -281,13 +355,15 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
 
   private normalizeSnapshot(raw: Partial<RuntimeStateSnapshot>) {
     return {
-      version: raw.version === 1 ? 2 : 2,
+      version: 3,
       orders: raw.orders ?? [],
       idempotencyIndex: raw.idempotencyIndex ?? {},
       subscriptions: raw.subscriptions ?? [],
       accounts: raw.accounts ?? [],
       sessions: raw.sessions ?? [],
       verificationCodes: raw.verificationCodes ?? [],
+      onchainReceipts: raw.onchainReceipts ?? [],
+      paymentScanCursors: raw.paymentScanCursors ?? [],
     } satisfies RuntimeStateSnapshot;
   }
 }

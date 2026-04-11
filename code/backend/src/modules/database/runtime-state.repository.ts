@@ -6,8 +6,11 @@ import {
 import { OrderStatus } from '../orders/orders.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 import {
+  PaymentScanCursorRecord,
+  RuntimeStatePaymentContext,
   RuntimeStateListOrdersParams,
   RuntimeStateListOrdersResult,
+  StoredOnchainReceiptRecord,
   StoredOrderRecord,
 } from './runtime-state.types';
 
@@ -42,6 +45,23 @@ export abstract class RuntimeStateRepository {
     statuses: OrderStatus[];
     activeAfter: number;
   }): Promise<StoredOrderRecord[]>;
+
+  abstract listActivePaymentContexts(params: {
+    statuses: OrderStatus[];
+    activeAfter: number;
+  }): Promise<RuntimeStatePaymentContext[]>;
+
+  abstract findPaymentScanCursor(
+    context: RuntimeStatePaymentContext,
+  ): Promise<PaymentScanCursorRecord | null>;
+
+  abstract savePaymentScanCursor(
+    cursor: PaymentScanCursorRecord,
+  ): Promise<PaymentScanCursorRecord>;
+
+  abstract upsertOnchainReceipt(
+    receipt: StoredOnchainReceiptRecord,
+  ): Promise<StoredOnchainReceiptRecord>;
 
   abstract listOrders(
     params: RuntimeStateListOrdersParams,

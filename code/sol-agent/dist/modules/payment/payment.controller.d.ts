@@ -1,5 +1,6 @@
 import { PaymentService } from './payment.service';
 import { DetectPaymentRequestDto } from './dto/detect-payment.request';
+import { ScanIncomingTransfersRequestDto } from './dto/scan-incoming.request';
 import { VerifyTransactionRequestDto } from './dto/verify-transaction.request';
 export declare class PaymentController {
     private readonly paymentService;
@@ -47,6 +48,7 @@ export declare class PaymentController {
         error: string;
         updatedAt: string;
     }>;
+    scanIncomingTransfers(body: ScanIncomingTransfersRequestDto): Promise<import("./dto/scan-incoming.response").ScanIncomingTransfersResponseDto>;
     verifyTransaction(body: VerifyTransactionRequestDto): Promise<{
         signature: string;
         networkCode: string;

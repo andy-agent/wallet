@@ -9,8 +9,11 @@ import { OrderStatus } from '../orders/orders.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 import { RuntimeStateRepository } from './runtime-state.repository';
 import {
+  PaymentScanCursorRecord,
+  RuntimeStatePaymentContext,
   RuntimeStateListOrdersParams,
   RuntimeStateListOrdersResult,
+  StoredOnchainReceiptRecord,
   StoredOrderRecord,
 } from './runtime-state.types';
 
@@ -19,6 +22,8 @@ const ACCOUNT_INSTALLATIONS_TABLE = 'account_installations';
 const SESSIONS_TABLE = 'client_sessions';
 const VERIFICATION_CODES_TABLE = 'verification_codes';
 const ORDERS_TABLE = 'runtime_state_orders';
+const ONCHAIN_RECEIPTS_TABLE = 'runtime_state_onchain_receipts';
+const PAYMENT_SCAN_CURSORS_TABLE = 'runtime_state_payment_scan_cursors';
 const SUBSCRIPTIONS_TABLE = 'runtime_state_subscriptions';
 const ACCOUNT_COLUMNS = `
   id::text AS account_id,
@@ -86,6 +91,37 @@ const SUBSCRIPTION_COLUMNS = `
   is_unlimited_traffic,
   max_active_sessions
 `;
+const ONCHAIN_RECEIPT_COLUMNS = `
+  receipt_id,
+  network_code,
+  asset_code,
+  collection_address,
+  tx_hash,
+  event_index,
+  recipient_token_account,
+  from_address,
+  mint,
+  amount,
+  amount_minor,
+  confirmation_status,
+  slot,
+  block_time,
+  observed_at,
+  matched_order_no,
+  match_status,
+  matcher_remark,
+  raw_payload
+`;
+const PAYMENT_SCAN_CURSOR_COLUMNS = `
+  cursor_key,
+  network_code,
+  asset_code,
+  collection_address,
+  before_signature,
+  last_signature,
+  last_slot,
+  updated_at
+`;
 
 interface RuntimeStateOrderRow {
   order_id: string;
@@ -127,6 +163,39 @@ interface RuntimeStateSubscriptionRow {
   days_remaining: number | null;
   is_unlimited_traffic: boolean;
   max_active_sessions: number;
+}
+
+interface RuntimeStateOnchainReceiptRow {
+  receipt_id: string;
+  network_code: StoredOrderRecord['quoteNetworkCode'];
+  asset_code: StoredOrderRecord['quoteAssetCode'];
+  collection_address: string;
+  tx_hash: string;
+  event_index: number;
+  recipient_token_account: string | null;
+  from_address: string | null;
+  mint: string | null;
+  amount: string;
+  amount_minor: string;
+  confirmation_status: StoredOnchainReceiptRecord['confirmationStatus'];
+  slot: string | number | null;
+  block_time: Date | string | null;
+  observed_at: Date | string;
+  matched_order_no: string | null;
+  match_status: StoredOnchainReceiptRecord['matchStatus'];
+  matcher_remark: string | null;
+  raw_payload: Record<string, unknown> | null;
+}
+
+interface PaymentScanCursorRow {
+  cursor_key: string;
+  network_code: StoredOrderRecord['quoteNetworkCode'];
+  asset_code: StoredOrderRecord['quoteAssetCode'];
+  collection_address: string;
+  before_signature: string | null;
+  last_signature: string | null;
+  last_slot: string | number | null;
+  updated_at: Date | string;
 }
 
 interface AuthAccountRow {
@@ -618,6 +687,182 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     return result.rows.map((row) => this.mapOrder(row));
   }
 
+  async listActivePaymentContexts(params: {
+    statuses: OrderStatus[];
+    activeAfter: number;
+  }): Promise<RuntimeStatePaymentContext[]> {
+    await this.ensureReady();
+    const result = await this.pool.query<{
+      collection_address: string;
+      quote_asset_code: StoredOrderRecord['quoteAssetCode'];
+      quote_network_code: StoredOrderRecord['quoteNetworkCode'];
+    }>(
+      `
+        SELECT DISTINCT
+          collection_address,
+          quote_asset_code,
+          quote_network_code
+        FROM ${ORDERS_TABLE}
+        WHERE status = ANY($1::text[])
+          AND expires_at > $2
+        ORDER BY collection_address, quote_asset_code, quote_network_code
+      `,
+      [params.statuses, new Date(params.activeAfter).toISOString()],
+    );
+
+    return result.rows.map((row) => ({
+      collectionAddress: row.collection_address,
+      quoteAssetCode: row.quote_asset_code,
+      quoteNetworkCode: row.quote_network_code,
+    }));
+  }
+
+  async findPaymentScanCursor(
+    context: RuntimeStatePaymentContext,
+  ): Promise<PaymentScanCursorRecord | null> {
+    await this.ensureReady();
+    const result = await this.pool.query<PaymentScanCursorRow>(
+      `
+        SELECT ${PAYMENT_SCAN_CURSOR_COLUMNS}
+        FROM ${PAYMENT_SCAN_CURSORS_TABLE}
+        WHERE network_code = $1
+          AND asset_code = $2
+          AND collection_address = $3
+        LIMIT 1
+      `,
+      [
+        context.quoteNetworkCode,
+        context.quoteAssetCode,
+        context.collectionAddress,
+      ],
+    );
+
+    return result.rows[0] ? this.mapPaymentScanCursor(result.rows[0]) : null;
+  }
+
+  async savePaymentScanCursor(
+    cursor: PaymentScanCursorRecord,
+  ): Promise<PaymentScanCursorRecord> {
+    await this.ensureReady();
+    const result = await this.pool.query<PaymentScanCursorRow>(
+      `
+        INSERT INTO ${PAYMENT_SCAN_CURSORS_TABLE} (
+          cursor_key,
+          network_code,
+          asset_code,
+          collection_address,
+          before_signature,
+          last_signature,
+          last_slot,
+          updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (cursor_key) DO UPDATE
+        SET
+          network_code = EXCLUDED.network_code,
+          asset_code = EXCLUDED.asset_code,
+          collection_address = EXCLUDED.collection_address,
+          before_signature = EXCLUDED.before_signature,
+          last_signature = EXCLUDED.last_signature,
+          last_slot = EXCLUDED.last_slot,
+          updated_at = EXCLUDED.updated_at
+        RETURNING ${PAYMENT_SCAN_CURSOR_COLUMNS}
+      `,
+      [
+        cursor.cursorKey,
+        cursor.quoteNetworkCode,
+        cursor.quoteAssetCode,
+        cursor.collectionAddress,
+        cursor.beforeSignature,
+        cursor.lastSignature,
+        cursor.lastSlot,
+        cursor.updatedAt,
+      ],
+    );
+
+    return this.mapPaymentScanCursor(result.rows[0]);
+  }
+
+  async upsertOnchainReceipt(
+    receipt: StoredOnchainReceiptRecord,
+  ): Promise<StoredOnchainReceiptRecord> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateOnchainReceiptRow>(
+      `
+        INSERT INTO ${ONCHAIN_RECEIPTS_TABLE} (
+          receipt_id,
+          network_code,
+          asset_code,
+          collection_address,
+          tx_hash,
+          event_index,
+          recipient_token_account,
+          from_address,
+          mint,
+          amount,
+          amount_minor,
+          confirmation_status,
+          slot,
+          block_time,
+          observed_at,
+          matched_order_no,
+          match_status,
+          matcher_remark,
+          raw_payload,
+          created_at,
+          updated_at
+        )
+        VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+          $11, $12, $13, $14, $15, $16, $17, $18,
+          $19::jsonb, NOW(), NOW()
+        )
+        ON CONFLICT (network_code, tx_hash, event_index) DO UPDATE
+        SET
+          asset_code = EXCLUDED.asset_code,
+          collection_address = EXCLUDED.collection_address,
+          recipient_token_account = EXCLUDED.recipient_token_account,
+          from_address = EXCLUDED.from_address,
+          mint = EXCLUDED.mint,
+          amount = EXCLUDED.amount,
+          amount_minor = EXCLUDED.amount_minor,
+          confirmation_status = EXCLUDED.confirmation_status,
+          slot = EXCLUDED.slot,
+          block_time = EXCLUDED.block_time,
+          observed_at = EXCLUDED.observed_at,
+          matched_order_no = EXCLUDED.matched_order_no,
+          match_status = EXCLUDED.match_status,
+          matcher_remark = EXCLUDED.matcher_remark,
+          raw_payload = EXCLUDED.raw_payload,
+          updated_at = NOW()
+        RETURNING ${ONCHAIN_RECEIPT_COLUMNS}
+      `,
+      [
+        receipt.receiptId,
+        receipt.quoteNetworkCode,
+        receipt.quoteAssetCode,
+        receipt.collectionAddress,
+        receipt.txHash,
+        receipt.eventIndex,
+        receipt.recipientTokenAccount,
+        receipt.fromAddress,
+        receipt.mint,
+        receipt.amount,
+        receipt.amountMinor,
+        receipt.confirmationStatus,
+        receipt.slot,
+        receipt.blockTime,
+        receipt.observedAt,
+        receipt.matchedOrderNo,
+        receipt.matchStatus,
+        receipt.matcherRemark,
+        receipt.rawPayload ? JSON.stringify(receipt.rawPayload) : null,
+      ],
+    );
+
+    return this.mapOnchainReceipt(result.rows[0]);
+  }
+
   async listOrders(
     params: RuntimeStateListOrdersParams,
   ): Promise<RuntimeStateListOrdersResult> {
@@ -949,6 +1194,59 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     `);
 
     await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${ONCHAIN_RECEIPTS_TABLE} (
+        receipt_id text PRIMARY KEY,
+        network_code text NOT NULL,
+        asset_code text NOT NULL,
+        collection_address text NOT NULL,
+        tx_hash text NOT NULL,
+        event_index integer NOT NULL DEFAULT 0,
+        recipient_token_account text NULL,
+        from_address text NULL,
+        mint text NULL,
+        amount text NOT NULL,
+        amount_minor text NOT NULL,
+        confirmation_status text NOT NULL,
+        slot bigint NULL,
+        block_time timestamptz NULL,
+        observed_at timestamptz NOT NULL,
+        matched_order_no text NULL,
+        match_status text NOT NULL,
+        matcher_remark text NULL,
+        raw_payload jsonb NULL,
+        created_at timestamptz NOT NULL DEFAULT NOW(),
+        updated_at timestamptz NOT NULL DEFAULT NOW(),
+        UNIQUE (network_code, tx_hash, event_index)
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_onchain_receipts_match
+      ON ${ONCHAIN_RECEIPTS_TABLE} (collection_address, asset_code, match_status, observed_at DESC)
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_onchain_receipts_tx
+      ON ${ONCHAIN_RECEIPTS_TABLE} (tx_hash, event_index)
+    `);
+
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${PAYMENT_SCAN_CURSORS_TABLE} (
+        cursor_key text PRIMARY KEY,
+        network_code text NOT NULL,
+        asset_code text NOT NULL,
+        collection_address text NOT NULL,
+        before_signature text NULL,
+        last_signature text NULL,
+        last_slot bigint NULL,
+        updated_at timestamptz NOT NULL,
+        UNIQUE (network_code, asset_code, collection_address)
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_payment_scan_cursors_context
+      ON ${PAYMENT_SCAN_CURSORS_TABLE} (network_code, asset_code, collection_address)
+    `);
+
+    await this.pool.query(`
       CREATE TABLE IF NOT EXISTS ${SUBSCRIPTIONS_TABLE} (
         account_id text PRIMARY KEY,
         order_no text NOT NULL UNIQUE,
@@ -1151,6 +1449,47 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     };
   }
 
+  private mapPaymentScanCursor(
+    row: PaymentScanCursorRow,
+  ): PaymentScanCursorRecord {
+    return {
+      cursorKey: row.cursor_key,
+      quoteNetworkCode: row.network_code,
+      quoteAssetCode: row.asset_code,
+      collectionAddress: row.collection_address,
+      beforeSignature: row.before_signature,
+      lastSignature: row.last_signature,
+      lastSlot: this.toNumber(row.last_slot),
+      updatedAt: this.toIsoString(row.updated_at)!,
+    };
+  }
+
+  private mapOnchainReceipt(
+    row: RuntimeStateOnchainReceiptRow,
+  ): StoredOnchainReceiptRecord {
+    return {
+      receiptId: row.receipt_id,
+      quoteNetworkCode: row.network_code,
+      quoteAssetCode: row.asset_code,
+      collectionAddress: row.collection_address,
+      txHash: row.tx_hash,
+      eventIndex: row.event_index,
+      recipientTokenAccount: row.recipient_token_account,
+      fromAddress: row.from_address,
+      mint: row.mint,
+      amount: row.amount,
+      amountMinor: row.amount_minor,
+      confirmationStatus: row.confirmation_status,
+      slot: this.toNumber(row.slot),
+      blockTime: this.toIsoString(row.block_time),
+      observedAt: this.toIsoString(row.observed_at)!,
+      matchedOrderNo: row.matched_order_no,
+      matchStatus: row.match_status,
+      matcherRemark: row.matcher_remark,
+      rawPayload: row.raw_payload,
+    };
+  }
+
   private mapSubscription(
     row: RuntimeStateSubscriptionRow,
   ): PersistedSubscriptionRecord {
@@ -1175,5 +1514,12 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       return null;
     }
     return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+  }
+
+  private toNumber(value: string | number | null): number | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    return typeof value === 'number' ? value : Number(value);
   }
 }

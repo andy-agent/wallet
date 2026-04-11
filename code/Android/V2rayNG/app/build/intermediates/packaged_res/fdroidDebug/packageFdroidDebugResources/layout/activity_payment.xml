@@ -199,7 +199,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/payment_amount"
+                            android:text="@string/payment_payable_amount"
                             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                             android:textColor="@color/md_theme_onSurfaceVariant" />
 
@@ -271,6 +271,71 @@
                             app:iconSize="16dp" />
 
                     </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/padding_spacing_dp8"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/payment_base_amount"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+                            android:textColor="@color/md_theme_onSurfaceVariant" />
+
+                        <TextView
+                            android:id="@+id/textBaseAmount"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/padding_spacing_dp8"
+                            android:layout_weight="1"
+                            android:gravity="end"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+                            android:textColor="@color/md_theme_onSurface"
+                            android:textIsSelectable="true"
+                            tools:text="58.000000 USDT" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/padding_spacing_dp4"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/payment_unique_delta"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+                            android:textColor="@color/md_theme_onSurfaceVariant" />
+
+                        <TextView
+                            android:id="@+id/textUniqueDelta"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/padding_spacing_dp8"
+                            android:layout_weight="1"
+                            android:gravity="end"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+                            android:textColor="@color/md_theme_onSurface"
+                            android:textIsSelectable="true"
+                            tools:text="+0.000123 USDT" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textPaymentHint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/padding_spacing_dp12"
+                        android:text="@string/payment_auto_scan_hint"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                        android:textColor="@color/md_theme_onSurfaceVariant" />
 
                 </LinearLayout>
 
@@ -362,8 +427,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/padding_spacing_dp16"
-                android:text="@string/refresh_status"
+                android:text="@string/check_payment_status"
                 app:icon="@drawable/ic_cloud_download_24dp"
+                app:iconGravity="textStart" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonSubmitTxFallback"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/padding_spacing_dp8"
+                android:text="@string/payment_submit_txhash_fallback"
+                app:icon="@drawable/ic_edit_24dp"
                 app:iconGravity="textStart" />
 
             <!-- Progress Bar -->

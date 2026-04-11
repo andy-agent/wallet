@@ -1,818 +1,822 @@
 [
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_shadowsocks.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_server_shadowsocks.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_lock_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_lock_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_image_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_image_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_login.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_login.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xhdpi_ic_stat_direct.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xhdpi/ic_stat_direct.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_stop_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_stop_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_metric.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_splash_metric.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_main.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_main.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/xml_shortcuts.xml.flat",
-        "source": "com.v2ray.ang.app-fdroid-85:/xml/shortcuts.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_chip_green.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_splash_chip_green.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_more_vert_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_more_vert_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_about_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_about_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_preference_with_help_link.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/preference_with_help_link.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_backup_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_backup_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-mdpi_ic_stat_proxy.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-mdpi/ic_stat_proxy.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/xml_pref_settings.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/xml/pref_settings.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-anydpi-v26/ic_launcher_round.xml"
-    },
-    {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_hysteria2.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_server_hysteria2.xml"
-    },
-    {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_save_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_save_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_chip_purple.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_splash_chip_purple.xml"
     },
     {
         "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_payment.xml.flat",
         "source": "com.v2ray.ang.app-main-87:/layout/activity_payment.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_hub_ring_outer.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_hub_ring_outer.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_hub_core.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_hub_core.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_plan.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_plan.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-hdpi_ic_launcher_foreground.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-hdpi/ic_launcher_foreground.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-xhdpi_ic_launcher_round.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-xhdpi/ic_launcher_round.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_restore_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_restore_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxhdpi_ic_launcher_foreground.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-xxhdpi/ic_launcher_foreground.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_qrcode.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_qrcode.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_about_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_about_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_per_apps_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_per_apps_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_chip_green.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_splash_chip_green.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xxhdpi_ic_stat_direct.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xxhdpi/ic_stat_direct.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-nodpi_launch_splash_window_bg.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-nodpi/launch_splash_window_bg.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_privacy_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_privacy_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_settings.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_settings.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_invitation_center.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_invitation_center.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_logcat.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_logcat.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_compose_launch_background.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/compose_launch_background.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-anydpi-v26_ic_banner.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-anydpi-v26/ic_banner.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-xxhdpi/ic_launcher_round.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_routing_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_routing_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xxhdpi_ic_stat_proxy.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xxhdpi/ic_stat_proxy.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_withdrawal.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_withdrawal.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_qu_scan_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_qu_scan_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/menu_menu_drawer.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/menu/menu_drawer.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_plans.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_plans.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/color_color_highlight_material.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/color/color_highlight_material.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_settings_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_settings_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_sub_edit.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_sub_edit.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_delete_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_delete_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_fab_check.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_fab_check.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_nav_header.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/nav_header.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-mdpi_ic_launcher.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-mdpi/ic_launcher.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_more_vert_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_more_vert_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-hdpi_ic_stat_name.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-hdpi/ic_stat_name.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_hub_ring_inner.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_hub_ring_inner.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_stop_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_stop_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxhdpi_ic_launcher_foreground.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-xxhdpi/ic_launcher_foreground.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_sub_setting.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_recycler_sub_setting.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-anydpi-v26/ic_launcher_round.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_socks.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_server_socks.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_telegram_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_telegram_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xxxhdpi_ic_stat_proxy.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xxxhdpi/ic_stat_proxy.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_refresh_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_refresh_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_share_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_share_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_preference_with_help_link.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/preference_with_help_link.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_circle.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_circle.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_fab_check.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_fab_check.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_bypass_list.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_bypass_list.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_fab_check.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_fab_check.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_lock_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_lock_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-hdpi_ic_stat_name.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-hdpi/ic_stat_name.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_order_history.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_order_history.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/menu_menu_main.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/menu/menu_main.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/menu_action_server.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/menu/action_server.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/color_color_highlight_material.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/color/color_highlight_material.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_nav_header.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/nav_header.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xxxhdpi_ic_stat_proxy.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xxxhdpi/ic_stat_proxy.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_group.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_server_group.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/menu_action_server.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/menu/action_server.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xxxhdpi_ic_stat_name.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xxxhdpi/ic_stat_name.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_rounded_corner_inactive.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_rounded_corner_inactive.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_delete_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_delete_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxxhdpi_ic_launcher_foreground.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-xxxhdpi/ic_launcher_foreground.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_trojan.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_server_trojan.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_outline_filter_alt_24.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_outline_filter_alt_24.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxxhdpi_ic_launcher_foreground.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-xxxhdpi/ic_launcher_foreground.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-mdpi_ic_stat_proxy.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-mdpi/ic_stat_proxy.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xxhdpi_ic_stat_proxy.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xxhdpi/ic_stat_proxy.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_bypass_list.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_bypass_list.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_description_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_description_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_sub_setting.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_recycler_sub_setting.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_scan_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_scan_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xxhdpi_ic_stat_name_black.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xxhdpi/ic_stat_name_black.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_launch_splash.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_launch_splash.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_routing_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_routing_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_description_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_description_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_withdrawal.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_withdrawal.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/xml_pref_settings.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/xml/pref_settings.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_about.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_about.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_file_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_file_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_logcat.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_logcat.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_invitation_center.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_invitation_center.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_logcat_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_logcat_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_base.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_base.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_lock_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_lock_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxhdpi_ic_launcher.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-xxhdpi/ic_launcher.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_action_done.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_action_done.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_image_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_image_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_hub_ring_outer.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_hub_ring_outer.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_sub_setting.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_sub_setting.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_nav_header_bg.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/nav_header_bg.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_license_24px.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/license_24px.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_dialog_config_filter.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/dialog_config_filter.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xxhdpi_ic_stat_name_black.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xxhdpi/ic_stat_name_black.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xxhdpi_ic_stat_name.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xxhdpi/ic_stat_name.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_custom_divider.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/custom_divider.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_save_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_save_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_user_asset_url.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_user_asset_url.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-hdpi_ic_stat_direct.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-hdpi/ic_stat_direct.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_nav_header_bg.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/nav_header_bg.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_layout_address_port.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/layout_address_port.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-hdpi_ic_launcher.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-hdpi/ic_launcher.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_user_asset.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_user_asset.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_play_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_play_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-xhdpi/ic_launcher.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_dialog_webdav.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/dialog_webdav.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_routing_setting.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_routing_setting.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/xml_app_widget_provider.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/xml/app_widget_provider.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_delete_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_delete_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_plans.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_plans.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_share_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_share_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_telegram_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_telegram_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_commission_ledger.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_commission_ledger.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xxhdpi_ic_stat_direct.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xxhdpi/ic_stat_direct.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_layout_tls.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/layout_tls.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_restore_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_restore_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_feedback_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_feedback_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xxxhdpi_ic_stat_direct.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xxxhdpi/ic_stat_direct.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-mdpi/ic_launcher_round.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_check_update_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_check_update_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_subscriptions_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_subscriptions_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_file_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_file_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_layout_tls_hysteria2.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/layout_tls_hysteria2.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_person_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_person_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_select_all_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_select_all_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_progress.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_splash_progress.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_source_code_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_source_code_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_hub_ring_inner.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_hub_ring_inner.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_bypass_list.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_recycler_bypass_list.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_add_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_add_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_description_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_description_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_chip.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_splash_chip.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/xml_app_widget_provider.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/xml/app_widget_provider.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-xxxhdpi/ic_launcher.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_description_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_description_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_rounded_corner_active.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_rounded_corner_active.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_play_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_play_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_edit_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_edit_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_dialog_webdav.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/dialog_webdav.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_window.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_splash_window.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_per_apps_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_per_apps_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_commission_ledger.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_commission_ledger.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-anydpi-v26_ic_banner.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-anydpi-v26/ic_banner.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-xhdpi_ic_banner.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-xhdpi/ic_banner.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_cloud_download_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_cloud_download_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-xhdpi_ic_launcher.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-xhdpi/ic_launcher.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_backup_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_backup_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xxxhdpi_ic_stat_name_black.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xxxhdpi/ic_stat_name_black.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_source_code_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_source_code_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-mdpi_ic_launcher_foreground.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-mdpi/ic_launcher_foreground.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_card.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_splash_card.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_scan_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_scan_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_group.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_server_group.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_backup.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_backup.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-xhdpi_ic_banner.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-xhdpi/ic_banner.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_footer.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_recycler_footer.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_order_history.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_order_history.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_logcat_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_logcat_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_image_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_image_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_logcat.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_recycler_logcat.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_file_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_file_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xhdpi_ic_stat_proxy.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xhdpi/ic_stat_proxy.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_edit_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_edit_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_privacy_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_privacy_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/menu_action_sub_setting.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/menu/action_sub_setting.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_fragment_group_server.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/fragment_group_server.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_stop_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_stop_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_save_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_save_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_hysteria2.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_server_hysteria2.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-xxxhdpi/ic_launcher_round.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_scan_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_scan_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_feedback_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_feedback_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_action_done.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_action_done.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_per_apps_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_per_apps_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_vless.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_server_vless.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-mdpi_ic_stat_name.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-mdpi/ic_stat_name.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_login_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_login_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_wireguard.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_server_wireguard.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_about_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_about_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_more_vert_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_more_vert_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-mdpi_ic_stat_name.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-mdpi/ic_stat_name.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_backup_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_backup_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_routing_setting.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_recycler_routing_setting.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-mdpi_ic_stat_name_black.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-mdpi/ic_stat_name_black.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_payment.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_payment.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_fab_check.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_fab_check.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_routing_edit.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_routing_edit.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_logout_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_logout_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-xxhdpi/ic_launcher.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_compose_launch_background.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/compose_launch_background.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_withdrawal.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_withdrawal.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-hdpi_ic_launcher_foreground.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-hdpi/ic_launcher_foreground.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_check_update_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_check_update_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xhdpi_ic_stat_name_black.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xhdpi/ic_stat_name_black.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_copy.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_copy.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/menu_menu_bypass_list.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/menu/menu_bypass_list.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-xhdpi_ic_banner_foreground.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-xhdpi/ic_banner_foreground.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/menu_menu_scanner.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/menu/menu_scanner.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xhdpi_ic_stat_proxy.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xhdpi/ic_stat_proxy.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_user_asset.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_recycler_user_asset.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_shadowsocks.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_server_shadowsocks.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_routing_setting.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_recycler_routing_setting.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_trojan.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_server_trojan.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_routing_setting.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_routing_setting.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_tasker.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_tasker.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xxhdpi_ic_stat_name.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xxhdpi/ic_stat_name.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_launch_splash.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_launch_splash.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-xhdpi_ic_banner_foreground.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-xhdpi/ic_banner_foreground.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xhdpi_ic_stat_name_black.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xhdpi/ic_stat_name_black.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_check_update_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_check_update_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_check_update_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_check_update_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_copy.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_copy.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-mdpi/ic_launcher.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_cloud_download_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_cloud_download_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_edit_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_edit_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_routing_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_routing_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/raw_licenses.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/raw/licenses.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_promotion_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_promotion_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_settings.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_settings.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_backup_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_backup_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_license_24px.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/license_24px.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_qu_switch_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_qu_switch_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_person_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_person_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_chip_purple.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_splash_chip_purple.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_feedback_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_feedback_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_none.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_none.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_orb.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_splash_orb.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/menu_menu_asset.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/menu/menu_asset.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/menu_menu_routing_setting.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/menu/menu_routing_setting.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_nav_header_bg.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/nav_header_bg.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_user_asset_url.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_user_asset_url.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_copy.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_copy.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_settings_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_settings_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_hub_core.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_hub_core.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_main.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_recycler_main.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_privacy_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_privacy_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_circle.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_circle.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_tasker.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_tasker.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_logout_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_logout_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_custom_config.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_server_custom_config.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_base.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_base.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_promotion_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_promotion_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xxxhdpi_ic_stat_name.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xxxhdpi/ic_stat_name.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_qu_scan_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_qu_scan_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_commission_ledger.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_commission_ledger.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-xhdpi_ic_stat_name.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-xhdpi/ic_stat_name.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_layout_transport.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/layout_transport.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_share_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_share_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-mdpi_ic_launcher_foreground.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-mdpi/ic_launcher_foreground.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/xml_network_security_config.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/xml/network_security_config.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_outline_filter_alt_24.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_outline_filter_alt_24.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_check_update.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_check_update.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_restore_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_restore_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_action_done.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_action_done.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_add_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_add_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_add_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_add_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xhdpi_ic_stat_name.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xhdpi/ic_stat_name.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_stop_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_stop_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_window.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_splash_window.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_outline_filter_alt_24.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_outline_filter_alt_24.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_cloud_download_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_cloud_download_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-hdpi_ic_stat_proxy.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-hdpi/ic_stat_proxy.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_widget_switch.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/widget_switch.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_user_profile.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_user_profile.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_metric.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_splash_metric.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_vmess.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_server_vmess.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/xml_shortcuts.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroid-85:/xml/shortcuts.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-mdpi_ic_stat_direct.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-mdpi/ic_stat_direct.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_promotion_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_promotion_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-mdpi_ic_launcher_round.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-mdpi/ic_launcher_round.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-xxxhdpi/ic_launcher.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_source_code_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_source_code_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_qu_switch_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_qu_switch_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_login_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_login_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/menu_menu_logcat.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/menu/menu_logcat.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_orb.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_splash_orb.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/xml_network_security_config.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/xml/network_security_config.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-hdpi_ic_stat_direct.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-hdpi/ic_stat_direct.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-xhdpi/ic_launcher_round.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_logcat_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_logcat_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-xhdpi_ic_launcher_foreground.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-xhdpi/ic_launcher_foreground.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_withdrawal.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_withdrawal.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_fragment_group_server.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/fragment_group_server.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_commission_ledger.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_commission_ledger.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-hdpi_ic_stat_proxy.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-hdpi/ic_stat_proxy.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_refresh_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_refresh_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_rounded_corner_active.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_rounded_corner_active.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_source_code_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_source_code_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_backup.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_backup.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxhdpi_ic_launcher_round.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-xxhdpi/ic_launcher_round.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-nodpi_launch_splash_window_bg.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-nodpi/launch_splash_window_bg.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_settings_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_settings_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_logcat.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_recycler_logcat.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/raw_licenses.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/raw/licenses.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_copy.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_copy.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/menu_action_sub_setting.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/menu/action_sub_setting.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-xxxhdpi/ic_launcher_round.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_settings_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_settings_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-mdpi_ic_stat_direct.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-mdpi/ic_stat_direct.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_rounded_corner_inactive.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_rounded_corner_inactive.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_hub_glow.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_hub_glow.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_routing_edit.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_routing_edit.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/menu_menu_bypass_list.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/menu/menu_bypass_list.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_bypass_list.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_recycler_bypass_list.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/font_montserrat_thin.ttf.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/font/montserrat_thin.ttf"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_widget_switch.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/widget_switch.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_select_all_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_select_all_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_qrcode.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_qrcode.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_footer.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_recycler_footer.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_per_apps_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_per_apps_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_nav_header_bg.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/nav_header_bg.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-xhdpi_ic_launcher_foreground.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-xhdpi/ic_launcher_foreground.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/menu_menu_drawer.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/menu/menu_drawer.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_about_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_about_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/menu_menu_asset.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/menu/menu_asset.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_delete_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_delete_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_custom_divider.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/custom_divider.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_vless.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_server_vless.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-nodpi_launch_splash_static.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-nodpi/launch_splash_static.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_hub_glow.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_hub_glow.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-mdpi_ic_stat_name_black.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-mdpi/ic_stat_name_black.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_dialog_config_filter.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/dialog_config_filter.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_save_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_save_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-nodpi_launch_splash_static.png.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-nodpi/launch_splash_static.png"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_promotion_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_promotion_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_telegram_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_telegram_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_chip.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_splash_chip.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_lock_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_lock_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_sub_setting.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_sub_setting.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_login.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_login.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_share_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_share_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_action_done.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_action_done.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_play_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_play_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/menu_menu_scanner.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/menu/menu_scanner.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/menu_menu_logcat.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/menu/menu_logcat.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_file_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_file_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_layout_tls.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/layout_tls.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_routing_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_routing_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_edit_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_edit_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_user_profile.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_user_profile.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_cloud_download_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_cloud_download_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_scan_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_scan_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_outline_filter_alt_24.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_outline_filter_alt_24.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xxxhdpi_ic_stat_direct.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xxxhdpi/ic_stat_direct.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/menu_menu_main.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/menu/menu_main.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_none.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_none.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_main.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/item_recycler_main.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_custom_config.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_server_custom_config.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_layout_tls_hysteria2.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/layout_tls_hysteria2.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_play_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_play_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/font_montserrat_thin.ttf.flat",
-        "source": "com.v2ray.ang.app-main-87:/font/montserrat_thin.ttf"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_sub_edit.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_sub_edit.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_subscriptions_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_subscriptions_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_socks.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_server_socks.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_card.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/launch_splash_card.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_launch_splash_progress.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/launch_splash_progress.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/menu_menu_routing_setting.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/menu/menu_routing_setting.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_privacy_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_privacy_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_about.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_about.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xxxhdpi_ic_stat_name_black.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xxxhdpi/ic_stat_name_black.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_select_all_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_select_all_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_subscriptions_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_subscriptions_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_restore_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_restore_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_recycler_user_asset.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_recycler_user_asset.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_layout_transport.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/layout_transport.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_image_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_image_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_subscriptions_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_subscriptions_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_telegram_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_telegram_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/mipmap-anydpi-v26/ic_launcher.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/xml_cache_paths.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/xml/cache_paths.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_select_all_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable-night/ic_select_all_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_item_plan.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/item_plan.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_layout_address_port.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/layout_address_port.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_check_update.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_check_update.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_feedback_24dp.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/drawable/ic_feedback_24dp.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-night_ic_add_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-night/ic_add_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_main.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_main.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/mipmap-hdpi/ic_launcher.png"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/xml_cache_paths.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/xml/cache_paths.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_logcat_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_logcat_24dp.xml"
     },
     {
-        "merged": "com.v2ray.ang.app-fdroidDebug-83:/layout_activity_user_asset.xml.flat",
-        "source": "com.v2ray.ang.app-main-87:/layout/activity_user_asset.xml"
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable_ic_more_vert_24dp.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable/ic_more_vert_24dp.xml"
+    },
+    {
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/drawable-xhdpi_ic_stat_direct.png.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/drawable-xhdpi/ic_stat_direct.png"
+    },
+    {
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_vmess.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_server_vmess.xml"
+    },
+    {
+        "merged": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-fdroidDebug-83:/layout_activity_server_wireguard.xml.flat",
+        "source": "/Users/cnyirui/.gradle/daemon/9.3.1/com.v2ray.ang.app-main-87:/layout/activity_server_wireguard.xml"
     }
 ]

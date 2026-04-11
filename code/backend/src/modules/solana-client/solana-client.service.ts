@@ -27,6 +27,8 @@ import type {
   GetTransactionStatusRequest,
   GetTransactionStatusResponse,
   SolanaServiceHealth,
+  ScanIncomingTransfersRequest,
+  ScanIncomingTransfersResponse,
   TransferPrecheckRequest,
   TransferPrecheckResponse,
   VerifyIncomingTransferRequest,
@@ -271,6 +273,62 @@ export class SolanaClientService {
       throw new ServiceUnavailableException({
         code: 'SOLANA_VERIFY_TRANSFER_FAILED',
         message: 'Failed to verify incoming Solana transfer',
+      });
+    }
+  }
+
+  async scanIncomingTransfers(
+    request: ScanIncomingTransfersRequest,
+  ): Promise<ScanIncomingTransfersResponse> {
+    const network = this.getEffectiveNetwork(request.network);
+    const networkCode = this.toNetworkCode(network);
+
+    if (!this.isEnabled()) {
+      this.logger.debug('Solana service disabled, returning empty scan result', {
+        collectionAddress: request.collectionAddress,
+        assetCode: request.assetCode,
+        networkCode,
+      });
+      return {
+        networkCode,
+        collectionAddress: request.collectionAddress,
+        assetCode: request.assetCode,
+        mint: request.mint ?? null,
+        events: [],
+        nextCursor: request.cursor ?? null,
+        scannedAt: new Date().toISOString(),
+      };
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(
+          this.buildApiUrl('internal/v1/payment/scan-incoming'),
+          {
+            networkCode,
+            collectionAddress: request.collectionAddress,
+            assetCode: request.assetCode,
+            mintAddress: request.mint ?? null,
+            cursor: request.cursor ?? null,
+            limit: request.limit ?? 50,
+          },
+          {
+            timeout: this.config.getTimeoutMs(),
+            headers: this.getAuthHeaders(),
+          },
+        ),
+      );
+
+      return this.unwrapResponse<ScanIncomingTransfersResponse>(
+        response as AxiosResponse<
+          ScanIncomingTransfersResponse | EnvelopeResponse<ScanIncomingTransfersResponse>
+        >,
+      );
+    } catch (error) {
+      this.logger.error('Scan incoming transfers failed', error);
+      throw new ServiceUnavailableException({
+        code: 'SOLANA_SCAN_INCOMING_FAILED',
+        message: 'Failed to scan incoming transfers from chain-side service',
       });
     }
   }

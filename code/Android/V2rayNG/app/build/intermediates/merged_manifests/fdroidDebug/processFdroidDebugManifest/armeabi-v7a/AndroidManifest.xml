@@ -26,9 +26,7 @@
         android:required="false" />
     <uses-feature
         android:name="android.hardware.touchscreen"
-        android:required="false" />
-
-    <!-- https://developer.android.com/about/versions/11/privacy/package-visibility -->
+        android:required="false" /> <!-- https://developer.android.com/about/versions/11/privacy/package-visibility -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
@@ -38,8 +36,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission
         android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
-        android:minSdkVersion="34" />
-    <!-- <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> -->
+        android:minSdkVersion="34" /> <!-- <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -77,6 +74,11 @@
         android:supportsRtl="true"
         android:theme="@style/AppThemeDayNight.NoActionBar"
         android:usesCleartextTraffic="true" >
+        <activity
+            android:name="com.v2ray.ang.ui.compose.debug.ComposeRouteHarnessActivity"
+            android:exported="true"
+            android:label="Compose Route Harness"
+            android:theme="@style/AppThemeDayNight.NoActionBar" />
         <activity
             android:name="com.v2ray.ang.ui.MainActivity"
             android:exported="true"
@@ -307,8 +309,7 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="tile" />
-        </service>
-        <!-- =====================Tasker===================== -->
+        </service> <!-- =====================Tasker===================== -->
         <activity
             android:name="com.v2ray.ang.ui.TaskerActivity"
             android:exported="true"
@@ -325,8 +326,7 @@
             <intent-filter>
                 <action android:name="com.twofortyfouram.locale.intent.action.FIRE_SETTING" />
             </intent-filter>
-        </receiver>
-        <!-- =====================Tasker===================== -->
+        </receiver> <!-- =====================Tasker===================== -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="com.v2ray.ang.fdroid.androidx-startup"

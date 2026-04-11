@@ -62,4 +62,42 @@ describe('SolanaClientService', () => {
       expect.any(Object),
     );
   });
+
+  it('returns an empty scan response when chain-side service is disabled', async () => {
+    const httpService = {
+      post: jest.fn(),
+      get: jest.fn(),
+    };
+
+    const config = {
+      isEnabled: () => false,
+      getTimeoutMs: () => 1000,
+      getApiKey: () => 'test-token',
+      useDevnet: () => false,
+      getBaseUrl: () => 'https://sol.residential-agent.com',
+      getMaxRetries: () => 3,
+    };
+
+    const service = new SolanaClientService(
+      httpService as never,
+      config as never,
+    );
+
+    const result = await service.scanIncomingTransfers({
+      collectionAddress: 'SharedAddress111111111111111111111111111111',
+      assetCode: 'USDT',
+      mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+    });
+
+    expect(result).toEqual({
+      networkCode: 'solana-mainnet',
+      collectionAddress: 'SharedAddress111111111111111111111111111111',
+      assetCode: 'USDT',
+      mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+      events: [],
+      nextCursor: null,
+      scannedAt: expect.any(String),
+    });
+    expect(httpService.post).not.toHaveBeenCalled();
+  });
 });
