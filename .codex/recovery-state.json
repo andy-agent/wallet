@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-04-11T09:55:04Z",
+  "generated_at": "2026-04-11T10:26:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "next_task_id": "liaojiang-5cv",
-  "next_task_title": "Backend支付：订单模型改造为共享地址+尾差金额",
+  "next_task_id": "liaojiang-a3u",
+  "next_task_title": "Backend：共享地址订单自动匹配器与调度",
   "in_progress_count": 7,
   "ready_count": 0,
   "open_count": 12,
-  "closed_count": 387,
-  "dirty_count": 3,
+  "closed_count": 389,
+  "dirty_count": 193,
   "milestone_reached": false,
   "write_human_docs": false,
   "docs": {

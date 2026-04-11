@@ -6,6 +6,11 @@ import {
 } from '@solana/web3.js';
 import { SolanaRpcService } from '../solana/solana.rpc.service';
 import { DetectPaymentRequestDto } from './dto/detect-payment.request';
+import { ScanIncomingTransfersRequestDto } from './dto/scan-incoming.request';
+import {
+  ScanIncomingTransferItemDto,
+  ScanIncomingTransfersResponseDto,
+} from './dto/scan-incoming.response';
 import { VerifyTransactionRequestDto } from './dto/verify-transaction.request';
 
 const DEFAULT_NETWORK_CODE = 'solana-mainnet';
@@ -21,6 +26,12 @@ interface AssetResolution {
   assetKind: AssetKind;
   mintAddress: string | null;
   decimals: number;
+}
+
+interface AssetResolutionInput {
+  assetCode: string;
+  mintAddress?: string;
+  assetDecimals?: number;
 }
 
 interface PaymentMatch {
@@ -272,6 +283,110 @@ export class PaymentService {
     }
   }
 
+  async scanIncomingTransfers(
+    body: ScanIncomingTransfersRequestDto,
+  ): Promise<ScanIncomingTransfersResponseDto> {
+    const networkCode = body.networkCode ?? DEFAULT_NETWORK_CODE;
+    const collectionAddress = this.assertPublicKey(
+      body.collectionAddress,
+      'collectionAddress',
+    );
+    const asset = this.resolveAsset(body, networkCode);
+    const limit = body.limit ?? 20;
+
+    const signatureResult = await this.solanaRpc.getSignatureInfos(
+      collectionAddress,
+      networkCode,
+      {
+        limit,
+        beforeSignature: body.beforeSignature,
+      },
+    );
+
+    if (signatureResult.signatures.length === 0) {
+      return {
+        collectionAddress,
+        networkCode,
+        assetCode: asset.assetCode,
+        assetKind: asset.assetKind,
+        mintAddress: asset.mintAddress,
+        decimals: asset.decimals,
+        scannedSignatures: 0,
+        matchedTransfers: 0,
+        nextBeforeSignature: null,
+        items: [],
+      };
+    }
+
+    const parsedTransactions = await this.solanaRpc.getParsedTransactions(
+      signatureResult.signatures.map((item) => item.signature),
+      networkCode,
+    );
+    const transactionMap = new Map(
+      parsedTransactions.transactions.map((item) => [item.signature, item]),
+    );
+
+    const items = signatureResult.signatures
+      .map<ScanIncomingTransferItemDto | null>((signatureInfo) => {
+        if (signatureInfo.err) {
+          return null;
+        }
+
+        const parsedTx =
+          transactionMap.get(signatureInfo.signature)?.transaction ?? null;
+        if (!parsedTx || parsedTx.meta?.err) {
+          return null;
+        }
+
+        const paymentMatch =
+          asset.assetKind === 'NATIVE_SOL'
+            ? this.extractSolReceipt(parsedTx, collectionAddress)
+            : this.extractSplReceipt(
+                parsedTx,
+                collectionAddress,
+                asset.mintAddress as string,
+              );
+
+        if (paymentMatch.receivedAmountRaw <= 0n) {
+          return null;
+        }
+
+        return {
+          signature: signatureInfo.signature,
+          slot: signatureInfo.slot ?? parsedTx.slot ?? null,
+          blockTime: signatureInfo.blockTime ?? parsedTx.blockTime ?? null,
+          confirmationStatus: signatureInfo.confirmationStatus,
+          collectionAddress,
+          assetCode: asset.assetCode,
+          assetKind: asset.assetKind,
+          mintAddress: asset.mintAddress,
+          decimals: asset.decimals,
+          amount: this.fromBaseUnits(
+            paymentMatch.receivedAmountRaw,
+            asset.decimals,
+          ),
+          amountRaw: paymentMatch.receivedAmountRaw.toString(),
+          matchedAccounts: paymentMatch.matchedAccounts,
+        };
+      })
+      .filter((item): item is ScanIncomingTransferItemDto => item !== null);
+
+    return {
+      collectionAddress,
+      networkCode,
+      assetCode: asset.assetCode,
+      assetKind: asset.assetKind,
+      mintAddress: asset.mintAddress,
+      decimals: asset.decimals,
+      scannedSignatures: signatureResult.signatures.length,
+      matchedTransfers: items.length,
+      nextBeforeSignature:
+        signatureResult.signatures[signatureResult.signatures.length - 1]
+          ?.signature ?? null,
+      items,
+    };
+  }
+
   private buildVerificationResult(input: {
     body: VerifyTransactionRequestDto;
     asset: AssetResolution;
@@ -311,7 +426,7 @@ export class PaymentService {
   }
 
   private resolveAsset(
-    body: VerifyTransactionRequestDto,
+    body: AssetResolutionInput,
     networkCode: string,
   ): AssetResolution {
     const assetCode = body.assetCode.trim().toUpperCase();

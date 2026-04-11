@@ -12,6 +12,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { InternalAuthGuard } from '../../common/guards/internal-auth.guard';
 import { PaymentService } from './payment.service';
 import { DetectPaymentRequestDto } from './dto/detect-payment.request';
+import { ScanIncomingTransfersRequestDto } from './dto/scan-incoming.request';
 import { VerifyTransactionRequestDto } from './dto/verify-transaction.request';
 
 @ApiTags('Payment')
@@ -35,6 +36,15 @@ export class PaymentController {
   @ApiOperation({ summary: '主动检测指定地址收款（调用 Solana RPC）' })
   async detectPayment(@Body() body: DetectPaymentRequestDto) {
     return this.paymentService.detectPayment(body);
+  }
+
+  @Post('scan-incoming')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: '扫描共享收款地址最近入账并标准化为可匹配事件',
+  })
+  async scanIncomingTransfers(@Body() body: ScanIncomingTransfersRequestDto) {
+    return this.paymentService.scanIncomingTransfers(body);
   }
 
   @Post('verify')

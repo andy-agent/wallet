@@ -8,6 +8,15 @@ import {
   clusterApiUrl,
 } from '@solana/web3.js';
 
+export interface RpcSignatureInfo {
+  signature: string;
+  slot: number;
+  err: unknown;
+  memo: string | null;
+  blockTime: number | null;
+  confirmationStatus: string | null;
+}
+
 @Injectable()
 export class SolanaRpcService {
   private readonly logger = new Logger(SolanaRpcService.name);
@@ -181,12 +190,48 @@ export class SolanaRpcService {
       };
     }
 
+    const signatureInfo = await this.getSignatureInfos(address, networkCode, {
+      limit,
+    });
+
+    return {
+      address,
+      networkCode,
+      signatures: signatureInfo.signatures.map((sig) => sig.signature),
+    };
+  }
+
+  /**
+   * 查询地址最近的交易签名元数据
+   */
+  async getSignatureInfos(
+    address: string,
+    networkCode: string = 'solana-mainnet',
+    options?: {
+      limit?: number;
+      beforeSignature?: string;
+    },
+  ): Promise<{
+    address: string;
+    networkCode: string;
+    signatures: RpcSignatureInfo[];
+  }> {
+    if (this.useMockMode) {
+      return {
+        address,
+        networkCode,
+        signatures: [],
+      };
+    }
+
     const connection = this.getConnection(networkCode);
     const publicKey = new PublicKey(address);
 
-    // 添加 10 秒超时
     const signatures = await Promise.race([
-      connection.getSignaturesForAddress(publicKey, { limit }),
+      connection.getSignaturesForAddress(publicKey, {
+        limit: options?.limit,
+        before: options?.beforeSignature,
+      }),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('RPC timeout')), 10000),
       ),
@@ -195,7 +240,14 @@ export class SolanaRpcService {
     return {
       address,
       networkCode,
-      signatures: signatures.map((sig: { signature: string }) => sig.signature),
+      signatures: signatures.map((signatureInfo) => ({
+        signature: signatureInfo.signature,
+        slot: signatureInfo.slot,
+        err: signatureInfo.err,
+        memo: signatureInfo.memo ?? null,
+        blockTime: signatureInfo.blockTime ?? null,
+        confirmationStatus: signatureInfo.confirmationStatus ?? null,
+      })),
     };
   }
 
@@ -273,6 +325,50 @@ export class SolanaRpcService {
       signature,
       networkCode,
       transaction,
+    };
+  }
+
+  /**
+   * 批量获取已解析的交易详情，适合扫描场景
+   */
+  async getParsedTransactions(
+    signatures: string[],
+    networkCode: string = 'solana-mainnet',
+  ): Promise<{
+    networkCode: string;
+    transactions: Array<{
+      signature: string;
+      transaction: ParsedTransactionWithMeta | null;
+    }>;
+  }> {
+    if (this.useMockMode) {
+      return {
+        networkCode,
+        transactions: signatures.map((signature) => ({
+          signature,
+          transaction: null,
+        })),
+      };
+    }
+
+    const connection = this.getConnection(networkCode);
+
+    const transactions = await Promise.race([
+      connection.getParsedTransactions(signatures, {
+        commitment: 'confirmed',
+        maxSupportedTransactionVersion: 0,
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('RPC timeout')), 10000),
+      ),
+    ]);
+
+    return {
+      networkCode,
+      transactions: signatures.map((signature, index) => ({
+        signature,
+        transaction: transactions[index] ?? null,
+      })),
     };
   }
 }

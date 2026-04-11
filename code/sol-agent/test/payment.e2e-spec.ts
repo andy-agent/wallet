@@ -126,6 +126,106 @@ describe('PaymentController (e2e)', () => {
     expect(response.body.data.error).toContain('invalid address');
   }, 30000);
 
+  it('POST /api/internal/v1/payment/scan-incoming - 返回标准化共享地址入账结果', async () => {
+    const recipient = Keypair.generate().publicKey.toBase58();
+    const otherAddress = Keypair.generate().publicKey.toBase58();
+
+    jest.spyOn(solanaRpc, 'getSignatureInfos').mockResolvedValue({
+      address: recipient,
+      networkCode: 'solana-mainnet',
+      signatures: [
+        {
+          signature: 'scan-sol-signature',
+          slot: 42345,
+          err: null,
+          memo: null,
+          blockTime: 1712800300,
+          confirmationStatus: 'confirmed',
+        },
+        {
+          signature: 'scan-ignored-signature',
+          slot: 42346,
+          err: null,
+          memo: null,
+          blockTime: 1712800301,
+          confirmationStatus: 'confirmed',
+        },
+      ],
+    });
+    jest.spyOn(solanaRpc, 'getParsedTransactions').mockResolvedValue({
+      networkCode: 'solana-mainnet',
+      transactions: [
+        {
+          signature: 'scan-sol-signature',
+          transaction: {
+            slot: 42345,
+            blockTime: 1712800300,
+            meta: {
+              err: null,
+              preBalances: [1_500_000_000, 250_000_000],
+              postBalances: [750_000_000, 1_000_000_000],
+              preTokenBalances: [],
+              postTokenBalances: [],
+            },
+            transaction: {
+              message: {
+                accountKeys: [{ pubkey: otherAddress }, { pubkey: recipient }],
+              },
+            },
+          } as never,
+        },
+        {
+          signature: 'scan-ignored-signature',
+          transaction: {
+            slot: 42346,
+            blockTime: 1712800301,
+            meta: {
+              err: null,
+              preBalances: [500_000_000, 100_000_000],
+              postBalances: [450_000_000, 100_000_000],
+              preTokenBalances: [],
+              postTokenBalances: [],
+            },
+            transaction: {
+              message: {
+                accountKeys: [{ pubkey: otherAddress }, { pubkey: recipient }],
+              },
+            },
+          } as never,
+        },
+      ],
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/api/internal/v1/payment/scan-incoming')
+      .set('X-Internal-Auth', `Bearer ${token}`)
+      .send({
+        collectionAddress: recipient,
+        assetCode: 'SOL',
+        limit: 10,
+      })
+      .expect(200);
+
+    expect(response.body.code).toBe('OK');
+    expect(response.body.data.collectionAddress).toBe(recipient);
+    expect(response.body.data.assetCode).toBe('SOL');
+    expect(response.body.data.assetKind).toBe('NATIVE_SOL');
+    expect(response.body.data.scannedSignatures).toBe(2);
+    expect(response.body.data.matchedTransfers).toBe(1);
+    expect(response.body.data.nextBeforeSignature).toBe(
+      'scan-ignored-signature',
+    );
+    expect(response.body.data.items).toEqual([
+      expect.objectContaining({
+        signature: 'scan-sol-signature',
+        amount: '0.75',
+        amountRaw: '750000000',
+        matchedAccounts: [recipient],
+        confirmationStatus: 'confirmed',
+      }),
+    ]);
+  }, 30000);
+
   it('POST /api/internal/v1/payment/verify - 可校验原生 SOL 到账', async () => {
     const sender = Keypair.generate().publicKey.toBase58();
     const recipient = Keypair.generate().publicKey.toBase58();
