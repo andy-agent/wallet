@@ -259,6 +259,11 @@
     - `58.00 USDT`
     - `1.24 USDT`
   - 修复：改为用 `uiState.order + detailLines + riskLines + primaryActionLabel`
+- `OrderResultPage`
+  - 问题：页面是固定“订单已生效 / 开始连接并进入首页”的成功模板，不跟真实订单状态走
+  - 修复：改为用 `uiState.order + stateInfo + detailLines + canEnterHome`
+  - 最新真机证据：
+    - `/tmp/compose-realify-20260412-p1c/order_result_ORD-1775909049741-BF4BAF37.png`
 
 ### P0 首页真实回归
 - 新增运行级证据：
