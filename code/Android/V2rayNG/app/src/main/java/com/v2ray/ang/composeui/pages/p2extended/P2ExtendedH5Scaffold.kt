@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -384,6 +385,129 @@ internal fun ListRow(title: String, subtitle: String, trailing: String? = null) 
 }
 
 @Composable
+internal fun OptionCard(
+    title: String,
+    subtitle: String,
+    selected: Boolean = false,
+) {
+    val borderColor = if (selected) Color(0xFF9AB1FF) else Color(0xFFE9ECF8)
+    val backgroundColor = if (selected) Color(0xFFF1F5FF) else Color.White
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor, RoundedCornerShape(14.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(14.dp))
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(30.dp)
+                .background(
+                    if (selected) Color(0xFFDCE6FF) else Color(0xFFEBF0FF),
+                    RoundedCornerShape(9.dp),
+                ),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = Color(0xFF1E274D), fontWeight = FontWeight.SemiBold)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF68739E))
+        }
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .border(1.5.dp, if (selected) Color(0xFF2D4ED7) else Color(0xFFB8C1E5), CircleShape)
+                .padding(3.dp),
+        ) {
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Color(0xFF2D4ED7), CircleShape),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun MnemonicGrid(words: List<String>) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        words.chunked(3).forEachIndexed { rowIndex, rowWords ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                rowWords.forEachIndexed { columnIndex, word ->
+                    val absoluteIndex = rowIndex * 3 + columnIndex + 1
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(Color(0xFFF7F9FF), RoundedCornerShape(12.dp))
+                            .border(1.dp, Color(0xFFE9ECF8), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 10.dp, vertical = 9.dp),
+                    ) {
+                        Text(
+                            absoluteIndex.toString().padStart(2, '0'),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFF6E78A4),
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            word,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF1F2A52),
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+                repeat(3 - rowWords.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun DetectedChainList(chains: List<String>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0xFFE9ECF8), RoundedCornerShape(14.dp))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        chains.forEach { chain ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF7F9FF), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(Color(0xFF2D4ED7), CircleShape),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    chain,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF25315E),
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 internal fun NoteCard(title: String, text: String) {
     Row(
         modifier = Modifier
@@ -403,6 +527,146 @@ internal fun NoteCard(title: String, text: String) {
             Text(title, style = MaterialTheme.typography.labelLarge, color = Color(0xFF1D274D), fontWeight = FontWeight.SemiBold)
             Text(text, style = MaterialTheme.typography.bodySmall, color = Color(0xFF6673A0))
         }
+    }
+}
+
+@Composable
+internal fun ImportMethodOptionCard(
+    title: String,
+    subtitle: String,
+    tag: String? = null,
+    highlighted: Boolean = false,
+) {
+    val borderColor = if (highlighted) Color(0xFFB6C5FF) else Color(0xFFE9ECF8)
+    val backgroundColor = if (highlighted) Color(0xFFF2F5FF) else Color.White
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor, RoundedCornerShape(14.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(14.dp))
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .background(Color(0xFFE7EEFF), RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0xFFD7E2FF), RoundedCornerShape(10.dp)),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF1E274D),
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF6673A0),
+            )
+        }
+        if (tag != null) {
+            Box(
+                modifier = Modifier
+                    .background(Color(0xFFEAF0FF), RoundedCornerShape(999.dp))
+                    .border(1.dp, Color(0xFFD4DEFF), RoundedCornerShape(999.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+            ) {
+                Text(tag, style = MaterialTheme.typography.labelSmall, color = Color(0xFF3150D0))
+            }
+        }
+    }
+}
+
+@Composable
+internal fun MnemonicChunkCard(
+    chunkLabel: String,
+    words: List<String>,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFF7F9FF), RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0xFFE9ECF8), RoundedCornerShape(12.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .background(Color.White, RoundedCornerShape(999.dp))
+                .border(1.dp, Color(0xFFDCE3FF), RoundedCornerShape(999.dp))
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+        ) {
+            Text(chunkLabel, style = MaterialTheme.typography.labelSmall, color = Color(0xFF3E5197))
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = words.joinToString("  ·  "),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFF1F2A52),
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+internal fun MnemonicCheckpointRow(
+    label: String,
+    answer: String,
+    verified: Boolean,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0xFFE8ECF9), RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = Color(0xFF6671A1))
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                answer,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF1E274D),
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        SecurityStatusPill(
+            label = if (verified) "校验通过" else "待确认",
+            healthy = verified,
+        )
+    }
+}
+
+@Composable
+internal fun SecurityStatusPill(
+    label: String,
+    healthy: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val bg = if (healthy) Color(0xFFEAFBF1) else Color(0xFFFFF4E8)
+    val border = if (healthy) Color(0xFFC7F0D8) else Color(0xFFFFE2BF)
+    val text = if (healthy) Color(0xFF177245) else Color(0xFF995315)
+    Row(
+        modifier = modifier
+            .defaultMinSize(minHeight = 30.dp)
+            .background(bg, RoundedCornerShape(999.dp))
+            .border(1.dp, border, RoundedCornerShape(999.dp))
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(7.dp)
+                .background(text, CircleShape),
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(label, style = MaterialTheme.typography.labelMedium, color = text)
     }
 }
 

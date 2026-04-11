@@ -57,13 +57,13 @@ fun ImportWalletMethodScreen(
     ) {
         P2Card(title = "选择导入方式", subtitle = "支持助记词、私钥、Keystore 与观察钱包。") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ListRow("助记词导入", "适合完整恢复多链资产")
-                ListRow("私钥导入", "适合单地址快速恢复")
-                ListRow("Keystore / JSON", "适合 EVM 系资产")
+                OptionCard(title = "助记词导入", subtitle = "适合完整恢复多链资产", selected = true)
+                OptionCard(title = "私钥导入", subtitle = "适合单地址快速恢复")
+                OptionCard(title = "Keystore / JSON", subtitle = "适合 EVM 系资产")
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
-        ListRow("观察钱包", "只读地址，不可签名")
+        OptionCard(title = "观察钱包", subtitle = "只读地址不可签名，适合做资产追踪与风险监控。")
     }
 }
 

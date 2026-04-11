@@ -59,12 +59,19 @@ fun SecurityCenterScreen(
             ),
         )
         Spacer(modifier = Modifier.height(14.dp))
+        P2Card(title = "实时安全状态", subtitle = "关键防护项与风险项会在这里持续刷新。") {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SecurityStatusPill(label = "助记词完整性已验证", healthy = true)
+                SecurityStatusPill(label = "风险地址提醒命中 2 条", healthy = false)
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ListRow("管理助记词", "查看备份状态、重新校验")
-            ListRow("已登录设备", "Android · Pixel 8 / Web")
-            ListRow("签名授权记录", "已连接 6 个 DApp")
-            ListRow("风险地址提醒", "自动拦截诈骗地址")
-            ListRow("生物识别支付", "大额交易需指纹验证")
+            ImportMethodOptionCard("管理助记词", "查看备份状态、重新校验", tag = "关键", highlighted = true)
+            ImportMethodOptionCard("已登录设备", "Android · Pixel 8 / Web", tag = "2 台")
+            ImportMethodOptionCard("签名授权记录", "已连接 6 个 DApp")
+            ImportMethodOptionCard("风险地址提醒", "自动拦截诈骗地址", tag = "2 条")
+            ImportMethodOptionCard("生物识别支付", "大额交易需指纹验证")
         }
     }
 }

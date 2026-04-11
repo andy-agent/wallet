@@ -54,11 +54,23 @@ fun ConfirmMnemonicScreen(
         onSecondaryAction = { onEvent(ConfirmMnemonicEvent.SecondaryActionClicked) },
     ) {
         P2Card(title = "按顺序选择缺失的单词", subtitle = "系统会随机抽查3个位置。") {
-            FieldRow("第 2 个单词", "brick")
+            MnemonicCheckpointRow(
+                label = "第 2 个单词",
+                answer = "brick",
+                verified = true,
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("第 7 个单词", "orbit")
+            MnemonicCheckpointRow(
+                label = "第 7 个单词",
+                answer = "orbit",
+                verified = true,
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("第 11 个单词", "anchor")
+            MnemonicCheckpointRow(
+                label = "第 11 个单词",
+                answer = "anchor",
+                verified = false,
+            )
             Spacer(modifier = Modifier.height(12.dp))
             ChipRow(items = listOf("brick", "orbit", "anchor", "velvet", "glow", "coral"), activeIndex = 0)
         }

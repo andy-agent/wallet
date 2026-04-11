@@ -54,13 +54,16 @@ fun BackupMnemonicScreen(
         onSecondaryAction = { onEvent(BackupMnemonicEvent.SecondaryActionClicked) },
     ) {
         P2Card(title = "请抄写以下 12 个单词", subtitle = "不要截屏、不要存云端、不要分享给任何人。") {
-            FieldRow(label = "01-03", value = "ocean · brick · velvet")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow(label = "04-06", value = "lamp · maple · vivid")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow(label = "07-09", value = "orbit · coral · charge")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow(label = "10-12", value = "laptop · anchor · glow")
+            MnemonicGrid(
+                words = listOf(
+                    "ocean", "brick", "velvet",
+                    "lamp", "maple", "vivid",
+                    "orbit", "coral", "charge",
+                    "laptop", "anchor", "glow",
+                ),
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            SecurityStatusPill(label = "离线抄写确认", healthy = false)
         }
     }
 }

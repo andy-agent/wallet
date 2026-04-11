@@ -54,11 +54,23 @@ fun ImportMnemonicScreen(
         onSecondaryAction = { onEvent(ImportMnemonicEvent.SecondaryActionClicked) },
     ) {
         P2Card(title = "助记词恢复", subtitle = "你的助记词仅在本地解析，不会上传真服务器。") {
-            FieldRow("助记词", "ocean brick velvet lamp maple vivid orbit coral charge laptop anchor glow")
+            MnemonicGrid(
+                words = listOf(
+                    "ocean", "brick", "velvet",
+                    "lamp", "maple", "vivid",
+                    "orbit", "coral", "charge",
+                    "laptop", "anchor", "glow",
+                ),
+            )
             Spacer(modifier = Modifier.height(12.dp))
             ChipRow(items = listOf("自动识别链", "仅恢复 Solana", "仅恢复 TRON", "高级"), activeIndex = 0)
             Spacer(modifier = Modifier.height(12.dp))
-            NoteCard(title = "已识别链", text = "Solana · TRON · Base")
+            DetectedChainList(chains = listOf("Solana", "TRON", "Base"))
+            Spacer(modifier = Modifier.height(10.dp))
+            SecurityStatusPill(
+                label = "本地解析模式",
+                healthy = true,
+            )
         }
     }
 }
