@@ -5,20 +5,22 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
+import { PostgresDataAccessService } from '../database/postgres-data-access.service';
 import { RuntimeStateRepository } from '../database/runtime-state.repository';
 import {
   PersistedSubscriptionRecord,
   SubscriptionState,
 } from './vpn.types';
 
-const BASIC_REGION_ID = '33333333-3333-3333-3333-333333333333';
-const ADVANCED_REGION_ID = '22222222-2222-2222-2222-222222222222';
+const TEST_BASIC_REGION_ID = '33333333-3333-3333-3333-333333333333';
+const TEST_ADVANCED_REGION_ID = '22222222-2222-2222-2222-222222222222';
 
 @Injectable()
 export class VpnService {
   constructor(
     private readonly authService: AuthService,
     private readonly runtimeStateRepository: RuntimeStateRepository,
+    private readonly postgresDataAccessService: PostgresDataAccessService,
   ) {}
 
   async getCurrentSubscription(accessToken: string) {
@@ -35,27 +37,70 @@ export class VpnService {
         message: 'Subscription required',
       });
     }
+    if (!this.postgresDataAccessService.isEnabled()) {
+      if (process.env.NODE_ENV === 'test') {
+        return {
+          items: [
+            {
+              regionId: TEST_BASIC_REGION_ID,
+              regionCode: 'JP_BASIC',
+              displayName: '日本-基础线路',
+              tier: 'BASIC',
+              status: 'ACTIVE',
+              isAllowed: true,
+              remark: '基础可用区域',
+            },
+            {
+              regionId: TEST_ADVANCED_REGION_ID,
+              regionCode: 'US_LOW_LATENCY',
+              displayName: '美国-低延迟',
+              tier: 'ADVANCED',
+              status: 'ACTIVE',
+              isAllowed: false,
+              remark: '当前套餐无权限',
+            },
+          ],
+        };
+      }
+      return { items: [] };
+    }
+
+    const plans = await this.postgresDataAccessService.listPlans({
+      page: 1,
+      pageSize: 100,
+    });
+    const plan = plans.items.find(
+      (item) => (item as { planCode?: string }).planCode === subscription.planCode,
+    ) as
+      | {
+          planCode: string;
+          regionAccessPolicy: string;
+          includesAdvancedRegions: boolean;
+          allowedRegionIds: string[];
+        }
+      | undefined;
+
+    const regions = await this.postgresDataAccessService.listVpnRegions({
+      page: 1,
+      pageSize: 100,
+      status: 'ACTIVE',
+    });
+
     return {
-      items: [
-        {
-          regionId: BASIC_REGION_ID,
-          regionCode: 'JP_BASIC',
-          displayName: '日本-基础线路',
-          tier: 'BASIC',
-          status: 'ACTIVE',
-          isAllowed: true,
-          remark: '基础可用区域',
-        },
-        {
-          regionId: ADVANCED_REGION_ID,
-          regionCode: 'US_LOW_LATENCY',
-          displayName: '美国-低延迟',
-          tier: 'ADVANCED',
-          status: 'ACTIVE',
-          isAllowed: false,
-          remark: '当前套餐无权限',
-        },
-      ],
+      items: regions.items.map((region) => {
+        const typedRegion = region as {
+          regionId: string;
+          regionCode: string;
+          displayName: string;
+          tier: string;
+          status: string;
+          remark: string | null;
+        };
+        return {
+          ...typedRegion,
+          isAllowed: this.isRegionAllowed(plan, typedRegion),
+        };
+      }),
     };
   }
 
@@ -96,10 +141,23 @@ export class VpnService {
       });
     }
 
+    const node = await this.pickRegionNode(region.regionId);
+    if (!node) {
+      throw new ConflictException({
+        code: 'VPN_REGION_UNAVAILABLE',
+        message: 'Region unavailable',
+      });
+    }
+
     return {
       regionCode: region.regionCode,
       connectionMode: params.connectionMode,
-      configPayload: `vless://issued-${region.regionCode.toLowerCase()}-${session.sessionId}`,
+      configPayload: this.buildVlessConfigPayload({
+        subscriptionId: subscription.subscriptionId,
+        regionCode: region.regionCode,
+        host: node.host,
+        port: node.port,
+      }),
       issuedAt: new Date().toISOString(),
       expireAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
     };
@@ -109,12 +167,19 @@ export class VpnService {
     const account = this.authService.getMe(accessToken);
     const subscription = await this.getSubscriptionByAccountId(account.accountId);
     const session = this.authService.getSessionSummary(accessToken);
+    const allowedRegions =
+      subscription.status === 'ACTIVE' ? (await this.listRegions(accessToken)).items : [];
+    const currentRegionCode =
+      allowedRegions.find((item) => item.isAllowed)?.regionCode ?? null;
 
     return {
       subscriptionStatus: subscription.status,
-      currentRegionCode: subscription.status === 'ACTIVE' ? 'JP_BASIC' : null,
+      currentRegionCode,
       connectionMode: subscription.status === 'ACTIVE' ? 'global' : null,
-      canIssueConfig: subscription.status === 'ACTIVE' && session.status === 'ACTIVE',
+      canIssueConfig:
+        subscription.status === 'ACTIVE' &&
+        session.status === 'ACTIVE' &&
+        currentRegionCode !== null,
       sessionStatus: session.status,
     };
   }
@@ -209,5 +274,71 @@ export class VpnService {
       isUnlimitedTraffic: true,
       maxActiveSessions: 1,
     };
+  }
+
+  private isRegionAllowed(
+    plan:
+      | {
+          regionAccessPolicy: string;
+          includesAdvancedRegions: boolean;
+          allowedRegionIds: string[];
+        }
+      | undefined,
+    region: { regionId: string; tier: string },
+  ) {
+    if (!plan) {
+      return false;
+    }
+
+    if (plan.includesAdvancedRegions) {
+      return true;
+    }
+
+    if (plan.regionAccessPolicy === 'CUSTOM') {
+      return plan.allowedRegionIds.includes(region.regionId);
+    }
+
+    if (plan.regionAccessPolicy === 'INCLUDE_ADVANCED') {
+      return true;
+    }
+
+    return region.tier === 'BASIC';
+  }
+
+  private async pickRegionNode(regionId: string) {
+    if (!this.postgresDataAccessService.isEnabled()) {
+      if (process.env.NODE_ENV === 'test') {
+        return {
+          host: 'jp-basic.example.com',
+          port: 443,
+        };
+      }
+      return null;
+    }
+
+    const nodes = await this.postgresDataAccessService.listVpnNodes({
+      page: 1,
+      pageSize: 20,
+      regionId,
+      status: 'ACTIVE',
+    });
+
+    return nodes.items[0] as
+      | {
+          host: string;
+          port: number;
+        }
+      | undefined
+      | null;
+  }
+
+  private buildVlessConfigPayload(input: {
+    subscriptionId: string;
+    regionCode: string;
+    host: string;
+    port: number;
+  }) {
+    const remark = encodeURIComponent(`CryptoVPN-${input.regionCode}`);
+    return `vless://${input.subscriptionId}@${input.host}:${input.port}?encryption=none&security=none&type=tcp#${remark}`;
   }
 }

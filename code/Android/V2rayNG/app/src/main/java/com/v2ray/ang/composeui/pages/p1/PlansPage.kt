@@ -1,5 +1,7 @@
 package com.v2ray.ang.composeui.pages.p1
 
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,6 +34,7 @@ import com.v2ray.ang.composeui.p1.model.PlansUiState
 import com.v2ray.ang.composeui.p1.model.plansPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.PlansViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.plans.PlansActivity
 
 @Composable
 fun PlansRoute(
@@ -41,11 +44,12 @@ fun PlansRoute(
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     PlansScreen(
         uiState = uiState,
         onPrimaryAction = {
             viewModel.onEvent(PlansEvent.PrimaryActionClicked)
-            onPrimaryAction()
+            context.startActivity(Intent(context, PlansActivity::class.java))
         },
         onSecondaryAction = {
             viewModel.onEvent(PlansEvent.SecondaryActionClicked)

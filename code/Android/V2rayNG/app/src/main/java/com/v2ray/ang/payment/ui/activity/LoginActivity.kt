@@ -28,6 +28,15 @@ class LoginActivity : AppCompatActivity() {
 
     companion object {
         const val RESULT_CODE_LOGIN_SUCCESS = RESULT_OK
+        private const val EXTRA_REGISTER_MODE = "extra_register_mode"
+        private const val EXTRA_RETURN_RESULT_ONLY = "extra_return_result_only"
+
+        fun createRegisterIntent(context: android.content.Context): Intent {
+            return Intent(context, LoginActivity::class.java).apply {
+                putExtra(EXTRA_REGISTER_MODE, true)
+                putExtra(EXTRA_RETURN_RESULT_ONLY, true)
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +45,7 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         repository = PaymentRepository(this)
+        isRegisterMode = intent.getBooleanExtra(EXTRA_REGISTER_MODE, false)
 
         if (checkAutoLogin()) {
             return
@@ -47,7 +57,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun checkAutoLogin(): Boolean {
         return if (repository.isTokenValid()) {
-            navigateToUserProfile()
+            finishWithAuthResultOrNavigate()
             true
         } else if (repository.getRefreshToken() != null) {
             lifecycleScope.launch {
@@ -55,7 +65,7 @@ class LoginActivity : AppCompatActivity() {
                 val success = repository.refreshTokenIfNeeded()
                 showLoading(false)
                 if (success) {
-                    navigateToUserProfile()
+                    finishWithAuthResultOrNavigate()
                 }
             }
             true
@@ -67,6 +77,15 @@ class LoginActivity : AppCompatActivity() {
     private fun navigateToUserProfile() {
         startActivity(Intent(this, UserProfileActivity::class.java))
         finish()
+    }
+
+    private fun finishWithAuthResultOrNavigate() {
+        if (intent.getBooleanExtra(EXTRA_RETURN_RESULT_ONLY, false)) {
+            setResult(RESULT_CODE_LOGIN_SUCCESS)
+            finish()
+        } else {
+            navigateToUserProfile()
+        }
     }
 
     private fun setupUI() {
@@ -266,7 +285,11 @@ class LoginActivity : AppCompatActivity() {
                     putExtra("username", email)
                     putExtra("access_token", authData.accessToken)
                 })
-                navigateToUserProfile()
+                if (intent.getBooleanExtra(EXTRA_RETURN_RESULT_ONLY, false)) {
+                    finish()
+                } else {
+                    navigateToUserProfile()
+                }
             } catch (e: Exception) {
                 showError(getString(R.string.error_operation_failed, e.message ?: "Cache failed"))
             }

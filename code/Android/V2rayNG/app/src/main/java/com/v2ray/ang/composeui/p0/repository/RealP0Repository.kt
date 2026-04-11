@@ -14,6 +14,7 @@ import com.v2ray.ang.composeui.p0.model.WalletChainSummary
 import com.v2ray.ang.composeui.p0.model.WalletHomeUiState
 import com.v2ray.ang.composeui.p0.model.WalletOnboardingUiState
 import com.v2ray.ang.composeui.p0.model.WatchSignal
+import com.v2ray.ang.handler.V2RayServiceManager
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.model.Order
@@ -122,7 +123,7 @@ class RealP0Repository(context: Context) : P0Repository {
             )
 
         return VpnHomeUiState(
-            connectionStatus = if (paymentRepository.isTokenValid()) {
+            connectionStatus = if (V2RayServiceManager.isRunning()) {
                 VpnConnectionStatus.CONNECTED
             } else {
                 VpnConnectionStatus.DISCONNECTED
@@ -135,7 +136,7 @@ class RealP0Repository(context: Context) : P0Repository {
                 nextBillingLabel = subscription?.expireAt?.let(::formatDateLabel) ?: "等待续费",
             ),
             autoConnectEnabled = paymentRepository.isTokenValid(),
-            oneTapLabel = if (paymentRepository.isTokenValid()) "Protected session active" else "Reconnect and secure",
+            oneTapLabel = if (V2RayServiceManager.isRunning()) "VPN tunnel active" else "Connect and secure",
             speedNodes = regions,
             watchSignals = buildWatchSignals(orders),
             walletTotalLabel = orders.sumOf { it.payment.amountCrypto.toDoubleOrNull() ?: 0.0 }

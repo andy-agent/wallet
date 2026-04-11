@@ -15,11 +15,13 @@ export class AdminPlansService {
       return result;
     }
 
-    const result = this.plansService.listPlans();
+    const result = await this.plansService.listPlans();
     let items = result.items;
 
     if (params.status) {
-      items = items.filter((p) => p.status === params.status);
+      items = items.filter(
+        (plan) => (plan as { status?: string }).status === params.status,
+      );
     }
 
     const page = Math.max(1, params.page ?? 1);
