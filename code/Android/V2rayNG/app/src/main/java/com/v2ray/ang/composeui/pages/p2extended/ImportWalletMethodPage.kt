@@ -57,7 +57,7 @@ fun ImportWalletMethodScreen(
     ) {
         P2Card(title = "选择导入方式", subtitle = "支持助记词、私钥、Keystore 与观察钱包。") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OptionCard(title = "助记词导入", subtitle = "适合完整恢复多链资产", selected = true)
+                OptionCard(title = "助记词导入", subtitle = "适合完整恢复多链资产", selected = true, badge = "推荐")
                 OptionCard(title = "私钥导入", subtitle = "适合单地址快速恢复")
                 OptionCard(title = "Keystore / JSON", subtitle = "适合 EVM 系资产")
             }

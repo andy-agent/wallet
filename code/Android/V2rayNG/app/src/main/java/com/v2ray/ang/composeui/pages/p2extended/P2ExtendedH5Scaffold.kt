@@ -389,6 +389,7 @@ internal fun OptionCard(
     title: String,
     subtitle: String,
     selected: Boolean = false,
+    badge: String? = null,
 ) {
     val borderColor = if (selected) Color(0xFF9AB1FF) else Color(0xFFE9ECF8)
     val backgroundColor = if (selected) Color(0xFFF1F5FF) else Color.White
@@ -413,6 +414,22 @@ internal fun OptionCard(
             Text(title, style = MaterialTheme.typography.bodyLarge, color = Color(0xFF1E274D), fontWeight = FontWeight.SemiBold)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF68739E))
         }
+        if (badge != null) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .background(Color(0xFFEAF0FF), RoundedCornerShape(999.dp))
+                    .border(1.dp, Color(0xFFD4DEFF), RoundedCornerShape(999.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            ) {
+                Text(
+                    badge,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF3150D0),
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
         Box(
             modifier = Modifier
                 .size(18.dp)
@@ -501,6 +518,12 @@ internal fun DetectedChainList(chains: List<String>) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFF25315E),
                     fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    "已识别",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF6270A4),
                 )
             }
         }
@@ -667,6 +690,145 @@ internal fun SecurityStatusPill(
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(label, style = MaterialTheme.typography.labelMedium, color = text)
+    }
+}
+
+@Composable
+internal fun P2FlowStepCard(
+    step: String,
+    title: String,
+    detail: String,
+    emphasized: Boolean = false,
+) {
+    val background = if (emphasized) Color(0xFFF0F4FF) else Color(0xFFF7F9FF)
+    val border = if (emphasized) Color(0xFFCBD8FF) else Color(0xFFE5EAF8)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(background, RoundedCornerShape(14.dp))
+            .border(1.dp, border, RoundedCornerShape(14.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .background(Color.White, RoundedCornerShape(999.dp))
+                .border(1.dp, Color(0xFFD7DFFB), RoundedCornerShape(999.dp))
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+        ) {
+            Text(step, style = MaterialTheme.typography.labelSmall, color = Color(0xFF40539C))
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF1E274D),
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                detail,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF6673A0),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun P2SecurityActionCard(
+    title: String,
+    detail: String,
+    badge: String? = null,
+    risk: Boolean = false,
+) {
+    val border = if (risk) Color(0xFFFFD7C2) else Color(0xFFE8ECF8)
+    val background = if (risk) Color(0xFFFFFAF6) else Color.White
+    val badgeBg = if (risk) Color(0xFFFFEFE5) else Color(0xFFEAF0FF)
+    val badgeText = if (risk) Color(0xFFB25A1C) else Color(0xFF3150D0)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(background, RoundedCornerShape(14.dp))
+            .border(1.dp, border, RoundedCornerShape(14.dp))
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .background(
+                    if (risk) Color(0xFFFFEFE5) else Color(0xFFE7EEFF),
+                    RoundedCornerShape(10.dp),
+                )
+                .border(
+                    1.dp,
+                    if (risk) Color(0xFFFFDCC8) else Color(0xFFD7E2FF),
+                    RoundedCornerShape(10.dp),
+                ),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF1E274D),
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                text = detail,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF6673A0),
+            )
+        }
+        if (badge != null) {
+            Box(
+                modifier = Modifier
+                    .background(badgeBg, RoundedCornerShape(999.dp))
+                    .border(1.dp, border, RoundedCornerShape(999.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+            ) {
+                Text(badge, style = MaterialTheme.typography.labelSmall, color = badgeText)
+            }
+        }
+    }
+}
+
+@Composable
+internal fun P2InlineWarningCard(
+    title: String,
+    text: String,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFF6EC), RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0xFFFFE0C5), RoundedCornerShape(14.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(Color(0xFFF18A3D), CircleShape),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Column {
+            Text(
+                title,
+                style = MaterialTheme.typography.labelLarge,
+                color = Color(0xFF9D4E1D),
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFAF6736),
+            )
+        }
     }
 }
 
