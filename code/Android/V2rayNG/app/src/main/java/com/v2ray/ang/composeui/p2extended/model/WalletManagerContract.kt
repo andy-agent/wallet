@@ -14,7 +14,7 @@ data class WalletManagerUiState(
         val subtitle: String = "WALLET MANAGER",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "钱包管理页用于切换默认钱包、重命名、归档与导出安全操作。",
-        val primaryActionLabel: String = "打开地址簿",
+        val primaryActionLabel: String? = "打开地址簿",
         val secondaryActionLabel: String? = "返回个人中心",
         val heroAccent: String = "wallet_manager",
         val metrics: List<FeatureMetric> = listOf(

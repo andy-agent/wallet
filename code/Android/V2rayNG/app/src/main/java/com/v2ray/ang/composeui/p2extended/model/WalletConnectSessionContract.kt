@@ -14,7 +14,7 @@ data class WalletConnectSessionUiState(
         val subtitle: String = "WALLET CONNECT SESSION",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "WalletConnect 会话页展示活跃连接、权限范围与失效时间。",
-        val primaryActionLabel: String = "查看签名确认",
+        val primaryActionLabel: String? = "查看签名确认",
         val secondaryActionLabel: String? = "断开后返回钱包",
         val heroAccent: String = "wallet_connect_session",
         val metrics: List<FeatureMetric> = listOf(

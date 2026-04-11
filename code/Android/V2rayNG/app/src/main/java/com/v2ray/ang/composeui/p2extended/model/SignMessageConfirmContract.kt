@@ -14,7 +14,7 @@ data class SignMessageConfirmUiState(
         val subtitle: String = "SIGN MESSAGE CONFIRM",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "签名确认页展示 DApp 请求、链、金额与风险提示。",
-        val primaryActionLabel: String = "确认签名",
+        val primaryActionLabel: String? = "确认签名",
         val secondaryActionLabel: String? = "拒绝并返回",
         val heroAccent: String = "sign_message_confirm",
         val metrics: List<FeatureMetric> = listOf(

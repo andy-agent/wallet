@@ -14,7 +14,7 @@ data class ChainManagerUiState(
         val subtitle: String = "CHAIN MANAGER",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "链管理页用于启停链、排序、查看 RPC 状态与添加扩展网络。",
-        val primaryActionLabel: String = "添加自定义代币",
+        val primaryActionLabel: String? = "添加自定义代币",
         val secondaryActionLabel: String? = "返回钱包首页",
         val heroAccent: String = "chain_manager",
         val metrics: List<FeatureMetric> = listOf(

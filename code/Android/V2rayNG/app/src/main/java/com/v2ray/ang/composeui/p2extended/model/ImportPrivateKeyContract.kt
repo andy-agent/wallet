@@ -14,7 +14,7 @@ data class ImportPrivateKeyUiState(
         val subtitle: String = "IMPORT PRIVATE KEY",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "私钥导入页展示链选择、私钥输入与本地加密提示。",
-        val primaryActionLabel: String = "校验并导入",
+        val primaryActionLabel: String? = "校验并导入",
         val secondaryActionLabel: String? = "回到导入方式",
         val heroAccent: String = "import_private_key",
         val metrics: List<FeatureMetric> = listOf(

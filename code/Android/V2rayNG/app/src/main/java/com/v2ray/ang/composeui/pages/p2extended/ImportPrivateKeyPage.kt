@@ -4,8 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
-import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 import com.v2ray.ang.composeui.p2extended.model.ImportPrivateKeyEvent
 import com.v2ray.ang.composeui.p2extended.model.ImportPrivateKeyUiState
@@ -40,32 +38,21 @@ fun ImportPrivateKeyScreen(
     onEvent: (ImportPrivateKeyEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    FeaturePageTemplate(
+    P2ExtendedFeatureTemplate(
+        kicker = uiState.subtitle,
         title = uiState.title,
-        subtitle = uiState.subtitle,
-        badge = uiState.badge,
-        summary = uiState.summary,
-        heroAccent = uiState.heroAccent,
+        subtitle = uiState.summary,
+        hubLabel = uiState.badge,
+        onHubClick = { onEvent(ImportPrivateKeyEvent.Refresh) },
+        primaryActionLabel = uiState.primaryActionLabel,
+        onPrimaryAction = { onEvent(ImportPrivateKeyEvent.PrimaryActionClicked) },
+        secondaryActionLabel = uiState.secondaryActionLabel,
+        onSecondaryAction = { onEvent(ImportPrivateKeyEvent.SecondaryActionClicked) },
         metrics = uiState.metrics,
         fields = uiState.fields,
         highlights = uiState.highlights,
         checklist = uiState.checklist,
         note = uiState.note,
-        primaryActionLabel = uiState.primaryActionLabel,
-        secondaryActionLabel = uiState.secondaryActionLabel,
-        showBottomBar = false,
-        currentRoute = "import_private_key",
-        motionProfile = MotionProfile.L1,
-        onBottomNav = onBottomNav,
-        onFieldChanged = { key, value ->
-            onEvent(ImportPrivateKeyEvent.FieldChanged(key = key, value = value))
-        },
-        onPrimaryAction = {
-            onEvent(ImportPrivateKeyEvent.PrimaryActionClicked)
-        },
-        onSecondaryAction = {
-            onEvent(ImportPrivateKeyEvent.SecondaryActionClicked)
-        },
     )
 }
 

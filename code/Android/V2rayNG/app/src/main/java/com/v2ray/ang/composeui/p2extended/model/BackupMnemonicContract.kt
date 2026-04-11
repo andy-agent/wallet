@@ -14,7 +14,7 @@ data class BackupMnemonicUiState(
         val subtitle: String = "BACKUP MNEMONIC",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "备份助记词页展示助记词分组、风险说明与下一步确认入口。",
-        val primaryActionLabel: String = "进入确认助记词",
+        val primaryActionLabel: String? = "进入确认助记词",
         val secondaryActionLabel: String? = "返回创建钱包",
         val heroAccent: String = "backup_mnemonic",
         val metrics: List<FeatureMetric> = listOf(

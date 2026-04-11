@@ -12,7 +12,7 @@ data class ImportWalletMethodUiState(
         val subtitle: String = "IMPORT WALLET METHOD",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "导入钱包方式页提供助记词、私钥等入口，并标记风险提示。",
-        val primaryActionLabel: String = "使用助记词导入",
+        val primaryActionLabel: String? = "使用助记词导入",
         val secondaryActionLabel: String? = "改用私钥导入",
         val heroAccent: String = "import_wallet_method",
         val metrics: List<FeatureMetric> = listOf(

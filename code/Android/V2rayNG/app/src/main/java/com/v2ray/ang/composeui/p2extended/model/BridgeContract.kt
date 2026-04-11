@@ -14,7 +14,7 @@ data class BridgeUiState(
         val subtitle: String = "BRIDGE",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "Bridge 页补齐跨链资产搬运、目标地址与预计到账时间。",
-        val primaryActionLabel: String = "继续桥接预览",
+        val primaryActionLabel: String? = "继续桥接预览",
         val secondaryActionLabel: String? = "回到钱包首页",
         val heroAccent: String = "bridge",
         val metrics: List<FeatureMetric> = listOf(

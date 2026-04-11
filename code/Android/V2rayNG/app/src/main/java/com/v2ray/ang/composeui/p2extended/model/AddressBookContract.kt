@@ -14,7 +14,7 @@ data class AddressBookUiState(
         val subtitle: String = "ADDRESS BOOK",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "地址簿页管理常用地址、标签、白名单与快捷发送入口。",
-        val primaryActionLabel: String = "用该地址发起转账",
+        val primaryActionLabel: String? = "用该地址发起转账",
         val secondaryActionLabel: String? = "返回钱包管理",
         val heroAccent: String = "address_book",
         val metrics: List<FeatureMetric> = listOf(

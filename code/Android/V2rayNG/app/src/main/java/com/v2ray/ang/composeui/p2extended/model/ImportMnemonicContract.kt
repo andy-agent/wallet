@@ -14,7 +14,7 @@ data class ImportMnemonicUiState(
         val subtitle: String = "IMPORT MNEMONIC",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "助记词导入页提供文本输入、词数校验与恢复后的链列表预估。",
-        val primaryActionLabel: String = "解析并导入钱包",
+        val primaryActionLabel: String? = "解析并导入钱包",
         val secondaryActionLabel: String? = "回到导入方式",
         val heroAccent: String = "import_mnemonic",
         val metrics: List<FeatureMetric> = listOf(

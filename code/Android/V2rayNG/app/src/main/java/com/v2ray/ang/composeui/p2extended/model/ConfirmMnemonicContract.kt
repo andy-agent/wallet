@@ -14,7 +14,7 @@ data class ConfirmMnemonicUiState(
         val subtitle: String = "CONFIRM MNEMONIC",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "确认助记词页通过抽查顺序验证用户是否完成备份。",
-        val primaryActionLabel: String = "完成验证并进入安全中心",
+        val primaryActionLabel: String? = "完成验证并进入安全中心",
         val secondaryActionLabel: String? = "返回重新查看",
         val heroAccent: String = "confirm_mnemonic",
         val metrics: List<FeatureMetric> = listOf(

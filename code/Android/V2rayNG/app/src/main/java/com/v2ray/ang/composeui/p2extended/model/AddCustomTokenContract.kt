@@ -14,7 +14,7 @@ data class AddCustomTokenUiState(
         val subtitle: String = "ADD CUSTOM TOKEN",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "自定义代币页填写合约、符号与精度，补齐链上资产扩展能力。",
-        val primaryActionLabel: String = "添加到资产列表",
+        val primaryActionLabel: String? = "添加到资产列表",
         val secondaryActionLabel: String? = "返回链管理",
         val heroAccent: String = "add_custom_token",
         val metrics: List<FeatureMetric> = listOf(

@@ -14,7 +14,7 @@ data class DappBrowserUiState(
         val subtitle: String = "DAPP BROWSER",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "DApp 浏览器页提供搜索、收藏与安全评分入口。",
-        val primaryActionLabel: String = "查看 WalletConnect 会话",
+        val primaryActionLabel: String? = "查看 WalletConnect 会话",
         val secondaryActionLabel: String? = "返回钱包首页",
         val heroAccent: String = "dapp_browser",
         val metrics: List<FeatureMetric> = listOf(

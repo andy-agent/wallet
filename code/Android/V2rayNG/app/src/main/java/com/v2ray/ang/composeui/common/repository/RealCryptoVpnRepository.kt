@@ -980,6 +980,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val orders = loadCachedOrders()
 
         return AutoConnectRulesUiState(
+            badge = if (tokenValid) "本地规则" else "未登录",
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("规则数量", if (tokenValid) "1" else "0"),
                 FeatureMetric("会话状态", if (tokenValid) "有效" else "未登录"),
@@ -994,11 +997,12 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 ),
             ),
             highlights = listOf(
-                FeatureListItem("默认策略", if (tokenValid) "检测到账号会话后允许自动提醒" else "未配置", "", "REAL"),
+                FeatureListItem("默认策略", if (tokenValid) "检测到账号会话后允许自动提醒" else "未配置", "", "LOCAL"),
                 FeatureListItem("会话状态", if (tokenValid) "已登录" else "需登录后配置", "", "SESSION"),
                 FeatureListItem("数据源", "本地运行时状态", "", "LOCAL"),
             ),
-            note = "不再回退到 Mock 仓库；当前页面先使用本地运行时规则状态。",
+            summary = "自动连接规则当前只有本地运行时状态，没有真实持久化与策略下发能力。",
+            note = "在真实规则存储和下发能力补齐前，本页只读展示当前本地状态，不再假装可以保存。",
         )
     }
 
@@ -1007,10 +1011,13 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val defaultName = user?.username?.let { "$it Wallet" } ?: "Primary Wallet"
 
         return CreateWalletUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("模式", args.mode),
                 FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
-                FeatureMetric("数据源", "本地钱包流程"),
+                FeatureMetric("数据源", "本地占位流程"),
             ),
             fields = listOf(
                 FeatureField(
@@ -1021,11 +1028,12 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 ),
             ),
             highlights = listOf(
-                FeatureListItem("创建模式", args.mode, "本地流程", "LIVE"),
+                FeatureListItem("创建模式", args.mode, "未接真实钱包引擎", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据源", "本地钱包状态", "", "LOCAL"),
+                FeatureListItem("数据源", "本地占位状态", "", "LOCAL"),
             ),
-            note = "不再回退到 Mock 仓库；当前页面使用本地钱包创建上下文。",
+            summary = "创建钱包能力当前未接真实钱包引擎，本页只保留阻塞说明。",
+            note = "若无真实密钥生成、持久化和备份流程，页面不能继续伪装成可创建钱包。",
         )
     }
 
@@ -1033,78 +1041,100 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
         return ImportWalletMethodUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("当前账户", if (user != null) "已登录" else "未登录"),
                 FeatureMetric("订单记录", orders.size.toString()),
-                FeatureMetric("恢复入口", "助记词"),
+                FeatureMetric("恢复入口", "未启用"),
             ),
             highlights = listOf(
-                FeatureListItem("默认方式", "优先使用助记词恢复多链钱包", "助记词", "LIVE"),
+                FeatureListItem("默认方式", "当前没有真实钱包导入引擎", "阻塞", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "真实账户缓存 + 本地状态", "", "REAL"),
+                FeatureListItem("数据来源", "真实账户缓存 + 本地占位", "", "LOCAL"),
             ),
-            note = "导入钱包方式页已切断 Mock 仓库，当前使用真实账户上下文与本地状态种子。",
+            summary = "导入钱包方式页当前只暴露阻塞，不再假装助记词/私钥导入能力已可用。",
+            note = "真实钱包导入需要本地密钥解析、校验和持久化，当前工程尚未接通。",
         )
     }
 
     override suspend fun getImportMnemonicState(args: ImportMnemonicRouteArgs): ImportMnemonicUiState {
         val user = paymentRepository.getCachedCurrentUser()
         return ImportMnemonicUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("导入来源", args.source),
                 FeatureMetric("账户状态", if (user != null) "已登录" else "未登录"),
-                FeatureMetric("恢复链数", "3"),
+                FeatureMetric("恢复链数", "0"),
             ),
             highlights = listOf(
-                FeatureListItem("恢复来源", args.source, "本地导入流程", "LIVE"),
+                FeatureListItem("恢复来源", args.source, "没有真实助记词解析/导入能力", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "真实账户缓存 + 本地助记词流程", "", "REAL"),
+                FeatureListItem("数据来源", "真实账户缓存 + 本地占位", "", "LOCAL"),
             ),
-            note = "助记词导入页已切断 Mock 仓库，当前以真实账户状态和本地恢复流程为准。",
+            summary = "助记词导入当前未接真实钱包解析与持久化，只保留阻塞说明。",
+            note = "在真实助记词解析、链派生和本地存储接通前，本页不应再伪装成导入流程。",
         )
     }
 
     override suspend fun getImportPrivateKeyState(args: ImportPrivateKeyRouteArgs): ImportPrivateKeyUiState =
         ImportPrivateKeyUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("目标链", args.chainId),
-                FeatureMetric("校验状态", "本地解析"),
-                FeatureMetric("导入模式", "私钥"),
+                FeatureMetric("校验状态", "未启用"),
+                FeatureMetric("导入模式", "阻塞"),
             ),
-            note = "私钥导入页保留本地真实输入流程，不再依赖 Mock 仓库。",
+            summary = "私钥导入未接真实解析与密钥存储能力。",
+            note = "当前页面只能说明阻塞，不能继续展示可导入的假流程。",
         )
 
     override suspend fun getBackupMnemonicState(args: BackupMnemonicRouteArgs): BackupMnemonicUiState {
         val user = paymentRepository.getCachedCurrentUser()
         return BackupMnemonicUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("钱包标识", args.walletId),
                 FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
-                FeatureMetric("备份策略", "本地离线"),
+                FeatureMetric("备份策略", "不可用"),
             ),
             highlights = listOf(
-                FeatureListItem("钱包标识", args.walletId, "主钱包", "LIVE"),
+                FeatureListItem("钱包标识", args.walletId, "尚无真实助记词可备份", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "本地安全流程", "", "REAL"),
+                FeatureListItem("数据来源", "本地占位状态", "", "LOCAL"),
             ),
-            note = "助记词备份页已切断 Mock 仓库，当前使用本地安全流程状态。",
+            summary = "助记词备份页当前无真实密钥材料，不再假装可备份。",
+            note = "如果真实创建/导入钱包未接通，备份页只能暴露阻塞说明。",
         )
     }
 
     override suspend fun getConfirmMnemonicState(args: ConfirmMnemonicRouteArgs): ConfirmMnemonicUiState =
         ConfirmMnemonicUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("钱包标识", args.walletId),
-                FeatureMetric("校验方式", "抽查确认"),
-                FeatureMetric("状态", "待完成"),
+                FeatureMetric("校验方式", "不可用"),
+                FeatureMetric("状态", "阻塞"),
             ),
-            note = "助记词确认页已切断 Mock 仓库，当前使用本地确认流程状态。",
+            summary = "确认助记词页当前没有真实备份材料可核验。",
+            note = "在真实助记词创建/导入接通前，本页只保留阻塞说明。",
         )
 
     override suspend fun getSecurityCenterState(): SecurityCenterUiState {
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
         return SecurityCenterUiState(
+            badge = "只读",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("会话状态", if (paymentRepository.isTokenValid()) "有效" else "失效"),
                 FeatureMetric("账户", user?.username ?: "--"),
@@ -1115,28 +1145,39 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 FeatureListItem("设备会话", if (paymentRepository.isTokenValid()) "当前登录有效" else "需要重登", "", "SESSION"),
                 FeatureListItem("数据来源", "真实账户 + 本地状态", "", "REAL"),
             ),
-            note = "安全中心页已切断 Mock 仓库，当前展示真实账号会话与本地安全状态。",
+            summary = "安全中心当前只读展示真实账号会话与本地状态，没有真实安全设置写入动作。",
+            note = "若未接入授权记录、设备管理和钱包安全策略，本页不能继续展示可执行安全动作。",
         )
     }
 
     override suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState =
         ChainManagerUiState(
+            badge = "只读",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("钱包标识", args.walletId),
-                FeatureMetric("启用链", "TRON / SOL / ETH"),
-                FeatureMetric("默认链", "TRON"),
+                FeatureMetric("启用链", "0"),
+                FeatureMetric("默认链", "--"),
             ),
-            note = "链管理页已切断 Mock 仓库，当前使用本地钱包配置状态。",
+            highlights = listOf(
+                FeatureListItem("钱包标识", args.walletId, "未接真实多链钱包", "BLOCKED"),
+                FeatureListItem("状态", "当前没有真实链开关与 RPC 配置数据", "", "LOCAL"),
+            ),
+            summary = "链管理页当前没有真实多链钱包配置来源，不再伪造启用链列表。",
+            note = "需要真实钱包配置仓储后才能支持链启停、排序和默认链切换。",
         )
 
     override suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState =
         AddCustomTokenUiState(
+            badge = "只读",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("目标链", args.chainId),
-                FeatureMetric("录入模式", "手动"),
-                FeatureMetric("校验", "本地表单"),
+                FeatureMetric("录入模式", "阻塞"),
+                FeatureMetric("校验", "未接入"),
             ),
-            note = "自定义代币页已切断 Mock 仓库，当前使用本地真实录入流程。",
+            summary = "自定义代币当前没有真实 metadata 查询和资产清单持久化能力。",
+            note = "在真实代币查询与保存接通前，本页只暴露字段占位与阻塞说明。",
         )
 
     override suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState {
@@ -1144,23 +1185,27 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val orders = loadCachedOrders()
 
         return WalletManagerUiState(
+            badge = "只读",
+            primaryActionLabel = null,
             metrics = listOf(
-                FeatureMetric("钱包数量", "1"),
+                FeatureMetric("钱包数量", "0"),
                 FeatureMetric("默认钱包", args.walletId),
                 FeatureMetric("关联订单", orders.size.toString()),
             ),
             highlights = listOf(
-                FeatureListItem("默认钱包", args.walletId, "本地主钱包", "LIVE"),
+                FeatureListItem("默认钱包", args.walletId, "未接真实多钱包数据", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据源", "本地钱包管理状态", "", "LOCAL"),
+                FeatureListItem("数据源", "本地占位状态", "", "LOCAL"),
             ),
-            summary = "钱包管理页已切断 Mock 仓库，当前使用本地钱包状态。",
-            note = "后续可继续接入多钱包持久化数据。",
+            summary = "钱包管理页当前未接多钱包模型与持久化，不再伪造单钱包完成态。",
+            note = "需要真实钱包列表、切换、重命名和删除能力后才能完成。",
         )
     }
 
     override suspend fun getAddressBookState(args: AddressBookRouteArgs): AddressBookUiState =
         AddressBookUiState(
+            badge = "空态",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("已保存", "0"),
                 FeatureMetric("最近使用", "0"),
@@ -1185,11 +1230,13 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 FeatureListItem("数据源", "本地地址簿空态", "", "LOCAL"),
             ),
             summary = "地址簿页已切断 Mock 仓库，当前显示明确空态。",
-            note = "后续可接入本地持久化地址簿。",
+            note = "未接地址簿持久化前，本页不能继续提供发起转账等假动作。",
         )
 
     override suspend fun getGasSettingsState(args: GasSettingsRouteArgs): GasSettingsUiState =
         GasSettingsUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("目标链", args.chainId),
                 FeatureMetric("估算状态", "未接入"),
@@ -1214,61 +1261,79 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 FeatureListItem("数据源", "本地设置空态", "", "LOCAL"),
             ),
             summary = "Gas 设置页已切断 Mock 仓库，当前保持明确空态。",
-            note = "后续可接入真实 gas estimator。",
+            note = "没有真实 gas estimator 前，本页不再展示可保存的假配置。",
         )
 
     override suspend fun getSwapState(args: SwapRouteArgs): SwapUiState =
         SwapUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
+            secondaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("源资产", args.fromAsset),
                 FeatureMetric("目标资产", args.toAsset),
-                FeatureMetric("数据来源", "本地钱包上下文"),
+                FeatureMetric("数据来源", "阻塞"),
             ),
-            note = "兑换页已切断 Mock 仓库，当前使用本地钱包上下文与真实账户状态。",
+            summary = "兑换页未接真实报价、滑点和执行能力。",
+            note = "在 DEX quote/execute 能力补齐前，本页不再保留可兑换 CTA。",
         )
 
     override suspend fun getBridgeState(args: BridgeRouteArgs): BridgeUiState =
         BridgeUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("起始链", args.fromChainId),
                 FeatureMetric("目标链", args.toChainId),
-                FeatureMetric("状态", "待确认"),
+                FeatureMetric("状态", "阻塞"),
             ),
-            note = "桥接页已切断 Mock 仓库，当前使用本地桥接流程状态。",
+            summary = "桥接页未接真实 bridge quote / execute 能力。",
+            note = "没有真实桥接能力前，本页只展示阻塞说明。",
         )
 
     override suspend fun getDappBrowserState(args: DappBrowserRouteArgs): DappBrowserUiState =
         DappBrowserUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("入口", args.entry),
                 FeatureMetric("会话状态", if (paymentRepository.isTokenValid()) "已认证" else "匿名"),
-                FeatureMetric("安全模式", "启用"),
+                FeatureMetric("安全模式", "只读"),
             ),
-            note = "DApp 浏览器页已切断 Mock 仓库，当前使用真实账户状态与本地浏览上下文。",
+            summary = "DApp 浏览器未接真实浏览器容器、历史和收藏能力。",
+            note = "当前仅能说明入口参数和会话状态，不能伪装成可访问浏览器。",
         )
 
     override suspend fun getWalletConnectSessionState(args: WalletConnectSessionRouteArgs): WalletConnectSessionUiState =
         WalletConnectSessionUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("会话标识", args.sessionId),
                 FeatureMetric("认证状态", if (paymentRepository.isTokenValid()) "有效" else "失效"),
-                FeatureMetric("数据来源", "本地会话状态"),
+                FeatureMetric("数据来源", "阻塞"),
             ),
-            note = "WalletConnect 会话页已切断 Mock 仓库，当前使用本地会话上下文。",
+            summary = "WalletConnect 会话页未接真实会话存储与授权对象。",
+            note = "没有真实 WalletConnect 会话前，本页只保留路由和阻塞说明。",
         )
 
     override suspend fun getSignMessageConfirmState(args: SignMessageConfirmRouteArgs): SignMessageConfirmUiState =
         SignMessageConfirmUiState(
+            badge = "未接入",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("请求标识", args.requestId),
                 FeatureMetric("账户状态", if (paymentRepository.isTokenValid()) "已登录" else "未登录"),
-                FeatureMetric("校验", "本地签名前确认"),
+                FeatureMetric("校验", "阻塞"),
             ),
-            note = "签名确认页已切断 Mock 仓库，当前使用本地签名确认上下文。",
+            summary = "签名确认页未接真实签名请求对象与批准/拒绝能力。",
+            note = "在真实签名请求源接入前，本页不能继续提供确认签名假动作。",
         )
 
     override suspend fun getRiskAuthorizationsState(): RiskAuthorizationsUiState =
         RiskAuthorizationsUiState(
+            badge = "空态",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("授权总数", "0"),
                 FeatureMetric("高风险", "0"),
@@ -1279,11 +1344,13 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 FeatureListItem("数据源", "本地安全状态", "", "LOCAL"),
             ),
             summary = "风险授权页已切断 Mock 仓库，当前显示明确空态。",
-            note = "后续可接入 WalletConnect/DApp 授权记录。",
+            note = "没有真实授权记录来源前，本页不再保留任何可操作动作。",
         )
 
     override suspend fun getNftGalleryState(): NftGalleryUiState =
         NftGalleryUiState(
+            badge = "空态",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("收藏系列", "0"),
                 FeatureMetric("地板价", "--"),
@@ -1294,11 +1361,13 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 FeatureListItem("数据源", "本地空态", "", "LOCAL"),
             ),
             summary = "NFT 画廊页已切断 Mock 仓库，当前显示明确空态。",
-            note = "后续可接入链上资产/NFT 索引。",
+            note = "没有真实 NFT 索引前，本页不能继续跳转或展示伪资产内容。",
         )
 
     override suspend fun getStakingEarnState(): StakingEarnUiState =
         StakingEarnUiState(
+            badge = "空态",
+            primaryActionLabel = null,
             metrics = listOf(
                 FeatureMetric("APR", "--"),
                 FeatureMetric("已质押", "0"),
@@ -1309,7 +1378,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 FeatureListItem("数据源", "本地空态", "", "LOCAL"),
             ),
             summary = "质押赚币页已切断 Mock 仓库，当前显示明确空态。",
-            note = "后续可接入真实 Earn/Staking 数据。",
+            note = "没有真实 Earn/Staking 数据与动作前，本页不再保留任何假 CTA。",
         )
 
     override suspend fun getSessionEvictedDialogState(): SessionEvictedDialogUiState {

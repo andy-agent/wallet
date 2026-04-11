@@ -12,7 +12,7 @@ data class SecurityCenterUiState(
         val subtitle: String = "SECURITY CENTER",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "安全中心聚合备份状态、设备保护、多签与风险授权入口。",
-        val primaryActionLabel: String = "查看风险授权",
+        val primaryActionLabel: String? = "查看风险授权",
         val secondaryActionLabel: String? = "返回个人中心",
         val heroAccent: String = "security_center",
         val metrics: List<FeatureMetric> = listOf(

@@ -12,7 +12,7 @@ data class StakingEarnUiState(
         val subtitle: String = "STAKING EARN",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "质押赚币页展示 APR、已质押金额与待领取收益。",
-        val primaryActionLabel: String = "返回钱包首页",
+        val primaryActionLabel: String? = "返回钱包首页",
         val secondaryActionLabel: String? = "查看资产详情",
         val heroAccent: String = "staking_earn",
         val metrics: List<FeatureMetric> = listOf(

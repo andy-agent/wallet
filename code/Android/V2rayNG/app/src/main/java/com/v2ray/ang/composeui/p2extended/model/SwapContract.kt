@@ -14,7 +14,7 @@ data class SwapUiState(
         val subtitle: String = "SWAP",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "Swap 页展示源币、目标币、滑点与预估接收数量。",
-        val primaryActionLabel: String = "提交兑换预览",
+        val primaryActionLabel: String? = "提交兑换预览",
         val secondaryActionLabel: String? = "回到钱包首页",
         val heroAccent: String = "swap",
         val metrics: List<FeatureMetric> = listOf(

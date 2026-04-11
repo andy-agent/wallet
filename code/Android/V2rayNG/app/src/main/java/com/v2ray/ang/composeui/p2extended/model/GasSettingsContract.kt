@@ -14,7 +14,7 @@ data class GasSettingsUiState(
         val subtitle: String = "GAS SETTINGS",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "Gas 设置页支持慢 / 中 / 快档位与高级自定义参数。",
-        val primaryActionLabel: String = "保存并返回发送页",
+        val primaryActionLabel: String? = "保存并返回发送页",
         val secondaryActionLabel: String? = "取消修改",
         val heroAccent: String = "gas_settings",
         val metrics: List<FeatureMetric> = listOf(

@@ -12,7 +12,7 @@ data class NftGalleryUiState(
         val subtitle: String = "NFT GALLERY",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "NFT 画廊页用于展示收藏、地板价与快捷打开市场。",
-        val primaryActionLabel: String = "返回钱包首页",
+        val primaryActionLabel: String? = "返回钱包首页",
         val secondaryActionLabel: String? = "打开 DApp 浏览器",
         val heroAccent: String = "nft_gallery",
         val metrics: List<FeatureMetric> = listOf(

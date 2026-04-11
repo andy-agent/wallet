@@ -12,7 +12,7 @@ data class RiskAuthorizationsUiState(
         val subtitle: String = "RISK AUTHORIZATIONS",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "风险授权页汇总高风险批准项、过期会话与可撤销授权。",
-        val primaryActionLabel: String = "返回钱包首页",
+        val primaryActionLabel: String? = "返回钱包首页",
         val secondaryActionLabel: String? = "进入安全中心",
         val heroAccent: String = "risk_authorizations",
         val metrics: List<FeatureMetric> = listOf(

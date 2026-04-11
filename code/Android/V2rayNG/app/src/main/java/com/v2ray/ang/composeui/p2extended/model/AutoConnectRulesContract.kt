@@ -12,7 +12,7 @@ data class AutoConnectRulesUiState(
         val subtitle: String = "AUTO CONNECT RULES",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "自动连接规则页配置不安全网络、后台唤醒与指定 App 的连接策略。",
-        val primaryActionLabel: String = "保存并返回首页",
+        val primaryActionLabel: String? = "保存并返回首页",
         val secondaryActionLabel: String? = "回到个人中心",
         val heroAccent: String = "auto_connect_rules",
         val metrics: List<FeatureMetric> = listOf(

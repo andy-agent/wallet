@@ -14,7 +14,7 @@ data class CreateWalletUiState(
         val subtitle: String = "CREATE WALLET",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "创建钱包页承接钱包命名、多链初始化与备份前校验。",
-        val primaryActionLabel: String = "开始备份助记词",
+        val primaryActionLabel: String? = "开始备份助记词",
         val secondaryActionLabel: String? = "改用导入方式",
         val heroAccent: String = "create_wallet",
         val metrics: List<FeatureMetric> = listOf(

@@ -10,49 +10,64 @@ import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.repository.MockCryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.cryptoVpnViewModelFactory
 import com.v2ray.ang.composeui.p2extended.model.AddCustomTokenRouteArgs
+import com.v2ray.ang.composeui.p2extended.model.AddressBookRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.BackupMnemonicRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.BridgeRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.ChainManagerRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.ConfirmMnemonicRouteArgs
+import com.v2ray.ang.composeui.p2extended.model.CreateWalletRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.DappBrowserRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.ExpiryReminderRouteArgs
+import com.v2ray.ang.composeui.p2extended.model.GasSettingsRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.ImportMnemonicRouteArgs
+import com.v2ray.ang.composeui.p2extended.model.ImportPrivateKeyRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.NodeSpeedTestRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.SignMessageConfirmRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.SubscriptionDetailRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.SwapRouteArgs
+import com.v2ray.ang.composeui.p2extended.model.WalletManagerRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.WalletConnectSessionRouteArgs
 import com.v2ray.ang.composeui.p2extended.viewmodel.AddCustomTokenViewModel
+import com.v2ray.ang.composeui.p2extended.viewmodel.AddressBookViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.AutoConnectRulesViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.BackupMnemonicViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.BridgeViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.ChainManagerViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.ConfirmMnemonicViewModel
+import com.v2ray.ang.composeui.p2extended.viewmodel.CreateWalletViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.DappBrowserViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.ExpiryReminderViewModel
+import com.v2ray.ang.composeui.p2extended.viewmodel.GasSettingsViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.ImportMnemonicViewModel
+import com.v2ray.ang.composeui.p2extended.viewmodel.ImportPrivateKeyViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.ImportWalletMethodViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.NodeSpeedTestViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.SecurityCenterViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.SignMessageConfirmViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.SubscriptionDetailViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.SwapViewModel
+import com.v2ray.ang.composeui.p2extended.viewmodel.WalletManagerViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.WalletConnectSessionViewModel
 import com.v2ray.ang.composeui.pages.p2extended.AddCustomTokenRoute
+import com.v2ray.ang.composeui.pages.p2extended.AddressBookRoute
 import com.v2ray.ang.composeui.pages.p2extended.AutoConnectRulesRoute
 import com.v2ray.ang.composeui.pages.p2extended.BackupMnemonicRoute
 import com.v2ray.ang.composeui.pages.p2extended.BridgeRoute
 import com.v2ray.ang.composeui.pages.p2extended.ChainManagerRoute
 import com.v2ray.ang.composeui.pages.p2extended.ConfirmMnemonicRoute
+import com.v2ray.ang.composeui.pages.p2extended.CreateWalletRoute
 import com.v2ray.ang.composeui.pages.p2extended.DappBrowserRoute
 import com.v2ray.ang.composeui.pages.p2extended.ExpiryReminderRoute
+import com.v2ray.ang.composeui.pages.p2extended.GasSettingsRoute
 import com.v2ray.ang.composeui.pages.p2extended.ImportMnemonicRoute
+import com.v2ray.ang.composeui.pages.p2extended.ImportPrivateKeyRoute
 import com.v2ray.ang.composeui.pages.p2extended.ImportWalletMethodRoute
 import com.v2ray.ang.composeui.pages.p2extended.NodeSpeedTestRoute
 import com.v2ray.ang.composeui.pages.p2extended.SecurityCenterRoute
 import com.v2ray.ang.composeui.pages.p2extended.SignMessageConfirmRoute
 import com.v2ray.ang.composeui.pages.p2extended.SubscriptionDetailRoute
 import com.v2ray.ang.composeui.pages.p2extended.SwapRoute
+import com.v2ray.ang.composeui.pages.p2extended.WalletManagerRoute
 import com.v2ray.ang.composeui.pages.p2extended.WalletConnectSessionRoute
 
 fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
@@ -145,6 +160,29 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
         )
     }
 
+    composable(
+        route = CryptoVpnRouteSpec.createWallet.pattern,
+        arguments = listOf(
+            navArgument("mode") {
+                type = NavType.StringType
+                defaultValue = "create"
+            },
+        ),
+    ) { backStackEntry ->
+        val args = CreateWalletRouteArgs(
+            mode = backStackEntry.arguments?.getString("mode") ?: "create",
+        )
+        val vm: CreateWalletViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { CreateWalletViewModel(repository, args) },
+        )
+        CreateWalletRoute(
+            viewModel = vm,
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.backupMnemonicRoute("primary_wallet")) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.importWalletMethod.pattern) },
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
+    }
+
     composable(CryptoVpnRouteSpec.importWalletMethod.pattern) {
         val vm: ImportWalletMethodViewModel = viewModel(
             factory = cryptoVpnViewModelFactory { ImportWalletMethodViewModel(repository) },
@@ -175,6 +213,29 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
         ImportMnemonicRoute(
             viewModel = vm,
             onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.securityCenter.pattern) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.importWalletMethod.pattern) },
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
+    }
+
+    composable(
+        route = CryptoVpnRouteSpec.importPrivateKey.pattern,
+        arguments = listOf(
+            navArgument("chainId") {
+                type = NavType.StringType
+                defaultValue = "ethereum"
+            },
+        ),
+    ) { backStackEntry ->
+        val args = ImportPrivateKeyRouteArgs(
+            chainId = backStackEntry.arguments?.getString("chainId") ?: "ethereum",
+        )
+        val vm: ImportPrivateKeyViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { ImportPrivateKeyViewModel(repository, args) },
+        )
+        ImportPrivateKeyRoute(
+            viewModel = vm,
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.importWalletMethod.pattern) },
             onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.importWalletMethod.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
@@ -280,6 +341,75 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
             viewModel = vm,
             onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.chainManagerRoute("primary_wallet")) },
             onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern) },
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
+    }
+
+    composable(
+        route = CryptoVpnRouteSpec.walletManager.pattern,
+        arguments = listOf(
+            navArgument("walletId") {
+                type = NavType.StringType
+                defaultValue = "primary_wallet"
+            },
+        ),
+    ) { backStackEntry ->
+        val args = WalletManagerRouteArgs(
+            walletId = backStackEntry.arguments?.getString("walletId") ?: "primary_wallet",
+        )
+        val vm: WalletManagerViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { WalletManagerViewModel(repository, args) },
+        )
+        WalletManagerRoute(
+            viewModel = vm,
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.addressBookRoute("send")) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.profile.pattern) },
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
+    }
+
+    composable(
+        route = CryptoVpnRouteSpec.addressBook.pattern,
+        arguments = listOf(
+            navArgument("mode") {
+                type = NavType.StringType
+                defaultValue = "send"
+            },
+        ),
+    ) { backStackEntry ->
+        val args = AddressBookRouteArgs(
+            mode = backStackEntry.arguments?.getString("mode") ?: "send",
+        )
+        val vm: AddressBookViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { AddressBookViewModel(repository, args) },
+        )
+        AddressBookRoute(
+            viewModel = vm,
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletManagerRoute("primary_wallet")) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletManagerRoute("primary_wallet")) },
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
+    }
+
+    composable(
+        route = CryptoVpnRouteSpec.gasSettings.pattern,
+        arguments = listOf(
+            navArgument("chainId") {
+                type = NavType.StringType
+                defaultValue = "ethereum"
+            },
+        ),
+    ) { backStackEntry ->
+        val args = GasSettingsRouteArgs(
+            chainId = backStackEntry.arguments?.getString("chainId") ?: "ethereum",
+        )
+        val vm: GasSettingsViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { GasSettingsViewModel(repository, args) },
+        )
+        GasSettingsRoute(
+            viewModel = vm,
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.sendRoute("USDT", args.chainId)) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.sendRoute("USDT", args.chainId)) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
