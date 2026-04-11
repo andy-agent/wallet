@@ -27,7 +27,9 @@ class WalletOnboardingViewModel(
     fun onEvent(event: WalletOnboardingEvent) {
         when (event) {
             is WalletOnboardingEvent.SelectMode -> {
-                _uiState.value = _uiState.value.copy(selectedMode = event.value)
+                viewModelScope.launch {
+                    _uiState.value = repository.getWalletOnboardingState(event.value)
+                }
             }
 
             WalletOnboardingEvent.ContinueClicked -> Unit

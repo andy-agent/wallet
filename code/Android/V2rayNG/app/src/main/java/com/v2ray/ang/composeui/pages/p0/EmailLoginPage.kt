@@ -89,6 +89,12 @@ fun EmailLoginScreen(
                     primaryLabel = if (uiState.isLoading) "登录中..." else "登录并同步账户",
                     onPrimaryClick = onPrimary,
                 )
+                uiState.statusMessage?.let {
+                    P01CardCopy(it)
+                }
+                uiState.errorMessage?.let {
+                    P01CardCopy(it)
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),

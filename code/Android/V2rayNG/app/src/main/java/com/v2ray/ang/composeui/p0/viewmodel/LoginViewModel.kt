@@ -30,9 +30,17 @@ class LoginViewModel(
             is LoginEvent.RememberMeChanged -> _uiState.value = _uiState.value.copy(rememberMe = event.value)
             LoginEvent.LoginClicked -> {
                 viewModelScope.launch {
-                    _uiState.value = _uiState.value.copy(isLoading = true)
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = true,
+                        errorMessage = null,
+                        statusMessage = null,
+                    )
                     val result = repository.login(_uiState.value.email, _uiState.value.password)
-                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        statusMessage = result.message.takeIf { result.success },
+                        errorMessage = result.message.takeIf { !result.success },
+                    )
                     if (result.success) {
                         onLoginSuccess?.invoke()
                     }
