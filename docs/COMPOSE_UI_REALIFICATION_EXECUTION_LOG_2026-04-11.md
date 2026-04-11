@@ -302,3 +302,28 @@
 - `liaojiang-0jp.8`
   - `Compose UI：建立稳定真机路由回归入口并沉淀逐页证据`
   - 该任务专门承接 Phase 3 的真实运行证据，不再把回归混在实现批里。
+
+### P2 / P1 新增运行级证据
+- `profile`
+  - `/tmp/compose-realify-20260412-p2d/profile.png`
+- `about_app`
+  - `/tmp/compose-realify-20260412-p2d/about_app.png`
+- `legal_documents`
+  - `/tmp/compose-realify-20260412-p2d/legal_documents.png`
+- `legal_document_detail/terms_of_service`
+  - `/tmp/compose-realify-20260412-p2d/legal_document_detail_terms_of_service.png`
+- `wallet_payment`
+  - `/tmp/compose-realify-20260412-p2c/wallet_payment.png`
+
+### 本轮新增问题与修复
+- `wallet_payment`
+  - 初次运行时真实崩溃
+  - 原因：`P1NavGraph` 缺少 `wallet_payment` 目的地
+  - 修复：补齐 `wallet_payment` 路由安装，页面已可进入真实 `WalletPaymentViewModel` 路径
+- `about_app / profile / legal_documents / legal_document_detail`
+  - 问题：页面层仍按固定 index 解释动作和路由
+  - 修复：
+    - `AboutAppPage` 按真实 `badge` 执行外链/法务跳转
+    - `ProfilePage` 按真实 `badge` 进入安全中心/订单/邀请/法务/关于
+    - `LegalDocumentsPage` 按真实文档 `id` 进入详情，不再按列表序号猜路由
+    - `LegalDocumentDetailPage` 改正“文档标识被当作生效日期”的错误语义
