@@ -1,5 +1,7 @@
 package com.v2ray.ang.composeui.theme
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -8,49 +10,34 @@ import org.junit.Test
 class ControlPlaneDesignSystemTest {
 
     @Test
-    fun `audit states stay aligned with control plane semantics`() {
-        assertEquals(
-            ControlPlaneTokens.Settlement.accent,
-            ControlPlaneTokens.audit(AuditState.Ok).accent,
-        )
-        assertEquals(
-            ControlPlaneTokens.Warning.accent,
-            ControlPlaneTokens.audit(AuditState.Warn).accent,
-        )
-        assertEquals(
-            ControlPlaneTokens.Critical.accent,
-            ControlPlaneTokens.audit(AuditState.Critical).accent,
-        )
-        assertEquals(
-            ControlPlaneTokens.Neutral.accent,
-            ControlPlaneTokens.audit(AuditState.Unknown).accent,
-        )
+    fun `core palette keeps the white base and semantic accents`() {
+        assertEquals(Color(0xFFF7FBFF), AppWhite)
+        assertEquals(Color(0xFFFFFFFF), LayerWhite)
+        assertEquals(Color(0xFF4268FF), ElectricBlue)
+        assertEquals(Color(0xFF20C4F4), ElectricCyan)
+        assertEquals(Color(0xFFB58DFF), AuroraPurple)
+        assertEquals(Color(0xFFFF6175), DangerRed)
     }
 
     @Test
-    fun `layer depths become more elevated as emphasis increases`() {
-        val layer0 = ControlPlaneTokens.layer(ControlPlaneLayer.Level0)
-        val layer1 = ControlPlaneTokens.layer(ControlPlaneLayer.Level1)
-        val layer2 = ControlPlaneTokens.layer(ControlPlaneLayer.Level2)
-        val layer3 = ControlPlaneTokens.layer(ControlPlaneLayer.Level3)
-
-        assertEquals(0.dp, layer0.shadowElevation)
-        assertTrue(layer1.shadowElevation > layer0.shadowElevation)
-        assertTrue(layer2.shadowElevation > layer1.shadowElevation)
-        assertTrue(layer3.shadowElevation > layer2.shadowElevation)
+    fun `shape scale stays ordered from compact to spacious`() {
+        assertEquals(RoundedCornerShape(10.dp), CryptoVpnShapes.extraSmall)
+        assertEquals(RoundedCornerShape(14.dp), CryptoVpnShapes.small)
+        assertEquals(RoundedCornerShape(20.dp), CryptoVpnShapes.medium)
+        assertEquals(RoundedCornerShape(28.dp), CryptoVpnShapes.large)
+        assertEquals(RoundedCornerShape(34.dp), CryptoVpnShapes.extraLarge)
     }
 
     @Test
-    fun `material scheme keeps the frozen white base and semantic accents`() {
-        assertEquals(
-            ControlPlaneTokens.layer(ControlPlaneLayer.Level0).container,
-            ControlPlaneTokens.materialColorScheme.background,
+    fun `typography hierarchy keeps large headings above body text`() {
+        assertTrue(
+            CryptoVpnTypography.headlineLarge.fontSize > CryptoVpnTypography.titleLarge.fontSize,
         )
-        assertEquals(ControlPlaneTokens.Infra.accent, ControlPlaneTokens.materialColorScheme.primary)
-        assertEquals(
-            ControlPlaneTokens.Settlement.accent,
-            ControlPlaneTokens.materialColorScheme.secondary,
+        assertTrue(
+            CryptoVpnTypography.titleLarge.fontSize > CryptoVpnTypography.bodyLarge.fontSize,
         )
-        assertEquals(ControlPlaneTokens.Finance.accent, ControlPlaneTokens.materialColorScheme.tertiary)
+        assertTrue(
+            CryptoVpnTypography.bodyLarge.fontSize > CryptoVpnTypography.labelSmall.fontSize,
+        )
     }
 }
