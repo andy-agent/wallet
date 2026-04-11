@@ -24,6 +24,8 @@ import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 class ComposeContainerActivity : ComponentActivity() {
     companion object {
         const val EXTRA_START_ROUTE = "compose_start_route"
+        private const val DEBUG_ROUTE_PREFS = "debug_compose_route_override"
+        private const val DEBUG_ROUTE_KEY = "route"
 
         fun createIntent(
             context: Context,
@@ -38,6 +40,7 @@ class ComposeContainerActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val startRoute = intent.getStringExtra(EXTRA_START_ROUTE)
+            ?: consumeDebugRouteOverride(applicationContext)
             ?: CryptoVpnRouteSpec.splash.pattern
 
         setContent {
@@ -58,5 +61,14 @@ class ComposeContainerActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun consumeDebugRouteOverride(context: Context): String? {
+        val prefs = context.getSharedPreferences(DEBUG_ROUTE_PREFS, MODE_PRIVATE)
+        val route = prefs.getString(DEBUG_ROUTE_KEY, null)?.trim()?.takeIf { it.isNotEmpty() }
+        if (route != null) {
+            prefs.edit().remove(DEBUG_ROUTE_KEY).apply()
+        }
+        return route
     }
 }

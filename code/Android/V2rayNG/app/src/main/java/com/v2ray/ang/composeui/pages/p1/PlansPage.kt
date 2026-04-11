@@ -28,6 +28,7 @@ import com.v2ray.ang.composeui.p0.ui.P01MetricGrid
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p1.model.PlansEvent
 import com.v2ray.ang.composeui.p1.model.P1PlanCard
+import com.v2ray.ang.composeui.p1.model.P1ScreenState
 import com.v2ray.ang.composeui.p1.model.PlansUiState
 import com.v2ray.ang.composeui.p1.model.plansPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.PlansViewModel
@@ -65,7 +66,11 @@ fun PlansScreen(
 ) {
     val cards = rememberPlans(uiState)
     var selectedPlanIndex by rememberSaveable { mutableIntStateOf(cards.indexOfFirst { it.featured }.coerceAtLeast(0)) }
-    val selectedPlan = cards.getOrElse(selectedPlanIndex) { cards.first() }
+    if (selectedPlanIndex !in cards.indices) {
+        selectedPlanIndex = 0
+    }
+    val selectedPlan = cards.getOrNull(selectedPlanIndex)
+    val stateInfo = uiState.stateInfo
 
     P01PhoneScaffold(
         statusTime = "18:08",
@@ -73,72 +78,98 @@ fun PlansScreen(
         onBottomNav = onBottomNav,
     ) {
         P01Header(
-            eyebrow = "SUBSCRIPTION",
-            title = "购买你的套餐",
-            subtitle = "VPN 是核心服务，钱包是支付与资产层。这里把它们真正融合。",
+            eyebrow = uiState.subtitle,
+            title = uiState.title,
+            subtitle = uiState.summary,
             chips = listOf("支持钱包直付"),
-            trailing = { P1SecureHub(label = plansHubLabel(selectedPlan.title)) },
+            trailing = { P1SecureHub(label = plansHubLabel(selectedPlan?.title ?: stateInfo.title.ifBlank { "PLANS" })) },
         )
 
         P01Card {
             P01CardHeader(
                 title = "当前状态",
-                trailing = { P01Chip(text = "实时套餐") },
+                trailing = { P01Chip(text = stateChipLabel(stateInfo.state, cards.isNotEmpty())) },
             )
             P01MetricGrid(
                 items = listOf(
-                    P01MetricCell("当前计划", cards.getOrNull(selectedPlanIndex)?.title ?: "Pro 月付"),
+                    P01MetricCell("当前计划", selectedPlan?.title ?: stateInfo.title.ifBlank { "未选择" }),
                     P01MetricCell("支付资产", "USDT"),
                 ),
             )
-            P01CardCopy(uiState.summary)
+            P01CardCopy(stateInfo.message.ifBlank { uiState.note.ifBlank { uiState.summary } })
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            cards.forEachIndexed { index, card ->
-                val isSelected = index == selectedPlanIndex
-                P1SelectableCard(
-                    selected = isSelected,
-                    modifier = Modifier.clickable { selectedPlanIndex = index },
-                ) {
-                    P01CardHeader(
-                        title = card.title,
-                        trailing = {
-                            P01Chip(
-                                text = if (isSelected && !card.featured) "已选择" else card.badge,
-                                highlighted = isSelected || card.featured,
-                            )
-                        },
-                    )
-                    if (card.featured || isSelected) {
-                        androidx.compose.material3.Text(
-                            text = card.price,
-                            color = if (isSelected) Color(0xFF4276FF) else Color(0xFF132748),
-                            modifier = Modifier.padding(top = 2.dp),
+        if (cards.isEmpty()) {
+            P01Card {
+                P01CardHeader(
+                    title = stateInfo.title.ifBlank { "当前暂无可购买套餐" },
+                    trailing = {
+                        P01Chip(
+                            text = stateChipLabel(stateInfo.state, hasContent = false),
+                            highlighted = stateInfo.state == P1ScreenState.Content,
                         )
-                    }
-                    P01CardCopy(card.copy)
-                    androidx.compose.foundation.layout.FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    },
+                )
+                P01CardCopy(stateInfo.message.ifBlank { "当前页面没有真实套餐数据可供展示。" })
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                cards.forEachIndexed { index, card ->
+                    val isSelected = index == selectedPlanIndex
+                    P1SelectableCard(
+                        selected = isSelected,
+                        modifier = Modifier.clickable { selectedPlanIndex = index },
                     ) {
-                        card.tags.forEach { tag ->
-                            P01Chip(
-                                text = tag,
-                                highlighted = isSelected || card.featured,
+                        P01CardHeader(
+                            title = card.title,
+                            trailing = {
+                                P01Chip(
+                                    text = if (isSelected && !card.featured) "已选择" else card.badge,
+                                    highlighted = isSelected || card.featured,
+                                )
+                            },
+                        )
+                        if (card.featured || isSelected) {
+                            androidx.compose.material3.Text(
+                                text = card.price,
+                                color = if (isSelected) Color(0xFF4276FF) else Color(0xFF132748),
+                                modifier = Modifier.padding(top = 2.dp),
                             )
+                        }
+                        P01CardCopy(card.copy)
+                        androidx.compose.foundation.layout.FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            card.tags.forEach { tag ->
+                                P01Chip(
+                                    text = tag,
+                                    highlighted = isSelected || card.featured,
+                                )
+                            }
                         }
                     }
                 }
             }
         }
 
-        P1PrimaryCta(
-            text = "使用钱包支付 · ${selectedPlan.title}",
-            onClick = onPrimaryAction,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        if (selectedPlan != null) {
+            P1PrimaryCta(
+                text = "使用钱包支付 · ${selectedPlan.title}",
+                onClick = onPrimaryAction,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
+}
+
+private fun stateChipLabel(state: P1ScreenState, hasContent: Boolean): String = when {
+    hasContent -> "实时套餐"
+    state == P1ScreenState.Loading -> "加载中"
+    state == P1ScreenState.Empty -> "空态"
+    state == P1ScreenState.Error -> "错误"
+    state == P1ScreenState.Unavailable -> "不可用"
+    else -> "无数据"
 }
 
 private fun plansHubLabel(title: String): String = when {

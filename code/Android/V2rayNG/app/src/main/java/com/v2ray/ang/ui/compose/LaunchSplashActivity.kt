@@ -24,6 +24,11 @@ import kotlinx.coroutines.launch
 import kotlin.system.measureTimeMillis
 
 class LaunchSplashActivity : ComponentActivity() {
+    companion object {
+        private const val DEBUG_ROUTE_PREFS = "debug_compose_route_override"
+        private const val DEBUG_ROUTE_KEY = "route"
+    }
+
     private lateinit var progressBar: ProgressBar
     private lateinit var hubGlow: View
     private lateinit var hubRingOuter: View
@@ -71,6 +76,17 @@ class LaunchSplashActivity : ComponentActivity() {
     }
 
     private suspend fun runLaunchSequence() {
+        peekDebugRouteOverride()?.let { debugRoute ->
+            startActivity(
+                ComposeContainerActivity.createIntent(
+                    context = this,
+                    startRoute = debugRoute,
+                ),
+            )
+            finish()
+            return
+        }
+
         val repository = RealP0Repository(applicationContext)
         val minVisibleMs = 2200L
         val snapshotDeferred = lifecycleScope.async(Dispatchers.IO) { repository.getSplashState() }
@@ -136,6 +152,11 @@ class LaunchSplashActivity : ComponentActivity() {
         )
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         finish()
+    }
+
+    private fun peekDebugRouteOverride(): String? {
+        val prefs = getSharedPreferences(DEBUG_ROUTE_PREFS, MODE_PRIVATE)
+        return prefs.getString(DEBUG_ROUTE_KEY, null)?.trim()?.takeIf { it.isNotEmpty() }
     }
 
     private fun renderStage(

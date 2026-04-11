@@ -5,13 +5,14 @@
             android:name=".ui.compose.debug.ComposeRouteHarnessActivity"
             android:exported="true"
             android:label="Compose Route Harness"
-            android:theme="@style/AppThemeDayNight.NoActionBar">
+            android:theme="@style/AppThemeDayNight.NoActionBar" />
+        <receiver
+            android:name=".ui.compose.debug.ComposeRouteOverrideReceiver"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="com.v2ray.ang.fdroid.DEBUG_SET_COMPOSE_ROUTE" />
+                <action android:name="com.v2ray.ang.DEBUG_SET_COMPOSE_ROUTE" />
             </intent-filter>
-        </activity>
+        </receiver>
     </application>
 </manifest>
