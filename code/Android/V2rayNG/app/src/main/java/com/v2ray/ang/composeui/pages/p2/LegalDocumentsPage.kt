@@ -40,6 +40,7 @@ fun LegalDocumentsScreen(
     onEvent: (LegalDocumentsEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val documentFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -64,6 +65,11 @@ fun LegalDocumentsScreen(
                     title = item.title,
                     subtitle = item.subtitle,
                     trailing = item.trailing,
+                    emphasis = if (index == documentFocus % maxOf(uiState.highlights.size, 1)) {
+                        P2CoreRowEmphasis.Brand
+                    } else {
+                        P2CoreRowEmphasis.Neutral
+                    },
                     trailingColor = if (index == 0) Color(0xFF2F5BFF) else Color(0xFF66739D),
                     onClick = destination?.let { { onBottomNav(it) } },
                 )

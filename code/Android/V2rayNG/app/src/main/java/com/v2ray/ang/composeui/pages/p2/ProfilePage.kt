@@ -40,6 +40,7 @@ fun ProfileScreen(
     onEvent: (ProfileEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val profileFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -84,7 +85,11 @@ fun ProfileScreen(
                     title = item.title,
                     subtitle = item.subtitle,
                     trailing = item.trailing,
-                    emphasis = P2CoreRowEmphasis.Brand,
+                    emphasis = if (index == profileFocus % maxOf(uiState.highlights.size, 1)) {
+                        P2CoreRowEmphasis.Brand
+                    } else {
+                        P2CoreRowEmphasis.Neutral
+                    },
                     trailingColor = Color(0xFF2F5BFF),
                     onClick = route?.let { { onBottomNav(it) } },
                 )

@@ -39,6 +39,7 @@ fun WithdrawScreen(
     onEvent: (WithdrawEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val riskFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -53,7 +54,7 @@ fun WithdrawScreen(
     ) {
         P2CoreMetricGrid(
             items = uiState.metrics.take(2).map { it.label to it.value } + listOf("网络手续费" to (uiState.metrics.getOrNull(2)?.value ?: "")),
-            accentIndexes = emptySet(),
+            accentIndexes = setOf(riskFocus % 3),
         )
         P2CoreCard {
             uiState.fields.forEach { field ->
@@ -69,11 +70,16 @@ fun WithdrawScreen(
         }
         P2CoreCard {
             P2CoreCardHeader(title = "Risk Review")
-            uiState.highlights.forEach { item ->
+            uiState.highlights.forEachIndexed { index, item ->
                 P2CoreListRow(
                     title = item.title,
                     subtitle = item.subtitle,
                     trailing = item.trailing,
+                    emphasis = if (index == riskFocus % maxOf(uiState.highlights.size, 1)) {
+                        P2CoreRowEmphasis.Warning
+                    } else {
+                        P2CoreRowEmphasis.Neutral
+                    },
                     trailingColor = Color(0xFF18B68B),
                 )
             }

@@ -39,6 +39,7 @@ fun InviteCenterScreen(
     onEvent: (InviteCenterEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val metricFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.metrics.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -73,7 +74,7 @@ fun InviteCenterScreen(
             P2CoreCardHeader(title = "增长指标", trailing = "实时同步", trailingColor = Color(0xFFEAF6FF))
             P2CoreMetricGrid(
                 items = uiState.metrics.map { it.label to it.value },
-                accentIndexes = setOf(1),
+                accentIndexes = setOf(metricFocus % maxOf(uiState.metrics.size, 1)),
             )
         }
     }

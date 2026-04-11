@@ -27,6 +27,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -50,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.effects.TechParticleBackground
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
+import kotlinx.coroutines.delay
 
 private val CorePageBackground = Brush.verticalGradient(
     colors = listOf(
@@ -85,6 +90,23 @@ internal enum class P2CoreRowEmphasis {
     Brand,
     Success,
     Warning,
+}
+
+@Composable
+internal fun rememberCoreLoopingIndex(
+    itemCount: Int,
+    durationMillis: Int = 4200,
+): Int {
+    if (itemCount <= 1) return 0
+    var index by remember(itemCount, durationMillis) { mutableIntStateOf(0) }
+    LaunchedEffect(itemCount, durationMillis) {
+        index = 0
+        while (true) {
+            delay(durationMillis.toLong())
+            index = (index + 1) % itemCount
+        }
+    }
+    return index
 }
 
 @Composable
@@ -848,6 +870,7 @@ internal fun P2CoreChartInfoBlock(
     highlight: String? = null,
     highlightColor: Color = Color(0xFFEAF6FF),
     accent: Color = CorePrimary,
+    activeChipIndex: Int = 0,
 ) {
     P2CoreCard(modifier = modifier, contentPadding = PaddingValues(18.dp)) {
         P2CoreCardHeader(
@@ -858,7 +881,7 @@ internal fun P2CoreChartInfoBlock(
         )
         P2CoreChartPlaceholder(accent = accent)
         if (chips.isNotEmpty()) {
-            P2CoreChipRow(items = chips)
+            P2CoreChipRow(items = chips, activeIndex = activeChipIndex % chips.size)
         }
         if (infoItems.isNotEmpty()) {
             P2CoreMetricGrid(items = infoItems)

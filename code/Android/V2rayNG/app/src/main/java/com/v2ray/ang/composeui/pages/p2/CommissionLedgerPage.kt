@@ -40,6 +40,7 @@ fun CommissionLedgerScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     val total = uiState.metrics.firstOrNull()?.value ?: "$3,481.22"
+    val trendFocus = rememberCoreLoopingIndex(itemCount = 3, durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -66,6 +67,7 @@ fun CommissionLedgerScreen(
             infoItems = uiState.metrics.take(3).map { it.label to it.value },
             highlight = "更新中",
             accent = Color(0xFF22C3A0),
+            activeChipIndex = trendFocus,
         )
         P2CoreActionValueRow(
             label = "月度新增",
@@ -76,12 +78,14 @@ fun CommissionLedgerScreen(
         )
         P2CoreCard {
             P2CoreCardHeader(title = uiState.note)
-            uiState.highlights.forEach { item ->
+            uiState.highlights.forEachIndexed { index, item ->
                 P2CoreListRow(
                     title = item.title,
                     subtitle = item.subtitle,
                     trailing = item.trailing,
-                    emphasis = if (item.trailing.contains("+")) {
+                    emphasis = if (index == trendFocus % maxOf(uiState.highlights.size, 1)) {
+                        P2CoreRowEmphasis.Success
+                    } else if (item.trailing.contains("+")) {
                         P2CoreRowEmphasis.Success
                     } else {
                         P2CoreRowEmphasis.Warning
