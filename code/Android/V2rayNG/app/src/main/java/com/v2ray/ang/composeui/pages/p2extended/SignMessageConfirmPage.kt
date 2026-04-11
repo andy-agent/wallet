@@ -53,18 +53,28 @@ fun SignMessageConfirmScreen(
         secondaryActionLabel = "拒绝",
         onSecondaryAction = { onEvent(SignMessageConfirmEvent.SecondaryActionClicked) },
     ) {
-        P2Card(title = "Jupiter 请求签名", subtitle = "请检查合约、数量、网络与 gas 费用。") {
-            FieldRow("操作类型", "Swap Exact In")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("网络", "Solana")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("支付资产", "580 USDT")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("目标资产", "82.6 SOL")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("预估费用", "0.0012 SOL")
-            Spacer(modifier = Modifier.height(12.dp))
-            NoteCard(title = "风险提示", text = "授权范围为本次交易，未检测到无限授权")
+        P2SignRequestCard(
+            dapp = "Jupiter",
+            domain = "app.jup.ag",
+            operation = "Swap Exact In",
+            network = "Solana",
+            payload = "580 USDT -> 82.6 SOL",
+            gasHint = "约 0.0012 SOL",
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        P2Card(title = "签名前检查", subtitle = "签名后将广播交易并不可回滚。") {
+            KpiRow(
+                items = listOf(
+                    "授权范围" to "单次交易",
+                    "到期时间" to "5 min",
+                    "风险等级" to "低",
+                ),
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            P2InlineWarningCard(
+                title = "风险提示",
+                text = "请核对目标资产与最小到账数量，防止钓鱼签名。",
+            )
         }
     }
 }

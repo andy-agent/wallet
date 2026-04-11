@@ -53,16 +53,24 @@ fun SwapScreen(
         secondaryActionLabel = "预览兑换并继续",
         onSecondaryAction = { onEvent(SwapEvent.SecondaryActionClicked) },
     ) {
-        P2Card(title = "兑换面板", subtitle = "支持 SOL / USDT / ETH / TRX 等常见资产。") {
-            FieldRow("支付", "USDT · TRON · 580")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("获得", "SOL · Solana · 82.6")
-            Spacer(modifier = Modifier.height(12.dp))
+        P2SwapPairCard(
+            payToken = "USDT",
+            payChain = "TRON",
+            payAmount = "580.00",
+            receiveToken = "SOL",
+            receiveChain = "Solana",
+            receiveAmount = "82.60",
+            routeDetail = "Jupiter -> Orca 两跳聚合，预计成交价偏差 0.42%",
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        P2Card(title = "兑换控制", subtitle = "确认滑点与路由后再发起签名。") {
+            ChipRow(items = listOf("0.3%", "0.5%", "1.0%"), activeIndex = 1)
+            Spacer(modifier = Modifier.height(10.dp))
             KpiRow(
                 listOf(
-                    "滑点" to "0.5%",
-                    "路由" to "2 hops",
-                    "预计到手" to "82.1",
+                    "价格影响" to "0.19%",
+                    "最小到账" to "82.10 SOL",
+                    "网络费" to "0.0012 SOL",
                 ),
             )
         }

@@ -832,4 +832,210 @@ internal fun P2InlineWarningCard(
     }
 }
 
+@Composable
+internal fun P2SearchShell(
+    placeholder: String,
+    quickHint: String,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0xFFE9ECF8), RoundedCornerShape(14.dp))
+            .padding(12.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF7F9FF), RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0xFFE7EBFA), RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(Color(0xFF7A8AC3), CircleShape),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                placeholder,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF6A76A4),
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            SecurityStatusPill(label = "可访问", healthy = true)
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            quickHint,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFF6974A0),
+        )
+    }
+}
+
+@Composable
+internal fun P2SwapPairCard(
+    payToken: String,
+    payChain: String,
+    payAmount: String,
+    receiveToken: String,
+    receiveChain: String,
+    receiveAmount: String,
+    routeDetail: String,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(16.dp))
+            .border(1.dp, Color(0xFFE9ECF8), RoundedCornerShape(16.dp))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FieldRow(label = "支付", value = "$payToken · $payChain · $payAmount")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(28.dp)
+                    .height(2.dp)
+                    .background(Color(0xFFD9E0FA), RoundedCornerShape(999.dp)),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            SecurityStatusPill(label = "路径计算中", healthy = true)
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .width(28.dp)
+                    .height(2.dp)
+                    .background(Color(0xFFD9E0FA), RoundedCornerShape(999.dp)),
+            )
+        }
+        FieldRow(label = "获得", value = "$receiveToken · $receiveChain · $receiveAmount")
+        NoteCard(title = "路由详情", text = routeDetail)
+    }
+}
+
+@Composable
+internal fun P2BridgeFlowCard(
+    sourceChain: String,
+    targetChain: String,
+    asset: String,
+    amount: String,
+    eta: String,
+    fee: String,
+) {
+    P2Card(
+        title = "桥接流程",
+        subtitle = "从来源链冻结资产，跨链验证后在目标链释放。",
+    ) {
+        P2FlowStepCard(
+            step = "01",
+            title = "来源链：$sourceChain",
+            detail = "$asset · $amount",
+            emphasized = true,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        P2FlowStepCard(
+            step = "02",
+            title = "目标链：$targetChain",
+            detail = "预计到账 $eta",
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        KpiRow(
+            items = listOf(
+                "手续费" to fee,
+                "链路状态" to "健康",
+                "确认数" to "12/12",
+            ),
+        )
+    }
+}
+
+@Composable
+internal fun P2SessionAppCard(
+    title: String,
+    subtitle: String,
+    network: String,
+    riskFlag: Boolean = false,
+    actionLabel: String = "断开",
+) {
+    val border = if (riskFlag) Color(0xFFFFD5C0) else Color(0xFFE9ECF8)
+    val background = if (riskFlag) Color(0xFFFFFAF6) else Color.White
+    val badgeLabel = if (riskFlag) "高风险" else "活跃"
+    val badgeBg = if (riskFlag) Color(0xFFFFEFE5) else Color(0xFFEAFBF1)
+    val badgeColor = if (riskFlag) Color(0xFFAA5621) else Color(0xFF177245)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(background, RoundedCornerShape(14.dp))
+            .border(1.dp, border, RoundedCornerShape(14.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .background(Color(0xFFE8EEFF), RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0xFFD8E2FF), RoundedCornerShape(10.dp)),
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF1E274D),
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                "$subtitle · $network",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF6673A0),
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Box(
+                modifier = Modifier
+                    .background(badgeBg, RoundedCornerShape(999.dp))
+                    .border(1.dp, border, RoundedCornerShape(999.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            ) {
+                Text(badgeLabel, style = MaterialTheme.typography.labelSmall, color = badgeColor)
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                actionLabel,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color(0xFF3651C8),
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun P2SignRequestCard(
+    dapp: String,
+    domain: String,
+    operation: String,
+    network: String,
+    payload: String,
+    gasHint: String,
+) {
+    P2Card(title = "$dapp 请求签名", subtitle = domain) {
+        FieldRow("操作类型", operation)
+        Spacer(modifier = Modifier.height(8.dp))
+        FieldRow("网络", network)
+        Spacer(modifier = Modifier.height(8.dp))
+        FieldRow("签名摘要", payload)
+        Spacer(modifier = Modifier.height(8.dp))
+        NoteCard(title = "预估网络费", text = gasHint)
+    }
+}
+
 internal object ColumnScopeWrapper

@@ -53,21 +53,27 @@ fun BridgeScreen(
         secondaryActionLabel = "返回 Swap",
         onSecondaryAction = { onEvent(BridgeEvent.SecondaryActionClicked) },
     ) {
-        P2Card(title = "桥接面板", subtitle = "支持常用主流链之间的稳定币与主资产桥接。") {
-            FieldRow("来源链", "TRON")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("目标链", "Solana")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("资产", "USDT")
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldRow("数量", "580.00")
-            Spacer(modifier = Modifier.height(12.dp))
+        P2BridgeFlowCard(
+            sourceChain = "TRON",
+            targetChain = "Solana",
+            asset = "USDT",
+            amount = "580.00",
+            eta = "3 min",
+            fee = "$1.90",
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        P2Card(title = "桥接参数", subtitle = "执行前确认到账链与最小到账数量。") {
             KpiRow(
                 listOf(
-                    "桥接费用" to "$1.9",
-                    "预计用时" to "3 min",
-                    "到账数量" to "578.1",
+                    "最小到账" to "578.10",
+                    "桥接路由" to "Stargate",
+                    "状态" to "可执行",
                 ),
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            P2InlineWarningCard(
+                title = "跨链提醒",
+                text = "桥接提交后不可撤销，请确认目标地址网络一致。",
             )
         }
     }

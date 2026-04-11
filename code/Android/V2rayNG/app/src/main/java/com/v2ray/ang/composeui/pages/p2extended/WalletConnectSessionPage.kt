@@ -50,15 +50,44 @@ fun WalletConnectSessionScreen(
         subtitle = "管理与 DApp的已连接会话、权限范围与自动断开。",
         hubLabel = "6 会话",
         onHubClick = { onEvent(WalletConnectSessionEvent.Refresh) },
+        primaryActionLabel = "批量审计会话",
+        onPrimaryAction = { onEvent(WalletConnectSessionEvent.PrimaryActionClicked) },
+        secondaryActionLabel = "断开全部高风险",
+        onSecondaryAction = { onEvent(WalletConnectSessionEvent.SecondaryActionClicked) },
     ) {
+        P2SearchShell(
+            placeholder = "搜索 DApp / 会话地址",
+            quickHint = "按链与风险等级筛选，避免过期授权长期保留。",
+        )
+        Spacer(modifier = Modifier.height(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ListRow("Jupiter", "读取余额 / 发起兑换 · 当前网络：Solana", "断开")
-            ListRow("Sunswap", "读取地址 / 发起授权 · 当前网络：TRON", "断开")
-            ListRow("Aave", "读取资产 / 发起存款 · 当前网络：Ethereum", "断开")
-            ListRow("Magic Eden", "读取 NFT / 签名 · 当前网络：Solana", "断开")
+            P2SessionAppCard(
+                title = "Jupiter",
+                subtitle = "读取余额 / 发起兑换",
+                network = "Solana",
+            )
+            P2SessionAppCard(
+                title = "Sunswap",
+                subtitle = "读取地址 / 发起授权",
+                network = "TRON",
+            )
+            P2SessionAppCard(
+                title = "Aave",
+                subtitle = "读取资产 / 发起存款",
+                network = "Ethereum",
+            )
+            P2SessionAppCard(
+                title = "Unknown DEX",
+                subtitle = "合约写入 / 签名请求",
+                network = "Polygon",
+                riskFlag = true,
+            )
         }
         Spacer(modifier = Modifier.height(14.dp))
-        NoteCard(title = "会话安全", text = "高风险域名会自动标红并在签名前再次确认")
+        P2InlineWarningCard(
+            title = "会话安全",
+            text = "高风险域名会自动标红并在签名前再次确认。",
+        )
     }
 }
 
