@@ -505,10 +505,12 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             .sortedByDescending { it.createdAt }
         val total = relatedOrders.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
         val assetCode = args.assetId.uppercase(Locale.ROOT)
+        val supportsLinkedRoutes =
+            args.assetId.equals("USDT", ignoreCase = true) && args.chainId.equals("tron", ignoreCase = true)
         return AssetDetailUiState(
             badge = if (relatedOrders.isEmpty()) "订单视角" else "${relatedOrders.size} 笔真实记录",
-            primaryActionLabel = if (relatedOrders.isNotEmpty()) "发送资产" else null,
-            secondaryActionLabel = if (relatedOrders.isNotEmpty()) "收款" else null,
+            primaryActionLabel = if (relatedOrders.isNotEmpty() && supportsLinkedRoutes) "发送资产" else null,
+            secondaryActionLabel = if (relatedOrders.isNotEmpty() && supportsLinkedRoutes) "收款" else null,
             metrics = listOf(
                 FeatureMetric("资产", assetCode),
                 FeatureMetric("订单金额", formatAssetAmount(total, assetCode)),
@@ -629,8 +631,8 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         return if (overview != null) {
             InviteCenterUiState(
                 badge = "真实邀请",
-                primaryActionLabel = "复制邀请码",
-                secondaryActionLabel = "分享推广链接",
+                primaryActionLabel = "查看佣金账本",
+                secondaryActionLabel = "进入分享页",
                 metrics = listOf(
                     FeatureMetric("邀请码", overview.referralCode),
                     FeatureMetric("可用佣金", "${overview.availableAmountUsdt} USDT"),

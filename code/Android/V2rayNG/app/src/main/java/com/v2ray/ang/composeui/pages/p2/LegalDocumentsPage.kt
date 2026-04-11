@@ -41,6 +41,9 @@ fun LegalDocumentsScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     val documentFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
+    val firstDocumentRoute = uiState.highlights.firstOrNull { it.badge.isNotBlank() }
+        ?.badge
+        ?.let(CryptoVpnRouteSpec::legalDocumentDetailRoute)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -50,7 +53,7 @@ fun LegalDocumentsScreen(
         onBottomNav = onBottomNav,
         primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = {
-            uiState.highlights.firstOrNull()?.badge?.let { onBottomNav(CryptoVpnRouteSpec.legalDocumentDetailRoute(it)) }
+            firstDocumentRoute?.let(onBottomNav)
         },
         secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onBottomNav(CryptoVpnRouteSpec.profile.pattern) },
