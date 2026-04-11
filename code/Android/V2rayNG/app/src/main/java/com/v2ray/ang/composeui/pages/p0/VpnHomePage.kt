@@ -183,7 +183,7 @@ fun VpnHomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                VpnQuickCell(uiState.walletTotalLabel, onClick = { onBottomNav(CryptoVpnRouteSpec.receiveRoute("USDT", "tron")) }, modifier = Modifier.weight(1f))
+                VpnQuickCell("${uiState.importedConfigCount} 配置", onClick = { onBottomNav(CryptoVpnRouteSpec.receiveRoute("USDT", "tron")) }, modifier = Modifier.weight(1f))
                 VpnQuickCell("${uiState.speedNodes.size} 节点", onClick = { onBottomNav(CryptoVpnRouteSpec.sendRoute("USDT", "tron")) }, modifier = Modifier.weight(1f))
                 VpnQuickCell("${uiState.subscription.expiresInDays}天", onClick = { onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern) }, modifier = Modifier.weight(1f))
                 VpnQuickCell("查看订单", onClick = { onBottomNav(CryptoVpnRouteSpec.orderList.pattern) }, modifier = Modifier.weight(1f))
@@ -251,7 +251,7 @@ private fun connectionChipLabel(status: VpnConnectionStatus): String = when (sta
 }
 
 private fun connectionPrimaryValue(status: VpnHomeUiState): String = when (status.connectionStatus) {
-    VpnConnectionStatus.CONNECTED -> if (status.selectedRegion.latencyMs > 0) "${status.selectedRegion.latencyMs}ms" else "已连接"
+    VpnConnectionStatus.CONNECTED -> status.selectedRegion.latencyMs?.let { "${it}ms" } ?: "已连接"
     VpnConnectionStatus.CONNECTING -> "连接中"
     VpnConnectionStatus.DISCONNECTED -> "0Mbps"
 }

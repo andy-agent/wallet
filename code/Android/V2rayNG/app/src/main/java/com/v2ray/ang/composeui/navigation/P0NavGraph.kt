@@ -126,7 +126,7 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
 
     composable(CryptoVpnRouteSpec.emailRegister.pattern) {
         val vm: EmailRegisterViewModel = viewModel(
-            factory = cryptoVpnViewModelFactory { EmailRegisterViewModel(repository) },
+            factory = cryptoVpnViewModelFactory { EmailRegisterViewModel(repository, p0Repository) },
         )
         EmailRegisterRoute(
             viewModel = vm,
@@ -138,7 +138,7 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
 
     composable(CryptoVpnRouteSpec.resetPassword.pattern) {
         val vm: ResetPasswordViewModel = viewModel(
-            factory = cryptoVpnViewModelFactory { ResetPasswordViewModel(repository) },
+            factory = cryptoVpnViewModelFactory { ResetPasswordViewModel(repository, p0Repository) },
         )
         ResetPasswordRoute(
             viewModel = vm,

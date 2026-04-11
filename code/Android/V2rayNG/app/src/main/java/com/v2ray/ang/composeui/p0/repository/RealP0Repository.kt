@@ -3,13 +3,16 @@ package com.v2ray.ang.composeui.p0.repository
 import android.content.Context
 import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.composeui.p0.model.AssetHolding
+import com.v2ray.ang.composeui.p0.model.CodeRequestResult
 import com.v2ray.ang.composeui.p0.model.LoginResult
 import com.v2ray.ang.composeui.p0.model.LoginUiState
 import com.v2ray.ang.composeui.p0.model.RegionSpeed
 import com.v2ray.ang.composeui.p0.model.SplashUiState
+import com.v2ray.ang.composeui.p0.model.SubmitResult
 import com.v2ray.ang.composeui.p0.model.SubscriptionSummary
 import com.v2ray.ang.composeui.p0.model.VpnConnectionStatus
 import com.v2ray.ang.composeui.p0.model.VpnHomeUiState
+import com.v2ray.ang.composeui.p0.model.WalletCreationMode
 import com.v2ray.ang.composeui.p0.model.WalletChainSummary
 import com.v2ray.ang.composeui.p0.model.WalletHomeUiState
 import com.v2ray.ang.composeui.p0.model.WalletOnboardingUiState
@@ -74,7 +77,7 @@ class RealP0Repository(context: Context) : P0Repository {
 
     override suspend fun login(email: String, password: String): LoginResult {
         if (email.isBlank() || password.isBlank()) {
-            return LoginResult(success = false)
+            return LoginResult(success = false, message = "邮箱和密码不能为空")
         }
         return withContext(Dispatchers.IO) {
             val response = paymentRepository.api.login(
@@ -97,32 +100,91 @@ class RealP0Repository(context: Context) : P0Repository {
                         loginAt = System.currentTimeMillis(),
                     ),
                 )
-                LoginResult(success = true)
+                LoginResult(success = true, message = "登录成功")
             } else {
-                LoginResult(success = false)
+                LoginResult(
+                    success = false,
+                    message = response.body()?.message ?: "登录失败，请检查邮箱和密码",
+                )
             }
         }
     }
 
-    override suspend fun getWalletOnboardingState(): WalletOnboardingUiState {
-        return WalletOnboardingUiState()
+    override suspend fun requestRegisterCode(email: String): CodeRequestResult {
+        if (email.isBlank()) {
+            return CodeRequestResult(success = false, message = "邮箱不能为空")
+        }
+        return paymentRepository.requestRegisterCode(email).fold(
+            onSuccess = { CodeRequestResult(success = true, message = "验证码已发送") },
+            onFailure = { CodeRequestResult(success = false, message = it.message ?: "发送验证码失败") },
+        )
     }
 
-    override suspend fun getVpnHomeState(): VpnHomeUiState {
+    override suspend fun register(email: String, password: String, code: String): SubmitResult {
+        if (email.isBlank() || password.isBlank() || code.isBlank()) {
+            return SubmitResult(success = false, message = "邮箱、验证码和密码不能为空")
+        }
+        return paymentRepository.register(email, password, code).fold(
+            onSuccess = { SubmitResult(success = true, message = "注册成功") },
+            onFailure = { SubmitResult(success = false, message = it.message ?: "注册失败") },
+        )
+    }
+
+    override suspend fun requestResetCode(email: String): CodeRequestResult {
+        if (email.isBlank()) {
+            return CodeRequestResult(success = false, message = "邮箱不能为空")
+        }
+        return paymentRepository.requestResetCode(email).fold(
+            onSuccess = { CodeRequestResult(success = true, message = "重置验证码已发送") },
+            onFailure = { CodeRequestResult(success = false, message = it.message ?: "发送重置验证码失败") },
+        )
+    }
+
+    override suspend fun resetPassword(email: String, code: String, newPassword: String): SubmitResult {
+        if (email.isBlank() || code.isBlank() || newPassword.isBlank()) {
+            return SubmitResult(success = false, message = "邮箱、验证码和新密码不能为空")
+        }
+        return paymentRepository.resetPassword(email, code, newPassword).fold(
+            onSuccess = { SubmitResult(success = true, message = "密码已重置，请重新登录") },
+            onFailure = { SubmitResult(success = false, message = it.message ?: "重置密码失败") },
+        )
+    }
+
+    override suspend fun getWalletOnboardingState(selectedMode: WalletCreationMode?): WalletOnboardingUiState {
+        val currentUser = paymentRepository.getCachedCurrentUser()
+        return WalletOnboardingUiState(
+            selectedMode = selectedMode ?: WalletCreationMode.CREATE,
+            accountLabel = currentUser?.username ?: currentUser?.email.orEmpty(),
+            statusMessage = if (currentUser != null) {
+                "当前账号已登录，可继续进入真实钱包创建或导入流程。"
+            } else {
+                "建议先登录真实账号，再继续钱包流程。"
+            },
+        )
+    }
+
+    override suspend fun getVpnHomeState(selectedRegionCode: String?): VpnHomeUiState {
         val me = paymentRepository.getMe().getOrNull()
         val subscription = paymentRepository.getSubscription().getOrNull() ?: me?.subscription
         val orders = loadOrders()
         val latestOrder = orders.maxByOrNull { it.createdAt }
         val regions = localRegions()
-        val selectedRegion = regions.firstOrNull()
+        val selectedRegion = regions.firstOrNull { it.regionCode == selectedRegionCode }
+            ?: regions.firstOrNull()
             ?: RegionSpeed(
+                regionCode = "",
                 regionName = "暂无本地节点",
                 protocol = "等待导入或订阅同步",
-                latencyMs = 0,
+                latencyMs = null,
                 load = "空态",
+                statusLabel = "未就绪",
+                isAllowed = false,
+                isOnline = false,
             )
 
         return VpnHomeUiState(
+            isLoading = false,
+            accountLabel = me?.email ?: paymentRepository.getCachedCurrentUser()?.username.orEmpty(),
             connectionStatus = if (V2RayServiceManager.isRunning()) {
                 VpnConnectionStatus.CONNECTED
             } else {
@@ -131,20 +193,24 @@ class RealP0Repository(context: Context) : P0Repository {
             selectedRegion = selectedRegion,
             subscription = SubscriptionSummary(
                 planName = subscription?.planCode ?: latestOrder?.planName ?: "暂无有效订阅",
+                statusLabel = subscription?.status ?: "NONE",
                 expiresInDays = subscription?.daysRemaining ?: 0,
                 autoRenew = false,
                 nextBillingLabel = subscription?.expireAt?.let(::formatDateLabel) ?: "等待续费",
+                sessionLimitLabel = subscription?.maxActiveSessions?.toString() ?: "--",
+                canIssueConfig = subscription?.status == "ACTIVE",
             ),
             autoConnectEnabled = paymentRepository.isTokenValid(),
             oneTapLabel = if (V2RayServiceManager.isRunning()) "VPN tunnel active" else "Connect and secure",
             speedNodes = regions,
             watchSignals = buildWatchSignals(orders),
-            walletTotalLabel = orders.sumOf { it.payment.amountCrypto.toDoubleOrNull() ?: 0.0 }
-                .let { "$" + String.format(Locale.US, "%.2f", it) },
+            importedConfigCount = MmkvManager.decodeAllServerList().size,
+            availableRegionCount = regions.count { it.isAllowed },
+            emptyMessage = if (subscription == null && orders.isEmpty()) "当前暂无订阅与订单，请先购买套餐。" else null,
         )
     }
 
-    override suspend fun getWalletHomeState(): WalletHomeUiState {
+    override suspend fun getWalletHomeState(selectedChainId: String?): WalletHomeUiState {
         val orders = loadOrders()
         val currentUser = paymentRepository.getCachedCurrentUser()
         val assetCodeTotals = orders.groupBy { it.quoteAssetCode }
@@ -176,12 +242,17 @@ class RealP0Repository(context: Context) : P0Repository {
         }
 
         return WalletHomeUiState(
-            totalBalanceText = formatMoney(assetCodeTotals.values.sum()),
-            selectedChainId = chains.firstOrNull()?.chainId ?: "",
+            isLoading = false,
+            totalBalanceText = "${assetCodeTotals.size} 个已缓存资产",
+            selectedChainId = selectedChainId ?: chains.firstOrNull()?.chainId ?: "all",
             chains = chains,
             assets = assets,
             alertBanner = currentUser?.let { "Account ${it.username} · ${orders.size} 笔订单缓存" }
                 ?: "当前未缓存账号",
+            accountLabel = currentUser?.username ?: currentUser?.email.orEmpty(),
+            defaultAddressCount = 0,
+            supportedRailCount = chainTotals.size,
+            emptyMessage = if (orders.isEmpty()) "当前暂无真实订单或钱包公开地址缓存。" else null,
         )
     }
 
@@ -218,12 +289,16 @@ class RealP0Repository(context: Context) : P0Repository {
                 ?.toInt()
                 ?: 0
             RegionSpeed(
+                regionCode = guid,
                 regionName = profile.remarks.ifBlank { profile.server ?: guid.take(8) },
                 protocol = profile.configType.name,
-                latencyMs = latency,
+                latencyMs = latency.takeIf { it > 0 },
                 load = if (latency > 0) "${latency}ms" else "未测速",
+                statusLabel = if (latency > 0) "ONLINE" else "UNKNOWN",
+                isAllowed = true,
+                isOnline = true,
             )
-        }.sortedBy { if (it.latencyMs > 0) it.latencyMs else Int.MAX_VALUE }
+        }.sortedBy { it.latencyMs ?: Int.MAX_VALUE }
     }
 
     private fun buildWatchSignals(orders: List<Order>): List<WatchSignal> {

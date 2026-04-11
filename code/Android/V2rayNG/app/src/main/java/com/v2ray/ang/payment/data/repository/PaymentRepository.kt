@@ -19,6 +19,8 @@ import com.v2ray.ang.payment.data.api.CurrentSubscriptionData
 import com.v2ray.ang.payment.data.api.IssueVpnConfigRequest
 import com.v2ray.ang.payment.data.api.MeData
 import com.v2ray.ang.payment.data.api.PaymentApi
+import com.v2ray.ang.payment.data.api.PasswordResetCodeRequest
+import com.v2ray.ang.payment.data.api.PasswordResetRequest
 import com.v2ray.ang.payment.data.api.RegisterEmailCodeRequest
 import com.v2ray.ang.payment.data.api.ReferralBindRequest
 import com.v2ray.ang.payment.data.api.ReferralOverviewData
@@ -628,6 +630,19 @@ class PaymentRepository(context: Context) {
         }
     }
 
+    suspend fun requestResetCode(email: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val response = api.requestResetCode(PasswordResetCodeRequest(email))
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "发送重置验证码失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun register(
         email: String,
         password: String,
@@ -661,6 +676,30 @@ class PaymentRepository(context: Context) {
                 } ?: Result.failure(Exception("注册响应为空"))
             } else {
                 Result.failure(Exception(response.body()?.message ?: "注册失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun resetPassword(
+        email: String,
+        code: String,
+        newPassword: String,
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val response = api.resetPassword(
+                UUID.randomUUID().toString(),
+                PasswordResetRequest(
+                    email = email,
+                    code = code,
+                    newPassword = newPassword,
+                ),
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "重置密码失败"))
             }
         } catch (e: Exception) {
             Result.failure(e)

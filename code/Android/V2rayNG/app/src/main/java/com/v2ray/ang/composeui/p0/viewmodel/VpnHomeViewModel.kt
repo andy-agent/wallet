@@ -31,7 +31,9 @@ class VpnHomeViewModel(
             }
 
             is VpnHomeEvent.RegionSelected -> {
-                _uiState.value = _uiState.value.copy(selectedRegion = event.value)
+                viewModelScope.launch {
+                    _uiState.value = repository.getVpnHomeState(event.value.regionCode)
+                }
             }
         }
     }

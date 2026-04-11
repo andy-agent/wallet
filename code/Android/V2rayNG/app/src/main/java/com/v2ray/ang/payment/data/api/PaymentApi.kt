@@ -148,6 +148,29 @@ interface PaymentApi {
         @Body request: RegisterRequest
     ): Response<RegisterResponse>
 
+    @POST("${PaymentConfig.API_VERSION}/auth/password/forgot/request-code")
+    suspend fun requestResetCode(
+        @Body request: PasswordResetCodeRequest
+    ): Response<OperationResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/auth/password/reset")
+    suspend fun resetPassword(
+        @Header("X-Idempotency-Key") idempotencyKey: String,
+        @Body request: PasswordResetRequest
+    ): Response<OperationResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallet/chains")
+    suspend fun getWalletChains(
+        @Header("Authorization") authorization: String
+    ): Response<WalletChainsResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallet/public-addresses")
+    suspend fun getWalletPublicAddresses(
+        @Header("Authorization") authorization: String,
+        @Query("networkCode") networkCode: String? = null,
+        @Query("assetCode") assetCode: String? = null
+    ): Response<WalletPublicAddressesResponse>
+
     @POST("${PaymentConfig.API_VERSION}/auth/refresh")
     suspend fun refreshToken(
         @Body request: RefreshTokenRequest
@@ -164,6 +187,17 @@ class EmptyData
 
 data class RegisterEmailCodeRequest(
     val email: String
+)
+
+data class PasswordResetCodeRequest(
+    val email: String
+)
+
+data class PasswordResetRequest(
+    val email: String,
+    val code: String,
+    @SerializedName("newPassword")
+    val newPassword: String
 )
 
 data class PlansResponse(
@@ -336,6 +370,57 @@ data class ReferralOverviewData(
 data class ReferralBindRequest(
     @SerializedName("referralCode")
     val referralCode: String
+)
+
+data class WalletChainsResponse(
+    val code: String,
+    val message: String,
+    val data: WalletChainsData?
+)
+
+data class WalletChainsData(
+    val items: List<WalletChainItem>
+)
+
+data class WalletChainItem(
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("displayName")
+    val displayName: String,
+    @SerializedName("nativeAssetCode")
+    val nativeAssetCode: String,
+    @SerializedName("directBroadcastEnabled")
+    val directBroadcastEnabled: Boolean,
+    @SerializedName("proxyBroadcastEnabled")
+    val proxyBroadcastEnabled: Boolean,
+    @SerializedName("requiredConfirmations")
+    val requiredConfirmations: Int,
+    @SerializedName("publicRpcUrl")
+    val publicRpcUrl: String,
+)
+
+data class WalletPublicAddressesResponse(
+    val code: String,
+    val message: String,
+    val data: WalletPublicAddressesData?
+)
+
+data class WalletPublicAddressesData(
+    val items: List<WalletPublicAddressItem>
+)
+
+data class WalletPublicAddressItem(
+    @SerializedName("addressId")
+    val addressId: String,
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
+    val assetCode: String,
+    val address: String,
+    @SerializedName("isDefault")
+    val isDefault: Boolean,
+    @SerializedName("createdAt")
+    val createdAt: String,
 )
 
 data class CreateWithdrawalRequest(

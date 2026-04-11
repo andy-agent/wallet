@@ -15,6 +15,10 @@ data class SplashUiState(
     val progressDetail: String = "初始化加密模块、节点探测与资产索引…",
     val authResolved: Boolean = false,
     val readyToNavigate: Boolean = false,
+    val nextRoute: String? = null,
+    val isLoading: Boolean = true,
+    val errorMessage: String? = null,
+    val retryLabel: String = "重试启动检查",
 )
 
 sealed interface SplashEvent {
@@ -28,6 +32,8 @@ data class LoginUiState(
     val isLoading: Boolean = false,
     val rememberMe: Boolean = true,
     val helperText: String = "Self-custody wallet + VPN, one secure shell.",
+    val statusMessage: String? = null,
+    val errorMessage: String? = null,
 )
 
 sealed interface LoginEvent {
@@ -45,6 +51,13 @@ enum class WalletCreationMode {
 data class WalletOnboardingUiState(
     val selectedMode: WalletCreationMode = WalletCreationMode.CREATE,
     val focusedChains: List<String> = listOf("ETH", "BSC", "Polygon", "Arbitrum", "Base", "Solana", "TRON"),
+    val isLoading: Boolean = false,
+    val accountLabel: String = "",
+    val statusMessage: String? = null,
+    val errorMessage: String? = null,
+    val emptyMessage: String? = null,
+    val unavailableMessage: String? = null,
+    val primaryActionLabel: String = "继续",
 )
 
 sealed interface WalletOnboardingEvent {
@@ -54,16 +67,23 @@ sealed interface WalletOnboardingEvent {
 
 data class SubscriptionSummary(
     val planName: String,
+    val statusLabel: String,
     val expiresInDays: Int,
     val autoRenew: Boolean,
     val nextBillingLabel: String,
+    val sessionLimitLabel: String = "--",
+    val canIssueConfig: Boolean = false,
 )
 
 data class RegionSpeed(
+    val regionCode: String,
     val regionName: String,
     val protocol: String,
-    val latencyMs: Int,
+    val latencyMs: Int? = null,
     val load: String,
+    val statusLabel: String = "",
+    val isAllowed: Boolean = false,
+    val isOnline: Boolean = false,
 )
 
 data class WatchSignal(
@@ -75,19 +95,37 @@ data class WatchSignal(
 )
 
 data class VpnHomeUiState(
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val emptyMessage: String? = null,
+    val unavailableMessage: String? = null,
+    val accountLabel: String = "",
     val connectionStatus: VpnConnectionStatus = VpnConnectionStatus.DISCONNECTED,
-    val selectedRegion: RegionSpeed = RegionSpeed("Singapore - Premium", "VLESS / Reality", 48, "11% load"),
+    val selectedRegion: RegionSpeed = RegionSpeed(
+        regionCode = "",
+        regionName = "暂无可用区域",
+        protocol = "--",
+        latencyMs = null,
+        load = "--",
+        statusLabel = "未就绪",
+        isAllowed = false,
+        isOnline = false,
+    ),
     val subscription: SubscriptionSummary = SubscriptionSummary(
-        planName = "Pro Mesh 30D",
+        planName = "暂无有效订阅",
+        statusLabel = "NONE",
         expiresInDays = 18,
         autoRenew = true,
         nextBillingLabel = "Renews 2025-04-27",
+        sessionLimitLabel = "--",
+        canIssueConfig = false,
     ),
     val autoConnectEnabled: Boolean = true,
     val oneTapLabel: String = "Quick Secure Connect",
     val speedNodes: List<RegionSpeed> = emptyList(),
     val watchSignals: List<WatchSignal> = emptyList(),
-    val walletTotalLabel: String = "$24,860.42",
+    val importedConfigCount: Int = 0,
+    val availableRegionCount: Int = 0,
 )
 
 sealed interface VpnHomeEvent {
@@ -114,11 +152,18 @@ data class AssetHolding(
 )
 
 data class WalletHomeUiState(
-    val totalBalanceText: String = "$24,860.42",
-    val selectedChainId: String = "ethereum",
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val emptyMessage: String? = null,
+    val unavailableMessage: String? = null,
+    val totalBalanceText: String = "0 个已绑定地址",
+    val selectedChainId: String = "all",
     val chains: List<WalletChainSummary> = emptyList(),
     val assets: List<AssetHolding> = emptyList(),
-    val alertBanner: String = "2 approvals need review · 1 backup reminder",
+    val alertBanner: String = "尚未读取真实钱包公开地址",
+    val accountLabel: String = "",
+    val defaultAddressCount: Int = 0,
+    val supportedRailCount: Int = 0,
 )
 
 sealed interface WalletHomeEvent {
@@ -128,4 +173,15 @@ sealed interface WalletHomeEvent {
 
 data class LoginResult(
     val success: Boolean,
+    val message: String? = null,
+)
+
+data class CodeRequestResult(
+    val success: Boolean,
+    val message: String? = null,
+)
+
+data class SubmitResult(
+    val success: Boolean,
+    val message: String? = null,
 )

@@ -24,7 +24,9 @@ class WalletHomeViewModel(
     fun onEvent(event: WalletHomeEvent) {
         when (event) {
             is WalletHomeEvent.ChainSelected -> {
-                _uiState.value = _uiState.value.copy(selectedChainId = event.chainId)
+                viewModelScope.launch {
+                    _uiState.value = repository.getWalletHomeState(event.chainId)
+                }
             }
 
             WalletHomeEvent.Refresh -> refresh()
