@@ -47,6 +47,7 @@ fun LegalDocumentDetailScreen(
 ) {
     val version = uiState.metrics.firstOrNull()?.value ?: "v2025.04"
     val effective = uiState.highlights.firstOrNull()?.trailing?.ifBlank { "2025-04-01" } ?: "2025-04-01"
+    val sectionFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -54,6 +55,7 @@ fun LegalDocumentDetailScreen(
         badge = null,
         activeSection = CoreNavSection.Profile,
         onBottomNav = onBottomNav,
+        secureHubLabel = legalDetailHubLabel(sectionFocus),
         primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(LegalDocumentDetailEvent.PrimaryActionClicked) },
         secondaryActionLabel = uiState.secondaryActionLabel,
@@ -74,6 +76,13 @@ fun LegalDocumentDetailScreen(
             }
         }
     }
+}
+
+private fun legalDetailHubLabel(index: Int): String = when (index) {
+    0 -> "TERM"
+    1 -> "RULE"
+    2 -> "NOTE"
+    else -> "LEGAL"
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

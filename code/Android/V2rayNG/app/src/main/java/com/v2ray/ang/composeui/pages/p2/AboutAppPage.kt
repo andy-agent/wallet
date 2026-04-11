@@ -40,6 +40,7 @@ fun AboutAppScreen(
     onEvent: (AboutAppEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val aboutFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -47,6 +48,7 @@ fun AboutAppScreen(
         badge = null,
         activeSection = CoreNavSection.Profile,
         onBottomNav = onBottomNav,
+        secureHubLabel = aboutHubLabel(aboutFocus),
         primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(AboutAppEvent.PrimaryActionClicked) },
         secondaryActionLabel = uiState.secondaryActionLabel,
@@ -68,6 +70,13 @@ fun AboutAppScreen(
             }
         }
     }
+}
+
+private fun aboutHubLabel(index: Int): String = when (index) {
+    0 -> "APP"
+    1 -> "VER"
+    2 -> "DOC"
+    else -> "INFO"
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

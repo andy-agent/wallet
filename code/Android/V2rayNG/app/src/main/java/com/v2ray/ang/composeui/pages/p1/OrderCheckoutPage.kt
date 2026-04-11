@@ -81,7 +81,7 @@ fun OrderCheckoutScreen(
             chips = listOf("• 10分钟有效"),
             backLabel = "<",
             onBack = { onBottomNav(CryptoVpnRouteSpec.plans.pattern) },
-            trailing = { P1SecureHub(label = "PAY") },
+            trailing = { P1SecureHub(label = checkoutHubLabel(selectedNetwork)) },
         )
 
         P01Card {
@@ -184,6 +184,13 @@ private fun checkoutNetworkAccent(network: String): Color =
         "USDT-TRON" -> Color(0xFF20C4F4)
         "USDT-Solana" -> Color(0xFF4276FF)
         else -> Color(0xFFF6B155)
+    }
+
+private fun checkoutHubLabel(network: String): String =
+    when (network) {
+        "USDT-TRON" -> "TRON"
+        "USDT-Solana" -> "SOL"
+        else -> "PAY"
     }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

@@ -90,7 +90,7 @@ fun RegionSelectionScreen(
             eyebrow = "SMART ROUTING",
             title = "选择最佳节点",
             subtitle = "用延迟、速度、用途标签来选区，而不是只看国家名。",
-            trailing = { P1SecureHub(label = "ROUTE") },
+            trailing = { P1SecureHub(label = regionHubLabel(selectedNode)) },
         )
 
         P01SearchField(
@@ -275,6 +275,14 @@ private fun inferRegion(title: String): String =
         listOf("洛杉矶", "纽约", "多伦多", "温哥华").any { it in title } -> "美洲"
         else -> "推荐"
     }
+
+private fun regionHubLabel(node: RegionNodeUi?): String = when {
+    node == null -> "ROUTE"
+    node.region == "亚洲" -> "ASIA"
+    node.region == "欧洲" -> "EU"
+    node.region == "美洲" -> "US"
+    else -> "ROUTE"
+}
 
 private fun latencyValue(value: String): Int =
     value.filter(Char::isDigit).toIntOrNull() ?: Int.MAX_VALUE

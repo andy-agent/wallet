@@ -68,7 +68,7 @@ fun OrderListScreen(
             title = "订单中心",
             backLabel = "<",
             onBack = { onBottomNav(CryptoVpnRouteSpec.vpnHome.pattern) },
-            trailing = { P1SecureHub(label = "LIST") },
+            trailing = { P1SecureHub(label = orderListHubLabel(selectedTab)) },
         )
 
         P1SelectableCard(
@@ -161,6 +161,12 @@ private fun orderStatusColor(status: String): Color =
         "已退款" -> Color(0xFF7B8DB0)
         else -> Color(0xFF4276FF)
     }
+
+private fun orderListHubLabel(selectedTab: Int): String = when (selectedTab) {
+    1 -> "DONE"
+    2 -> "REFUND"
+    else -> "ALL"
+}
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
 @Composable

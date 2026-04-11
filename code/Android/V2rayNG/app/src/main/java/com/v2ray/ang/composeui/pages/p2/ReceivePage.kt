@@ -49,6 +49,7 @@ fun ReceiveScreen(
         badge = uiState.badge,
         activeSection = CoreNavSection.Wallet,
         onBottomNav = onBottomNav,
+        secureHubLabel = receiveHubLabel(status, chips.firstOrNull()),
     ) {
         P2CoreHeroValueCard(
             label = "当前收款网络",
@@ -81,6 +82,15 @@ fun ReceiveScreen(
             P2CoreNoteCard(title = "请确认链一致", text = uiState.note)
         }
     }
+}
+
+private fun receiveHubLabel(
+    status: String,
+    network: String?,
+): String = when {
+    status.contains("校验") -> "READY"
+    !network.isNullOrBlank() -> network.take(4).uppercase()
+    else -> "SCAN"
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

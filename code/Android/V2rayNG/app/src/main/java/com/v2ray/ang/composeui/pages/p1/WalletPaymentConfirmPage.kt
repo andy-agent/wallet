@@ -71,7 +71,7 @@ fun WalletPaymentConfirmScreen(
             title = "钱包支付确认",
             subtitle = "把 VPN 续费变成标准的钱包支付流，而不是额外弹窗。",
             chips = listOf("链路安全"),
-            trailing = { P1SecureHub(label = "SAFE") },
+            trailing = { P1SecureHub(label = paymentConfirmHubLabel(selectedRiskIndex, focusedSummaryIndex)) },
         )
 
         P01Card {
@@ -170,6 +170,15 @@ private fun paymentConfirmRows(uiState: WalletPaymentConfirmUiState): WalletPaym
             "预计开通" to "1 分钟内",
         ),
     )
+}
+
+private fun paymentConfirmHubLabel(
+    selectedRiskIndex: Int,
+    focusedSummaryIndex: Int,
+): String = when {
+    selectedRiskIndex >= 0 -> "CHECK"
+    focusedSummaryIndex >= 4 -> "PAY"
+    else -> "SAFE"
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

@@ -56,7 +56,7 @@ fun OrderDetailScreen(
             chips = listOf("• 已完成"),
             backLabel = "<",
             onBack = onBack,
-            trailing = { P1SecureHub(label = "TRACE") },
+            trailing = { P1SecureHub(label = orderDetailHubLabel(highlightedRowIndex)) },
         )
 
         P1SelectableCard(
@@ -122,6 +122,16 @@ private fun detailRows(uiState: OrderDetailUiState): List<OrderDetailRowUi> {
             accentColor = Color(0xFF49D89B),
         ),
     )
+}
+
+private fun orderDetailHubLabel(index: Int): String = when (index) {
+    0 -> "PLAN"
+    1 -> "ORD"
+    2 -> "TX"
+    3 -> "HASH"
+    4 -> "LIVE"
+    5 -> "NODE"
+    else -> "TRACE"
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

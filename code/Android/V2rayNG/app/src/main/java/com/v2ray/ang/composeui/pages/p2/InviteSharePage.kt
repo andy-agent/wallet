@@ -42,6 +42,7 @@ fun InviteShareScreen(
     val link = uiState.highlights.firstOrNull()?.subtitle ?: primaryMetric?.value ?: ""
     val inviteCode = uiState.metrics.getOrNull(1)?.value ?: "--"
     val channel = uiState.metrics.getOrNull(2)?.value ?: "分享"
+    val shareFocus = rememberCoreLoopingIndex(itemCount = 2, durationMillis = 4200)
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -49,6 +50,7 @@ fun InviteShareScreen(
         badge = null,
         activeSection = CoreNavSection.Growth,
         onBottomNav = onBottomNav,
+        secureHubLabel = if (shareFocus == 0) "QR" else "LINK",
         primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(InviteShareEvent.PrimaryActionClicked) },
         secondaryActionLabel = uiState.secondaryActionLabel,
