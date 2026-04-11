@@ -41,6 +41,7 @@ fun InviteShareScreen(
     val primaryMetric = uiState.metrics.firstOrNull()
     val link = uiState.highlights.firstOrNull()?.subtitle ?: primaryMetric?.value ?: ""
     val inviteCode = uiState.metrics.getOrNull(1)?.value ?: "--"
+    val channel = uiState.metrics.getOrNull(2)?.value ?: "分享"
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -53,29 +54,33 @@ fun InviteShareScreen(
         secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(InviteShareEvent.SecondaryActionClicked) },
     ) {
-        P2CoreQrAddressCard(
-            title = primaryMetric?.label ?: "分享信息",
-            subtitle = uiState.summary,
-            status = "可复制",
-            address = link,
-        ) {
-            P2CoreActionValueRow(
-                label = "邀请码",
-                value = inviteCode,
-                actionLabel = uiState.primaryActionLabel,
-                onAction = { onEvent(InviteShareEvent.PrimaryActionClicked) },
-            )
-        }
-        P2CoreAddressModule(
-            title = "邀请状态",
-            value = uiState.highlights.firstOrNull()?.title ?: inviteCode,
-            supportingText = "分享链接可追踪转化与佣金",
-            status = uiState.highlights.firstOrNull()?.trailing ?: "跟踪中",
-            primaryActionLabel = uiState.primaryActionLabel,
-            onPrimaryAction = { onEvent(InviteShareEvent.PrimaryActionClicked) },
-            secondaryActionLabel = uiState.secondaryActionLabel,
-            onSecondaryAction = { onEvent(InviteShareEvent.SecondaryActionClicked) },
+        P2CoreHeroValueCard(
+            label = "推广邀请码",
+            value = inviteCode.ifBlank { "CVPN-2025-GLOW" },
+            supportingText = uiState.summary,
+            highlight = uiState.badge,
+            stats = listOf(
+                "分享渠道" to channel,
+                "状态" to "可转发",
+            ),
         )
+        P2CoreQrAddressCard(
+            title = "推广二维码",
+            subtitle = "扫码后自动带入邀请关系",
+            status = "Share Ready",
+            address = link,
+            addressLabel = primaryMetric?.label ?: "推广链接",
+            supportingText = uiState.note,
+        ) {
+            if (inviteCode.isNotBlank()) {
+                P2CoreField(
+                    label = "邀请码",
+                    value = inviteCode,
+                    supportingText = "可单独复制并发送给新用户",
+                )
+            }
+            P2CoreNoteCard(title = "分享提示", text = uiState.note)
+        }
     }
 }
 
