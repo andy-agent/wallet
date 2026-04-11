@@ -19,6 +19,12 @@ import com.v2ray.ang.composeui.p0.model.optionalUpdatePreviewState
 import com.v2ray.ang.composeui.p0.model.resetPasswordPreviewState
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutRouteArgs
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutUiState
+import com.v2ray.ang.composeui.p1.model.P1DetailLine
+import com.v2ray.ang.composeui.p1.model.P1OrderSummary
+import com.v2ray.ang.composeui.p1.model.P1PlanCard
+import com.v2ray.ang.composeui.p1.model.P1RegionOption
+import com.v2ray.ang.composeui.p1.model.P1ScreenState
+import com.v2ray.ang.composeui.p1.model.P1StateInfo
 import com.v2ray.ang.composeui.p1.model.OrderDetailRouteArgs
 import com.v2ray.ang.composeui.p1.model.OrderDetailUiState
 import com.v2ray.ang.composeui.p1.model.OrderListUiState
@@ -204,12 +210,12 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val plans = paymentRepository.getPlans().getOrNull()
         if (plans.isNullOrEmpty()) {
             return PlansUiState(
+                stateInfo = P1StateInfo(P1ScreenState.Empty, title = "暂无套餐", message = "当前未取到真实套餐数据。"),
                 metrics = listOf(
                     FeatureMetric("套餐数量", "0"),
                     FeatureMetric("状态", "未取到真实套餐"),
                     FeatureMetric("数据源", "PaymentRepository"),
                 ),
-                highlights = emptyList(),
                 summary = "当前未取到真实套餐数据。",
                 note = "套餐页未再回退到 Mock 仓库；保持真实接口空态。",
             )
@@ -217,55 +223,67 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
         val sortedPlans = plans.sortedBy { it.displayOrder }
         return PlansUiState(
+            stateInfo = P1StateInfo(P1ScreenState.Content),
             metrics = sortedPlans.take(3).map {
                 FeatureMetric(it.getDurationDisplay(), "$${it.priceUsd}")
             },
-            highlights = sortedPlans.take(4).map {
-                FeatureListItem(
+            plans = sortedPlans.map {
+                P1PlanCard(
+                    planCode = it.planCode,
                     title = it.name,
+                    priceText = "$${it.priceUsd}",
                     subtitle = it.description ?: it.regionAccessPolicy,
-                    trailing = "${it.maxActiveSessions} 设备",
                     badge = it.badge ?: "LIVE",
+                    tags = listOf(it.getDurationDisplay(), it.quoteAssetCodeLabel(), it.quoteNetworkCodeLabel()),
+                    featured = it.badge?.contains("推荐") == true || it.badge?.contains("HOT") == true,
                 )
             },
+            selectedPlanCode = sortedPlans.firstOrNull()?.planCode,
             summary = "已从真实套餐接口拉取 ${sortedPlans.size} 个计划。",
             note = "套餐数据来自 PaymentRepository.getPlans()。",
         )
     }
 
     override suspend fun getRegionSelectionState(): RegionSelectionUiState {
-        val nodes = localServerSnapshots()
-        val bestLatency = nodes.mapNotNull { it.latencyMs }.minOrNull()
-        val preferredProtocol = nodes.firstOrNull()?.protocol ?: "--"
+        val regions = paymentRepository.getVpnRegions().getOrNull().orEmpty()
+        val onlineAllowed = regions.filter { it.isAllowed && it.status.equals("ACTIVE", ignoreCase = true) }
 
         return RegionSelectionUiState(
+            stateInfo = if (regions.isEmpty()) {
+                P1StateInfo(P1ScreenState.Empty, title = "暂无可用区域", message = "当前未取到真实 VPN 区域。")
+            } else {
+                P1StateInfo(P1ScreenState.Content)
+            },
             metrics = listOf(
-                FeatureMetric("最佳延迟", bestLatency?.let { "$it ms" } ?: "--"),
-                FeatureMetric("可用节点", nodes.size.toString()),
-                FeatureMetric("优先协议", preferredProtocol),
+                FeatureMetric("可用区域", onlineAllowed.size.toString()),
+                FeatureMetric("总区域数", regions.size.toString()),
+                FeatureMetric("数据源", "vpn/regions"),
             ),
             fields = listOf(
                 FeatureField(
                     key = "search",
-                    label = "节点搜索",
+                    label = "区域搜索",
                     value = "",
-                    supportingText = "当前基于本地节点列表过滤，不再使用固定演示节点。",
+                    supportingText = "当前直接基于真实区域对象过滤。",
                 ),
             ),
-            highlights = nodes.map {
-                FeatureListItem(
+            regions = regions.map {
+                P1RegionOption(
+                    regionCode = it.regionCode,
                     title = it.displayName,
-                    subtitle = it.description,
-                    trailing = it.latencyMs?.let { latency -> "$latency ms" } ?: "--",
-                    badge = it.protocol,
+                    subtitle = it.remark ?: it.tier,
+                    trailing = if (it.isAllowed) "可用" else "不可用",
+                    tier = it.tier,
+                    status = it.status,
+                    isAllowed = it.isAllowed,
                 )
             },
-            summary = if (nodes.isNotEmpty()) {
-                "节点选择页已切换到本地真实节点列表。"
+            summary = if (regions.isNotEmpty()) {
+                "区域选择页已切到真实 vpn/regions 数据。"
             } else {
-                "当前未导入本地节点，页面保持明确空态。"
+                "当前未取到真实 VPN 区域，页面保持真实空态。"
             },
-            note = "节点数据来自 MmkvManager 本地服务器列表与测速缓存。",
+            note = "区域页已不再依赖本地节点快照。",
         )
     }
 
@@ -274,6 +292,8 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val plan = paymentRepository.getPlans().getOrNull()?.firstOrNull { it.planCode == args.planId }
         return if (order != null) {
             OrderCheckoutUiState(
+                stateInfo = P1StateInfo(P1ScreenState.Content),
+                order = order.toP1OrderSummary(),
                 metrics = listOf(
                     FeatureMetric("套餐", order.planName),
                     FeatureMetric("金额", "${order.payment.amountCrypto} ${order.payment.assetCode}"),
@@ -283,22 +303,25 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                     FeatureField("invoice", "账单邮箱", paymentRepository.getCachedCurrentUser()?.email ?: "", "用于发送支付凭证"),
                     FeatureField("remark", "订单备注", order.orderNo, "真实订单号已生成"),
                 ),
-                highlights = listOf(
-                    FeatureListItem("订单号", order.orderNo, order.statusText, "LIVE"),
-                    FeatureListItem("收款地址", order.payment.receiveAddress.ifBlank { "--" }, order.quoteNetworkCode, "PAY"),
-                    FeatureListItem("套餐说明", plan?.description ?: plan?.regionAccessPolicy ?: "", plan?.getDurationDisplay() ?: "", "PLAN"),
+                detailLines = listOf(
+                    P1DetailLine("订单号", order.orderNo),
+                    P1DetailLine("收款地址", order.payment.receiveAddress.ifBlank { "--" }),
+                    P1DetailLine("基础金额", order.baseAmount ?: order.quoteUsdAmount),
+                    P1DetailLine("尾差金额", order.uniqueAmountDelta ?: "--"),
+                    P1DetailLine("支付二维码", order.payment.qrText.ifBlank { "--" }),
+                    P1DetailLine("套餐说明", plan?.description ?: plan?.regionAccessPolicy ?: "--"),
                 ),
                 summary = "真实订单已生成并绑定到当前结算页。",
                 note = "订单数据来自 PaymentRepository.createOrder()/getOrder()。",
             )
         } else {
             OrderCheckoutUiState(
+                stateInfo = P1StateInfo(P1ScreenState.Error, title = "订单生成失败", message = "当前未能生成真实订单，请重试。"),
                 metrics = listOf(
                     FeatureMetric("套餐", args.planId),
                     FeatureMetric("订单状态", "未生成"),
                     FeatureMetric("数据源", "PaymentRepository"),
                 ),
-                highlights = emptyList(),
                 summary = "当前未能生成真实订单，请重试。",
                 note = "结算页未再回退到 Mock 仓库；保持真实订单空态。",
             )
@@ -309,27 +332,34 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val order = paymentRepository.getOrder(args.orderId).getOrNull()
         return if (order != null) {
             WalletPaymentConfirmUiState(
+                stateInfo = P1StateInfo(P1ScreenState.Content),
+                order = order.toP1OrderSummary(),
                 metrics = listOf(
-                    FeatureMetric("订单号", order.orderNo),
+                    FeatureMetric("订单状态", order.statusText),
+                    FeatureMetric("支付网络", order.quoteNetworkCode),
                     FeatureMetric("支付币种", order.payment.assetCode),
-                    FeatureMetric("网络手续费", order.paymentTarget?.uniqueAmountDelta ?: "0"),
                 ),
-                highlights = listOf(
-                    FeatureListItem("套餐", order.planName, order.quoteUsdAmount, "LIVE"),
-                    FeatureListItem("收款地址", order.payment.receiveAddress.ifBlank { "--" }, order.quoteNetworkCode, "CHAIN"),
-                    FeatureListItem("订单状态", order.statusText, order.expiresAt.take(10), "STATUS"),
+                detailLines = listOf(
+                    P1DetailLine("订单号", order.orderNo),
+                    P1DetailLine("应付金额", "${order.payment.amountCrypto} ${order.payment.assetCode}"),
+                    P1DetailLine("收款地址", order.payment.receiveAddress.ifBlank { "--" }),
+                    P1DetailLine("到期时间", order.expiresAt),
+                ),
+                riskLines = listOf(
+                    P1DetailLine("自动扫链", "无需手填 txHash，系统会按共享地址 + 尾差识别订单。"),
+                    P1DetailLine("支付确认", "当前页只展示真实订单与支付状态，不假装自动成功。"),
                 ),
                 summary = "钱包支付确认已绑定真实订单。",
                 note = "订单与 paymentTarget 来自真实支付接口。",
             )
         } else {
             WalletPaymentConfirmUiState(
+                stateInfo = P1StateInfo(P1ScreenState.Error, title = "订单不存在", message = "当前未查询到真实支付确认单。"),
                 metrics = listOf(
                     FeatureMetric("订单号", args.orderId),
                     FeatureMetric("状态", "未查询到"),
                     FeatureMetric("数据源", "PaymentRepository"),
                 ),
-                highlights = emptyList(),
                 summary = "当前未查询到真实支付确认单。",
                 note = "支付确认页未再回退到 Mock 仓库；保持真实订单空态。",
             )
@@ -340,27 +370,30 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val order = paymentRepository.getOrder(args.orderId).getOrNull()
         return if (order != null) {
             OrderResultUiState(
+                stateInfo = P1StateInfo(P1ScreenState.Content),
+                order = order.toP1OrderSummary(),
                 metrics = listOf(
-                    FeatureMetric("状态", order.statusText),
-                    FeatureMetric("剩余时长", order.completedAt?.let { "已完成" } ?: order.expiresAt.take(10)),
-                    FeatureMetric("节点权限", order.planName),
+                    FeatureMetric("订单状态", order.statusText),
+                    FeatureMetric("支付网络", order.quoteNetworkCode),
+                    FeatureMetric("订阅状态", if (order.subscriptionUrl.isNullOrBlank()) "未下发" else "已下发"),
                 ),
-                highlights = listOf(
-                    FeatureListItem("订单号", order.orderNo, order.quoteUsdAmount, "ORDER"),
-                    FeatureListItem("链上交易", order.payment.txHash ?: "--", order.quoteNetworkCode, "CHAIN"),
-                    FeatureListItem("订阅链接", order.subscriptionUrl ?: "待生成", "", "SUB"),
+                detailLines = listOf(
+                    P1DetailLine("链上交易", order.payment.txHash ?: "--"),
+                    P1DetailLine("支付确认时间", order.payment.confirmedAt ?: "--"),
+                    P1DetailLine("订阅链接", order.subscriptionUrl ?: "待生成"),
                 ),
                 summary = "订单结果来自真实订单状态查询。",
                 note = "使用 PaymentRepository.getOrder(orderId) 填充。",
+                canEnterHome = order.status == PaymentConfig.OrderStatus.FULFILLED,
             )
         } else {
             OrderResultUiState(
+                stateInfo = P1StateInfo(P1ScreenState.Error, title = "订单未找到", message = "当前未查询到真实订单结果。"),
                 metrics = listOf(
                     FeatureMetric("订单号", args.orderId),
                     FeatureMetric("状态", "未查询到"),
                     FeatureMetric("数据源", "PaymentRepository"),
                 ),
-                highlights = emptyList(),
                 summary = "当前未查询到真实订单结果。",
                 note = "订单结果页未再回退到 Mock 仓库；保持真实订单空态。",
             )
@@ -371,30 +404,26 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val orders = loadCachedOrders()
         if (orders.isEmpty()) {
             return OrderListUiState(
+                stateInfo = P1StateInfo(P1ScreenState.Empty, title = "暂无订单", message = "当前账号暂无真实订单缓存。"),
                 metrics = listOf(
                     FeatureMetric("订单总数", "0"),
                     FeatureMetric("状态", "暂无真实订单"),
                     FeatureMetric("数据源", "LocalPaymentRepository"),
                 ),
-                highlights = emptyList(),
+                orders = emptyList(),
                 summary = "当前账号暂无真实订单缓存。",
                 note = "订单列表页未再回退到 Mock 仓库；保持真实空态。",
             )
         }
         return OrderListUiState(
+            stateInfo = P1StateInfo(P1ScreenState.Content),
             metrics = listOf(
                 FeatureMetric("订单总数", orders.size.toString()),
                 FeatureMetric("生效中", orders.count { it.status in liveStatuses }.toString()),
                 FeatureMetric("待续费", orders.count { it.status == PaymentConfig.OrderStatus.PENDING_PAYMENT }.toString()),
             ),
-            highlights = orders.take(4).map {
-                FeatureListItem(
-                    title = it.planName,
-                    subtitle = it.orderNo,
-                    trailing = "${it.amount} ${it.assetCode}",
-                    badge = it.status,
-                )
-            },
+            searchField = FeatureField("search", "搜索订单", "", "按真实订单号或套餐名过滤"),
+            orders = orders.map { it.toOrder().toP1OrderSummary() },
             summary = "订单列表来自当前账号缓存订单。",
             note = "使用 LocalPaymentRepository 中的订单缓存。",
         )
@@ -405,27 +434,31 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             ?: loadCachedOrders().firstOrNull { it.orderNo == args.orderId }?.toOrder()
         return if (order != null) {
             OrderDetailUiState(
+                stateInfo = P1StateInfo(P1ScreenState.Content),
+                order = order.toP1OrderSummary(),
                 metrics = listOf(
                     FeatureMetric("订单金额", "${order.payment.amountCrypto} ${order.payment.assetCode}"),
-                    FeatureMetric("状态", order.statusText),
-                    FeatureMetric("计费周期", order.planName),
+                    FeatureMetric("订单状态", order.statusText),
+                    FeatureMetric("支付网络", order.quoteNetworkCode),
                 ),
-                highlights = listOf(
-                    FeatureListItem("订单号", order.orderNo, order.createdAt.take(10), "LIVE"),
-                    FeatureListItem("支付地址", order.payment.receiveAddress.ifBlank { "--" }, order.quoteNetworkCode, "PAY"),
-                    FeatureListItem("订阅", order.subscriptionUrl ?: "待开通", "", "SUB"),
+                detailLines = listOf(
+                    P1DetailLine("订单号", order.orderNo),
+                    P1DetailLine("创建时间", order.createdAt.take(19)),
+                    P1DetailLine("支付地址", order.payment.receiveAddress.ifBlank { "--" }),
+                    P1DetailLine("链上交易", order.payment.txHash ?: "--"),
+                    P1DetailLine("订阅链接", order.subscriptionUrl ?: "待开通"),
                 ),
                 summary = "订单详情来自真实订单查询与本地缓存。",
                 note = "订单详情优先使用 PaymentRepository.getOrder(orderNo)。",
             )
         } else {
             OrderDetailUiState(
+                stateInfo = P1StateInfo(P1ScreenState.Error, title = "订单未找到", message = "当前未查询到真实订单详情。"),
                 metrics = listOf(
                     FeatureMetric("订单号", args.orderId),
                     FeatureMetric("状态", "未查询到"),
                     FeatureMetric("数据源", "PaymentRepository"),
                 ),
-                highlights = emptyList(),
                 summary = "当前未查询到真实订单详情。",
                 note = "订单详情页未再回退到 Mock 仓库；保持真实订单空态。",
             )
@@ -436,6 +469,11 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val currentOrder = paymentRepository.getCurrentOrderId()?.let { paymentRepository.getOrder(it).getOrNull() }
         val currentUser = paymentRepository.getCachedCurrentUser()
         return WalletPaymentUiState(
+            stateInfo = if (currentOrder != null) {
+                P1StateInfo(P1ScreenState.Content)
+            } else {
+                P1StateInfo(P1ScreenState.Empty, title = "暂无支付上下文", message = "当前没有可继续的钱包支付订单。")
+            },
             metrics = listOf(
                 FeatureMetric("可用余额", currentOrder?.quoteUsdAmount ?: "--"),
                 FeatureMetric("默认网络", currentOrder?.quoteNetworkCode ?: "TRON"),
@@ -1288,6 +1326,31 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         confirmedAt = paidAt?.let(::formatEpoch),
         completedAt = fulfilledAt?.let(::formatEpoch),
         createdAt = formatEpoch(createdAt),
+        subscriptionUrl = subscriptionUrl,
+    )
+
+    private fun Plan.quoteAssetCodeLabel(): String = "USDT"
+
+    private fun Plan.quoteNetworkCodeLabel(): String = "SOLANA"
+
+    private fun Order.toP1OrderSummary(): P1OrderSummary = P1OrderSummary(
+        orderNo = orderNo,
+        planCode = planCode,
+        planName = planName,
+        status = status,
+        statusText = statusText,
+        amountText = "${payment.amountCrypto} ${payment.assetCode}",
+        assetCode = payment.assetCode,
+        networkCode = quoteNetworkCode,
+        createdAt = createdAt.take(19),
+        expiresAt = expiresAt.take(19),
+        collectionAddress = payment.receiveAddress,
+        qrText = payment.qrText,
+        baseAmount = baseAmount,
+        uniqueAmountDelta = uniqueAmountDelta,
+        payableAmount = payment.amountCrypto,
+        txHash = payment.txHash,
+        paymentMatchedAt = payment.confirmedAt,
         subscriptionUrl = subscriptionUrl,
     )
 

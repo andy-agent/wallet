@@ -1,5 +1,7 @@
 package com.v2ray.ang.composeui.navigation
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -23,8 +25,6 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
         )
         PlansRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.orderCheckoutRoute("annual_pro")) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.regionSelection.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
@@ -46,19 +46,25 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
         arguments = listOf(
     navArgument("planId") {
         type = NavType.StringType
-        defaultValue = "annual_pro"
+                defaultValue = ""
     }
         ),
     ) { backStackEntry ->
         val args = OrderCheckoutRouteArgs(
-    planId = backStackEntry.arguments?.getString("planId") ?: "annual_pro"
+            planId = backStackEntry.arguments?.getString("planId") ?: ""
         )
         val vm: OrderCheckoutViewModel = viewModel(
             factory = cryptoVpnViewModelFactory { OrderCheckoutViewModel(repository, args) },
         )
+        val uiState by vm.uiState.collectAsState()
         OrderCheckoutRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletPaymentConfirmRoute("ORD-2025-0001")) },
+            onPrimaryAction = {
+                val orderNo = uiState.order?.orderNo
+                if (!orderNo.isNullOrBlank()) {
+                    navController.navigateSingleTop(CryptoVpnRouteSpec.walletPaymentConfirmRoute(orderNo))
+                }
+            },
             onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.plans.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
@@ -69,20 +75,26 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
         arguments = listOf(
     navArgument("orderId") {
         type = NavType.StringType
-        defaultValue = "ORD-2025-0001"
+                defaultValue = ""
     }
         ),
     ) { backStackEntry ->
         val args = WalletPaymentConfirmRouteArgs(
-    orderId = backStackEntry.arguments?.getString("orderId") ?: "ORD-2025-0001"
+            orderId = backStackEntry.arguments?.getString("orderId") ?: ""
         )
         val vm: WalletPaymentConfirmViewModel = viewModel(
             factory = cryptoVpnViewModelFactory { WalletPaymentConfirmViewModel(repository, args) },
         )
+        val uiState by vm.uiState.collectAsState()
         WalletPaymentConfirmRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.orderResultRoute("ORD-2025-0001")) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.orderCheckoutRoute("annual_pro")) },
+            onPrimaryAction = {
+                val orderNo = uiState.order?.orderNo ?: args.orderId
+                if (orderNo.isNotBlank()) {
+                    navController.navigateSingleTop(CryptoVpnRouteSpec.orderResultRoute(orderNo))
+                }
+            },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.orderCheckoutRoute(uiState.order?.planCode ?: "")) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
@@ -92,12 +104,12 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
         arguments = listOf(
     navArgument("orderId") {
         type = NavType.StringType
-        defaultValue = "ORD-2025-0001"
+                defaultValue = ""
     }
         ),
     ) { backStackEntry ->
         val args = OrderResultRouteArgs(
-    orderId = backStackEntry.arguments?.getString("orderId") ?: "ORD-2025-0001"
+            orderId = backStackEntry.arguments?.getString("orderId") ?: ""
         )
         val vm: OrderResultViewModel = viewModel(
             factory = cryptoVpnViewModelFactory { OrderResultViewModel(repository, args) },
@@ -116,8 +128,6 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
         )
         OrderListRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.orderDetailRoute("ORD-2025-0001")) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.vpnHome.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
@@ -127,12 +137,12 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
         arguments = listOf(
     navArgument("orderId") {
         type = NavType.StringType
-        defaultValue = "ORD-2025-0001"
+                defaultValue = ""
     }
         ),
     ) { backStackEntry ->
         val args = OrderDetailRouteArgs(
-    orderId = backStackEntry.arguments?.getString("orderId") ?: "ORD-2025-0001"
+            orderId = backStackEntry.arguments?.getString("orderId") ?: ""
         )
         val vm: OrderDetailViewModel = viewModel(
             factory = cryptoVpnViewModelFactory { OrderDetailViewModel(repository, args) },
