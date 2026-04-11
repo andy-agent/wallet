@@ -17,7 +17,7 @@ export class AddressService {
   generateAddress(body: GenerateAddressRequestDto) {
     const keypair = this.solanaRpc.generateKeypair();
     const networkCode = body.networkCode ?? 'solana-mainnet';
-    
+
     const addressData = {
       accountId: body.accountId,
       networkCode,
@@ -30,12 +30,13 @@ export class AddressService {
 
     // 存储地址信息（生产环境应加密存储 secretKey）
     this.addressStore.set(body.accountId, addressData);
-    
-    this.logger.log(`Generated Solana address for account ${body.accountId}: ${keypair.address}`);
+
+    this.logger.log(
+      `Generated Solana address for account ${body.accountId}: ${keypair.address}`,
+    );
 
     // 返回时不包含 secretKey
-    const { secretKey, ...result } = addressData;
-    return result;
+    return this.sanitizeAddressData(addressData);
   }
 
   /**
@@ -43,10 +44,9 @@ export class AddressService {
    */
   getAddress(accountId: string) {
     const stored = this.addressStore.get(accountId);
-    
+
     if (stored) {
-      const { secretKey, ...result } = stored;
-      return result;
+      return this.sanitizeAddressData(stored);
     }
 
     // 如果未找到，返回占位信息
@@ -65,5 +65,11 @@ export class AddressService {
    */
   getAddressInternal(accountId: string): any | null {
     return this.addressStore.get(accountId) || null;
+  }
+
+  private sanitizeAddressData(addressData: Record<string, any>) {
+    const sanitized = { ...addressData };
+    delete sanitized.secretKey;
+    return sanitized;
   }
 }
