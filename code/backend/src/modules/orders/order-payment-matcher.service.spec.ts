@@ -133,6 +133,184 @@ describe('OrderPaymentMatcherService', () => {
     expect(provisioningService.provisionPaidOrder).not.toHaveBeenCalled();
   });
 
+  it('uses minSlotExclusive cursor progression and matches newer event on later scan without submitted tx', async () => {
+    const now = Date.now();
+    const savedOrderStatuses: string[] = [];
+    let savedCursor: {
+      cursorKey: string;
+      quoteNetworkCode: string;
+      quoteAssetCode: string;
+      collectionAddress: string;
+      beforeSignature: string | null;
+      lastSignature: string | null;
+      lastSlot: number | null;
+      updatedAt: string;
+    } | null = null;
+    const runtimeStateRepository = {
+      listActivePaymentContexts: jest.fn().mockResolvedValue([
+        {
+          collectionAddress: 'SharedAddress111111111111111111111111111111',
+          quoteAssetCode: 'USDT',
+          quoteNetworkCode: 'SOLANA',
+        },
+      ]),
+      listActiveOrdersForPaymentContext: jest.fn().mockResolvedValue([
+        {
+          orderId: 'order-1',
+          orderNo: 'ORD-1',
+          accountId: 'acct-1',
+          planCode: 'BASIC_1M',
+          planName: 'Basic',
+          orderType: 'NEW',
+          quoteAssetCode: 'USDT',
+          quoteNetworkCode: 'SOLANA',
+          quoteUsdAmount: '9.99000000',
+          baseAmount: '9.990000',
+          uniqueAmountDelta: '0.000123',
+          payableAmount: '9.990123',
+          status: 'AWAITING_PAYMENT',
+          expiresAt: new Date(now + 15 * 60_000).toISOString(),
+          confirmedAt: null,
+          completedAt: null,
+          failureReason: null,
+          submittedClientTxHash: null,
+          matchedOnchainTxHash: null,
+          paymentMatchedAt: null,
+          matcherRemark: null,
+          createdAt: new Date(now - 60_000).toISOString(),
+          idempotencyKey: 'acct-1:key',
+          collectionAddress: 'SharedAddress111111111111111111111111111111',
+        },
+      ]),
+      findPaymentScanCursor: jest.fn().mockImplementation(async () => savedCursor),
+      upsertOnchainReceipt: jest.fn().mockImplementation(async (receipt) => receipt),
+      savePaymentScanCursor: jest.fn().mockImplementation(async (cursor) => {
+        savedCursor = cursor;
+        return cursor;
+      }),
+      saveOrder: jest.fn().mockImplementation(async (order) => {
+        savedOrderStatuses.push(order.status);
+        return order;
+      }),
+    };
+    const solanaClient = {
+      getUsdtMint: jest
+        .fn()
+        .mockReturnValue('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'),
+      scanIncomingTransfers: jest
+        .fn()
+        .mockResolvedValueOnce({
+          networkCode: 'solana-mainnet',
+          collectionAddress: 'SharedAddress111111111111111111111111111111',
+          assetCode: 'USDT',
+          mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+          events: [
+            {
+              signature: 'sig_first_processed',
+              eventIndex: 0,
+              slot: 100,
+              blockTime: Math.floor(now / 1000),
+              confirmationStatus: 'processed',
+              recipientOwnerAddress:
+                'SharedAddress111111111111111111111111111111',
+              recipientTokenAccount: 'TokenAccount101',
+              fromAddress: 'FromAddress101',
+              assetCode: 'USDT',
+              mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+              decimals: 6,
+              amount: '9.990123',
+              amountRaw: '9990123',
+              rawPayload: { source: 'test' },
+            },
+          ],
+          nextCursor: {
+            beforeSignature: 'sig_first_processed',
+            minSlotExclusive: 100,
+          },
+          scannedAt: '2026-04-11T18:00:00.000Z',
+        })
+        .mockResolvedValueOnce({
+          networkCode: 'solana-mainnet',
+          collectionAddress: 'SharedAddress111111111111111111111111111111',
+          assetCode: 'USDT',
+          mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+          events: [
+            {
+              signature: 'sig_second_confirmed',
+              eventIndex: 0,
+              slot: 105,
+              blockTime: Math.floor((now + 2_000) / 1000),
+              confirmationStatus: 'confirmed',
+              recipientOwnerAddress:
+                'SharedAddress111111111111111111111111111111',
+              recipientTokenAccount: 'TokenAccount102',
+              fromAddress: 'FromAddress102',
+              assetCode: 'USDT',
+              mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+              decimals: 6,
+              amount: '9.990123',
+              amountRaw: '9990123',
+              rawPayload: { source: 'test' },
+            },
+          ],
+          nextCursor: {
+            beforeSignature: 'sig_second_confirmed',
+            minSlotExclusive: 105,
+          },
+          scannedAt: '2026-04-11T18:00:05.000Z',
+        }),
+    };
+    const provisioningService = {
+      provisionPaidOrder: jest.fn(),
+    };
+    const configService = {
+      get: jest.fn().mockReturnValue('true'),
+    };
+
+    const service = new OrderPaymentMatcherService(
+      configService as never,
+      runtimeStateRepository as never,
+      solanaClient as never,
+      provisioningService as never,
+    );
+
+    await service.scanActiveContextsOnce();
+    await service.scanActiveContextsOnce();
+
+    expect(solanaClient.scanIncomingTransfers).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        cursor: null,
+      }),
+    );
+    expect(solanaClient.scanIncomingTransfers).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        cursor: {
+          beforeSignature: null,
+          minSlotExclusive: 100,
+        },
+      }),
+    );
+    expect(runtimeStateRepository.upsertOnchainReceipt).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        txHash: 'sig_first_processed',
+        matchStatus: 'UNMATCHED',
+      }),
+    );
+    expect(runtimeStateRepository.upsertOnchainReceipt).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        txHash: 'sig_second_confirmed',
+        matchedOrderNo: 'ORD-1',
+        matchStatus: 'MATCHED',
+      }),
+    );
+    expect(savedOrderStatuses).toEqual(['PAID', 'PROVISIONING', 'COMPLETED']);
+    expect(provisioningService.provisionPaidOrder).toHaveBeenCalledTimes(1);
+  });
+
   it('matches a single pending order and provisions it on confirmed scan results', async () => {
     const savedOrderStatuses: string[] = [];
     const runtimeStateRepository = {
