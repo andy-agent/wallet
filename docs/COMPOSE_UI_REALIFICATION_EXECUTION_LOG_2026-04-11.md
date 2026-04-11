@@ -164,6 +164,31 @@
   - 当前证据：
     - 截图：`/tmp/compose-realify-20260412-route2/subscription_detail_current_subscription.png`
     - 前台 activity：`ComposeContainerActivity`
+- `chain_manager/primary_wallet`
+  - 已通过 launcher-driven route override 打开
+  - 当前证据：
+    - 截图：`/tmp/compose-realify-20260412-route3/chain_manager_primary_wallet.png`
+    - 前台 activity：`ComposeContainerActivity`
+- `add_custom_token/base`
+  - 已通过 launcher-driven route override 打开
+  - 当前证据：
+    - 截图：`/tmp/compose-realify-20260412-route3/add_custom_token_base.png`
+    - 前台 activity：`ComposeContainerActivity`
+- `confirm_mnemonic/primary_wallet`
+  - 已通过 launcher-driven route override 打开
+  - 当前证据：
+    - 截图：`/tmp/compose-realify-20260412-route3/confirm_mnemonic_primary_wallet.png`
+    - 前台 activity：`ComposeContainerActivity`
+
+### P2Extended 第二批去硬编码
+- 下列页面已从页面文件内写死的“完整业务故事”切回 `uiState` 驱动：
+  - `ChainManager`
+  - `ConfirmMnemonic`
+  - `AddCustomToken`
+- 这意味着：
+  - 页面标题、摘要、CTA 不再由页面硬编码
+  - 页面展示对象改为跟随 repository/viewmodel 状态
+  - 即使当前仍是 D 类，也会真实暴露“本地状态 / 未接能力 / 阻塞说明”，而不是继续伪装成功能完整
 
 ### 当前仍未完成的事
 - 这轮只拿到了“页面能打开”的真实证据，还没有把所有页面的主动作、loading、error、retry 全量跑完。
