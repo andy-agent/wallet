@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-04-11T10:58:46Z",
+  "generated_at": "2026-04-11T11:07:00Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "next_task_id": "liaojiang-vx4.2",
-  "next_task_title": "Backend：完善共享地址订单自动匹配幂等与状态推进",
+  "next_task_id": "liaojiang-f7p",
+  "next_task_title": "Continue full page-by-page prototype motion parity restoration",
   "in_progress_count": 8,
   "ready_count": 0,
   "open_count": 13,
   "closed_count": 392,
-  "dirty_count": 16,
-  "milestone_reached": false,
+  "dirty_count": 0,
+  "milestone_reached": true,
   "write_human_docs": false,
   "docs": {
     "current_status": "docs/current-status.md",
@@ -24,5 +24,9 @@
     "mode": "simulate",
     "dispatched_count": 0,
     "max_workers": 3
-  }
+  },
+  "last_orchestrator_update": "2026-04-11T19:07:00+08:00",
+  "active_bd_task": "liaojiang-f7p",
+  "active_worker_tasks": [],
+  "note": "c9x is deployed and blocked only by njb funded-payment evidence. Current active task is f7p; the first P2 core motion parity slice is on mainline and compile-accepted, and the next iteration should continue the remaining page-local motion gaps."
 }

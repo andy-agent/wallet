@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-04-11T18:48:00+08:00",
+  "generated_at": "2026-04-11T19:07:00+08:00",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "active_task_id": "liaojiang-c9x",
-  "accepted_task_id": "liaojiang-k27",
-  "next_task_id": "liaojiang-c9x",
+  "active_task_id": "liaojiang-f7p",
+  "accepted_task_id": "liaojiang-vx4.1",
+  "next_task_id": "liaojiang-f7p",
   "active_worker_task_ids": [],
   "blockers": [
     {
@@ -15,7 +15,7 @@
   "workers": [],
   "mainline": {
     "feature_id": "liaojiang-26d",
-    "phase_id": "liaojiang-c9x",
-    "policy": "Server3 now hosts local sol-agent and backend matcher is enabled. Remaining acceptance blocker is real funded payment for positive path evidence."
+    "phase_id": "liaojiang-f7p",
+    "policy": "c9x has been deployed to server3 and is blocked only by njb funded-payment evidence. Active implementation focus has moved to f7p; the first P2 core motion slice is now on mainline and compile-accepted, and remaining page-local motion parity work continues."
   }
 }
