@@ -344,3 +344,14 @@
   - 修复：让 `stateInfo` 进入页面 summary/note，并在无 `order` 时隐藏主按钮
   - 最新证据：
     - `/tmp/compose-realify-20260412-latest/wallet_payment.png`
+
+### 动作级证据
+- `about_app`
+  - 动作：点击第一页“项目主页”的 `打开`
+  - 结果：
+    - 前台切到 `com.heytap.browser/com.android.browser.BrowserActivity`
+    - `Intent` 为 `android.intent.action.VIEW`
+    - 目标 URL 为 `https://github.com/2dust/v2rayNG`
+  - 证据：
+    - `/tmp/compose-realify-20260412-action/about.after_tap.top.txt`
+    - `/tmp/compose-realify-20260412-action/about.after_tap.png`
