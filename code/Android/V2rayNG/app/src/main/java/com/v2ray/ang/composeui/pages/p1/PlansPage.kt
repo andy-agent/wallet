@@ -28,7 +28,6 @@ import com.v2ray.ang.composeui.p0.ui.P01Header
 import com.v2ray.ang.composeui.p0.ui.P01MetricCell
 import com.v2ray.ang.composeui.p0.ui.P01MetricGrid
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
-import com.v2ray.ang.composeui.p0.ui.P01PrimaryButton
 import com.v2ray.ang.composeui.p1.model.PlansEvent
 import com.v2ray.ang.composeui.p1.model.PlansUiState
 import com.v2ray.ang.composeui.p1.model.plansPreviewState
@@ -68,6 +67,7 @@ fun PlansScreen(
 ) {
     val cards = rememberPlans(uiState)
     var selectedPlanIndex by rememberSaveable { mutableIntStateOf(cards.indexOfFirst { it.featured }.coerceAtLeast(0)) }
+    val selectedPlan = cards.getOrElse(selectedPlanIndex) { cards.first() }
 
     P01PhoneScaffold(
         statusTime = "18:08",
@@ -97,27 +97,24 @@ fun PlansScreen(
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             cards.forEachIndexed { index, card ->
-                P01Card(
-                    modifier = Modifier
-                        .clickable { selectedPlanIndex = index }
-                        .then(
-                            if (index == selectedPlanIndex) {
-                                Modifier
-                            } else {
-                                Modifier
-                            }
-                        ),
+                val isSelected = index == selectedPlanIndex
+                P1SelectableCard(
+                    selected = isSelected,
+                    modifier = Modifier.clickable { selectedPlanIndex = index },
                 ) {
                     P01CardHeader(
                         title = card.title,
                         trailing = {
-                            P01Chip(text = card.badge)
+                            P01Chip(
+                                text = if (isSelected && !card.featured) "已选择" else card.badge,
+                                highlighted = isSelected || card.featured,
+                            )
                         },
                     )
-                    if (card.featured) {
+                    if (card.featured || isSelected) {
                         androidx.compose.material3.Text(
                             text = card.price,
-                            color = Color(0xFF132748),
+                            color = if (isSelected) Color(0xFF4276FF) else Color(0xFF132748),
                             modifier = Modifier.padding(top = 2.dp),
                         )
                     }
@@ -126,14 +123,19 @@ fun PlansScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        card.tags.forEach { tag -> P01Chip(text = tag) }
+                        card.tags.forEach { tag ->
+                            P01Chip(
+                                text = tag,
+                                highlighted = isSelected || card.featured,
+                            )
+                        }
                     }
                 }
             }
         }
 
-        P01PrimaryButton(
-            text = "使用钱包支付并开通",
+        P1PrimaryCta(
+            text = "使用钱包支付 · ${selectedPlan.title}",
             onClick = onPrimaryAction,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -150,6 +152,7 @@ private data class PlanCardUi(
 )
 
 private fun rememberPlans(uiState: PlansUiState): List<PlanCardUi> {
+    val contentHighlights = uiState.highlights.p1ContentItems()
     val metrics = uiState.metrics.ifEmpty {
         listOf(
             FeatureMetric("月费", "US$8.90"),
@@ -157,7 +160,7 @@ private fun rememberPlans(uiState: PlansUiState): List<PlanCardUi> {
             FeatureMetric("团队版", "US$149.00"),
         )
     }
-    val highlights = uiState.highlights.ifEmpty {
+    val highlights = contentHighlights.ifEmpty {
         listOf(
             FeatureListItem("月度", "适合首次体验，按月续费。", "$8.90", "SOL"),
             FeatureListItem("年度 Pro", "节省 46%，开放高速专线与隐私路由。", "$58.00", "最受欢迎"),

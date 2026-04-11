@@ -44,6 +44,11 @@ fun DappBrowserScreen(
     onEvent: (DappBrowserEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val categoryFocus = rememberLoopingIndex(itemCount = 5, durationMillis = 4600)
+    val sessionFocus = rememberLoopingIndex(itemCount = 4, durationMillis = 5600)
+    val browserMetrics = uiState.metrics.take(3).map { it.label to it.value }
+    val metricFocus = if (browserMetrics.isNotEmpty()) categoryFocus % browserMetrics.size else -1
+    val entryHint = uiState.fields.firstOrNull()?.value ?: "jup.ag"
     P2ExtendedPageScaffold(
         kicker = "DApp Browser",
         title = "DApp 浏览器",
@@ -56,11 +61,20 @@ fun DappBrowserScreen(
         onSecondaryAction = { onEvent(DappBrowserEvent.SecondaryActionClicked) },
     ) {
         P2SearchShell(
-            placeholder = "输入 URL / 搜索 DApp / 输入 ENS",
+            placeholder = "打开 $entryHint / 搜索 DApp / 输入 ENS",
             quickHint = "支持历史记录、收藏与风险域名标记。",
+            animated = true,
+            statusLabel = if (sessionFocus == 3) "谨慎域名" else "可访问",
+            statusHealthy = sessionFocus != 3,
         )
         Spacer(modifier = Modifier.height(12.dp))
-        ChipRow(items = listOf("精选", "DeFi", "支付", "NFT", "工具"), activeIndex = 0)
+        KpiRow(items = browserMetrics, activeIndex = metricFocus)
+        Spacer(modifier = Modifier.height(12.dp))
+        ChipRow(
+            items = listOf("精选", "DeFi", "支付", "NFT", "工具"),
+            activeIndex = categoryFocus,
+            animated = true,
+        )
         Spacer(modifier = Modifier.height(14.dp))
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             P2SessionAppCard(
@@ -68,18 +82,21 @@ fun DappBrowserScreen(
                 subtitle = "Solana 聚合兑换",
                 network = "Solana",
                 actionLabel = "访问",
+                emphasized = sessionFocus == 0,
             )
             P2SessionAppCard(
                 title = "Sunswap",
                 subtitle = "TRON 稳定币兑换",
                 network = "TRON",
                 actionLabel = "访问",
+                emphasized = sessionFocus == 1,
             )
             P2SessionAppCard(
                 title = "Aave",
                 subtitle = "借贷与收益",
                 network = "Ethereum",
                 actionLabel = "访问",
+                emphasized = sessionFocus == 2,
             )
             P2SessionAppCard(
                 title = "Unknown DEX",
@@ -87,6 +104,7 @@ fun DappBrowserScreen(
                 network = "Polygon",
                 riskFlag = true,
                 actionLabel = "谨慎访问",
+                emphasized = sessionFocus == 3,
             )
         }
     }

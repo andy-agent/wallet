@@ -4,7 +4,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.ui.P01Card
@@ -13,11 +17,9 @@ import com.v2ray.ang.composeui.p0.ui.P01CardHeader
 import com.v2ray.ang.composeui.p0.ui.P01Chip
 import com.v2ray.ang.composeui.p0.ui.P01Header
 import com.v2ray.ang.composeui.p0.ui.P01List
-import com.v2ray.ang.composeui.p0.ui.P01ListRow
 import com.v2ray.ang.composeui.p0.ui.P01MetricCell
 import com.v2ray.ang.composeui.p0.ui.P01MetricGrid
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
-import com.v2ray.ang.composeui.p0.ui.P01PrimaryButton
 import com.v2ray.ang.composeui.p1.model.WalletPaymentConfirmEvent
 import com.v2ray.ang.composeui.p1.model.WalletPaymentConfirmUiState
 import com.v2ray.ang.composeui.p1.model.walletPaymentConfirmPreviewState
@@ -49,6 +51,15 @@ fun WalletPaymentConfirmScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     val rows = paymentConfirmRows(uiState)
+    var focusedSummaryIndex by rememberSaveable {
+        mutableIntStateOf(rows.summaryRows.indexOfFirst { it.first == "支付金额" }.coerceAtLeast(0))
+    }
+    var selectedRiskIndex by rememberSaveable { mutableIntStateOf(-1) }
+    val summaryAccent = if (focusedSummaryIndex == rows.summaryRows.indexOfFirst { it.first == "支付金额" }) {
+        Color(0xFFF6B155)
+    } else {
+        Color(0xFF4276FF)
+    }
 
     P01PhoneScaffold(
         statusTime = "18:14",
@@ -68,40 +79,65 @@ fun WalletPaymentConfirmScreen(
                 trailing = { P01Chip(text = rows.orderNoLabel) },
             )
             P01List {
-                rows.summaryRows.forEach { (title, value) ->
-                    P01ListRow(title = title, value = value)
+                rows.summaryRows.forEachIndexed { index, (title, value) ->
+                    P1FeedbackRow(
+                        title = title,
+                        value = value,
+                        selected = index == focusedSummaryIndex,
+                        accentColor = if (title == "支付金额") Color(0xFFF6B155) else summaryAccent,
+                        valueColor = if (title == "支付金额") Color(0xFFF6B155) else summaryAccent,
+                        onClick = { focusedSummaryIndex = index },
+                    )
                 }
             }
         }
 
-        P01Card {
+        P1SelectableCard(
+            selected = true,
+            accentColor = Color(0xFF49D89B),
+        ) {
             P01MetricGrid(
                 items = listOf(
                     P01MetricCell("剩余余额", rows.balanceText),
                     P01MetricCell("路由状态", "已加密"),
                 ),
             )
-            P01CardCopy("支付后 · VPN 广播交易。")
+            P01CardCopy(
+                if (selectedRiskIndex >= 0) {
+                    "风控项已确认 · VPN 广播交易。"
+                } else {
+                    "支付后 · VPN 广播交易。"
+                },
+            )
         }
 
         P01Card {
             P01CardHeader(
                 title = "风控提示",
-                trailing = { P01Chip(text = "建议查看") },
+                trailing = {
+                    P01Chip(
+                        text = if (selectedRiskIndex >= 0) "已核对" else "建议查看",
+                        highlighted = selectedRiskIndex >= 0,
+                    )
+                },
             )
             P01List {
-                P01ListRow(
-                    title = "收款地址已绑定官方商户",
-                    copy = "避免因中间人攻击造成错误转账。",
-                )
-                P01ListRow(
-                    title = "当前节点延迟稳定",
-                    copy = "提交交易不会因重试产生重复扣款。",
-                )
+                listOf(
+                    "收款地址已绑定官方商户" to "避免因中间人攻击造成错误转账。",
+                    "当前节点延迟稳定" to "提交交易不会因重试产生重复扣款。",
+                ).forEachIndexed { index, (title, copy) ->
+                    P1FeedbackRow(
+                        title = title,
+                        copy = copy,
+                        selected = index == selectedRiskIndex,
+                        accentColor = Color(0xFF49D89B),
+                        onClick = { selectedRiskIndex = index },
+                    )
+                }
             }
         }
 
-        P01PrimaryButton(
+        P1PrimaryCta(
             text = "确认支付并开通",
             onClick = onPrimaryAction,
             modifier = Modifier.fillMaxWidth(),
@@ -117,7 +153,8 @@ private data class WalletPaymentConfirmRows(
 
 private fun paymentConfirmRows(uiState: WalletPaymentConfirmUiState): WalletPaymentConfirmRows {
     val metrics = uiState.metrics.associate { it.label to it.value }
-    val highlightMap = uiState.highlights.associateBy { it.title }
+    val contentHighlights = uiState.highlights.p1ContentItems()
+    val highlightMap = contentHighlights.associateBy { it.title }
     val planTitle = highlightMap.keys.firstOrNull { !it.contains("收款地址") && !it.contains("订单状态") }
     return WalletPaymentConfirmRows(
         orderNoLabel = metrics["订单号"]?.let { "订单 #$it" } ?: "订单 #CVP-2409",

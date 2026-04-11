@@ -1,6 +1,8 @@
 package com.v2ray.ang.composeui.pages.p2extended
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -110,6 +112,26 @@ internal fun P2ExtendedPageScaffold(
             }
         }
     }
+}
+
+@Composable
+internal fun rememberLoopingIndex(
+    itemCount: Int,
+    durationMillis: Int = itemCount.coerceAtLeast(1) * 900,
+    startIndex: Int = 0,
+): Int {
+    if (itemCount <= 1) return 0
+    val transition = rememberInfiniteTransition(label = "p2e_loop_index")
+    val phase by transition.animateFloat(
+        initialValue = startIndex.toFloat(),
+        targetValue = startIndex.toFloat() + itemCount.toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = durationMillis, easing = LinearEasing),
+        ),
+        label = "p2e_loop_index_phase",
+    )
+    val rawIndex = phase.toInt()
+    return ((rawIndex % itemCount) + itemCount) % itemCount
 }
 
 @Composable
@@ -323,31 +345,110 @@ internal fun FieldRow(label: String, value: String) {
 }
 
 @Composable
-internal fun ChipRow(items: List<String>, activeIndex: Int = 0) {
+internal fun ChipRow(
+    items: List<String>,
+    activeIndex: Int = 0,
+    animated: Boolean = false,
+) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         items.forEachIndexed { index, item ->
+            val selected = index == activeIndex
+            val background by animateColorAsState(
+                targetValue = if (selected) Color(0xFFE7EDFF) else Color(0xFFF2F4FA),
+                label = "p2e_chip_bg_$index",
+            )
+            val border by animateColorAsState(
+                targetValue = if (selected) Color(0xFFD5DFFF) else Color.Transparent,
+                label = "p2e_chip_border_$index",
+            )
+            val textColor by animateColorAsState(
+                targetValue = if (selected) Color(0xFF2D4ED7) else Color(0xFF5D688E),
+                label = "p2e_chip_text_$index",
+            )
+            val scale by animateFloatAsState(
+                targetValue = if (selected && animated) 1f else 0.96f,
+                animationSpec = tween(durationMillis = 420),
+                label = "p2e_chip_scale_$index",
+            )
+            val glowAlpha = if (selected && animated) {
+                val transition = rememberInfiniteTransition(label = "p2e_chip_glow_$index")
+                transition.animateFloat(
+                    initialValue = 0.08f,
+                    targetValue = 0.24f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 1400, easing = LinearEasing),
+                    ),
+                    label = "p2e_chip_glow_alpha_$index",
+                ).value
+            } else {
+                0f
+            }
             Box(
                 modifier = Modifier
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
                     .background(
-                        if (index == activeIndex) Color(0xFFE7EDFF) else Color(0xFFF2F4FA),
+                        background,
                         RoundedCornerShape(999.dp),
                     )
+                    .border(1.dp, border, RoundedCornerShape(999.dp))
+                    .drawWithContent {
+                        drawContent()
+                        if (glowAlpha > 0f) {
+                            drawRoundRect(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.White.copy(alpha = glowAlpha),
+                                        Color.Transparent,
+                                    ),
+                                ),
+                                topLeft = Offset.Zero,
+                                size = size,
+                                cornerRadius = CornerRadius(size.height / 2f, size.height / 2f),
+                            )
+                        }
+                    }
                     .padding(horizontal = 12.dp, vertical = 7.dp),
             ) {
-                Text(item, style = MaterialTheme.typography.labelMedium, color = if (index == activeIndex) Color(0xFF2D4ED7) else Color(0xFF5D688E))
+                Text(item, style = MaterialTheme.typography.labelMedium, color = textColor)
             }
         }
     }
 }
 
 @Composable
-internal fun KpiRow(items: List<Pair<String, String>>) {
+internal fun KpiRow(
+    items: List<Pair<String, String>>,
+    activeIndex: Int = -1,
+) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items.forEach { (label, value) ->
+        items.forEachIndexed { index, (label, value) ->
+            val emphasized = index == activeIndex
+            val background by animateColorAsState(
+                targetValue = if (emphasized) Color(0xFFEFF4FF) else Color(0xFFF7F9FF),
+                label = "p2e_kpi_bg_$index",
+            )
+            val border by animateColorAsState(
+                targetValue = if (emphasized) Color(0xFFD4DEFF) else Color.Transparent,
+                label = "p2e_kpi_border_$index",
+            )
+            val scale by animateFloatAsState(
+                targetValue = if (emphasized) 1.02f else 1f,
+                animationSpec = tween(durationMillis = 420),
+                label = "p2e_kpi_scale_$index",
+            )
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .background(Color(0xFFF7F9FF), RoundedCornerShape(12.dp))
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
+                    .background(background, RoundedCornerShape(12.dp))
+                    .border(1.dp, border, RoundedCornerShape(12.dp))
                     .padding(10.dp),
             ) {
                 Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F79A8))
@@ -448,7 +549,10 @@ internal fun OptionCard(
 }
 
 @Composable
-internal fun MnemonicGrid(words: List<String>) {
+internal fun MnemonicGrid(
+    words: List<String>,
+    focusIndex: Int? = null,
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -459,16 +563,68 @@ internal fun MnemonicGrid(words: List<String>) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 rowWords.forEachIndexed { columnIndex, word ->
-                    val absoluteIndex = rowIndex * 3 + columnIndex + 1
+                    val absoluteIndex = rowIndex * 3 + columnIndex
+                    val focused = focusIndex == absoluteIndex
+                    val background by animateColorAsState(
+                        targetValue = if (focused) Color(0xFFF1F5FF) else Color(0xFFF7F9FF),
+                        label = "p2e_mnemonic_bg_$absoluteIndex",
+                    )
+                    val border by animateColorAsState(
+                        targetValue = if (focused) Color(0xFFCADAFF) else Color(0xFFE9ECF8),
+                        label = "p2e_mnemonic_border_$absoluteIndex",
+                    )
+                    val scale by animateFloatAsState(
+                        targetValue = if (focused) 1.02f else 1f,
+                        animationSpec = tween(durationMillis = 420),
+                        label = "p2e_mnemonic_scale_$absoluteIndex",
+                    )
+                    val scanOffset = if (focused) {
+                        val transition = rememberInfiniteTransition(label = "p2e_mnemonic_focus_$absoluteIndex")
+                        transition.animateFloat(
+                            initialValue = -0.4f,
+                            targetValue = 1.2f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(durationMillis = 1800, easing = LinearEasing),
+                            ),
+                            label = "p2e_mnemonic_focus_scan_$absoluteIndex",
+                        ).value
+                    } else {
+                        0f
+                    }
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .background(Color(0xFFF7F9FF), RoundedCornerShape(12.dp))
-                            .border(1.dp, Color(0xFFE9ECF8), RoundedCornerShape(12.dp))
+                            .graphicsLayer {
+                                scaleX = scale
+                                scaleY = scale
+                            }
+                            .background(background, RoundedCornerShape(12.dp))
+                            .border(1.dp, border, RoundedCornerShape(12.dp))
+                            .drawWithContent {
+                                drawContent()
+                                if (focused) {
+                                    val scanWidth = size.width * 0.4f
+                                    drawRoundRect(
+                                        brush = Brush.horizontalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.White.copy(alpha = 0.22f),
+                                                Color.Transparent,
+                                            ),
+                                        ),
+                                        topLeft = Offset(
+                                            x = size.width * scanOffset - scanWidth,
+                                            y = 0f,
+                                        ),
+                                        size = Size(scanWidth, size.height),
+                                        cornerRadius = CornerRadius(24f, 24f),
+                                    )
+                                }
+                            }
                             .padding(horizontal = 10.dp, vertical = 9.dp),
                     ) {
                         Text(
-                            absoluteIndex.toString().padStart(2, '0'),
+                            (absoluteIndex + 1).toString().padStart(2, '0'),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFF6E78A4),
                         )
@@ -490,7 +646,10 @@ internal fun MnemonicGrid(words: List<String>) {
 }
 
 @Composable
-internal fun DetectedChainList(chains: List<String>) {
+internal fun DetectedChainList(
+    chains: List<String>,
+    activeIndex: Int = -1,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -499,17 +658,44 @@ internal fun DetectedChainList(chains: List<String>) {
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        chains.forEach { chain ->
+        chains.forEachIndexed { index, chain ->
+            val highlighted = index == activeIndex
+            val rowBackground by animateColorAsState(
+                targetValue = if (highlighted) Color(0xFFF0F4FF) else Color(0xFFF7F9FF),
+                label = "p2e_chain_row_bg_$index",
+            )
+            val rowBorder by animateColorAsState(
+                targetValue = if (highlighted) Color(0xFFD5DFFF) else Color.Transparent,
+                label = "p2e_chain_row_border_$index",
+            )
+            val dotScale = if (highlighted) {
+                val transition = rememberInfiniteTransition(label = "p2e_chain_dot_$index")
+                transition.animateFloat(
+                    initialValue = 0.82f,
+                    targetValue = 1.16f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 1200, easing = LinearEasing),
+                    ),
+                    label = "p2e_chain_dot_scale_$index",
+                ).value
+            } else {
+                1f
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFF7F9FF), RoundedCornerShape(10.dp))
+                    .background(rowBackground, RoundedCornerShape(10.dp))
+                    .border(1.dp, rowBorder, RoundedCornerShape(10.dp))
                     .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
                     modifier = Modifier
                         .size(8.dp)
+                        .graphicsLayer {
+                            scaleX = dotScale
+                            scaleY = dotScale
+                        }
                         .background(Color(0xFF2D4ED7), CircleShape),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -640,12 +826,35 @@ internal fun MnemonicCheckpointRow(
     label: String,
     answer: String,
     verified: Boolean,
+    active: Boolean = false,
 ) {
+    val highlighted = active || !verified
+    val background by animateColorAsState(
+        targetValue = if (highlighted) Color(0xFFF8FAFF) else Color.White,
+        label = "p2e_checkpoint_bg_$label",
+    )
+    val border by animateColorAsState(
+        targetValue = when {
+            highlighted && verified -> Color(0xFFD1DDFD)
+            highlighted -> Color(0xFFFFE2BF)
+            else -> Color(0xFFE8ECF9)
+        },
+        label = "p2e_checkpoint_border_$label",
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (active) 1.01f else 1f,
+        animationSpec = tween(durationMillis = 420),
+        label = "p2e_checkpoint_scale_$label",
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(12.dp))
-            .border(1.dp, Color(0xFFE8ECF9), RoundedCornerShape(12.dp))
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .background(background, RoundedCornerShape(12.dp))
+            .border(1.dp, border, RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -662,6 +871,7 @@ internal fun MnemonicCheckpointRow(
         SecurityStatusPill(
             label = if (verified) "校验通过" else "待确认",
             healthy = verified,
+            animated = highlighted,
         )
     }
 }
@@ -671,10 +881,24 @@ internal fun SecurityStatusPill(
     label: String,
     healthy: Boolean,
     modifier: Modifier = Modifier,
+    animated: Boolean = false,
 ) {
     val bg = if (healthy) Color(0xFFEAFBF1) else Color(0xFFFFF4E8)
     val border = if (healthy) Color(0xFFC7F0D8) else Color(0xFFFFE2BF)
     val text = if (healthy) Color(0xFF177245) else Color(0xFF995315)
+    val dotScale = if (animated) {
+        val transition = rememberInfiniteTransition(label = "p2e_status_pill_$label")
+        transition.animateFloat(
+            initialValue = 0.78f,
+            targetValue = 1.18f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1200, easing = LinearEasing),
+            ),
+            label = "p2e_status_pill_scale_$label",
+        ).value
+    } else {
+        1f
+    }
     Row(
         modifier = modifier
             .defaultMinSize(minHeight = 30.dp)
@@ -686,6 +910,10 @@ internal fun SecurityStatusPill(
         Box(
             modifier = Modifier
                 .size(7.dp)
+                .graphicsLayer {
+                    scaleX = dotScale
+                    scaleY = dotScale
+                }
                 .background(text, CircleShape),
         )
         Spacer(modifier = Modifier.width(6.dp))
@@ -699,14 +927,46 @@ internal fun P2FlowStepCard(
     title: String,
     detail: String,
     emphasized: Boolean = false,
+    animated: Boolean = false,
 ) {
     val background = if (emphasized) Color(0xFFF0F4FF) else Color(0xFFF7F9FF)
     val border = if (emphasized) Color(0xFFCBD8FF) else Color(0xFFE5EAF8)
+    val scanOffset = if (emphasized && animated) {
+        val transition = rememberInfiniteTransition(label = "p2e_flow_step_$step")
+        transition.animateFloat(
+            initialValue = -0.32f,
+            targetValue = 1.18f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1900, easing = LinearEasing),
+            ),
+            label = "p2e_flow_step_scan_$step",
+        ).value
+    } else {
+        0f
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(background, RoundedCornerShape(14.dp))
             .border(1.dp, border, RoundedCornerShape(14.dp))
+            .drawWithContent {
+                drawContent()
+                if (emphasized && animated) {
+                    val scanWidth = size.width * 0.18f
+                    drawRoundRect(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.White.copy(alpha = 0.18f),
+                                Color.Transparent,
+                            ),
+                        ),
+                        topLeft = Offset(size.width * scanOffset - scanWidth, 0f),
+                        size = Size(scanWidth, size.height),
+                        cornerRadius = CornerRadius(28f, 28f),
+                    )
+                }
+            }
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -836,7 +1096,36 @@ internal fun P2InlineWarningCard(
 internal fun P2SearchShell(
     placeholder: String,
     quickHint: String,
+    animated: Boolean = false,
+    statusLabel: String = "可访问",
+    statusHealthy: Boolean = true,
 ) {
+    val scanOffset = if (animated) {
+        val transition = rememberInfiniteTransition(label = "p2e_search_shell")
+        transition.animateFloat(
+            initialValue = -0.36f,
+            targetValue = 1.2f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 2200, easing = LinearEasing),
+            ),
+            label = "p2e_search_shell_scan",
+        ).value
+    } else {
+        0f
+    }
+    val dotScale = if (animated) {
+        val transition = rememberInfiniteTransition(label = "p2e_search_shell_dot")
+        transition.animateFloat(
+            initialValue = 0.82f,
+            targetValue = 1.18f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1200, easing = LinearEasing),
+            ),
+            label = "p2e_search_shell_dot_scale",
+        ).value
+    } else {
+        1f
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -849,12 +1138,34 @@ internal fun P2SearchShell(
                 .fillMaxWidth()
                 .background(Color(0xFFF7F9FF), RoundedCornerShape(10.dp))
                 .border(1.dp, Color(0xFFE7EBFA), RoundedCornerShape(10.dp))
+                .drawWithContent {
+                    drawContent()
+                    if (animated) {
+                        val scanWidth = size.width * 0.22f
+                        drawRoundRect(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.White.copy(alpha = 0.22f),
+                                    Color.Transparent,
+                                ),
+                            ),
+                            topLeft = Offset(size.width * scanOffset - scanWidth, 0f),
+                            size = Size(scanWidth, size.height),
+                            cornerRadius = CornerRadius(20f, 20f),
+                        )
+                    }
+                }
                 .padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
                     .size(8.dp)
+                    .graphicsLayer {
+                        scaleX = dotScale
+                        scaleY = dotScale
+                    }
                     .background(Color(0xFF7A8AC3), CircleShape),
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -864,7 +1175,7 @@ internal fun P2SearchShell(
                 color = Color(0xFF6A76A4),
             )
             Spacer(modifier = Modifier.weight(1f))
-            SecurityStatusPill(label = "可访问", healthy = true)
+            SecurityStatusPill(label = statusLabel, healthy = statusHealthy, animated = animated)
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -884,6 +1195,7 @@ internal fun P2SwapPairCard(
     receiveChain: String,
     receiveAmount: String,
     routeDetail: String,
+    routeStateLabel: String = "路径计算中",
 ) {
     Column(
         modifier = Modifier
@@ -899,25 +1211,46 @@ internal fun P2SwapPairCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .width(28.dp)
-                    .height(2.dp)
-                    .background(Color(0xFFD9E0FA), RoundedCornerShape(999.dp)),
-            )
+            RoutePulseBar()
             Spacer(modifier = Modifier.width(8.dp))
-            SecurityStatusPill(label = "路径计算中", healthy = true)
+            SecurityStatusPill(label = routeStateLabel, healthy = true, animated = true)
             Spacer(modifier = Modifier.width(8.dp))
-            Box(
-                modifier = Modifier
-                    .width(28.dp)
-                    .height(2.dp)
-                    .background(Color(0xFFD9E0FA), RoundedCornerShape(999.dp)),
-            )
+            RoutePulseBar(reverse = true)
         }
         FieldRow(label = "获得", value = "$receiveToken · $receiveChain · $receiveAmount")
         NoteCard(title = "路由详情", text = routeDetail)
     }
+}
+
+@Composable
+private fun RoutePulseBar(reverse: Boolean = false) {
+    val transition = rememberInfiniteTransition(label = "p2e_route_bar_$reverse")
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1800, easing = LinearEasing),
+        ),
+        label = "p2e_route_bar_progress_$reverse",
+    )
+    Box(
+        modifier = Modifier
+            .width(28.dp)
+            .height(6.dp)
+            .drawWithContent {
+                drawRoundRect(
+                    color = Color(0xFFD9E0FA),
+                    cornerRadius = CornerRadius(size.height / 2f, size.height / 2f),
+                )
+                val trackProgress = if (reverse) 1f - progress else progress
+                val centerX = size.width * trackProgress.coerceIn(0f, 1f)
+                drawCircle(
+                    color = Color(0xFF4F7CFF),
+                    radius = size.height * 0.45f,
+                    center = Offset(centerX, size.height / 2f),
+                )
+            },
+    )
 }
 
 @Composable
@@ -963,15 +1296,47 @@ internal fun P2SessionAppCard(
     network: String,
     riskFlag: Boolean = false,
     actionLabel: String = "断开",
+    emphasized: Boolean = false,
 ) {
-    val border = if (riskFlag) Color(0xFFFFD5C0) else Color(0xFFE9ECF8)
-    val background = if (riskFlag) Color(0xFFFFFAF6) else Color.White
+    val highlighted = emphasized || riskFlag
+    val border = when {
+        riskFlag -> Color(0xFFFFD5C0)
+        emphasized -> Color(0xFFD6E0FF)
+        else -> Color(0xFFE9ECF8)
+    }
+    val background = when {
+        riskFlag -> Color(0xFFFFFAF6)
+        emphasized -> Color(0xFFF6F8FF)
+        else -> Color.White
+    }
     val badgeLabel = if (riskFlag) "高风险" else "活跃"
     val badgeBg = if (riskFlag) Color(0xFFFFEFE5) else Color(0xFFEAFBF1)
     val badgeColor = if (riskFlag) Color(0xFFAA5621) else Color(0xFF177245)
+    val scale by animateFloatAsState(
+        targetValue = if (highlighted) 1.01f else 1f,
+        animationSpec = tween(durationMillis = 420),
+        label = "p2e_session_scale_$title",
+    )
+    val badgeGlow = if (highlighted) {
+        val transition = rememberInfiniteTransition(label = "p2e_session_glow_$title")
+        transition.animateFloat(
+            initialValue = 0.08f,
+            targetValue = 0.22f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1400, easing = LinearEasing),
+            ),
+            label = "p2e_session_glow_alpha_$title",
+        ).value
+    } else {
+        0f
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .background(background, RoundedCornerShape(14.dp))
             .border(1.dp, border, RoundedCornerShape(14.dp))
             .padding(12.dp),
@@ -1003,6 +1368,15 @@ internal fun P2SessionAppCard(
                 modifier = Modifier
                     .background(badgeBg, RoundedCornerShape(999.dp))
                     .border(1.dp, border, RoundedCornerShape(999.dp))
+                    .drawWithContent {
+                        drawContent()
+                        if (badgeGlow > 0f) {
+                            drawRoundRect(
+                                color = Color.White.copy(alpha = badgeGlow),
+                                cornerRadius = CornerRadius(size.height / 2f, size.height / 2f),
+                            )
+                        }
+                    }
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
                 Text(badgeLabel, style = MaterialTheme.typography.labelSmall, color = badgeColor)
@@ -1026,8 +1400,16 @@ internal fun P2SignRequestCard(
     network: String,
     payload: String,
     gasHint: String,
+    verificationLabel: String = "域名已校验",
+    animated: Boolean = false,
 ) {
     P2Card(title = "$dapp 请求签名", subtitle = domain) {
+        SecurityStatusPill(
+            label = verificationLabel,
+            healthy = true,
+            animated = animated,
+        )
+        Spacer(modifier = Modifier.height(10.dp))
         FieldRow("操作类型", operation)
         Spacer(modifier = Modifier.height(8.dp))
         FieldRow("网络", network)

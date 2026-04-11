@@ -44,6 +44,10 @@ fun ConfirmMnemonicScreen(
     onEvent: (ConfirmMnemonicEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val reviewFocus = rememberLoopingIndex(itemCount = 3, durationMillis = 4800)
+    val candidateFocus = listOf(0, 1, 2)[reviewFocus]
+    val stateFocus = rememberLoopingIndex(itemCount = 2, durationMillis = 3600)
+    val confirmMetrics = uiState.metrics.take(3).map { it.label to it.value }
     P2ExtendedPageScaffold(
         kicker = "Verify Backup",
         title = "确认助记词",
@@ -55,26 +59,35 @@ fun ConfirmMnemonicScreen(
         secondaryActionLabel = "返回备份页",
         onSecondaryAction = { onEvent(ConfirmMnemonicEvent.SecondaryActionClicked) },
     ) {
+        KpiRow(items = confirmMetrics, activeIndex = reviewFocus)
+        Spacer(modifier = Modifier.height(12.dp))
         P2Card(title = "按顺序选择缺失的单词", subtitle = "系统会随机抽查3个位置。") {
             MnemonicCheckpointRow(
                 label = "第 2 个单词",
                 answer = "brick",
                 verified = true,
+                active = reviewFocus == 0,
             )
             Spacer(modifier = Modifier.height(8.dp))
             MnemonicCheckpointRow(
                 label = "第 7 个单词",
                 answer = "orbit",
                 verified = true,
+                active = reviewFocus == 1,
             )
             Spacer(modifier = Modifier.height(8.dp))
             MnemonicCheckpointRow(
                 label = "第 11 个单词",
                 answer = "anchor",
                 verified = false,
+                active = reviewFocus == 2,
             )
             Spacer(modifier = Modifier.height(12.dp))
-            ChipRow(items = listOf("brick", "orbit", "anchor", "velvet", "glow", "coral"), activeIndex = 0)
+            ChipRow(
+                items = listOf("brick", "orbit", "anchor", "velvet", "glow", "coral"),
+                activeIndex = candidateFocus,
+                animated = true,
+            )
         }
         Spacer(modifier = Modifier.height(12.dp))
         P2Card(title = "校验状态", subtitle = "逐项通过后才会放行进入钱包。") {
@@ -83,12 +96,15 @@ fun ConfirmMnemonicScreen(
                     step = "STATE 1",
                     title = "随机位置抽查",
                     detail = "至少 3 个位置命中正确单词",
-                    emphasized = true,
+                    emphasized = stateFocus == 0,
+                    animated = true,
                 )
                 P2FlowStepCard(
                     step = "STATE 2",
                     title = "顺序一致性检查",
                     detail = "防止单词正确但顺序错误导致恢复失败",
+                    emphasized = stateFocus == 1,
+                    animated = true,
                 )
             }
         }

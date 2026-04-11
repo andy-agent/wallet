@@ -7,9 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.common.model.FeatureListItem
@@ -17,7 +19,6 @@ import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.ui.P01Header
 import com.v2ray.ang.composeui.p0.ui.P01Card
 import com.v2ray.ang.composeui.p0.ui.P01List
-import com.v2ray.ang.composeui.p0.ui.P01ListRow
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.ui.P01Tab
 import com.v2ray.ang.composeui.p1.model.OrderListUiState
@@ -47,11 +48,14 @@ fun OrderListScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    val orders = uiState.highlights.ifEmpty {
-        listOf(
-            FeatureListItem("年费 Pro", "TRON / 149 USDT", "已完成", "ORD-2025-0001"),
-            FeatureListItem("月费 Pro", "SOL / 8.90", "待支付", "ORD-2025-0002"),
-        )
+    val orders = orderListItems(uiState)
+    var selectedOrderId by rememberSaveable { mutableStateOf(orders.firstOrNull()?.orderId.orEmpty()) }
+    val filteredOrders = orders.filter { order ->
+        when (selectedTab) {
+            1 -> order.status == "已完成"
+            2 -> order.status == "已退款"
+            else -> true
+        }
     }
 
     P01PhoneScaffold(
@@ -66,7 +70,10 @@ fun OrderListScreen(
             onBack = { onBottomNav(CryptoVpnRouteSpec.vpnHome.pattern) },
         )
 
-        P01Card {
+        P1SelectableCard(
+            selected = filteredOrders.isNotEmpty(),
+            accentColor = Color(0xFF4276FF),
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -80,18 +87,79 @@ fun OrderListScreen(
                 }
             }
             P01List {
-                orders.forEach { order ->
-                    P01ListRow(
+                filteredOrders.forEach { order ->
+                    P1FeedbackRow(
                         title = order.title,
-                        copy = order.subtitle,
-                        value = order.trailing,
-                        onClick = { onOpenOrder(order.badge.ifBlank { "ORD-2025-0001" }) },
+                        copy = order.copy,
+                        value = order.status,
+                        selected = order.orderId == selectedOrderId,
+                        accentColor = order.accentColor,
+                        valueColor = order.accentColor,
+                        onClick = {
+                            selectedOrderId = order.orderId
+                            onOpenOrder(order.orderId)
+                        },
+                    )
+                }
+                if (filteredOrders.isEmpty()) {
+                    P1FeedbackRow(
+                        title = "当前筛选下暂无订单",
+                        copy = "切换标签后可查看其他状态的订阅订单。",
+                        accentColor = Color(0xFF7B8DB0),
                     )
                 }
             }
         }
     }
 }
+
+private data class OrderListItemUi(
+    val title: String,
+    val copy: String,
+    val status: String,
+    val orderId: String,
+    val accentColor: Color,
+)
+
+private fun orderListItems(uiState: OrderListUiState): List<OrderListItemUi> {
+    val contentItems = uiState.highlights.p1ContentItems()
+    if (contentItems.isNotEmpty()) {
+        return contentItems.mapIndexed { index, item ->
+            val status = item.trailing.ifBlank { if (index == 0) "已完成" else "待支付" }
+            OrderListItemUi(
+                title = item.title,
+                copy = item.subtitle,
+                status = status,
+                orderId = item.badge.ifBlank { "ORD-2025-000${index + 1}" },
+                accentColor = orderStatusColor(status),
+            )
+        }
+    }
+    return listOf(
+        OrderListItemUi(
+            title = "年费 Pro",
+            copy = "TRON / 149 USDT",
+            status = "已完成",
+            orderId = "ORD-2025-0001",
+            accentColor = orderStatusColor("已完成"),
+        ),
+        OrderListItemUi(
+            title = "月费 Pro",
+            copy = "SOL / 8.90",
+            status = "待支付",
+            orderId = "ORD-2025-0002",
+            accentColor = orderStatusColor("待支付"),
+        ),
+    )
+}
+
+private fun orderStatusColor(status: String): Color =
+    when (status) {
+        "已完成" -> Color(0xFF49D89B)
+        "待支付" -> Color(0xFFF6B155)
+        "已退款" -> Color(0xFF7B8DB0)
+        else -> Color(0xFF4276FF)
+    }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
 @Composable

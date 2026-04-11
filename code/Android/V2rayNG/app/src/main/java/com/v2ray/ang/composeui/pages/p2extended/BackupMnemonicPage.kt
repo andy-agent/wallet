@@ -44,6 +44,10 @@ fun BackupMnemonicScreen(
     onEvent: (BackupMnemonicEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val wordFocus = rememberLoopingIndex(itemCount = 12, durationMillis = 7200)
+    val ruleFocus = rememberLoopingIndex(itemCount = 2, durationMillis = 3600)
+    val backupMetrics = uiState.metrics.take(3).map { it.label to it.value }
+    val metricFocus = if (backupMetrics.isNotEmpty()) wordFocus % backupMetrics.size else -1
     P2ExtendedPageScaffold(
         kicker = "Backup",
         title = "备份助记词",
@@ -55,6 +59,8 @@ fun BackupMnemonicScreen(
         secondaryActionLabel = "导出到离线打印模板",
         onSecondaryAction = { onEvent(BackupMnemonicEvent.SecondaryActionClicked) },
     ) {
+        KpiRow(items = backupMetrics, activeIndex = metricFocus)
+        Spacer(modifier = Modifier.height(12.dp))
         P2Card(title = "请抄写以下 12 个单词", subtitle = "不要截屏、不要存云端、不要分享给任何人。") {
             MnemonicGrid(
                 words = listOf(
@@ -63,9 +69,10 @@ fun BackupMnemonicScreen(
                     "orbit", "coral", "charge",
                     "laptop", "anchor", "glow",
                 ),
+                focusIndex = wordFocus,
             )
             Spacer(modifier = Modifier.height(12.dp))
-            SecurityStatusPill(label = "离线抄写确认", healthy = false)
+            SecurityStatusPill(label = "离线抄写确认", healthy = false, animated = true)
         }
         Spacer(modifier = Modifier.height(12.dp))
         P2Card(title = "备份规范", subtitle = "通过分步约束降低泄露风险。") {
@@ -74,12 +81,15 @@ fun BackupMnemonicScreen(
                     step = "RULE 1",
                     title = "仅离线载体保存",
                     detail = "纸质或离线硬件介质，避免截图与云端笔记",
-                    emphasized = true,
+                    emphasized = ruleFocus == 0,
+                    animated = true,
                 )
                 P2FlowStepCard(
                     step = "RULE 2",
                     title = "至少两份物理备份",
                     detail = "分地保存，防止单点丢失或损坏",
+                    emphasized = ruleFocus == 1,
+                    animated = true,
                 )
                 P2InlineWarningCard(
                     title = "高风险提醒",

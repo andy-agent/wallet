@@ -1,5 +1,7 @@
 package com.v2ray.ang.composeui.pages.p1
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -7,13 +9,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
-import com.v2ray.ang.composeui.p0.ui.P01ButtonRow
-import com.v2ray.ang.composeui.p0.ui.P01Card
+import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.p0.ui.P01CardCopy
 import com.v2ray.ang.composeui.p0.ui.P01CardHeader
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
+import com.v2ray.ang.composeui.p0.ui.P01SecondaryButton
 import com.v2ray.ang.composeui.p0.ui.P01SuccessBadge
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p1.model.OrderResultEvent
 import com.v2ray.ang.composeui.p1.model.OrderResultUiState
 import com.v2ray.ang.composeui.p1.model.orderResultPreviewState
@@ -50,16 +52,29 @@ fun OrderResultScreen(
         currentRoute = CryptoVpnRouteSpec.plans.name,
         onBottomNav = onBottomNav,
     ) {
-        P01Card(centered = true) {
+        P1SelectableCard(
+            selected = true,
+            centered = true,
+            accentColor = Color(0xFF49D89B),
+        ) {
             P01SuccessBadge(symbol = "", tint = Color(0xFF49D89B))
             P01CardHeader(title = "订单已生效")
             P01CardCopy("套餐与节点权限已经下发，你可以立即开始使用加密网络。")
-            P01ButtonRow(
-                primaryLabel = "开始连接并进入首页",
-                onPrimaryClick = onGoHome,
-                secondaryLabel = "查看订单详情",
-                onSecondaryClick = onOpenDetail,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                P01SecondaryButton(
+                    text = "查看订单详情",
+                    onClick = onOpenDetail,
+                    modifier = Modifier.weight(1f),
+                )
+                P1PrimaryCta(
+                    text = "开始连接并进入首页",
+                    onClick = onGoHome,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
     }
 }

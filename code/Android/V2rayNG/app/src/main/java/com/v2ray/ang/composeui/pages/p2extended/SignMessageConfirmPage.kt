@@ -42,6 +42,9 @@ fun SignMessageConfirmScreen(
     onEvent: (SignMessageConfirmEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val auditFocus = rememberLoopingIndex(itemCount = 3, durationMillis = 4500)
+    val requestMetrics = uiState.metrics.take(3).map { it.label to it.value }
+    val verificationLabels = listOf("域名已校验", "摘要已匹配", "会话权限已对齐")
     P2ExtendedPageScaffold(
         kicker = "Signature Request",
         title = "签名确认",
@@ -53,6 +56,8 @@ fun SignMessageConfirmScreen(
         secondaryActionLabel = "拒绝",
         onSecondaryAction = { onEvent(SignMessageConfirmEvent.SecondaryActionClicked) },
     ) {
+        KpiRow(items = requestMetrics, activeIndex = auditFocus)
+        Spacer(modifier = Modifier.height(12.dp))
         P2SignRequestCard(
             dapp = "Jupiter",
             domain = "app.jup.ag",
@@ -60,15 +65,33 @@ fun SignMessageConfirmScreen(
             network = "Solana",
             payload = "580 USDT -> 82.6 SOL",
             gasHint = "约 0.0012 SOL",
+            verificationLabel = verificationLabels[auditFocus],
+            animated = true,
         )
         Spacer(modifier = Modifier.height(12.dp))
         P2Card(title = "签名前检查", subtitle = "签名后将广播交易并不可回滚。") {
-            KpiRow(
-                items = listOf(
-                    "授权范围" to "单次交易",
-                    "到期时间" to "5 min",
-                    "风险等级" to "低",
-                ),
+            P2FlowStepCard(
+                step = "CHECK 1",
+                title = "确认来源域名",
+                detail = "app.jup.ag 与当前连接会话一致，避免被钓鱼页面劫持。",
+                emphasized = auditFocus == 0,
+                animated = true,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            P2FlowStepCard(
+                step = "CHECK 2",
+                title = "核对签名摘要",
+                detail = "确认 580 USDT -> 82.6 SOL 与最小到账预期一致。",
+                emphasized = auditFocus == 1,
+                animated = true,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            P2FlowStepCard(
+                step = "CHECK 3",
+                title = "审计单次授权范围",
+                detail = "授权范围限制为单次交易，并在 5 分钟内失效。",
+                emphasized = auditFocus == 2,
+                animated = true,
             )
             Spacer(modifier = Modifier.height(10.dp))
             P2InlineWarningCard(
