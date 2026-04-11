@@ -55,13 +55,20 @@ fun ProfileScreen(
                 trailing = uiState.badge,
                 trailingColor = Color(0xFFEAF6FF),
             )
-            P2CoreHeroValue(
+            P2CoreHeroValueCard(
                 label = "当前套餐",
                 value = uiState.metrics.firstOrNull()?.value ?: "--",
-                caption = "设备在线: ${uiState.checklist.getOrNull(1)?.detail ?: "--"}",
-                accent = Color(0xFF2F5BFF),
+                supportingText = "设备在线: ${uiState.checklist.getOrNull(1)?.detail ?: "--"}",
+                highlight = uiState.badge,
+                stats = uiState.metrics.drop(1).take(2).map { it.label to it.value },
             )
-            P2CoreMetricGrid(items = uiState.metrics.map { it.label to it.value })
+            P2CoreActionValueRow(
+                label = "账号状态",
+                value = uiState.note,
+                actionLabel = "安全中心",
+                onAction = { onBottomNav(CryptoVpnRouteSpec.securityCenter.pattern) },
+                valueColor = Color(0xFF2F5BFF),
+            )
         }
         P2CoreCard {
             uiState.highlights.forEachIndexed { index, item ->

@@ -50,27 +50,23 @@ fun SendScreen(
         primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(SendEvent.PrimaryActionClicked) },
     ) {
-        P2CoreCard {
-            uiState.fields.take(2).forEach { field ->
-                P2CoreField(
-                    label = field.label,
-                    value = field.value,
-                    supportingText = field.supportingText,
-                )
-            }
-            P2CoreChipRow(items = listOf("TRON · Fee 更低", "Solana"), activeIndex = 0)
-        }
-        P2CoreTrendCard(
-            title = "发送概览",
+        P2CoreHeroValueCard(
+            label = "发送概览",
             value = amount,
-            caption = "≈ $amount USDT · 广播后不可撤回",
-            accent = Color(0xFF19B78C),
-        )
-        P2CoreMetricGrid(
-            items = listOf(
+            supportingText = "≈ $amount USDT · 广播后不可撤回",
+            highlight = uiState.badge,
+            stats = listOf(
                 "网络费" to (uiState.metrics.getOrNull(2)?.value ?: "1.24 USDT"),
                 "预计到账" to (uiState.metrics.getOrNull(3)?.value ?: "~ 38 秒"),
             ),
+        )
+        P2CoreChartInfoBlock(
+            title = "链路走势",
+            subtitle = "Gas 波动与广播速度",
+            chips = listOf("TRON · Fee 更低", "Solana"),
+            infoItems = uiState.fields.take(2).map { it.label to it.value },
+            highlight = "实时",
+            accent = Color(0xFF19B78C),
         )
         P2CoreCard {
             P2CoreCardHeader(title = "安全检查", trailing = "通过 3/4", trailingColor = Color(0xFFEAF6FF))
