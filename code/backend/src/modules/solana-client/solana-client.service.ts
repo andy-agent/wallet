@@ -29,11 +29,40 @@ import type {
   SolanaServiceHealth,
   TransferPrecheckRequest,
   TransferPrecheckResponse,
+  VerifyIncomingTransferRequest,
+  VerifyIncomingTransferResponse,
 } from './solana-client.types';
 import type { AxiosResponse } from 'axios';
 
 interface EnvelopeResponse<T> {
   data?: T;
+}
+
+interface LegacyPaymentDetectResponse {
+  address?: string;
+  status?: 'pending' | 'partial' | 'confirmed' | 'error';
+  receivedAmount?: string;
+  expectedAmount?: string | null;
+  txHash?: string | null;
+  recentTransactions?: string[];
+  confirmations?: number;
+  error?: string;
+}
+
+interface VerifyPaymentResponse {
+  signature?: string;
+  networkCode?: string;
+  status?: 'verified' | 'mismatch' | 'failed' | 'pending';
+  recipientAddress?: string;
+  assetCode?: string;
+  mintAddress?: string | null;
+  expectedAmount?: string;
+  receivedAmount?: string;
+  recipientMatched?: boolean;
+  amountSatisfied?: boolean;
+  error?: string;
+  blockTime?: number | null;
+  slot?: number | null;
 }
 
 @Injectable()
@@ -66,9 +95,8 @@ export class SolanaClientService {
     }
 
     try {
-      const baseUrl = this.config.getBaseUrl();
       const response = await firstValueFrom(
-        this.httpService.get(`${baseUrl}/health`, {
+        this.httpService.get(this.buildApiUrl('healthz'), {
           timeout: this.config.getTimeoutMs(),
           headers: this.getAuthHeaders(),
         }),
@@ -105,12 +133,11 @@ export class SolanaClientService {
     }
 
     try {
-      const baseUrl = this.config.getBaseUrl();
       const network = this.getEffectiveNetwork(request.network);
 
       const response = await firstValueFrom(
         this.httpService.post(
-          `${baseUrl}/v1/transactions/broadcast`,
+          this.buildApiUrl('v1/transactions/broadcast'),
           {
             serializedTx: request.serializedTx,
             network,
@@ -158,15 +185,17 @@ export class SolanaClientService {
     }
 
     try {
-      const baseUrl = this.config.getBaseUrl();
       const network = this.getEffectiveNetwork(request.network);
 
       const response = await firstValueFrom(
-        this.httpService.get(`${baseUrl}/v1/transactions/${request.signature}`, {
-          params: { network },
-          timeout: this.config.getTimeoutMs(),
-          headers: this.getAuthHeaders(),
-        }),
+        this.httpService.get(
+          this.buildApiUrl(`v1/transactions/${request.signature}`),
+          {
+            params: { network },
+            timeout: this.config.getTimeoutMs(),
+            headers: this.getAuthHeaders(),
+          },
+        ),
       );
 
       return this.unwrapResponse<GetTransactionStatusResponse>(
@@ -179,6 +208,73 @@ export class SolanaClientService {
       throw new ServiceUnavailableException({
         code: 'SOLANA_STATUS_CHECK_FAILED',
         message: 'Failed to get transaction status',
+      });
+    }
+  }
+
+  async verifyIncomingTransfer(
+    request: VerifyIncomingTransferRequest,
+  ): Promise<VerifyIncomingTransferResponse> {
+    if (!this.isEnabled()) {
+      this.logger.debug(
+        'Solana service disabled, returning test-safe verification response',
+        {
+          signature: request.signature,
+          recipientAddress: request.recipientAddress,
+          assetCode: request.assetCode,
+        },
+      );
+      return {
+        signature: request.signature,
+        status: 'confirmed',
+        confirmations: 1,
+        verified: true,
+        recipientAddress: request.recipientAddress.trim(),
+        assetCode: request.assetCode,
+        mint: request.mint,
+        amount: request.expectedAmount,
+      };
+    }
+
+    try {
+      const network = this.getEffectiveNetwork(request.network);
+      const networkCode = this.toNetworkCode(network);
+      const txStatus = await this.getTransactionStatus({
+        signature: request.signature,
+        network,
+      });
+
+      if (txStatus.status === 'failed' || txStatus.status === 'pending') {
+        return {
+          signature: request.signature,
+          status: txStatus.status,
+          confirmations: txStatus.confirmations,
+          verified: false,
+          error: txStatus.error,
+          blockTime: txStatus.blockTime,
+          slot: txStatus.slot,
+        };
+      }
+
+      const payload = await this.verifyWithFallback({
+        signature: request.signature,
+        recipientAddress: request.recipientAddress,
+        assetCode: request.assetCode,
+        mint: request.mint,
+        expectedAmount: request.expectedAmount,
+        networkCode,
+      });
+
+      return this.normalizeVerifyIncomingTransferResponse(
+        payload,
+        request,
+        txStatus,
+      );
+    } catch (error) {
+      this.logger.error('Verify incoming transfer failed', error);
+      throw new ServiceUnavailableException({
+        code: 'SOLANA_VERIFY_TRANSFER_FAILED',
+        message: 'Failed to verify incoming Solana transfer',
       });
     }
   }
@@ -207,11 +303,10 @@ export class SolanaClientService {
     }
 
     try {
-      const baseUrl = this.config.getBaseUrl();
       const network = this.getEffectiveNetwork(request.network);
 
       const response = await firstValueFrom(
-        this.httpService.get(`${baseUrl}/v1/balances/${request.address}`, {
+        this.httpService.get(this.buildApiUrl(`v1/balances/${request.address}`), {
           params: {
             network,
             mint: request.mint,
@@ -264,11 +359,9 @@ export class SolanaClientService {
     }
 
     try {
-      const baseUrl = this.config.getBaseUrl();
-
       const response = await firstValueFrom(
         this.httpService.post(
-          `${baseUrl}/v1/transfers/precheck`,
+          this.buildApiUrl('v1/transfers/precheck'),
           {
             network: request.network,
             mint: request.mint,
@@ -356,6 +449,225 @@ export class SolanaClientService {
       return requested;
     }
     return this.config.useDevnet() ? 'devnet' : 'mainnet';
+  }
+
+  private toNetworkCode(network: 'mainnet' | 'devnet') {
+    return network === 'devnet' ? 'solana-devnet' : 'solana-mainnet';
+  }
+
+  private buildApiUrl(path: string) {
+    const baseUrl = this.config.getBaseUrl().replace(/\/+$/, '');
+    const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+    return `${apiBaseUrl}/${path.replace(/^\/+/, '')}`;
+  }
+
+  private normalizeVerifyIncomingTransferResponse(
+    payload:
+      | VerifyIncomingTransferResponse
+      | VerifyPaymentResponse
+      | LegacyPaymentDetectResponse,
+    request: VerifyIncomingTransferRequest,
+    txStatus: GetTransactionStatusResponse,
+  ): VerifyIncomingTransferResponse {
+    if ('verified' in payload && typeof payload.verified === 'boolean') {
+      return {
+        signature: payload.signature ?? request.signature,
+        status: payload.status,
+        confirmations: payload.confirmations,
+        verified: payload.verified,
+        recipientAddress: payload.recipientAddress,
+        assetCode: payload.assetCode,
+        mint: payload.mint,
+        amount: payload.amount,
+        mismatchCode: payload.mismatchCode,
+        error: payload.error,
+        failureReason: payload.failureReason,
+        blockTime: payload.blockTime ?? txStatus.blockTime,
+        slot: payload.slot ?? txStatus.slot,
+      };
+    }
+
+    if (
+      'status' in payload &&
+      (payload.status === 'verified' ||
+        payload.status === 'mismatch' ||
+        payload.status === 'pending' ||
+        payload.status === 'failed')
+    ) {
+      const verifyPayload = payload as VerifyPaymentResponse;
+      if (verifyPayload.status === 'pending' || verifyPayload.status === 'failed') {
+        return {
+          signature: request.signature,
+          status: verifyPayload.status,
+          confirmations: txStatus.confirmations,
+          verified: false,
+          error: verifyPayload.error ?? txStatus.error,
+          blockTime: (verifyPayload.blockTime ?? undefined) ?? txStatus.blockTime,
+          slot: (verifyPayload.slot ?? undefined) ?? txStatus.slot,
+        };
+      }
+
+      const receivedAmount = Number(verifyPayload.receivedAmount ?? '0');
+      const expectedAmount = Number(request.expectedAmount);
+      const hasAmount = Number.isFinite(receivedAmount) && Number.isFinite(expectedAmount);
+      const amountOver = hasAmount && receivedAmount > expectedAmount;
+      const amountUnder = hasAmount && receivedAmount < expectedAmount;
+      const recipientMatched = verifyPayload.recipientMatched !== false;
+      const amountSatisfied = verifyPayload.amountSatisfied !== false && !amountUnder;
+      const verified = verifyPayload.status === 'verified' && recipientMatched && amountSatisfied;
+
+      let mismatchCode: VerifyIncomingTransferResponse['mismatchCode'];
+      if (!verified) {
+        if (!recipientMatched) {
+          mismatchCode = 'RECIPIENT_MISMATCH';
+        } else if (amountOver) {
+          mismatchCode = 'AMOUNT_OVER';
+        } else if (amountUnder) {
+          mismatchCode = 'AMOUNT_UNDER';
+        } else {
+          mismatchCode = 'ASSET_MISMATCH';
+        }
+      }
+
+      return {
+        signature: verifyPayload.signature ?? request.signature,
+        status: txStatus.status,
+        confirmations: txStatus.confirmations,
+        verified,
+        recipientAddress: verifyPayload.recipientAddress ?? request.recipientAddress,
+        assetCode: verified ? request.assetCode : undefined,
+        mint: verified ? (verifyPayload.mintAddress ?? request.mint ?? null) : undefined,
+        amount: verifyPayload.receivedAmount,
+        mismatchCode,
+        failureReason: verified
+          ? undefined
+          : mismatchCode === 'RECIPIENT_MISMATCH'
+            ? 'Submitted transaction recipient does not match the configured collection address'
+            : mismatchCode === 'AMOUNT_OVER'
+              ? 'Submitted transaction amount exceeds the expected payment target'
+              : mismatchCode === 'AMOUNT_UNDER'
+                ? 'Submitted transaction amount is below the expected payment target'
+                : 'Submitted transaction asset does not match the expected payment asset',
+        error: verifyPayload.error,
+        blockTime: (verifyPayload.blockTime ?? undefined) ?? txStatus.blockTime,
+        slot: (verifyPayload.slot ?? undefined) ?? txStatus.slot,
+      };
+    }
+
+    const detectPayload = payload as LegacyPaymentDetectResponse;
+    const signatureSeen =
+      detectPayload.txHash === request.signature ||
+      (detectPayload.recentTransactions ?? []).includes(request.signature);
+    const receivedAmount = Number(detectPayload.receivedAmount ?? '0');
+    const expectedAmount = Number(request.expectedAmount);
+    const hasAmount = Number.isFinite(receivedAmount) && Number.isFinite(expectedAmount);
+    const amountSatisfied = hasAmount && receivedAmount >= expectedAmount;
+
+    const verified =
+      request.assetCode === 'SOL' &&
+      signatureSeen &&
+      amountSatisfied &&
+      detectPayload.status === 'confirmed';
+
+    return {
+      signature: request.signature,
+      status: txStatus.status,
+      confirmations: txStatus.confirmations,
+      verified,
+      recipientAddress: detectPayload.address ?? request.recipientAddress,
+      assetCode: verified ? request.assetCode : undefined,
+      mint: verified ? request.mint : undefined,
+      amount: detectPayload.receivedAmount,
+      mismatchCode: signatureSeen
+        ? amountSatisfied
+          ? request.assetCode === 'SOL'
+            ? undefined
+            : 'ASSET_MISMATCH'
+          : 'AMOUNT_UNDER'
+        : 'RECIPIENT_MISMATCH',
+      failureReason: verified
+        ? undefined
+        : request.assetCode === 'SOL'
+          ? signatureSeen
+            ? 'Detected recipient transaction amount is below the expected payment target'
+            : 'Submitted transaction was not detected on the configured collection address'
+          : 'Chain-side detect response does not include asset-level verification for this payment',
+      error: detectPayload.error,
+      blockTime: txStatus.blockTime,
+      slot: txStatus.slot,
+    };
+  }
+
+  private async verifyWithFallback(request: {
+    signature: string;
+    recipientAddress: string;
+    assetCode: string;
+    mint?: string | null;
+    expectedAmount: string;
+    networkCode: string;
+  }) {
+    const body = {
+      signature: request.signature,
+      recipientAddress: request.recipientAddress,
+      assetCode: request.assetCode,
+      mint: request.mint,
+      expectedAmount: request.expectedAmount,
+      networkCode: request.networkCode,
+    };
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(this.buildApiUrl('internal/v1/payment/verify'), body, {
+          timeout: this.config.getTimeoutMs(),
+          headers: this.getAuthHeaders(),
+        }),
+      );
+      return this.unwrapResponse<
+        VerifyIncomingTransferResponse | VerifyPaymentResponse | LegacyPaymentDetectResponse
+      >(
+        response as AxiosResponse<
+          | VerifyIncomingTransferResponse
+          | VerifyPaymentResponse
+          | LegacyPaymentDetectResponse
+          | EnvelopeResponse<
+              VerifyIncomingTransferResponse | VerifyPaymentResponse | LegacyPaymentDetectResponse
+            >
+        >,
+      );
+    } catch (error) {
+      this.logger.warn(
+        'Primary verify endpoint failed, attempting legacy detect fallback',
+        error instanceof Error ? error.message : String(error),
+      );
+
+      const response = await firstValueFrom(
+        this.httpService.post(
+          this.buildApiUrl('internal/v1/payment/detect'),
+          {
+            address: request.recipientAddress,
+            expectedAmount: request.expectedAmount,
+            signature: request.signature,
+            networkCode: request.networkCode,
+          },
+          {
+            timeout: this.config.getTimeoutMs(),
+            headers: this.getAuthHeaders(),
+          },
+        ),
+      );
+      return this.unwrapResponse<
+        VerifyIncomingTransferResponse | VerifyPaymentResponse | LegacyPaymentDetectResponse
+      >(
+        response as AxiosResponse<
+          | VerifyIncomingTransferResponse
+          | VerifyPaymentResponse
+          | LegacyPaymentDetectResponse
+          | EnvelopeResponse<
+              VerifyIncomingTransferResponse | VerifyPaymentResponse | LegacyPaymentDetectResponse
+            >
+        >,
+      );
+    }
   }
 
   private unwrapResponse<T>(

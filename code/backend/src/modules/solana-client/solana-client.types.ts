@@ -56,6 +56,54 @@ export interface GetTransactionStatusResponse {
   slot?: number;
 }
 
+export interface VerifyIncomingTransferRequest {
+  /** Transaction signature */
+  signature: string;
+  /** Network */
+  network?: 'mainnet' | 'devnet';
+  /** Expected recipient address */
+  recipientAddress: string;
+  /** Expected asset code */
+  assetCode: string;
+  /** Expected token mint (for SPL tokens) */
+  mint?: string | null;
+  /** Expected amount in UI units */
+  expectedAmount: string;
+}
+
+export interface VerifyIncomingTransferResponse {
+  /** Transaction signature */
+  signature: string;
+  /** Canonical chain status */
+  status: 'pending' | 'confirmed' | 'finalized' | 'failed';
+  /** Confirmation count */
+  confirmations: number;
+  /** Verification result */
+  verified: boolean;
+  /** Matched recipient address */
+  recipientAddress?: string;
+  /** Matched asset code */
+  assetCode?: string;
+  /** Matched mint */
+  mint?: string | null;
+  /** Received amount in UI units */
+  amount?: string;
+  /** Mismatch code when verification fails */
+  mismatchCode?:
+    | 'RECIPIENT_MISMATCH'
+    | 'ASSET_MISMATCH'
+    | 'AMOUNT_UNDER'
+    | 'AMOUNT_OVER';
+  /** Human-readable failure reason */
+  failureReason?: string;
+  /** Error message if tx failed */
+  error?: string;
+  /** Block time if available */
+  blockTime?: number;
+  /** Slot */
+  slot?: number;
+}
+
 export interface GetBalanceRequest {
   /** Wallet address */
   address: string;

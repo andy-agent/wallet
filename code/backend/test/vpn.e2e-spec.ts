@@ -13,11 +13,14 @@ describe('PlansSubscriptionVpn (e2e)', () => {
   let accessToken: string;
   let orderNo: string;
   let runtimeDir: string;
+  const solanaCollectionAddress =
+    '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV';
 
   beforeEach(async () => {
     runtimeDir = mkdtempSync(join(tmpdir(), 'backend-vpn-'));
     process.env.NODE_ENV = 'test';
     process.env.RUNTIME_STATE_FILE = join(runtimeDir, 'runtime-state.json');
+    process.env.SOLANA_ORDER_COLLECTION_ADDRESS = solanaCollectionAddress;
     delete process.env.RUNTIME_STATE_BACKEND;
     app = await bootstrapApp();
 
@@ -73,6 +76,7 @@ describe('PlansSubscriptionVpn (e2e)', () => {
     delete process.env.NODE_ENV;
     delete process.env.RUNTIME_STATE_FILE;
     delete process.env.RUNTIME_STATE_BACKEND;
+    delete process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
     rmSync(runtimeDir, { recursive: true, force: true });
   });
 

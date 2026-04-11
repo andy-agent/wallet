@@ -3,14 +3,17 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth/auth.service';
 import { ClientCatalogService } from '../database/client-catalog.service';
 import { RuntimeStateRepository } from '../database/runtime-state.repository';
 import { StoredOrderRecord } from '../database/runtime-state.types';
 import { ProvisioningService } from '../provisioning/provisioning.service';
 import { SolanaClientService } from '../solana-client/solana-client.service';
+import { VerifyIncomingTransferResponse } from '../solana-client/solana-client.types';
 import { CreateOrderRequestDto } from './dto/create-order.request';
 import { RefreshOrderStatusRequestDto } from './dto/refresh-order-status.request';
 import { SubmitClientTxRequestDto } from './dto/submit-client-tx.request';
@@ -21,6 +24,7 @@ export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
   constructor(
+    private readonly configService: ConfigService,
     private readonly authService: AuthService,
     private readonly clientCatalogService: ClientCatalogService,
     private readonly runtimeStateRepository: RuntimeStateRepository,
@@ -57,7 +61,7 @@ export class OrdersService {
     const storedOrder: StoredOrderRecord = {
       createdAt: new Date().toISOString(),
       idempotencyKey: compositeKey,
-      collectionAddress: this.buildCollectionAddress(dto.quoteNetworkCode, orderId),
+      collectionAddress: this.resolveCollectionAddress(dto.quoteNetworkCode),
       uniqueAmountDelta: this.buildUniqueAmountDelta(orderId),
       orderId,
       orderNo,
@@ -108,7 +112,7 @@ export class OrdersService {
       collectionAddress: order.collectionAddress,
       payableAmount: order.payableAmount,
       uniqueAmountDelta: order.uniqueAmountDelta,
-      qrText: `${order.quoteNetworkCode}:${order.orderNo}:${order.payableAmount}`,
+      qrText: this.buildPaymentQrText(order),
       expiresAt: order.expiresAt,
       serviceEnabled:
         order.quoteNetworkCode === 'SOLANA' ? this.solanaClient.isEnabled() : false,
@@ -121,8 +125,17 @@ export class OrdersService {
     dto: SubmitClientTxRequestDto,
   ) {
     const order = await this.mustGetOwned(accessToken, orderNo);
+    if (dto.networkCode !== order.quoteNetworkCode) {
+      throw new ConflictException({
+        code: 'ORDER_TX_NETWORK_MISMATCH',
+        message: 'Submitted transaction network does not match order network',
+      });
+    }
     order.submittedClientTxHash = dto.txHash;
-    order.status = order.status === 'AWAITING_PAYMENT' ? 'PAYMENT_DETECTED' : order.status;
+    if (!this.isTerminalStatus(order.status)) {
+      order.status = 'PAYMENT_DETECTED';
+      order.failureReason = null;
+    }
     await this.runtimeStateRepository.saveOrder(order);
     return {};
   }
@@ -156,22 +169,43 @@ export class OrdersService {
 
     if (order.quoteNetworkCode === 'SOLANA') {
       try {
-        const remoteStatus = await this.solanaClient.getTransactionStatus({
+        const verification = await this.solanaClient.verifyIncomingTransfer({
           signature: order.submittedClientTxHash,
+          recipientAddress: order.collectionAddress,
+          assetCode: order.quoteAssetCode,
+          mint:
+            order.quoteAssetCode === 'USDT'
+              ? this.solanaClient.getUsdtMint()
+              : null,
+          expectedAmount: order.payableAmount,
         });
 
-        if (remoteStatus.status === 'confirmed' || remoteStatus.status === 'finalized') {
-          return this.markPaidAndProvision(order);
-        }
+        if (
+          verification.status === 'confirmed' ||
+          verification.status === 'finalized'
+        ) {
+          if (verification.verified) {
+            order.failureReason = null;
+            return this.markPaidAndProvision(order);
+          }
 
-        if (remoteStatus.status === 'failed') {
-          order.status = 'FAILED';
-          order.failureReason = remoteStatus.error ?? 'Transaction failed on chain';
+          order.status = this.mapVerificationFailureStatus(verification);
+          order.failureReason =
+            verification.failureReason ??
+            'Submitted transaction does not satisfy the expected payment target';
           await this.runtimeStateRepository.saveOrder(order);
           return this.toOrderRecord(order);
         }
 
-        if (remoteStatus.status === 'pending') {
+        if (verification.status === 'failed') {
+          order.status = 'FAILED';
+          order.failureReason =
+            verification.error ?? 'Transaction failed on chain';
+          await this.runtimeStateRepository.saveOrder(order);
+          return this.toOrderRecord(order);
+        }
+
+        if (verification.status === 'pending') {
           if (order.status === 'PAYMENT_DETECTED') {
             order.status = 'CONFIRMING';
             await this.runtimeStateRepository.saveOrder(order);
@@ -286,24 +320,34 @@ export class OrdersService {
     return publicOrder;
   }
 
-  private buildCollectionAddress(
+  private resolveCollectionAddress(
     networkCode: StoredOrderRecord['quoteNetworkCode'],
-    seed: string,
   ) {
-    const base =
-      networkCode === 'SOLANA'
-        ? 'So11111111111111111111111111111111111111112'
-        : 'TR7NhqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
-    const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-    const suffixLength = Math.min(6, base.length);
-    let suffix = '';
+    if (networkCode === 'SOLANA') {
+      const configured = this.configService
+        .get<string>('SOLANA_ORDER_COLLECTION_ADDRESS')
+        ?.trim();
+      if (configured) {
+        if (!this.solanaClient.validateAddress(configured)) {
+          throw new ServiceUnavailableException({
+            code: 'SOLANA_COLLECTION_ADDRESS_INVALID',
+            message: 'Configured Solana collection address is invalid',
+          });
+        }
+        return configured;
+      }
 
-    for (let index = 0; index < suffixLength; index++) {
-      const charCode = seed.charCodeAt(index % seed.length);
-      suffix += alphabet[charCode % alphabet.length];
+      if (this.configService.get<string>('NODE_ENV') === 'test') {
+        return 'So11111111111111111111111111111111111111112';
+      }
+
+      throw new ServiceUnavailableException({
+        code: 'SOLANA_COLLECTION_ADDRESS_MISSING',
+        message: 'Solana collection address is not configured',
+      });
     }
 
-    return `${base.slice(0, base.length - suffix.length)}${suffix}`;
+    return 'TR7NhqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
   }
 
   private buildUniqueAmountDelta(seed: string) {
@@ -312,5 +356,29 @@ export class OrdersService {
       accumulator = (accumulator + char.charCodeAt(0)) % 999999;
     }
     return `0.${String(accumulator + 1).padStart(6, '0')}`;
+  }
+
+  private buildPaymentQrText(order: StoredOrderRecord) {
+    if (order.quoteNetworkCode === 'SOLANA') {
+      return `solana:${order.collectionAddress}?amount=${order.payableAmount}`;
+    }
+    return `${order.quoteNetworkCode}:${order.orderNo}:${order.payableAmount}`;
+  }
+
+  private isTerminalStatus(status: OrderRecord['status']) {
+    return (
+      status === 'COMPLETED' ||
+      status === 'FAILED' ||
+      status === 'EXPIRED' ||
+      status === 'CANCELED'
+    );
+  }
+
+  private mapVerificationFailureStatus(
+    verification: VerifyIncomingTransferResponse,
+  ): OrderRecord['status'] {
+    return verification.mismatchCode === 'AMOUNT_OVER'
+      ? 'OVERPAID_REVIEW'
+      : 'UNDERPAID_REVIEW';
   }
 }

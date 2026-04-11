@@ -10,8 +10,14 @@ describe('ReferralWithdrawal (e2e)', () => {
   let inviterToken: string;
   let inviterCode: string;
   let inviteeToken: string;
+  const solanaCollectionAddress =
+    '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV';
 
   beforeEach(async () => {
+    process.env.SOLANA_ORDER_COLLECTION_ADDRESS = solanaCollectionAddress;
+    const runId = Date.now().toString(36);
+    const inviterEmail = `inviter-${runId}@example.com`;
+    const inviteeEmail = `invitee-${runId}@example.com`;
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -31,13 +37,13 @@ describe('ReferralWithdrawal (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email/request-code')
-      .send({ email: 'inviter@example.com' })
+      .send({ email: inviterEmail })
       .expect(200);
     const inviter = await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email')
       .set('x-idempotency-key', 'inviter-register')
       .send({
-        email: 'inviter@example.com',
+        email: inviterEmail,
         code: '123456',
         password: 'Passw0rd!',
       })
@@ -51,13 +57,13 @@ describe('ReferralWithdrawal (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email/request-code')
-      .send({ email: 'invitee@example.com' })
+      .send({ email: inviteeEmail })
       .expect(200);
     const invitee = await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email')
       .set('x-idempotency-key', 'invitee-register')
       .send({
-        email: 'invitee@example.com',
+        email: inviteeEmail,
         code: '123456',
         password: 'Passw0rd!',
       })
@@ -67,6 +73,7 @@ describe('ReferralWithdrawal (e2e)', () => {
 
   afterEach(async () => {
     await app.close();
+    delete process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
   });
 
   it('bind referral and create frozen commission after completed order', async () => {

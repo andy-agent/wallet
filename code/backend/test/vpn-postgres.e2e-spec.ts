@@ -20,11 +20,14 @@ describe('VPN Postgres runtime state (e2e)', () => {
   let app: INestApplication;
   let accessToken: string;
   let orderNo: string;
+  const solanaCollectionAddress =
+    '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV';
 
   beforeEach(async () => {
     process.env.NODE_ENV = 'production';
     process.env.DATABASE_URL =
       'postgres://runtime:runtime@server2:5432/cryptovpn';
+    process.env.SOLANA_ORDER_COLLECTION_ADDRESS = solanaCollectionAddress;
     delete process.env.RUNTIME_STATE_BACKEND;
     delete process.env.RUNTIME_STATE_FILE;
 
@@ -87,6 +90,7 @@ describe('VPN Postgres runtime state (e2e)', () => {
     delete process.env.DATABASE_URL;
     delete process.env.RUNTIME_STATE_BACKEND;
     delete process.env.RUNTIME_STATE_FILE;
+    delete process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
   });
 
   it('keeps fulfillment, subscription reads, and vpn access restart-safe in Postgres', async () => {
