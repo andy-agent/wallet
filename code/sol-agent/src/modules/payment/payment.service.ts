@@ -1,12 +1,55 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  ParsedMessageAccount,
+  ParsedTransactionWithMeta,
+  PublicKey,
+} from '@solana/web3.js';
 import { SolanaRpcService } from '../solana/solana.rpc.service';
 import { DetectPaymentRequestDto } from './dto/detect-payment.request';
+import { VerifyTransactionRequestDto } from './dto/verify-transaction.request';
+
+const DEFAULT_NETWORK_CODE = 'solana-mainnet';
+const MAINNET_USDT_MINT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
+const SOL_DECIMALS = 9;
+const USDT_DECIMALS = 6;
+
+type VerifyStatus = 'pending' | 'failed' | 'mismatch' | 'verified';
+type AssetKind = 'NATIVE_SOL' | 'SPL_TOKEN';
+
+interface AssetResolution {
+  assetCode: string;
+  assetKind: AssetKind;
+  mintAddress: string | null;
+  decimals: number;
+}
+
+interface PaymentMatch {
+  matchedAccounts: string[];
+  receivedAmountRaw: bigint;
+}
+
+interface ParsedTokenBalanceEntry {
+  accountIndex: number;
+  mint: string;
+  owner?: string;
+  uiTokenAmount: {
+    amount: string;
+    decimals: number;
+  };
+}
+
+interface NormalizedTokenBalance {
+  accountAddress: string;
+  owner: string | null;
+  mint: string;
+  amount: bigint;
+  decimals: number;
+}
 
 @Injectable()
 export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
-  // 存储检测到的支付状态
-  private paymentStore: Map<string, any> = new Map();
+  private paymentStore: Map<string, Record<string, unknown>> = new Map();
 
   constructor(private readonly solanaRpc: SolanaRpcService) {}
 
@@ -15,19 +58,22 @@ export class PaymentService {
    * 调用真实 Solana RPC 获取余额和交易信息
    */
   async getPaymentStatus(address: string, networkCode?: string) {
-    const effectiveNetworkCode = networkCode ?? 'solana-mainnet';
-    
+    const effectiveNetworkCode = networkCode ?? DEFAULT_NETWORK_CODE;
+
     try {
-      // 查询余额
-      const balanceInfo = await this.solanaRpc.getBalance(address, effectiveNetworkCode);
-      
-      // 查询最近交易
-      const txInfo = await this.solanaRpc.getRecentTransactions(address, effectiveNetworkCode, 5);
-      
-      // 判断收款状态
+      const balanceInfo = await this.solanaRpc.getBalance(
+        address,
+        effectiveNetworkCode,
+      );
+      const txInfo = await this.solanaRpc.getRecentTransactions(
+        address,
+        effectiveNetworkCode,
+        5,
+      );
+
       const hasBalance = balanceInfo.balance > 0;
       const hasTransactions = txInfo.signatures.length > 0;
-      
+
       let status = 'pending';
       if (hasBalance && hasTransactions) {
         status = 'received';
@@ -42,20 +88,18 @@ export class PaymentService {
         receivedAmount: balanceInfo.balanceInSOL,
         expectedAmount: null,
         txHash: hasTransactions ? txInfo.signatures[0] : null,
-        confirmations: hasTransactions ? 1 : 0, // 简化处理
+        confirmations: hasTransactions ? 1 : 0,
         balance: balanceInfo.balance,
         recentTxCount: txInfo.signatures.length,
         updatedAt: new Date().toISOString(),
       };
 
-      // 存储状态
       this.paymentStore.set(address, result);
-      
+
       return result;
     } catch (error) {
       this.logger.error(`Failed to get payment status for ${address}:`, error);
-      
-      // 返回错误状态
+
       return {
         address,
         networkCode: effectiveNetworkCode,
@@ -75,25 +119,28 @@ export class PaymentService {
    * 调用真实 Solana RPC 进行余额和交易检测
    */
   async detectPayment(body: DetectPaymentRequestDto) {
-    const effectiveNetworkCode = body.networkCode ?? 'solana-mainnet';
-    
+    const effectiveNetworkCode = body.networkCode ?? DEFAULT_NETWORK_CODE;
+
     try {
-      this.logger.log(`Detecting payment for ${body.address} on ${effectiveNetworkCode}`);
-      
-      // 获取余额信息
-      const balanceInfo = await this.solanaRpc.getBalance(body.address, effectiveNetworkCode);
-      
-      // 获取最近交易
-      const txInfo = await this.solanaRpc.getRecentTransactions(
-        body.address, 
-        effectiveNetworkCode, 
-        10
+      this.logger.log(
+        `Detecting payment for ${body.address} on ${effectiveNetworkCode}`,
       );
 
-      // 判断是否收到款项
+      const balanceInfo = await this.solanaRpc.getBalance(
+        body.address,
+        effectiveNetworkCode,
+      );
+      const txInfo = await this.solanaRpc.getRecentTransactions(
+        body.address,
+        effectiveNetworkCode,
+        10,
+      );
+
       const receivedAmount = parseFloat(balanceInfo.balanceInSOL);
-      const expectedAmount = body.expectedAmount ? parseFloat(body.expectedAmount) : null;
-      
+      const expectedAmount = body.expectedAmount
+        ? parseFloat(body.expectedAmount)
+        : null;
+
       let status = 'pending';
       if (expectedAmount !== null && receivedAmount >= expectedAmount) {
         status = 'confirmed';
@@ -113,15 +160,16 @@ export class PaymentService {
         updatedAt: new Date().toISOString(),
       };
 
-      // 存储检测结果
       this.paymentStore.set(body.address, result);
-      
-      this.logger.log(`Payment detection result for ${body.address}: ${status}, ${balanceInfo.balanceInSOL} SOL`);
-      
+
+      this.logger.log(
+        `Payment detection result for ${body.address}: ${status}, ${balanceInfo.balanceInSOL} SOL`,
+      );
+
       return result;
     } catch (error) {
       this.logger.error(`Payment detection failed for ${body.address}:`, error);
-      
+
       return {
         address: body.address,
         networkCode: effectiveNetworkCode,
@@ -134,5 +182,362 @@ export class PaymentService {
         updatedAt: new Date().toISOString(),
       };
     }
+  }
+
+  /**
+   * 按交易签名校验是否向指定地址支付了预期资产和金额。
+   * SOL 使用 lamports 差值，SPL Token 使用 token balance delta。
+   */
+  async verifyTransaction(body: VerifyTransactionRequestDto) {
+    const networkCode = body.networkCode ?? DEFAULT_NETWORK_CODE;
+    const recipientAddress = this.assertPublicKey(
+      body.recipientAddress,
+      'recipientAddress',
+    );
+    const asset = this.resolveAsset(body, networkCode);
+    const expectedAmountRaw = this.toBaseUnits(
+      body.expectedAmount,
+      asset.decimals,
+      'expectedAmount',
+    );
+
+    try {
+      const txResult = await this.solanaRpc.getParsedTransaction(
+        body.signature,
+        networkCode,
+      );
+
+      if (!txResult.transaction) {
+        return this.buildVerificationResult({
+          body,
+          asset,
+          recipientAddress,
+          expectedAmountRaw,
+          status: 'pending',
+          receivedAmountRaw: 0n,
+          matchedAccounts: [],
+          slot: null,
+          blockTime: null,
+        });
+      }
+
+      const parsedTx = txResult.transaction;
+      if (parsedTx.meta?.err) {
+        return this.buildVerificationResult({
+          body,
+          asset,
+          recipientAddress,
+          expectedAmountRaw,
+          status: 'failed',
+          receivedAmountRaw: 0n,
+          matchedAccounts: [],
+          slot: parsedTx.slot,
+          blockTime: parsedTx.blockTime ?? null,
+          error: JSON.stringify(parsedTx.meta.err),
+        });
+      }
+
+      const paymentMatch =
+        asset.assetKind === 'NATIVE_SOL'
+          ? this.extractSolReceipt(parsedTx, recipientAddress)
+          : this.extractSplReceipt(
+              parsedTx,
+              recipientAddress,
+              asset.mintAddress as string,
+            );
+
+      const status: VerifyStatus =
+        paymentMatch.receivedAmountRaw >= expectedAmountRaw &&
+        paymentMatch.receivedAmountRaw > 0n
+          ? 'verified'
+          : 'mismatch';
+
+      return this.buildVerificationResult({
+        body,
+        asset,
+        recipientAddress,
+        expectedAmountRaw,
+        status,
+        receivedAmountRaw: paymentMatch.receivedAmountRaw,
+        matchedAccounts: paymentMatch.matchedAccounts,
+        slot: parsedTx.slot,
+        blockTime: parsedTx.blockTime ?? null,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Transaction verification failed for ${body.signature}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  private buildVerificationResult(input: {
+    body: VerifyTransactionRequestDto;
+    asset: AssetResolution;
+    recipientAddress: string;
+    expectedAmountRaw: bigint;
+    receivedAmountRaw: bigint;
+    matchedAccounts: string[];
+    status: VerifyStatus;
+    slot: number | null;
+    blockTime: number | null;
+    error?: string;
+  }) {
+    return {
+      signature: input.body.signature,
+      networkCode: input.body.networkCode ?? DEFAULT_NETWORK_CODE,
+      status: input.status,
+      recipientAddress: input.recipientAddress,
+      assetCode: input.asset.assetCode,
+      assetKind: input.asset.assetKind,
+      mintAddress: input.asset.mintAddress,
+      decimals: input.asset.decimals,
+      expectedAmount: input.body.expectedAmount,
+      expectedAmountRaw: input.expectedAmountRaw.toString(),
+      receivedAmount: this.fromBaseUnits(
+        input.receivedAmountRaw,
+        input.asset.decimals,
+      ),
+      receivedAmountRaw: input.receivedAmountRaw.toString(),
+      recipientMatched: input.receivedAmountRaw > 0n,
+      amountSatisfied: input.receivedAmountRaw >= input.expectedAmountRaw,
+      matchedAccounts: input.matchedAccounts,
+      slot: input.slot,
+      blockTime: input.blockTime,
+      error: input.error,
+      verifiedAt: new Date().toISOString(),
+    };
+  }
+
+  private resolveAsset(
+    body: VerifyTransactionRequestDto,
+    networkCode: string,
+  ): AssetResolution {
+    const assetCode = body.assetCode.trim().toUpperCase();
+    if (!assetCode) {
+      throw new BadRequestException('assetCode is required');
+    }
+
+    if (assetCode === 'SOL') {
+      return {
+        assetCode,
+        assetKind: 'NATIVE_SOL',
+        mintAddress: null,
+        decimals: SOL_DECIMALS,
+      };
+    }
+
+    let mintAddress = body.mintAddress?.trim() ?? null;
+    if (
+      !mintAddress &&
+      assetCode === 'USDT' &&
+      networkCode === DEFAULT_NETWORK_CODE
+    ) {
+      mintAddress = MAINNET_USDT_MINT;
+    }
+
+    if (!mintAddress) {
+      throw new BadRequestException(
+        'mintAddress is required for SPL token verification',
+      );
+    }
+
+    const decimals =
+      body.assetDecimals ?? (assetCode === 'USDT' ? USDT_DECIMALS : undefined);
+
+    if (decimals === undefined) {
+      throw new BadRequestException(
+        'assetDecimals is required for non-USDT SPL token verification',
+      );
+    }
+
+    return {
+      assetCode,
+      assetKind: 'SPL_TOKEN',
+      mintAddress: this.assertPublicKey(mintAddress, 'mintAddress'),
+      decimals,
+    };
+  }
+
+  private extractSolReceipt(
+    tx: ParsedTransactionWithMeta,
+    recipientAddress: string,
+  ): PaymentMatch {
+    const accountKeys = this.getAccountKeys(tx);
+    const recipientIndex = accountKeys.findIndex(
+      (accountKey) => accountKey === recipientAddress,
+    );
+
+    if (recipientIndex < 0) {
+      return {
+        matchedAccounts: [],
+        receivedAmountRaw: 0n,
+      };
+    }
+
+    const preBalance = BigInt(tx.meta?.preBalances?.[recipientIndex] ?? 0);
+    const postBalance = BigInt(tx.meta?.postBalances?.[recipientIndex] ?? 0);
+    const delta = postBalance - preBalance;
+
+    return {
+      matchedAccounts: delta > 0n ? [recipientAddress] : [],
+      receivedAmountRaw: delta > 0n ? delta : 0n,
+    };
+  }
+
+  private extractSplReceipt(
+    tx: ParsedTransactionWithMeta,
+    recipientAddress: string,
+    mintAddress: string,
+  ): PaymentMatch {
+    const accountKeys = this.getAccountKeys(tx);
+    const preBalances = this.normalizeTokenBalances(
+      tx.meta?.preTokenBalances as ParsedTokenBalanceEntry[] | null | undefined,
+      accountKeys,
+    );
+    const postBalances = this.normalizeTokenBalances(
+      tx.meta?.postTokenBalances as
+        | ParsedTokenBalanceEntry[]
+        | null
+        | undefined,
+      accountKeys,
+    );
+
+    const matchedAccounts = new Set<string>();
+    let receivedAmountRaw = 0n;
+
+    const candidateIndices = new Set<number>([
+      ...Array.from(preBalances.keys()),
+      ...Array.from(postBalances.keys()),
+    ]);
+
+    for (const accountIndex of candidateIndices) {
+      const before = preBalances.get(accountIndex);
+      const after = postBalances.get(accountIndex);
+      const balance = after ?? before;
+
+      if (!balance || balance.mint !== mintAddress) {
+        continue;
+      }
+
+      const accountMatchesRecipient =
+        balance.accountAddress === recipientAddress ||
+        balance.owner === recipientAddress;
+
+      if (!accountMatchesRecipient) {
+        continue;
+      }
+
+      const preAmount = before?.amount ?? 0n;
+      const postAmount = after?.amount ?? 0n;
+      const delta = postAmount - preAmount;
+
+      if (delta > 0n) {
+        receivedAmountRaw += delta;
+        matchedAccounts.add(balance.accountAddress);
+      }
+    }
+
+    return {
+      matchedAccounts: Array.from(matchedAccounts),
+      receivedAmountRaw,
+    };
+  }
+
+  private normalizeTokenBalances(
+    tokenBalances: ParsedTokenBalanceEntry[] | null | undefined,
+    accountKeys: string[],
+  ): Map<number, NormalizedTokenBalance> {
+    const balances = new Map<number, NormalizedTokenBalance>();
+
+    for (const tokenBalance of tokenBalances ?? []) {
+      balances.set(tokenBalance.accountIndex, {
+        accountAddress: accountKeys[tokenBalance.accountIndex] ?? '',
+        owner: tokenBalance.owner ?? null,
+        mint: tokenBalance.mint,
+        amount: BigInt(tokenBalance.uiTokenAmount.amount ?? '0'),
+        decimals: tokenBalance.uiTokenAmount.decimals,
+      });
+    }
+
+    return balances;
+  }
+
+  private getAccountKeys(tx: ParsedTransactionWithMeta): string[] {
+    return tx.transaction.message.accountKeys.map(
+      (accountKey: ParsedMessageAccount | PublicKey) => {
+        if (accountKey instanceof PublicKey) {
+          return accountKey.toBase58();
+        }
+
+        const parsedAccount = accountKey as ParsedMessageAccount;
+        return typeof parsedAccount.pubkey === 'string'
+          ? parsedAccount.pubkey
+          : parsedAccount.pubkey.toBase58();
+      },
+    );
+  }
+
+  private assertPublicKey(address: string, fieldName: string): string {
+    try {
+      return new PublicKey(address).toBase58();
+    } catch {
+      throw new BadRequestException(
+        `${fieldName} must be a valid Solana public key`,
+      );
+    }
+  }
+
+  private toBaseUnits(
+    amount: string,
+    decimals: number,
+    fieldName: string,
+  ): bigint {
+    const normalized = amount.trim();
+    if (!/^\d+(\.\d+)?$/.test(normalized)) {
+      throw new BadRequestException(
+        `${fieldName} must be a non-negative decimal string`,
+      );
+    }
+
+    const [wholePart, fractionalPart = ''] = normalized.split('.');
+    if (fractionalPart.length > decimals) {
+      throw new BadRequestException(
+        `${fieldName} has more than ${decimals} decimal places`,
+      );
+    }
+
+    const paddedFraction = fractionalPart
+      .padEnd(decimals, '0')
+      .slice(0, decimals);
+
+    return (
+      BigInt(wholePart) * 10n ** BigInt(decimals) +
+      BigInt(paddedFraction || '0')
+    );
+  }
+
+  private fromBaseUnits(amount: bigint, decimals: number): string {
+    if (amount === 0n) {
+      return '0';
+    }
+
+    const negative = amount < 0n;
+    const absoluteAmount = negative ? -amount : amount;
+    const factor = 10n ** BigInt(decimals);
+    const wholePart = absoluteAmount / factor;
+    const fractionalPart = absoluteAmount % factor;
+
+    if (fractionalPart === 0n) {
+      return `${negative ? '-' : ''}${wholePart.toString()}`;
+    }
+
+    const paddedFraction = fractionalPart
+      .toString()
+      .padStart(decimals, '0')
+      .replace(/0+$/, '');
+
+    return `${negative ? '-' : ''}${wholePart.toString()}.${paddedFraction}`;
   }
 }

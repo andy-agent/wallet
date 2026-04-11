@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   Connection,
   Keypair,
+  ParsedTransactionWithMeta,
   PublicKey,
   clusterApiUrl,
 } from '@solana/web3.js';
@@ -15,7 +16,8 @@ export class SolanaRpcService {
 
   constructor(private readonly configService: ConfigService) {
     // 在测试环境中可以使用 mock 模式
-    this.useMockMode = this.configService.get<string>('SOLANA_RPC_MODE') === 'mock';
+    this.useMockMode =
+      this.configService.get<string>('SOLANA_RPC_MODE') === 'mock';
   }
 
   /**
@@ -24,23 +26,26 @@ export class SolanaRpcService {
    */
   getConnection(networkCode: string = 'solana-mainnet'): Connection {
     const network = networkCode.replace('solana-', '');
-    
+
     if (this.connections.has(network)) {
       return this.connections.get(network)!;
     }
 
-    const rpcUrl = this.configService.get<string>(`SOLANA_RPC_URL_${network.toUpperCase()}`);
-    
+    const rpcUrl = this.configService.get<string>(
+      `SOLANA_RPC_URL_${network.toUpperCase()}`,
+    );
+
     let connection: Connection;
     if (rpcUrl) {
       connection = new Connection(rpcUrl, 'confirmed');
     } else {
       // 使用公共 RPC 端点（生产环境应使用私有 RPC）
-      const clusterUrl = network === 'mainnet' 
-        ? clusterApiUrl('mainnet-beta')
-        : network === 'devnet'
-        ? clusterApiUrl('devnet')
-        : clusterApiUrl('testnet');
+      const clusterUrl =
+        network === 'mainnet'
+          ? clusterApiUrl('mainnet-beta')
+          : network === 'devnet'
+            ? clusterApiUrl('devnet')
+            : clusterApiUrl('testnet');
       connection = new Connection(clusterUrl, 'confirmed');
     }
 
@@ -71,8 +76,8 @@ export class SolanaRpcService {
       // 添加 5 秒超时
       const slot = await Promise.race([
         connection.getSlot(),
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('RPC timeout')), 5000)
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('RPC timeout')), 5000),
         ),
       ]);
       return {
@@ -138,15 +143,15 @@ export class SolanaRpcService {
 
     const connection = this.getConnection(networkCode);
     const publicKey = new PublicKey(address);
-    
+
     // 添加 10 秒超时
     const balance = await Promise.race([
       connection.getBalance(publicKey),
-      new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('RPC timeout')), 10000)
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('RPC timeout')), 10000),
       ),
     ]);
-    
+
     return {
       address,
       balance,
@@ -178,19 +183,19 @@ export class SolanaRpcService {
 
     const connection = this.getConnection(networkCode);
     const publicKey = new PublicKey(address);
-    
+
     // 添加 10 秒超时
     const signatures = await Promise.race([
       connection.getSignaturesForAddress(publicKey, { limit }),
-      new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('RPC timeout')), 10000)
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('RPC timeout')), 10000),
       ),
     ]);
-    
+
     return {
       address,
       networkCode,
-      signatures: signatures.map((sig) => sig.signature),
+      signatures: signatures.map((sig: { signature: string }) => sig.signature),
     };
   }
 
@@ -215,17 +220,55 @@ export class SolanaRpcService {
     }
 
     const connection = this.getConnection(networkCode);
-    
+
     // 添加 10 秒超时
     const transaction = await Promise.race([
       connection.getTransaction(signature, {
         maxSupportedTransactionVersion: 0,
       }),
-      new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('RPC timeout')), 10000)
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('RPC timeout')), 10000),
       ),
     ]);
-    
+
+    return {
+      signature,
+      networkCode,
+      transaction,
+    };
+  }
+
+  /**
+   * 获取已解析的交易详情
+   */
+  async getParsedTransaction(
+    signature: string,
+    networkCode: string = 'solana-mainnet',
+  ): Promise<{
+    signature: string;
+    networkCode: string;
+    transaction: ParsedTransactionWithMeta | null;
+  }> {
+    if (this.useMockMode) {
+      return {
+        signature,
+        networkCode,
+        transaction: null,
+      };
+    }
+
+    const connection = this.getConnection(networkCode);
+
+    const transaction = await Promise.race([
+      connection.getParsedTransaction(signature, {
+        commitment: 'confirmed',
+        maxSupportedTransactionVersion: 0,
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('RPC timeout')), 10000),
+      ),
+    ]);
+
     return {
       signature,
       networkCode,
