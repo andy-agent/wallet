@@ -1,20 +1,9 @@
 package com.v2ray.ang.composeui.pages.p2
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import com.v2ray.ang.composeui.p2.model.ReceiveEvent
 import com.v2ray.ang.composeui.p2.model.ReceiveUiState
 import com.v2ray.ang.composeui.p2.model.receivePreviewState
@@ -63,26 +52,36 @@ fun ReceiveScreen(
         if (chips.isNotEmpty()) {
             P2CoreChipRow(items = chips, activeIndex = 0)
         }
-        P2CoreCard {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.Center,
-            ) {
-                P2CoreQrPlaceholder()
-            }
-        }
-        P2CoreCard {
-            P2CoreCardHeader(title = "收款地址", trailing = status, trailingColor = Color(0xFFE6FFF6))
-            Text(address, style = MaterialTheme.typography.bodyLarge, color = Color(0xFF182345), fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(4.dp))
-            CoreActionRow(
-                primaryActionLabel = uiState.secondaryActionLabel ?: "分享二维码",
-                onPrimaryAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
-                secondaryActionLabel = uiState.primaryActionLabel,
-                onSecondaryAction = { onEvent(ReceiveEvent.PrimaryActionClicked) },
+        P2CoreQrAddressCard(
+            title = "收款二维码",
+            subtitle = "扫码转账前请确认网络与资产一致",
+            status = status,
+            address = address,
+        ) {
+            P2CoreActionValueRow(
+                label = "收款地址",
+                value = address,
+                actionLabel = uiState.secondaryActionLabel ?: "分享二维码",
+                onAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
             )
-            P2CoreNoteCard(title = "请确认链一致", text = uiState.note)
         }
+        P2CoreHeroValueCard(
+            label = "到账预估",
+            value = uiState.metrics.firstOrNull()?.value ?: "--",
+            supportingText = uiState.summary,
+            highlight = uiState.badge,
+            stats = uiState.metrics.drop(1).take(2).map { it.label to it.value },
+        )
+        P2CoreAddressModule(
+            title = "收款地址",
+            value = address,
+            supportingText = uiState.note,
+            status = status,
+            primaryActionLabel = uiState.secondaryActionLabel ?: "分享二维码",
+            onPrimaryAction = { onEvent(ReceiveEvent.SecondaryActionClicked) },
+            secondaryActionLabel = uiState.primaryActionLabel,
+            onSecondaryAction = { onEvent(ReceiveEvent.PrimaryActionClicked) },
+        )
     }
 }
 

@@ -1,17 +1,10 @@
 package com.v2ray.ang.composeui.pages.p2
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import com.v2ray.ang.composeui.p2.model.SendEvent
 import com.v2ray.ang.composeui.p2.model.SendUiState
 import com.v2ray.ang.composeui.p2.model.sendPreviewState
@@ -67,16 +60,18 @@ fun SendScreen(
             }
             P2CoreChipRow(items = listOf("TRON · Fee 更低", "Solana"), activeIndex = 0)
         }
-        P2CoreCard {
-            Text(amount, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color(0xFF182345))
-            Text("≈ $amount USDT", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF7783A8))
-            P2CoreMetricGrid(
-                items = listOf(
-                    "网络费" to (uiState.metrics.getOrNull(2)?.value ?: "1.24 USDT"),
-                    "预计到账" to (uiState.metrics.getOrNull(3)?.value ?: "~ 38 秒"),
-                ),
-            )
-        }
+        P2CoreTrendCard(
+            title = "发送概览",
+            value = amount,
+            caption = "≈ $amount USDT · 广播后不可撤回",
+            accent = Color(0xFF19B78C),
+        )
+        P2CoreMetricGrid(
+            items = listOf(
+                "网络费" to (uiState.metrics.getOrNull(2)?.value ?: "1.24 USDT"),
+                "预计到账" to (uiState.metrics.getOrNull(3)?.value ?: "~ 38 秒"),
+            ),
+        )
         P2CoreCard {
             P2CoreCardHeader(title = "安全检查", trailing = "通过 3/4", trailingColor = Color(0xFFEAF6FF))
             uiState.highlights.forEach { item ->

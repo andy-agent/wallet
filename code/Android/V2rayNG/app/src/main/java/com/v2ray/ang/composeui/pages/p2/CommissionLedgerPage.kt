@@ -3,10 +3,8 @@ package com.v2ray.ang.composeui.pages.p2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.ui.tooling.preview.Preview
 import com.v2ray.ang.composeui.p2.model.CommissionLedgerEvent
 import com.v2ray.ang.composeui.p2.model.CommissionLedgerUiState
 import com.v2ray.ang.composeui.p2.model.commissionLedgerPreviewState
@@ -54,11 +52,18 @@ fun CommissionLedgerScreen(
         secondaryActionLabel = uiState.secondaryActionLabel,
         onSecondaryAction = { onEvent(CommissionLedgerEvent.SecondaryActionClicked) },
     ) {
-        P2CoreCard {
-            Text(total, style = MaterialTheme.typography.headlineMedium, color = Color(0xFF182345))
-            Text(uiState.checklist.firstOrNull()?.detail ?: uiState.summary, style = MaterialTheme.typography.bodySmall, color = Color(0xFF6D789E))
-            P2CoreChartPlaceholder(accent = Color(0xFF22C3A0))
-        }
+        P2CoreTrendCard(
+            title = uiState.note,
+            value = total,
+            caption = uiState.checklist.firstOrNull()?.detail ?: uiState.summary,
+            accent = Color(0xFF22C3A0),
+        )
+        P2CoreHeroValue(
+            label = "月度新增",
+            value = uiState.badge,
+            caption = "按订单来源拆分返佣并同步提现状态",
+            accent = Color(0xFF16B889),
+        )
         P2CoreCard {
             P2CoreCardHeader(title = uiState.note)
             uiState.highlights.forEach { item ->

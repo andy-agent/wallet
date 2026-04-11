@@ -3,6 +3,7 @@ package com.v2ray.ang.composeui.pages.p2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.v2ray.ang.composeui.p2.model.SendResultEvent
 import com.v2ray.ang.composeui.p2.model.SendResultUiState
@@ -38,6 +39,8 @@ fun SendResultScreen(
     onEvent: (SendResultEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val amount = uiState.metrics.firstOrNull()?.value ?: "--"
+    val txHash = uiState.highlights.getOrNull(1)?.subtitle ?: "--"
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -50,20 +53,21 @@ fun SendResultScreen(
         secondaryActionLabel = uiState.primaryActionLabel,
         onSecondaryAction = { onEvent(SendResultEvent.PrimaryActionClicked) },
     ) {
+        P2CoreHeroValue(
+            label = "到账金额",
+            value = amount,
+            caption = uiState.summary,
+            accent = Color(0xFF1BBF93),
+        )
         P2CoreMetricGrid(
             items = uiState.metrics.take(4).map { it.label to it.value },
         )
-        P2CoreCard {
-            P2CoreCardHeader(title = "转账详情")
-            uiState.highlights.forEach { item ->
-                P2CoreListRow(
-                    title = item.title,
-                    subtitle = item.subtitle,
-                    trailing = item.trailing,
-                )
-            }
-            P2CoreNoteCard(title = "说明", text = uiState.note)
-        }
+        P2CoreAddressModule(
+            title = "交易哈希",
+            value = txHash,
+            supportingText = "可复制哈希到链上浏览器追踪确认进度",
+            status = uiState.badge,
+        )
     }
 }
 

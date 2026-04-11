@@ -40,6 +40,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -60,6 +61,13 @@ private val CoreText = Color(0xFF182345)
 private val CoreSubtleText = Color(0xFF6D789E)
 private val CorePrimary = Color(0xFF2F5BFF)
 private val CoreMint = Color(0xFF23C8A8)
+private val CoreHeroGradient = Brush.linearGradient(
+    colors = listOf(
+        Color(0xFF1F2E66),
+        Color(0xFF2F5BFF),
+        Color(0xFF3F7CFF),
+    ),
+)
 
 internal enum class CoreNavSection {
     Overview,
@@ -88,7 +96,9 @@ internal fun P2CorePageScaffold(
         color = Color.Transparent,
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(CorePageBackground),
         ) {
             TechParticleBackground(
                 motionProfile = MotionProfile.L1,
@@ -192,6 +202,160 @@ internal fun P2CoreCardHeader(
 }
 
 @Composable
+internal fun P2CoreHeroValue(
+    label: String,
+    value: String,
+    caption: String,
+    accent: Color = CoreMint,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFF7FAFF), RoundedCornerShape(16.dp))
+            .border(1.dp, Color(0xFFE2EAFA), RoundedCornerShape(16.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = CoreSubtleText)
+        Text(
+            value,
+            style = MaterialTheme.typography.headlineSmall,
+            color = CoreText,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(caption, style = MaterialTheme.typography.bodySmall, color = accent)
+    }
+}
+
+@Composable
+internal fun P2CoreTrendCard(
+    title: String,
+    value: String,
+    caption: String,
+    accent: Color = CorePrimary,
+) {
+    P2CoreCard {
+        P2CoreCardHeader(title = title)
+        Text(
+            value,
+            style = MaterialTheme.typography.headlineMedium,
+            color = CoreText,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(caption, style = MaterialTheme.typography.bodySmall, color = CoreSubtleText)
+        P2CoreChartPlaceholder(accent = accent)
+    }
+}
+
+@Composable
+internal fun P2CoreQrInfoCard(
+    title: String,
+    subtitle: String,
+    address: String? = null,
+) {
+    P2CoreCard {
+        P2CoreCardHeader(title = title, subtitle = subtitle)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            P2CoreQrPlaceholder()
+        }
+        if (!address.isNullOrBlank()) {
+            P2CoreField(
+                label = "标识",
+                value = address,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun P2CoreAddressModule(
+    title: String,
+    value: String,
+    supportingText: String,
+    status: String? = null,
+    primaryActionLabel: String? = null,
+    onPrimaryAction: (() -> Unit)? = null,
+    secondaryActionLabel: String? = null,
+    onSecondaryAction: (() -> Unit)? = null,
+) {
+    P2CoreCard {
+        P2CoreCardHeader(
+            title = title,
+            trailing = status,
+            trailingColor = Color(0xFFE6FFF6),
+        )
+        P2CoreField(
+            label = "地址 / 标识",
+            value = value,
+            supportingText = supportingText,
+        )
+        if (
+            !primaryActionLabel.isNullOrBlank() &&
+            onPrimaryAction != null &&
+            !secondaryActionLabel.isNullOrBlank() &&
+            onSecondaryAction != null
+        ) {
+            CoreActionRow(
+                primaryActionLabel = primaryActionLabel,
+                onPrimaryAction = onPrimaryAction,
+                secondaryActionLabel = secondaryActionLabel,
+                onSecondaryAction = onSecondaryAction,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun P2CoreActionValueRow(
+    label: String,
+    value: String,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+    valueColor: Color = CoreText,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFF7F9FF), RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0xFFE7ECF7), RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = CoreSubtleText)
+            Text(
+                value,
+                style = MaterialTheme.typography.bodyLarge,
+                color = valueColor,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (!actionLabel.isNullOrBlank() && onAction != null) {
+            OutlinedButton(
+                onClick = onAction,
+                shape = RoundedCornerShape(999.dp),
+                border = BorderStroke(1.dp, Color(0xFFD7E3FF)),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFFFFFFFF)),
+            ) {
+                Text(
+                    actionLabel,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = CorePrimary,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 internal fun P2CoreMetricGrid(
     items: List<Pair<String, String>>,
     accentIndexes: Set<Int> = emptySet(),
@@ -213,6 +377,64 @@ internal fun P2CoreMetricGrid(
                 }
                 if (row.size == 1) {
                     Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun P2CoreHeroValueCard(
+    label: String,
+    value: String,
+    supportingText: String,
+    modifier: Modifier = Modifier,
+    highlight: String? = null,
+    highlightColor: Color = Color(0x26FFFFFF),
+    stats: List<Pair<String, String>> = emptyList(),
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(CoreHeroGradient, RoundedCornerShape(24.dp))
+            .border(1.dp, Color(0x1FFFFFFF), RoundedCornerShape(24.dp))
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(label, style = MaterialTheme.typography.labelLarge, color = Color(0xFFAEC4FF))
+                Text(value, style = MaterialTheme.typography.headlineMedium, color = Color.White, fontWeight = FontWeight.Bold)
+                Text(supportingText, style = MaterialTheme.typography.bodyMedium, color = Color(0xFFE3EAFF))
+            }
+            if (!highlight.isNullOrBlank()) {
+                StatusChip(text = highlight, color = highlightColor)
+            }
+        }
+        if (stats.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                stats.take(2).forEach { (title, statValue) ->
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(Color(0x1FFFFFFF), RoundedCornerShape(16.dp))
+                            .border(1.dp, Color(0x14FFFFFF), RoundedCornerShape(16.dp))
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(title, style = MaterialTheme.typography.labelSmall, color = Color(0xFFAEC4FF))
+                        Text(statValue, style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }
@@ -384,6 +606,61 @@ internal fun P2CoreQrPlaceholder() {
 }
 
 @Composable
+internal fun P2CoreQrAddressCard(
+    title: String,
+    subtitle: String,
+    address: String,
+    modifier: Modifier = Modifier,
+    addressLabel: String = "二维码内容",
+    supportingText: String? = null,
+    status: String? = null,
+    statusColor: Color = Color(0xFFE9F2FF),
+    footer: @Composable ColumnScope.() -> Unit = {},
+) {
+    P2CoreCard(modifier = modifier, contentPadding = PaddingValues(18.dp)) {
+        P2CoreCardHeader(
+            title = title,
+            subtitle = subtitle,
+            trailing = status,
+            trailingColor = statusColor,
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFF8FBFF),
+                            Color(0xFFF2F6FF),
+                        ),
+                    ),
+                    shape = RoundedCornerShape(24.dp),
+                )
+                .border(1.dp, Color(0xFFE4ECFF), RoundedCornerShape(24.dp))
+                .padding(vertical = 22.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            P2CoreQrPlaceholder()
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF7F9FF), RoundedCornerShape(18.dp))
+                .border(1.dp, Color(0xFFE7ECF7), RoundedCornerShape(18.dp))
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(addressLabel, style = MaterialTheme.typography.labelMedium, color = CoreSubtleText)
+            Text(address, style = MaterialTheme.typography.bodyLarge, color = CoreText, fontWeight = FontWeight.SemiBold)
+            if (!supportingText.isNullOrBlank()) {
+                Text(supportingText, style = MaterialTheme.typography.bodySmall, color = CoreSubtleText)
+            }
+        }
+        footer()
+    }
+}
+
+@Composable
 internal fun P2CoreChartPlaceholder(
     accent: Color = CorePrimary,
 ) {
@@ -406,6 +683,34 @@ internal fun P2CoreChartPlaceholder(
                     cap = StrokeCap.Round,
                 )
             }
+        }
+    }
+}
+
+@Composable
+internal fun P2CoreChartInfoBlock(
+    title: String,
+    subtitle: String,
+    chips: List<String>,
+    infoItems: List<Pair<String, String>>,
+    modifier: Modifier = Modifier,
+    highlight: String? = null,
+    highlightColor: Color = Color(0xFFEAF6FF),
+    accent: Color = CorePrimary,
+) {
+    P2CoreCard(modifier = modifier, contentPadding = PaddingValues(18.dp)) {
+        P2CoreCardHeader(
+            title = title,
+            subtitle = subtitle,
+            trailing = highlight,
+            trailingColor = highlightColor,
+        )
+        P2CoreChartPlaceholder(accent = accent)
+        if (chips.isNotEmpty()) {
+            P2CoreChipRow(items = chips)
+        }
+        if (infoItems.isNotEmpty()) {
+            P2CoreMetricGrid(items = infoItems)
         }
     }
 }
@@ -473,6 +778,7 @@ internal fun CoreActionRow(
                 .height(52.dp),
             shape = RoundedCornerShape(16.dp),
             border = BorderStroke(1.dp, Color(0xFFD7E3FF)),
+            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFFF7FAFF)),
         ) {
             Text(secondaryActionLabel, color = Color(0xFF506188), style = MaterialTheme.typography.titleSmall)
         }
@@ -497,7 +803,7 @@ private fun StatusChip(
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            color = if (color == Color(0xFFE9F2FF)) Color(0xFF4A68D8) else Color.White,
+            color = if (color.luminance() > 0.72f) Color(0xFF3752B8) else Color.White,
         )
     }
 }
