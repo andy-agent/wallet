@@ -65,7 +65,7 @@ fun WalletHomeScreen(
         P01Header(
             eyebrow = "MULTI-CHAIN WALLET",
             title = "钱包总览",
-            subtitle = "P0 里补齐链维度、资产维度、VPN 场景支付维度。",
+            subtitle = uiState.unavailableMessage ?: uiState.errorMessage ?: uiState.alertBanner,
         )
 
         P01Card {
@@ -79,9 +79,15 @@ fun WalletHomeScreen(
                     P01MetricCell("资产视图", uiState.totalBalanceText),
                     P01MetricCell("资产数量", uiState.assets.size.toString()),
                     P01MetricCell("支付网络", uiState.chains.size.toString()),
-                    P01MetricCell("当前筛选", uiState.chains.firstOrNull()?.label ?: "未配置"),
+                    P01MetricCell(
+                        "当前筛选",
+                        uiState.chains.firstOrNull { it.chainId == uiState.selectedChainId }?.label
+                            ?: if (uiState.selectedChainId == "all") "全部链" else "未配置",
+                    ),
                 ),
             )
+            uiState.unavailableMessage?.let { P01CardCopy(it) }
+            uiState.errorMessage?.let { P01CardCopy(it) }
             uiState.emptyMessage?.let { P01CardCopy(it) }
         }
 
@@ -95,12 +101,12 @@ fun WalletHomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 listOf("全部链" to "all") + uiState.chains.take(4).map { it.label to it.chainId }
-            .forEach { (label, chainId) ->
+                    .forEach { (label, chainId) ->
                     P01Tab(
                         text = label,
-                        selected = chainId == "all" || chainId == uiState.selectedChainId,
+                        selected = chainId == uiState.selectedChainId,
                         onClick = {
-                            if (chainId != "all") onSelectChain(chainId)
+                            onSelectChain(chainId)
                         },
                     )
                 }
@@ -112,23 +118,25 @@ fun WalletHomeScreen(
                 title = "资产列表",
                 trailing = { P01Chip(text = "按余额排序") },
             )
-            P01List {
-                uiState.assets.ifEmpty {
-                    listOf(AssetHolding("--", "暂无资产缓存", "--", "--", "等待真实资产或订单记录", true))
-                }.forEach { asset ->
-                    P01ListRow(
-                        title = asset.symbol,
-                        copy = asset.chainLabel,
-                        value = asset.balanceText,
-                        onClick = {
-                            onBottomNav(
-                                CryptoVpnRouteSpec.assetDetailRoute(
-                                    asset.symbol,
-                                    inferChain(asset.chainLabel),
-                                ),
-                            )
-                        },
-                    )
+            if (uiState.assets.isEmpty()) {
+                P01CardCopy(uiState.emptyMessage ?: uiState.unavailableMessage ?: "当前没有可展示的真实资产映射。")
+            } else {
+                P01List {
+                    uiState.assets.forEach { asset ->
+                        P01ListRow(
+                            title = asset.symbol,
+                            copy = asset.chainLabel,
+                            value = asset.balanceText,
+                            onClick = {
+                                onBottomNav(
+                                    CryptoVpnRouteSpec.assetDetailRoute(
+                                        asset.symbol,
+                                        inferChain(asset.chainLabel),
+                                    ),
+                                )
+                            },
+                        )
+                    }
                 }
             }
         }

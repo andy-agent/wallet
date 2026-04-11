@@ -123,7 +123,7 @@ fun EmailLoginScreen(
             P01List {
                 P01ListRow(
                     title = "VPN订阅与节点偏好",
-                    copy = "自动恢复最近连接的区域与智能路由策略。",
+                    copy = "同步当前账号可见的订阅状态、本地节点缓存与最近连接记录。",
                 )
                 P01ListRow(
                     title = "多链资产与支付能力",

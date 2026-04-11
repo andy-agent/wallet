@@ -133,7 +133,7 @@ fun VpnHomeScreen(
         P01Header(
             eyebrow = "SECURE TUNNEL",
             title = "VPN核心",
-            subtitle = "将节点健康、实时延迟、套餐状态与支付续费融合到一屏。",
+            subtitle = uiState.unavailableMessage ?: uiState.errorMessage ?: "将真实节点缓存、订阅状态与续费入口收敛到一屏。",
             chips = listOf("• ${connectionChipLabel(uiState.connectionStatus)}"),
         )
 
@@ -166,6 +166,8 @@ fun VpnHomeScreen(
                     P01MetricCell("节点负载", uiState.selectedRegion.load),
                 ),
             )
+            uiState.unavailableMessage?.let { P01CardCopy(it) }
+            uiState.errorMessage?.let { P01CardCopy(it) }
             uiState.emptyMessage?.let { P01CardCopy(it) }
             P01ButtonRow(
                 primaryLabel = "断开/重新连接",
@@ -185,8 +187,8 @@ fun VpnHomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 VpnQuickCell("${uiState.importedConfigCount} 配置", onClick = { onBottomNav(CryptoVpnRouteSpec.orderList.pattern) }, modifier = Modifier.weight(1f))
-                VpnQuickCell("${uiState.speedNodes.size} 节点", onClick = { onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern) }, modifier = Modifier.weight(1f))
-                VpnQuickCell("${uiState.subscription.expiresInDays}天", onClick = onPlans, modifier = Modifier.weight(1f))
+                VpnQuickCell("${uiState.availableRegionCount} 节点", onClick = { onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern) }, modifier = Modifier.weight(1f))
+                VpnQuickCell(if (uiState.subscription.expiresInDays > 0) "${uiState.subscription.expiresInDays}天" else "待续费", onClick = onPlans, modifier = Modifier.weight(1f))
                 VpnQuickCell("查看订单", onClick = { onBottomNav(CryptoVpnRouteSpec.orderList.pattern) }, modifier = Modifier.weight(1f))
             }
             P01CardCopy(uiState.watchSignals.firstOrNull()?.reason ?: "当前暂无链路提醒。")
@@ -254,7 +256,7 @@ private fun connectionChipLabel(status: VpnConnectionStatus): String = when (sta
 private fun connectionPrimaryValue(status: VpnHomeUiState): String = when (status.connectionStatus) {
     VpnConnectionStatus.CONNECTED -> status.selectedRegion.latencyMs?.let { "${it}ms" } ?: "已连接"
     VpnConnectionStatus.CONNECTING -> "连接中"
-    VpnConnectionStatus.DISCONNECTED -> "0Mbps"
+    VpnConnectionStatus.DISCONNECTED -> "未连接"
 }
 
 private fun regionLatencyLabel(region: RegionSpeed): String =

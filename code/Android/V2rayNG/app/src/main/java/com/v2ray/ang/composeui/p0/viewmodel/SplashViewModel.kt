@@ -41,57 +41,72 @@ class SplashViewModel(
 
     private suspend fun runBootSequence() {
         _uiState.value = SplashUiState()
-
-        val snapshotDeferred = viewModelScope.async { repository.getSplashState() }
-        var snapshot = SplashUiState()
         val minVisibleMs = 2200L
+        runCatching {
+            val snapshotDeferred = viewModelScope.async { repository.getSplashState() }
+            var snapshot = SplashUiState()
 
-        val elapsed = measureTimeMillis {
-            updateStage(
-                progress = 0.12f,
-                headline = "连接钱包与网络",
-                detail = "初始化加密模块、节点探测与资产索引…",
-            )
-            delay(260)
+            val elapsed = measureTimeMillis {
+                updateStage(
+                    progress = 0.12f,
+                    headline = "校验本地会话与缓存",
+                    detail = "读取账号、订单缓存和本地节点索引…",
+                )
+                delay(260)
 
-            updateStage(
-                progress = 0.34f,
-                headline = "装载本地安全环境",
-                detail = "读取加密存储、配置项与会话凭据…",
-            )
-            delay(260)
+                updateStage(
+                    progress = 0.34f,
+                    headline = "装载本地运行环境",
+                    detail = "同步登录态、配置项与路由入口…",
+                )
+                delay(260)
 
-            snapshot = snapshotDeferred.await()
+                snapshot = snapshotDeferred.await()
+                _uiState.value = snapshot.copy(
+                    progress = 0.58f,
+                    progressHeadline = "解析缓存状态",
+                    progressDetail = snapshot.progressDetail.ifBlank { "检查账号、订单和本地节点缓存…" },
+                    authResolved = false,
+                    readyToNavigate = false,
+                    errorMessage = null,
+                )
+                delay(280)
+
+                _uiState.value = snapshot.copy(
+                    progress = 0.82f,
+                    progressHeadline = "确认首页入口",
+                    progressDetail = snapshot.buildStatus.ifBlank { "准备进入首页…" },
+                    authResolved = false,
+                    readyToNavigate = false,
+                    errorMessage = null,
+                )
+                delay(260)
+            }
+
+            if (elapsed < minVisibleMs) {
+                delay(minVisibleMs - elapsed)
+            }
+
             _uiState.value = snapshot.copy(
-                progress = 0.58f,
-                progressHeadline = "同步账户与缓存",
-                progressDetail = "解析钱包账户、订单索引与节点缓存…",
-                authResolved = false,
-                readyToNavigate = false,
+                progress = 1f,
+                progressHeadline = "准备完成",
+                progressDetail = "启动检查完成，正在进入主界面…",
+                authResolved = true,
+                readyToNavigate = true,
+                errorMessage = null,
             )
-            delay(280)
-
-            _uiState.value = snapshot.copy(
-                progress = 0.82f,
-                progressHeadline = "校验安全状态",
-                progressDetail = snapshot.buildStatus.ifBlank { "准备主界面与安全通道…" },
-                authResolved = false,
+        }.onFailure { throwable ->
+            _uiState.value = SplashUiState(
+                checkingSecureBoot = false,
+                progress = 0f,
+                progressHeadline = "启动检查失败",
+                progressDetail = "本地状态读取失败，请重试启动检查。",
                 readyToNavigate = false,
+                authResolved = false,
+                isLoading = false,
+                errorMessage = throwable.message ?: "启动检查失败",
             )
-            delay(260)
         }
-
-        if (elapsed < minVisibleMs) {
-            delay(minVisibleMs - elapsed)
-        }
-
-        _uiState.value = snapshot.copy(
-            progress = 1f,
-            progressHeadline = "准备完成",
-            progressDetail = "安全通道与钱包环境已就绪，正在进入主界面…",
-            authResolved = true,
-            readyToNavigate = true,
-        )
     }
 
     private fun updateStage(
