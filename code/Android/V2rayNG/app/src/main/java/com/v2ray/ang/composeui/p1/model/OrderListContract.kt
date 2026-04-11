@@ -8,35 +8,21 @@ import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.common.model.FeatureMetric
 
 data class OrderListUiState(
-        val title: String = "订单中心",
-        val subtitle: String = "ORDER LIST",
-        val badge: String = "P1 · FLOW",
-        val summary: String = "订单列表页聚合当前账号下的套餐订单、续费记录与历史支付。",
-        val primaryActionLabel: String = "查看最新订单详情",
-        val secondaryActionLabel: String? = "返回首页",
-        val heroAccent: String = "order_list",
-        val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "订单总数", value = "12"),
-    FeatureMetric(label = "生效中", value = "3"),
-    FeatureMetric(label = "待续费", value = "1"),
-),
-        val fields: List<FeatureField> = listOf(
-    FeatureField(key = "search", label = "搜索订单", value = "ORD-2025", supportingText = "可按订单号或计划名过滤"),
-),
-        val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "订单列表页聚合当前账号下的套餐订单、续费记录与历史支付。", trailing = "order_list", badge = "P1"),
-    FeatureListItem(title = "导航参数", subtitle = "当前页面无必填导航参数", trailing = "0 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "搜索订单", trailing = "1 项", badge = "Form"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
-),
-        val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "订单中心 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 OrderListPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "当前页面无必填参数，但已纳入统一 RouteSpec 台账。"),
-),
-        val note: String = "订单中心 已按 P1 页面补齐，可继续替换为真实业务逻辑与接口数据。",
-    )
+    val title: String = "订单中心",
+    val subtitle: String = "ORDER LIST",
+    val badge: String = "P1 · REAL",
+    val summary: String = "列表页展示当前账号的真实订单缓存，点进详情时会刷新真实订单状态。",
+    val primaryActionLabel: String = "打开最新订单",
+    val secondaryActionLabel: String? = "返回首页",
+    val heroAccent: String = "order_list",
+    val stateInfo: P1StateInfo = P1StateInfo(),
+    val metrics: List<FeatureMetric> = emptyList(),
+    val searchField: FeatureField = FeatureField("search", "搜索订单", ""),
+    val highlights: List<FeatureListItem> = emptyList(),
+    val orders: List<P1OrderSummary> = emptyList(),
+    val checklist: List<FeatureBullet> = emptyList(),
+    val note: String = "",
+)
 
     sealed interface OrderListEvent {
         data object Refresh : OrderListEvent
@@ -50,4 +36,37 @@ data class OrderListUiState(
 
     val orderListNavigation: RouteDefinition = CryptoVpnRouteSpec.orderList
 
-    fun orderListPreviewState(): OrderListUiState = OrderListUiState()
+    fun orderListPreviewState(): OrderListUiState = OrderListUiState(
+        stateInfo = P1StateInfo(P1ScreenState.Content),
+        metrics = listOf(
+            FeatureMetric("订单总数", "2"),
+            FeatureMetric("进行中", "1"),
+            FeatureMetric("已完成", "1"),
+        ),
+        orders = listOf(
+            P1OrderSummary(
+                orderNo = "ORD-PREVIEW-0002",
+                planCode = "basic_1m",
+                planName = "月卡",
+                status = "AWAITING_PAYMENT",
+                statusText = "待支付",
+                amountText = "10.000001 USDT",
+                assetCode = "USDT",
+                networkCode = "SOLANA",
+                createdAt = "2026-04-11 10:00",
+                expiresAt = "2026-04-11 12:00",
+            ),
+            P1OrderSummary(
+                orderNo = "ORD-PREVIEW-0001",
+                planCode = "basic_12m",
+                planName = "年卡",
+                status = "COMPLETED",
+                statusText = "已完成",
+                amountText = "58.000004 USDT",
+                assetCode = "USDT",
+                networkCode = "SOLANA",
+                createdAt = "2026-04-10 10:00",
+                expiresAt = "2027-04-10 10:00",
+            ),
+        ),
+    )

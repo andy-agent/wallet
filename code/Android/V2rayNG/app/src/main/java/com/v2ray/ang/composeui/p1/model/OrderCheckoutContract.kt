@@ -4,42 +4,26 @@ import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.navigation.RouteDefinition
 import com.v2ray.ang.composeui.common.model.FeatureBullet
 import com.v2ray.ang.composeui.common.model.FeatureField
-import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.common.model.FeatureMetric
 
-data class OrderCheckoutRouteArgs(val planId: String = "annual_pro")
+data class OrderCheckoutRouteArgs(val planId: String = "")
 
 data class OrderCheckoutUiState(
-        val title: String = "订单收银台",
-        val subtitle: String = "ORDER CHECKOUT",
-        val badge: String = "P1 · FLOW",
-        val summary: String = "订单确认与支付前置页，承接套餐、支付方式与开票信息确认。",
-        val primaryActionLabel: String = "前往钱包支付确认",
-        val secondaryActionLabel: String? = "切换支付方式",
-        val heroAccent: String = "order_checkout",
-        val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "套餐", value = "年费 Pro"),
-    FeatureMetric(label = "金额", value = "149 USDT"),
-    FeatureMetric(label = "网络", value = "TRON"),
-),
-        val fields: List<FeatureField> = listOf(
-    FeatureField(key = "invoice", label = "账单邮箱", value = "billing@cryptovpn.app", supportingText = "用于发送支付凭证"),
-    FeatureField(key = "remark", label = "订单备注", value = "", supportingText = "给运营或风控的附加说明"),
-),
-        val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "订单确认与支付前置页，承接套餐、支付方式与开票信息确认。", trailing = "order_checkout", badge = "P1"),
-    FeatureListItem(title = "导航参数", subtitle = "planId", trailing = "1 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "账单邮箱、订单备注", trailing = "2 项", badge = "Form"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
-),
-        val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "订单收银台 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 OrderCheckoutPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "createRoute builder 与 NavGraph 参数解析已补齐。"),
-),
-        val note: String = "订单收银台 已按 P1 页面补齐，可继续替换为真实业务逻辑与接口数据。",
-    )
+    val title: String = "订单收银台",
+    val subtitle: String = "ORDER CHECKOUT",
+    val badge: String = "P1 · REAL",
+    val summary: String = "结算页直接绑定真实订单与 paymentTarget，不再显示假地址和假二维码。",
+    val primaryActionLabel: String = "查看支付确认",
+    val secondaryActionLabel: String? = "返回套餐页",
+    val heroAccent: String = "order_checkout",
+    val stateInfo: P1StateInfo = P1StateInfo(),
+    val order: P1OrderSummary? = null,
+    val metrics: List<FeatureMetric> = emptyList(),
+    val fields: List<FeatureField> = emptyList(),
+    val detailLines: List<P1DetailLine> = emptyList(),
+    val checklist: List<FeatureBullet> = emptyList(),
+    val note: String = "",
+)
 
     sealed interface OrderCheckoutEvent {
         data object Refresh : OrderCheckoutEvent
@@ -53,4 +37,36 @@ data class OrderCheckoutUiState(
 
     val orderCheckoutNavigation: RouteDefinition = CryptoVpnRouteSpec.orderCheckout
 
-    fun orderCheckoutPreviewState(): OrderCheckoutUiState = OrderCheckoutUiState()
+    fun orderCheckoutPreviewState(): OrderCheckoutUiState = OrderCheckoutUiState(
+        stateInfo = P1StateInfo(P1ScreenState.Content),
+        order = P1OrderSummary(
+            orderNo = "ORD-PREVIEW-0001",
+            planCode = "basic_1m",
+            planName = "月卡",
+            status = "AWAITING_PAYMENT",
+            statusText = "待支付",
+            amountText = "10.000001 USDT",
+            assetCode = "USDT",
+            networkCode = "SOLANA",
+            createdAt = "2026-04-11 10:00",
+            expiresAt = "2026-04-11 12:00",
+            collectionAddress = "EVYe1J...",
+            qrText = "solana:EVYe1J...?amount=10.000001",
+            baseAmount = "10.000000",
+            uniqueAmountDelta = "0.000001",
+            payableAmount = "10.000001",
+        ),
+        metrics = listOf(
+            FeatureMetric("套餐", "月卡"),
+            FeatureMetric("支付金额", "10.000001 USDT"),
+            FeatureMetric("支付网络", "SOLANA"),
+        ),
+        fields = listOf(
+            FeatureField("invoice", "账单邮箱", "preview@example.com"),
+        ),
+        detailLines = listOf(
+            P1DetailLine("收款地址", "EVYe1J..."),
+            P1DetailLine("基础金额", "10.000000"),
+            P1DetailLine("尾差金额", "0.000001"),
+        ),
+    )

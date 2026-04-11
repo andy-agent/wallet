@@ -78,15 +78,15 @@ fun OrderCheckoutScreen(
             eyebrow = "CHECKOUT",
             title = "订单收银台",
             subtitle = "确认套餐、支付网络与到账说明。",
-            chips = listOf("• 10分钟有效"),
+            chips = listOf("• ${checkoutData.expiresAtLabel}"),
             backLabel = "<",
             onBack = { onBottomNav(CryptoVpnRouteSpec.plans.pattern) },
             trailing = { P1SecureHub(label = checkoutHubLabel(selectedNetwork)) },
         )
 
-        P01Card {
+            P01Card {
             P01CardHeader(title = "订单信息")
-            P01CardCopy("选择链上资产完成支付，系统会自动激活对应订阅。")
+            P01CardCopy("当前页直接展示真实订单与真实 payment target，不再使用示例地址。")
             P01List {
                 orderRows.forEach { (title, value) ->
                     P1FeedbackRow(
@@ -120,7 +120,7 @@ fun OrderCheckoutScreen(
             selected = true,
             accentColor = networkAccent,
         ) {
-            P01CardHeader(title = "扫码支付")
+            P01CardHeader(title = "扫码支付", trailing = { P01Chip(text = checkoutData.orderNo) })
             P01CardCopy("使用任意支持 $selectedNetwork 的钱包完成付款，或复制地址转账。")
             androidx.compose.foundation.layout.Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -156,26 +156,25 @@ fun OrderCheckoutScreen(
 }
 
 private data class CheckoutUiData(
+    val orderNo: String,
     val planTitle: String,
     val amountText: String,
+    val expiresAtLabel: String,
     val networks: List<String>,
     val addresses: Map<String, String>,
 )
 
 private fun rememberCheckoutData(uiState: OrderCheckoutUiState): CheckoutUiData {
-    val metricMap = uiState.metrics.associate { it.label to it.value }
-    val contentHighlights = uiState.highlights.p1ContentItems()
-    val planTitle = metricMap["套餐"] ?: contentHighlights.firstOrNull()?.title ?: "年费 Pro"
-    val amountText = metricMap["金额"] ?: contentHighlights.firstOrNull()?.trailing?.takeIf { it.isNotBlank() } ?: "149.00 USDT"
+    val order = uiState.order
+    val address = uiState.detailLines.firstOrNull { it.label == "收款地址" }?.value
+        ?: order?.collectionAddress.orEmpty()
     return CheckoutUiData(
-        planTitle = planTitle,
-        amountText = amountText,
-        networks = listOf("USDT-TRON", "USDT-Solana", "SOL"),
-        addresses = mapOf(
-            "USDT-TRON" to "TXvM...eR92",
-            "USDT-Solana" to "7H8n...A6Qp",
-            "SOL" to "4s9K...Lm12",
-        ),
+        orderNo = order?.orderNo ?: "--",
+        planTitle = order?.planName ?: "--",
+        amountText = order?.amountText ?: "--",
+        expiresAtLabel = order?.expiresAt ?: "--",
+        networks = listOfNotNull(order?.networkCode).ifEmpty { listOf("--") },
+        addresses = mapOf((order?.networkCode ?: "--") to address),
     )
 }
 

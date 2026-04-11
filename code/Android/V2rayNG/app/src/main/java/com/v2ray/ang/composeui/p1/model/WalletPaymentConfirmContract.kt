@@ -3,40 +3,28 @@ package com.v2ray.ang.composeui.p1.model
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.navigation.RouteDefinition
 import com.v2ray.ang.composeui.common.model.FeatureBullet
-import com.v2ray.ang.composeui.common.model.FeatureField
 import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.common.model.FeatureMetric
 
-data class WalletPaymentConfirmRouteArgs(val orderId: String = "ORD-2025-0001")
+data class WalletPaymentConfirmRouteArgs(val orderId: String = "")
 
 data class WalletPaymentConfirmUiState(
-        val title: String = "钱包支付确认",
-        val subtitle: String = "WALLET PAYMENT CONFIRM",
-        val badge: String = "P1 · FLOW",
-        val summary: String = "针对 VPN 购买流的独立确认页，校验订单、金额与风险提示后再发起支付。",
-        val primaryActionLabel: String = "确认支付并开通",
-        val secondaryActionLabel: String? = "返回订单收银台",
-        val heroAccent: String = "wallet_payment_confirm",
-        val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "订单号", value = "ORD-2025-0001"),
-    FeatureMetric(label = "支付币种", value = "USDT"),
-    FeatureMetric(label = "网络手续费", value = "1.69 USDT"),
-),
-        val fields: List<FeatureField> = emptyList(),
-        val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "针对 VPN 购买流的独立确认页，校验订单、金额与风险提示后再发起支付。", trailing = "wallet_payment_confirm", badge = "P1"),
-    FeatureListItem(title = "导航参数", subtitle = "orderId", trailing = "1 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "当前页面以信息展示与确认动作为主", trailing = "0 项", badge = "Info"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
-),
-        val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "钱包支付确认 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 WalletPaymentConfirmPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "createRoute builder 与 NavGraph 参数解析已补齐。"),
-),
-        val note: String = "钱包支付确认 已按 P1 页面补齐，可继续替换为真实业务逻辑与接口数据。",
-    )
+    val title: String = "钱包支付确认",
+    val subtitle: String = "WALLET PAYMENT CONFIRM",
+    val badge: String = "P1 · REAL",
+    val summary: String = "支付确认页只展示真实订单、真实金额和真实支付状态，不再假装自动开通成功。",
+    val primaryActionLabel: String = "查看支付状态",
+    val secondaryActionLabel: String? = "返回收银台",
+    val heroAccent: String = "wallet_payment_confirm",
+    val stateInfo: P1StateInfo = P1StateInfo(),
+    val order: P1OrderSummary? = null,
+    val metrics: List<FeatureMetric> = emptyList(),
+    val highlights: List<FeatureListItem> = emptyList(),
+    val detailLines: List<P1DetailLine> = emptyList(),
+    val riskLines: List<P1DetailLine> = emptyList(),
+    val checklist: List<FeatureBullet> = emptyList(),
+    val note: String = "",
+)
 
     sealed interface WalletPaymentConfirmEvent {
         data object Refresh : WalletPaymentConfirmEvent
@@ -50,4 +38,36 @@ data class WalletPaymentConfirmUiState(
 
     val walletPaymentConfirmNavigation: RouteDefinition = CryptoVpnRouteSpec.walletPaymentConfirm
 
-    fun walletPaymentConfirmPreviewState(): WalletPaymentConfirmUiState = WalletPaymentConfirmUiState()
+    fun walletPaymentConfirmPreviewState(): WalletPaymentConfirmUiState = WalletPaymentConfirmUiState(
+        stateInfo = P1StateInfo(P1ScreenState.Content),
+        order = P1OrderSummary(
+            orderNo = "ORD-PREVIEW-0001",
+            planCode = "basic_1m",
+            planName = "月卡",
+            status = "AWAITING_PAYMENT",
+            statusText = "待支付",
+            amountText = "10.000001 USDT",
+            assetCode = "USDT",
+            networkCode = "SOLANA",
+            createdAt = "2026-04-11 10:00",
+            expiresAt = "2026-04-11 12:00",
+            collectionAddress = "EVYe1J...",
+            qrText = "solana:EVYe1J...?amount=10.000001",
+            baseAmount = "10.000000",
+            uniqueAmountDelta = "0.000001",
+            payableAmount = "10.000001",
+        ),
+        metrics = listOf(
+            FeatureMetric("订单状态", "待支付"),
+            FeatureMetric("支付网络", "SOLANA"),
+            FeatureMetric("支付币种", "USDT"),
+        ),
+        detailLines = listOf(
+            P1DetailLine("订单号", "ORD-PREVIEW-0001"),
+            P1DetailLine("应付金额", "10.000001 USDT"),
+            P1DetailLine("收款地址", "EVYe1J..."),
+        ),
+        riskLines = listOf(
+            P1DetailLine("自动扫链", "无需手填 txHash，系统会按共享地址 + 尾差识别订单。"),
+        ),
+    )
