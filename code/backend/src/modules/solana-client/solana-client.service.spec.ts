@@ -127,6 +127,20 @@ describe('SolanaClientService', () => {
                 amountRaw: '58000123',
                 matchedAccounts: ['TokenAccount111'],
               },
+              {
+                signature: 'sig-older',
+                slot: 980,
+                blockTime: 1775896900,
+                confirmationStatus: 'finalized',
+                collectionAddress:
+                  'SharedAddress111111111111111111111111111111',
+                assetCode: 'USDT',
+                mintAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+                decimals: 6,
+                amount: '57.999999',
+                amountRaw: '57999999',
+                matchedAccounts: ['TokenAccount112'],
+              },
             ],
           },
         }),
@@ -167,6 +181,7 @@ describe('SolanaClientService', () => {
         assetCode: 'USDT',
         mintAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
         beforeSignature: 'sig-previous',
+        minSlotExclusive: 123,
         limit: 25,
       }),
       expect.any(Object),
@@ -177,12 +192,14 @@ describe('SolanaClientService', () => {
       collectionAddress: 'SharedAddress111111111111111111111111111111',
       assetCode: 'USDT',
       mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
-      nextCursor: {
-        beforeSignature: 'sig-oldest',
-        minSlotExclusive: 987,
-      },
-      events: [
-        {
+    });
+    expect(result.nextCursor).toEqual({
+      beforeSignature: 'sig-oldest',
+      minSlotExclusive: 987,
+    });
+    expect(result.events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
           signature: 'sig-newest',
           eventIndex: 0,
           recipientOwnerAddress:
@@ -192,8 +209,84 @@ describe('SolanaClientService', () => {
           amount: '58.000123',
           amountRaw: '58000123',
           confirmationStatus: 'confirmed',
-        },
-      ],
+        }),
+        expect.objectContaining({
+          signature: 'sig-older',
+          eventIndex: 1,
+          recipientOwnerAddress:
+            'SharedAddress111111111111111111111111111111',
+          recipientTokenAccount: 'TokenAccount112',
+          assetCode: 'USDT',
+          amount: '57.999999',
+          amountRaw: '57999999',
+          confirmationStatus: 'finalized',
+        }),
+      ]),
+    );
+  });
+
+  it('prefers nextMinSlotExclusive from chain-side payload when present', async () => {
+    const httpService = {
+      post: jest.fn().mockReturnValue(
+        of({
+          data: {
+            networkCode: 'solana-mainnet',
+            collectionAddress:
+              'SharedAddress111111111111111111111111111111',
+            assetCode: 'USDT',
+            mintAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+            nextBeforeSignature: 'sig-oldest',
+            nextMinSlotExclusive: 2000,
+            items: [
+              {
+                signature: 'sig-newest',
+                slot: 1990,
+                blockTime: 1775897000,
+                confirmationStatus: 'confirmed',
+                collectionAddress:
+                  'SharedAddress111111111111111111111111111111',
+                assetCode: 'USDT',
+                mintAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+                decimals: 6,
+                amount: '58.000123',
+                amountRaw: '58000123',
+                matchedAccounts: ['TokenAccount111'],
+              },
+            ],
+          },
+        }),
+      ),
+      get: jest.fn(),
+    };
+
+    const config = {
+      isEnabled: () => true,
+      getTimeoutMs: () => 1000,
+      getApiKey: () => 'test-token',
+      useDevnet: () => false,
+      getBaseUrl: () => 'https://sol.residential-agent.com',
+      getMaxRetries: () => 3,
+    };
+
+    const service = new SolanaClientService(
+      httpService as never,
+      config as never,
+    );
+
+    const result = await service.scanIncomingTransfers({
+      collectionAddress: 'SharedAddress111111111111111111111111111111',
+      assetCode: 'USDT',
+      mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+      cursor: {
+        beforeSignature: 'sig-previous',
+        minSlotExclusive: 123,
+      },
+      limit: 25,
+    });
+
+    expect(result.nextCursor).toEqual({
+      beforeSignature: 'sig-oldest',
+      minSlotExclusive: 2000,
     });
   });
 });

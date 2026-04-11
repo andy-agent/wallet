@@ -88,6 +88,7 @@ interface ScanIncomingApiResponse {
   assetCode?: string;
   mintAddress?: string | null;
   nextBeforeSignature?: string | null;
+  nextMinSlotExclusive?: number | null;
   items?: ScanIncomingApiItem[];
 }
 
@@ -334,6 +335,7 @@ export class SolanaClientService {
             assetCode: request.assetCode,
             mintAddress: request.mint ?? null,
             beforeSignature: request.cursor?.beforeSignature ?? null,
+            minSlotExclusive: request.cursor?.minSlotExclusive ?? null,
             limit: request.limit ?? 50,
           },
           {
@@ -574,7 +576,15 @@ export class SolanaClientService {
         matchedAccounts: item.matchedAccounts ?? [],
       },
     }));
-    const oldestEvent = events[events.length - 1];
+    const maxObservedSlot = events.reduce<number | null>((maxSlot, event) => {
+      if (event.slot === null) {
+        return maxSlot;
+      }
+      if (maxSlot === null) {
+        return event.slot;
+      }
+      return event.slot > maxSlot ? event.slot : maxSlot;
+    }, null);
 
     return {
       networkCode: payload.networkCode ?? fallbackNetworkCode,
@@ -586,7 +596,10 @@ export class SolanaClientService {
       nextCursor: {
         beforeSignature: payload.nextBeforeSignature ?? null,
         minSlotExclusive:
-          oldestEvent?.slot ?? request.cursor?.minSlotExclusive ?? null,
+          payload.nextMinSlotExclusive ??
+          maxObservedSlot ??
+          request.cursor?.minSlotExclusive ??
+          null,
       },
       scannedAt: new Date().toISOString(),
     };
