@@ -89,7 +89,9 @@ const SUBSCRIPTION_COLUMNS = `
   expire_at,
   days_remaining,
   is_unlimited_traffic,
-  max_active_sessions
+  max_active_sessions,
+  marzban_username,
+  subscription_url
 `;
 const ONCHAIN_RECEIPT_COLUMNS = `
   receipt_id,
@@ -163,6 +165,8 @@ interface RuntimeStateSubscriptionRow {
   days_remaining: number | null;
   is_unlimited_traffic: boolean;
   max_active_sessions: number;
+  marzban_username: string | null;
+  subscription_url: string | null;
 }
 
 interface RuntimeStateOnchainReceiptRow {
@@ -962,7 +966,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           expire_at,
           days_remaining,
           is_unlimited_traffic,
-          max_active_sessions
+          max_active_sessions,
+          marzban_username,
+          subscription_url
         )
         VALUES (
           $1,
@@ -976,7 +982,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           $9,
           $10,
           $11,
-          $12
+          $12,
+          $13,
+          $14
         )
         ON CONFLICT (account_id) DO UPDATE
         SET
@@ -989,7 +997,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           expire_at = EXCLUDED.expire_at,
           days_remaining = EXCLUDED.days_remaining,
           is_unlimited_traffic = EXCLUDED.is_unlimited_traffic,
-          max_active_sessions = EXCLUDED.max_active_sessions
+          max_active_sessions = EXCLUDED.max_active_sessions,
+          marzban_username = EXCLUDED.marzban_username,
+          subscription_url = EXCLUDED.subscription_url
         RETURNING ${SUBSCRIPTION_COLUMNS}
       `,
       [
@@ -1005,6 +1015,8 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
         subscription.daysRemaining,
         subscription.isUnlimitedTraffic,
         subscription.maxActiveSessions,
+        subscription.marzbanUsername,
+        subscription.subscriptionUrl,
       ],
     );
 
@@ -1259,8 +1271,18 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
         expire_at timestamptz NULL,
         days_remaining integer NULL,
         is_unlimited_traffic boolean NOT NULL,
-        max_active_sessions integer NOT NULL
+        max_active_sessions integer NOT NULL,
+        marzban_username text NULL,
+        subscription_url text NULL
       )
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${SUBSCRIPTIONS_TABLE}
+      ADD COLUMN IF NOT EXISTS marzban_username text NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${SUBSCRIPTIONS_TABLE}
+      ADD COLUMN IF NOT EXISTS subscription_url text NULL
     `);
     await this.pool.query(`
       CREATE INDEX IF NOT EXISTS idx_runtime_state_subscriptions_status
@@ -1506,6 +1528,8 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       daysRemaining: row.days_remaining,
       isUnlimitedTraffic: row.is_unlimited_traffic,
       maxActiveSessions: row.max_active_sessions,
+      marzbanUsername: row.marzban_username,
+      subscriptionUrl: row.subscription_url,
     };
   }
 

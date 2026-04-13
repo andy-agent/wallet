@@ -126,7 +126,26 @@
   - `api.residential-agent.com`
   - backend / nginx / 对外 API 接入
 - 服务器二 `38.58.59.142`
-  - PostgreSQL / Redis 物理落点
+  - Marzban 控制面服务器
+  - 本机运行 `Marzban + Nginx + PostgreSQL + Redis`
+  - `vpn.residential-agent.com` 已在 2026-04-13 重新指向该机
+- 服务器四 `38.246.249.106`
+  - 首台 `Marzban-node`
+  - 已接入 `38.58.59.142` 控制面
+  - 当前 `status=connected`
+  - 暂未加入自动分流 host 池
+
+### VPN 控制面当前边界
+
+- Android 生产主流程已切到 `subscriptionUrl -> 订阅导入 -> 本地节点连接`
+- Node 后端负责：
+  - auth / orders / payment / overview 业务数据
+  - `subscriptionUrl` 与订阅状态下发
+- Marzban 负责：
+  - VPN 用户
+  - 节点配置
+  - 订阅链接
+- 旧版 raw VLESS `issueVpnConfig/configPayload` 仅保留兼容接口，不再作为 Android 主流程
 - 服务器一 `38.58.59.119`
   - `sol.residential-agent.com`
   - `usdt.residential-agent.com`

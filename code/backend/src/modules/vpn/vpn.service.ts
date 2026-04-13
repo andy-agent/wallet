@@ -163,6 +163,8 @@ export class VpnService {
       daysRemaining: this.calculateDaysRemaining(now, expireAt),
       isUnlimitedTraffic: plan?.isUnlimitedTraffic ?? true,
       maxActiveSessions: plan?.maxActiveSessions ?? 1,
+      marzbanUsername: existing?.marzbanUsername ?? null,
+      subscriptionUrl: existing?.subscriptionUrl ?? null,
     };
 
     await this.runtimeStateRepository.upsertSubscription(subscription);
@@ -178,6 +180,35 @@ export class VpnService {
       return null;
     }
     return this.toSubscriptionState(subscription);
+  }
+
+  async attachMarzbanAccess(
+    accountId: string,
+    input: {
+      marzbanUsername: string;
+      subscriptionUrl: string;
+      expireAt?: string | null;
+    },
+  ) {
+    const subscription =
+      await this.runtimeStateRepository.findCurrentSubscriptionByAccountId(accountId);
+    if (!subscription) {
+      return null;
+    }
+
+    const nextExpireAt = input.expireAt ?? subscription.expireAt;
+    const updated: PersistedSubscriptionRecord = {
+      ...subscription,
+      updatedAt: new Date().toISOString(),
+      expireAt: nextExpireAt,
+      daysRemaining: nextExpireAt
+        ? this.calculateDaysRemaining(new Date(), new Date(nextExpireAt))
+        : subscription.daysRemaining,
+      marzbanUsername: input.marzbanUsername,
+      subscriptionUrl: input.subscriptionUrl,
+    };
+    await this.runtimeStateRepository.upsertSubscription(updated);
+    return this.toSubscriptionState(updated);
   }
 
   private async getSubscriptionByAccountId(
@@ -227,6 +258,8 @@ export class VpnService {
       daysRemaining: null,
       isUnlimitedTraffic: true,
       maxActiveSessions: 1,
+      marzbanUsername: null,
+      subscriptionUrl: null,
     };
   }
 

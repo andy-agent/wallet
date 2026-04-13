@@ -12,6 +12,10 @@ import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import com.v2ray.ang.BuildConfig
+import com.v2ray.ang.dto.SubscriptionItem
+import com.v2ray.ang.fmt.VlessFmt
+import com.v2ray.ang.handler.AngConfigManager
+import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.api.CommissionLedgerPageData
 import com.v2ray.ang.payment.data.api.CommissionSummaryData
@@ -31,10 +35,13 @@ import com.v2ray.ang.payment.data.local.entity.OrderEntity
 import com.v2ray.ang.payment.data.local.entity.PaymentHistoryEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
 import com.v2ray.ang.payment.data.model.*
+import com.v2ray.ang.util.Utils
+import com.v2ray.ang.service.SessionKeepAliveService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
+import retrofit2.Response
 import retrofit2.converter.gson.GsonConverterFactory
 import java.text.SimpleDateFormat
 import java.util.*
@@ -47,8 +54,10 @@ import javax.net.ssl.*
  */
 class PaymentRepository(context: Context) {
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    private val localRepository = LocalPaymentRepository(context)
+    private val appContext = context.applicationContext
+
+    private val prefs: SharedPreferences = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val localRepository = LocalPaymentRepository(appContext)
 
     val api: PaymentApi by lazy {
         // 创建信任所有证书的 SSL Socket Factory (用于自签名证书)
@@ -91,6 +100,8 @@ class PaymentRepository(context: Context) {
     companion object {
         private const val PREFS_NAME = "payment_prefs"
         private const val KEY_CURRENT_USER_ID = "current_user_id"
+        private const val ORDER_SYNC_THROTTLE_MS = 60_000L
+        private const val ORDER_PAGE_SIZE = 100
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
             timeZone = java.util.TimeZone.getTimeZone("UTC")
@@ -171,7 +182,9 @@ class PaymentRepository(context: Context) {
             planName = order.plan.name,
             planId = order.plan.id,
             amount = order.payment.amountCrypto,
+            usdAmount = order.quoteUsdAmount,
             assetCode = order.payment.assetCode,
+            networkCode = order.quoteNetworkCode,
             status = order.status,
             createdAt = parseDate(order.createdAt) ?: System.currentTimeMillis(),
             paidAt = order.payment.confirmedAt?.let { parseDate(it) },
@@ -208,6 +221,8 @@ class PaymentRepository(context: Context) {
                 fulfilledAt = order.completedAt?.let { parseDate(it) } ?: existingOrder.fulfilledAt,
                 expiredAt = parseDate(order.expiresAt) ?: existingOrder.expiredAt,
                 subscriptionUrl = order.subscriptionUrl ?: existingOrder.subscriptionUrl,
+                usdAmount = order.quoteUsdAmount,
+                networkCode = order.quoteNetworkCode,
                 marzbanUsername = existingOrder.marzbanUsername
             )
             localRepository.updateOrder(updatedOrder)
@@ -229,8 +244,11 @@ class PaymentRepository(context: Context) {
     /**
      * 获取本地缓存的订单列表
      */
-    suspend fun getCachedOrders(userId: String): List<OrderEntity> = withContext(Dispatchers.IO) {
-        localRepository.getOrdersByUserId(userId)
+    suspend fun getCachedOrders(userId: String): List<OrderEntity> {
+        syncOrdersFromServer(force = false, userId = userId)
+        return withContext(Dispatchers.IO) {
+            localRepository.getOrdersByUserId(userId)
+        }
     }
 
     /**
@@ -251,6 +269,7 @@ class PaymentRepository(context: Context) {
      * 清除所有本地数据（退出登录）
      */
     suspend fun logout() = withContext(Dispatchers.IO) {
+        SessionKeepAliveService.stop(appContext)
         localRepository.clearAllData()
         prefs.edit()
             .remove(KEY_CURRENT_USER_ID)
@@ -258,11 +277,15 @@ class PaymentRepository(context: Context) {
             .remove(PaymentConfig.Prefs.TOKEN_EXPIRES_AT)
             .remove(PaymentConfig.Prefs.SUBSCRIPTION_URL)
             .remove(PaymentConfig.Prefs.MARZBAN_USERNAME)
+            .remove(PaymentConfig.Prefs.CURRENT_ORDER_ID)
+            .remove(PaymentConfig.Prefs.LAST_ORDERS_SYNC_AT)
+            .remove(PaymentConfig.Prefs.LAST_VPN_REGION_CODE)
+            .remove(PaymentConfig.Prefs.LAST_VPN_CONFIG_EXPIRE_AT)
             .apply()
     }
 
     private fun parseDate(dateString: String?): Long? {
-        return try {
+        return parseIsoDateInternal(dateString) ?: try {
             dateString?.let { dateFormat.parse(it)?.time }
         } catch (e: Exception) {
             null
@@ -337,6 +360,43 @@ class PaymentRepository(context: Context) {
             .putString(PaymentConfig.Prefs.SUBSCRIPTION_URL, url)
             .putString(PaymentConfig.Prefs.MARZBAN_USERNAME, username)
             .apply()
+    }
+
+    fun getSavedSubscriptionUrl(): String? {
+        return prefs.getString(PaymentConfig.Prefs.SUBSCRIPTION_URL, null)
+    }
+
+    fun getSavedMarzbanUsername(): String? {
+        return prefs.getString(PaymentConfig.Prefs.MARZBAN_USERNAME, null)
+    }
+
+    fun importSubscriptionUrl(
+        subscriptionUrl: String,
+        remarks: String = "CryptoVPN Subscription",
+    ): Boolean {
+        if (subscriptionUrl.isBlank()) {
+            return false
+        }
+
+        val existing = MmkvManager.decodeSubscriptions()
+            .firstOrNull { it.subscription.url == subscriptionUrl }
+        val subscriptionId = existing?.guid ?: Utils.getUuid()
+        val subscriptionItem = existing?.subscription ?: SubscriptionItem()
+        subscriptionItem.remarks =
+            if (remarks.isBlank()) subscriptionItem.remarks.ifBlank { "CryptoVPN Subscription" } else remarks
+        subscriptionItem.url = subscriptionUrl
+        subscriptionItem.enabled = true
+        subscriptionItem.autoUpdate = true
+        subscriptionItem.lastUpdated = System.currentTimeMillis()
+        MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
+
+        val updateResult = AngConfigManager.updateConfigViaSubAll()
+        val serverList = MmkvManager.decodeServerList(subscriptionId)
+        if (MmkvManager.getSelectServer().isNullOrEmpty()) {
+            serverList.firstOrNull()?.let { MmkvManager.setSelectServer(it) }
+        }
+
+        return updateResult.configCount > 0 || serverList.isNotEmpty()
     }
 
     /**
@@ -446,18 +506,13 @@ class PaymentRepository(context: Context) {
      */
     suspend fun getSubscription(): Result<CurrentSubscriptionData> = withContext(Dispatchers.IO) {
         try {
-            // 自动刷新 Token（如果需要）
-            if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
-            }
-            
-            val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
-
-            val response = api.getSubscription("Bearer $token")
+            val (response, _) = executeAuthenticatedRequest {
+                api.getSubscription("Bearer $it")
+            } ?: return@withContext Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val data = response.body()?.data
                 if (data != null) {
+                    cacheSubscriptionMetadata(data)
                     Result.success(data)
                 } else {
                     Result.failure(Exception("订阅数据为空"))
@@ -495,16 +550,10 @@ class PaymentRepository(context: Context) {
 
     /**
      * 检查 Token 是否过期
-     * 在 Token 过期前 5 分钟认为即将过期
+     * 当前客户端将 access token 视为本地常驻态；只要本地还保存 token，就不主动按时间判过期。
      */
     fun isTokenExpired(): Boolean {
-        val expiresAtStr = prefs.getString(PaymentConfig.Prefs.AUTH_TOKEN_EXPIRES_AT, null) ?: return true
-        val expiresAt = parseIsoDate(expiresAtStr)
-        return if (expiresAt != null) {
-            System.currentTimeMillis() + PaymentConfig.TokenConfig.TOKEN_REFRESH_BUFFER_MS >= expiresAt
-        } else {
-            true
-        }
+        return getAccessToken().isNullOrBlank()
     }
 
     /**
@@ -587,6 +636,7 @@ class PaymentRepository(context: Context) {
      * 清除认证信息（退出登录）
      */
     suspend fun clearAuth() = withContext(Dispatchers.IO) {
+        SessionKeepAliveService.stop(appContext)
         prefs.edit()
             .remove(PaymentConfig.Prefs.ACCESS_TOKEN)
             .remove(PaymentConfig.Prefs.REFRESH_TOKEN)
@@ -596,6 +646,10 @@ class PaymentRepository(context: Context) {
             .remove(PaymentConfig.Prefs.TOKEN_EXPIRES_AT)
             .remove(PaymentConfig.Prefs.SUBSCRIPTION_URL)
             .remove(PaymentConfig.Prefs.MARZBAN_USERNAME)
+            .remove(PaymentConfig.Prefs.CURRENT_ORDER_ID)
+            .remove(PaymentConfig.Prefs.LAST_ORDERS_SYNC_AT)
+            .remove(PaymentConfig.Prefs.LAST_VPN_REGION_CODE)
+            .remove(PaymentConfig.Prefs.LAST_VPN_CONFIG_EXPIRE_AT)
             .apply()
         
         // 清除 Room 数据库中的用户数据
@@ -669,15 +723,22 @@ class PaymentRepository(context: Context) {
 
     suspend fun getMe(): Result<MeData> = withContext(Dispatchers.IO) {
         try {
-            if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
-            }
-            val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
-            val response = api.getMe("Bearer $token")
+            val (response, token) = executeAuthenticatedRequest {
+                api.getMe("Bearer $it")
+            } ?: return@withContext Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val data = response.body()?.data
                 if (data != null) {
+                    val currentUser = UserEntity(
+                        userId = data.accountId,
+                        username = data.email,
+                        email = data.email,
+                        accessToken = token,
+                        refreshToken = getRefreshToken(),
+                        loginAt = System.currentTimeMillis(),
+                    )
+                    localRepository.saveUser(currentUser)
+                    saveCurrentUserId(data.accountId)
                     Result.success(data)
                 } else {
                     Result.failure(Exception("用户数据为空"))
@@ -734,12 +795,9 @@ class PaymentRepository(context: Context) {
 
     suspend fun getVpnRegions(): Result<List<VpnRegionItem>> = withContext(Dispatchers.IO) {
         try {
-            if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
-            }
-            val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
-            val response = api.getVpnRegions("Bearer $token")
+            val (response, _) = executeAuthenticatedRequest {
+                api.getVpnRegions("Bearer $it")
+            } ?: return@withContext Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
                 Result.success(response.body()?.data?.items.orEmpty())
             } else {
@@ -755,20 +813,20 @@ class PaymentRepository(context: Context) {
         connectionMode: String = "global",
     ): Result<VpnConfigIssueData> = withContext(Dispatchers.IO) {
         try {
-            if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
-            }
-            val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
-            val response = api.issueVpnConfig(
-                authorization = "Bearer $token",
-                request = IssueVpnConfigRequest(
-                    regionCode = regionCode,
-                    connectionMode = connectionMode,
-                ),
-            )
+            val (response, _) = executeAuthenticatedRequest { token ->
+                api.issueVpnConfig(
+                    authorization = "Bearer $token",
+                    request = IssueVpnConfigRequest(
+                        regionCode = regionCode,
+                        connectionMode = connectionMode,
+                    ),
+                )
+            } ?: return@withContext Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
-                response.body()?.data?.let { Result.success(it) }
+                response.body()?.data?.let {
+                    saveIssuedVpnConfigMetadata(it)
+                    Result.success(it)
+                }
                     ?: Result.failure(Exception("VPN 配置为空"))
             } else {
                 Result.failure(Exception(response.body()?.message ?: "签发 VPN 配置失败"))
@@ -778,16 +836,88 @@ class PaymentRepository(context: Context) {
         }
     }
 
+    suspend fun syncOrdersFromServer(
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<List<OrderEntity>> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId
+            ?: return@withContext Result.failure(Exception("未识别当前用户"))
+        val now = System.currentTimeMillis()
+        val lastSyncAt = prefs.getLong(PaymentConfig.Prefs.LAST_ORDERS_SYNC_AT, 0L)
+        val cachedOrders = localRepository.getOrdersByUserId(resolvedUserId)
+        if (!force && cachedOrders.isNotEmpty() && now - lastSyncAt < ORDER_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cachedOrders)
+        }
+
+        try {
+            val remoteOrders = mutableListOf<Order>()
+            var page = 1
+            var total = Int.MAX_VALUE
+            while (remoteOrders.size < total) {
+                val (response, _) = executeAuthenticatedRequest { token ->
+                    api.listOrders(
+                        authorization = "Bearer $token",
+                        page = page,
+                        pageSize = ORDER_PAGE_SIZE,
+                    )
+                } ?: run {
+                    prefs.edit().remove(PaymentConfig.Prefs.LAST_ORDERS_SYNC_AT).apply()
+                    return@withContext Result.failure(Exception("未登录"))
+                }
+                if (!response.isSuccessful || response.body()?.code != "OK") {
+                    prefs.edit().remove(PaymentConfig.Prefs.LAST_ORDERS_SYNC_AT).apply()
+                    val failureMessage = when {
+                        response.code() == 404 -> "订单接口待同步"
+                        else -> response.body()?.message ?: "同步订单列表失败"
+                    }
+                    return@withContext Result.failure(
+                        Exception(failureMessage),
+                    )
+                }
+                val data = response.body()?.data
+                    ?: run {
+                        prefs.edit().remove(PaymentConfig.Prefs.LAST_ORDERS_SYNC_AT).apply()
+                        return@withContext Result.failure(Exception("订单列表数据为空"))
+                    }
+                remoteOrders += data.items
+                total = data.page.total
+                if (data.items.isEmpty() || remoteOrders.size >= total) {
+                    break
+                }
+                page += 1
+            }
+
+            remoteOrders.forEach { order ->
+                cacheOrder(order, resolvedUserId)
+            }
+            val remoteOrderNos = remoteOrders.mapTo(mutableSetOf()) { it.orderNo }
+            cachedOrders
+                .filterNot { it.orderNo in remoteOrderNos }
+                .forEach { staleOrder ->
+                    localRepository.deleteOrderByOrderNo(staleOrder.orderNo)
+                    localRepository.deletePaymentHistoryByOrderNo(staleOrder.orderNo)
+                }
+
+            val latestOrder = remoteOrders.maxByOrNull { parseDate(it.createdAt) ?: 0L }
+            latestOrder?.let { saveCurrentOrderId(it.orderNo) }
+            prefs.edit().putLong(PaymentConfig.Prefs.LAST_ORDERS_SYNC_AT, now).apply()
+            Result.success(localRepository.getOrdersByUserId(resolvedUserId))
+        } catch (e: Exception) {
+            prefs.edit().remove(PaymentConfig.Prefs.LAST_ORDERS_SYNC_AT).apply()
+            Result.failure(e)
+        }
+    }
+
     suspend fun getVpnStatus(): Result<VpnStatusData> = withContext(Dispatchers.IO) {
         try {
-            if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
-            }
-            val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
-            val response = api.getVpnStatus("Bearer $token")
+            val (response, _) = executeAuthenticatedRequest {
+                api.getVpnStatus("Bearer $it")
+            } ?: return@withContext Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
-                response.body()?.data?.let { Result.success(it) }
+                response.body()?.data?.let {
+                    cacheVpnStatusMetadata(it)
+                    Result.success(it)
+                }
                     ?: Result.failure(Exception("VPN 状态为空"))
             } else {
                 Result.failure(Exception(response.body()?.message ?: "获取 VPN 状态失败"))
@@ -795,6 +925,63 @@ class PaymentRepository(context: Context) {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private suspend fun <T> executeAuthenticatedRequest(
+        call: suspend (token: String) -> Response<T>,
+    ): Pair<Response<T>, String>? {
+        if (!refreshTokenIfNeeded()) {
+            return null
+        }
+        var token = getAccessToken() ?: return null
+        var response = call(token)
+        if (response.code() == 401 && forceRefreshToken()) {
+            token = getAccessToken() ?: return Pair(response, token)
+            response = call(token)
+        }
+        return Pair(response, token)
+    }
+
+    suspend fun warmSyncAfterLogin(
+        userId: String? = getCurrentUserId(),
+        meSnapshot: MeData? = null,
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        val me = meSnapshot ?: getMe().getOrElse { return@withContext Result.failure(it) }
+        val resolvedUserId = userId ?: me?.accountId ?: getCurrentUserId()
+            ?: return@withContext Result.failure(Exception("未识别当前用户"))
+
+        syncOrdersFromServer(force = true, userId = resolvedUserId).getOrElse {
+            return@withContext Result.failure(it)
+        }
+
+        val subscription = getSubscription().getOrElse {
+            me?.subscription ?: return@withContext Result.failure(it)
+        }
+        cacheSubscriptionMetadata(subscription)
+        val vpnStatus = getVpnStatus().getOrElse { return@withContext Result.failure(it) }
+        cacheVpnStatusMetadata(vpnStatus)
+        val vpnRegions = getVpnRegions().getOrElse { return@withContext Result.failure(it) }
+
+        val shouldBootstrapConfig = MmkvManager.getSelectServer().isNullOrEmpty()
+        if (shouldBootstrapConfig) {
+            val subscriptionUrl = subscription?.subscriptionUrl?.takeIf { it.isNotBlank() }
+            if (subscriptionUrl.isNullOrBlank()) {
+                return@withContext Result.failure(Exception("订阅待同步，暂不再回退到旧版手拼 VLESS 配置。"))
+            }
+
+            val importedFromSubscription = importSubscriptionUrl(
+                subscriptionUrl = subscriptionUrl,
+                remarks = subscription.planCode?.takeIf { code -> code.isNotBlank() }
+                    ?.let { code -> "Purchase $code" }
+                    ?: "CryptoVPN Subscription",
+            )
+            if (!importedFromSubscription) {
+                return@withContext Result.failure(Exception("订阅导入失败"))
+            }
+        }
+
+        SessionKeepAliveService.start(appContext)
+        Result.success(Unit)
     }
 
     suspend fun getReferralOverview(): Result<ReferralOverviewData> = withContext(Dispatchers.IO) {
@@ -920,6 +1107,78 @@ class PaymentRepository(context: Context) {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    fun getLastIssuedVpnConfigExpireAt(): String? {
+        return prefs.getString(PaymentConfig.Prefs.LAST_VPN_CONFIG_EXPIRE_AT, null)
+    }
+
+    fun getLastIssuedVpnRegionCode(): String? {
+        return prefs.getString(PaymentConfig.Prefs.LAST_VPN_REGION_CODE, null)
+    }
+
+    private fun cacheSubscriptionMetadata(subscription: CurrentSubscriptionData?) {
+        val editor = prefs.edit()
+        subscription?.expireAt?.takeIf { it.isNotBlank() }?.let {
+            editor.putString(PaymentConfig.Prefs.LAST_VPN_CONFIG_EXPIRE_AT, it)
+        }
+        subscription?.subscriptionUrl?.takeIf { it.isNotBlank() }?.let {
+            editor.putString(PaymentConfig.Prefs.SUBSCRIPTION_URL, it)
+        }
+        subscription?.marzbanUsername?.takeIf { it.isNotBlank() }?.let {
+            editor.putString(PaymentConfig.Prefs.MARZBAN_USERNAME, it)
+        }
+        editor.apply()
+    }
+
+    private fun cacheVpnStatusMetadata(status: VpnStatusData?) {
+        val regionCode = status?.currentRegionCode?.takeIf { it.isNotBlank() } ?: return
+        prefs.edit()
+            .putString(PaymentConfig.Prefs.LAST_VPN_REGION_CODE, regionCode)
+            .apply()
+    }
+
+    private fun resolveBootstrapRegionCode(
+        vpnStatus: VpnStatusData?,
+        regions: List<VpnRegionItem>,
+    ): String? {
+        return vpnStatus?.currentRegionCode?.takeIf { it.isNotBlank() }
+            ?: regions.firstOrNull {
+                it.isAllowed && (
+                    it.status.equals("ACTIVE", ignoreCase = true) ||
+                        it.status.equals("ONLINE", ignoreCase = true)
+                    )
+            }?.regionCode
+            ?: regions.firstOrNull { it.isAllowed }?.regionCode
+    }
+
+    fun importIssuedVpnConfig(config: VpnConfigIssueData): Boolean {
+        val profile = VlessFmt.parse(config.configPayload) ?: return false
+        val subscriptionId = Utils.getUuid()
+        MmkvManager.encodeSubscription(
+            subscriptionId,
+            SubscriptionItem(
+                remarks = "Purchase ${config.regionCode}",
+                url = config.configPayload,
+                enabled = true,
+                lastUpdated = System.currentTimeMillis(),
+                autoUpdate = false,
+            ),
+        )
+        profile.subscriptionId = subscriptionId
+        profile.remarks = "Purchase ${config.regionCode}"
+        profile.description = AngConfigManager.generateDescription(profile)
+        val guid = MmkvManager.encodeServerConfig("", profile)
+        MmkvManager.setSelectServer(guid)
+        return true
+    }
+
+    private fun saveIssuedVpnConfigMetadata(config: VpnConfigIssueData) {
+        prefs.edit()
+            .putString(PaymentConfig.Prefs.SUBSCRIPTION_URL, config.configPayload)
+            .putString(PaymentConfig.Prefs.LAST_VPN_REGION_CODE, config.regionCode)
+            .putString(PaymentConfig.Prefs.LAST_VPN_CONFIG_EXPIRE_AT, config.expireAt)
+            .apply()
     }
 
     /**

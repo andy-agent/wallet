@@ -21,6 +21,8 @@ describe('PlansSubscriptionVpn (e2e)', () => {
     process.env.NODE_ENV = 'test';
     process.env.RUNTIME_STATE_FILE = join(runtimeDir, 'runtime-state.json');
     process.env.SOLANA_ORDER_COLLECTION_ADDRESS = solanaCollectionAddress;
+    process.env.MARZBAN_MOCK_MODE = 'true';
+    process.env.MARZBAN_BASE_URL = 'https://vpn.residential-agent.com';
     delete process.env.RUNTIME_STATE_BACKEND;
     app = await bootstrapApp();
 
@@ -77,6 +79,8 @@ describe('PlansSubscriptionVpn (e2e)', () => {
     delete process.env.RUNTIME_STATE_FILE;
     delete process.env.RUNTIME_STATE_BACKEND;
     delete process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
+    delete process.env.MARZBAN_MOCK_MODE;
+    delete process.env.MARZBAN_BASE_URL;
     rmSync(runtimeDir, { recursive: true, force: true });
   });
 
@@ -108,6 +112,8 @@ describe('PlansSubscriptionVpn (e2e)', () => {
       .expect(200);
 
     expect(subscription.body.data.status).toBe('ACTIVE');
+    expect(subscription.body.data.subscriptionUrl).toContain('/sub/');
+    expect(subscription.body.data.marzbanUsername).toMatch(/^cvpn_/);
 
     await app.close();
     app = await bootstrapApp();
@@ -118,6 +124,8 @@ describe('PlansSubscriptionVpn (e2e)', () => {
       .expect(200);
 
     expect(subscriptionAfterRestart.body.data.status).toBe('ACTIVE');
+    expect(subscriptionAfterRestart.body.data.subscriptionUrl).toContain('/sub/');
+    expect(subscriptionAfterRestart.body.data.marzbanUsername).toMatch(/^cvpn_/);
 
     const regions = await request(app.getHttpServer())
       .get('/api/client/v1/vpn/regions')

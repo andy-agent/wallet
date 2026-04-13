@@ -7,8 +7,8 @@
 | **IP 地址** | 38.58.59.142 |
 | **域名** | vpn.residential-agent.com |
 | **SSH 密码** | ypbaHXDG9534 |
-| **管理面板** | https://vpn.residential-agent.com:8443/dashboard |
-| **API 地址** | https://vpn.residential-agent.com:8443/api |
+| **管理面板** | https://vpn.residential-agent.com/dashboard/ |
+| **API 地址** | https://vpn.residential-agent.com/api |
 | **管理员账号** | admin |
 | **管理员密码** | MarzbanAdmin2024! |
 
@@ -29,13 +29,15 @@ docker compose ps
 - 密钥路径: `/var/lib/marzban/key.key`
 
 ### 3. Nginx 反向代理
-- 监听 8443 端口
-- 转发到 Marzban 8000 端口
+- 对外统一入口：`443`
+- 内部转发到 Marzban `127.0.0.1:8000`
+- `8443` 不再作为推荐公网入口
 - 配置 SSL
 
 ### 4. Cloudflare DNS
-- A 记录: vpn.residential-agent.com → 38.58.59.142
+- A 记录: `vpn.residential-agent.com` → `38.58.59.142`
 - 代理状态: 已启用（橙云）
+- 2026-04-13 已校正为指向 Marzban 服务器；此前误指向 `154.37.208.72`
 
 ---
 
@@ -53,7 +55,7 @@ nano /opt/payment-bridge/code/deploy/.env
 
 ```env
 # Marzban 配置 (新服务器)
-MARZban_API_URL=https://vpn.residential-agent.com:8443/api
+MARZBAN_BASE_URL=https://vpn.residential-agent.com
 MARZban_USERNAME=admin
 MARZban_PASSWORD=MarzbanAdmin2024!
 MARZban_MOCK_MODE=false
@@ -88,7 +90,7 @@ python -m app.workers.scheduler &
 ### 测试 Marzban 连接
 ```bash
 # 获取 Token
-curl -X POST https://vpn.residential-agent.com:8443/api/admin/token \
+curl -X POST https://vpn.residential-agent.com/api/admin/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "username=admin&password=MarzbanAdmin2024!"
 ```
@@ -153,8 +155,41 @@ systemctl restart nginx
 ## 安全建议
 
 1. **立即修改默认密码**
-   - 登录 https://vpn.residential-agent.com:8443/dashboard
+   - 登录 https://vpn.residential-agent.com/dashboard/
    - 修改 admin 密码
+
+## 2026-04-13 验证结果
+
+- `https://vpn.residential-agent.com/` 返回 `302` 到管理入口
+- `https://vpn.residential-agent.com/dashboard/` 返回 `200`
+- `POST https://vpn.residential-agent.com/api/admin/token` 返回 `200`
+- 当前公网入口修复方式：
+  - Cloudflare A 记录切回 `38.58.59.142`
+  - Nginx `proxy_set_header` 变量转义错误已修正
+  - 清理了 `sites-enabled` 中重复生效的备份配置
+
+## 首台 Marzban-node
+
+- 节点服务器：`38.246.249.106`
+- 角色：首台 `Marzban-node`
+- 节点名：`node-38-246-249-106`
+- 控制面状态：`connected`
+- 控制面端口：
+  - `62050/tcp` Node service
+  - `62051/tcp` Xray API
+- 当前策略：
+  - 已接入 Marzban 控制面
+  - 创建时使用 `add_as_new_host=false`
+  - 暂未加入自动分流 host 池，不承接现网用户流量
+
+### 节点验收
+
+- 控制面 `GET /api/node/1` 返回：
+  - `status=connected`
+  - `xray_version=25.3.6`
+- 节点日志可见：
+  - `38.58.59.142 connected`
+  - `/connect`、`/start`、`/ping` 返回 `200`
 
 2. **限制 SSH 访问**
    - 只允许特定 IP 访问 38.58.59.142:22

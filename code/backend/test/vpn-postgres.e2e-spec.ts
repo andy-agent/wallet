@@ -28,6 +28,8 @@ describe('VPN Postgres runtime state (e2e)', () => {
     process.env.DATABASE_URL =
       'postgres://runtime:runtime@server2:5432/cryptovpn';
     process.env.SOLANA_ORDER_COLLECTION_ADDRESS = solanaCollectionAddress;
+    process.env.MARZBAN_MOCK_MODE = 'true';
+    process.env.MARZBAN_BASE_URL = 'https://vpn.residential-agent.com';
     delete process.env.RUNTIME_STATE_BACKEND;
     delete process.env.RUNTIME_STATE_FILE;
 
@@ -91,6 +93,8 @@ describe('VPN Postgres runtime state (e2e)', () => {
     delete process.env.RUNTIME_STATE_BACKEND;
     delete process.env.RUNTIME_STATE_FILE;
     delete process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
+    delete process.env.MARZBAN_MOCK_MODE;
+    delete process.env.MARZBAN_BASE_URL;
   });
 
   it('keeps fulfillment, subscription reads, and vpn access restart-safe in Postgres', async () => {
@@ -125,6 +129,8 @@ describe('VPN Postgres runtime state (e2e)', () => {
 
     expect(subscription.body.data.status).toBe('ACTIVE');
     expect(subscription.body.data.maxActiveSessions).toBe(2);
+    expect(subscription.body.data.subscriptionUrl).toContain('/sub/');
+    expect(subscription.body.data.marzbanUsername).toMatch(/^cvpn_/);
 
     await app.close();
     app = await bootstrapApp();
@@ -135,6 +141,8 @@ describe('VPN Postgres runtime state (e2e)', () => {
       .expect(200);
 
     expect(subscriptionAfterRestart.body.data.status).toBe('ACTIVE');
+    expect(subscriptionAfterRestart.body.data.subscriptionUrl).toContain('/sub/');
+    expect(subscriptionAfterRestart.body.data.marzbanUsername).toMatch(/^cvpn_/);
 
     const regions = await request(app.getHttpServer())
       .get('/api/client/v1/vpn/regions')

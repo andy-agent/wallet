@@ -8,6 +8,7 @@ import com.v2ray.ang.payment.data.model.CreateOrderResponse
 import com.v2ray.ang.payment.data.model.GetOrderResponse
 import com.v2ray.ang.payment.data.model.LoginRequest
 import com.v2ray.ang.payment.data.model.LoginResponse
+import com.v2ray.ang.payment.data.model.OrderPageResponse
 import com.v2ray.ang.payment.data.model.PaymentTarget
 import com.v2ray.ang.payment.data.model.Plan
 import com.v2ray.ang.payment.data.model.RefreshTokenRequest
@@ -34,6 +35,15 @@ interface PaymentApi {
         @Header("X-Idempotency-Key") idempotencyKey: String,
         @Body request: CreateOrderRequest
     ): Response<CreateOrderResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/orders")
+    suspend fun listOrders(
+        @Header("Authorization") authorization: String,
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 100,
+        @Query("orderNo") orderNo: String? = null,
+        @Query("status") status: String? = null
+    ): Response<OrderPageResponse>
 
     @GET("${PaymentConfig.API_VERSION}/orders/{orderNo}")
     suspend fun getOrder(
@@ -148,6 +158,17 @@ interface PaymentApi {
         @Body request: RegisterRequest
     ): Response<RegisterResponse>
 
+    @POST("${PaymentConfig.API_VERSION}/auth/password/forgot/request-code")
+    suspend fun requestPasswordResetCode(
+        @Body request: PasswordResetCodeRequest
+    ): Response<OperationResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/auth/password/reset")
+    suspend fun resetPassword(
+        @Header("X-Idempotency-Key") idempotencyKey: String,
+        @Body request: PasswordResetRequest
+    ): Response<OperationResponse>
+
     @POST("${PaymentConfig.API_VERSION}/auth/refresh")
     suspend fun refreshToken(
         @Body request: RefreshTokenRequest
@@ -164,6 +185,16 @@ class EmptyData
 
 data class RegisterEmailCodeRequest(
     val email: String
+)
+
+data class PasswordResetCodeRequest(
+    val email: String
+)
+
+data class PasswordResetRequest(
+    val email: String,
+    val code: String,
+    val password: String
 )
 
 data class PlansResponse(
@@ -285,7 +316,11 @@ data class CurrentSubscriptionData(
     @SerializedName("isUnlimitedTraffic")
     val isUnlimitedTraffic: Boolean,
     @SerializedName("maxActiveSessions")
-    val maxActiveSessions: Int
+    val maxActiveSessions: Int,
+    @SerializedName("subscriptionUrl")
+    val subscriptionUrl: String? = null,
+    @SerializedName("marzbanUsername")
+    val marzbanUsername: String? = null,
 )
 
 data class MeResponse(

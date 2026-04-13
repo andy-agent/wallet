@@ -16,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.v2ray.ang.dto.SubscriptionItem
 import com.v2ray.ang.handler.AngConfigManager
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SettingsManager
@@ -454,53 +455,47 @@ class PaymentActivity : AppCompatActivity(), OrderPollingUseCase.PollingCallback
 
     private suspend fun provisionVpnAndConnect(order: Order) {
         binding.progressBar.visibility = View.VISIBLE
-        val regionResult = repository.getVpnRegions()
-        val region = regionResult.getOrNull()
-            ?.firstOrNull { it.isAllowed && it.status == "ACTIVE" }
+        val subscriptionResult = repository.getSubscription()
+        val subscription = subscriptionResult.getOrNull()
+        val subscriptionUrl = repository.getSavedSubscriptionUrl()?.takeIf { it.isNotBlank() }
+            ?: subscription?.subscriptionUrl?.takeIf { it.isNotBlank() }
 
-        if (region == null) {
+        if (!subscriptionUrl.isNullOrBlank()) {
+            val imported = repository.importSubscriptionUrl(
+                subscriptionUrl = subscriptionUrl,
+                remarks = "Purchase ${order.planCode}",
+            )
             binding.progressBar.visibility = View.GONE
-            AlertDialog.Builder(this@PaymentActivity)
-                .setTitle("支付成功")
-                .setMessage("订单已完成，但当前没有可用 VPN 区域。\n\n${regionResult.exceptionOrNull()?.message ?: "请稍后在首页重试连接。"}")
-                .setPositiveButton("返回首页") { _, _ ->
-                    setResult(RESULT_OK)
-                    finish()
-                }
-                .show()
-            return
-        }
-
-        val configResult = repository.issueVpnConfig(region.regionCode)
-        binding.progressBar.visibility = View.GONE
-
-        configResult.onSuccess { vpnConfig ->
-            if (importIssuedVpnConfig(vpnConfig)) {
+            if (imported) {
                 startVpnConnection()
-            } else {
-                AlertDialog.Builder(this@PaymentActivity)
-                    .setTitle("支付成功")
-                    .setMessage("订单已完成，但 VPN 配置导入失败。请稍后在首页重试连接。")
-                    .setPositiveButton("返回首页") { _, _ ->
-                        setResult(RESULT_OK)
-                        finish()
-                    }
-                    .show()
+                return
             }
-        }.onFailure { error ->
-            AlertDialog.Builder(this@PaymentActivity)
-                .setTitle("支付成功")
-                .setMessage("订单已完成，但 VPN 配置签发失败：${error.message}")
-                .setPositiveButton("返回首页") { _, _ ->
-                    setResult(RESULT_OK)
-                    finish()
-                }
-                .show()
         }
+        binding.progressBar.visibility = View.GONE
+        AlertDialog.Builder(this@PaymentActivity)
+            .setTitle("支付成功")
+            .setMessage("订单已完成，但订阅尚未同步到本地节点。请返回首页后稍后重试。")
+            .setPositiveButton("返回首页") { _, _ ->
+                setResult(RESULT_OK)
+                finish()
+            }
+            .show()
     }
 
     private fun importIssuedVpnConfig(config: VpnConfigIssueData): Boolean {
         val profile = VlessFmt.parse(config.configPayload) ?: return false
+        val subscriptionId = Utils.getUuid()
+        MmkvManager.encodeSubscription(
+            subscriptionId,
+            SubscriptionItem(
+                remarks = "Purchase ${config.regionCode}",
+                url = config.configPayload,
+                enabled = true,
+                lastUpdated = System.currentTimeMillis(),
+                autoUpdate = false,
+            ),
+        )
+        profile.subscriptionId = subscriptionId
         profile.remarks = "Purchase ${config.regionCode}"
         profile.description = AngConfigManager.generateDescription(profile)
         val guid = MmkvManager.encodeServerConfig("", profile)

@@ -15,6 +15,8 @@ export interface SubscriptionState {
   daysRemaining: number | null;
   isUnlimitedTraffic: boolean;
   maxActiveSessions: number;
+  marzbanUsername: string | null;
+  subscriptionUrl: string | null;
 }
 
 export interface PersistedSubscriptionRecord extends SubscriptionState {
