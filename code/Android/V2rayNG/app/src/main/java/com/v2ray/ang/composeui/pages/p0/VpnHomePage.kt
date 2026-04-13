@@ -479,7 +479,7 @@ private fun SecureTunnelCard(
                 )
                 StatusPill(
                     text = "${connectionChipLabel(uiState)} · ${uiState.vlessRegionLabel}",
-                    positive = uiState.connectionStatus != VpnConnectionStatus.DISCONNECTED || uiState.canConnect,
+                    positive = uiState.connectionStatus != VpnConnectionStatus.DISCONNECTED,
                 )
             }
 
@@ -560,7 +560,7 @@ private fun SecureTunnelCard(
             )
             PrimaryTunnelButton(
                 modifier = Modifier.weight(1f),
-                text = "断开 / 重连",
+                text = primaryTunnelButtonLabel(uiState),
                 onClick = onReconnect,
             )
         }
@@ -1126,21 +1126,30 @@ private fun connectionChipLabel(uiState: VpnHomeUiState): String = when {
     uiState.connectionStatus == VpnConnectionStatus.CONNECTED -> "已连接"
     uiState.connectionStatus == VpnConnectionStatus.CONNECTING -> "连接中"
     uiState.canConnect -> "待连接"
-    else -> "未连接"
+    else -> "待同步"
 }
 
 private fun orbPrimaryText(uiState: VpnHomeUiState): String = when {
-    uiState.selectedRegion.latencyMs > 0 -> "${uiState.selectedRegion.latencyMs} ms"
-    uiState.speedNodes.isNotEmpty() -> "${uiState.speedNodes.size} 节点"
+    uiState.connectionStatus == VpnConnectionStatus.CONNECTED -> "已连接"
+    uiState.connectionStatus == VpnConnectionStatus.CONNECTING -> "连接中"
     uiState.canConnect -> "待连接"
     else -> "待同步"
 }
 
 private fun orbSecondaryText(uiState: VpnHomeUiState): String = when {
-    uiState.canConnect -> "配置可用"
-    uiState.configStatusLabel == "已就绪" -> "配置已就绪"
-    uiState.configStatusLabel.contains("已导入") -> "已导入配置"
-    else -> "配置未就绪"
+    uiState.connectionStatus == VpnConnectionStatus.CONNECTED ->
+        uiState.vlessRegionLabel.takeIf { it.isNotBlank() } ?: "当前线路"
+    uiState.connectionStatus == VpnConnectionStatus.CONNECTING -> "正在建立安全隧道"
+    uiState.canConnect ->
+        "${uiState.vlessRegionLabel.takeIf { it.isNotBlank() } ?: "当前线路"} 已就绪"
+    else -> "节点下发中"
+}
+
+private fun primaryTunnelButtonLabel(uiState: VpnHomeUiState): String = when {
+    uiState.connectionStatus == VpnConnectionStatus.CONNECTED -> "断开连接"
+    uiState.connectionStatus == VpnConnectionStatus.CONNECTING -> "连接中"
+    uiState.canConnect -> "连接"
+    else -> "待同步"
 }
 
 private fun overviewCaption(uiState: VpnHomeUiState): String {
