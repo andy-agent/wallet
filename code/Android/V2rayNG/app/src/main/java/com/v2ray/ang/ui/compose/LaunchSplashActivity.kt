@@ -1,5 +1,6 @@
 package com.v2ray.ang.ui.compose
 
+import android.app.ActivityManager
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.os.Bundle
@@ -24,6 +25,9 @@ import kotlinx.coroutines.launch
 import kotlin.system.measureTimeMillis
 
 class LaunchSplashActivity : ComponentActivity() {
+    private val routeOverride: String?
+        get() = intent.getStringExtra(ComposeContainerActivity.EXTRA_START_ROUTE)?.takeIf { it.isNotBlank() }
+
     private lateinit var progressBar: ProgressBar
     private lateinit var hubGlow: View
     private lateinit var hubRingOuter: View
@@ -35,6 +39,9 @@ class LaunchSplashActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (resumeExistingComposeTaskIfPresent()) {
+            return
+        }
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -131,11 +138,31 @@ class LaunchSplashActivity : ComponentActivity() {
         startActivity(
             ComposeContainerActivity.createIntent(
                 context = this,
-                startRoute = CryptoVpnRouteSpec.emailLogin.pattern,
+                startRoute = routeOverride ?: snapshot.nextRoute.ifBlank { CryptoVpnRouteSpec.emailLogin.pattern },
             ),
         )
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         finish()
+    }
+
+    private fun resumeExistingComposeTaskIfPresent(): Boolean {
+        if (!routeOverride.isNullOrBlank()) {
+            return false
+        }
+
+        val activityManager = getSystemService(ActivityManager::class.java) ?: return false
+        val composeClassName = ComposeContainerActivity::class.java.name
+        val existingTask = activityManager.appTasks.firstOrNull { appTask ->
+            val taskInfo = appTask.taskInfo ?: return@firstOrNull false
+            taskInfo.taskId != taskId &&
+                (taskInfo.baseActivity?.className == composeClassName ||
+                    taskInfo.topActivity?.className == composeClassName)
+        } ?: return false
+
+        existingTask.moveToFront()
+        overridePendingTransition(0, 0)
+        finish()
+        return true
     }
 
     private fun renderStage(
