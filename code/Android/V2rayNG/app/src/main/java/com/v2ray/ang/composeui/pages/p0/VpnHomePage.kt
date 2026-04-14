@@ -1,9 +1,14 @@
 package com.v2ray.ang.composeui.pages.p0
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.VpnService
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,8 +37,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +61,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import com.v2ray.ang.AppConfig
 import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.effects.TechParticleBackground
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
@@ -75,6 +84,7 @@ import com.v2ray.ang.handler.SettingsManager
 import com.v2ray.ang.handler.V2RayServiceManager
 import com.v2ray.ang.payment.data.api.VpnConfigIssueData
 import com.v2ray.ang.payment.data.repository.PaymentRepository
+import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.Utils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -144,16 +154,57 @@ fun VpnHomeRoute(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val appContext = context.applicationContext
     val scope = rememberCoroutineScope()
-    val paymentRepository = remember { PaymentRepository(context.applicationContext) }
+    val paymentRepository = remember { PaymentRepository(appContext) }
+    var runtimeConnectionStatus by remember { mutableStateOf<VpnConnectionStatus?>(null) }
     val requestVpnPermission = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
+            runtimeConnectionStatus = VpnConnectionStatus.CONNECTING
             V2RayServiceManager.startVService(context)
         }
         viewModel.onEvent(VpnHomeEvent.Refresh)
     }
+
+    DisposableEffect(appContext) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                when (intent?.getIntExtra("key", 0)) {
+                    AppConfig.MSG_STATE_RUNNING,
+                    AppConfig.MSG_STATE_START_SUCCESS -> {
+                        runtimeConnectionStatus = VpnConnectionStatus.CONNECTED
+                        viewModel.onEvent(VpnHomeEvent.Refresh)
+                    }
+
+                    AppConfig.MSG_STATE_NOT_RUNNING,
+                    AppConfig.MSG_STATE_START_FAILURE,
+                    AppConfig.MSG_STATE_STOP_SUCCESS -> {
+                        runtimeConnectionStatus = VpnConnectionStatus.DISCONNECTED
+                        viewModel.onEvent(VpnHomeEvent.Refresh)
+                    }
+                }
+            }
+        }
+
+        val filter = IntentFilter(AppConfig.BROADCAST_ACTION_ACTIVITY)
+        ContextCompat.registerReceiver(appContext, receiver, filter, Utils.receiverFlags())
+        MessageUtil.sendMsg2Service(appContext, AppConfig.MSG_REGISTER_CLIENT, "")
+
+        onDispose {
+            runCatching { appContext.unregisterReceiver(receiver) }
+            MessageUtil.sendMsg2Service(appContext, AppConfig.MSG_UNREGISTER_CLIENT, "")
+        }
+    }
+
+    val effectiveUiState = runtimeConnectionStatus?.let { status ->
+        if (uiState.connectionStatus == status) {
+            uiState
+        } else {
+            uiState.copy(connectionStatus = status)
+        }
+    } ?: uiState
 
     fun importIssuedVpnConfig(config: VpnConfigIssueData): Boolean {
         val profile = VlessFmt.parse(config.configPayload) ?: return false
@@ -180,12 +231,14 @@ fun VpnHomeRoute(
         if (SettingsManager.isVpnMode()) {
             val prepareIntent = VpnService.prepare(context)
             if (prepareIntent == null) {
+                runtimeConnectionStatus = VpnConnectionStatus.CONNECTING
                 V2RayServiceManager.startVService(context)
                 viewModel.onEvent(VpnHomeEvent.Refresh)
             } else {
                 requestVpnPermission.launch(prepareIntent)
             }
         } else {
+            runtimeConnectionStatus = VpnConnectionStatus.CONNECTING
             V2RayServiceManager.startVService(context)
             viewModel.onEvent(VpnHomeEvent.Refresh)
         }
@@ -235,7 +288,7 @@ fun VpnHomeRoute(
 
     VpnHomeScreen(
         currentRoute = currentRoute,
-        uiState = uiState,
+        uiState = effectiveUiState,
         onToggleConnection = ::toggleRealConnection,
         onSelectRegion = { viewModel.onEvent(VpnHomeEvent.RegionSelected(it)) },
         onBottomNav = onBottomNav,
