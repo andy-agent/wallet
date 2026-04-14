@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -195,9 +196,10 @@ fun P01BottomNav(
     destinations: List<P01BottomDestination>,
     onNavigate: (String) -> Unit,
 ) {
+    val activeRoute = resolveSharedBottomRoute(currentRoute)
     FlatNavBackground {
         destinations.forEach { item ->
-            val active = currentRoute == item.route
+            val active = activeRoute == item.route
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -223,8 +225,7 @@ fun P01BottomNav(
                 Text(
                     text = item.label,
                     color = if (active) P01AccentBlue else P01TextSoft,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelSmall,
                 )
             }
         }
@@ -239,7 +240,7 @@ fun P01Header(
     chips: List<String> = emptyList(),
     backLabel: String? = null,
     onBack: (() -> Unit)? = null,
-    trailing: @Composable (() -> Unit)? = null,
+    trailing: @Composable (() -> Unit)? = { P01HeaderHeroRing() },
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (backLabel != null) {
@@ -247,8 +248,7 @@ fun P01Header(
                 text = backLabel,
                 modifier = Modifier.clickable(enabled = onBack != null) { onBack?.invoke() },
                 color = P01TextSoft,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelLarge,
             )
         }
         Row(
@@ -262,12 +262,12 @@ fun P01Header(
             ) {
                 Text(
                     text = eyebrow,
-                    style = TextStyle(
+                    style = MaterialTheme.typography.labelSmall.merge(
+                        TextStyle(
                         color = P01TextSoft,
-                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 2.4.sp,
-                    ),
+                    )),
                 )
                 if (chips.isNotEmpty()) {
                     P01FlowRow(horizontalGap = 8.dp, verticalGap = 8.dp) {
@@ -278,19 +278,16 @@ fun P01Header(
                 }
                 Text(
                     text = title,
-                    style = TextStyle(
+                    style = MaterialTheme.typography.headlineLarge.merge(TextStyle(
                         color = P01TextStrong,
-                        fontSize = 34.sp,
-                        lineHeight = 35.sp,
                         fontWeight = FontWeight.ExtraBold,
-                    ),
+                    )),
                 )
                 if (!subtitle.isNullOrBlank()) {
                     Text(
                         text = subtitle,
                         color = P01TextBody,
-                        fontSize = 14.sp,
-                        lineHeight = 24.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
             }
@@ -338,16 +335,13 @@ fun P01CardHeader(
             Text(
                 text = title,
                 color = P01TextStrong,
-                fontSize = 22.sp,
-                lineHeight = 24.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
             )
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     text = subtitle,
                     color = P01TextBody,
-                    fontSize = 13.sp,
-                    lineHeight = 21.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }
@@ -364,8 +358,7 @@ fun P01CardCopy(text: String, modifier: Modifier = Modifier) {
         text = text,
         modifier = modifier,
         color = P01TextBody,
-        fontSize = 13.sp,
-        lineHeight = 21.sp,
+        style = MaterialTheme.typography.bodyMedium,
     )
 }
 
@@ -387,8 +380,7 @@ fun P01Chip(text: String, highlighted: Boolean = true) {
         Text(
             text = text,
             color = if (highlighted) P01AccentBlue else P01TextSoft,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelMedium,
         )
     }
 }
@@ -425,8 +417,7 @@ fun P01Tab(
         Text(
             text = text,
             color = textColor,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelMedium,
         )
     }
 }
@@ -458,16 +449,14 @@ fun P01MetricGrid(
                         Text(
                             text = item.label,
                             color = P01TextSoft,
-                            fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             letterSpacing = 0.8.sp,
+                            style = MaterialTheme.typography.labelSmall,
                         )
                         Text(
                             text = item.value,
                             color = item.valueColor,
-                            fontSize = 24.sp,
-                            lineHeight = 26.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.headlineSmall,
                         )
                     }
                 }
@@ -530,16 +519,13 @@ fun P01ListRow(
             Text(
                 text = title,
                 color = P01TextStrong,
-                fontSize = 15.sp,
-                lineHeight = 19.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmall,
             )
             if (!copy.isNullOrBlank()) {
                 Text(
                     text = copy,
                     color = P01TextBody,
-                    fontSize = 12.sp,
-                    lineHeight = 19.sp,
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
         }
@@ -548,9 +534,7 @@ fun P01ListRow(
             Text(
                 text = value,
                 color = P01TextStrong,
-                fontSize = 16.sp,
-                lineHeight = 20.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
             )
         }
     }
@@ -574,16 +558,14 @@ fun P01InputField(
             Text(
                 text = label,
                 color = P01TextSoft,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelMedium,
             )
             if (!trailingText.isNullOrBlank()) {
                 Text(
                     text = trailingText,
                     modifier = Modifier.clickable(enabled = onTrailingClick != null) { onTrailingClick?.invoke() },
                     color = P01AccentBlue,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelMedium,
                 )
             }
         }
@@ -596,11 +578,9 @@ fun P01InputField(
                 .padding(horizontal = 16.dp, vertical = 15.dp),
         ) {
             CompositionLocalProvider(
-                androidx.compose.material3.LocalTextStyle provides TextStyle(
+                androidx.compose.material3.LocalTextStyle provides MaterialTheme.typography.bodyMedium.merge(TextStyle(
                     color = P01TextBody,
-                    fontSize = 14.sp,
-                    lineHeight = 18.sp,
-                ),
+                )),
             ) {
                 BasicTextField(
                     value = value,
@@ -613,7 +593,7 @@ fun P01InputField(
                             Text(
                                 text = label,
                                 color = P01TextSoft.copy(alpha = 0.65f),
-                                fontSize = 14.sp,
+                                style = MaterialTheme.typography.bodyMedium,
                             )
                         }
                         innerTextField()
@@ -642,10 +622,9 @@ fun P01SearchField(
             value = value,
             onValueChange = onValueChange,
             singleLine = true,
-            textStyle = TextStyle(
+            textStyle = MaterialTheme.typography.bodyMedium.merge(TextStyle(
                 color = P01TextBody,
-                fontSize = 14.sp,
-            ),
+            )),
             modifier = Modifier.fillMaxWidth(),
             decorationBox = { innerTextField ->
                 Row(
@@ -673,7 +652,7 @@ fun P01SearchField(
                             Text(
                                 text = placeholder,
                                 color = P01TextSoft,
-                                fontSize = 14.sp,
+                                style = MaterialTheme.typography.bodyMedium,
                             )
                         }
                         innerTextField()
@@ -729,8 +708,7 @@ fun P01PrimaryButton(
         Text(
             text = text,
             color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelLarge,
         )
     }
 }
@@ -752,8 +730,7 @@ fun P01SecondaryButton(
         Text(
             text = text,
             color = P01AccentBlue,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelLarge,
         )
     }
 }
@@ -833,8 +810,7 @@ fun P01SuccessBadge(
         Text(
             text = symbol,
             color = tint,
-            fontSize = 30.sp,
-            fontWeight = FontWeight.ExtraBold,
+            style = MaterialTheme.typography.headlineLarge,
         )
     }
 }
@@ -1033,6 +1009,18 @@ fun P01Orb(modifier: Modifier = Modifier.size(172.dp)) {
         ) {
             P01OrbWalletGlyph(modifier = Modifier.size(coreSize * 0.44f))
         }
+    }
+}
+
+@Composable
+fun P01HeaderHeroRing(
+    modifier: Modifier = Modifier.size(118.dp),
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        P01Orb(modifier = Modifier.fillMaxSize())
     }
 }
 
@@ -1266,6 +1254,76 @@ fun defaultP01Destinations(): List<P01BottomDestination> = listOf(
     P01BottomDestination("invite_center", "增长", P01BottomIconKind.GROWTH),
     P01BottomDestination("profile", "我的", P01BottomIconKind.PROFILE),
 )
+
+fun resolveSharedBottomRoute(currentRoute: String): String {
+    val routeKey = currentRoute.substringBefore('/')
+    return when (routeKey) {
+        "splash",
+        "email_login",
+        "email_register",
+        "reset_password",
+        "force_update",
+        "optional_update",
+        "vpn_home",
+        -> "vpn_home"
+
+        "plans",
+        "region_selection",
+        "order_checkout",
+        "wallet_payment_confirm",
+        "order_result",
+        "order_list",
+        "order_detail",
+        "subscription_detail",
+        "expiry_reminder",
+        "node_speed_test",
+        "auto_connect_rules",
+        -> "plans"
+
+        "wallet_home",
+        "wallet_onboarding",
+        "wallet_payment",
+        "asset_detail",
+        "receive",
+        "send",
+        "send_result",
+        "create_wallet",
+        "import_wallet_method",
+        "import_mnemonic",
+        "import_private_key",
+        "backup_mnemonic",
+        "confirm_mnemonic",
+        "chain_manager",
+        "add_custom_token",
+        "wallet_manager",
+        "address_book",
+        "gas_settings",
+        "swap",
+        "bridge",
+        "dapp_browser",
+        "wallet_connect_session",
+        "sign_message_confirm",
+        "risk_authorizations",
+        "nft_gallery",
+        "staking_earn",
+        -> "wallet_home"
+
+        "invite_center",
+        "invite_share",
+        "commission_ledger",
+        "withdraw",
+        -> "invite_center"
+
+        "profile",
+        "security_center",
+        "legal_documents",
+        "legal_document_detail",
+        "about_app",
+        -> "profile"
+
+        else -> routeKey
+    }
+}
 
 private fun DrawScope.drawDecorativeDots() {
     val dots = listOf(

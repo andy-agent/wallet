@@ -26,7 +26,9 @@ import com.v2ray.ang.payment.data.api.PaymentApi
 import com.v2ray.ang.payment.data.api.RegisterEmailCodeRequest
 import com.v2ray.ang.payment.data.api.ReferralBindRequest
 import com.v2ray.ang.payment.data.api.ReferralOverviewData
+import com.v2ray.ang.payment.data.api.SelectVpnNodeRequest
 import com.v2ray.ang.payment.data.api.VpnConfigIssueData
+import com.v2ray.ang.payment.data.api.VpnNodeItem
 import com.v2ray.ang.payment.data.api.VpnRegionItem
 import com.v2ray.ang.payment.data.api.VpnStatusData
 import com.v2ray.ang.payment.data.api.WithdrawalItem
@@ -34,6 +36,8 @@ import com.v2ray.ang.payment.data.api.WithdrawalPageData
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
 import com.v2ray.ang.payment.data.local.entity.PaymentHistoryEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
+import com.v2ray.ang.payment.data.local.entity.VpnNodeCacheEntity
+import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
 import com.v2ray.ang.payment.data.model.*
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.service.SessionKeepAliveService
@@ -101,6 +105,7 @@ class PaymentRepository(context: Context) {
         private const val PREFS_NAME = "payment_prefs"
         private const val KEY_CURRENT_USER_ID = "current_user_id"
         private const val ORDER_SYNC_THROTTLE_MS = 60_000L
+        private const val VPN_NODE_SYNC_THROTTLE_MS = 60_000L
         private const val ORDER_PAGE_SIZE = 100
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
@@ -279,6 +284,7 @@ class PaymentRepository(context: Context) {
             .remove(PaymentConfig.Prefs.MARZBAN_USERNAME)
             .remove(PaymentConfig.Prefs.CURRENT_ORDER_ID)
             .remove(PaymentConfig.Prefs.LAST_ORDERS_SYNC_AT)
+            .remove(PaymentConfig.Prefs.LAST_VPN_NODES_SYNC_AT)
             .remove(PaymentConfig.Prefs.LAST_VPN_REGION_CODE)
             .remove(PaymentConfig.Prefs.LAST_VPN_CONFIG_EXPIRE_AT)
             .apply()
@@ -808,6 +814,136 @@ class PaymentRepository(context: Context) {
         }
     }
 
+    suspend fun getVpnNodes(
+        lineCode: String? = null,
+    ): Result<List<VpnNodeItem>> = withContext(Dispatchers.IO) {
+        try {
+            val (response, _) = executeAuthenticatedRequest {
+                api.getVpnNodes("Bearer $it", lineCode)
+            } ?: return@withContext Result.failure(Exception("未登录"))
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                Result.success(response.body()?.data?.items.orEmpty())
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取 VPN 节点失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getCachedVpnNodes(
+        userId: String = getCurrentUserId().orEmpty(),
+        lineCode: String? = null,
+    ): List<VpnNodeCacheEntity> {
+        if (userId.isBlank()) return emptyList()
+        return localRepository.getVpnNodeCache(userId, lineCode)
+    }
+
+    suspend fun getCachedVpnNodeRuntime(
+        userId: String = getCurrentUserId().orEmpty(),
+    ): List<VpnNodeRuntimeEntity> {
+        if (userId.isBlank()) return emptyList()
+        return localRepository.getVpnNodeRuntime(userId)
+    }
+
+    suspend fun syncVpnNodesFromServer(
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<List<VpnNodeCacheEntity>> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId
+            ?: return@withContext Result.failure(Exception("未识别当前用户"))
+        val now = System.currentTimeMillis()
+        val lastSyncAt = prefs.getLong(PaymentConfig.Prefs.LAST_VPN_NODES_SYNC_AT, 0L)
+        val cachedNodes = localRepository.getVpnNodeCache(resolvedUserId)
+        if (!force && cachedNodes.isNotEmpty() && now - lastSyncAt < VPN_NODE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cachedNodes)
+        }
+
+        val vpnStatus = getVpnStatus().getOrElse {
+            return@withContext Result.failure(it)
+        }
+        val regions = getVpnRegions().getOrElse {
+            return@withContext Result.failure(it)
+        }
+        val allowedLines = regions.filter { it.isAllowed }
+        if (allowedLines.isEmpty()) {
+            localRepository.syncVpnNodes(resolvedUserId, emptyList(), emptyList())
+            prefs.edit().putLong(PaymentConfig.Prefs.LAST_VPN_NODES_SYNC_AT, now).apply()
+            return@withContext Result.success(emptyList())
+        }
+
+        val remoteNodes = mutableListOf<VpnNodeItem>()
+        allowedLines.forEach { line ->
+            val result = getVpnNodes(line.regionCode).getOrElse { error ->
+                prefs.edit().remove(PaymentConfig.Prefs.LAST_VPN_NODES_SYNC_AT).apply()
+                return@withContext Result.failure(error)
+            }
+            remoteNodes += result
+        }
+        val nodeCache = remoteNodes.map { node ->
+            VpnNodeCacheEntity(
+                userId = resolvedUserId,
+                nodeId = node.nodeId,
+                nodeName = node.nodeName,
+                lineCode = node.lineCode,
+                lineName = node.lineName,
+                regionCode = node.regionCode,
+                regionName = node.regionName,
+                host = node.host,
+                port = node.port,
+                status = node.status,
+                source = node.source ?: "backend",
+                remark = null,
+                updatedAt = now,
+            )
+        }
+        val nodeRuntime = remoteNodes.map { node ->
+            VpnNodeRuntimeEntity(
+                userId = resolvedUserId,
+                nodeId = node.nodeId,
+                lineCode = node.lineCode,
+                healthStatus = node.healthStatus,
+                pingMs = null,
+                selected = node.selected || vpnStatus.selectedNodeId == node.nodeId,
+                lastSeenAt = now,
+            )
+        }
+
+        localRepository.syncVpnNodes(resolvedUserId, nodeCache, nodeRuntime)
+        prefs.edit().putLong(PaymentConfig.Prefs.LAST_VPN_NODES_SYNC_AT, now).apply()
+        Result.success(localRepository.getVpnNodeCache(resolvedUserId))
+    }
+
+    suspend fun selectVpnNode(
+        lineCode: String,
+        nodeId: String,
+    ): Result<VpnStatusData> = withContext(Dispatchers.IO) {
+        try {
+            val (response, _) = executeAuthenticatedRequest { token ->
+                api.selectVpnNode(
+                    authorization = "Bearer $token",
+                    request = SelectVpnNodeRequest(
+                        lineCode = lineCode,
+                        nodeId = nodeId,
+                    ),
+                )
+            } ?: return@withContext Result.failure(Exception("未登录"))
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let {
+                    cacheVpnStatusMetadata(it)
+                    getCurrentUserId()?.let { userId ->
+                        localRepository.markSelectedVpnNode(userId, nodeId)
+                    }
+                    Result.success(it)
+                } ?: Result.failure(Exception("节点选择结果为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "保存节点选择失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun issueVpnConfig(
         regionCode: String,
         connectionMode: String = "global",
@@ -1170,6 +1306,16 @@ class PaymentRepository(context: Context) {
         profile.description = AngConfigManager.generateDescription(profile)
         val guid = MmkvManager.encodeServerConfig("", profile)
         MmkvManager.setSelectServer(guid)
+        return true
+    }
+
+    fun selectLocalServerForNode(node: VpnNodeItem): Boolean {
+        val matchedGuid = MmkvManager.decodeAllServerList()
+            .firstOrNull { guid ->
+                val profile = MmkvManager.decodeServerConfig(guid) ?: return@firstOrNull false
+                profile.server == node.host && profile.serverPort == node.port.toString()
+            } ?: return false
+        MmkvManager.setSelectServer(matchedGuid)
         return true
     }
 

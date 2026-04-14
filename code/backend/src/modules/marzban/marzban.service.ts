@@ -2,6 +2,7 @@ import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config';
 import {
   EnsureMarzbanUserInput,
+  MarzbanHostSetting,
   MarzbanInbound,
   MarzbanUser,
 } from './marzban.types';
@@ -13,6 +14,19 @@ interface TokenResponse {
 interface InboundsResponse {
   vless?: MarzbanInbound[];
 }
+
+interface HostSettingItem {
+  remark?: string | null;
+  address?: string | null;
+  port?: number | null;
+  sni?: string | null;
+  host?: string | null;
+  security?: string | null;
+  allowinsecure?: boolean | null;
+  is_disabled?: boolean | null;
+}
+
+type HostsResponse = Record<string, HostSettingItem[]>;
 
 interface UserResponse {
   username: string;
@@ -73,6 +87,29 @@ export class MarzbanService {
       }),
     });
     return this.toMarzbanUser(created);
+  }
+
+  async listHostSettings(): Promise<MarzbanHostSetting[]> {
+    if (this.isMockMode()) {
+      return [];
+    }
+
+    const response = await this.request<HostsResponse>('/api/hosts');
+    return Object.entries(response).flatMap(([inboundTag, items]) =>
+      (items ?? [])
+        .filter((item) => !item.is_disabled)
+        .map((item, index) => ({
+          inboundTag,
+          remark: this.cleanRemark(item.remark, inboundTag, index),
+          address: this.normalizeAddress(item.address),
+          port: item.port ?? 443,
+          sni: item.sni ?? null,
+          host: item.host ?? null,
+          security: item.security ?? null,
+          allowInsecure: item.allowinsecure === true,
+          isDisabled: item.is_disabled === true,
+        })),
+    );
   }
 
   normalizeSubscriptionUrl(
@@ -222,6 +259,31 @@ export class MarzbanService {
     return `cvpn_${subscriptionId.replace(/-/g, '').slice(0, 24)}`;
   }
 
+  private cleanRemark(
+    remark: string | null | undefined,
+    inboundTag: string,
+    index: number,
+  ) {
+    const raw = remark
+      ?.replace(/\{[^}]+\}/g, '')
+      .replace(/\(\s*\)/g, '')
+      .replace(/\[\s*-\s*\]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (raw) {
+      return raw.replace(/^🚀\s*/, '').trim();
+    }
+    return `${inboundTag}-${index + 1}`;
+  }
+
+  private normalizeAddress(address: string | null | undefined) {
+    const raw = address?.trim();
+    if (!raw || raw === '{SERVER_IP}') {
+      return this.getPanelHost();
+    }
+    return raw;
+  }
+
   private toUnix(value?: string | null) {
     if (!value) {
       return undefined;
@@ -242,6 +304,14 @@ export class MarzbanService {
 
   private getApiBaseUrl() {
     return `${this.getPanelBaseUrl()}/api`;
+  }
+
+  private getPanelHost() {
+    try {
+      return new URL(this.getPanelBaseUrl()).hostname;
+    } catch {
+      return this.getPanelBaseUrl();
+    }
   }
 
   private getAdminUsername() {

@@ -138,6 +138,36 @@ describe('PlansSubscriptionVpn (e2e)', () => {
 
     expect(regions.body.data.items[0].regionCode).toBe('JP_BASIC');
 
+    const nodes = await request(app.getHttpServer())
+      .get('/api/client/v1/vpn/nodes?lineCode=JP_BASIC')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(nodes.body.data.items).toEqual([
+      expect.objectContaining({
+        lineCode: 'JP_BASIC',
+        lineName: '日本-基础线路',
+        regionCode: 'JP',
+        regionName: '日本',
+        nodeName: 'NODE_JP_01',
+        host: 'bootstrap.jp.example.com',
+      }),
+    ]);
+
+    const selection = await request(app.getHttpServer())
+      .post('/api/client/v1/vpn/selection')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        lineCode: 'JP_BASIC',
+        nodeId: nodes.body.data.items[0].nodeId,
+      })
+      .expect(201);
+
+    expect(selection.body.data.selectedLineCode).toBe('JP_BASIC');
+    expect(selection.body.data.selectedLineName).toBe('日本-基础线路');
+    expect(selection.body.data.selectedNodeId).toBe(nodes.body.data.items[0].nodeId);
+    expect(selection.body.data.selectedNodeName).toBe('NODE_JP_01');
+
     const issue = await request(app.getHttpServer())
       .post('/api/client/v1/vpn/config/issue')
       .set('authorization', `Bearer ${accessToken}`)
@@ -159,6 +189,9 @@ describe('PlansSubscriptionVpn (e2e)', () => {
       .expect(200);
 
     expect(status.body.data.canIssueConfig).toBe(true);
+    expect(status.body.data.selectedLineCode).toBe('JP_BASIC');
+    expect(status.body.data.selectedLineName).toBe('日本-基础线路');
+    expect(status.body.data.selectedNodeName).toBe('NODE_JP_01');
   });
 
   it('backfills marzban access for an active legacy subscription missing subscription fields', async () => {

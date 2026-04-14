@@ -91,7 +91,9 @@ const SUBSCRIPTION_COLUMNS = `
   is_unlimited_traffic,
   max_active_sessions,
   marzban_username,
-  subscription_url
+  subscription_url,
+  selected_line_code,
+  selected_node_id
 `;
 const ONCHAIN_RECEIPT_COLUMNS = `
   receipt_id,
@@ -167,6 +169,8 @@ interface RuntimeStateSubscriptionRow {
   max_active_sessions: number;
   marzban_username: string | null;
   subscription_url: string | null;
+  selected_line_code: string | null;
+  selected_node_id: string | null;
 }
 
 interface RuntimeStateOnchainReceiptRow {
@@ -968,7 +972,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           is_unlimited_traffic,
           max_active_sessions,
           marzban_username,
-          subscription_url
+          subscription_url,
+          selected_line_code,
+          selected_node_id
         )
         VALUES (
           $1,
@@ -984,7 +990,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           $11,
           $12,
           $13,
-          $14
+          $14,
+          $15,
+          $16
         )
         ON CONFLICT (account_id) DO UPDATE
         SET
@@ -999,7 +1007,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           is_unlimited_traffic = EXCLUDED.is_unlimited_traffic,
           max_active_sessions = EXCLUDED.max_active_sessions,
           marzban_username = EXCLUDED.marzban_username,
-          subscription_url = EXCLUDED.subscription_url
+          subscription_url = EXCLUDED.subscription_url,
+          selected_line_code = EXCLUDED.selected_line_code,
+          selected_node_id = EXCLUDED.selected_node_id
         RETURNING ${SUBSCRIPTION_COLUMNS}
       `,
       [
@@ -1017,6 +1027,8 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
         subscription.maxActiveSessions,
         subscription.marzbanUsername,
         subscription.subscriptionUrl,
+        subscription.selectedLineCode,
+        subscription.selectedNodeId,
       ],
     );
 
@@ -1273,7 +1285,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
         is_unlimited_traffic boolean NOT NULL,
         max_active_sessions integer NOT NULL,
         marzban_username text NULL,
-        subscription_url text NULL
+        subscription_url text NULL,
+        selected_line_code text NULL,
+        selected_node_id text NULL
       )
     `);
     await this.pool.query(`
@@ -1283,6 +1297,14 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     await this.pool.query(`
       ALTER TABLE ${SUBSCRIPTIONS_TABLE}
       ADD COLUMN IF NOT EXISTS subscription_url text NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${SUBSCRIPTIONS_TABLE}
+      ADD COLUMN IF NOT EXISTS selected_line_code text NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${SUBSCRIPTIONS_TABLE}
+      ADD COLUMN IF NOT EXISTS selected_node_id text NULL
     `);
     await this.pool.query(`
       CREATE INDEX IF NOT EXISTS idx_runtime_state_subscriptions_status
@@ -1530,6 +1552,8 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       maxActiveSessions: row.max_active_sessions,
       marzbanUsername: row.marzban_username,
       subscriptionUrl: row.subscription_url,
+      selectedLineCode: row.selected_line_code,
+      selectedNodeId: row.selected_node_id,
     };
   }
 

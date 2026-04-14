@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -49,6 +50,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.v2ray.ang.composeui.p0.ui.P01HeaderHeroRing
 import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.p0.ui.P01Card
 import com.v2ray.ang.composeui.p0.ui.P01BottomIcon
@@ -202,16 +204,13 @@ internal fun P1FeedbackRow(
             Text(
                 text = title,
                 color = titleColor,
-                fontSize = 15.sp,
-                lineHeight = 19.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmall,
             )
             if (!copy.isNullOrBlank()) {
                 Text(
                     text = copy,
                     color = bodyColor,
-                    fontSize = 12.sp,
-                    lineHeight = 19.sp,
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
         }
@@ -220,9 +219,7 @@ internal fun P1FeedbackRow(
             Text(
                 text = value,
                 color = trailingColor,
-                fontSize = 16.sp,
-                lineHeight = 20.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
             )
         }
     }
@@ -262,58 +259,7 @@ internal fun P1PrimaryCta(
 internal fun P1SecureHub(
     label: String = "SECURE",
 ) {
-    val transition = rememberInfiniteTransition(label = "p1_secure_hub")
-    val outerRingRotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 12000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "p1_secure_hub_outer_ring_rotation",
-    )
-    val innerRingRotation by transition.animateFloat(
-        initialValue = 360f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 18000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "p1_secure_hub_inner_ring_rotation",
-    )
-    val glowScale by transition.animateFloat(
-        initialValue = 0.96f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "p1_secure_hub_glow_scale",
-    )
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .background(Color.White.copy(alpha = 0.82f), RoundedCornerShape(999.dp))
-                .border(1.dp, P1AccentBlue.copy(alpha = 0.16f), RoundedCornerShape(999.dp))
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-        ) {
-            Text(
-                text = label,
-                color = P1HubGlyphBlue,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-        P1ConfirmedOrb(
-            outerRingRotation = outerRingRotation,
-            innerRingRotation = innerRingRotation,
-            glowScale = glowScale,
-        )
-    }
+    P01HeaderHeroRing()
 }
 
 @Composable

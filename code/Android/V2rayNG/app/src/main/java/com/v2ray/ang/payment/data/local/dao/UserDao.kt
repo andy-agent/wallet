@@ -14,8 +14,8 @@ import com.v2ray.ang.payment.data.local.entity.UserEntity
 @Dao
 interface UserDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(user: UserEntity)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(user: UserEntity): Long
 
     @Update
     suspend fun update(user: UserEntity)

@@ -19,3 +19,15 @@ export interface EnsureMarzbanUserInput {
   expireAt?: string | null;
   isUnlimitedTraffic?: boolean;
 }
+
+export interface MarzbanHostSetting {
+  inboundTag: string;
+  remark: string;
+  address: string;
+  port: number;
+  sni: string | null;
+  host: string | null;
+  security: string | null;
+  allowInsecure: boolean;
+  isDisabled: boolean;
+}

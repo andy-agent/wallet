@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -153,22 +154,18 @@ private fun SplashHeader() {
         Text(
             text = "CRYPTO • VPN • PRIVATE NETWORK",
             color = SplashTextSoft,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
             letterSpacing = 2.sp,
+            style = MaterialTheme.typography.labelSmall,
         )
         Text(
             text = "CryptoVPN",
             color = SplashTextStrong,
-            fontSize = 34.sp,
-            fontWeight = FontWeight.ExtraBold,
-            lineHeight = 36.sp,
+            style = MaterialTheme.typography.headlineLarge,
         )
         Text(
             text = "多链钱包 + 私密高速网络",
             color = SplashTextBody,
-            fontSize = 14.sp,
-            lineHeight = 20.sp,
+            style = MaterialTheme.typography.bodyMedium,
         )
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -193,8 +190,7 @@ private fun SplashChip(text: String) {
         Text(
             text = text,
             color = SplashBlue,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelMedium,
         )
     }
 }
@@ -214,15 +210,12 @@ private fun SplashMainCard() {
                 Text(
                     text = "连接钱包与网络",
                     color = SplashTextStrong,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    lineHeight = 29.sp,
+                    style = MaterialTheme.typography.headlineMedium,
                 )
                 Text(
                     text = "初始化加密模块、节点探测与资产索引，系统准备完成后即可进入主界面。",
                     color = SplashTextBody,
-                    fontSize = 13.sp,
-                    lineHeight = 22.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
             SplashSecureGraphic(
@@ -284,16 +277,13 @@ private fun SplashMetricCard(
         Text(
             text = label,
             color = SplashTextSoft,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
             letterSpacing = 0.8.sp,
+            style = MaterialTheme.typography.labelSmall,
         )
         Text(
             text = value,
             color = SplashTextStrong,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.ExtraBold,
-            lineHeight = 24.sp,
+            style = MaterialTheme.typography.titleLarge,
         )
     }
 }
@@ -379,9 +369,7 @@ private fun SplashStatusCard(uiState: SplashUiState) {
         Text(
             text = "系统正在准备",
             color = SplashTextStrong,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.ExtraBold,
-            lineHeight = 24.sp,
+            style = MaterialTheme.typography.titleLarge,
         )
         SplashStatusRow(
             title = "安全自托管",
@@ -418,22 +406,19 @@ private fun SplashStatusRow(
             Text(
                 text = title,
                 color = SplashTextStrong,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.labelLarge,
             )
             Text(
                 text = detail,
                 color = SplashTextBody,
-                fontSize = 12.sp,
-                lineHeight = 18.sp,
+                style = MaterialTheme.typography.bodySmall,
             )
         }
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = value,
             color = valueColor,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.ExtraBold,
+            style = MaterialTheme.typography.labelLarge,
         )
     }
 }

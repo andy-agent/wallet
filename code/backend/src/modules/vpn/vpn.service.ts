@@ -3,7 +3,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
 import { ClientCatalogService } from '../database/client-catalog.service';
 import { MarzbanService } from '../marzban/marzban.service';
@@ -17,6 +17,29 @@ import {
   PersistedSubscriptionRecord,
   SubscriptionState,
 } from './vpn.types';
+
+interface AllowedLineView extends ClientCatalogVpnRegion {
+  lineCode: string;
+  lineName: string;
+  regionGroupCode: string;
+  regionGroupName: string;
+  isAllowed: boolean;
+}
+
+export interface VpnNodeView {
+  nodeId: string;
+  nodeName: string;
+  lineCode: string;
+  lineName: string;
+  regionCode: string;
+  regionName: string;
+  host: string;
+  port: number;
+  status: string;
+  healthStatus: string;
+  selected: boolean;
+  source: 'marzban-host' | 'catalog-node';
+}
 
 @Injectable()
 export class VpnService {
@@ -52,11 +75,55 @@ export class VpnService {
     ]);
 
     return {
-      items: regions.map((region) => ({
-        ...region,
-        isAllowed: this.isRegionAllowed(plan, region),
-      })),
+      items: regions.map((region) => {
+        const identity = this.toLineIdentity(region);
+        return {
+          ...region,
+          ...identity,
+          isAllowed: this.isRegionAllowed(plan, region),
+        };
+      }),
     };
+  }
+
+  async listNodes(
+    accessToken: string,
+    params: { lineCode?: string } = {},
+  ) {
+    const account = this.authService.getMe(accessToken);
+    const subscription = await this.getSubscriptionByAccountId(account.accountId);
+    if (subscription.status !== 'ACTIVE') {
+      throw new ForbiddenException({
+        code: 'SUBSCRIPTION_REQUIRED',
+        message: 'Subscription required',
+      });
+    }
+
+    const allowedLines = await this.getAllowedLines(accessToken);
+    const targetLines = params.lineCode
+      ? allowedLines.filter((line) => line.lineCode === params.lineCode)
+      : allowedLines;
+
+    if (params.lineCode && targetLines.length === 0) {
+      throw new ForbiddenException({
+        code: 'VPN_LINE_FORBIDDEN',
+        message: 'Current plan does not include this line',
+      });
+    }
+
+    const items = (
+      await Promise.all(
+        targetLines.map((line) =>
+          this.resolveNodesForLine(
+            line,
+            subscription,
+            allowedLines.length,
+          ),
+        ),
+      )
+    ).flat();
+
+    return { items };
   }
 
   async issueConfig(
@@ -118,20 +185,82 @@ export class VpnService {
     const account = this.authService.getMe(accessToken);
     const subscription = await this.getSubscriptionByAccountId(account.accountId);
     const session = this.authService.getSessionSummary(accessToken);
-    const allowedRegions =
-      subscription.status === 'ACTIVE' ? (await this.listRegions(accessToken)).items : [];
-    const currentRegion = allowedRegions.find((item) => item.isAllowed) ?? null;
+    const allowedLines =
+      subscription.status === 'ACTIVE' ? await this.getAllowedLines(accessToken) : [];
+    const selectedLine =
+      allowedLines.find((item) => item.lineCode === subscription.selectedLineCode) ??
+      allowedLines.find((item) => item.isAllowed) ??
+      null;
+    const selectedLineNodes = selectedLine
+      ? await this.resolveNodesForLine(selectedLine, subscription, allowedLines.length)
+      : [];
+    const selectedNode =
+      selectedLineNodes.find((item) => item.nodeId === subscription.selectedNodeId) ??
+      selectedLineNodes[0] ??
+      null;
 
     return {
       subscriptionStatus: subscription.status,
-      currentRegionCode: currentRegion?.regionCode ?? null,
+      currentRegionCode: selectedLine?.lineCode ?? null,
       connectionMode: subscription.status === 'ACTIVE' ? 'global' : null,
       canIssueConfig:
         subscription.status === 'ACTIVE' &&
         session.status === 'ACTIVE' &&
-        currentRegion !== null,
+        selectedLine !== null,
       sessionStatus: session.status,
+      selectedRegionCode: selectedLine?.regionGroupCode ?? null,
+      selectedRegionName: selectedLine?.regionGroupName ?? null,
+      selectedLineCode: selectedLine?.lineCode ?? null,
+      selectedLineName: selectedLine?.lineName ?? null,
+      selectedNodeId: selectedNode?.nodeId ?? null,
+      selectedNodeName: selectedNode?.nodeName ?? null,
     };
+  }
+
+  async selectNode(
+    accessToken: string,
+    params: { lineCode: string; nodeId: string },
+  ) {
+    const account = this.authService.getMe(accessToken);
+    const persistedSubscription =
+      await this.runtimeStateRepository.findCurrentSubscriptionByAccountId(account.accountId);
+    if (!persistedSubscription || persistedSubscription.status !== 'ACTIVE') {
+      throw new ForbiddenException({
+        code: 'SUBSCRIPTION_REQUIRED',
+        message: 'Subscription required',
+      });
+    }
+
+    const allowedLines = await this.getAllowedLines(accessToken);
+    const selectedLine = allowedLines.find((line) => line.lineCode === params.lineCode);
+    if (!selectedLine) {
+      throw new ForbiddenException({
+        code: 'VPN_LINE_FORBIDDEN',
+        message: 'Current plan does not include this line',
+      });
+    }
+
+    const candidateNodes = await this.resolveNodesForLine(
+      selectedLine,
+      persistedSubscription,
+      allowedLines.length,
+    );
+    const selectedNode = candidateNodes.find((node) => node.nodeId === params.nodeId);
+    if (!selectedNode) {
+      throw new ConflictException({
+        code: 'VPN_NODE_UNAVAILABLE',
+        message: 'Node unavailable',
+      });
+    }
+
+    await this.runtimeStateRepository.upsertSubscription({
+      ...persistedSubscription,
+      updatedAt: new Date().toISOString(),
+      selectedLineCode: selectedLine.lineCode,
+      selectedNodeId: selectedNode.nodeId,
+    });
+
+    return this.getVpnStatus(accessToken);
   }
 
   async getActiveSubscriptionCount() {
@@ -167,6 +296,8 @@ export class VpnService {
       maxActiveSessions: plan?.maxActiveSessions ?? 1,
       marzbanUsername: existing?.marzbanUsername ?? null,
       subscriptionUrl: existing?.subscriptionUrl ?? null,
+      selectedLineCode: existing?.selectedLineCode ?? null,
+      selectedNodeId: existing?.selectedNodeId ?? null,
     };
 
     await this.runtimeStateRepository.upsertSubscription(subscription);
@@ -314,6 +445,103 @@ export class VpnService {
       maxActiveSessions: 1,
       marzbanUsername: null,
       subscriptionUrl: null,
+      selectedLineCode: null,
+      selectedNodeId: null,
+    };
+  }
+
+  private async getAllowedLines(accessToken: string): Promise<AllowedLineView[]> {
+    const regions = (await this.listRegions(accessToken)).items as AllowedLineView[];
+    return regions.filter((item) => item.isAllowed);
+  }
+
+  private async resolveNodesForLine(
+    line: AllowedLineView,
+    subscription: SubscriptionState,
+    allowedLineCount: number,
+  ): Promise<VpnNodeView[]> {
+    const marzbanHosts =
+      allowedLineCount === 1 ? await this.resolveNodesFromMarzbanHosts(line, subscription) : [];
+    if (marzbanHosts.length > 0) {
+      return marzbanHosts;
+    }
+
+    const catalogNodes = await this.clientCatalogService.listNodes({
+      regionIds: [line.regionId],
+      status: 'ACTIVE',
+    });
+    return catalogNodes.map((node) =>
+      this.toCatalogNodeView(line, node, subscription.selectedNodeId),
+    );
+  }
+
+  private async resolveNodesFromMarzbanHosts(
+    line: AllowedLineView,
+    subscription: SubscriptionState,
+  ): Promise<VpnNodeView[]> {
+    const hosts = await this.marzbanService.listHostSettings();
+    return hosts.map((host) => {
+      const nodeId = this.buildHostNodeId(host.inboundTag, host.address, host.port, host.remark);
+      return {
+        nodeId,
+        nodeName: host.remark,
+        lineCode: line.lineCode,
+        lineName: line.lineName,
+        regionCode: line.regionGroupCode,
+        regionName: line.regionGroupName,
+        host: host.address,
+        port: host.port,
+        status: host.isDisabled ? 'DISABLED' : 'ACTIVE',
+        healthStatus: 'HEALTHY',
+        selected: subscription.selectedNodeId === nodeId,
+        source: 'marzban-host' as const,
+      };
+    });
+  }
+
+  private toCatalogNodeView(
+    line: AllowedLineView,
+    node: ClientCatalogVpnNode,
+    selectedNodeId: string | null,
+  ): VpnNodeView {
+    return {
+      nodeId: node.nodeId,
+      nodeName: node.nodeCode,
+      lineCode: line.lineCode,
+      lineName: line.lineName,
+      regionCode: line.regionGroupCode,
+      regionName: line.regionGroupName,
+      host: node.host,
+      port: node.port,
+      status: node.status,
+      healthStatus: node.healthStatus,
+      selected: selectedNodeId === node.nodeId,
+      source: 'catalog-node',
+    };
+  }
+
+  private buildHostNodeId(
+    inboundTag: string,
+    address: string,
+    port: number,
+    remark: string,
+  ) {
+    return createHash('sha1')
+      .update(`${inboundTag}|${address}|${port}|${remark}`)
+      .digest('hex')
+      .slice(0, 24);
+  }
+
+  private toLineIdentity(region: ClientCatalogVpnRegion) {
+    const lineCode = region.regionCode;
+    const lineName = region.displayName;
+    const regionGroupCode = lineCode.split('_')[0] || lineCode;
+    const regionGroupName = lineName.split('-')[0]?.trim() || lineName;
+    return {
+      lineCode,
+      lineName,
+      regionGroupCode,
+      regionGroupName,
     };
   }
 

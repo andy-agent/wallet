@@ -17,6 +17,8 @@ export interface SubscriptionState {
   maxActiveSessions: number;
   marzbanUsername: string | null;
   subscriptionUrl: string | null;
+  selectedLineCode: string | null;
+  selectedNodeId: string | null;
 }
 
 export interface PersistedSubscriptionRecord extends SubscriptionState {

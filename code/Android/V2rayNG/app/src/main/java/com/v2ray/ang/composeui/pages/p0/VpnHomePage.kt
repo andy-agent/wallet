@@ -32,6 +32,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -412,16 +413,13 @@ private fun OverviewHeader(alertCount: Int) {
             Text(
                 text = "CONTROL PLANE",
                 color = OverviewHeaderBlue,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 1.6.sp,
+                style = MaterialTheme.typography.labelLarge,
             )
             Text(
                 text = "网络与资产总览",
                 color = OverviewInk,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Black,
-                lineHeight = 34.sp,
+                style = MaterialTheme.typography.headlineLarge,
             )
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             }
@@ -437,8 +435,7 @@ private fun OverviewHeader(alertCount: Int) {
             Text(
                 text = "${maxOf(alertCount, 0)} 条实时提醒",
                 color = OverviewOrange,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.labelMedium,
             )
         }
     }
@@ -475,8 +472,7 @@ private fun OverviewSearchBar() {
             text = "搜索节点 / 币种 / 订单 / 标签",
             modifier = Modifier.weight(1f),
             color = OverviewMuted,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.bodyMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -490,8 +486,7 @@ private fun OverviewSearchBar() {
             Text(
                 text = "智能筛选",
                 color = OverviewBlue,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelMedium,
             )
         }
     }
@@ -527,8 +522,7 @@ private fun SecureTunnelCard(
                 Text(
                     text = "Secure Tunnel",
                     color = OverviewInk,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Black,
+                    style = MaterialTheme.typography.titleLarge,
                 )
                 StatusPill(
                     text = "${connectionChipLabel(uiState)} · ${uiState.vlessRegionLabel}",
@@ -553,9 +547,7 @@ private fun SecureTunnelCard(
                     Text(
                         text = uiState.overviewValueText,
                         color = OverviewInk,
-                        fontSize = 44.sp,
-                        fontWeight = FontWeight.Black,
-                        lineHeight = 48.sp,
+                        style = MaterialTheme.typography.headlineLarge,
                     )
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -564,19 +556,17 @@ private fun SecureTunnelCard(
                         Text(
                             text = "总资产",
                             color = OverviewBody,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
+                            style = MaterialTheme.typography.bodyLarge,
                         )
                         Text(
                             text = "•",
                             color = OverviewMuted,
-                            fontSize = 16.sp,
+                            style = MaterialTheme.typography.bodyLarge,
                         )
                         Text(
                             text = overviewCaption(uiState),
                             color = if (isOrdersResolved(uiState)) OverviewGreen else OverviewMuted,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -677,15 +667,13 @@ private fun TunnelOrb(
             Text(
                 text = primaryText,
                 color = OverviewBlue,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Black,
+                style = MaterialTheme.typography.titleMedium,
             )
             Text(
                 text = secondaryText,
                 color = OverviewBody,
-                fontSize = 11.sp,
                 textAlign = TextAlign.Center,
-                lineHeight = 14.sp,
+                style = MaterialTheme.typography.labelSmall,
             )
         }
     }
@@ -710,16 +698,14 @@ private fun CompactStatCard(
             Text(
                 text = label,
                 color = OverviewMuted,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = value,
                 color = OverviewInk,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Black,
+                style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
         )
@@ -745,8 +731,7 @@ private fun SecondaryTunnelButton(
         Text(
             text = text,
             color = OverviewInk,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Black,
+            style = MaterialTheme.typography.labelLarge,
             maxLines = 1,
             overflow = TextOverflow.Clip,
         )
@@ -771,8 +756,7 @@ private fun PrimaryTunnelButton(
         Text(
             text = text,
             color = Color.White,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Black,
+            style = MaterialTheme.typography.labelLarge,
             maxLines = 1,
             overflow = TextOverflow.Clip,
         )
@@ -789,8 +773,7 @@ private fun OverviewSectionHeader(title: String) {
         Text(
             text = title,
             color = OverviewInk,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Black,
+            style = MaterialTheme.typography.titleLarge,
         )
     }
 }
@@ -831,8 +814,7 @@ private fun OverviewQuickActions(actions: List<OverviewAction>) {
                 Text(
                     text = action.label,
                     color = OverviewInk,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                 )
@@ -884,14 +866,12 @@ private fun OverviewAlerts(alerts: List<OverviewAlert>) {
                     Text(
                         text = alert.title,
                         color = OverviewInk,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Black,
+                        style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
                         text = alert.subtitle,
                         color = OverviewBody,
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
+                        style = MaterialTheme.typography.bodySmall,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -925,8 +905,7 @@ private fun StatusPill(
         Text(
             text = text,
             color = if (positive) Color(0xFF1DAA73) else OverviewBlue,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelMedium,
         )
     }
 }
@@ -982,8 +961,7 @@ private fun OverviewBottomNav(
                 Text(
                     text = label,
                     color = if (active) OverviewBlue else OverviewBody,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelSmall,
                     textAlign = TextAlign.Center,
                 )
             }

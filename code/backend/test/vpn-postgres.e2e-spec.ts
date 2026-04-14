@@ -168,6 +168,36 @@ describe('VPN Postgres runtime state (e2e)', () => {
       }),
     ]);
 
+    const nodes = await request(app.getHttpServer())
+      .get('/api/client/v1/vpn/nodes?lineCode=JP_DB_BASIC')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(nodes.body.data.items).toEqual([
+      expect.objectContaining({
+        lineCode: 'JP_DB_BASIC',
+        lineName: '日本-数据库基础线路',
+        regionCode: 'JP',
+        regionName: '日本',
+        nodeName: 'JP-DB-01',
+        host: 'jp-db-01.example.com',
+      }),
+    ]);
+
+    const selection = await request(app.getHttpServer())
+      .post('/api/client/v1/vpn/selection')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        lineCode: 'JP_DB_BASIC',
+        nodeId: nodes.body.data.items[0].nodeId,
+      })
+      .expect(201);
+
+    expect(selection.body.data.selectedLineCode).toBe('JP_DB_BASIC');
+    expect(selection.body.data.selectedLineName).toBe('日本-数据库基础线路');
+    expect(selection.body.data.selectedNodeId).toBe(nodes.body.data.items[0].nodeId);
+    expect(selection.body.data.selectedNodeName).toBe('JP-DB-01');
+
     const issue = await request(app.getHttpServer())
       .post('/api/client/v1/vpn/config/issue')
       .set('authorization', `Bearer ${accessToken}`)
@@ -201,6 +231,9 @@ describe('VPN Postgres runtime state (e2e)', () => {
 
     expect(status.body.data.canIssueConfig).toBe(true);
     expect(status.body.data.currentRegionCode).toBe('JP_DB_BASIC');
+    expect(status.body.data.selectedLineCode).toBe('JP_DB_BASIC');
+    expect(status.body.data.selectedLineName).toBe('日本-数据库基础线路');
+    expect(status.body.data.selectedNodeName).toBe('JP-DB-01');
   });
 
   it('backfills marzban access for a real active subscription missing marzban fields', async () => {

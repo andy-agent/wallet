@@ -63,16 +63,10 @@ export class ClientCatalogService {
   }
 
   async selectIssueNode(regionId: string): Promise<ClientCatalogVpnNode | null> {
-    const nodes = this.postgresDataAccessService.isEnabled()
-      ? ((await this.postgresDataAccessService.listVpnNodes({
-          page: 1,
-          pageSize: 100,
-          regionId,
-          status: 'ACTIVE',
-        })).items as unknown as ClientCatalogVpnNode[])
-      : BOOTSTRAP_CLIENT_VPN_NODES.filter(
-          (node) => node.regionId === regionId && node.status === 'ACTIVE',
-        );
+    const nodes = await this.listNodes({
+      regionIds: [regionId],
+      status: 'ACTIVE',
+    });
 
     const candidates = nodes
       .filter((node) => this.isAndroidImportableNode(node))
@@ -87,6 +81,53 @@ export class ClientCatalogService {
       });
 
     return candidates[0] ?? null;
+  }
+
+  async listNodes(params: {
+    regionIds?: string[];
+    status?: string;
+    healthStatus?: string;
+  } = {}): Promise<ClientCatalogVpnNode[]> {
+    const regionIds = (params.regionIds ?? []).filter(Boolean);
+    if (this.postgresDataAccessService.isEnabled()) {
+      if (regionIds.length === 0) {
+        const result = await this.postgresDataAccessService.listVpnNodes({
+          page: 1,
+          pageSize: 100,
+          status: params.status,
+          healthStatus: params.healthStatus,
+        });
+        return result.items as unknown as ClientCatalogVpnNode[];
+      }
+
+      const batches = await Promise.all(
+        regionIds.map((regionId) =>
+          this.postgresDataAccessService.listVpnNodes({
+            page: 1,
+            pageSize: 100,
+            regionId,
+            status: params.status,
+            healthStatus: params.healthStatus,
+          }),
+        ),
+      );
+      return batches.flatMap(
+        (result) => result.items as unknown as ClientCatalogVpnNode[],
+      );
+    }
+
+    return BOOTSTRAP_CLIENT_VPN_NODES.filter((node) => {
+      if (regionIds.length > 0 && !regionIds.includes(node.regionId)) {
+        return false;
+      }
+      if (!this.matchesStatus(node.status, params.status)) {
+        return false;
+      }
+      if (params.healthStatus && !this.matchesStatus(node.healthStatus, params.healthStatus)) {
+        return false;
+      }
+      return true;
+    });
   }
 
   async getConfigIssueMinutes(): Promise<number> {

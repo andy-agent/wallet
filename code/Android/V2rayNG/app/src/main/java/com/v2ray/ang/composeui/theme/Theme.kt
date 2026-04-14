@@ -23,9 +23,10 @@ fun CryptoVpnTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
+    val typography = rememberAdaptiveTypography()
     MaterialTheme(
         colorScheme = CryptoVpnLightColors,
-        typography = CryptoVpnTypography,
+        typography = typography,
         shapes = CryptoVpnShapes,
         content = content,
     )

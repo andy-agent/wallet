@@ -9,9 +9,11 @@ import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.common.model.FeatureMetric
 import com.v2ray.ang.composeui.global.session.SessionEvictedDialogUiState
 import com.v2ray.ang.composeui.global.session.sessionEvictedDialogPreviewState
+import com.v2ray.ang.composeui.p0.model.EmailRegisterActionResult
 import com.v2ray.ang.composeui.p0.model.EmailRegisterUiState
 import com.v2ray.ang.composeui.p0.model.ForceUpdateUiState
 import com.v2ray.ang.composeui.p0.model.OptionalUpdateUiState
+import com.v2ray.ang.composeui.p0.model.ResetPasswordActionResult
 import com.v2ray.ang.composeui.p0.model.ResetPasswordUiState
 import com.v2ray.ang.composeui.p0.model.emailRegisterPreviewState
 import com.v2ray.ang.composeui.p0.model.forceUpdatePreviewState
@@ -19,12 +21,17 @@ import com.v2ray.ang.composeui.p0.model.optionalUpdatePreviewState
 import com.v2ray.ang.composeui.p0.model.resetPasswordPreviewState
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutRouteArgs
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutUiState
+import com.v2ray.ang.composeui.p1.model.OrderDetailRowUi
 import com.v2ray.ang.composeui.p1.model.OrderDetailRouteArgs
 import com.v2ray.ang.composeui.p1.model.OrderDetailUiState
+import com.v2ray.ang.composeui.p1.model.OrderListItemUi
 import com.v2ray.ang.composeui.p1.model.OrderListUiState
 import com.v2ray.ang.composeui.p1.model.OrderResultRouteArgs
 import com.v2ray.ang.composeui.p1.model.OrderResultUiState
+import com.v2ray.ang.composeui.p1.model.P1ScreenState
+import com.v2ray.ang.composeui.p1.model.PlanOptionUi
 import com.v2ray.ang.composeui.p1.model.PlansUiState
+import com.v2ray.ang.composeui.p1.model.RegionOptionUi
 import com.v2ray.ang.composeui.p1.model.RegionSelectionUiState
 import com.v2ray.ang.composeui.p1.model.WalletPaymentConfirmRouteArgs
 import com.v2ray.ang.composeui.p1.model.WalletPaymentConfirmUiState
@@ -137,18 +144,25 @@ import com.v2ray.ang.payment.data.api.CommissionLedgerItem
 import com.v2ray.ang.payment.data.api.CommissionSummaryData
 import com.v2ray.ang.payment.data.api.CurrentSubscriptionData
 import com.v2ray.ang.payment.data.api.MeData
+import com.v2ray.ang.payment.data.api.PasswordResetCodeRequest
+import com.v2ray.ang.payment.data.api.PasswordResetRequest
 import com.v2ray.ang.payment.data.api.ReferralOverviewData
 import com.v2ray.ang.payment.data.api.WithdrawalItem
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
+import com.v2ray.ang.payment.data.local.entity.VpnNodeCacheEntity
+import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
 import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.model.Plan
 import com.v2ray.ang.payment.data.repository.PaymentRepository
 import com.v2ray.ang.handler.MmkvManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.util.UUID
 
 class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     private val paymentRepository = PaymentRepository(context.applicationContext)
@@ -180,11 +194,12 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         return EmailRegisterUiState(
             fields = listOf(
                 FeatureField("email", "邮箱", cached?.email ?: "", "将作为登录与找回凭据"),
-                FeatureField("code", "验证码", "", "真实接口支持发送邮箱验证码"),
-                FeatureField("password", "登录密码", "", "需包含字母与数字"),
-                FeatureField("invite", "邀请码", "", "选填"),
+                FeatureField("code", "验证码", "", "先点击发送验证码，再填写收到的 6 位验证码"),
+                FeatureField("password", "登录密码", "", "至少 8 位，建议混合字母和数字"),
+                FeatureField("invite", "邀请码", "", "选填，注册成功后会尝试真实绑定"),
             ),
-            note = "已切换到真实认证域数据源；当前页面动作仍为模板流，下一步可继续接通注册提交。",
+            summary = "在当前 Compose 页内完成真实发码、注册和邀请码绑定。",
+            note = "注册动作将直接调用真实后端；只有成功后才进入主界面。",
         )
     }
 
@@ -193,144 +208,384 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         return ResetPasswordUiState(
             fields = listOf(
                 FeatureField("email", "邮箱", cached?.email ?: "", "会向该邮箱发送验证码"),
-                FeatureField("code", "验证码", "", "请填写收到的验证码"),
-                FeatureField("password", "新密码", "", "后端 reset endpoint 尚未提供"),
+                FeatureField("code", "验证码", "", "先发送验证码，再填写收到的 6 位验证码"),
+                FeatureField("password", "新密码", "", "重置后立即使用新密码登录"),
+                FeatureField("confirm", "确认密码", "", "保持两次输入一致"),
             ),
-            note = "已切换到真实认证域数据源；当前页面动作仍为模板流，等待后端 reset-password 能力补齐。",
+            summary = "通过真实密码重置接口恢复当前账号访问权限。",
+            note = "密码重置只会在后端确认成功后返回登录页。",
         )
     }
 
+    override suspend fun requestEmailRegisterCode(email: String): EmailRegisterActionResult = withContext(Dispatchers.IO) {
+        val normalizedEmail = email.trim()
+        if (normalizedEmail.isBlank()) {
+            return@withContext EmailRegisterActionResult(
+                success = false,
+                errorMessage = "请先填写邮箱地址",
+            )
+        }
+        val result = paymentRepository.requestRegisterCode(normalizedEmail)
+        if (result.isSuccess) {
+            EmailRegisterActionResult(
+                success = true,
+                successMessage = "验证码已发送。当前后端验证码链路仍为占位投递，请按实际收到的验证码继续。",
+            )
+        } else {
+            val message = result.exceptionOrNull()?.message ?: "发送验证码失败"
+            EmailRegisterActionResult(
+                success = false,
+                errorMessage = message,
+                unavailable = true,
+            )
+        }
+    }
+
+    override suspend fun registerEmail(
+        email: String,
+        password: String,
+        code: String,
+        inviteCode: String,
+    ): EmailRegisterActionResult = withContext(Dispatchers.IO) {
+        val normalizedEmail = email.trim()
+        val normalizedCode = code.trim()
+        val normalizedInvite = inviteCode.trim()
+        if (normalizedEmail.isBlank() || normalizedCode.isBlank() || password.isBlank()) {
+            return@withContext EmailRegisterActionResult(
+                success = false,
+                errorMessage = "邮箱、验证码和密码都必须填写",
+            )
+        }
+
+        val registerResult = paymentRepository.register(
+            email = normalizedEmail,
+            password = password,
+            code = normalizedCode,
+        )
+        if (registerResult.isFailure) {
+            return@withContext EmailRegisterActionResult(
+                success = false,
+                errorMessage = registerResult.exceptionOrNull()?.message ?: "注册失败",
+                unavailable = true,
+            )
+        }
+
+        val successMessage = if (normalizedInvite.isNotBlank()) {
+            val bindResult = paymentRepository.bindReferralCode(normalizedInvite)
+            if (bindResult.isSuccess) {
+                "账户已创建，并已绑定邀请码。"
+            } else {
+                "账户已创建，但邀请码绑定失败：${bindResult.exceptionOrNull()?.message ?: "未知错误"}"
+            }
+        } else {
+            "账户已创建并已登录。"
+        }
+
+        EmailRegisterActionResult(
+            success = true,
+            successMessage = successMessage,
+            completed = true,
+        )
+    }
+
+    override suspend fun requestResetPasswordCode(email: String): ResetPasswordActionResult = withContext(Dispatchers.IO) {
+        val normalizedEmail = email.trim()
+        if (normalizedEmail.isBlank()) {
+            return@withContext ResetPasswordActionResult(
+                success = false,
+                errorMessage = "请先填写邮箱地址",
+            )
+        }
+        try {
+            val response = paymentRepository.api.requestPasswordResetCode(
+                PasswordResetCodeRequest(email = normalizedEmail),
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                ResetPasswordActionResult(
+                    success = true,
+                    successMessage = "重置验证码已发送，请检查邮箱。",
+                )
+            } else {
+                ResetPasswordActionResult(
+                    success = false,
+                    errorMessage = response.body()?.message ?: "发送重置验证码失败",
+                    unavailable = true,
+                )
+            }
+        } catch (e: Exception) {
+            ResetPasswordActionResult(
+                success = false,
+                errorMessage = e.message ?: "发送重置验证码失败",
+                unavailable = true,
+            )
+        }
+    }
+
+    override suspend fun resetPassword(
+        email: String,
+        code: String,
+        password: String,
+    ): ResetPasswordActionResult = withContext(Dispatchers.IO) {
+        val normalizedEmail = email.trim()
+        val normalizedCode = code.trim()
+        if (normalizedEmail.isBlank() || normalizedCode.isBlank() || password.isBlank()) {
+            return@withContext ResetPasswordActionResult(
+                success = false,
+                errorMessage = "邮箱、验证码和新密码都必须填写",
+            )
+        }
+        try {
+            val response = paymentRepository.api.resetPassword(
+                idempotencyKey = UUID.randomUUID().toString(),
+                request = PasswordResetRequest(
+                    email = normalizedEmail,
+                    code = normalizedCode,
+                    password = password,
+                ),
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                ResetPasswordActionResult(
+                    success = true,
+                    successMessage = "密码已重置，请使用新密码重新登录。",
+                    completed = true,
+                )
+            } else {
+                ResetPasswordActionResult(
+                    success = false,
+                    errorMessage = response.body()?.message ?: "密码重置失败",
+                    unavailable = true,
+                )
+            }
+        } catch (e: Exception) {
+            ResetPasswordActionResult(
+                success = false,
+                errorMessage = e.message ?: "密码重置失败",
+                unavailable = true,
+            )
+        }
+    }
+
     override suspend fun getPlansState(): PlansUiState {
-        val plans = paymentRepository.getPlans().getOrNull()
+        val plansResult = paymentRepository.getPlans()
+        val plans = plansResult.getOrNull()
+        if (plansResult.isFailure) {
+            val failureMessage = plansResult.exceptionOrNull()?.message ?: "套餐服务不可用"
+            return PlansUiState(
+                summary = "套餐页无法完成真实加载。",
+                screenState = P1ScreenState(
+                    errorMessage = failureMessage,
+                    unavailableMessage = if (failureMessage.contains("未登录")) {
+                        "登录后才能加载真实套餐。"
+                    } else {
+                        null
+                    },
+                ),
+                note = "套餐页未再回退到 Mock 仓库；当前直接暴露真实错误。",
+            )
+        }
         if (plans.isNullOrEmpty()) {
             return PlansUiState(
-                metrics = listOf(
-                    FeatureMetric("套餐数量", "0"),
-                    FeatureMetric("状态", "未取到真实套餐"),
-                    FeatureMetric("数据源", "PaymentRepository"),
-                ),
-                highlights = emptyList(),
-                summary = "当前未取到真实套餐数据。",
+                summary = "当前没有可售的真实套餐。",
+                screenState = P1ScreenState(emptyMessage = "真实套餐接口返回空列表。"),
                 note = "套餐页未再回退到 Mock 仓库；保持真实接口空态。",
             )
         }
 
         val sortedPlans = plans.sortedBy { it.displayOrder }
         return PlansUiState(
-            metrics = sortedPlans.take(3).map {
-                FeatureMetric(it.getDurationDisplay(), "$${it.priceUsd}")
-            },
-            highlights = sortedPlans.take(4).map {
-                FeatureListItem(
+            summary = "已从真实套餐接口拉取 ${sortedPlans.size} 个计划。",
+            screenState = P1ScreenState(),
+            plans = sortedPlans.map {
+                PlanOptionUi(
+                    planCode = it.planCode,
                     title = it.name,
-                    subtitle = it.description ?: it.regionAccessPolicy,
-                    trailing = "${it.maxActiveSessions} 设备",
-                    badge = it.badge ?: "LIVE",
+                    description = it.description ?: it.regionAccessPolicy,
+                    priceText = "$${it.priceUsd}",
+                    durationText = it.getDurationDisplay(),
+                    maxSessionsText = "${it.maxActiveSessions} 台设备",
+                    badge = it.badge,
+                    paymentMethods = buildList {
+                        if (it.supportsUsdtTrc20()) add("USDT-TRON")
+                        add("USDT-SOL")
+                        if (it.supportsSol()) add("SOL")
+                    },
                 )
             },
-            summary = "已从真实套餐接口拉取 ${sortedPlans.size} 个计划。",
+            selectedPlanCode = sortedPlans.firstOrNull()?.planCode,
             note = "套餐数据来自 PaymentRepository.getPlans()。",
         )
     }
 
     override suspend fun getRegionSelectionState(): RegionSelectionUiState {
-        val nodes = localServerSnapshots()
-        val bestLatency = nodes.mapNotNull { it.latencyMs }.minOrNull()
-        val preferredProtocol = nodes.firstOrNull()?.protocol ?: "--"
-
-        return RegionSelectionUiState(
-            metrics = listOf(
-                FeatureMetric("最佳延迟", bestLatency?.let { "$it ms" } ?: "--"),
-                FeatureMetric("可用节点", nodes.size.toString()),
-                FeatureMetric("优先协议", preferredProtocol),
-            ),
-            fields = listOf(
-                FeatureField(
-                    key = "search",
-                    label = "节点搜索",
-                    value = "",
-                    supportingText = "当前基于本地节点列表过滤，不再使用固定演示节点。",
+        val vpnStatus = paymentRepository.getVpnStatus().getOrNull()
+        val syncResult = paymentRepository.syncVpnNodesFromServer(force = false)
+        val cached = buildRegionSelectionStateFromCache(vpnStatus)
+        return if (syncResult.isSuccess) {
+            (buildRegionSelectionStateFromCache(vpnStatus) ?: cached ?: RegionSelectionUiState(
+                summary = "当前没有可用节点。",
+                screenState = P1ScreenState(emptyMessage = "服务器当前没有返回任何节点。"),
+            )).copy(
+                note = "节点数据来自本地缓存，并已按服务器结果覆盖同步。",
+            )
+        } else {
+            val failureMessage = syncResult.exceptionOrNull()?.message ?: "节点服务不可用"
+            cached?.copy(
+                screenState = P1ScreenState(errorMessage = failureMessage),
+                note = "当前展示本地缓存节点；远端同步失败。",
+            ) ?: RegionSelectionUiState(
+                summary = "区域选择页无法完成真实加载。",
+                screenState = P1ScreenState(
+                    errorMessage = failureMessage,
+                    unavailableMessage = if (failureMessage.contains("未登录")) {
+                        "登录后才能加载真实节点。"
+                    } else {
+                        null
+                    },
                 ),
-            ),
-            highlights = nodes.map {
-                FeatureListItem(
-                    title = it.displayName,
-                    subtitle = it.description,
-                    trailing = it.latencyMs?.let { latency -> "$latency ms" } ?: "--",
-                    badge = it.protocol,
-                )
-            },
-            summary = if (nodes.isNotEmpty()) {
-                "节点选择页已切换到本地真实节点列表。"
-            } else {
-                "当前未导入本地节点，页面保持明确空态。"
-            },
-            note = "节点数据来自 MmkvManager 本地服务器列表与测速缓存。",
+                note = "节点目录当前既无本地缓存也无法从服务器同步。",
+            )
+        }
+    }
+
+    override suspend fun getCachedRegionSelectionState(): RegionSelectionUiState? {
+        return buildRegionSelectionStateFromCache(paymentRepository.getVpnStatus().getOrNull())
+    }
+
+    override suspend fun selectVpnNode(lineCode: String, nodeId: String): RegionSelectionUiState {
+        val selection = paymentRepository.selectVpnNode(lineCode, nodeId)
+        if (selection.isFailure) {
+            return getRegionSelectionState().copy(
+                screenState = P1ScreenState(
+                    errorMessage = selection.exceptionOrNull()?.message ?: "保存节点选择失败",
+                ),
+            )
+        }
+
+        paymentRepository.getVpnNodes(lineCode).getOrNull()
+            ?.firstOrNull { it.nodeId == nodeId }
+            ?.let { paymentRepository.selectLocalServerForNode(it) }
+
+        return getRegionSelectionState().copy(selectionApplied = true)
+    }
+
+    private suspend fun buildRegionSelectionStateFromCache(
+        vpnStatus: com.v2ray.ang.payment.data.api.VpnStatusData?,
+    ): RegionSelectionUiState? {
+        val userId = paymentRepository.getCurrentUserId() ?: return null
+        val cachedNodes = paymentRepository.getCachedVpnNodes(userId = userId)
+        if (cachedNodes.isEmpty()) {
+            return null
+        }
+        val runtimes = paymentRepository.getCachedVpnNodeRuntime(userId)
+            .associateBy { it.nodeId }
+        val selectedNodeId =
+            vpnStatus?.selectedNodeId ?: runtimes.values.firstOrNull { it.selected }?.nodeId
+        val selectedLineCode =
+            vpnStatus?.selectedLineCode ?: runtimes.values.firstOrNull { it.selected }?.lineCode
+        val regions = cachedNodes.map { cache ->
+            val runtime = runtimes[cache.nodeId]
+            cache.toRegionOption(runtime, selectedNodeId)
+        }
+        return RegionSelectionUiState(
+            summary = "已从本地缓存加载 ${regions.size} 个节点。",
+            screenState = P1ScreenState(),
+            regions = regions,
+            selectedRegionCode = vpnStatus?.selectedRegionCode ?: regions.firstOrNull()?.regionCode,
+            selectedLineCode = selectedLineCode ?: regions.firstOrNull()?.lineCode,
+            selectedNodeId = selectedNodeId ?: regions.firstOrNull()?.nodeId,
+            note = "节点目录先读本地缓存，再由服务器覆盖同步。",
         )
     }
 
     override suspend fun getOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState {
+        if (args.planId.isBlank()) {
+            return OrderCheckoutUiState(
+                summary = "缺少真实套餐标识，无法创建订单。",
+                screenState = P1ScreenState(errorMessage = "planId 不能为空"),
+                note = "结算页必须由真实套餐路由进入。",
+            )
+        }
         val order = resolveCheckoutOrder(args.planId)
-        val plan = paymentRepository.getPlans().getOrNull()?.firstOrNull { it.planCode == args.planId }
+        val plan = findPlanByCode(args.planId)
         return if (order != null) {
             OrderCheckoutUiState(
-                metrics = listOf(
-                    FeatureMetric("套餐", order.planName),
-                    FeatureMetric("金额", "${order.payment.amountCrypto} ${order.payment.assetCode}"),
-                    FeatureMetric("网络", order.quoteNetworkCode),
-                ),
-                fields = listOf(
-                    FeatureField("invoice", "账单邮箱", paymentRepository.getCachedCurrentUser()?.email ?: "", "用于发送支付凭证"),
-                    FeatureField("remark", "订单备注", order.orderNo, "真实订单号已生成"),
-                ),
-                highlights = listOf(
-                    FeatureListItem("订单号", order.orderNo, order.statusText, "LIVE"),
-                    FeatureListItem("收款地址", order.payment.receiveAddress.ifBlank { "--" }, order.quoteNetworkCode, "PAY"),
-                    FeatureListItem("套餐说明", plan?.description ?: plan?.regionAccessPolicy ?: "", plan?.getDurationDisplay() ?: "", "PLAN"),
-                ),
-                summary = "真实订单已生成并绑定到当前结算页。",
+                summary = "真实订单已创建，可继续查看支付确认。",
+                screenState = P1ScreenState(),
+                planCode = order.planCode,
+                planTitle = order.planName,
+                orderNo = order.orderNo,
+                orderStatus = order.status,
+                assetCode = order.paymentTarget?.assetCode ?: order.quoteAssetCode,
+                networkCode = order.paymentTarget?.networkCode ?: order.quoteNetworkCode,
+                payableAmount = order.payment.amountCrypto,
+                baseAmount = order.paymentTarget?.baseAmount ?: order.baseAmount,
+                uniqueAmountDelta = order.paymentTarget?.uniqueAmountDelta ?: order.uniqueAmountDelta,
+                collectionAddress = order.payment.receiveAddress,
+                qrText = order.payment.qrText,
+                expiresAt = order.paymentTarget?.expiresAt ?: order.expiresAt,
+                invoiceEmail = paymentRepository.getCachedCurrentUser()?.email,
+                serviceEnabled = order.paymentTarget?.serviceEnabled == true,
                 note = "订单数据来自 PaymentRepository.createOrder()/getOrder()。",
             )
         } else {
             OrderCheckoutUiState(
-                metrics = listOf(
-                    FeatureMetric("套餐", args.planId),
-                    FeatureMetric("订单状态", "未生成"),
-                    FeatureMetric("数据源", "PaymentRepository"),
-                ),
-                highlights = emptyList(),
-                summary = "当前未能生成真实订单，请重试。",
+                summary = "当前未能生成真实订单。",
+                screenState = P1ScreenState(errorMessage = "创建订单失败"),
+                planCode = args.planId,
+                planTitle = plan?.name.orEmpty(),
                 note = "结算页未再回退到 Mock 仓库；保持真实订单空态。",
             )
         }
+    }
+
+    private fun VpnNodeCacheEntity.toRegionOption(
+        runtime: VpnNodeRuntimeEntity?,
+        selectedNodeId: String?,
+    ): RegionOptionUi {
+        return RegionOptionUi(
+            nodeId = nodeId,
+            nodeName = nodeName,
+            lineCode = lineCode,
+            lineName = lineName,
+            regionCode = regionCode,
+            regionName = regionName,
+            tier = lineCode.substringAfter('_', "STANDARD"),
+            status = status,
+            healthStatus = runtime?.healthStatus ?: "UNKNOWN",
+            host = host,
+            port = port,
+            isAllowed = true,
+            isSelected = selectedNodeId == nodeId,
+            remark = remark,
+        )
     }
 
     override suspend fun getWalletPaymentConfirmState(args: WalletPaymentConfirmRouteArgs): WalletPaymentConfirmUiState {
         val order = paymentRepository.getOrder(args.orderId).getOrNull()
         return if (order != null) {
             WalletPaymentConfirmUiState(
-                metrics = listOf(
-                    FeatureMetric("订单号", order.orderNo),
-                    FeatureMetric("支付币种", order.payment.assetCode),
-                    FeatureMetric("网络手续费", order.paymentTarget?.uniqueAmountDelta ?: "0"),
-                ),
-                highlights = listOf(
-                    FeatureListItem("套餐", order.planName, order.quoteUsdAmount, "LIVE"),
-                    FeatureListItem("收款地址", order.payment.receiveAddress.ifBlank { "--" }, order.quoteNetworkCode, "CHAIN"),
-                    FeatureListItem("订单状态", order.statusText, order.expiresAt.take(10), "STATUS"),
-                ),
-                summary = "钱包支付确认已绑定真实订单。",
+                summary = "支付确认页已绑定真实订单对象。",
+                screenState = P1ScreenState(),
+                orderNo = order.orderNo,
+                planCode = order.planCode,
+                planTitle = order.planName,
+                status = order.status,
+                statusText = order.statusText,
+                assetCode = order.paymentTarget?.assetCode ?: order.quoteAssetCode,
+                networkCode = order.paymentTarget?.networkCode ?: order.quoteNetworkCode,
+                payableAmount = order.payment.amountCrypto,
+                baseAmount = order.paymentTarget?.baseAmount ?: order.baseAmount,
+                uniqueAmountDelta = order.paymentTarget?.uniqueAmountDelta ?: order.uniqueAmountDelta,
+                collectionAddress = order.payment.receiveAddress,
+                expiresAt = order.paymentTarget?.expiresAt ?: order.expiresAt,
+                txHash = order.payment.txHash,
                 note = "订单与 paymentTarget 来自真实支付接口。",
             )
         } else {
             WalletPaymentConfirmUiState(
-                metrics = listOf(
-                    FeatureMetric("订单号", args.orderId),
-                    FeatureMetric("状态", "未查询到"),
-                    FeatureMetric("数据源", "PaymentRepository"),
-                ),
-                highlights = emptyList(),
                 summary = "当前未查询到真实支付确认单。",
+                screenState = P1ScreenState(errorMessage = "未查询到订单 ${args.orderId}"),
+                orderNo = args.orderId,
                 note = "支付确认页未再回退到 Mock 仓库；保持真实订单空态。",
             )
         }
@@ -340,28 +595,29 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val order = paymentRepository.getOrder(args.orderId).getOrNull()
         return if (order != null) {
             OrderResultUiState(
-                metrics = listOf(
-                    FeatureMetric("状态", order.statusText),
-                    FeatureMetric("剩余时长", order.completedAt?.let { "已完成" } ?: order.expiresAt.take(10)),
-                    FeatureMetric("节点权限", order.planName),
-                ),
-                highlights = listOf(
-                    FeatureListItem("订单号", order.orderNo, order.quoteUsdAmount, "ORDER"),
-                    FeatureListItem("链上交易", order.payment.txHash ?: "--", order.quoteNetworkCode, "CHAIN"),
-                    FeatureListItem("订阅链接", order.subscriptionUrl ?: "待生成", "", "SUB"),
-                ),
-                summary = "订单结果来自真实订单状态查询。",
+                summary = "订单状态来自真实 refresh-status 查询。",
+                screenState = P1ScreenState(),
+                orderNo = order.orderNo,
+                planCode = order.planCode,
+                planTitle = order.planName,
+                status = order.status,
+                statusText = order.statusText,
+                payableAmount = order.payment.amountCrypto,
+                assetCode = order.paymentTarget?.assetCode ?: order.quoteAssetCode,
+                networkCode = order.paymentTarget?.networkCode ?: order.quoteNetworkCode,
+                txHash = order.payment.txHash,
+                paymentMatchedAt = order.paymentMatchedAt,
+                subscriptionUrl = order.subscriptionUrl,
+                expiresAt = order.expiresAt,
+                completedAt = order.completedAt,
+                failureReason = order.failureReason,
                 note = "使用 PaymentRepository.getOrder(orderId) 填充。",
             )
         } else {
             OrderResultUiState(
-                metrics = listOf(
-                    FeatureMetric("订单号", args.orderId),
-                    FeatureMetric("状态", "未查询到"),
-                    FeatureMetric("数据源", "PaymentRepository"),
-                ),
-                highlights = emptyList(),
                 summary = "当前未查询到真实订单结果。",
+                screenState = P1ScreenState(errorMessage = "未查询到订单 ${args.orderId}"),
+                orderNo = args.orderId,
                 note = "订单结果页未再回退到 Mock 仓库；保持真实订单空态。",
             )
         }
@@ -371,31 +627,24 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val orders = loadCachedOrders()
         if (orders.isEmpty()) {
             return OrderListUiState(
-                metrics = listOf(
-                    FeatureMetric("订单总数", "0"),
-                    FeatureMetric("状态", "暂无真实订单"),
-                    FeatureMetric("数据源", "LocalPaymentRepository"),
-                ),
-                highlights = emptyList(),
-                summary = "当前账号暂无真实订单缓存。",
+                summary = "当前账号暂无真实订单。",
+                screenState = P1ScreenState(emptyMessage = "当前账号没有真实订单缓存。"),
                 note = "订单列表页未再回退到 Mock 仓库；保持真实空态。",
             )
         }
         return OrderListUiState(
-            metrics = listOf(
-                FeatureMetric("订单总数", orders.size.toString()),
-                FeatureMetric("生效中", orders.count { it.status in liveStatuses }.toString()),
-                FeatureMetric("待续费", orders.count { it.status == PaymentConfig.OrderStatus.PENDING_PAYMENT }.toString()),
-            ),
-            highlights = orders.take(4).map {
-                FeatureListItem(
-                    title = it.planName,
-                    subtitle = it.orderNo,
-                    trailing = "${it.amount} ${it.assetCode}",
-                    badge = it.status,
+            summary = "订单列表来自真实订单缓存。",
+            screenState = P1ScreenState(),
+            orders = orders.sortedByDescending { it.createdAt }.map {
+                OrderListItemUi(
+                    orderNo = it.orderNo,
+                    planTitle = it.planName,
+                    status = it.status,
+                    statusText = it.toOrder().statusText,
+                    amountText = "${it.amount} ${it.assetCode}",
+                    createdAt = formatEpoch(it.createdAt),
                 )
             },
-            summary = "订单列表来自当前账号缓存订单。",
             note = "使用 LocalPaymentRepository 中的订单缓存。",
         )
     }
@@ -405,28 +654,31 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             ?: loadCachedOrders().firstOrNull { it.orderNo == args.orderId }?.toOrder()
         return if (order != null) {
             OrderDetailUiState(
-                metrics = listOf(
-                    FeatureMetric("订单金额", "${order.payment.amountCrypto} ${order.payment.assetCode}"),
-                    FeatureMetric("状态", order.statusText),
-                    FeatureMetric("计费周期", order.planName),
-                ),
-                highlights = listOf(
-                    FeatureListItem("订单号", order.orderNo, order.createdAt.take(10), "LIVE"),
-                    FeatureListItem("支付地址", order.payment.receiveAddress.ifBlank { "--" }, order.quoteNetworkCode, "PAY"),
-                    FeatureListItem("订阅", order.subscriptionUrl ?: "待开通", "", "SUB"),
-                ),
                 summary = "订单详情来自真实订单查询与本地缓存。",
+                screenState = P1ScreenState(),
+                orderNo = order.orderNo,
+                planCode = order.planCode,
+                planTitle = order.planName,
+                status = order.status,
+                statusText = order.statusText,
+                rows = listOf(
+                    OrderDetailRowUi("订单号", order.orderNo),
+                    OrderDetailRowUi("套餐", order.planName),
+                    OrderDetailRowUi("金额", "${order.payment.amountCrypto} ${order.payment.assetCode}"),
+                    OrderDetailRowUi("网络", order.paymentTarget?.networkCode ?: order.quoteNetworkCode),
+                    OrderDetailRowUi("收款地址", order.payment.receiveAddress.ifBlank { "--" }),
+                    OrderDetailRowUi("链上交易", order.payment.txHash ?: "--"),
+                    OrderDetailRowUi("创建时间", order.createdAt),
+                    OrderDetailRowUi("到期时间", order.expiresAt),
+                    OrderDetailRowUi("订阅链接", order.subscriptionUrl ?: "待开通"),
+                ),
                 note = "订单详情优先使用 PaymentRepository.getOrder(orderNo)。",
             )
         } else {
             OrderDetailUiState(
-                metrics = listOf(
-                    FeatureMetric("订单号", args.orderId),
-                    FeatureMetric("状态", "未查询到"),
-                    FeatureMetric("数据源", "PaymentRepository"),
-                ),
-                highlights = emptyList(),
                 summary = "当前未查询到真实订单详情。",
+                screenState = P1ScreenState(errorMessage = "未查询到订单 ${args.orderId}"),
+                orderNo = args.orderId,
                 note = "订单详情页未再回退到 Mock 仓库；保持真实订单空态。",
             )
         }
@@ -813,8 +1065,8 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                     badge = it.protocol,
                 )
             },
-            summary = "节点测速页已切断 Mock 仓库，当前使用本地节点列表与测速缓存。",
-            note = "后续可继续替换为真实测速服务结果。",
+            summary = "节点测速页当前仅基于本地已导入节点与测速缓存，不代表远端真实测速业务。",
+            note = "当前页仍未接入独立真实测速服务；仅能视为本地节点诊断页。",
         )
     }
 
@@ -837,11 +1089,11 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 ),
             ),
             highlights = listOf(
-                FeatureListItem("默认策略", if (tokenValid) "检测到账号会话后允许自动提醒" else "未配置", "", "REAL"),
+                FeatureListItem("默认策略", if (tokenValid) "仅展示本地运行态提示" else "未配置", "", "LOCAL"),
                 FeatureListItem("会话状态", if (tokenValid) "已登录" else "需登录后配置", "", "SESSION"),
                 FeatureListItem("数据源", "本地运行时状态", "", "LOCAL"),
             ),
-            note = "不再回退到 Mock 仓库；当前页面先使用本地运行时规则状态。",
+            note = "当前未接入真实自动连接规则存储或系统生效链路；页面仍是本地运行态占位。",
         )
     }
 
@@ -853,22 +1105,22 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("模式", args.mode),
                 FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
-                FeatureMetric("数据源", "本地钱包流程"),
+                FeatureMetric("数据源", "BLOCKED"),
             ),
             fields = listOf(
                 FeatureField(
                     key = "name",
                     label = "钱包名称",
                     value = defaultName,
-                    supportingText = "当前使用本地钱包创建流程，不再回退到 Mock 仓库。",
+                    supportingText = "当前尚未接入真实钱包引擎，页面仅保留待实现输入上下文。",
                 ),
             ),
             highlights = listOf(
-                FeatureListItem("创建模式", args.mode, "本地流程", "LIVE"),
+                FeatureListItem("创建模式", args.mode, "真实钱包创建能力未接入", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据源", "本地钱包状态", "", "LOCAL"),
+                FeatureListItem("数据源", "等待钱包引擎", "", "BLOCKED"),
             ),
-            note = "不再回退到 Mock 仓库；当前页面使用本地钱包创建上下文。",
+            note = "D 类阻塞：当前没有真实钱包创建/保存/派生能力，页面不能视为已真实落地。",
         )
     }
 
@@ -896,14 +1148,14 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("导入来源", args.source),
                 FeatureMetric("账户状态", if (user != null) "已登录" else "未登录"),
-                FeatureMetric("恢复链数", "3"),
+                FeatureMetric("恢复能力", "BLOCKED"),
             ),
             highlights = listOf(
-                FeatureListItem("恢复来源", args.source, "本地导入流程", "LIVE"),
+                FeatureListItem("恢复来源", args.source, "真实助记词导入未接入", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "真实账户缓存 + 本地助记词流程", "", "REAL"),
+                FeatureListItem("数据来源", "等待钱包引擎", "", "BLOCKED"),
             ),
-            note = "助记词导入页已切断 Mock 仓库，当前以真实账户状态和本地恢复流程为准。",
+            note = "D 类阻塞：当前没有真实助记词解析/派生/导入能力。",
         )
     }
 
@@ -911,10 +1163,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         ImportPrivateKeyUiState(
             metrics = listOf(
                 FeatureMetric("目标链", args.chainId),
-                FeatureMetric("校验状态", "本地解析"),
+                FeatureMetric("校验状态", "BLOCKED"),
                 FeatureMetric("导入模式", "私钥"),
             ),
-            note = "私钥导入页保留本地真实输入流程，不再依赖 Mock 仓库。",
+            note = "D 类阻塞：当前没有真实私钥校验、地址派生与安全保存能力。",
         )
 
     override suspend fun getBackupMnemonicState(args: BackupMnemonicRouteArgs): BackupMnemonicUiState {
@@ -923,14 +1175,14 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("钱包标识", args.walletId),
                 FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
-                FeatureMetric("备份策略", "本地离线"),
+                FeatureMetric("备份策略", "BLOCKED"),
             ),
             highlights = listOf(
-                FeatureListItem("钱包标识", args.walletId, "主钱包", "LIVE"),
+                FeatureListItem("钱包标识", args.walletId, "真实助记词未接入", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "本地安全流程", "", "REAL"),
+                FeatureListItem("数据来源", "等待钱包引擎", "", "BLOCKED"),
             ),
-            note = "助记词备份页已切断 Mock 仓库，当前使用本地安全流程状态。",
+            note = "D 类阻塞：当前没有真实种子生成/读取能力，不能把页面视为有效备份页。",
         )
     }
 
@@ -938,10 +1190,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         ConfirmMnemonicUiState(
             metrics = listOf(
                 FeatureMetric("钱包标识", args.walletId),
-                FeatureMetric("校验方式", "抽查确认"),
-                FeatureMetric("状态", "待完成"),
+                FeatureMetric("校验方式", "BLOCKED"),
+                FeatureMetric("状态", "未接入"),
             ),
-            note = "助记词确认页已切断 Mock 仓库，当前使用本地确认流程状态。",
+            note = "D 类阻塞：当前没有真实助记词 challenge/verify 流程。",
         )
 
     override suspend fun getSecurityCenterState(): SecurityCenterUiState {
@@ -966,10 +1218,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         ChainManagerUiState(
             metrics = listOf(
                 FeatureMetric("钱包标识", args.walletId),
-                FeatureMetric("启用链", "TRON / SOL / ETH"),
-                FeatureMetric("默认链", "TRON"),
+                FeatureMetric("启用链", "--"),
+                FeatureMetric("默认链", "--"),
             ),
-            note = "链管理页已切断 Mock 仓库，当前使用本地钱包配置状态。",
+            note = "D 类阻塞：当前没有真实多链钱包配置读写能力。",
         )
 
     override suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState =
@@ -977,9 +1229,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("目标链", args.chainId),
                 FeatureMetric("录入模式", "手动"),
-                FeatureMetric("校验", "本地表单"),
+                FeatureMetric("校验", "BLOCKED"),
             ),
-            note = "自定义代币页已切断 Mock 仓库，当前使用本地真实录入流程。",
+            note = "D 类阻塞：当前没有真实代币 metadata 校验与保存能力。",
         )
 
     override suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState {
@@ -988,17 +1240,17 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
         return WalletManagerUiState(
             metrics = listOf(
-                FeatureMetric("钱包数量", "1"),
+                FeatureMetric("钱包数量", "--"),
                 FeatureMetric("默认钱包", args.walletId),
                 FeatureMetric("关联订单", orders.size.toString()),
             ),
             highlights = listOf(
-                FeatureListItem("默认钱包", args.walletId, "本地主钱包", "LIVE"),
+                FeatureListItem("默认钱包", args.walletId, "真实钱包列表未接入", "BLOCKED"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据源", "本地钱包管理状态", "", "LOCAL"),
+                FeatureListItem("数据源", "等待钱包引擎", "", "BLOCKED"),
             ),
-            summary = "钱包管理页已切断 Mock 仓库，当前使用本地钱包状态。",
-            note = "后续可继续接入多钱包持久化数据。",
+            summary = "钱包管理页当前仍未接入真实多钱包列表与切换能力。",
+            note = "D 类阻塞：当前不能把该页面视为真实钱包管理页。",
         )
     }
 
@@ -1025,10 +1277,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             ),
             highlights = listOf(
                 FeatureListItem("地址簿状态", "暂无本地地址记录", args.mode, "EMPTY"),
-                FeatureListItem("数据源", "本地地址簿空态", "", "LOCAL"),
+                FeatureListItem("数据源", "等待地址簿持久化", "", "BLOCKED"),
             ),
             summary = "地址簿页已切断 Mock 仓库，当前显示明确空态。",
-            note = "后续可接入本地持久化地址簿。",
+            note = "D 类阻塞：当前没有真实地址簿持久化与编辑能力。",
         )
 
     override suspend fun getGasSettingsState(args: GasSettingsRouteArgs): GasSettingsUiState =
@@ -1054,10 +1306,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             ),
             highlights = listOf(
                 FeatureListItem("Gas 状态", "等待真实链上估算", args.chainId, "PENDING"),
-                FeatureListItem("数据源", "本地设置空态", "", "LOCAL"),
+                FeatureListItem("数据源", "等待 gas estimator", "", "BLOCKED"),
             ),
             summary = "Gas 设置页已切断 Mock 仓库，当前保持明确空态。",
-            note = "后续可接入真实 gas estimator。",
+            note = "D 类阻塞：当前缺少真实 gas estimator。",
         )
 
     override suspend fun getSwapState(args: SwapRouteArgs): SwapUiState =
@@ -1065,9 +1317,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("源资产", args.fromAsset),
                 FeatureMetric("目标资产", args.toAsset),
-                FeatureMetric("数据来源", "本地钱包上下文"),
+                FeatureMetric("数据来源", "BLOCKED"),
             ),
-            note = "兑换页已切断 Mock 仓库，当前使用本地钱包上下文与真实账户状态。",
+            note = "D 类阻塞：当前没有真实 swap quote / sign / submit 能力。",
         )
 
     override suspend fun getBridgeState(args: BridgeRouteArgs): BridgeUiState =
@@ -1075,9 +1327,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("起始链", args.fromChainId),
                 FeatureMetric("目标链", args.toChainId),
-                FeatureMetric("状态", "待确认"),
+                FeatureMetric("状态", "BLOCKED"),
             ),
-            note = "桥接页已切断 Mock 仓库，当前使用本地桥接流程状态。",
+            note = "D 类阻塞：当前没有真实 bridge quote / execute 能力。",
         )
 
     override suspend fun getDappBrowserState(args: DappBrowserRouteArgs): DappBrowserUiState =
@@ -1085,9 +1337,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("入口", args.entry),
                 FeatureMetric("会话状态", if (paymentRepository.isTokenValid()) "已认证" else "匿名"),
-                FeatureMetric("安全模式", "启用"),
+                FeatureMetric("安全模式", "BLOCKED"),
             ),
-            note = "DApp 浏览器页已切断 Mock 仓库，当前使用真实账户状态与本地浏览上下文。",
+            note = "D 类阻塞：当前没有真实浏览器容器、历史、收藏或授权会话。",
         )
 
     override suspend fun getWalletConnectSessionState(args: WalletConnectSessionRouteArgs): WalletConnectSessionUiState =
@@ -1095,9 +1347,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("会话标识", args.sessionId),
                 FeatureMetric("认证状态", if (paymentRepository.isTokenValid()) "有效" else "失效"),
-                FeatureMetric("数据来源", "本地会话状态"),
+                FeatureMetric("数据来源", "BLOCKED"),
             ),
-            note = "WalletConnect 会话页已切断 Mock 仓库，当前使用本地会话上下文。",
+            note = "D 类阻塞：当前没有真实 WalletConnect session store / revoke 能力。",
         )
 
     override suspend fun getSignMessageConfirmState(args: SignMessageConfirmRouteArgs): SignMessageConfirmUiState =
@@ -1105,9 +1357,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("请求标识", args.requestId),
                 FeatureMetric("账户状态", if (paymentRepository.isTokenValid()) "已登录" else "未登录"),
-                FeatureMetric("校验", "本地签名前确认"),
+                FeatureMetric("校验", "BLOCKED"),
             ),
-            note = "签名确认页已切断 Mock 仓库，当前使用本地签名确认上下文。",
+            note = "D 类阻塞：当前没有真实签名请求队列与确认回传能力。",
         )
 
     override suspend fun getRiskAuthorizationsState(): RiskAuthorizationsUiState =
@@ -1119,10 +1371,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             ),
             highlights = listOf(
                 FeatureListItem("授权状态", "当前未接入真实授权列表", "", "EMPTY"),
-                FeatureListItem("数据源", "本地安全状态", "", "LOCAL"),
+                FeatureListItem("数据源", "等待授权记录源", "", "BLOCKED"),
             ),
             summary = "风险授权页已切断 Mock 仓库，当前显示明确空态。",
-            note = "后续可接入 WalletConnect/DApp 授权记录。",
+            note = "D 类阻塞：当前没有真实授权记录与撤销能力。",
         )
 
     override suspend fun getNftGalleryState(): NftGalleryUiState =
@@ -1134,10 +1386,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             ),
             highlights = listOf(
                 FeatureListItem("NFT 状态", "当前未接入真实 NFT 数据源", "", "EMPTY"),
-                FeatureListItem("数据源", "本地空态", "", "LOCAL"),
+                FeatureListItem("数据源", "等待 NFT 索引", "", "BLOCKED"),
             ),
             summary = "NFT 画廊页已切断 Mock 仓库，当前显示明确空态。",
-            note = "后续可接入链上资产/NFT 索引。",
+            note = "D 类阻塞：当前没有真实 NFT indexer / holdings。",
         )
 
     override suspend fun getStakingEarnState(): StakingEarnUiState =
@@ -1149,10 +1401,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             ),
             highlights = listOf(
                 FeatureListItem("质押状态", "当前未接入真实质押数据源", "", "EMPTY"),
-                FeatureListItem("数据源", "本地空态", "", "LOCAL"),
+                FeatureListItem("数据源", "等待质押域能力", "", "BLOCKED"),
             ),
             summary = "质押赚币页已切断 Mock 仓库，当前显示明确空态。",
-            note = "后续可接入真实 Earn/Staking 数据。",
+            note = "D 类阻塞：当前没有真实 Earn/Staking 数据和动作能力。",
         )
 
     override suspend fun getSessionEvictedDialogState(): SessionEvictedDialogUiState {
@@ -1280,8 +1532,14 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         planName = planName,
         orderType = PaymentConfig.PurchaseType.NEW,
         quoteAssetCode = assetCode,
-        quoteNetworkCode = if (assetCode.equals(PaymentConfig.AssetCode.SOL, true)) PaymentConfig.NetworkCode.SOLANA else PaymentConfig.NetworkCode.TRON,
-        quoteUsdAmount = amount,
+        quoteNetworkCode = networkCode.ifBlank {
+            if (assetCode.equals(PaymentConfig.AssetCode.SOL, true)) {
+                PaymentConfig.NetworkCode.SOLANA
+            } else {
+                PaymentConfig.NetworkCode.TRON
+            }
+        },
+        quoteUsdAmount = usdAmount,
         payableAmount = amount,
         status = status,
         expiresAt = expiredAt?.let(::formatEpoch) ?: formatEpoch(createdAt),

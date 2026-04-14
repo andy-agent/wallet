@@ -45,6 +45,10 @@ object PaymentConfig {
         const val SUBSCRIPTION_URL = "payment_subscription_url"
         const val CURRENT_ORDER_ID = "payment_current_order_id"
         const val DEVICE_ID = "payment_device_id"
+        const val LAST_ORDERS_SYNC_AT = "payment_last_orders_sync_at"
+        const val LAST_VPN_NODES_SYNC_AT = "payment_last_vpn_nodes_sync_at"
+        const val LAST_VPN_REGION_CODE = "payment_last_vpn_region_code"
+        const val LAST_VPN_CONFIG_EXPIRE_AT = "payment_last_vpn_config_expire_at"
         
         // Token 相关存储键
         const val ACCESS_TOKEN = "payment_access_token"

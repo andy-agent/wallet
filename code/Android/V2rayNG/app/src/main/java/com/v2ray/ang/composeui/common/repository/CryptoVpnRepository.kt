@@ -10,9 +10,24 @@ interface CryptoVpnRepository {
     suspend fun getForceUpdateState(): ForceUpdateUiState
     suspend fun getOptionalUpdateState(): OptionalUpdateUiState
     suspend fun getEmailRegisterState(): EmailRegisterUiState
+    suspend fun requestEmailRegisterCode(email: String): EmailRegisterActionResult
+    suspend fun registerEmail(
+        email: String,
+        password: String,
+        code: String,
+        inviteCode: String,
+    ): EmailRegisterActionResult
     suspend fun getResetPasswordState(): ResetPasswordUiState
+    suspend fun requestResetPasswordCode(email: String): ResetPasswordActionResult
+    suspend fun resetPassword(
+        email: String,
+        code: String,
+        password: String,
+    ): ResetPasswordActionResult
     suspend fun getPlansState(): PlansUiState
     suspend fun getRegionSelectionState(): RegionSelectionUiState
+    suspend fun getCachedRegionSelectionState(): RegionSelectionUiState? = null
+    suspend fun selectVpnNode(lineCode: String, nodeId: String): RegionSelectionUiState
     suspend fun getOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState
     suspend fun getWalletPaymentConfirmState(args: WalletPaymentConfirmRouteArgs): WalletPaymentConfirmUiState
     suspend fun getOrderResultState(args: OrderResultRouteArgs): OrderResultUiState
