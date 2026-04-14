@@ -12,6 +12,7 @@ interface P0Repository {
     suspend fun getLoginSeed(): LoginUiState
     suspend fun login(email: String, password: String): LoginResult
     suspend fun getWalletOnboardingState(): WalletOnboardingUiState
+    suspend fun getCachedVpnHomeState(): VpnHomeUiState? = null
     suspend fun getVpnHomeState(): VpnHomeUiState
     suspend fun getWalletHomeState(): WalletHomeUiState
 }

@@ -16,8 +16,6 @@ import com.v2ray.ang.composeui.p0.model.WalletChainSummary
 import com.v2ray.ang.composeui.p0.model.WalletHomeUiState
 import com.v2ray.ang.composeui.p0.model.WalletOnboardingUiState
 import com.v2ray.ang.composeui.p0.model.WatchSignal
-import com.v2ray.ang.dto.ProfileItem
-import com.v2ray.ang.dto.SubscriptionItem
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.V2RayServiceManager
 import com.v2ray.ang.payment.PaymentConfig
@@ -26,6 +24,8 @@ import com.v2ray.ang.payment.data.api.MeData
 import com.v2ray.ang.payment.data.api.VpnRegionItem
 import com.v2ray.ang.payment.data.api.VpnStatusData
 import com.v2ray.ang.payment.data.local.entity.UserEntity
+import com.v2ray.ang.payment.data.local.entity.VpnNodeCacheEntity
+import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
 import com.v2ray.ang.payment.data.model.LoginRequest
 import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.repository.PaymentRepository
@@ -40,6 +40,113 @@ import java.util.Locale
 class RealP0Repository(context: Context) : P0Repository {
     private val appContext = context.applicationContext
     private val paymentRepository = PaymentRepository(appContext)
+
+    override suspend fun getCachedVpnHomeState(): VpnHomeUiState? = withContext(Dispatchers.IO) {
+        val cachedUser = paymentRepository.getCachedCurrentUser() ?: return@withContext null
+        val currentUserId = paymentRepository.getCurrentUserId() ?: return@withContext null
+        val cachedNodeSnapshots = buildCachedNodeSnapshots(
+            cachedNodes = paymentRepository.getCachedVpnNodes(userId = currentUserId),
+            runtimes = paymentRepository.getCachedVpnNodeRuntime(userId = currentUserId),
+            selectedNodeId = paymentRepository.getCachedVpnNodeId(),
+        )
+        val cachedOrders = readLocalOrders(currentUserId)
+        val latestOrder = cachedOrders.maxByOrNull { it.createdAt }
+        val cachedSubscription = paymentRepository.getCachedSubscriptionStatus()
+        val cachedPlanCode = paymentRepository.getCachedSubscriptionPlanCode()
+        val cachedDaysRemaining = paymentRepository.getCachedSubscriptionDaysRemaining()
+        val cachedLineName = paymentRepository.getCachedVpnLineName()
+        val selectedNode = selectedCachedNode(cachedNodeSnapshots, paymentRepository.getCachedVpnNodeId())
+        val hasLocalConfig = !MmkvManager.getSelectServer().isNullOrEmpty()
+        val localSubscriptionUrl = latestOrder?.subscriptionUrl ?: paymentRepository.getSavedSubscriptionUrl()
+        val cachedSubscriptionData = buildCachedSubscriptionData(
+            planCode = cachedPlanCode,
+            status = cachedSubscription,
+            daysRemaining = cachedDaysRemaining,
+            expireAt = paymentRepository.getLastIssuedVpnConfigExpireAt(),
+            subscriptionUrl = localSubscriptionUrl,
+            marzbanUsername = paymentRepository.getSavedMarzbanUsername(),
+        )
+        val cachedVpnStatusData = buildCachedVpnStatusData(
+            subscriptionStatus = cachedSubscription,
+            currentRegionCode = paymentRepository.getLastIssuedVpnRegionCode(),
+            selectedLineCode = paymentRepository.getLastIssuedVpnRegionCode(),
+            selectedLineName = cachedLineName,
+            selectedNodeId = paymentRepository.getCachedVpnNodeId(),
+            selectedNodeName = paymentRepository.getCachedVpnNodeName(),
+            sessionStatus = paymentRepository.getCachedVpnSessionStatus(),
+        )
+        val signals = buildVpnSignals(
+            subscription = cachedSubscriptionData,
+            vpnStatus = cachedVpnStatusData,
+            latestOrder = latestOrder,
+            hasLocalConfig = hasLocalConfig,
+            localNodes = cachedNodeSnapshots,
+            localSubscriptionUrl = localSubscriptionUrl,
+        )
+
+        return@withContext VpnHomeUiState(
+            isLoading = false,
+            loadState = if (cachedNodeSnapshots.isNotEmpty() || cachedOrders.isNotEmpty() || !localSubscriptionUrl.isNullOrBlank()) {
+                P0LoadState.READY
+            } else {
+                P0LoadState.EMPTY
+            },
+            connectionStatus = resolveConnectionStatus(cachedVpnStatusData, hasLocalConfig),
+            accountLabel = cachedUser.email ?: cachedUser.username,
+            selectedRegion = selectedNode?.toRegionSpeed()
+                ?: cachedLineName?.let {
+                    RegionSpeed(
+                        regionName = it,
+                        protocol = paymentRepository.getCachedVpnNodeName() ?: "缓存节点",
+                        latencyMs = 0,
+                        load = "--",
+                    )
+                }
+                ?: RegionSpeed("待同步", "缓存待同步", 0, "--"),
+            subscription = cachedSubscriptionData?.toSummary() ?: localSubscriptionSummary(
+                latestOrder = latestOrder,
+                hasSavedSubscriptionUrl = !localSubscriptionUrl.isNullOrBlank(),
+                fallbackExpireAt = paymentRepository.getLastIssuedVpnConfigExpireAt(),
+            ),
+            autoConnectEnabled = hasLocalConfig,
+            oneTapLabel = if (hasLocalConfig) "启动已导入配置" else "导入已购配置后连接",
+            speedNodes = cachedNodeSnapshots.map { it.toRegionSpeed() },
+            watchSignals = signals,
+            overviewValueText = resolveOverviewValueText(cachedOrders, ordersSyncUnavailable = false),
+            overviewSummaryText = buildOverviewSummary(
+                orders = cachedOrders,
+                subscription = cachedSubscriptionData,
+                fallbackExpireAt = paymentRepository.getLastIssuedVpnConfigExpireAt(),
+                ordersSyncUnavailable = false,
+            ),
+            alertCount = signals.size,
+            nodeHealthPercent = calculateNodeHealthPercent(
+                localNodeCount = cachedNodeSnapshots.size,
+                allowedRegions = emptyList(),
+                cachedNodes = cachedNodeSnapshots,
+            ),
+            vlessExpiryLabel = resolveVlessExpiryLabel(
+                subscription = cachedSubscriptionData,
+                lastIssuedConfigExpireAt = paymentRepository.getLastIssuedVpnConfigExpireAt(),
+            ),
+            vlessRegionLabel = cachedVpnStatusData?.selectedLineName
+                ?: selectedNode?.lineName
+                ?: paymentRepository.getLastIssuedVpnRegionCode()
+                ?: "待同步",
+            configStatusLabel = localConfigStatusLabel(
+                hasLocalConfig = hasLocalConfig,
+                localSubscriptionUrl = localSubscriptionUrl,
+                localNodeCount = cachedNodeSnapshots.size,
+            ),
+            latestOrderLabel = latestOrder?.let { "${it.planName} · ${it.statusText}" }
+                ?: if (cachedNodeSnapshots.isNotEmpty()) {
+                    "已识别 ${cachedNodeSnapshots.size} 个缓存节点"
+                } else {
+                    resolveOrdersFallbackLabel(false)
+                },
+            canConnect = hasLocalConfig,
+        )
+    }
 
     override suspend fun getSplashState(): SplashUiState = withContext(Dispatchers.IO) {
         val cachedUser = paymentRepository.getCachedCurrentUser()
@@ -304,8 +411,14 @@ class RealP0Repository(context: Context) : P0Repository {
 
     override suspend fun getVpnHomeState(): VpnHomeUiState {
         val cachedUser = paymentRepository.getCachedCurrentUser()
-        var localNodes = localServerSnapshots()
-        var localSubscription = selectedLocalSubscription(localNodes)
+        val currentUserId = paymentRepository.getCurrentUserId()
+        var cachedNodeSnapshots = currentUserId?.let { userId ->
+            buildCachedNodeSnapshots(
+                cachedNodes = paymentRepository.getCachedVpnNodes(userId = userId),
+                runtimes = paymentRepository.getCachedVpnNodeRuntime(userId = userId),
+                selectedNodeId = null,
+            )
+        }.orEmpty()
         val lastIssuedConfigExpireAt = paymentRepository.getLastIssuedVpnConfigExpireAt()
         val lastIssuedRegionCode = paymentRepository.getLastIssuedVpnRegionCode()
         val currentOrderNo = paymentRepository.getCurrentOrderId()
@@ -315,36 +428,49 @@ class RealP0Repository(context: Context) : P0Repository {
         val activeOrder = currentOrderNo?.let { orderNo ->
             orders.firstOrNull { it.orderNo == orderNo }
         } ?: latestOrder
-        var selectedLocalRegion = selectedLocalNode(localNodes)?.toRegionSpeed()
+        var selectedLocalRegion = selectedCachedNode(cachedNodeSnapshots)?.toRegionSpeed()
         var hasLocalConfig = !MmkvManager.getSelectServer().isNullOrEmpty()
         val localSubscriptionUrl = activeOrder?.subscriptionUrl
-            ?: localSubscription?.url
             ?: paymentRepository.getSavedSubscriptionUrl()
 
-        if (localNodes.isEmpty() && !localSubscriptionUrl.isNullOrBlank()) {
+        if (cachedNodeSnapshots.isEmpty() && !currentUserId.isNullOrBlank()) {
+            paymentRepository.syncVpnNodesFromServer(force = false, userId = currentUserId)
+            cachedNodeSnapshots = buildCachedNodeSnapshots(
+                cachedNodes = paymentRepository.getCachedVpnNodes(userId = currentUserId),
+                runtimes = paymentRepository.getCachedVpnNodeRuntime(userId = currentUserId),
+                selectedNodeId = null,
+            )
+            selectedLocalRegion = selectedCachedNode(cachedNodeSnapshots)?.toRegionSpeed()
+        }
+
+        if (cachedNodeSnapshots.isEmpty() && !localSubscriptionUrl.isNullOrBlank()) {
             paymentRepository.importSubscriptionUrl(
                 subscriptionUrl = localSubscriptionUrl,
                 remarks = activeOrder?.planName ?: "CryptoVPN Subscription",
             )
-            localNodes = localServerSnapshots()
-            localSubscription = selectedLocalSubscription(localNodes)
-            selectedLocalRegion = selectedLocalNode(localNodes)?.toRegionSpeed()
             hasLocalConfig = !MmkvManager.getSelectServer().isNullOrEmpty()
         }
 
         val localSignals = buildLocalVpnSignals(
             latestOrder = activeOrder,
-            localNodes = localNodes,
-            localSubscription = localSubscription,
+            localNodes = cachedNodeSnapshots,
             localSubscriptionUrl = localSubscriptionUrl,
             hasLocalConfig = hasLocalConfig,
         )
         val meResult = paymentRepository.getMe()
         if (meResult.isFailure) {
+            getCachedVpnHomeState()?.let { cachedState ->
+                return cachedState.copy(
+                    accountLabel = cachedUser?.email ?: cachedUser?.username ?: cachedState.accountLabel,
+                    canConnect = hasLocalConfig,
+                    autoConnectEnabled = hasLocalConfig,
+                    oneTapLabel = if (hasLocalConfig) "启动已导入配置" else "导入已购配置后连接",
+                )
+            }
             val resolvedConnectionStatus = resolveConnectionStatus(null, hasLocalConfig)
             return VpnHomeUiState(
                 isLoading = false,
-                loadState = if (cachedUser == null && activeOrder == null && localNodes.isEmpty()) {
+                loadState = if (cachedUser == null && activeOrder == null && cachedNodeSnapshots.isEmpty()) {
                     P0LoadState.UNAVAILABLE
                 } else {
                     P0LoadState.READY
@@ -361,12 +487,12 @@ class RealP0Repository(context: Context) : P0Repository {
                 ),
                 subscription = localSubscriptionSummary(
                     latestOrder = activeOrder,
-                    localSubscription = localSubscription,
+                    hasSavedSubscriptionUrl = !localSubscriptionUrl.isNullOrBlank(),
                     fallbackExpireAt = lastIssuedConfigExpireAt,
                 ),
                 autoConnectEnabled = hasLocalConfig,
                 oneTapLabel = if (hasLocalConfig) "启动已导入配置" else "导入已购配置后连接",
-                speedNodes = localNodes.map { it.toRegionSpeed() },
+                speedNodes = cachedNodeSnapshots.map { it.toRegionSpeed() },
                 watchSignals = localSignals,
                 overviewValueText = resolveOverviewValueText(orders, orderSnapshot.syncUnavailable),
                 overviewSummaryText = buildOverviewSummary(
@@ -377,8 +503,9 @@ class RealP0Repository(context: Context) : P0Repository {
                 ),
                 alertCount = localSignals.size,
                 nodeHealthPercent = calculateNodeHealthPercent(
-                    localNodeCount = localNodes.size,
+                    localNodeCount = cachedNodeSnapshots.size,
                     allowedRegions = emptyList(),
+                    cachedNodes = cachedNodeSnapshots,
                 ),
                 vlessExpiryLabel = resolveVlessExpiryLabel(
                     subscription = null,
@@ -388,7 +515,7 @@ class RealP0Repository(context: Context) : P0Repository {
                 configStatusLabel = localConfigStatusLabel(
                     hasLocalConfig = hasLocalConfig,
                     localSubscriptionUrl = localSubscriptionUrl,
-                    localNodeCount = localNodes.size,
+                    localNodeCount = cachedNodeSnapshots.size,
                 ),
                 latestOrderLabel = activeOrder?.let { latest ->
                     buildString {
@@ -399,8 +526,8 @@ class RealP0Repository(context: Context) : P0Repository {
                             append(" · 已签发订阅")
                         }
                     }
-                } ?: if (localNodes.isNotEmpty()) {
-                    "已识别 ${localNodes.size} 个本地节点"
+                } ?: if (cachedNodeSnapshots.isNotEmpty()) {
+                    "已识别 ${cachedNodeSnapshots.size} 个缓存节点"
                 } else {
                     resolveOrdersFallbackLabel(orderSnapshot.syncUnavailable)
                 },
@@ -411,22 +538,34 @@ class RealP0Repository(context: Context) : P0Repository {
         val me = meResult.getOrThrow()
         val subscription = paymentRepository.getSubscription().getOrNull() ?: me.subscription
         val vpnStatus = paymentRepository.getVpnStatus().getOrNull()
+        if (!currentUserId.isNullOrBlank()) {
+            paymentRepository.syncVpnNodesFromServer(force = false, userId = currentUserId)
+            cachedNodeSnapshots = buildCachedNodeSnapshots(
+                cachedNodes = paymentRepository.getCachedVpnNodes(userId = currentUserId),
+                runtimes = paymentRepository.getCachedVpnNodeRuntime(userId = currentUserId),
+                selectedNodeId = vpnStatus?.selectedNodeId,
+            )
+            selectedLocalRegion = selectedCachedNode(
+                cachedNodeSnapshots,
+                vpnStatus?.selectedNodeId,
+            )?.toRegionSpeed()
+        }
         val connectionStatus = resolveConnectionStatus(vpnStatus, hasLocalConfig)
         val vpnRegions = paymentRepository.getVpnRegions().getOrNull().orEmpty()
         val allowedRegions = vpnRegions.filter { it.isAllowed }
+        val selectedLineName = vpnStatus?.selectedLineName?.takeIf { it.isNotBlank() }
         val selectedRegion = selectedLocalRegion ?: resolveSelectedRegion(allowedRegions, vpnStatus)
         val watchSignals = buildVpnSignals(
             subscription = subscription,
             vpnStatus = vpnStatus,
             latestOrder = activeOrder,
             hasLocalConfig = hasLocalConfig,
-            localNodes = localNodes,
-            localSubscription = localSubscription,
+            localNodes = cachedNodeSnapshots,
             localSubscriptionUrl = localSubscriptionUrl,
         )
 
         val loadState = when {
-            localNodes.isNotEmpty() || localSubscriptionUrl != null -> P0LoadState.READY
+            cachedNodeSnapshots.isNotEmpty() || localSubscriptionUrl != null -> P0LoadState.READY
             allowedRegions.isEmpty() && subscription?.status == "ACTIVE" -> P0LoadState.EMPTY
             allowedRegions.isEmpty() -> P0LoadState.EMPTY
             else -> P0LoadState.READY
@@ -458,8 +597,8 @@ class RealP0Repository(context: Context) : P0Repository {
                 vpnStatus?.canIssueConfig == true -> "当前账号可签发配置"
                 else -> "购买套餐后连接"
             },
-            speedNodes = if (localNodes.isNotEmpty()) {
-                localNodes.map { it.toRegionSpeed() }
+            speedNodes = if (cachedNodeSnapshots.isNotEmpty()) {
+                cachedNodeSnapshots.map { it.toRegionSpeed() }
             } else {
                 allowedRegions.map { it.toRegionSpeed() }
             },
@@ -473,21 +612,23 @@ class RealP0Repository(context: Context) : P0Repository {
             ),
             alertCount = watchSignals.size,
             nodeHealthPercent = calculateNodeHealthPercent(
-                localNodeCount = localNodes.size,
+                localNodeCount = cachedNodeSnapshots.size,
                 allowedRegions = allowedRegions,
+                cachedNodes = cachedNodeSnapshots,
             ),
             vlessExpiryLabel = resolveVlessExpiryLabel(
                 subscription = subscription,
                 lastIssuedConfigExpireAt = lastIssuedConfigExpireAt,
             ),
-            vlessRegionLabel = lastIssuedRegionCode
+            vlessRegionLabel = selectedLineName
+                ?: lastIssuedRegionCode
                 ?: selectedRegion?.regionName
                 ?: selectedLocalRegion?.regionName
                 ?: "待同步",
             configStatusLabel = localConfigStatusLabel(
                 hasLocalConfig = hasLocalConfig,
                 localSubscriptionUrl = localSubscriptionUrl,
-                localNodeCount = localNodes.size,
+                localNodeCount = cachedNodeSnapshots.size,
                 remoteIssuable = vpnStatus?.canIssueConfig == true,
             ),
             latestOrderLabel = activeOrder?.let { latest ->
@@ -588,58 +729,22 @@ class RealP0Repository(context: Context) : P0Repository {
             paymentRepository.getOrder(currentOrderId)
         }
         val currentUserId = paymentRepository.getCurrentUserId() ?: return emptyList()
-        val cached = paymentRepository.getCachedOrders(currentUserId)
-        return cached.map {
-            Order(
-                orderId = it.orderNo,
-                orderNo = it.orderNo,
-                planCode = it.planId,
-                planName = it.planName,
-                orderType = PaymentConfig.PurchaseType.NEW,
-                quoteAssetCode = it.assetCode,
-                quoteNetworkCode = it.networkCode.ifBlank { inferNetworkCode(it.assetCode) },
-                quoteUsdAmount = it.usdAmount,
-                payableAmount = it.amount,
-                status = it.status,
-                expiresAt = formatEpoch(it.expiredAt ?: it.createdAt),
-                confirmedAt = it.paidAt?.let(::formatEpoch),
-                completedAt = it.fulfilledAt?.let(::formatEpoch),
-                createdAt = formatEpoch(it.createdAt),
-                subscriptionUrl = it.subscriptionUrl,
-            )
-        }
+        return readLocalOrders(currentUserId)
     }
 
     private suspend fun loadOrdersSnapshot(): OrdersSnapshot {
+        val currentUserId = paymentRepository.getCurrentUserId()
+            ?: return OrdersSnapshot(emptyList(), syncUnavailable = false)
+        val localOrders = readLocalOrders(currentUserId)
         paymentRepository.getCurrentOrderId()?.let { currentOrderId ->
             paymentRepository.getOrder(currentOrderId)
         }
-        val currentUserId = paymentRepository.getCurrentUserId()
-            ?: return OrdersSnapshot(emptyList(), syncUnavailable = false)
         val syncResult = paymentRepository.syncOrdersFromServer(force = false, userId = currentUserId)
-        val cached = paymentRepository.getLocalRepository().getOrdersByUserId(currentUserId).map {
-            Order(
-                orderId = it.orderNo,
-                orderNo = it.orderNo,
-                planCode = it.planId,
-                planName = it.planName,
-                orderType = PaymentConfig.PurchaseType.NEW,
-                quoteAssetCode = it.assetCode,
-                quoteNetworkCode = it.networkCode.ifBlank { inferNetworkCode(it.assetCode) },
-                quoteUsdAmount = it.usdAmount,
-                payableAmount = it.amount,
-                status = it.status,
-                expiresAt = formatEpoch(it.expiredAt ?: it.createdAt),
-                confirmedAt = it.paidAt?.let(::formatEpoch),
-                completedAt = it.fulfilledAt?.let(::formatEpoch),
-                createdAt = formatEpoch(it.createdAt),
-                subscriptionUrl = it.subscriptionUrl,
-            )
-        }
+        val refreshedOrders = readLocalOrders(currentUserId)
         val syncUnavailable = syncResult.exceptionOrNull()?.message?.contains("订单接口待同步") == true
         return OrdersSnapshot(
-            orders = cached,
-            syncUnavailable = syncUnavailable && cached.isEmpty(),
+            orders = if (refreshedOrders.isNotEmpty()) refreshedOrders else localOrders,
+            syncUnavailable = syncUnavailable && refreshedOrders.isEmpty() && localOrders.isEmpty(),
         )
     }
 
@@ -670,8 +775,7 @@ class RealP0Repository(context: Context) : P0Repository {
         vpnStatus: VpnStatusData?,
         latestOrder: Order?,
         hasLocalConfig: Boolean,
-        localNodes: List<LocalServerSnapshot>,
-        localSubscription: SubscriptionItem?,
+        localNodes: List<CachedVpnNodeSnapshot>,
         localSubscriptionUrl: String?,
     ): List<WatchSignal> {
         val signals = mutableListOf<WatchSignal>()
@@ -707,7 +811,6 @@ class RealP0Repository(context: Context) : P0Repository {
         signals += buildLocalVpnSignals(
             latestOrder = latestOrder,
             localNodes = localNodes,
-            localSubscription = localSubscription,
             localSubscriptionUrl = localSubscriptionUrl,
             hasLocalConfig = hasLocalConfig,
         )
@@ -737,6 +840,60 @@ class RealP0Repository(context: Context) : P0Repository {
         )
     }
 
+    private fun buildCachedSubscriptionData(
+        planCode: String?,
+        status: String?,
+        daysRemaining: Int?,
+        expireAt: String?,
+        subscriptionUrl: String?,
+        marzbanUsername: String?,
+    ): CurrentSubscriptionData? {
+        if (planCode.isNullOrBlank() && status.isNullOrBlank() && expireAt.isNullOrBlank() && subscriptionUrl.isNullOrBlank()) {
+            return null
+        }
+        return CurrentSubscriptionData(
+            planCode = planCode,
+            status = status ?: "LOCAL",
+            expireAt = expireAt,
+            daysRemaining = daysRemaining,
+            isUnlimitedTraffic = true,
+            maxActiveSessions = 1,
+            subscriptionUrl = subscriptionUrl,
+            marzbanUsername = marzbanUsername,
+        )
+    }
+
+    private fun buildCachedVpnStatusData(
+        subscriptionStatus: String?,
+        currentRegionCode: String?,
+        selectedLineCode: String?,
+        selectedLineName: String?,
+        selectedNodeId: String?,
+        selectedNodeName: String?,
+        sessionStatus: String?,
+    ): VpnStatusData? {
+        if (subscriptionStatus.isNullOrBlank() &&
+            currentRegionCode.isNullOrBlank() &&
+            selectedLineName.isNullOrBlank() &&
+            selectedNodeId.isNullOrBlank() &&
+            selectedNodeName.isNullOrBlank() &&
+            sessionStatus.isNullOrBlank()
+        ) {
+            return null
+        }
+        return VpnStatusData(
+            subscriptionStatus = subscriptionStatus ?: "NONE",
+            currentRegionCode = currentRegionCode,
+            selectedLineCode = selectedLineCode,
+            selectedLineName = selectedLineName,
+            selectedNodeId = selectedNodeId,
+            selectedNodeName = selectedNodeName,
+            connectionMode = null,
+            canIssueConfig = false,
+            sessionStatus = sessionStatus ?: "LOCAL",
+        )
+    }
+
     private fun inferNetworkCode(assetCode: String): String {
         return if (assetCode.equals(PaymentConfig.AssetCode.SOL, ignoreCase = true)) {
             PaymentConfig.NetworkCode.SOLANA
@@ -761,12 +918,34 @@ class RealP0Repository(context: Context) : P0Repository {
     private fun formatEpoch(epoch: Long): String =
         Instant.ofEpochMilli(epoch).toString()
 
+    private suspend fun readLocalOrders(userId: String): List<Order> {
+        return paymentRepository.getLocalRepository().getOrdersByUserId(userId).map {
+            Order(
+                orderId = it.orderNo,
+                orderNo = it.orderNo,
+                planCode = it.planId,
+                planName = it.planName,
+                orderType = PaymentConfig.PurchaseType.NEW,
+                quoteAssetCode = it.assetCode,
+                quoteNetworkCode = it.networkCode.ifBlank { inferNetworkCode(it.assetCode) },
+                quoteUsdAmount = it.usdAmount,
+                payableAmount = it.amount,
+                status = it.status,
+                expiresAt = formatEpoch(it.expiredAt ?: it.createdAt),
+                confirmedAt = it.paidAt?.let(::formatEpoch),
+                completedAt = it.fulfilledAt?.let(::formatEpoch),
+                createdAt = formatEpoch(it.createdAt),
+                subscriptionUrl = it.subscriptionUrl,
+            )
+        }
+    }
+
     private fun formatDateLabel(date: String): String =
         runCatching { LocalDate.parse(date.take(10)).format(DateTimeFormatter.ISO_DATE) }.getOrDefault(date)
 
     private fun localSubscriptionSummary(
         latestOrder: Order?,
-        localSubscription: SubscriptionItem?,
+        hasSavedSubscriptionUrl: Boolean,
         fallbackExpireAt: String? = null,
     ): SubscriptionSummary? {
         val order = latestOrder
@@ -779,8 +958,8 @@ class RealP0Repository(context: Context) : P0Repository {
                 nextBillingLabel = fallbackExpireAt?.let(::formatDateTimeLabel) ?: "待同步",
                 status = order.status,
             )
-            localSubscription != null -> SubscriptionSummary(
-                planName = localSubscription.remarks.ifBlank { "本地已导入订阅" },
+            hasSavedSubscriptionUrl -> SubscriptionSummary(
+                planName = "本地已导入订阅",
                 expiresInDays = 0,
                 autoRenew = false,
                 nextBillingLabel = "已导入本地订阅",
@@ -792,19 +971,18 @@ class RealP0Repository(context: Context) : P0Repository {
 
     private fun buildLocalVpnSignals(
         latestOrder: Order?,
-        localNodes: List<LocalServerSnapshot>,
-        localSubscription: SubscriptionItem?,
+        localNodes: List<CachedVpnNodeSnapshot>,
         localSubscriptionUrl: String?,
         hasLocalConfig: Boolean,
     ): List<WatchSignal> {
-        val selectedNode = selectedLocalNode(localNodes)
+        val selectedNode = selectedCachedNode(localNodes)
         val signals = mutableListOf<WatchSignal>()
         selectedNode?.let {
             signals += WatchSignal(
                 symbol = "NODE",
                 reason = it.displayName,
                 changeText = it.protocol,
-                volumeText = it.latencyMs?.let { latency -> "${latency}ms" } ?: "未测速",
+                volumeText = it.latencyMs?.let { latency -> "${latency}ms" } ?: it.description,
                 isPositive = true,
             )
         }
@@ -812,7 +990,7 @@ class RealP0Repository(context: Context) : P0Repository {
             signals += WatchSignal(
                 symbol = "VLESS",
                 reason = shortenSensitiveUrl(url),
-                changeText = localSubscription?.remarks?.ifBlank { "已保存订阅配置" } ?: "已保存订阅配置",
+                changeText = selectedNode?.lineName ?: "已保存订阅配置",
                 volumeText = if (hasLocalConfig) "本地配置可用" else "待导入节点",
                 isPositive = true,
             )
@@ -844,58 +1022,51 @@ class RealP0Repository(context: Context) : P0Repository {
         }
     }
 
-    private fun localServerSnapshots(): List<LocalServerSnapshot> {
-        return MmkvManager.decodeAllServerList().mapNotNull { guid ->
-            val profile = MmkvManager.decodeServerConfig(guid) ?: return@mapNotNull null
-            val subscriptionRemarks = profile.subscriptionId
-                .takeIf { it.isNotBlank() }
-                ?.let { MmkvManager.decodeSubscription(it)?.remarks }
-                .orEmpty()
-            val latency = MmkvManager.decodeServerAffiliationInfo(guid)
-                ?.testDelayMillis
-                ?.takeIf { it > 0L }
-                ?.toInt()
-            LocalServerSnapshot(
-                guid = guid,
-                displayName = profile.remarks.ifBlank {
-                    subscriptionRemarks.ifBlank { profile.server ?: guid.take(8) }
-                },
+    private fun buildCachedNodeSnapshots(
+        cachedNodes: List<VpnNodeCacheEntity>,
+        runtimes: List<VpnNodeRuntimeEntity>,
+        selectedNodeId: String?,
+    ): List<CachedVpnNodeSnapshot> {
+        val runtimeMap = runtimes.associateBy { it.nodeId }
+        return cachedNodes.map { node ->
+            val runtime = runtimeMap[node.nodeId]
+            CachedVpnNodeSnapshot(
+                nodeId = node.nodeId,
+                displayName = node.nodeName,
+                lineName = node.lineName,
+                regionName = node.regionName,
                 description = listOfNotNull(
-                    subscriptionRemarks.takeIf { it.isNotBlank() },
-                    profile.server,
-                    profile.serverPort?.let { "端口 $it" },
-                ).joinToString(" · ").ifBlank { "本地节点配置" },
-                protocol = profile.configType.name,
-                latencyMs = latency,
-                selected = MmkvManager.getSelectServer() == guid,
-                subscriptionId = profile.subscriptionId,
+                    node.lineName,
+                    "${node.host}:${node.port}",
+                ).joinToString(" · "),
+                protocol = node.source,
+                healthStatus = runtime?.healthStatus ?: "UNKNOWN",
+                latencyMs = runtime?.pingMs,
+                selected = selectedNodeId == node.nodeId || runtime?.selected == true,
             )
         }.sortedWith(
-            compareByDescending<LocalServerSnapshot> { it.selected }
+            compareByDescending<CachedVpnNodeSnapshot> { it.selected }
                 .thenBy { it.latencyMs == null }
                 .thenBy { it.latencyMs ?: Int.MAX_VALUE }
                 .thenBy { it.displayName },
         )
     }
 
-    private fun selectedLocalNode(nodes: List<LocalServerSnapshot>): LocalServerSnapshot? {
-        return nodes.firstOrNull { it.selected } ?: nodes.firstOrNull()
+    private fun selectedCachedNode(
+        nodes: List<CachedVpnNodeSnapshot>,
+        selectedNodeId: String? = null,
+    ): CachedVpnNodeSnapshot? {
+        return nodes.firstOrNull { it.selected || (selectedNodeId != null && it.nodeId == selectedNodeId) }
+            ?: nodes.firstOrNull()
     }
 
-    private fun selectedLocalSubscription(nodes: List<LocalServerSnapshot>): SubscriptionItem? {
-        val subscriptionId = selectedLocalNode(nodes)?.subscriptionId
-            ?.takeIf { it.isNotBlank() }
-            ?: return null
-        return MmkvManager.decodeSubscription(subscriptionId)
-    }
-
-    private fun LocalServerSnapshot.toRegionSpeed(): RegionSpeed {
+    private fun CachedVpnNodeSnapshot.toRegionSpeed(): RegionSpeed {
         return RegionSpeed(
-            regionName = displayName,
-            protocol = protocol,
+            regionName = lineName,
+            protocol = displayName,
             latencyMs = latencyMs ?: 0,
             load = if (selected) "已选中" else description,
-            regionCode = guid,
+            regionCode = nodeId,
             isAllowed = true,
         )
     }
@@ -939,7 +1110,12 @@ class RealP0Repository(context: Context) : P0Repository {
     private fun calculateNodeHealthPercent(
         localNodeCount: Int,
         allowedRegions: List<VpnRegionItem>,
+        cachedNodes: List<CachedVpnNodeSnapshot> = emptyList(),
     ): Int {
+        if (cachedNodes.isNotEmpty()) {
+            val healthy = cachedNodes.count { it.healthStatus.equals("HEALTHY", ignoreCase = true) }
+            return (healthy * 100) / cachedNodes.size
+        }
         if (allowedRegions.isNotEmpty()) {
             val online = allowedRegions.count {
                 it.status.equals("ACTIVE", ignoreCase = true) || it.status.equals("ONLINE", ignoreCase = true)
@@ -990,14 +1166,16 @@ class RealP0Repository(context: Context) : P0Repository {
     }
 }
 
-private data class LocalServerSnapshot(
-    val guid: String,
+private data class CachedVpnNodeSnapshot(
+    val nodeId: String,
     val displayName: String,
+    val lineName: String,
+    val regionName: String,
     val description: String,
     val protocol: String,
+    val healthStatus: String,
     val latencyMs: Int?,
     val selected: Boolean,
-    val subscriptionId: String,
 )
 
 private data class OrdersSnapshot(

@@ -43,6 +43,10 @@ class MockP0Repository : P0Repository {
         return WalletOnboardingUiState()
     }
 
+    override suspend fun getCachedVpnHomeState(): VpnHomeUiState? {
+        return getVpnHomeState()
+    }
+
     override suspend fun getVpnHomeState(): VpnHomeUiState {
         return VpnHomeUiState(
             connectionStatus = VpnConnectionStatus.CONNECTED,

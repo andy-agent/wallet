@@ -38,6 +38,9 @@ class VpnHomeViewModel(
 
     private fun refresh() {
         viewModelScope.launch {
+            repository.getCachedVpnHomeState()?.let { cached ->
+                _uiState.value = cached
+            }
             _uiState.value = repository.getVpnHomeState()
         }
     }
