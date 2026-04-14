@@ -6,6 +6,7 @@ import {
 import { randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
 import { ClientCatalogService } from '../database/client-catalog.service';
+import { MarzbanService } from '../marzban/marzban.service';
 import {
   ClientCatalogPlan,
   ClientCatalogVpnNode,
@@ -23,6 +24,7 @@ export class VpnService {
     private readonly authService: AuthService,
     private readonly clientCatalogService: ClientCatalogService,
     private readonly runtimeStateRepository: RuntimeStateRepository,
+    private readonly marzbanService: MarzbanService,
   ) {}
 
   async getCurrentSubscription(accessToken: string) {
@@ -232,7 +234,44 @@ export class VpnService {
       return this.toSubscriptionState(expiredSubscription);
     }
 
-    return this.toSubscriptionState(subscription);
+    const reconciled = await this.reconcileMarzbanAccessIfNeeded(subscription);
+    return this.toSubscriptionState(reconciled);
+  }
+
+  private async reconcileMarzbanAccessIfNeeded(
+    subscription: PersistedSubscriptionRecord,
+  ): Promise<PersistedSubscriptionRecord> {
+    if (subscription.status !== 'ACTIVE') {
+      return subscription;
+    }
+
+    if (
+      subscription.marzbanUsername?.trim() &&
+      subscription.subscriptionUrl?.trim()
+    ) {
+      return subscription;
+    }
+
+    const marzbanUser = await this.marzbanService.ensureUserForSubscription({
+      subscriptionId: subscription.subscriptionId,
+      existingUsername: subscription.marzbanUsername,
+      expireAt: subscription.expireAt,
+      isUnlimitedTraffic: subscription.isUnlimitedTraffic,
+    });
+
+    const nextExpireAt = marzbanUser.expireAt ?? subscription.expireAt;
+    const updated: PersistedSubscriptionRecord = {
+      ...subscription,
+      updatedAt: new Date().toISOString(),
+      expireAt: nextExpireAt,
+      daysRemaining: nextExpireAt
+        ? this.calculateDaysRemaining(new Date(), new Date(nextExpireAt))
+        : subscription.daysRemaining,
+      marzbanUsername: marzbanUser.username,
+      subscriptionUrl: marzbanUser.subscriptionUrl,
+    };
+    await this.runtimeStateRepository.upsertSubscription(updated);
+    return updated;
   }
 
   private toSubscriptionState(

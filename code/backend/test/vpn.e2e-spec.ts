@@ -156,6 +156,26 @@ describe('PlansSubscriptionVpn (e2e)', () => {
 
     expect(status.body.data.canIssueConfig).toBe(true);
   });
+
+  it('backfills marzban access for an active legacy subscription missing subscription fields', async () => {
+    const runtimePath = join(runtimeDir, 'runtime-state.json')
+    const snapshot = JSON.parse(require('fs').readFileSync(runtimePath, 'utf8'))
+    snapshot.subscriptions = snapshot.subscriptions.map((item: Record<string, unknown>) => ({
+      ...item,
+      marzbanUsername: null,
+      subscriptionUrl: null,
+    }))
+    require('fs').writeFileSync(runtimePath, JSON.stringify(snapshot, null, 2))
+
+    const subscription = await request(app.getHttpServer())
+      .get('/api/client/v1/subscriptions/current')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+
+    expect(subscription.body.data.status).toBe('ACTIVE')
+    expect(subscription.body.data.subscriptionUrl).toContain('/sub/')
+    expect(subscription.body.data.marzbanUsername).toMatch(/^cvpn_/)
+  })
 });
 
 async function bootstrapApp() {

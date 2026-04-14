@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { MarzbanModule } from '../marzban/marzban.module';
 import { VpnController } from './vpn.controller';
 import { VpnService } from './vpn.service';
 import { SubscriptionController } from './subscription.controller';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, MarzbanModule],
   controllers: [VpnController, SubscriptionController],
   providers: [VpnService],
   exports: [VpnService],

@@ -20,6 +20,7 @@ describe('VPN Postgres runtime state (e2e)', () => {
   let app: INestApplication;
   let accessToken: string;
   let orderNo: string;
+  let email: string;
   const solanaCollectionAddress =
     '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV';
 
@@ -32,6 +33,7 @@ describe('VPN Postgres runtime state (e2e)', () => {
     process.env.MARZBAN_BASE_URL = 'https://vpn.residential-agent.com';
     delete process.env.RUNTIME_STATE_BACKEND;
     delete process.env.RUNTIME_STATE_FILE;
+    email = `vpn-pg-${Date.now()}@example.com`;
 
     ensureClientCatalogSchema(runtimeDb);
     seedClientCatalogData(runtimeDb);
@@ -39,14 +41,14 @@ describe('VPN Postgres runtime state (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email/request-code')
-      .send({ email: 'vpn-pg@example.com' })
+      .send({ email })
       .expect(200);
 
     const registerResponse = await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email')
-      .set('x-idempotency-key', 'vpn-pg-register')
+      .set('x-idempotency-key', `vpn-pg-register-${Date.now()}`)
       .send({
-        email: 'vpn-pg@example.com',
+        email,
         code: '123456',
         password: 'Passw0rd!',
       })
@@ -195,6 +197,23 @@ describe('VPN Postgres runtime state (e2e)', () => {
 
     expect(status.body.data.canIssueConfig).toBe(true);
     expect(status.body.data.currentRegionCode).toBe('JP_DB_BASIC');
+  });
+
+  it('backfills marzban access for a real active subscription missing marzban fields', async () => {
+    runtimeDb.public.none(`
+      UPDATE runtime_state_subscriptions
+      SET marzban_username = NULL,
+          subscription_url = NULL
+    `);
+
+    const subscription = await request(app.getHttpServer())
+      .get('/api/client/v1/subscriptions/current')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(subscription.body.data.status).toBe('ACTIVE');
+    expect(subscription.body.data.subscriptionUrl).toContain('/sub/');
+    expect(subscription.body.data.marzbanUsername).toMatch(/^cvpn_/);
   });
 });
 
