@@ -1,18 +1,12 @@
 package com.v2ray.ang.composeui.pages.p1
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,6 +21,7 @@ import com.v2ray.ang.composeui.p0.ui.P01List
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.ui.P01QrArt
 import com.v2ray.ang.composeui.p0.ui.P01SecondaryButton
+import com.v2ray.ang.composeui.p0.ui.P01Tab
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutEvent
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutUiState
 import com.v2ray.ang.composeui.p1.model.orderCheckoutPreviewState
@@ -36,17 +31,24 @@ import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 @Composable
 fun OrderCheckoutRoute(
     viewModel: OrderCheckoutViewModel,
-    onPrimaryAction: () -> Unit = {},
+    onPrimaryAction: (String) -> Unit = {},
     onSecondaryAction: (() -> Unit)? = null,
+    onPaymentOptionRoute: (String) -> Unit = {},
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     OrderCheckoutScreen(
         uiState = uiState,
+        onRefresh = { viewModel.onEvent(OrderCheckoutEvent.Refresh) },
         onPrimaryAction = {
             viewModel.onEvent(OrderCheckoutEvent.PrimaryActionClicked)
-            onPrimaryAction()
+            uiState.orderNo?.let(onPrimaryAction)
         },
+        onSecondaryAction = {
+            viewModel.onEvent(OrderCheckoutEvent.SecondaryActionClicked)
+            onSecondaryAction?.invoke()
+        },
+        onPaymentOptionRoute = onPaymentOptionRoute,
         onBottomNav = onBottomNav,
     )
 }
@@ -54,144 +56,146 @@ fun OrderCheckoutRoute(
 @Composable
 fun OrderCheckoutScreen(
     uiState: OrderCheckoutUiState,
+    onRefresh: () -> Unit,
     onPrimaryAction: () -> Unit,
+    onSecondaryAction: () -> Unit,
+    onPaymentOptionRoute: (String) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
     val clipboardManager = LocalClipboardManager.current
-    val checkoutData = rememberCheckoutData(uiState)
-    var selectedNetwork by rememberSaveable { mutableStateOf(checkoutData.networks.first()) }
-    var copiedNetwork by rememberSaveable { mutableStateOf<String?>(null) }
-    val address = checkoutData.addresses[selectedNetwork] ?: checkoutData.addresses.values.first()
-    val networkAccent = checkoutNetworkAccent(selectedNetwork)
-    val orderRows = listOf(
-        "套餐" to checkoutData.planTitle,
-        "支付网络" to selectedNetwork,
-        "订单金额" to checkoutData.amountText,
+    val rows = listOfNotNull(
+        "套餐" to uiState.planTitle.ifBlank { uiState.planCode.orEmpty() }.ifBlank { null },
+        "支付网络" to uiState.networkCode.ifBlank { null },
+        "订单金额" to uiState.payableAmount.takeIf { it.isNotBlank() }?.let { "$it ${uiState.assetCode}" },
     )
+    val orderLabel = uiState.orderNo?.let { "ORD-${it.takeLast(8)}" }
 
     P01PhoneScaffold(
         statusTime = "18:33",
-        currentRoute = CryptoVpnRouteSpec.plans.name,
+        currentRoute = CryptoVpnRouteSpec.orderCheckout.name,
         onBottomNav = onBottomNav,
     ) {
         P01Header(
             eyebrow = "CHECKOUT",
             title = "订单收银台",
             subtitle = "确认套餐、支付网络与到账说明。",
-            chips = listOf("• 10分钟有效"),
+            chips = listOf(uiState.expiresAt?.substringBefore('.')?.replace('T', ' ') ?: "当前订单"),
             backLabel = "<",
-            onBack = { onBottomNav(CryptoVpnRouteSpec.plans.pattern) },
-            trailing = { P1SecureHub(label = checkoutHubLabel(selectedNetwork)) },
+            onBack = onSecondaryAction,
+            trailing = { P1SecureHub(label = uiState.networkCode.ifBlank { "PAY" }) },
         )
 
         P01Card {
             P01CardHeader(title = "订单信息")
-            P01CardCopy("选择链上资产完成支付，系统会自动激活对应订阅。")
+            P01CardCopy(
+                uiState.screenState.unavailableMessage
+                    ?: uiState.screenState.errorMessage
+                    ?: uiState.screenState.emptyMessage
+                    ?: "当前页面直接展示真实订单号与真实 payment target，不再使用示例地址。"
+            )
             P01List {
-                orderRows.forEach { (title, value) ->
-                    P1FeedbackRow(
-                        title = title,
-                        value = value,
-                        selected = title == "支付网络" || title == "订单金额",
-                        accentColor = if (title == "订单金额") Color(0xFFF6B155) else networkAccent,
-                        valueColor = if (title == "订单金额") Color(0xFFF6B155) else networkAccent,
-                    )
+                rows.forEach { (title, value) ->
+                    value?.let {
+                        P1FeedbackRow(
+                            title = title,
+                            value = it,
+                            selected = title == "订单金额" || title == "支付网络",
+                        )
+                    }
                 }
             }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            checkoutData.networks.forEach { label ->
-                Box(
-                    modifier = Modifier.clickable {
-                        selectedNetwork = label
-                        copiedNetwork = null
-                    },
+            if (uiState.networkCode.isNotBlank()) {
+                P01Chip(text = uiState.networkCode)
+            }
+        }
+
+        if (uiState.paymentOptions.isNotEmpty()) {
+            P01Card {
+                P01CardHeader(title = "选择支付网络")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    P01Chip(
-                        text = label,
-                        highlighted = label == selectedNetwork,
-                    )
+                    uiState.paymentOptions.forEach { option ->
+                        P01Tab(
+                            text = option.label,
+                            selected = option.selected,
+                            onClick = {
+                                val planCode = uiState.planCode ?: return@P01Tab
+                                onPaymentOptionRoute(
+                                    CryptoVpnRouteSpec.orderCheckoutRoute(
+                                        planId = planCode,
+                                        assetCode = option.assetCode,
+                                        networkCode = option.networkCode,
+                                    ),
+                                )
+                            },
+                        )
+                    }
                 }
+                P01CardCopy("支付选项来自服务端钱包资产目录，切换后会重新创建对应真实订单。")
             }
         }
 
         P1SelectableCard(
-            selected = true,
-            accentColor = networkAccent,
+            selected = uiState.collectionAddress.isNotBlank(),
         ) {
-            P01CardHeader(title = "扫码支付")
-            P01CardCopy("使用任意支持 $selectedNetwork 的钱包完成付款，或复制地址转账。")
-            androidx.compose.foundation.layout.Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
+            P01CardHeader(
+                title = "扫码支付",
+                trailing = {
+                    if (!orderLabel.isNullOrBlank()) {
+                        P01Chip(text = orderLabel)
+                    }
+                },
+            )
+            P01CardCopy(
+                if (uiState.collectionAddress.isBlank()) {
+                    "当前服务不可签发链路"
+                } else {
+                    "使用当前网络的钱包完成付款，或复制真实收款地址。"
+                },
+            )
+            if (uiState.collectionAddress.isNotBlank()) {
                 P01QrArt()
-                androidx.compose.material3.Text(
-                    text = address,
-                    color = if (copiedNetwork == selectedNetwork) networkAccent else Color(0xFF7B8DB0),
-                )
+                P01CardCopy(uiState.collectionAddress)
+            } else {
+                P01CardCopy("当前没有可用的真实收款地址，请刷新订单。")
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                P01SecondaryButton(
-                    text = if (copiedNetwork == selectedNetwork) "已复制地址" else "复制地址",
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(address))
-                        copiedNetwork = selectedNetwork
-                    },
-                    modifier = Modifier.weight(1f),
-                )
-                P1PrimaryCta(
-                    text = "我已完成支付",
-                    onClick = onPrimaryAction,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            P01SecondaryButton(
+                text = if (uiState.collectionAddress.isBlank()) "刷新订单" else "复制地址",
+                onClick = {
+                    if (uiState.collectionAddress.isBlank()) {
+                        onRefresh()
+                    } else {
+                        clipboardManager.setText(AnnotatedString(uiState.collectionAddress))
+                    }
+                },
+                modifier = Modifier.weight(1f),
+            )
+            P1PrimaryCta(
+                text = if (uiState.orderNo == null) "重试创建订单" else "我已完成支付",
+                onClick = {
+                    if (uiState.orderNo == null) {
+                        onRefresh()
+                    } else {
+                        onPrimaryAction()
+                    }
+                },
+                modifier = Modifier.weight(1f),
+                active = uiState.orderNo != null || uiState.screenState.hasError,
+            )
         }
     }
 }
-
-private data class CheckoutUiData(
-    val planTitle: String,
-    val amountText: String,
-    val networks: List<String>,
-    val addresses: Map<String, String>,
-)
-
-private fun rememberCheckoutData(uiState: OrderCheckoutUiState): CheckoutUiData {
-    val metricMap = uiState.metrics.associate { it.label to it.value }
-    val contentHighlights = uiState.highlights.p1ContentItems()
-    val planTitle = metricMap["套餐"] ?: contentHighlights.firstOrNull()?.title ?: "年费 Pro"
-    val amountText = metricMap["金额"] ?: contentHighlights.firstOrNull()?.trailing?.takeIf { it.isNotBlank() } ?: "149.00 USDT"
-    return CheckoutUiData(
-        planTitle = planTitle,
-        amountText = amountText,
-        networks = listOf("USDT-TRON", "USDT-Solana", "SOL"),
-        addresses = mapOf(
-            "USDT-TRON" to "TXvM...eR92",
-            "USDT-Solana" to "7H8n...A6Qp",
-            "SOL" to "4s9K...Lm12",
-        ),
-    )
-}
-
-private fun checkoutNetworkAccent(network: String): Color =
-    when (network) {
-        "USDT-TRON" -> Color(0xFF20C4F4)
-        "USDT-Solana" -> Color(0xFF4276FF)
-        else -> Color(0xFFF6B155)
-    }
-
-private fun checkoutHubLabel(network: String): String =
-    when (network) {
-        "USDT-TRON" -> "TRON"
-        "USDT-Solana" -> "SOL"
-        else -> "PAY"
-    }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
 @Composable
@@ -199,7 +203,10 @@ private fun OrderCheckoutPreview() {
     CryptoVpnTheme {
         OrderCheckoutScreen(
             uiState = orderCheckoutPreviewState(),
+            onRefresh = {},
             onPrimaryAction = {},
+            onSecondaryAction = {},
+            onPaymentOptionRoute = {},
         )
     }
 }

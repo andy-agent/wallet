@@ -38,13 +38,17 @@ fun WalletHomeRoute(
     onSend: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val selectedChainId = uiState.selectedChainId.takeIf { it.isNotBlank() } ?: uiState.chains.firstOrNull()?.chainId ?: "tron"
+    val selectedAssets = uiState.assets.filter { inferChain(it.chainLabel) == selectedChainId }
+    val activeAsset = selectedAssets.firstOrNull() ?: uiState.assets.firstOrNull()
+    val activeAssetId = activeAsset?.symbol ?: if (selectedChainId == "solana") "SOL" else "USDT"
     WalletHomeScreen(
         currentRoute = currentRoute,
         uiState = uiState,
         onSelectChain = { viewModel.onEvent(WalletHomeEvent.ChainSelected(it)) },
         onBottomNav = onBottomNav,
-        onReceive = onReceive ?: { onBottomNav(CryptoVpnRouteSpec.receiveRoute("USDT", "tron")) },
-        onSend = onSend ?: { onBottomNav(CryptoVpnRouteSpec.sendRoute("USDT", "tron")) },
+        onReceive = onReceive ?: { onBottomNav(CryptoVpnRouteSpec.receiveRoute(activeAssetId, selectedChainId)) },
+        onSend = onSend ?: { onBottomNav(CryptoVpnRouteSpec.sendRoute(activeAssetId, selectedChainId)) },
     )
 }
 
@@ -57,6 +61,14 @@ fun WalletHomeScreen(
     onReceive: () -> Unit,
     onSend: () -> Unit,
 ) {
+    val selectedChainId = uiState.selectedChainId
+    val currentChain = uiState.chains.firstOrNull { it.chainId == selectedChainId } ?: uiState.chains.firstOrNull()
+    val visibleAssets = if (selectedChainId == "all") {
+        uiState.assets
+    } else {
+        uiState.assets.filter { inferChain(it.chainLabel) == selectedChainId }
+    }
+
     P01PhoneScaffold(
         statusTime = "18:10",
         currentRoute = currentRoute,
@@ -77,9 +89,9 @@ fun WalletHomeScreen(
             P01MetricGrid(
                 items = listOf(
                     P01MetricCell("可用余额", uiState.totalBalanceText),
-                    P01MetricCell("资产数量", uiState.assets.size.toString()),
+                    P01MetricCell("资产数量", visibleAssets.size.toString()),
                     P01MetricCell("已激活链", uiState.chains.size.toString()),
-                    P01MetricCell("当前网络", uiState.chains.firstOrNull()?.label ?: "未配置"),
+                    P01MetricCell("当前网络", currentChain?.label ?: "未配置"),
                 ),
             )
         }
@@ -97,9 +109,13 @@ fun WalletHomeScreen(
             .forEach { (label, chainId) ->
                     P01Tab(
                         text = label,
-                        selected = chainId == "all" || chainId == uiState.selectedChainId,
+                        selected = if (chainId == "all") {
+                            uiState.selectedChainId == "all"
+                        } else {
+                            chainId == uiState.selectedChainId
+                        },
                         onClick = {
-                            if (chainId != "all") onSelectChain(chainId)
+                            onSelectChain(chainId)
                         },
                     )
                 }
@@ -112,7 +128,7 @@ fun WalletHomeScreen(
                 trailing = { P01Chip(text = "按余额排序") },
             )
             P01List {
-                uiState.assets.ifEmpty {
+                visibleAssets.ifEmpty {
                     listOf(AssetHolding("--", "暂无资产缓存", "--", "--", "等待真实资产或订单记录", true))
                 }.forEach { asset ->
                     P01ListRow(

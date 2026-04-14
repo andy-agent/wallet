@@ -17,5 +17,6 @@ import { MARKET_DATA_PROVIDER } from './market.types';
       useClass: CoinGeckoMarketDataProvider,
     },
   ],
+  exports: [MarketService],
 })
 export class MarketModule {}

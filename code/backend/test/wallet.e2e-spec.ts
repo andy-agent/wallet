@@ -9,6 +9,7 @@ import { TronClientService } from '../src/modules/tron-client/tron-client.servic
 describe('Wallet (e2e)', () => {
   let app: INestApplication;
   let accessToken: string;
+  let email: string;
   const originalTronServiceEnabled = process.env.TRON_SERVICE_ENABLED;
 
   async function bootstrapApp(
@@ -46,17 +47,18 @@ describe('Wallet (e2e)', () => {
   beforeEach(async () => {
     delete process.env.TRON_SERVICE_ENABLED;
     await bootstrapApp();
+    email = `wallet-${Date.now()}-${Math.random().toString(16).slice(2, 8)}@example.com`;
 
     await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email/request-code')
-      .send({ email: 'wallet@example.com' })
+      .send({ email })
       .expect(200);
 
     const registerResponse = await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email')
-      .set('x-idempotency-key', 'wallet-register-1')
+      .set('x-idempotency-key', `wallet-register-${Date.now()}`)
       .send({
-        email: 'wallet@example.com',
+        email,
         code: '123456',
         password: 'Passw0rd!',
       })
@@ -104,6 +106,47 @@ describe('Wallet (e2e)', () => {
       .expect(200);
 
     await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/overview')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.chainItems).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ networkCode: 'SOLANA' }),
+            expect.objectContaining({ networkCode: 'TRON' }),
+          ]),
+        );
+        expect(res.body.data.assetItems).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ networkCode: 'SOLANA', assetCode: 'SOL' }),
+            expect.objectContaining({ networkCode: 'TRON', assetCode: 'USDT' }),
+          ]),
+        );
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/receive-context?networkCode=SOLANA&assetCode=USDT')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.selectedNetworkCode).toBe('SOLANA');
+        expect(res.body.data.selectedAssetCode).toBe('USDT');
+        expect(res.body.data.status).toBe('已配置收款地址');
+        expect(res.body.data.defaultAddress).toBe(
+          'So11111111111111111111111111111111111111112',
+        );
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/client/v1/referral/share-context')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.referralCode).toBeDefined();
+        expect(res.body.data.shareLink).toContain(res.body.data.referralCode);
+      });
+
+    await request(app.getHttpServer())
       .post('/api/client/v1/wallet/transfer/precheck')
       .set('authorization', `Bearer ${accessToken}`)
       .send({
@@ -144,16 +187,17 @@ describe('Wallet (e2e)', () => {
       }),
     });
 
+    const tronEmail = `wallet-tron-${Date.now()}-${Math.random().toString(16).slice(2, 8)}@example.com`;
     await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email/request-code')
-      .send({ email: 'wallet-tron@example.com' })
+      .send({ email: tronEmail })
       .expect(200);
 
     const registerResponse = await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email')
-      .set('x-idempotency-key', 'wallet-tron-register-1')
+      .set('x-idempotency-key', `wallet-tron-register-${Date.now()}`)
       .send({
-        email: 'wallet-tron@example.com',
+        email: tronEmail,
         code: '123456',
         password: 'Passw0rd!',
       })
@@ -209,16 +253,17 @@ describe('Wallet (e2e)', () => {
         .mockRejectedValue(new Error('tron remote unavailable')),
     });
 
+    const tronFallbackEmail = `wallet-tron-fallback-${Date.now()}-${Math.random().toString(16).slice(2, 8)}@example.com`;
     await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email/request-code')
-      .send({ email: 'wallet-tron-fallback@example.com' })
+      .send({ email: tronFallbackEmail })
       .expect(200);
 
     const registerResponse = await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email')
-      .set('x-idempotency-key', 'wallet-tron-register-2')
+      .set('x-idempotency-key', `wallet-tron-register-${Date.now()}`)
       .send({
-        email: 'wallet-tron-fallback@example.com',
+        email: tronFallbackEmail,
         code: '123456',
         password: 'Passw0rd!',
       })

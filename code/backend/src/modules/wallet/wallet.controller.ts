@@ -24,6 +24,24 @@ export class WalletController {
     );
   }
 
+  @Get('overview')
+  getOverview(@Headers('authorization') authorization?: string) {
+    return this.walletService.getOverview(this.extractBearer(authorization));
+  }
+
+  @Get('receive-context')
+  getReceiveContext(
+    @Headers('authorization') authorization?: string,
+    @Query('networkCode') networkCode?: string,
+    @Query('assetCode') assetCode?: string,
+  ) {
+    return this.walletService.getReceiveContext(
+      this.extractBearer(authorization),
+      networkCode,
+      assetCode,
+    );
+  }
+
   @Post('public-addresses')
   upsertPublicAddress(
     @Headers('authorization') authorization: string | undefined,

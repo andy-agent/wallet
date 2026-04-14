@@ -4,6 +4,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth/auth.service';
 import { ReferralBindingRecord, CommissionLedgerRecord } from './referral.types';
 
@@ -12,7 +13,10 @@ export class ReferralService {
   private readonly bindings = new Map<string, ReferralBindingRecord>();
   private readonly ledgerByBeneficiary = new Map<string, CommissionLedgerRecord[]>();
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   getOverview(accessToken: string) {
     const account = this.authService.getMe(accessToken);
@@ -42,6 +46,25 @@ export class ReferralService {
       availableAmountUsdt: available.toFixed(2),
       frozenAmountUsdt: frozen.toFixed(2),
       minWithdrawAmountUsdt: '10.00',
+    };
+  }
+
+  getShareContext(accessToken: string) {
+    const overview = this.getOverview(accessToken);
+    const shareBaseUrl =
+      this.configService.get<string>('REFERRAL_SHARE_BASE_URL')?.trim() ||
+      'https://vpn.residential-agent.com/invite?code=';
+    const shareLink = this.buildShareLink(shareBaseUrl, overview.referralCode);
+    return {
+      referralCode: overview.referralCode,
+      shareLink,
+      shareTitle: 'CryptoVPN 邀请链接',
+      shareMessage: `使用我的邀请码 ${overview.referralCode} 注册 CryptoVPN：${shareLink}`,
+      level1InviteCount: overview.level1InviteCount,
+      level2InviteCount: overview.level2InviteCount,
+      availableAmountUsdt: overview.availableAmountUsdt,
+      frozenAmountUsdt: overview.frozenAmountUsdt,
+      hasBinding: overview.hasBinding,
     };
   }
 
@@ -237,5 +260,18 @@ export class ReferralService {
       },
       { available: 0, frozen: 0, withdrawing: 0, withdrawn: 0 },
     );
+  }
+
+  private buildShareLink(base: string, referralCode: string) {
+    if (base.includes('{code}')) {
+      return base.replace('{code}', encodeURIComponent(referralCode));
+    }
+    if (base.endsWith('=')) {
+      return `${base}${encodeURIComponent(referralCode)}`;
+    }
+    if (base.includes('?')) {
+      return `${base}&code=${encodeURIComponent(referralCode)}`;
+    }
+    return `${base.replace(/\/$/, '')}/${encodeURIComponent(referralCode)}`;
   }
 }

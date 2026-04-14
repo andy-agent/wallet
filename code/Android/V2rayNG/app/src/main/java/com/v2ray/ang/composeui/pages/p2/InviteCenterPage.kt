@@ -4,7 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p2.model.InviteCenterEvent
 import com.v2ray.ang.composeui.p2.model.InviteCenterUiState
 import com.v2ray.ang.composeui.p2.model.inviteCenterPreviewState
@@ -21,14 +24,7 @@ fun InviteCenterRoute(
     val uiState by viewModel.uiState.collectAsState()
     InviteCenterScreen(
         uiState = uiState,
-        onEvent = { event ->
-            viewModel.onEvent(event)
-            when (event) {
-                InviteCenterEvent.PrimaryActionClicked -> onPrimaryAction()
-                InviteCenterEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
-                else -> Unit
-            }
-        },
+        onEvent = { event -> viewModel.onEvent(event) },
         onBottomNav = onBottomNav,
     )
 }
@@ -39,7 +35,9 @@ fun InviteCenterScreen(
     onEvent: (InviteCenterEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val clipboardManager = LocalClipboardManager.current
     val metricFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.metrics.size, 1), durationMillis = 4200)
+    val inviteCode = uiState.highlights.firstOrNull()?.title ?: "--"
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = uiState.title,
@@ -48,9 +46,14 @@ fun InviteCenterScreen(
         activeSection = CoreNavSection.Growth,
         onBottomNav = onBottomNav,
         primaryActionLabel = uiState.primaryActionLabel,
-        onPrimaryAction = { onEvent(InviteCenterEvent.PrimaryActionClicked) },
+        onPrimaryAction = {
+            onEvent(InviteCenterEvent.PrimaryActionClicked)
+            if (inviteCode.isNotBlank() && inviteCode != "--") {
+                clipboardManager.setText(AnnotatedString(inviteCode))
+            }
+        },
         secondaryActionLabel = uiState.secondaryActionLabel,
-        onSecondaryAction = { onBottomNav("invite_share") },
+        onSecondaryAction = { onBottomNav(CryptoVpnRouteSpec.inviteShare.pattern) },
     ) {
         P2CoreHeroValueCard(
             label = "邀请收益总览",
@@ -62,13 +65,18 @@ fun InviteCenterScreen(
         )
         P2CoreAddressModule(
             title = "我的邀请码",
-            value = uiState.highlights.firstOrNull()?.title ?: "--",
+            value = inviteCode,
             supportingText = uiState.highlights.firstOrNull()?.subtitle ?: uiState.note,
             status = uiState.highlights.firstOrNull()?.trailing,
             primaryActionLabel = uiState.primaryActionLabel,
-            onPrimaryAction = { onEvent(InviteCenterEvent.PrimaryActionClicked) },
+            onPrimaryAction = {
+                onEvent(InviteCenterEvent.PrimaryActionClicked)
+                if (inviteCode.isNotBlank() && inviteCode != "--") {
+                    clipboardManager.setText(AnnotatedString(inviteCode))
+                }
+            },
             secondaryActionLabel = uiState.secondaryActionLabel,
-            onSecondaryAction = { onBottomNav("invite_share") },
+            onSecondaryAction = { onBottomNav(CryptoVpnRouteSpec.inviteShare.pattern) },
         )
         P2CoreCard {
             P2CoreCardHeader(title = "增长指标", trailing = "实时同步", trailingColor = Color(0xFFEAF6FF))

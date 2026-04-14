@@ -82,9 +82,11 @@ object CryptoVpnRouteSpec {
 
     val orderCheckout = RouteDefinition(
         name = "order_checkout",
-        pattern = "order_checkout/{planId}",
+        pattern = "order_checkout/{planId}?assetCode={assetCode}&networkCode={networkCode}",
         params = listOf(
         RouteParamInfo(key = "planId", sample = "annual_pro", description = "套餐标识，用于读取当前结算单"),
+        RouteParamInfo(key = "assetCode", sample = "USDT", description = "支付资产标识"),
+        RouteParamInfo(key = "networkCode", sample = "TRON", description = "支付网络标识"),
     ),
     )
 
@@ -391,7 +393,21 @@ object CryptoVpnRouteSpec {
         params = emptyList(),
     )
 
-    fun orderCheckoutRoute(planId: String): String = "order_checkout" + "/" + planId
+    fun orderCheckoutRoute(
+        planId: String,
+        assetCode: String? = null,
+        networkCode: String? = null,
+    ): String {
+        val query = buildList {
+            assetCode?.takeIf { it.isNotBlank() }?.let { add("assetCode=$it") }
+            networkCode?.takeIf { it.isNotBlank() }?.let { add("networkCode=$it") }
+        }.joinToString("&")
+        return if (query.isBlank()) {
+            "order_checkout/$planId"
+        } else {
+            "order_checkout/$planId?$query"
+        }
+    }
     fun walletPaymentConfirmRoute(orderId: String): String = "wallet_payment_confirm" + "/" + orderId
     fun orderResultRoute(orderId: String): String = "order_result" + "/" + orderId
     fun orderDetailRoute(orderId: String): String = "order_detail" + "/" + orderId

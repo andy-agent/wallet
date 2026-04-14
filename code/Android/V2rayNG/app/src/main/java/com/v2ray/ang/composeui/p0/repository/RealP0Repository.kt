@@ -647,6 +647,45 @@ class RealP0Repository(context: Context) : P0Repository {
     }
 
     override suspend fun getWalletHomeState(): WalletHomeUiState {
+        val walletOverview = paymentRepository.getWalletOverview().getOrNull()
+        if (walletOverview != null) {
+            val chains = walletOverview.chainItems.map { chain ->
+                WalletChainSummary(
+                    chainId = chain.networkCode.lowercase(Locale.ROOT),
+                    label = chainLabel(chain.networkCode),
+                    balanceText = "${chain.orderCount ?: 0} 笔订单",
+                    accent = if (chain.hasConfiguredAddress == true) "已配置地址" else "待配置地址",
+                    itemCount = chain.assetCount ?: 0,
+                )
+            }
+            val assets = walletOverview.assetItems
+                .filter { it.walletVisible }
+                .map { asset ->
+                    AssetHolding(
+                        symbol = asset.assetCode,
+                        chainLabel = chainLabel(asset.networkCode),
+                        balanceText = "${asset.orderCount ?: 0} 笔订单",
+                        valueText = "累计 ${formatAssetAmount(asset.totalPayableAmount?.toDoubleOrNull() ?: 0.0, asset.assetCode)}",
+                        changeText = asset.lastOrderStatus ?: if ((asset.publicAddressCount ?: 0) > 0) "已配置地址" else "未配置地址",
+                        changePositive = asset.lastOrderStatus !in setOf("FAILED", "EXPIRED", "CANCELED"),
+                        detailText = asset.displayName,
+                    )
+                }
+
+            return WalletHomeUiState(
+                isLoading = false,
+                loadState = if (assets.isEmpty()) P0LoadState.EMPTY else P0LoadState.READY,
+                accountLabel = walletOverview.accountEmail,
+                totalBalanceText = "${assets.sumOf { it.balanceText.substringBefore(" ").toIntOrNull() ?: 0 }} 笔真实记录",
+                summaryLabel = walletOverview.alerts.firstOrNull() ?: "钱包总览已切到服务端真实数据",
+                selectedChainId = walletOverview.selectedNetworkCode.lowercase(Locale.ROOT),
+                chains = chains,
+                assets = assets,
+                alertBanner = walletOverview.alerts.joinToString(" · "),
+                emptyMessage = if (assets.isEmpty()) "当前服务端钱包总览还没有可展示的链上资产或订单记录。" else null,
+            )
+        }
+
         val cachedUser = paymentRepository.getCachedCurrentUser()
         val meResult = paymentRepository.getMe()
         if (meResult.isFailure) {

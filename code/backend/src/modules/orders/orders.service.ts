@@ -11,6 +11,7 @@ import { AuthService } from '../auth/auth.service';
 import { ClientCatalogService } from '../database/client-catalog.service';
 import { RuntimeStateRepository } from '../database/runtime-state.repository';
 import { StoredOrderRecord } from '../database/runtime-state.types';
+import { MarketService } from '../market/market.service';
 import { ProvisioningService } from '../provisioning/provisioning.service';
 import { SolanaClientService } from '../solana-client/solana-client.service';
 import { VerifyIncomingTransferResponse } from '../solana-client/solana-client.types';
@@ -28,6 +29,7 @@ export class OrdersService {
     private readonly authService: AuthService,
     private readonly clientCatalogService: ClientCatalogService,
     private readonly runtimeStateRepository: RuntimeStateRepository,
+    private readonly marketService: MarketService,
     private readonly provisioningService: ProvisioningService,
     private readonly solanaClient: SolanaClientService,
   ) {}
@@ -59,7 +61,7 @@ export class OrdersService {
     const orderId = randomUUID();
     const orderNo = `ORD-${Date.now()}-${orderId.slice(0, 8).toUpperCase()}`;
     const collectionAddress = this.resolveCollectionAddress(dto.quoteNetworkCode);
-    const baseAmount = this.resolveBaseAmount(dto.quoteAssetCode, plan.priceUsd);
+    const baseAmount = await this.resolveBaseAmount(dto.quoteAssetCode, plan.priceUsd);
     const uniqueAmountDelta = await this.allocateUniqueAmountDelta({
       collectionAddress,
       quoteAssetCode: dto.quoteAssetCode,
@@ -242,6 +244,26 @@ export class OrdersService {
 
   async getAwaitingOrderCount() {
     return this.runtimeStateRepository.countOrdersByStatus(['AWAITING_PAYMENT']);
+  }
+
+  async listOwnedOrders(
+    accessToken: string,
+    params: {
+      page?: number;
+      pageSize?: number;
+      orderNo?: string;
+      status?: string;
+    },
+  ) {
+    const account = this.authService.getMe(accessToken);
+    const result = await this.runtimeStateRepository.listOrders({
+      ...params,
+      accountId: account.accountId,
+    });
+    return {
+      items: result.items.map((order) => this.toOrderRecord(order)),
+      page: result.page,
+    };
   }
 
   async getReviewOrderCount() {
@@ -448,11 +470,24 @@ export class OrdersService {
       : 'UNDERPAID_REVIEW';
   }
 
-  private resolveBaseAmount(
+  private async resolveBaseAmount(
     assetCode: StoredOrderRecord['quoteAssetCode'],
     planPriceUsd: string,
   ) {
     if (assetCode === 'SOL') {
+      try {
+        const detail = await this.marketService.getInstrumentDetail('solana');
+        const lastPrice = detail.ticker24h.lastPrice;
+        const usdPrice = lastPrice ? Number(lastPrice) : NaN;
+        if (Number.isFinite(usdPrice) && usdPrice > 0) {
+          return (Number(planPriceUsd) / usdPrice).toFixed(9);
+        }
+      } catch (error) {
+        this.logger.warn(
+          'Failed to resolve live SOL/USD price for order amount conversion, falling back to static SOL amount',
+          error instanceof Error ? error.message : `${error}`,
+        );
+      }
       return '0.045000000';
     }
     return Number(planPriceUsd).toFixed(6);

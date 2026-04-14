@@ -14,23 +14,16 @@ data class InviteShareUiState(
     val secondaryActionLabel: String? = "复制邀请码",
     val heroAccent: String = "invite_share",
     val metrics: List<FeatureMetric> = listOf(
-        FeatureMetric(label = "链接", value = "https://cryptovpn.app/invite/CVPN-2025-GLOW"),
-        FeatureMetric(label = "邀请码", value = "CVPN-2025-GLOW"),
-        FeatureMetric(label = "渠道", value = "分享"),
+        FeatureMetric(label = "链接", value = "--"),
+        FeatureMetric(label = "邀请码", value = "--"),
+        FeatureMetric(label = "渠道", value = "系统分享"),
     ),
     val fields: List<FeatureField> = emptyList(),
-    val highlights: List<FeatureListItem> = listOf(
-        FeatureListItem(title = "推广链接", subtitle = "https://cryptovpn.app/invite/CVPN-2025-GLOW", trailing = "复制"),
-        FeatureListItem(title = "邀请码", subtitle = "CVPN-2025-GLOW", trailing = "复制"),
-        FeatureListItem(title = "二维码", subtitle = "用于转发与扫码进入", trailing = "分享"),
-    ),
-    val checklist: List<FeatureBullet> = listOf(
-        FeatureBullet(title = "推广链接", detail = "https://cryptovpn.app/invite/CVPN-2025-GLOW"),
-        FeatureBullet(title = "邀请码", detail = "CVPN-2025-GLOW"),
-        FeatureBullet(title = "复制链接", detail = "一键复制"),
-        FeatureBullet(title = "复制邀请码", detail = "一键复制"),
-    ),
-    val note: String = "生成推广链接与二维码，便于复制或转发。",
+    val highlights: List<FeatureListItem> = emptyList(),
+    val checklist: List<FeatureBullet> = emptyList(),
+    val note: String = "正在从真实分享服务同步推广链接。",
+    val banner: P2SurfaceBanner = p2LoadingBanner(),
+    val feedbackMessage: String? = null,
 )
 
 sealed interface InviteShareEvent {

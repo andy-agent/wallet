@@ -26,11 +26,15 @@ import com.v2ray.ang.payment.data.api.PaymentApi
 import com.v2ray.ang.payment.data.api.RegisterEmailCodeRequest
 import com.v2ray.ang.payment.data.api.ReferralBindRequest
 import com.v2ray.ang.payment.data.api.ReferralOverviewData
+import com.v2ray.ang.payment.data.api.ReferralShareContextData
 import com.v2ray.ang.payment.data.api.SelectVpnNodeRequest
 import com.v2ray.ang.payment.data.api.VpnConfigIssueData
 import com.v2ray.ang.payment.data.api.VpnNodeItem
 import com.v2ray.ang.payment.data.api.VpnRegionItem
 import com.v2ray.ang.payment.data.api.VpnStatusData
+import com.v2ray.ang.payment.data.api.WalletOverviewData
+import com.v2ray.ang.payment.data.api.WalletAssetItemData
+import com.v2ray.ang.payment.data.api.WalletReceiveContextData
 import com.v2ray.ang.payment.data.api.WithdrawalItem
 import com.v2ray.ang.payment.data.api.WithdrawalPageData
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
@@ -374,6 +378,38 @@ class PaymentRepository(context: Context) {
 
     fun getSavedMarzbanUsername(): String? {
         return prefs.getString(PaymentConfig.Prefs.MARZBAN_USERNAME, null)
+    }
+
+    fun getCachedSubscriptionPlanCode(): String? {
+        return prefs.getString(PaymentConfig.Prefs.LAST_SUBSCRIPTION_PLAN_CODE, null)
+    }
+
+    fun getCachedSubscriptionStatus(): String? {
+        return prefs.getString(PaymentConfig.Prefs.LAST_SUBSCRIPTION_STATUS, null)
+    }
+
+    fun getCachedSubscriptionDaysRemaining(): Int? {
+        return if (prefs.contains(PaymentConfig.Prefs.LAST_SUBSCRIPTION_DAYS_REMAINING)) {
+            prefs.getInt(PaymentConfig.Prefs.LAST_SUBSCRIPTION_DAYS_REMAINING, 0)
+        } else {
+            null
+        }
+    }
+
+    fun getCachedVpnLineName(): String? {
+        return prefs.getString(PaymentConfig.Prefs.LAST_VPN_LINE_NAME, null)
+    }
+
+    fun getCachedVpnNodeId(): String? {
+        return prefs.getString(PaymentConfig.Prefs.LAST_VPN_NODE_ID, null)
+    }
+
+    fun getCachedVpnNodeName(): String? {
+        return prefs.getString(PaymentConfig.Prefs.LAST_VPN_NODE_NAME, null)
+    }
+
+    fun getCachedVpnSessionStatus(): String? {
+        return prefs.getString(PaymentConfig.Prefs.LAST_VPN_SESSION_STATUS, null)
     }
 
     fun importSubscriptionUrl(
@@ -1139,6 +1175,25 @@ class PaymentRepository(context: Context) {
         }
     }
 
+    suspend fun getReferralShareContext(): Result<ReferralShareContextData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getReferralShareContext("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("推广分享上下文为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取推广分享上下文失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun bindReferralCode(referralCode: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             if (!refreshTokenIfNeeded()) {
@@ -1170,6 +1225,74 @@ class PaymentRepository(context: Context) {
                     ?: Result.failure(Exception("佣金概览为空"))
             } else {
                 Result.failure(Exception(response.body()?.message ?: "获取佣金概览失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getWalletOverview(): Result<WalletOverviewData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getWalletOverview("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("钱包总览为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取钱包总览失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getWalletAssetCatalog(
+        networkCode: String? = null,
+    ): Result<List<WalletAssetItemData>> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getWalletAssetCatalog(
+                authorization = "Bearer $token",
+                networkCode = networkCode,
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                Result.success(response.body()?.data?.items.orEmpty())
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取钱包资产目录失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getWalletReceiveContext(
+        networkCode: String? = null,
+        assetCode: String? = null,
+    ): Result<WalletReceiveContextData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getWalletReceiveContext(
+                authorization = "Bearer $token",
+                networkCode = networkCode,
+                assetCode = assetCode,
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("收款上下文为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取收款上下文失败"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -1255,6 +1378,15 @@ class PaymentRepository(context: Context) {
 
     private fun cacheSubscriptionMetadata(subscription: CurrentSubscriptionData?) {
         val editor = prefs.edit()
+        subscription?.planCode?.takeIf { it.isNotBlank() }?.let {
+            editor.putString(PaymentConfig.Prefs.LAST_SUBSCRIPTION_PLAN_CODE, it)
+        }
+        subscription?.status.takeIf { !it.isNullOrBlank() }?.let {
+            editor.putString(PaymentConfig.Prefs.LAST_SUBSCRIPTION_STATUS, it)
+        }
+        subscription?.daysRemaining?.let {
+            editor.putInt(PaymentConfig.Prefs.LAST_SUBSCRIPTION_DAYS_REMAINING, it)
+        }
         subscription?.expireAt?.takeIf { it.isNotBlank() }?.let {
             editor.putString(PaymentConfig.Prefs.LAST_VPN_CONFIG_EXPIRE_AT, it)
         }
@@ -1268,10 +1400,23 @@ class PaymentRepository(context: Context) {
     }
 
     private fun cacheVpnStatusMetadata(status: VpnStatusData?) {
-        val regionCode = status?.currentRegionCode?.takeIf { it.isNotBlank() } ?: return
-        prefs.edit()
-            .putString(PaymentConfig.Prefs.LAST_VPN_REGION_CODE, regionCode)
-            .apply()
+        val editor = prefs.edit()
+        status?.currentRegionCode?.takeIf { it.isNotBlank() }?.let {
+            editor.putString(PaymentConfig.Prefs.LAST_VPN_REGION_CODE, it)
+        }
+        status?.selectedLineName?.takeIf { it.isNotBlank() }?.let {
+            editor.putString(PaymentConfig.Prefs.LAST_VPN_LINE_NAME, it)
+        }
+        status?.selectedNodeId?.takeIf { it.isNotBlank() }?.let {
+            editor.putString(PaymentConfig.Prefs.LAST_VPN_NODE_ID, it)
+        }
+        status?.selectedNodeName?.takeIf { it.isNotBlank() }?.let {
+            editor.putString(PaymentConfig.Prefs.LAST_VPN_NODE_NAME, it)
+        }
+        status?.sessionStatus.takeIf { !it.isNullOrBlank() }?.let {
+            editor.putString(PaymentConfig.Prefs.LAST_VPN_SESSION_STATUS, it)
+        }
+        editor.apply()
     }
 
     private fun resolveBootstrapRegionCode(

@@ -48,6 +48,7 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
             onWalletOnboarding = {
                 navController.navigateSingleTop(CryptoVpnRouteSpec.walletOnboarding.pattern)
             },
+            onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
 
@@ -60,6 +61,7 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
             onContinue = {
                 navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern)
             },
+            onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
 
@@ -88,16 +90,6 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
             currentRoute = CryptoVpnRouteSpec.walletHome.name,
             viewModel = vm,
             onBottomNav = { navController.navigateSingleTop(it) },
-            onReceive = {
-                navController.navigateSingleTop(
-                    CryptoVpnRouteSpec.receiveRoute("USDT", "tron"),
-                )
-            },
-            onSend = {
-                navController.navigateSingleTop(
-                    CryptoVpnRouteSpec.sendRoute("USDT", "tron"),
-                )
-            },
         )
     }
     composable(CryptoVpnRouteSpec.forceUpdate.pattern) {

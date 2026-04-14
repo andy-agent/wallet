@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { MarketModule } from '../market/market.module';
 import { ProvisioningModule } from '../provisioning/provisioning.module';
 import { SolanaClientModule } from '../solana-client/solana-client.module';
 import { OrderPaymentMatcherScheduler } from './order-payment-matcher.scheduler';
@@ -8,7 +9,7 @@ import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 
 @Module({
-  imports: [AuthModule, ProvisioningModule, SolanaClientModule],
+  imports: [AuthModule, MarketModule, ProvisioningModule, SolanaClientModule],
   controllers: [OrdersController],
   providers: [OrdersService, OrderPaymentMatcherService, OrderPaymentMatcherScheduler],
   exports: [OrdersService, OrderPaymentMatcherService],

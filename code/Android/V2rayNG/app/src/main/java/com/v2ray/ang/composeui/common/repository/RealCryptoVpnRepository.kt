@@ -24,6 +24,7 @@ import com.v2ray.ang.composeui.p1.model.OrderCheckoutUiState
 import com.v2ray.ang.composeui.p1.model.OrderDetailRowUi
 import com.v2ray.ang.composeui.p1.model.OrderDetailRouteArgs
 import com.v2ray.ang.composeui.p1.model.OrderDetailUiState
+import com.v2ray.ang.composeui.p1.model.CheckoutPaymentOptionUi
 import com.v2ray.ang.composeui.p1.model.OrderListItemUi
 import com.v2ray.ang.composeui.p1.model.OrderListUiState
 import com.v2ray.ang.composeui.p1.model.OrderResultRouteArgs
@@ -55,6 +56,7 @@ import com.v2ray.ang.composeui.p2.model.LegalDocumentDetailUiState
 import com.v2ray.ang.composeui.p2.model.LegalDocumentsUiState
 import com.v2ray.ang.composeui.p2.model.ProfileUiState
 import com.v2ray.ang.composeui.p2.model.ReceiveRouteArgs
+import com.v2ray.ang.composeui.p2.model.ReceiveVariantUi
 import com.v2ray.ang.composeui.p2.model.ReceiveUiState
 import com.v2ray.ang.composeui.p2.model.SendResultRouteArgs
 import com.v2ray.ang.composeui.p2.model.SendResultUiState
@@ -505,7 +507,29 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "结算页必须由真实套餐路由进入。",
             )
         }
-        val order = resolveCheckoutOrder(args.planId)
+        val paymentOptions = paymentRepository.getWalletAssetCatalog().getOrNull()
+            .orEmpty()
+            .filter { it.orderPayable }
+            .map {
+                CheckoutPaymentOptionUi(
+                    assetCode = it.assetCode,
+                    networkCode = it.networkCode,
+                    label = "${it.assetCode} · ${displayChainLabel(it.networkCode)}",
+                    selected = false,
+                )
+            }
+            .distinctBy { "${it.assetCode}:${it.networkCode}" }
+        val selectedOption = paymentOptions.firstOrNull {
+            it.assetCode == args.assetCode && it.networkCode == args.networkCode
+        } ?: paymentOptions.firstOrNull()
+        val normalizedOptions = paymentOptions.map {
+            it.copy(selected = selectedOption?.assetCode == it.assetCode && selectedOption.networkCode == it.networkCode)
+        }
+        val order = resolveCheckoutOrder(
+            planId = args.planId,
+            assetCode = selectedOption?.assetCode ?: PaymentConfig.AssetCode.USDT,
+            networkCode = selectedOption?.networkCode ?: PaymentConfig.NetworkCode.TRON,
+        )
         val plan = findPlanByCode(args.planId)
         return if (order != null) {
             OrderCheckoutUiState(
@@ -525,6 +549,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 expiresAt = order.paymentTarget?.expiresAt ?: order.expiresAt,
                 invoiceEmail = paymentRepository.getCachedCurrentUser()?.email,
                 serviceEnabled = order.paymentTarget?.serviceEnabled == true,
+                paymentOptions = normalizedOptions,
                 note = "订单数据来自 PaymentRepository.createOrder()/getOrder()。",
             )
         } else {
@@ -533,6 +558,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 screenState = P1ScreenState(errorMessage = "创建订单失败"),
                 planCode = args.planId,
                 planTitle = plan?.name.orEmpty(),
+                paymentOptions = normalizedOptions,
                 note = "结算页未再回退到 Mock 仓库；保持真实订单空态。",
             )
         }
@@ -722,6 +748,49 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getReceiveState(args: ReceiveRouteArgs): ReceiveUiState {
+        val context = paymentRepository.getWalletReceiveContext(
+            networkCode = routeChainIdToNetworkCode(args.chainId),
+            assetCode = args.assetId.takeIf { it.isNotBlank() },
+        ).getOrNull()
+        if (context != null) {
+            return ReceiveUiState(
+                badge = "${context.selectedAssetCode} · ${displayChainLabel(context.selectedNetworkCode)}",
+                summary = context.note,
+                primaryActionLabel = if (context.canShare) "分享二维码" else "暂无地址可分享",
+                secondaryActionLabel = "复制地址",
+                metrics = listOf(
+                    FeatureMetric("当前链", "${context.selectedAssetCode} · ${displayChainLabel(context.selectedNetworkCode)}"),
+                    FeatureMetric("可切换", context.chainItems.joinToString(" / ") { displayChainLabel(it.networkCode) }),
+                    FeatureMetric("地址数", context.addresses.size.toString()),
+                    FeatureMetric("校验状态", context.status),
+                ),
+                fields = listOf(
+                    FeatureField(
+                        "address",
+                        "收款地址",
+                        context.defaultAddress ?: "--",
+                        context.note,
+                    ),
+                ),
+                highlights = listOf(
+                    FeatureListItem("当前网络", displayChainLabel(context.selectedNetworkCode), context.selectedAssetCode, "LIVE"),
+                    FeatureListItem("地址状态", context.status, "${context.addresses.size} 个地址", "ADDR"),
+                    FeatureListItem("数据源", "wallet/receive-context", "", "REAL"),
+                ),
+                variants = context.chainItems.map { item ->
+                    ReceiveVariantUi(
+                        assetId = if (item.networkCode == context.selectedNetworkCode) context.selectedAssetCode else item.nativeAssetCode,
+                        chainId = item.networkCode.lowercase(Locale.ROOT),
+                        label = displayChainLabel(item.networkCode),
+                        selected = item.selected == true,
+                    )
+                },
+                canShare = context.canShare,
+                shareText = context.shareText.orEmpty(),
+                note = context.note,
+            )
+        }
+
         val user = paymentRepository.getCachedCurrentUser()
         return ReceiveUiState(
             metrics = listOf(
@@ -730,10 +799,12 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 FeatureMetric("校验状态", if (user != null) "已登录" else "未登录"),
             ),
             fields = listOf(
-                FeatureField("label", "地址标签", walletAddress(user), "当前账户衍生地址标签"),
+                FeatureField("label", "地址标签", walletAddress(user), "服务端收款上下文不可用"),
             ),
-            summary = "收款页已绑定真实账户上下文。",
-            note = "当前地址使用账户派生占位，待接入真实链上钱包地址源。",
+            summary = "收款页服务端上下文不可用。",
+            note = "当前地址视图仍未拿到服务端真实收款地址。",
+            canShare = false,
+            shareText = "",
         )
     }
 
@@ -779,12 +850,12 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                     FeatureMetric("转化率", if (overview.level1InviteCount > 0) "${overview.level2InviteCount * 100 / overview.level1InviteCount}%" else "0%"),
                 ),
                 highlights = listOf(
-                    FeatureListItem("邀请码", overview.referralCode, overview.accountId, "LIVE"),
+                    FeatureListItem(overview.referralCode, "邀请码 · ${overview.accountId}", "LIVE"),
                     FeatureListItem("一级邀请", overview.level1InviteCount.toString(), overview.level1IncomeUsdt, "L1"),
                     FeatureListItem("二级邀请", overview.level2InviteCount.toString(), overview.level2IncomeUsdt, "L2"),
                 ),
                 summary = "邀请中心已切换到真实邀请概览接口。",
-                note = "使用 PaymentRepository.getReferralOverview()。",
+                note = "推广加密网络服务，佣金可直接计入当前增长账户。",
             )
         } else {
             InviteCenterUiState(
@@ -801,37 +872,34 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getInviteShareState(): InviteShareUiState {
-        val overview = paymentRepository.getReferralOverview().getOrNull()
-        val referralCode = overview?.referralCode ?: "--"
-
-        return InviteShareUiState(
-            metrics = listOf(
-                FeatureMetric("邀请码", referralCode),
-                FeatureMetric("一级邀请", overview?.level1InviteCount?.toString() ?: "0"),
-                FeatureMetric("二级邀请", overview?.level2InviteCount?.toString() ?: "0"),
-            ),
-            highlights = listOf(
-                FeatureListItem("邀请码", referralCode, "复制", "LIVE"),
-                FeatureListItem(
-                    "一级邀请",
-                    overview?.level1InviteCount?.toString() ?: "0",
-                    overview?.level1IncomeUsdt ?: "0",
-                    "L1",
+        val share = paymentRepository.getReferralShareContext().getOrNull()
+        return if (share != null) {
+            InviteShareUiState(
+                metrics = listOf(
+                    FeatureMetric("链接", share.shareLink),
+                    FeatureMetric("邀请码", share.referralCode),
+                    FeatureMetric("渠道", "系统分享"),
                 ),
-                FeatureListItem(
-                    "二级邀请",
-                    overview?.level2InviteCount?.toString() ?: "0",
-                    overview?.level2IncomeUsdt ?: "0",
-                    "L2",
+                highlights = listOf(
+                    FeatureListItem("推广链接", share.shareLink, "复制", "LIVE"),
+                    FeatureListItem("邀请码", share.referralCode, "复制", "CODE"),
+                    FeatureListItem("可用佣金", "${share.availableAmountUsdt} USDT", "冻结 ${share.frozenAmountUsdt}", "BAL"),
                 ),
-            ),
-            summary = if (overview != null) {
-                "分享页已切换到真实邀请码与邀请概览上下文。"
-            } else {
-                "当前未取到真实邀请码，页面显示明确空态。"
-            },
-            note = "邀请分享数据来自 PaymentRepository.getReferralOverview()。",
-        )
+                summary = share.shareMessage,
+                note = "分享推广链接或邀请码，邀请关系会自动写入服务端。",
+            )
+        } else {
+            InviteShareUiState(
+                metrics = listOf(
+                    FeatureMetric("链接", "--"),
+                    FeatureMetric("邀请码", "--"),
+                    FeatureMetric("渠道", "系统分享"),
+                ),
+                highlights = emptyList(),
+                summary = "当前未取到真实推广分享上下文。",
+                note = "邀请分享页未再回退到 Mock 仓库；保持真实空态。",
+            )
+        }
     }
 
     override suspend fun getCommissionLedgerState(): CommissionLedgerUiState {
@@ -1418,16 +1486,25 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
     }
 
-    private suspend fun resolveCheckoutOrder(planId: String): Order? {
+    private suspend fun resolveCheckoutOrder(
+        planId: String,
+        assetCode: String,
+        networkCode: String,
+    ): Order? {
         val currentOrderNo = paymentRepository.getCurrentOrderId()
         val currentOrder = currentOrderNo?.let { paymentRepository.getOrder(it).getOrNull() }
-        if (currentOrder != null && currentOrder.planCode == planId && currentOrder.status == PaymentConfig.OrderStatus.PENDING_PAYMENT) {
+        if (currentOrder != null &&
+            currentOrder.planCode == planId &&
+            currentOrder.status == PaymentConfig.OrderStatus.PENDING_PAYMENT &&
+            currentOrder.quoteAssetCode == assetCode &&
+            currentOrder.quoteNetworkCode == networkCode
+        ) {
             return currentOrder
         }
         return paymentRepository.createOrder(
             planId = planId,
-            assetCode = PaymentConfig.AssetCode.USDT,
-            networkCode = PaymentConfig.NetworkCode.TRON,
+            assetCode = assetCode,
+            networkCode = networkCode,
         ).getOrNull()
     }
 
@@ -1452,6 +1529,17 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         FeatureMetric("待结算", "${summary.frozenAmount} ${summary.settlementAssetCode}"),
         FeatureMetric("已结算", "${summary.withdrawnTotal} ${summary.settlementAssetCode}"),
     )
+
+    private fun displayChainLabel(networkCode: String): String = when (networkCode.uppercase(Locale.ROOT)) {
+        "SOLANA" -> "Solana"
+        "TRON" -> "TRON"
+        else -> networkCode
+    }
+
+    private fun routeChainIdToNetworkCode(chainId: String): String = when (chainId.lowercase(Locale.ROOT)) {
+        "sol", "solana" -> "SOLANA"
+        else -> "TRON"
+    }
 
     private fun walletAddress(user: UserEntity?): String {
         if (user == null) return "--"

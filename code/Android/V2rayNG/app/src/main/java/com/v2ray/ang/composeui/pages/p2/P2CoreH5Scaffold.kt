@@ -59,6 +59,12 @@ import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.effects.TechParticleBackground
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
+import com.v2ray.ang.composeui.p0.ui.P01BottomNav
+import com.v2ray.ang.composeui.p0.ui.P01HeaderHeroRing
+import com.v2ray.ang.composeui.p0.ui.defaultP01Destinations
+import com.v2ray.ang.composeui.p0.ui.P01BottomNav
+import com.v2ray.ang.composeui.p0.ui.P01HeaderHeroRing
+import com.v2ray.ang.composeui.p0.ui.defaultP01Destinations
 import kotlinx.coroutines.delay
 
 private val CorePageBackground = Brush.verticalGradient(
@@ -202,9 +208,16 @@ internal fun P2CorePageScaffold(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
-                CoreBottomNav(
-                    activeSection = activeSection,
-                    onBottomNav = onBottomNav,
+                P01BottomNav(
+                    currentRoute = when (activeSection) {
+                        CoreNavSection.Overview -> "vpn_home"
+                        CoreNavSection.Vpn -> "plans"
+                        CoreNavSection.Wallet -> "wallet_home"
+                        CoreNavSection.Growth -> "invite_center"
+                        CoreNavSection.Profile -> "profile"
+                    },
+                    destinations = defaultP01Destinations(),
+                    onNavigate = onBottomNav,
                 )
             }
         }
@@ -215,187 +228,7 @@ internal fun P2CorePageScaffold(
 private fun P2CoreSecureHub(
     label: String,
 ) {
-    val transition = rememberInfiniteTransition(label = "p2_core_secure_hub")
-    val outerRotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 12000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "p2_core_secure_hub_outer_rotation",
-    )
-    val middleRotation by transition.animateFloat(
-        initialValue = 360f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 18000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "p2_core_secure_hub_middle_rotation",
-    )
-    val innerRotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = -360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 22000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "p2_core_secure_hub_inner_rotation",
-    )
-    val glowAlpha by transition.animateFloat(
-        initialValue = 0.18f,
-        targetValue = 0.30f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2600, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "p2_core_secure_hub_glow",
-    )
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .background(Color(0xFFF1F5FF), RoundedCornerShape(999.dp))
-                .border(1.dp, Color(0xFFD7E3FF), RoundedCornerShape(999.dp))
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = CorePrimary,
-            )
-        }
-        Box(
-            modifier = Modifier
-                .size(84.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val orbPrimary = Color(0xFF4F7CFF)
-                val orbCyan = Color(0xFF20D3EE)
-                val orbViolet = Color(0xFF8B5CF6)
-                val minDim = size.minDimension
-                val bodyRadius = minDim * 0.33f
-                val innerCoreRadius = minDim * 0.21f
-                val dashedStroke = minDim * 0.022f
-
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            orbPrimary.copy(alpha = glowAlpha),
-                            orbCyan.copy(alpha = glowAlpha * 0.58f),
-                            Color.Transparent,
-                        ),
-                        center = center,
-                        radius = minDim * 0.52f,
-                    ),
-                    radius = minDim * 0.44f,
-                )
-                drawCircle(
-                    brush = Brush.sweepGradient(
-                        colors = listOf(
-                            orbPrimary.copy(alpha = 0.92f),
-                            orbCyan.copy(alpha = 0.72f),
-                            orbViolet.copy(alpha = 0.68f),
-                            orbPrimary.copy(alpha = 0.92f),
-                        ),
-                        center = center,
-                    ),
-                    radius = bodyRadius,
-                )
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.96f),
-                            Color.White.copy(alpha = 0.78f),
-                            orbPrimary.copy(alpha = 0.34f),
-                            orbCyan.copy(alpha = 0.20f),
-                            Color.Transparent,
-                        ),
-                        center = center,
-                        radius = bodyRadius,
-                    ),
-                    radius = bodyRadius,
-                )
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.72f),
-                    radius = bodyRadius,
-                    style = Stroke(width = minDim * 0.03f),
-                )
-                drawCircle(
-                    color = orbPrimary.copy(alpha = 0.16f),
-                    radius = bodyRadius + minDim * 0.09f,
-                    style = Stroke(width = minDim * 0.02f),
-                )
-                drawCircle(
-                    color = orbCyan.copy(alpha = 0.15f),
-                    radius = bodyRadius + minDim * 0.16f,
-                    style = Stroke(width = minDim * 0.02f),
-                )
-
-                rotate(degrees = outerRotation, pivot = center) {
-                    drawCircle(
-                        color = orbPrimary.copy(alpha = 0.34f),
-                        radius = bodyRadius + minDim * 0.04f,
-                        style = Stroke(
-                            width = dashedStroke,
-                            pathEffect = PathEffect.dashPathEffect(
-                                intervals = floatArrayOf(minDim * 0.055f, minDim * 0.032f),
-                            ),
-                        ),
-                    )
-                }
-                rotate(degrees = middleRotation, pivot = center) {
-                    drawCircle(
-                        color = orbCyan.copy(alpha = 0.28f),
-                        radius = bodyRadius + minDim * 0.11f,
-                        style = Stroke(
-                            width = dashedStroke,
-                            pathEffect = PathEffect.dashPathEffect(
-                                intervals = floatArrayOf(minDim * 0.045f, minDim * 0.03f),
-                            ),
-                        ),
-                    )
-                }
-                rotate(degrees = innerRotation, pivot = center) {
-                    drawCircle(
-                        color = orbViolet.copy(alpha = 0.24f),
-                        radius = bodyRadius - minDim * 0.08f,
-                        style = Stroke(
-                            width = minDim * 0.018f,
-                            pathEffect = PathEffect.dashPathEffect(
-                                intervals = floatArrayOf(minDim * 0.036f, minDim * 0.026f),
-                            ),
-                        ),
-                    )
-                }
-
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.98f),
-                            Color(0xFFF3F7FF).copy(alpha = 0.96f),
-                            orbPrimary.copy(alpha = 0.18f),
-                        ),
-                        center = center,
-                        radius = innerCoreRadius,
-                    ),
-                    radius = innerCoreRadius,
-                )
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.75f),
-                    radius = innerCoreRadius - minDim * 0.018f,
-                    style = Stroke(width = minDim * 0.02f),
-                )
-            }
-            P2CoreSecureHubWalletGlyph(
-                modifier = Modifier.size(22.dp),
-            )
-        }
-    }
+    P01HeaderHeroRing()
 }
 
 @Composable
@@ -1274,7 +1107,7 @@ private fun CoreBottomNav(
                 label = "钱包",
                 icon = { active, tint -> Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = null, tint = if (active) tint else Color(0xFF97A4C4)) },
                 active = activeSection == CoreNavSection.Wallet,
-                onClick = { onBottomNav(CryptoVpnRouteSpec.assetDetailRoute("USDT", "tron")) },
+                onClick = { onBottomNav(CryptoVpnRouteSpec.walletHome.pattern) },
             )
         }
         Box(modifier = Modifier.weight(1f)) {

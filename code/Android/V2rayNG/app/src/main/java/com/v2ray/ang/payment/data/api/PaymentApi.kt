@@ -76,11 +76,23 @@ interface PaymentApi {
         @Header("Authorization") authorization: String
     ): Response<VpnRegionsResponse>
 
+    @GET("${PaymentConfig.API_VERSION}/vpn/nodes")
+    suspend fun getVpnNodes(
+        @Header("Authorization") authorization: String,
+        @Query("lineCode") lineCode: String? = null
+    ): Response<VpnNodesResponse>
+
     @POST("${PaymentConfig.API_VERSION}/vpn/config/issue")
     suspend fun issueVpnConfig(
         @Header("Authorization") authorization: String,
         @Body request: IssueVpnConfigRequest
     ): Response<IssueVpnConfigResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/vpn/selection")
+    suspend fun selectVpnNode(
+        @Header("Authorization") authorization: String,
+        @Body request: SelectVpnNodeRequest
+    ): Response<VpnStatusResponse>
 
     @GET("${PaymentConfig.API_VERSION}/vpn/status")
     suspend fun getVpnStatus(
@@ -97,10 +109,45 @@ interface PaymentApi {
         @Header("Authorization") authorization: String
     ): Response<MeResponse>
 
+    @GET("${PaymentConfig.API_VERSION}/wallet/chains")
+    suspend fun getWalletChains(
+        @Header("Authorization") authorization: String
+    ): Response<WalletChainsResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallet/assets/catalog")
+    suspend fun getWalletAssetCatalog(
+        @Header("Authorization") authorization: String,
+        @Query("networkCode") networkCode: String? = null
+    ): Response<WalletAssetCatalogResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallet/public-addresses")
+    suspend fun getWalletPublicAddresses(
+        @Header("Authorization") authorization: String,
+        @Query("networkCode") networkCode: String? = null,
+        @Query("assetCode") assetCode: String? = null
+    ): Response<WalletPublicAddressesResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallet/overview")
+    suspend fun getWalletOverview(
+        @Header("Authorization") authorization: String
+    ): Response<WalletOverviewResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallet/receive-context")
+    suspend fun getWalletReceiveContext(
+        @Header("Authorization") authorization: String,
+        @Query("networkCode") networkCode: String? = null,
+        @Query("assetCode") assetCode: String? = null
+    ): Response<WalletReceiveContextResponse>
+
     @GET("${PaymentConfig.API_VERSION}/referral/overview")
     suspend fun getReferralOverview(
         @Header("Authorization") authorization: String
     ): Response<ReferralOverviewResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/referral/share-context")
+    suspend fun getReferralShareContext(
+        @Header("Authorization") authorization: String
+    ): Response<ReferralShareContextResponse>
 
     @POST("${PaymentConfig.API_VERSION}/referral/bind")
     suspend fun bindReferralCode(
@@ -257,6 +304,45 @@ data class VpnRegionItem(
     val remark: String? = null,
 )
 
+data class VpnNodesResponse(
+    val code: String,
+    val message: String,
+    val data: VpnNodesData?
+)
+
+data class VpnNodesData(
+    val items: List<VpnNodeItem>
+)
+
+data class VpnNodeItem(
+    @SerializedName("nodeId")
+    val nodeId: String,
+    @SerializedName("nodeName")
+    val nodeName: String,
+    @SerializedName("lineCode")
+    val lineCode: String,
+    @SerializedName("lineName")
+    val lineName: String,
+    @SerializedName("regionCode")
+    val regionCode: String,
+    @SerializedName("regionName")
+    val regionName: String,
+    val host: String,
+    val port: Int,
+    val status: String,
+    @SerializedName("healthStatus")
+    val healthStatus: String,
+    val selected: Boolean = false,
+    val source: String? = null,
+)
+
+data class SelectVpnNodeRequest(
+    @SerializedName("lineCode")
+    val lineCode: String,
+    @SerializedName("nodeId")
+    val nodeId: String,
+)
+
 data class IssueVpnConfigResponse(
     val code: String,
     val message: String,
@@ -287,6 +373,18 @@ data class VpnStatusData(
     val subscriptionStatus: String,
     @SerializedName("currentRegionCode")
     val currentRegionCode: String? = null,
+    @SerializedName("selectedRegionCode")
+    val selectedRegionCode: String? = null,
+    @SerializedName("selectedRegionName")
+    val selectedRegionName: String? = null,
+    @SerializedName("selectedLineCode")
+    val selectedLineCode: String? = null,
+    @SerializedName("selectedLineName")
+    val selectedLineName: String? = null,
+    @SerializedName("selectedNodeId")
+    val selectedNodeId: String? = null,
+    @SerializedName("selectedNodeName")
+    val selectedNodeName: String? = null,
     @SerializedName("connectionMode")
     val connectionMode: String? = null,
     @SerializedName("canIssueConfig")
@@ -339,6 +437,160 @@ data class MeData(
     val subscription: CurrentSubscriptionData? = null
 )
 
+data class WalletChainsResponse(
+    val code: String,
+    val message: String,
+    val data: WalletChainsData?
+)
+
+data class WalletChainsData(
+    val items: List<WalletChainItemData>
+)
+
+data class WalletChainItemData(
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("displayName")
+    val displayName: String,
+    @SerializedName("nativeAssetCode")
+    val nativeAssetCode: String,
+    @SerializedName("directBroadcastEnabled")
+    val directBroadcastEnabled: Boolean,
+    @SerializedName("proxyBroadcastEnabled")
+    val proxyBroadcastEnabled: Boolean,
+    @SerializedName("requiredConfirmations")
+    val requiredConfirmations: Int,
+    @SerializedName("publicRpcUrl")
+    val publicRpcUrl: String? = null,
+    @SerializedName("assetCount")
+    val assetCount: Int? = null,
+    @SerializedName("orderCount")
+    val orderCount: Int? = null,
+    @SerializedName("publicAddressCount")
+    val publicAddressCount: Int? = null,
+    @SerializedName("lastOrderAt")
+    val lastOrderAt: String? = null,
+    @SerializedName("hasConfiguredAddress")
+    val hasConfiguredAddress: Boolean? = null,
+    @SerializedName("selected")
+    val selected: Boolean? = null,
+)
+
+data class WalletAssetCatalogResponse(
+    val code: String,
+    val message: String,
+    val data: WalletAssetCatalogData?
+)
+
+data class WalletAssetCatalogData(
+    val items: List<WalletAssetItemData>
+)
+
+data class WalletAssetItemData(
+    @SerializedName("assetId")
+    val assetId: String,
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
+    val assetCode: String,
+    @SerializedName("displayName")
+    val displayName: String,
+    val symbol: String,
+    val decimals: Int,
+    @SerializedName("isNative")
+    val isNative: Boolean,
+    @SerializedName("contractAddress")
+    val contractAddress: String? = null,
+    @SerializedName("walletVisible")
+    val walletVisible: Boolean,
+    @SerializedName("orderPayable")
+    val orderPayable: Boolean,
+    @SerializedName("publicAddressCount")
+    val publicAddressCount: Int? = null,
+    @SerializedName("orderCount")
+    val orderCount: Int? = null,
+    @SerializedName("totalPayableAmount")
+    val totalPayableAmount: String? = null,
+    @SerializedName("lastOrderAt")
+    val lastOrderAt: String? = null,
+    @SerializedName("lastOrderStatus")
+    val lastOrderStatus: String? = null,
+    @SerializedName("selected")
+    val selected: Boolean? = null,
+)
+
+data class WalletPublicAddressesResponse(
+    val code: String,
+    val message: String,
+    val data: WalletPublicAddressesData?
+)
+
+data class WalletPublicAddressesData(
+    val items: List<WalletPublicAddressData>
+)
+
+data class WalletPublicAddressData(
+    @SerializedName("addressId")
+    val addressId: String,
+    @SerializedName("accountId")
+    val accountId: String,
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
+    val assetCode: String,
+    val address: String,
+    @SerializedName("isDefault")
+    val isDefault: Boolean,
+    @SerializedName("createdAt")
+    val createdAt: String,
+)
+
+data class WalletOverviewResponse(
+    val code: String,
+    val message: String,
+    val data: WalletOverviewData?
+)
+
+data class WalletOverviewData(
+    @SerializedName("accountId")
+    val accountId: String,
+    @SerializedName("accountEmail")
+    val accountEmail: String,
+    @SerializedName("selectedNetworkCode")
+    val selectedNetworkCode: String,
+    @SerializedName("chainItems")
+    val chainItems: List<WalletChainItemData>,
+    @SerializedName("assetItems")
+    val assetItems: List<WalletAssetItemData>,
+    val alerts: List<String> = emptyList(),
+)
+
+data class WalletReceiveContextResponse(
+    val code: String,
+    val message: String,
+    val data: WalletReceiveContextData?
+)
+
+data class WalletReceiveContextData(
+    @SerializedName("selectedNetworkCode")
+    val selectedNetworkCode: String,
+    @SerializedName("selectedAssetCode")
+    val selectedAssetCode: String,
+    @SerializedName("chainItems")
+    val chainItems: List<WalletChainItemData>,
+    @SerializedName("assetItems")
+    val assetItems: List<WalletAssetItemData>,
+    val addresses: List<WalletPublicAddressData>,
+    @SerializedName("defaultAddress")
+    val defaultAddress: String? = null,
+    @SerializedName("canShare")
+    val canShare: Boolean,
+    val status: String,
+    val note: String,
+    @SerializedName("shareText")
+    val shareText: String? = null,
+)
+
 data class ReferralOverviewResponse(
     val code: String,
     val message: String,
@@ -371,6 +623,33 @@ data class ReferralOverviewData(
 data class ReferralBindRequest(
     @SerializedName("referralCode")
     val referralCode: String
+)
+
+data class ReferralShareContextResponse(
+    val code: String,
+    val message: String,
+    val data: ReferralShareContextData?
+)
+
+data class ReferralShareContextData(
+    @SerializedName("referralCode")
+    val referralCode: String,
+    @SerializedName("shareLink")
+    val shareLink: String,
+    @SerializedName("shareTitle")
+    val shareTitle: String,
+    @SerializedName("shareMessage")
+    val shareMessage: String,
+    @SerializedName("level1InviteCount")
+    val level1InviteCount: Int,
+    @SerializedName("level2InviteCount")
+    val level2InviteCount: Int,
+    @SerializedName("availableAmountUsdt")
+    val availableAmountUsdt: String,
+    @SerializedName("frozenAmountUsdt")
+    val frozenAmountUsdt: String,
+    @SerializedName("hasBinding")
+    val hasBinding: Boolean,
 )
 
 data class CreateWithdrawalRequest(

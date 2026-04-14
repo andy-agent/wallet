@@ -16,24 +16,16 @@ data class InviteCenterUiState(
         val secondaryActionLabel: String? = "分享推广链接",
         val heroAccent: String = "invite_center",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "累计佣金", value = "$3,480.20"),
-    FeatureMetric(label = "待提现", value = "$580.00"),
-    FeatureMetric(label = "本月新增", value = "42人"),
-    FeatureMetric(label = "转化率", value = "18.6%"),
+    FeatureMetric(label = "累计佣金", value = "$0.00"),
+    FeatureMetric(label = "邀请人数", value = "0"),
+    FeatureMetric(label = "转化率", value = "0%"),
 ),
         val fields: List<FeatureField> = emptyList(),
-        val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "CVPN-2025-GLOW", subtitle = "可复制链接、二维码或分享给好友。", trailing = "复制邀请码"),
-    FeatureListItem(title = "一级分佣", subtitle = "25%", trailing = "二级分佣 5%"),
-    FeatureListItem(title = "分享推广链接", subtitle = "今日点击 268", trailing = "进入"),
-),
-        val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "邀请收益总览", detail = "邀请新用户购买套餐后，收益将进入你的 Growth 账户。"),
-    FeatureBullet(title = "累计佣金", detail = "$3,480.20"),
-    FeatureBullet(title = "待提现", detail = "$580.00"),
-    FeatureBullet(title = "转化率", detail = "18.6%"),
-),
-        val note: String = "推广加密网络服务，佣金可直接提到你的多链钱包。",
+        val highlights: List<FeatureListItem> = emptyList(),
+        val checklist: List<FeatureBullet> = emptyList(),
+        val note: String = "正在从真实邀请服务同步数据。",
+        val banner: P2SurfaceBanner = p2LoadingBanner(),
+        val feedbackMessage: String? = null,
     )
 
     sealed interface InviteCenterEvent {

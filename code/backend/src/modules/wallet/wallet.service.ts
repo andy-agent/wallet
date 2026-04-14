@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
+import { OrdersService } from '../orders/orders.service';
 import { SolanaClientService } from '../solana-client/solana-client.service';
 import { TronClientService } from '../tron-client/tron-client.service';
 import { ProxyBroadcastRequestDto } from './dto/proxy-broadcast.request';
@@ -29,6 +30,7 @@ export class WalletService {
 
   constructor(
     private readonly authService: AuthService,
+    private readonly ordersService: OrdersService,
     private readonly solanaClient: SolanaClientService,
     private readonly tronClient: TronClientService,
   ) {}
@@ -117,6 +119,193 @@ export class WalletService {
     };
   }
 
+  async getOverview(accessToken: string) {
+    const account = this.authService.getMe(accessToken);
+    const chains = this.getChains(accessToken).items;
+    const assets = this.getAssetCatalog(accessToken).items;
+    const publicAddresses = this.listPublicAddresses(accessToken).items;
+    const orders = await this.listOwnedOrders(accessToken);
+
+    const orderStatsByNetwork = new Map<
+      string,
+      { orderCount: number; lastOrderAt: string | null }
+    >();
+    const orderStatsByAsset = new Map<
+      string,
+      {
+        orderCount: number;
+        totalPayableAmount: number;
+        lastOrderAt: string | null;
+        lastOrderStatus: string | null;
+      }
+    >();
+
+    for (const order of orders) {
+      const networkKey = order.quoteNetworkCode;
+      const assetKey = `${order.quoteNetworkCode}:${order.quoteAssetCode}`;
+
+      const networkStats = orderStatsByNetwork.get(networkKey) ?? {
+        orderCount: 0,
+        lastOrderAt: null,
+      };
+      networkStats.orderCount += 1;
+      networkStats.lastOrderAt = this.maxIso(networkStats.lastOrderAt, order.completedAt ?? order.confirmedAt ?? order.expiresAt);
+      orderStatsByNetwork.set(networkKey, networkStats);
+
+      const assetStats = orderStatsByAsset.get(assetKey) ?? {
+        orderCount: 0,
+        totalPayableAmount: 0,
+        lastOrderAt: null,
+        lastOrderStatus: null,
+      };
+      assetStats.orderCount += 1;
+      assetStats.totalPayableAmount += Number(order.payableAmount);
+      assetStats.lastOrderAt = this.maxIso(assetStats.lastOrderAt, order.completedAt ?? order.confirmedAt ?? order.expiresAt);
+      assetStats.lastOrderStatus = order.status;
+      orderStatsByAsset.set(assetKey, assetStats);
+    }
+
+    const publicAddressCountByNetwork = new Map<string, number>();
+    const publicAddressCountByAsset = new Map<string, number>();
+    for (const item of publicAddresses) {
+      publicAddressCountByNetwork.set(
+        item.networkCode,
+        (publicAddressCountByNetwork.get(item.networkCode) ?? 0) + 1,
+      );
+      const assetKey = `${item.networkCode}:${item.assetCode}`;
+      publicAddressCountByAsset.set(
+        assetKey,
+        (publicAddressCountByAsset.get(assetKey) ?? 0) + 1,
+      );
+    }
+
+    const chainItems = chains.map((chain) => {
+      const assetsOnChain = assets.filter((item) => item.networkCode === chain.networkCode);
+      const networkStats = orderStatsByNetwork.get(chain.networkCode);
+      return {
+        networkCode: chain.networkCode,
+        displayName: chain.displayName,
+        nativeAssetCode: chain.nativeAssetCode,
+        publicRpcUrl: chain.publicRpcUrl,
+        directBroadcastEnabled: chain.directBroadcastEnabled,
+        proxyBroadcastEnabled: chain.proxyBroadcastEnabled,
+        requiredConfirmations: chain.requiredConfirmations,
+        assetCount: assetsOnChain.length,
+        orderCount: networkStats?.orderCount ?? 0,
+        publicAddressCount: publicAddressCountByNetwork.get(chain.networkCode) ?? 0,
+        lastOrderAt: networkStats?.lastOrderAt ?? null,
+        hasConfiguredAddress: (publicAddressCountByNetwork.get(chain.networkCode) ?? 0) > 0,
+      };
+    });
+
+    const assetItems = assets.map((asset) => {
+      const assetKey = `${asset.networkCode}:${asset.assetCode}`;
+      const assetStats = orderStatsByAsset.get(assetKey);
+      return {
+        assetId: asset.assetId,
+        networkCode: asset.networkCode,
+        assetCode: asset.assetCode,
+        displayName: asset.displayName,
+        symbol: asset.symbol,
+        decimals: asset.decimals,
+        isNative: asset.isNative,
+        walletVisible: asset.walletVisible,
+        orderPayable: asset.orderPayable,
+        publicAddressCount: publicAddressCountByAsset.get(assetKey) ?? 0,
+        orderCount: assetStats?.orderCount ?? 0,
+        totalPayableAmount: assetStats
+          ? assetStats.totalPayableAmount.toFixed(asset.assetCode === 'SOL' ? 6 : 6)
+          : '0.000000',
+        lastOrderAt: assetStats?.lastOrderAt ?? null,
+        lastOrderStatus: assetStats?.lastOrderStatus ?? null,
+      };
+    });
+
+    const selectedNetworkCode =
+      chainItems
+        .slice()
+        .sort((left, right) => {
+          const addressDelta = Number(right.hasConfiguredAddress) - Number(left.hasConfiguredAddress);
+          if (addressDelta !== 0) {
+            return addressDelta;
+          }
+          return right.orderCount - left.orderCount;
+        })
+        .at(0)?.networkCode ?? chains[0]?.networkCode ?? 'TRON';
+
+    return {
+      accountId: account.accountId,
+      accountEmail: account.email,
+      selectedNetworkCode,
+      chainItems,
+      assetItems,
+      alerts: this.buildOverviewAlerts({
+        chainItems,
+        assetItems,
+        publicAddresses,
+      }),
+    };
+  }
+
+  async getReceiveContext(
+    accessToken: string,
+    requestedNetworkCode?: string,
+    requestedAssetCode?: string,
+  ) {
+    const chains = this.getChains(accessToken).items;
+    const assets = this.getAssetCatalog(accessToken).items.filter((item) => item.walletVisible);
+    const selectedNetworkCode =
+      requestedNetworkCode && chains.some((item) => item.networkCode === requestedNetworkCode)
+        ? requestedNetworkCode
+        : chains[0]?.networkCode ?? 'TRON';
+    const assetsForNetwork = assets.filter((item) => item.networkCode === selectedNetworkCode);
+    const preferredAssetForNetwork = assetsForNetwork.find((item) => item.orderPayable)
+      ?? assetsForNetwork.find((item) => item.assetCode === 'SOL')
+      ?? assetsForNetwork[0];
+    const selectedAssetCode =
+      requestedAssetCode &&
+      assetsForNetwork.some((item) => item.assetCode === requestedAssetCode)
+        ? requestedAssetCode
+        : preferredAssetForNetwork?.assetCode ?? '';
+    const publicAddresses = this.listPublicAddresses(
+      accessToken,
+      selectedNetworkCode,
+      selectedAssetCode || undefined,
+    ).items;
+    const defaultAddress =
+      publicAddresses.find((item) => item.isDefault)?.address ??
+      publicAddresses[0]?.address ??
+      null;
+
+    return {
+      selectedNetworkCode,
+      selectedAssetCode,
+      chainItems: chains.map((item) => ({
+        networkCode: item.networkCode,
+        displayName: item.displayName,
+        nativeAssetCode: item.nativeAssetCode,
+        selected: item.networkCode === selectedNetworkCode,
+      })),
+      assetItems: assetsForNetwork.map((item) => ({
+        assetId: item.assetId,
+        assetCode: item.assetCode,
+        displayName: item.displayName,
+        symbol: item.symbol,
+        selected: item.assetCode === selectedAssetCode,
+      })),
+      addresses: publicAddresses,
+      defaultAddress,
+      canShare: Boolean(defaultAddress),
+      status: defaultAddress ? '已配置收款地址' : '未配置收款地址',
+      note: defaultAddress
+        ? '当前展示服务端保存的真实收款地址。'
+        : '当前账号在该链/资产下还没有配置收款地址。',
+      shareText: defaultAddress
+        ? `${selectedAssetCode} · ${selectedNetworkCode}\n${defaultAddress}`
+        : '',
+    };
+  }
+
   upsertPublicAddress(accessToken: string, dto: UpsertWalletPublicAddressRequestDto) {
     const account = this.authService.getMe(accessToken);
     const existing = this.publicAddresses.get(account.accountId) ?? [];
@@ -154,6 +343,54 @@ export class WalletService {
     existing.push(created);
     this.publicAddresses.set(account.accountId, existing);
     return created;
+  }
+
+  private async listOwnedOrders(accessToken: string) {
+    const result = await this.ordersService.listOwnedOrders(accessToken, {
+      page: 1,
+      pageSize: 200,
+    });
+    return result.items;
+  }
+
+  private buildOverviewAlerts(input: {
+    chainItems: Array<{
+      networkCode: string;
+      hasConfiguredAddress: boolean;
+      orderCount: number;
+    }>;
+    assetItems: Array<{
+      orderPayable: boolean;
+      publicAddressCount: number;
+      networkCode: string;
+      assetCode: string;
+    }>;
+    publicAddresses: WalletPublicAddressItem[];
+  }) {
+    const alerts: string[] = [];
+    if (input.publicAddresses.length === 0) {
+      alerts.push('当前账号尚未配置任何服务端收款地址');
+    }
+    const missingReceivableChains = input.chainItems
+      .filter((item) => !item.hasConfiguredAddress)
+      .map((item) => item.networkCode);
+    if (missingReceivableChains.length > 0) {
+      alerts.push(`未配置收款地址的链：${missingReceivableChains.join(' / ')}`);
+    }
+    if (alerts.length === 0) {
+      alerts.push('钱包总览已由服务端真实多链目录驱动');
+    }
+    return alerts;
+  }
+
+  private maxIso(current: string | null, candidate: string | null) {
+    if (!current) {
+      return candidate;
+    }
+    if (!candidate) {
+      return current;
+    }
+    return current > candidate ? current : candidate;
   }
 
   listPublicAddresses(

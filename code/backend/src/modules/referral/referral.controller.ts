@@ -11,6 +11,11 @@ export class ReferralController {
     return this.referralService.getOverview(this.extractBearer(authorization));
   }
 
+  @Get('referral/share-context')
+  getShareContext(@Headers('authorization') authorization?: string) {
+    return this.referralService.getShareContext(this.extractBearer(authorization));
+  }
+
   @Post('referral/bind')
   bind(
     @Headers('authorization') authorization: string | undefined,

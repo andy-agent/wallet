@@ -3,6 +3,8 @@ package com.v2ray.ang.composeui.pages.p2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import com.v2ray.ang.composeui.p2.model.InviteShareEvent
 import com.v2ray.ang.composeui.p2.model.InviteShareUiState
@@ -20,14 +22,7 @@ fun InviteShareRoute(
     val uiState by viewModel.uiState.collectAsState()
     InviteShareScreen(
         uiState = uiState,
-        onEvent = { event ->
-            viewModel.onEvent(event)
-            when (event) {
-                InviteShareEvent.PrimaryActionClicked -> onPrimaryAction()
-                InviteShareEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
-                else -> Unit
-            }
-        },
+        onEvent = { event -> viewModel.onEvent(event) },
         onBottomNav = onBottomNav,
     )
 }
@@ -38,6 +33,7 @@ fun InviteShareScreen(
     onEvent: (InviteShareEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val clipboardManager = LocalClipboardManager.current
     val primaryMetric = uiState.metrics.firstOrNull()
     val link = uiState.highlights.firstOrNull()?.subtitle ?: primaryMetric?.value ?: ""
     val inviteCode = uiState.metrics.getOrNull(1)?.value ?: "--"
@@ -52,9 +48,19 @@ fun InviteShareScreen(
         onBottomNav = onBottomNav,
         secureHubLabel = if (shareFocus == 0) "QR" else "LINK",
         primaryActionLabel = uiState.primaryActionLabel,
-        onPrimaryAction = { onEvent(InviteShareEvent.PrimaryActionClicked) },
+        onPrimaryAction = {
+            onEvent(InviteShareEvent.PrimaryActionClicked)
+            if (link.isNotBlank() && link != "--") {
+                clipboardManager.setText(AnnotatedString(link))
+            }
+        },
         secondaryActionLabel = uiState.secondaryActionLabel,
-        onSecondaryAction = { onEvent(InviteShareEvent.SecondaryActionClicked) },
+        onSecondaryAction = {
+            onEvent(InviteShareEvent.SecondaryActionClicked)
+            if (inviteCode.isNotBlank() && inviteCode != "--") {
+                clipboardManager.setText(AnnotatedString(inviteCode))
+            }
+        },
     ) {
         P2CoreHeroValueCard(
             label = "推广邀请码",
