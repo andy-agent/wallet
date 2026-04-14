@@ -131,7 +131,9 @@ describe('VPN Postgres runtime state (e2e)', () => {
 
     expect(subscription.body.data.status).toBe('ACTIVE');
     expect(subscription.body.data.maxActiveSessions).toBe(2);
-    expect(subscription.body.data.subscriptionUrl).toContain('/sub/');
+    expect(subscription.body.data.subscriptionUrl).toMatch(
+      /^https:\/\/vpn\.residential-agent\.com\/sub\//,
+    );
     expect(subscription.body.data.marzbanUsername).toMatch(/^cvpn_/);
 
     await app.close();
@@ -143,7 +145,9 @@ describe('VPN Postgres runtime state (e2e)', () => {
       .expect(200);
 
     expect(subscriptionAfterRestart.body.data.status).toBe('ACTIVE');
-    expect(subscriptionAfterRestart.body.data.subscriptionUrl).toContain('/sub/');
+    expect(subscriptionAfterRestart.body.data.subscriptionUrl).toMatch(
+      /^https:\/\/vpn\.residential-agent\.com\/sub\//,
+    );
     expect(subscriptionAfterRestart.body.data.marzbanUsername).toMatch(/^cvpn_/);
 
     const regions = await request(app.getHttpServer())
@@ -212,8 +216,26 @@ describe('VPN Postgres runtime state (e2e)', () => {
       .expect(200);
 
     expect(subscription.body.data.status).toBe('ACTIVE');
-    expect(subscription.body.data.subscriptionUrl).toContain('/sub/');
+    expect(subscription.body.data.subscriptionUrl).toMatch(
+      /^https:\/\/vpn\.residential-agent\.com\/sub\//,
+    );
     expect(subscription.body.data.marzbanUsername).toMatch(/^cvpn_/);
+  });
+
+  it('normalizes persisted relative subscription urls for active subscriptions', async () => {
+    runtimeDb.public.none(`
+      UPDATE runtime_state_subscriptions
+      SET subscription_url = '/sub/legacy-relative-token'
+    `);
+
+    const subscription = await request(app.getHttpServer())
+      .get('/api/client/v1/subscriptions/current')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(subscription.body.data.subscriptionUrl).toBe(
+      'https://vpn.residential-agent.com/sub/legacy-relative-token',
+    );
   });
 });
 

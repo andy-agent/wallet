@@ -112,7 +112,9 @@ describe('PlansSubscriptionVpn (e2e)', () => {
       .expect(200);
 
     expect(subscription.body.data.status).toBe('ACTIVE');
-    expect(subscription.body.data.subscriptionUrl).toContain('/sub/');
+    expect(subscription.body.data.subscriptionUrl).toMatch(
+      /^https:\/\/vpn\.residential-agent\.com\/sub\//,
+    );
     expect(subscription.body.data.marzbanUsername).toMatch(/^cvpn_/);
 
     await app.close();
@@ -124,7 +126,9 @@ describe('PlansSubscriptionVpn (e2e)', () => {
       .expect(200);
 
     expect(subscriptionAfterRestart.body.data.status).toBe('ACTIVE');
-    expect(subscriptionAfterRestart.body.data.subscriptionUrl).toContain('/sub/');
+    expect(subscriptionAfterRestart.body.data.subscriptionUrl).toMatch(
+      /^https:\/\/vpn\.residential-agent\.com\/sub\//,
+    );
     expect(subscriptionAfterRestart.body.data.marzbanUsername).toMatch(/^cvpn_/);
 
     const regions = await request(app.getHttpServer())
@@ -173,8 +177,29 @@ describe('PlansSubscriptionVpn (e2e)', () => {
       .expect(200)
 
     expect(subscription.body.data.status).toBe('ACTIVE')
-    expect(subscription.body.data.subscriptionUrl).toContain('/sub/')
+    expect(subscription.body.data.subscriptionUrl).toMatch(
+      /^https:\/\/vpn\.residential-agent\.com\/sub\//,
+    )
     expect(subscription.body.data.marzbanUsername).toMatch(/^cvpn_/)
+  })
+
+  it('normalizes a persisted relative subscription URL for active subscriptions', async () => {
+    const runtimePath = join(runtimeDir, 'runtime-state.json')
+    const snapshot = JSON.parse(require('fs').readFileSync(runtimePath, 'utf8'))
+    snapshot.subscriptions = snapshot.subscriptions.map((item: Record<string, unknown>) => ({
+      ...item,
+      subscriptionUrl: '/sub/legacy-relative-token',
+    }))
+    require('fs').writeFileSync(runtimePath, JSON.stringify(snapshot, null, 2))
+
+    const subscription = await request(app.getHttpServer())
+      .get('/api/client/v1/subscriptions/current')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+
+    expect(subscription.body.data.subscriptionUrl).toBe(
+      'https://vpn.residential-agent.com/sub/legacy-relative-token',
+    )
   })
 });
 

@@ -207,7 +207,9 @@ export class VpnService {
         ? this.calculateDaysRemaining(new Date(), new Date(nextExpireAt))
         : subscription.daysRemaining,
       marzbanUsername: input.marzbanUsername,
-      subscriptionUrl: input.subscriptionUrl,
+      subscriptionUrl: this.marzbanService.normalizeSubscriptionUrl(
+        input.subscriptionUrl,
+      ),
     };
     await this.runtimeStateRepository.upsertSubscription(updated);
     return this.toSubscriptionState(updated);
@@ -249,7 +251,20 @@ export class VpnService {
       subscription.marzbanUsername?.trim() &&
       subscription.subscriptionUrl?.trim()
     ) {
-      return subscription;
+      const normalizedUrl = this.marzbanService.normalizeSubscriptionUrl(
+        subscription.subscriptionUrl,
+      );
+      if (normalizedUrl === subscription.subscriptionUrl) {
+        return subscription;
+      }
+
+      const updated: PersistedSubscriptionRecord = {
+        ...subscription,
+        updatedAt: new Date().toISOString(),
+        subscriptionUrl: normalizedUrl,
+      };
+      await this.runtimeStateRepository.upsertSubscription(updated);
+      return updated;
     }
 
     const marzbanUser = await this.marzbanService.ensureUserForSubscription({

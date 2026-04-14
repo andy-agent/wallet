@@ -43,9 +43,10 @@ export class MarzbanService {
         username,
         status: 'active',
         expireAt: input.expireAt ?? existing?.expireAt ?? null,
-        subscriptionUrl:
-          existing?.subscriptionUrl ??
-          `${this.getPanelBaseUrl()}/sub/${username}-mock-token`,
+        subscriptionUrl: this.resolveSubscriptionUrl(
+          existing?.subscriptionUrl,
+          `${username}-mock-token`,
+        ),
       };
       this.mockUsers.set(username, next);
       return next;
@@ -72,6 +73,13 @@ export class MarzbanService {
       }),
     });
     return this.toMarzbanUser(created);
+  }
+
+  normalizeSubscriptionUrl(
+    subscriptionUrl?: string | null,
+    tokenFallback = '',
+  ) {
+    return this.resolveSubscriptionUrl(subscriptionUrl, tokenFallback);
   }
 
   private async getUser(username: string): Promise<MarzbanUser | null> {
@@ -189,9 +197,25 @@ export class MarzbanService {
         typeof user.expire === 'number' && user.expire > 0
           ? new Date(user.expire * 1000).toISOString()
           : null,
-      subscriptionUrl:
-        user.subscription_url || `${this.getPanelBaseUrl()}/sub/${user.token ?? ''}`,
+      subscriptionUrl: this.resolveSubscriptionUrl(
+        user.subscription_url,
+        user.token ?? '',
+      ),
     };
+  }
+
+  private resolveSubscriptionUrl(
+    subscriptionUrl?: string | null,
+    tokenFallback = '',
+  ) {
+    const raw = subscriptionUrl?.trim();
+    if (raw) {
+      if (/^https?:\/\//i.test(raw)) {
+        return raw;
+      }
+      return `${this.getPanelBaseUrl()}${raw.startsWith('/') ? '' : '/'}${raw}`;
+    }
+    return `${this.getPanelBaseUrl()}/sub/${tokenFallback}`;
   }
 
   private buildUsername(subscriptionId: string) {
