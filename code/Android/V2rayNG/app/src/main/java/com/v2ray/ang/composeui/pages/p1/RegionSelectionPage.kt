@@ -161,9 +161,6 @@ fun RegionSelectionScreen(
             selectedNodeId = filteredNodes.firstOrNull()?.id.orEmpty()
         }
     }
-    val selectedNode = filteredNodes.firstOrNull { it.id == selectedNodeId }
-        ?: filteredNodes.firstOrNull()
-        ?: nodes.firstOrNull()
 
     Box(modifier = Modifier.fillMaxSize()) {
         TechPageBackground()
@@ -178,8 +175,8 @@ fun RegionSelectionScreen(
             item {
                 HeaderSection(
                     eyebrow = "SMART ROUTING",
-                    title = "选择最佳节点",
-                    subtitle = "用延迟、速度、用途标签来选区，而不是只看国家名。",
+                    title = "选择节点",
+                    subtitle = "",
                     typeScale = typeScale,
                 )
             }
@@ -204,19 +201,9 @@ fun RegionSelectionScreen(
                 )
             }
 
-            selectedNode?.let { bestNode ->
-                item {
-                    BestNodeCard(
-                        node = bestNode,
-                        onClick = { onPrimaryAction(bestNode.lineCode, bestNode.id) },
-                        typeScale = typeScale,
-                    )
-                }
-            }
-
             item {
                 SectionHeader(
-                    title = "全部节点",
+                    title = "可用节点",
                     trailing = "${filteredNodes.count { it.isAllowed }} 可用",
                     typeScale = typeScale,
                 )
@@ -371,7 +358,7 @@ private fun BestNodeCard(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Text(
-                        text = "当前最优",
+                        text = "当前节点",
                         color = Color(0xFF94A3B8),
                         style = typeScale.caption,
                     )
