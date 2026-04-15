@@ -1,6 +1,6 @@
 # 当前状态
 
-**最后更新**: 2026-04-07
+**最后更新**: 2026-04-16
 
 ## 系统状态概览
 
@@ -15,9 +15,35 @@
 | Sol 链侧服务 | 🟢 可用 | `sol.residential-agent.com` 内外健康检查均通过 |
 | USDT/TRON 链侧服务 | 🟢 可用 | `usdt.residential-agent.com` 已接真实 TRON RPC，健康/区块/交易查询通过 |
 | 链侧客户端接线 | 🟢 已完成最小链路 | `liaojiang-rcb.14` 已关闭，订单最小链路已接远程链侧 |
-| Admin 后台 | 🟢 已完成最小真实部署 | `liaojiang-f93` 已关闭，后台可从 `/admin/` 访问并联调最小 admin API |
+| Admin 后台 | 🟢 已具备套餐管理闭环 | `admin-web` 已支持新增/编辑套餐，后台可从 `/admin/` 进行套餐运营配置 |
 
 ## 本轮完成
+
+- 完成 `liaojiang-vd3i`
+  - 后台已补齐套餐管理闭环：
+    - `admin-web` 套餐页支持新增、编辑、状态切换
+    - backend 新增 `POST /api/admin/v1/plans`
+    - backend 新增 `PUT /api/admin/v1/plans/:planId`
+    - PostgreSQL 套餐表与 `plan_region_permissions` 已接入写入
+  - 客户端套餐已改为消费后台可配置套餐：
+    - `GET /api/client/v1/plans` 直接读取后台启用套餐
+    - admin 创建启用套餐后客户端可立即拉取
+    - admin 停用套餐后客户端套餐列表不再展示
+  - 订单收银台流程已调整为：
+    - 套餐 -> 节点区域 -> 支付网络 -> 创建订单
+    - 进入收银台不再自动创建订单
+    - 无节点区域时允许非阻塞继续支付，支付后再补选节点
+  - 收银台细节已更新：
+    - 文案“创建真实订单中”已改为“正在创建订单”
+    - 支付网络展示改为 `sol.solana` / `USDT.solana` / `USDT.tron`
+    - Solana 下单能力改为按后端真实配置下发，不再暴露假可用选项
+  - 本轮验证已通过：
+    - `code/admin-web`: `npm run build`
+    - `code/Android/V2rayNG`: `./gradlew --no-daemon -Dkotlin.compiler.execution.strategy=in-process :app:testFdroidDebugUnitTest --tests "com.v2ray.ang.composeui.p1.model.OrderCheckoutContractTest"`
+    - `code/backend`: `pnpm --dir code/backend test:e2e -- admin-postgres.e2e-spec.ts wallet.e2e-spec.ts`
+  - 代码提交与推送：
+    - commit `ca751eb9`
+    - branch `codex/android-demock-live-data-v2`
 
 - 完成 `liaojiang-rcb.13.1`
   - 回收 Kimi 产出并并入主线
@@ -119,6 +145,11 @@
   - `https://api.residential-agent.com/admin/` 可访问
   - admin login 返回真实 token
   - dashboard / orders / withdrawals admin API 返回 200
+  - plans 管理 API 已验证：
+    - `POST /api/admin/v1/plans`
+    - `PUT /api/admin/v1/plans/:planId`
+  - client 动态套餐链路已验证：
+    - `GET /api/client/v1/plans` 可反映后台启用/停用结果
 
 ### 三机拆分现状
 
@@ -205,6 +236,6 @@
 
 ## 下一步
 
-1. 如果提供可用测试账号或验证码邮箱，优先恢复 `liaojiang-4j0.2`，完成 Android 真实登录/下单/支付页回归。
+1. 恢复 `liaojiang-4j0.2`，继续 Android 真实登录/下单/支付页回归，重点验证后台动态套餐在真实环境的端到端购买效果。
 2. 若 `bd` 后续重新放出 Android UI 迁移子任务，则继续 `4j0.10 / 4j0.11 / 4j0.12 / 4j0.13` 的 Compose 桥接。
-3. `liaojiang-rcb.17` backend 链侧 follow-up 已完成，本轮无需重复回到链侧接线实现。
+3. 若运营侧需要更完整套餐能力，可继续补套餐删除、发布审核、区域联动校验与审计日志展示，但这不阻塞当前动态套餐购买链路。
