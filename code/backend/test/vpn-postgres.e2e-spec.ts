@@ -130,11 +130,25 @@ describe('VPN Postgres runtime state (e2e)', () => {
       .expect(200);
 
     expect(subscription.body.data.status).toBe('ACTIVE');
+    expect(subscription.body.data.planName).toBe('数据库基础版-1个月');
     expect(subscription.body.data.maxActiveSessions).toBe(2);
     expect(subscription.body.data.subscriptionUrl).toMatch(
       /^https:\/\/vpn\.residential-agent\.com\/sub\//,
     );
     expect(subscription.body.data.marzbanUsername).toMatch(/^cvpn_/);
+
+    const me = await request(app.getHttpServer())
+      .get('/api/client/v1/me')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(me.body.data.subscription).toEqual(
+      expect.objectContaining({
+        planCode: 'BASIC_1M',
+        planName: '数据库基础版-1个月',
+        status: 'ACTIVE',
+      }),
+    );
 
     await app.close();
     app = await bootstrapApp();
@@ -236,12 +250,17 @@ describe('VPN Postgres runtime state (e2e)', () => {
     expect(status.body.data.selectedNodeName).toBe('JP-DB-01');
   });
 
-  it('backfills marzban access for a real active subscription missing marzban fields', async () => {
+  it('returns active subscriptions even when persisted marzban fields are missing', async () => {
     runtimeDb.public.none(`
       UPDATE runtime_state_subscriptions
       SET marzban_username = NULL,
           subscription_url = NULL
     `);
+
+    await app.close();
+    delete process.env.MARZBAN_MOCK_MODE;
+    delete process.env.MARZBAN_BASE_URL;
+    app = await bootstrapApp();
 
     const subscription = await request(app.getHttpServer())
       .get('/api/client/v1/subscriptions/current')
@@ -249,10 +268,8 @@ describe('VPN Postgres runtime state (e2e)', () => {
       .expect(200);
 
     expect(subscription.body.data.status).toBe('ACTIVE');
-    expect(subscription.body.data.subscriptionUrl).toMatch(
-      /^https:\/\/vpn\.residential-agent\.com\/sub\//,
-    );
-    expect(subscription.body.data.marzbanUsername).toMatch(/^cvpn_/);
+    expect(subscription.body.data.subscriptionUrl).toBeNull();
+    expect(subscription.body.data.marzbanUsername).toBeNull();
   });
 
   it('normalizes persisted relative subscription urls for active subscriptions', async () => {

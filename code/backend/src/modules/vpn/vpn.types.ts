@@ -9,6 +9,7 @@ export type SubscriptionStatus =
 export interface SubscriptionState {
   subscriptionId: string;
   planCode: string;
+  planName?: string | null;
   status: SubscriptionStatus;
   startedAt: string | null;
   expireAt: string | null;

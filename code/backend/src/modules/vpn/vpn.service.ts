@@ -66,9 +66,7 @@ export class VpnService {
     }
 
     const [plan, regions] = await Promise.all([
-      this.clientCatalogService.findPlanByCode(subscription.planCode, {
-        status: 'ACTIVE',
-      }),
+      this.clientCatalogService.findPlanByCode(subscription.planCode),
       this.clientCatalogService.listRegions({
         status: 'ACTIVE',
       }),
@@ -420,9 +418,12 @@ export class VpnService {
     return updated;
   }
 
-  private toSubscriptionState(
+  private async toSubscriptionState(
     subscription: PersistedSubscriptionRecord,
-  ): SubscriptionState {
+  ): Promise<SubscriptionState> {
+    const plan = subscription.planCode
+      ? await this.clientCatalogService.findPlanByCode(subscription.planCode)
+      : null;
     const {
       accountId: _accountId,
       createdAt: _createdAt,
@@ -430,13 +431,17 @@ export class VpnService {
       updatedAt: _updatedAt,
       ...publicSubscription
     } = subscription;
-    return publicSubscription;
+    return {
+      ...publicSubscription,
+      planName: plan?.name ?? null,
+    };
   }
 
   private getEmptySubscription(): SubscriptionState {
     return {
       subscriptionId: '',
       planCode: '',
+      planName: null,
       status: 'NONE',
       startedAt: null,
       expireAt: null,

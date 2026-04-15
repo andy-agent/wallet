@@ -20,6 +20,10 @@ describe('Admin Postgres real data (e2e)', () => {
     process.env.NODE_ENV = 'production';
     process.env.DATABASE_URL =
       'postgres://runtime:runtime@server2:5432/cryptovpn';
+    process.env.MARZBAN_MOCK_MODE = 'true';
+    process.env.MARZBAN_BASE_URL = 'https://vpn.residential-agent.com';
+    process.env.SOLANA_ORDER_COLLECTION_ADDRESS =
+      '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV';
     delete process.env.RUNTIME_STATE_BACKEND;
     delete process.env.RUNTIME_STATE_FILE;
 
@@ -39,6 +43,9 @@ describe('Admin Postgres real data (e2e)', () => {
     delete process.env.DATABASE_URL;
     delete process.env.RUNTIME_STATE_BACKEND;
     delete process.env.RUNTIME_STATE_FILE;
+    delete process.env.MARZBAN_MOCK_MODE;
+    delete process.env.MARZBAN_BASE_URL;
+    delete process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
   });
 
   it('reads seeded PostgreSQL data for admin plans, audit, legal, configs, versions, and vpn with flat pagination', async () => {
@@ -287,6 +294,128 @@ describe('Admin Postgres real data (e2e)', () => {
         (item: { planCode: string }) => item.planCode === 'ADMIN_DYNAMIC_3M',
       ),
     ).toBe(false);
+  });
+
+  it('runs the full admin-managed plan flow from plan config to client subscription', async () => {
+    const createPlanResponse = await request(app.getHttpServer())
+      .post('/api/admin/v1/plans')
+      .set('authorization', `Bearer ${adminToken}`)
+      .send({
+        planCode: 'ADMIN_FLOW_1M',
+        name: '后台链路套餐-1个月',
+        description: '用于验证后台配置到用户订阅全链路',
+        billingCycleMonths: 1,
+        priceUsd: '19.99',
+        isUnlimitedTraffic: true,
+        maxActiveSessions: 4,
+        regionAccessPolicy: 'BASIC_ONLY',
+        includesAdvancedRegions: false,
+        allowedRegionIds: [],
+        displayOrder: 4,
+        status: 'ACTIVE',
+      })
+      .expect(201);
+
+    expect(createPlanResponse.body.data).toEqual(
+      expect.objectContaining({
+        planCode: 'ADMIN_FLOW_1M',
+        name: '后台链路套餐-1个月',
+        status: 'ACTIVE',
+      }),
+    );
+
+    const clientPlansResponse = await request(app.getHttpServer())
+      .get('/api/client/v1/plans')
+      .expect(200);
+
+    expect(clientPlansResponse.body.data.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          planCode: 'ADMIN_FLOW_1M',
+          name: '后台链路套餐-1个月',
+          priceUsd: '19.99',
+        }),
+      ]),
+    );
+
+    const client = await registerClient(app, 'plan-flow@example.com');
+
+    const createOrderResponse = await request(app.getHttpServer())
+      .post('/api/client/v1/orders')
+      .set('authorization', `Bearer ${client.accessToken}`)
+      .set('x-idempotency-key', 'admin-flow-order')
+      .send({
+        planCode: 'ADMIN_FLOW_1M',
+        orderType: 'NEW',
+        quoteAssetCode: 'USDT',
+        quoteNetworkCode: 'SOLANA',
+      })
+      .expect(201);
+
+    const orderNo = createOrderResponse.body.data.orderNo as string;
+    expect(createOrderResponse.body.data).toEqual(
+      expect.objectContaining({
+        planCode: 'ADMIN_FLOW_1M',
+        planName: '后台链路套餐-1个月',
+        quoteUsdAmount: '19.99',
+      }),
+    );
+
+    await request(app.getHttpServer())
+      .post(`/api/client/v1/orders/${orderNo}/submit-client-tx`)
+      .set('authorization', `Bearer ${client.accessToken}`)
+      .send({
+        txHash: 'admin-flow-solana-tx',
+        networkCode: 'SOLANA',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/api/client/v1/orders/${orderNo}/refresh-status`)
+      .set('authorization', `Bearer ${client.accessToken}`)
+      .send({})
+      .expect(201)
+      .expect((res) => {
+        expect(res.body.data).toEqual(
+          expect.objectContaining({
+            status: 'COMPLETED',
+            planCode: 'ADMIN_FLOW_1M',
+            planName: '后台链路套餐-1个月',
+          }),
+        );
+      });
+
+    const currentSubscriptionResponse = await request(app.getHttpServer())
+      .get('/api/client/v1/subscriptions/current')
+      .set('authorization', `Bearer ${client.accessToken}`)
+      .expect(200);
+
+    expect(currentSubscriptionResponse.body.data).toEqual(
+      expect.objectContaining({
+        planCode: 'ADMIN_FLOW_1M',
+        planName: '后台链路套餐-1个月',
+        status: 'ACTIVE',
+        maxActiveSessions: 4,
+      }),
+    );
+    expect(currentSubscriptionResponse.body.data.subscriptionUrl).toMatch(
+      /^https:\/\/vpn\.residential-agent\.com\/sub\//,
+    );
+    expect(currentSubscriptionResponse.body.data.marzbanUsername).toMatch(/^cvpn_/);
+
+    const meResponse = await request(app.getHttpServer())
+      .get('/api/client/v1/me')
+      .set('authorization', `Bearer ${client.accessToken}`)
+      .expect(200);
+
+    expect(meResponse.body.data.subscription).toEqual(
+      expect.objectContaining({
+        planCode: 'ADMIN_FLOW_1M',
+        planName: '后台链路套餐-1个月',
+        status: 'ACTIVE',
+        maxActiveSessions: 4,
+      }),
+    );
   });
 
   it('reads persisted commission withdraw requests from PostgreSQL for admin and never falls back to mock rows', async () => {
