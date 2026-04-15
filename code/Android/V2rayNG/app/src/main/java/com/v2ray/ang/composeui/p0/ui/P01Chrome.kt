@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -58,9 +59,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -70,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.effects.TechParticleBackground
+import com.v2ray.ang.util.QRCodeDecoder
 import kotlin.math.min
 
 private val P01BgTop = Color(0xFFF8FBFF)
@@ -1132,6 +1136,40 @@ fun P01QrArt(modifier: Modifier = Modifier) {
                 cornerRadius = CornerRadius(unit * 0.12f, unit * 0.12f),
             )
         }
+    }
+}
+
+@Composable
+fun P01RealQr(
+    content: String,
+    modifier: Modifier = Modifier,
+    emptyLabel: String = "暂无二维码",
+) {
+    val normalized = content.trim().takeUnless { it.isBlank() || it == "--" }
+    val qrBitmap = remember(normalized) {
+        normalized?.let { QRCodeDecoder.createQRCode(it, size = 720) }
+    }
+
+    if (qrBitmap != null) {
+        Image(
+            bitmap = qrBitmap.asImageBitmap(),
+            contentDescription = "真实支付二维码",
+            modifier = modifier.size(188.dp),
+            contentScale = ContentScale.Fit,
+        )
+        return
+    }
+
+    Column(
+        modifier = modifier.size(188.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = emptyLabel,
+            style = MaterialTheme.typography.bodySmall,
+            color = P01TextSoft,
+        )
     }
 }
 

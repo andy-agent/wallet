@@ -207,14 +207,27 @@ class RealP0Repository(context: Context) : P0Repository {
                 )
             }
             val subscription = paymentRepository.getSubscription().getOrNull() ?: me.subscription
-            val regionCount = paymentRepository.getVpnRegions().getOrNull()?.count { it.isAllowed } ?: 0
+            val hasActiveSubscription = subscription?.status.equals("ACTIVE", ignoreCase = true)
+            val regionCount = if (hasActiveSubscription) {
+                paymentRepository.getVpnRegions().getOrNull()?.count { it.isAllowed } ?: 0
+            } else {
+                0
+            }
             return@withContext SplashUiState(
                 checkingSecureBoot = false,
                 versionLabel = "v${BuildConfig.VERSION_NAME}",
-                buildStatus = "${me.email} · ${subscription?.status ?: "NONE"} · $regionCount 个可用区域",
+                buildStatus = if (hasActiveSubscription) {
+                    "${me.email} · ${subscription?.status ?: "NONE"} · $regionCount 个可用区域"
+                } else {
+                    "${me.email} · ${subscription?.status ?: "NONE"}"
+                },
                 progress = 1f,
                 progressHeadline = "准备完成",
-                progressDetail = "真实账号、订阅和 VPN 区域已同步，正在进入主界面。",
+                progressDetail = if (hasActiveSubscription) {
+                    "真实账号、订阅和 VPN 区域已同步，正在进入主界面。"
+                } else {
+                    "已完成账户同步，正在进入主界面。可在应用内购买或续费订阅。"
+                },
                 authResolved = true,
                 readyToNavigate = true,
                 nextRoute = CryptoVpnRouteSpec.vpnHome.pattern,
@@ -386,6 +399,7 @@ class RealP0Repository(context: Context) : P0Repository {
         val cachedUser = paymentRepository.getCachedCurrentUser()
         val me = paymentRepository.getMe().getOrNull()
         val subscription = paymentRepository.getSubscription().getOrNull() ?: me?.subscription
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         val accountLabel = me?.email ?: cachedUser?.email ?: cachedUser?.username ?: "未登录"
         if (me == null && cachedUser == null) {
             return WalletOnboardingUiState(
@@ -398,14 +412,25 @@ class RealP0Repository(context: Context) : P0Repository {
 
         return WalletOnboardingUiState(
             accountLabel = accountLabel,
-            summary = if (subscription?.status == "ACTIVE") {
-                "账号已开通 ${subscription.planCode ?: "订阅"}，可继续选择创建或导入钱包入口。"
+            summary = if (lifecycle?.walletExists == true) {
+                "${lifecycle.displayName ?: "当前钱包"} 已建立，可继续进入钱包总览或重新导入。"
+            } else if (subscription?.status == "ACTIVE") {
+                "账号已开通 ${subscription.planCode ?: "订阅"}，请先创建或导入钱包后再进行收款。"
             } else {
                 "账号已登录，但链上钱包资料仍未建立；请选择创建或导入路径。"
             },
-            warningMessage = "本页已切到真实账号上下文；后续 create/import 页仍处于钱包域建设中。",
+            warningMessage = if (lifecycle?.walletExists == true) {
+                "检测到服务端已有钱包状态；再次导入会覆盖当前默认钱包入口。"
+            } else {
+                "当前入口已切到服务端钱包生命周期状态。"
+            },
             focusedChains = listOf("SOLANA", "TRON"),
-            primaryActionLabel = "继续到钱包入口",
+            primaryActionLabel = if (lifecycle?.walletExists == true) "进入钱包总览" else "继续到钱包入口",
+            walletExists = lifecycle?.walletExists == true,
+            lifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
+            walletId = lifecycle?.walletId,
+            walletDisplayName = lifecycle?.displayName,
+            walletNextAction = lifecycle?.nextAction ?: "CREATE_OR_IMPORT",
         )
     }
 
@@ -537,7 +562,12 @@ class RealP0Repository(context: Context) : P0Repository {
 
         val me = meResult.getOrThrow()
         val subscription = paymentRepository.getSubscription().getOrNull() ?: me.subscription
-        val vpnStatus = paymentRepository.getVpnStatus().getOrNull()
+        val hasActiveSubscription = subscription?.status.equals("ACTIVE", ignoreCase = true)
+        val vpnStatus = if (hasActiveSubscription) {
+            paymentRepository.getVpnStatus().getOrNull()
+        } else {
+            null
+        }
         if (!currentUserId.isNullOrBlank()) {
             paymentRepository.syncVpnNodesFromServer(force = false, userId = currentUserId)
             cachedNodeSnapshots = buildCachedNodeSnapshots(
@@ -551,7 +581,11 @@ class RealP0Repository(context: Context) : P0Repository {
             )?.toRegionSpeed()
         }
         val connectionStatus = resolveConnectionStatus(vpnStatus, hasLocalConfig)
-        val vpnRegions = paymentRepository.getVpnRegions().getOrNull().orEmpty()
+        val vpnRegions = if (hasActiveSubscription) {
+            paymentRepository.getVpnRegions().getOrNull().orEmpty()
+        } else {
+            emptyList()
+        }
         val allowedRegions = vpnRegions.filter { it.isAllowed }
         val selectedLineName = vpnStatus?.selectedLineName?.takeIf { it.isNotBlank() }
         val selectedRegion = selectedLocalRegion ?: resolveSelectedRegion(allowedRegions, vpnStatus)
@@ -648,6 +682,7 @@ class RealP0Repository(context: Context) : P0Repository {
 
     override suspend fun getWalletHomeState(): WalletHomeUiState {
         val walletOverview = paymentRepository.getWalletOverview().getOrNull()
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         if (walletOverview != null) {
             val chains = walletOverview.chainItems.map { chain ->
                 WalletChainSummary(
@@ -683,6 +718,11 @@ class RealP0Repository(context: Context) : P0Repository {
                 assets = assets,
                 alertBanner = walletOverview.alerts.joinToString(" · "),
                 emptyMessage = if (assets.isEmpty()) "当前服务端钱包总览还没有可展示的链上资产或订单记录。" else null,
+                walletExists = lifecycle?.walletExists == true,
+                walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
+                walletId = lifecycle?.walletId,
+                walletDisplayName = lifecycle?.displayName,
+                walletNextAction = lifecycle?.nextAction ?: "CREATE_OR_IMPORT",
             )
         }
 
@@ -699,6 +739,11 @@ class RealP0Repository(context: Context) : P0Repository {
                 totalBalanceText = "--",
                 summaryLabel = "无法同步真实支付数据",
                 alertBanner = "当前页面不再展示假余额；同步失败时只保留真实错误信息。",
+                walletExists = lifecycle?.walletExists == true,
+                walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
+                walletId = lifecycle?.walletId,
+                walletDisplayName = lifecycle?.displayName,
+                walletNextAction = lifecycle?.nextAction ?: "CREATE_OR_IMPORT",
             )
         }
 
@@ -715,6 +760,11 @@ class RealP0Repository(context: Context) : P0Repository {
                 summaryLabel = subscription?.planCode ?: "暂无支付记录",
                 emptyMessage = "当前账号还没有同步到真实支付记录。创建订单或完成支付后，这里会展示真实订单摘要。",
                 alertBanner = "当前页面展示的是支付与订单数据，不再冒充链上钱包余额。",
+                walletExists = lifecycle?.walletExists == true,
+                walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
+                walletId = lifecycle?.walletId,
+                walletDisplayName = lifecycle?.displayName,
+                walletNextAction = lifecycle?.nextAction ?: "CREATE_OR_IMPORT",
             )
         }
 
@@ -760,6 +810,11 @@ class RealP0Repository(context: Context) : P0Repository {
             assets = assets,
             alertBanner = latestOrder?.let { "最新订单：${it.planName} · ${it.statusText}" }
                 ?: "当前页面展示的是当前账号的真实订单与支付网络摘要。",
+            walletExists = lifecycle?.walletExists == true,
+            walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
+            walletId = lifecycle?.walletId,
+            walletDisplayName = lifecycle?.displayName,
+            walletNextAction = lifecycle?.nextAction ?: "CREATE_OR_IMPORT",
         )
     }
 

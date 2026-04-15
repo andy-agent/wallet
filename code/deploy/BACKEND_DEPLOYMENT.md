@@ -29,7 +29,7 @@ curl http://localhost:3000/api/healthz
 - 数据库 baseline / seed 执行仍需在真实环境阶段接 PostgreSQL 客户端完成
 - GitHub 当前推送凭证未开放 `workflow` scope，因此 CI 配置先以模板文件 `backend-ci.github-actions.yml` 形式保留，待具备权限后再落到 `.github/workflows/`
 
-## 当前真实环境临时方案
+## 当前真实环境基线
 
 在 `154.37.208.72` 上，当前已验证的最小方案为：
 
@@ -38,14 +38,18 @@ curl http://localhost:3000/api/healthz
    - `pnpm install --frozen-lockfile`
    - `pnpm build`
    - `pnpm start:prod`
-3. 复用现有 PostgreSQL 容器 `vpn-panel-db`
-4. 单独创建测试库 `cryptovpn_test`
-5. 执行：
+3. 生产运行时统一使用：
+   - `/opt/cryptovpn/backend/.env.local`
+   - `systemd` 通过 `EnvironmentFile=/opt/cryptovpn/backend/.env.local` 注入环境
+4. 运行时状态统一落到唯一真实数据库：
+   - `postgresql://cryptovpn@127.0.0.1:15432/cryptovpn`
+5. 仅在该真实库上执行初始化/seed：
    - `migrations/baseline/0001_init.up.sql`
    - `migrations/seeds/0001_bootstrap_seed.filled.sql`
 
-采用该临时方案的原因：
+采用该方案的原因：
 
 - 远端容器内访问 npm registry 存在 `EAI_AGAIN`
 - `docker-compose.backend.yml` 中 backend 镜像暂未在该机器稳定构建
 - 但宿主机 Node 方案已能支撑当前真实环境联调
+- 已移除旧的 `cryptovpn_test` 运行时路径，避免 live API 读到测试库

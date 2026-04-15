@@ -1132,25 +1132,25 @@ class PaymentRepository(context: Context) {
             me?.subscription ?: return@withContext Result.failure(it)
         }
         cacheSubscriptionMetadata(subscription)
-        val vpnStatus = getVpnStatus().getOrElse { return@withContext Result.failure(it) }
-        cacheVpnStatusMetadata(vpnStatus)
-        val vpnRegions = getVpnRegions().getOrElse { return@withContext Result.failure(it) }
+
+        if (!subscription.status.equals("ACTIVE", ignoreCase = true)) {
+            SessionKeepAliveService.start(appContext)
+            return@withContext Result.success(Unit)
+        }
+
+        getVpnStatus().getOrNull()?.let { cacheVpnStatusMetadata(it) }
+        getVpnRegions().getOrNull()
 
         val shouldBootstrapConfig = MmkvManager.getSelectServer().isNullOrEmpty()
         if (shouldBootstrapConfig) {
             val subscriptionUrl = subscription?.subscriptionUrl?.takeIf { it.isNotBlank() }
-            if (subscriptionUrl.isNullOrBlank()) {
-                return@withContext Result.failure(Exception("订阅待同步，暂不再回退到旧版手拼 VLESS 配置。"))
-            }
-
-            val importedFromSubscription = importSubscriptionUrl(
-                subscriptionUrl = subscriptionUrl,
-                remarks = subscription.planCode?.takeIf { code -> code.isNotBlank() }
-                    ?.let { code -> "Purchase $code" }
-                    ?: "CryptoVPN Subscription",
-            )
-            if (!importedFromSubscription) {
-                return@withContext Result.failure(Exception("订阅导入失败"))
+            if (!subscriptionUrl.isNullOrBlank()) {
+                importSubscriptionUrl(
+                    subscriptionUrl = subscriptionUrl,
+                    remarks = subscription.planCode?.takeIf { code -> code.isNotBlank() }
+                        ?.let { code -> "Purchase $code" }
+                        ?: "CryptoVPN Subscription",
+                )
             }
         }
 

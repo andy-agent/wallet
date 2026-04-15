@@ -41,6 +41,14 @@ export class AuthService implements OnModuleInit {
   private readonly codes = new Map<string, VerificationCodeRecord>();
   private readonly tokenSecret =
     process.env.AUTH_TOKEN_SECRET ?? 'cryptovpn-backend-dev-secret';
+  private readonly accessTokenTtlMs = this.resolveDurationMs(
+    'AUTH_ACCESS_TOKEN_TTL_MS',
+    365 * 24 * 60 * 60 * 1000,
+  );
+  private readonly refreshTokenTtlMs = this.resolveDurationMs(
+    'AUTH_REFRESH_TOKEN_TTL_MS',
+    3650 * 24 * 60 * 60 * 1000,
+  );
 
   constructor(
     private readonly runtimeStateRepository: RuntimeStateRepository,
@@ -216,6 +224,7 @@ export class AuthService implements OnModuleInit {
     return this.issueSession(
       account,
       params.installationId ?? session.installationId ?? undefined,
+      session,
     );
   }
 
@@ -244,8 +253,7 @@ export class AuthService implements OnModuleInit {
     });
     this.storeAccount(persistedAccount);
 
-    const activeSession = this.sessionsByAccountId.get(account.accountId);
-    if (activeSession) {
+    for (const activeSession of this.listActiveSessionsForAccount(account.accountId)) {
       const persistedSession = await this.runtimeStateRepository.saveSession({
         ...activeSession,
         status: 'REVOKED',
@@ -405,35 +413,26 @@ export class AuthService implements OnModuleInit {
     this.storeAccount(persistedAccount);
   }
 
-  private async issueSession(account: AuthAccount, installationId?: string) {
-    const persistedSessions: AuthSession[] = [];
-    const previous = this.sessionsByAccountId.get(account.accountId);
-
-    if (previous && previous.status === 'ACTIVE') {
-      persistedSessions.push(
-        await this.runtimeStateRepository.saveSession({
-          ...previous,
-          status: 'EVICTED',
-          updatedAt: new Date().toISOString(),
-        }),
-      );
-    }
-
+  private async issueSession(
+    account: AuthAccount,
+    installationId?: string,
+    reusableSession?: AuthSession | null,
+  ) {
+    const previous =
+      reusableSession ?? this.findReusableSession(account.accountId, installationId);
     const now = Date.now();
-    const createdAt = new Date(now).toISOString();
+    const nowIso = new Date(now).toISOString();
     const session: AuthSession = {
-      sessionId: randomUUID(),
+      sessionId: previous?.sessionId ?? randomUUID(),
       accountId: account.accountId,
-      installationId: installationId ?? null,
+      installationId: installationId ?? previous?.installationId ?? null,
       accessToken: '',
       refreshToken: '',
-      accessTokenExpiresAt: new Date(now + 2 * 60 * 60 * 1000).toISOString(),
-      refreshTokenExpiresAt: new Date(
-        now + 30 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
+      accessTokenExpiresAt: new Date(now + this.accessTokenTtlMs).toISOString(),
+      refreshTokenExpiresAt: new Date(now + this.refreshTokenTtlMs).toISOString(),
       status: 'ACTIVE',
-      createdAt,
-      updatedAt: createdAt,
+      createdAt: previous?.createdAt ?? nowIso,
+      updatedAt: nowIso,
     };
 
     const payload: SignedSessionPayload = {
@@ -450,20 +449,37 @@ export class AuthService implements OnModuleInit {
     session.accessToken = this.createSignedToken('access', payload);
     session.refreshToken = this.createSignedToken('refresh', payload);
 
-    persistedSessions.push(await this.runtimeStateRepository.saveSession(session));
-
-    for (const persistedSession of persistedSessions) {
-      this.storeSession(persistedSession);
-    }
+    const persistedSession = await this.runtimeStateRepository.saveSession(session);
+    this.storeSession(persistedSession);
 
     return {
-      accessToken: session.accessToken,
-      refreshToken: session.refreshToken,
-      accessTokenExpiresAt: session.accessTokenExpiresAt,
-      refreshTokenExpiresAt: session.refreshTokenExpiresAt,
+      accessToken: persistedSession.accessToken,
+      refreshToken: persistedSession.refreshToken,
+      accessTokenExpiresAt: persistedSession.accessTokenExpiresAt,
+      refreshTokenExpiresAt: persistedSession.refreshTokenExpiresAt,
       accountId: account.accountId,
       accountStatus: account.status,
     };
+  }
+
+  private findReusableSession(accountId: string, installationId?: string) {
+    const activeSessions = this.listActiveSessionsForAccount(accountId);
+    if (installationId) {
+      return (
+        activeSessions.find(
+          (session) => session.installationId === installationId,
+        ) ??
+        activeSessions[0] ??
+        null
+      );
+    }
+    return this.sessionsByAccountId.get(accountId) ?? activeSessions[0] ?? null;
+  }
+
+  private listActiveSessionsForAccount(accountId: string) {
+    return Array.from(this.sessionsById.values()).filter(
+      (session) => session.accountId === accountId && session.status === 'ACTIVE',
+    );
   }
 
   private requireAccessSession(accessToken: string) {
@@ -737,5 +753,11 @@ export class AuthService implements OnModuleInit {
     return createHmac('sha256', this.tokenSecret)
       .update(encodedPayload)
       .digest('base64url');
+  }
+
+  private resolveDurationMs(envKey: string, fallbackMs: number) {
+    const raw = process.env[envKey];
+    const parsed = raw ? Number(raw) : NaN;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallbackMs;
   }
 }
