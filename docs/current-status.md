@@ -11,13 +11,68 @@
 | Android 集成 | 🟡 进入 Compose 并入阶段 | 现有 XML App 保持可用，`vpnui` 并入方案与目录裁决均已冻结 |
 | Android 编译/构建 | 🟢 Compose APK 构建已恢复 | `7x4.2` 已修复 Kotlin/AGP 冲突，`assembleFdroidDebug` 可在主线通过 |
 | Android 运行验证 | 🟡 Compose 容器安装已验证 | `7x4.3` 已把新 APK 安装到 `emulator-5554`，但页面级真实回归仍待后续 UI 迁移完成 |
+| Compose copy-card 清理 | 🟡 Batch 1 / 2 已完成 | 共享组件抑制与 mounted 页面说明型卡片删除已落地，后续仍需 contract 默认值与 preview/dev residue 清理 |
+| 邀请/分享收口 | 🟡 App 侧已收口，Web 页已随 admin-web 部署 | `InviteLanding` 源码已纳入主线并随 admin-web 发布到服务器三，但 `vpn.residential-agent.com/invite` 是否对外生效仍取决于独立 nginx 路由接线 |
 | 真实业务 smoke | 🟢 已推进 | 基础接口 smoke 已通过，订单最小链路已通过远程 Solana 服务完成真实 smoke |
 | Sol 链侧服务 | 🟢 可用 | `sol.residential-agent.com` 内外健康检查均通过 |
 | USDT/TRON 链侧服务 | 🟢 可用 | `usdt.residential-agent.com` 已接真实 TRON RPC，健康/区块/交易查询通过 |
 | 链侧客户端接线 | 🟢 已完成最小链路 | `liaojiang-rcb.14` 已关闭，订单最小链路已接远程链侧 |
-| Admin 后台 | 🟢 已具备套餐管理闭环 | `admin-web` 已支持新增/编辑套餐，后台可从 `/admin/` 进行套餐运营配置 |
+| Admin 后台 | 🟢 已具备套餐管理闭环 | `liaojiang-kbf8` 与 `liaojiang-zhy8` 已完成，`/admin` 子路径路由白屏已修复并重部署到线上 |
 
 ## 本轮完成
+
+- 完成 `liaojiang-xn6o.5`
+  - 共享组件已支持“空文案不渲染”
+  - [FeaturePageTemplate.kt](/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/composeui/components/feature/FeaturePageTemplate.kt)、[P2CoreH5Scaffold.kt](/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/composeui/pages/p2/P2CoreH5Scaffold.kt)、[P2ExtendedH5Scaffold.kt](/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/composeui/pages/p2extended/P2ExtendedH5Scaffold.kt)、[P01Chrome.kt](/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/composeui/p0/ui/P01Chrome.kt) 已完成批量抑制
+  - 主验收 `:app:compileFdroidDebugKotlin` 通过
+- 完成 `liaojiang-xn6o.6`
+  - 已生成 [COMPOSE_COPY_CARD_DELETION_MATRIX_2026-04-16.md](/Users/cnyirui/git/projects/liaojiang/docs/COMPOSE_COPY_CARD_DELETION_MATRIX_2026-04-16.md)
+  - 已形成统一卡片分类与批次计划：
+    - `badge`
+    - `hero supportingText`
+    - `hero stats`
+    - `note/summary`
+    - `highlights/checklist`
+    - `FeaturePageTemplate sections`
+- 完成 `liaojiang-xn6o.7`
+  - mounted `p0 / p1 / p2 core / p2extended` 页面说明型 copy 已批量删除
+  - 共享抑制生效后，mounted 页面已大范围去除：
+    - 页面头部副文案
+    - 说明卡 / 提示卡
+    - hero stats / note / supportingText
+  - 主验收 `:app:compileFdroidDebugKotlin :app:assembleFdroidDebug` 通过
+- 完成 `liaojiang-xn6o.8`
+  - 收款页已继续删除说明型文案
+  - 已删除：
+    - “当前网络”卡片中的 `地址尾号`、`校验状态`
+    - “收款码”卡片中的状态字（如 `已配置收款地址`）
+  - 已新增 [COMPOSE_COPY_CARD_DELETION_LOG.md](/Users/cnyirui/git/projects/liaojiang/docs/COMPOSE_COPY_CARD_DELETION_LOG.md) 作为逐次删除回溯日志
+- 完成 `liaojiang-xn6o.9`
+  - App 内只保留“邀请中心”作为入口
+  - “分享推广链接”已收口为邀请中心内的系统分享动作
+  - 邀请码复制动作已补 toast 反馈
+  - 长账号标识不再在“我的邀请码”卡片中展示
+- 完成 `liaojiang-xn6o.10`
+  - 邀请中心/分享页已进一步对齐：
+    - `InviteCenter` 优先使用 `share context` 的 `referralCode`
+    - `InviteShare` 已删除“分享渠道 / 状态”卡片并补复制反馈
+  - `InviteShare` 仍保留代码，但 App 主流程已不再把它作为主要入口
+- 完成 `liaojiang-xn6o.11`
+  - `code/admin-web` 已新增公开 `/invite` 路由与 [InviteLanding.tsx](/Users/cnyirui/git/projects/liaojiang/code/admin-web/src/pages/InviteLanding.tsx)
+  - 邀请落地页已支持：
+    - 读取 `?code=`
+    - 展示邀请码
+    - 下载 App CTA
+    - 打开 App CTA
+    - 复制邀请码 / 复制邀请链接
+  - `code/admin-web` 本地 `npm run build` 通过
+- 完成 `liaojiang-xn6o.12` 方案设计
+  - 已确定“直接 Web 下载 APK”场景的最小闭环：
+    - web `/invite?code=...`
+    - App deep link `v2rayng://invite?...`
+    - App 本地保存 pending referral
+    - 登录/注册后自动调用 `bindReferralCode`
+  - 已明确当前不上商店时，无法做到“安装后完全自动归因”
 
 - 完成 `liaojiang-vd3i`
   - 后台已补齐套餐管理闭环：
@@ -44,6 +99,36 @@
   - 代码提交与推送：
     - commit `ca751eb9`
     - branch `codex/android-demock-live-data-v2`
+
+- 完成 `liaojiang-kbf8`
+  - 已复现 `https://api.residential-agent.com/admin/plans` 白屏问题
+  - 根因已定位为：
+    - admin-web 线上挂载在 `/admin/`
+    - 前端使用裸 `BrowserRouter`
+    - 未设置 `basename=/admin`
+    - 登录失效跳转仍硬编码到根路径 `/login`
+  - 已修复：
+    - `vite` 生产构建默认 `base=/admin/`
+    - `BrowserRouter` 增加 `basename`
+    - 401 未登录跳转改为基于 `BASE_URL`
+    - 退出登录跳转与 `/admin` 子路径保持一致
+  - 代码提交与推送：
+    - commit `8501ba7b`
+
+- 完成 `liaojiang-zhy8`
+  - 已将最新 admin-web 构建产物重新部署到服务器三：
+    - 目标主机 `154.37.208.72`
+    - 目标目录 `/opt/cryptovpn/admin-web/`
+  - 已执行：
+    - `rsync --delete` 同步静态文件
+    - `nginx -t`
+    - `systemctl reload nginx`
+  - 已补齐之前遗漏的 `InviteLanding` 源码与前端 API 封装，确保 HEAD 快照可独立构建
+  - 本轮线上验收证据：
+    - `https://api.residential-agent.com/admin/plans` 当前引用 `/admin/assets/index-B6HL9BUR.js`
+    - 新 bundle 已包含 `/admin` 子路径路由基准逻辑
+  - 代码提交与推送：
+    - commit `036dcd62`
 
 - 完成 `liaojiang-rcb.13.1`
   - 回收 Kimi 产出并并入主线
@@ -98,6 +183,23 @@
     - `GET /api/admin/v1/dashboard/summary`
     - `GET /api/admin/v1/orders`
     - `GET /api/admin/v1/withdrawals`
+- 完成 `liaojiang-o9m8`
+  - 已打通后台套餐配置到用户订阅返回链路：
+    - `web admin plans -> /api/admin/v1/plans -> /api/client/v1/plans -> /api/client/v1/orders -> provisioning -> Marzban -> /api/client/v1/subscriptions/current`
+  - `/api/client/v1/me` 不再固定返回 `subscription: null`
+  - `/api/client/v1/subscriptions/current` 与 `/api/client/v1/me.subscription` 现可返回后台套餐名称 `planName`
+  - Android 客户端已对齐优先消费 `planName` 展示“当前套餐 / 当前计划”
+  - 线上后台地址已确认：
+    - `https://api.residential-agent.com/admin/login`
+    - `https://api.residential-agent.com/admin/plans`
+  - 线上 admin 前端 bundle 已确认调用当前 backend admin 接口：
+    - `/admin/v1/auth/login`
+    - `/admin/v1/plans`
+    - `/admin/v1/dashboard/summary`
+    - `/admin/v1/orders`
+    - `/admin/v1/withdrawals`
+  - 本轮验证已通过：
+    - `npm run test:e2e -- --no-cache admin-postgres.e2e-spec.ts vpn-postgres.e2e-spec.ts`
 - 完成 `liaojiang-4j0.7`
   - [VPNUI_DIRECTORY_DECISION.md](/Users/cnyirui/git/projects/liaojiang/docs/VPNUI_DIRECTORY_DECISION.md) 已生成
   - 已明确 `batch1~5` 逻辑废弃/仅参考，业务域目录为最终并入源
@@ -121,6 +223,11 @@
   - `https://api.residential-agent.com/`
 - Android 代码已同步切换到 `api` 子域：
   - [PaymentConfig.kt](/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/payment/PaymentConfig.kt)
+- 推广分享默认 web 链接当前由 backend 生成到：
+  - `https://vpn.residential-agent.com/invite?code=...`
+- 代码侧已补齐 `admin-web` 的公开 `/invite` 页面，但线上是否真正可用仍取决于：
+  - `vpn.residential-agent.com/invite` 是否切到该前端
+  - `BrowserRouter` 的 `index.html` fallback 是否配置正确
 
 ### 已验证通过的真实链路
 
@@ -143,6 +250,11 @@
   - 提交真实主网签名后状态推进到 `COMPLETED`
 - 后台真实链路证据:
   - `https://api.residential-agent.com/admin/` 可访问
+  - `https://api.residential-agent.com/admin/login` 可访问
+  - `https://api.residential-agent.com/admin/plans` 可访问
+  - `https://api.residential-agent.com/admin/plans` 不再命中旧白屏 bundle
+  - 当前线上页面引用：
+    - `/admin/assets/index-B6HL9BUR.js`
   - admin login 返回真实 token
   - dashboard / orders / withdrawals admin API 返回 200
   - plans 管理 API 已验证：
@@ -150,6 +262,8 @@
     - `PUT /api/admin/v1/plans/:planId`
   - client 动态套餐链路已验证：
     - `GET /api/client/v1/plans` 可反映后台启用/停用结果
+    - `GET /api/client/v1/subscriptions/current` 可返回 `planName`
+    - `GET /api/client/v1/me` 可返回真实 `subscription`
 
 ### 三机拆分现状
 
@@ -231,11 +345,22 @@
 ### 当前 beads 状态
 
 - `liaojiang-rcb.17` 已完成实现、验收与 continuity 刷新
-- 当前没有新的 `bd ready` 任务
-- 当前实质 blocker 为 `liaojiang-4j0.2`：仍缺 Android 真实回归账号凭据或可取验证码邮箱
+- `liaojiang-xn6o.5 / .6 / .7 / .8 / .9 / .10 / .11` 已完成
+- `liaojiang-xn6o.12` 当前为“直接下载 APK 归因”设计已完成、实现待接入
+- 当前实质 blocker 仍是人工联动验证：
+  - Android 真实登录
+  - 创建真实订单
+  - 收款 / 发送
+  - 推广分享 Web 落地页线上接线
 
 ## 下一步
 
-1. 恢复 `liaojiang-4j0.2`，继续 Android 真实登录/下单/支付页回归，重点验证后台动态套餐在真实环境的端到端购买效果。
-2. 若 `bd` 后续重新放出 Android UI 迁移子任务，则继续 `4j0.10 / 4j0.11 / 4j0.12 / 4j0.13` 的 Compose 桥接。
-3. 若运营侧需要更完整套餐能力，可继续补套餐删除、发布审核、区域联动校验与审计日志展示，但这不阻塞当前动态套餐购买链路。
+1. 把 `admin-web` 的 `/invite` 页面接到 `vpn.residential-agent.com/invite?code=...`，并验证直接打开不为空。
+2. 实现 `liaojiang-xn6o.12` 最小闭环：
+   - Android `invite` deep link
+   - pending referral 本地保存
+   - 登录/注册后自动绑定
+3. 继续按 [COMPOSE_COPY_CARD_DELETION_MATRIX_2026-04-16.md](/Users/cnyirui/git/projects/liaojiang/docs/COMPOSE_COPY_CARD_DELETION_MATRIX_2026-04-16.md) 推进：
+   - contract 默认值清理
+   - preview/dev residue 清理
+4. 恢复 `liaojiang-4j0.2` / `liaojiang-xn6o.1.1` 人工联动验证，继续真实登录/下单/支付/收发款回归。
