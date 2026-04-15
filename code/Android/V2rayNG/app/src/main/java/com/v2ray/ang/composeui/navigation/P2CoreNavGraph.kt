@@ -1,13 +1,13 @@
 package com.v2ray.ang.composeui.navigation
 
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
-import com.v2ray.ang.composeui.common.repository.MockCryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.cryptoVpnViewModelFactory
 import com.v2ray.ang.composeui.p2.model.AssetDetailRouteArgs
 import com.v2ray.ang.composeui.p2.model.LegalDocumentDetailRouteArgs
@@ -41,7 +41,7 @@ import com.v2ray.ang.composeui.pages.p2.WithdrawRoute
 
 fun NavGraphBuilder.installCryptoVpnP2CoreRoutes(
     navController: NavHostController,
-    repository: CryptoVpnRepository = MockCryptoVpnRepository(),
+    repository: CryptoVpnRepository,
 ) {
     composable(
         route = CryptoVpnRouteSpec.assetDetail.pattern,
@@ -65,8 +65,8 @@ fun NavGraphBuilder.installCryptoVpnP2CoreRoutes(
         )
         AssetDetailRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.sendRoute("USDT","tron")) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.receiveRoute("USDT","tron")) },
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.sendRoute(args.assetId, args.chainId)) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.receiveRoute(args.assetId, args.chainId)) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
@@ -88,6 +88,12 @@ fun NavGraphBuilder.installCryptoVpnP2CoreRoutes(
     assetId = backStackEntry.arguments?.getString("assetId") ?: "USDT",
     chainId = backStackEntry.arguments?.getString("chainId") ?: "tron"
         )
+        LaunchedEffect(args.assetId, args.chainId) {
+            val lifecycle = repository.getWalletLifecycleState().getOrNull()
+            if (lifecycle?.walletExists != true || lifecycle.sourceType.equals("LEGACY", ignoreCase = true)) {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.walletOnboarding.pattern)
+            }
+        }
         val vm: ReceiveViewModel = viewModel(
             factory = cryptoVpnViewModelFactory { ReceiveViewModel(repository, args) },
         )
@@ -116,13 +122,19 @@ fun NavGraphBuilder.installCryptoVpnP2CoreRoutes(
     assetId = backStackEntry.arguments?.getString("assetId") ?: "USDT",
     chainId = backStackEntry.arguments?.getString("chainId") ?: "tron"
         )
+        LaunchedEffect(args.assetId, args.chainId) {
+            val lifecycle = repository.getWalletLifecycleState().getOrNull()
+            if (lifecycle?.walletExists != true || lifecycle.sourceType.equals("LEGACY", ignoreCase = true)) {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.walletOnboarding.pattern)
+            }
+        }
         val vm: SendViewModel = viewModel(
             factory = cryptoVpnViewModelFactory { SendViewModel(repository, args) },
         )
         SendRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.sendResultRoute("TX-9F32")) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.assetDetailRoute("USDT","tron")) },
+            onPrimaryAction = {},
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.assetDetailRoute(args.assetId, args.chainId)) },
             onBottomNav = { route -> navController.navigateSingleTop(route) },
         )
     }
@@ -163,15 +175,9 @@ fun NavGraphBuilder.installCryptoVpnP2CoreRoutes(
     }
 
     composable(CryptoVpnRouteSpec.inviteShare.pattern) {
-        val vm: InviteShareViewModel = viewModel(
-            factory = cryptoVpnViewModelFactory { InviteShareViewModel(repository) },
-        )
-        InviteShareRoute(
-            viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.inviteCenter.pattern) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.commissionLedger.pattern) },
-            onBottomNav = { route -> navController.navigateSingleTop(route) },
-        )
+        LaunchedEffect(Unit) {
+            navController.navigateSingleTop(CryptoVpnRouteSpec.inviteCenter.pattern)
+        }
     }
 
     composable(CryptoVpnRouteSpec.commissionLedger.pattern) {

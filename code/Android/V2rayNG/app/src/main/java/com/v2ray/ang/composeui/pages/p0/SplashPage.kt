@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.v2ray.ang.composeui.p0.ui.P01Orb
 import com.v2ray.ang.composeui.p0.model.SplashUiState
-import com.v2ray.ang.composeui.p0.repository.MockP0Repository
+import com.v2ray.ang.composeui.p0.model.splashPreviewState
 import com.v2ray.ang.composeui.p0.viewmodel.SplashViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
@@ -76,14 +76,14 @@ private const val MainCardProgress = 0.72f
 @Composable
 fun SplashRoute(
     viewModel: SplashViewModel,
-    onFinished: () -> Unit,
+    onFinished: (String) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState.readyToNavigate) {
         if (uiState.readyToNavigate) {
-            onFinished()
+            onFinished(uiState.nextRoute)
         }
     }
 
@@ -152,13 +152,13 @@ private fun SplashHeader() {
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
-            text = "CRYPTO • VPN • PRIVATE NETWORK",
+            text = "Ghost • VPN • PRIVATE NETWORK",
             color = SplashTextSoft,
             letterSpacing = 2.sp,
             style = MaterialTheme.typography.labelSmall,
         )
         Text(
-            text = "CryptoVPN",
+            text = "Ghost VPN",
             color = SplashTextStrong,
             style = MaterialTheme.typography.headlineLarge,
         )
@@ -445,7 +445,7 @@ private fun networkStatus(uiState: SplashUiState): String {
 private fun SplashScreenPreview() {
     CryptoVpnTheme {
         SplashScreen(
-            uiState = SplashViewModel(MockP0Repository()).uiState.value,
+            uiState = splashPreviewState(),
         )
     }
 }

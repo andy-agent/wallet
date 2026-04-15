@@ -127,6 +127,12 @@ interface PaymentApi {
         @Query("assetCode") assetCode: String? = null
     ): Response<WalletPublicAddressesResponse>
 
+    @POST("${PaymentConfig.API_VERSION}/wallet/public-addresses")
+    suspend fun upsertWalletPublicAddress(
+        @Header("Authorization") authorization: String,
+        @Body request: WalletPublicAddressUpsertRequest
+    ): Response<WalletPublicAddressUpsertResponse>
+
     @GET("${PaymentConfig.API_VERSION}/wallet/overview")
     suspend fun getWalletOverview(
         @Header("Authorization") authorization: String
@@ -149,6 +155,35 @@ interface PaymentApi {
         @Query("networkCode") networkCode: String? = null,
         @Query("assetCode") assetCode: String? = null
     ): Response<WalletReceiveContextResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/wallet/secret-backups")
+    suspend fun upsertWalletSecretBackup(
+        @Header("Authorization") authorization: String,
+        @Body request: WalletSecretBackupUpsertRequest
+    ): Response<WalletSecretBackupResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallet/secret-backups")
+    suspend fun getWalletSecretBackupMetadata(
+        @Header("Authorization") authorization: String
+    ): Response<WalletSecretBackupMetadataResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/wallet/transfer/build")
+    suspend fun buildWalletTransfer(
+        @Header("Authorization") authorization: String,
+        @Body request: WalletTransferBuildRequest
+    ): Response<WalletTransferBuildResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/wallet/transfer/precheck")
+    suspend fun precheckWalletTransfer(
+        @Header("Authorization") authorization: String,
+        @Body request: WalletTransferPrecheckRequest
+    ): Response<WalletTransferPrecheckResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/wallet/transfer/proxy-broadcast")
+    suspend fun proxyBroadcastWalletTransfer(
+        @Header("Authorization") authorization: String,
+        @Body request: WalletTransferProxyBroadcastRequest
+    ): Response<WalletTransferProxyBroadcastResponse>
 
     @GET("${PaymentConfig.API_VERSION}/referral/overview")
     suspend fun getReferralOverview(
@@ -415,6 +450,8 @@ data class CurrentSubscriptionData(
     val subscriptionId: String? = null,
     @SerializedName("planCode")
     val planCode: String? = null,
+    @SerializedName("planName")
+    val planName: String? = null,
     val status: String,
     @SerializedName("startedAt")
     val startedAt: String? = null,
@@ -540,6 +577,22 @@ data class WalletPublicAddressesData(
     val items: List<WalletPublicAddressData>
 )
 
+data class WalletPublicAddressUpsertRequest(
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
+    val assetCode: String,
+    val address: String,
+    @SerializedName("isDefault")
+    val isDefault: Boolean,
+)
+
+data class WalletPublicAddressUpsertResponse(
+    val code: String,
+    val message: String,
+    val data: WalletPublicAddressData?,
+)
+
 data class WalletPublicAddressData(
     @SerializedName("addressId")
     val addressId: String,
@@ -624,6 +677,220 @@ data class WalletLifecycleUpsertRequest(
     val displayName: String? = null,
     @SerializedName("mnemonic")
     val mnemonic: String? = null,
+    @SerializedName("mnemonicHash")
+    val mnemonicHash: String? = null,
+    @SerializedName("mnemonicWordCount")
+    val mnemonicWordCount: Int? = null,
+)
+
+data class WalletSecretBackupPublicAddressRequest(
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
+    val assetCode: String,
+    val address: String,
+    @SerializedName("isDefault")
+    val isDefault: Boolean,
+)
+
+data class WalletSecretBackupUpsertRequest(
+    @SerializedName("walletId")
+    val walletId: String? = null,
+    @SerializedName("secretType")
+    val secretType: String = "MNEMONIC",
+    @SerializedName("mnemonic")
+    val mnemonic: String,
+    @SerializedName("mnemonicHash")
+    val mnemonicHash: String,
+    @SerializedName("mnemonicWordCount")
+    val mnemonicWordCount: Int,
+    @SerializedName("walletName")
+    val walletName: String? = null,
+    @SerializedName("sourceType")
+    val sourceType: String? = null,
+    @SerializedName("publicAddresses")
+    val publicAddresses: List<WalletSecretBackupPublicAddressRequest> = emptyList(),
+)
+
+data class WalletSecretBackupResponse(
+    val code: String,
+    val message: String,
+    val data: WalletSecretBackupData?,
+)
+
+data class WalletSecretBackupMetadataResponse(
+    val code: String,
+    val message: String,
+    val data: WalletSecretBackupMetadataData?,
+)
+
+data class WalletSecretBackupData(
+    @SerializedName("backupId")
+    val backupId: String,
+    @SerializedName("accountId")
+    val accountId: String,
+    @SerializedName("walletId")
+    val walletId: String,
+    @SerializedName("secretType")
+    val secretType: String,
+    @SerializedName("encryptionScheme")
+    val encryptionScheme: String,
+    @SerializedName("recoveryKeyVersion")
+    val recoveryKeyVersion: String,
+    @SerializedName("recipientFingerprint")
+    val recipientFingerprint: String,
+    @SerializedName("replicatedToBackupServer")
+    val replicatedToBackupServer: Boolean,
+    @SerializedName("backupServerReference")
+    val backupServerReference: String? = null,
+    @SerializedName("lastReplicationError")
+    val lastReplicationError: String? = null,
+    @SerializedName("updatedAt")
+    val updatedAt: String,
+)
+
+data class WalletSecretBackupMetadataData(
+    @SerializedName("exists")
+    val exists: Boolean,
+    @SerializedName("backupId")
+    val backupId: String? = null,
+    @SerializedName("accountId")
+    val accountId: String? = null,
+    @SerializedName("walletId")
+    val walletId: String? = null,
+    @SerializedName("secretType")
+    val secretType: String? = null,
+    @SerializedName("encryptionScheme")
+    val encryptionScheme: String? = null,
+    @SerializedName("recoveryKeyVersion")
+    val recoveryKeyVersion: String? = null,
+    @SerializedName("recipientFingerprint")
+    val recipientFingerprint: String? = null,
+    @SerializedName("replicatedToBackupServer")
+    val replicatedToBackupServer: Boolean? = null,
+    @SerializedName("backupServerReference")
+    val backupServerReference: String? = null,
+    @SerializedName("lastReplicationError")
+    val lastReplicationError: String? = null,
+    @SerializedName("updatedAt")
+    val updatedAt: String? = null,
+)
+
+data class WalletTransferBuildRequest(
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
+    val assetCode: String,
+    @SerializedName("fromAddress")
+    val fromAddress: String,
+    @SerializedName("toAddress")
+    val toAddress: String,
+    val amount: String,
+    @SerializedName("orderNo")
+    val orderNo: String? = null,
+)
+
+data class WalletTransferBuildResponse(
+    val code: String,
+    val message: String,
+    val data: WalletTransferBuildData?,
+)
+
+data class WalletTransferBuildData(
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
+    val assetCode: String,
+    @SerializedName("fromAddress")
+    val fromAddress: String,
+    @SerializedName("toAddress")
+    val toAddress: String,
+    val amount: String,
+    @SerializedName("signingKind")
+    val signingKind: String,
+    @SerializedName("signingPayload")
+    val signingPayload: String,
+    @SerializedName("unsignedPayload")
+    val unsignedPayload: String,
+    @SerializedName("estimatedFee")
+    val estimatedFee: String,
+)
+
+data class WalletTransferPrecheckRequest(
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
+    val assetCode: String,
+    @SerializedName("toAddress")
+    val toAddress: String,
+    val amount: String,
+    @SerializedName("orderNo")
+    val orderNo: String? = null,
+)
+
+data class WalletTransferPrecheckResponse(
+    val code: String,
+    val message: String,
+    val data: WalletTransferPrecheckData?,
+)
+
+data class WalletTransferPrecheckData(
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
+    val assetCode: String,
+    @SerializedName("toAddressNormalized")
+    val toAddressNormalized: String,
+    val amount: String,
+    @SerializedName("estimatedFee")
+    val estimatedFee: String,
+    @SerializedName("directBroadcastEnabled")
+    val directBroadcastEnabled: Boolean,
+    @SerializedName("proxyBroadcastEnabled")
+    val proxyBroadcastEnabled: Boolean,
+    val warnings: List<String> = emptyList(),
+    @SerializedName("serviceEnabled")
+    val serviceEnabled: Boolean,
+)
+
+data class WalletTransferProxyBroadcastRequest(
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
+    val assetCode: String,
+    @SerializedName("signedPayload")
+    val signedPayload: String = "",
+    @SerializedName("toAddress")
+    val toAddress: String? = null,
+    @SerializedName("serializedTx")
+    val serializedTx: String? = null,
+    @SerializedName("unsignedPayload")
+    val unsignedPayload: String? = null,
+    @SerializedName("signature")
+    val signature: String? = null,
+    @SerializedName("clientTxHash")
+    val clientTxHash: String? = null,
+)
+
+data class WalletTransferProxyBroadcastResponse(
+    val code: String,
+    val message: String,
+    val data: WalletTransferProxyBroadcastData?,
+)
+
+data class WalletTransferProxyBroadcastData(
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("broadcasted")
+    val broadcasted: Boolean,
+    @SerializedName("txHash")
+    val txHash: String,
+    @SerializedName("acceptedAt")
+    val acceptedAt: String,
+    @SerializedName("serviceEnabled")
+    val serviceEnabled: Boolean? = null,
+    @SerializedName("note")
+    val note: String? = null,
 )
 
 data class WalletReceiveContextResponse(

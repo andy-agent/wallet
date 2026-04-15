@@ -97,19 +97,19 @@ class RealP0Repository(context: Context) : P0Repository {
                 ?: cachedLineName?.let {
                     RegionSpeed(
                         regionName = it,
-                        protocol = paymentRepository.getCachedVpnNodeName() ?: "缓存节点",
+                        protocol = paymentRepository.getCachedVpnNodeName() ?: "节点信息未返回",
                         latencyMs = 0,
                         load = "--",
                     )
                 }
-                ?: RegionSpeed("待同步", "缓存待同步", 0, "--"),
+                ?: RegionSpeed("未获取区域", "节点信息未返回", 0, "--"),
             subscription = cachedSubscriptionData?.toSummary() ?: localSubscriptionSummary(
                 latestOrder = latestOrder,
                 hasSavedSubscriptionUrl = !localSubscriptionUrl.isNullOrBlank(),
                 fallbackExpireAt = paymentRepository.getLastIssuedVpnConfigExpireAt(),
             ),
             autoConnectEnabled = hasLocalConfig,
-            oneTapLabel = if (hasLocalConfig) "启动已导入配置" else "导入已购配置后连接",
+            oneTapLabel = if (hasLocalConfig) "启动已导入配置" else "导入配置后连接",
             speedNodes = cachedNodeSnapshots.map { it.toRegionSpeed() },
             watchSignals = signals,
             overviewValueText = resolveOverviewValueText(cachedOrders, ordersSyncUnavailable = false),
@@ -168,7 +168,7 @@ class RealP0Repository(context: Context) : P0Repository {
                 userId = me.accountId,
                 meSnapshot = me,
             ).getOrElse { error ->
-                val failureMessage = error.message ?: "无法完成登录后的真实数据预同步。"
+                val failureMessage = error.message ?: "无法完成数据同步。"
                 if (failureMessage.contains("未登录") ||
                     failureMessage.contains("UNAUTHORIZED", ignoreCase = true) ||
                     failureMessage.contains("AUTH_REFRESH_INVALID", ignoreCase = true) ||
@@ -181,13 +181,13 @@ class RealP0Repository(context: Context) : P0Repository {
                         buildStatus = "登录态已失效",
                         progress = 1f,
                         progressHeadline = "进入登录",
-                        progressDetail = "检测到本地登录态失效，已清理并返回登录页。",
+                        progressDetail = "检测到本地登录态失效，返回登录页。",
                         authResolved = true,
                         readyToNavigate = true,
                         nextRoute = CryptoVpnRouteSpec.emailLogin.pattern,
                         loadState = P0LoadState.READY,
                         accountLabel = "未登录",
-                        subscriptionLabel = "无本地缓存",
+                        subscriptionLabel = "无可用数据",
                     )
                 }
                 return@withContext SplashUiState(
@@ -203,7 +203,7 @@ class RealP0Repository(context: Context) : P0Repository {
                     accountLabel = me.email,
                     subscriptionLabel = "同步未完成",
                     errorMessage = failureMessage,
-                    unavailableMessage = "启动前必须完成订单、订阅、节点和配置同步。",
+                    unavailableMessage = "正在加载订单、订阅、节点和配置同步。",
                 )
             }
             val subscription = paymentRepository.getSubscription().getOrNull() ?: me.subscription
@@ -224,16 +224,16 @@ class RealP0Repository(context: Context) : P0Repository {
                 progress = 1f,
                 progressHeadline = "准备完成",
                 progressDetail = if (hasActiveSubscription) {
-                    "真实账号、订阅和 VPN 区域已同步，正在进入主界面。"
+                    "账号、订阅和 VPN 区域已同步，正在进入主界面。"
                 } else {
-                    "已完成账户同步，正在进入主界面。可在应用内购买或续费订阅。"
+                    "已完成账户同步，正在进入主界面。"
                 },
                 authResolved = true,
                 readyToNavigate = true,
-                nextRoute = CryptoVpnRouteSpec.vpnHome.pattern,
+                nextRoute = resolvePostAuthRoute(),
                 loadState = P0LoadState.READY,
                 accountLabel = me.email,
-                subscriptionLabel = subscription?.planCode ?: "暂无有效订阅",
+                subscriptionLabel = subscription?.planName ?: subscription?.planCode ?: "暂无有效订阅",
             )
         }
 
@@ -245,19 +245,19 @@ class RealP0Repository(context: Context) : P0Repository {
                 buildStatus = cachedUser?.email
                     ?: cachedUser?.username
                     ?: currentUserId
-                    ?: "已识别本地账户数据",
+                    ?: "已读取缓存账户",
                 progress = 1f,
                 progressHeadline = "继续进入应用",
-                progressDetail = "检测到本地账户数据，将直接进入应用并在后台恢复真实会话。",
+                progressDetail = "检测到缓存账户和订单数据，正在进入应用。",
                 authResolved = true,
                 readyToNavigate = true,
-                nextRoute = CryptoVpnRouteSpec.vpnHome.pattern,
+                nextRoute = resolvePostAuthRoute(),
                 loadState = P0LoadState.READY,
-                accountLabel = cachedUser?.email ?: cachedUser?.username ?: "本地账户",
+                accountLabel = cachedUser?.email ?: cachedUser?.username ?: "缓存账户",
                 subscriptionLabel = if (cachedOrders.isEmpty()) {
-                    "已恢复本地账户数据"
+                    "已读取缓存账户数据"
                 } else {
-                    "${cachedOrders.size} 笔本地订单缓存"
+                    "${cachedOrders.size} 笔缓存订单"
                 },
             )
         }
@@ -269,13 +269,13 @@ class RealP0Repository(context: Context) : P0Repository {
                 buildStatus = cachedUser?.email ?: "未识别登录会话",
                 progress = 1f,
                 progressHeadline = "进入登录",
-                progressDetail = "未检测到有效认证信息，将进入真实登录页。",
+                progressDetail = "未检测到有效信息，将进入 登录页。",
                 authResolved = true,
                 readyToNavigate = true,
                 nextRoute = CryptoVpnRouteSpec.emailLogin.pattern,
                 loadState = P0LoadState.READY,
                 accountLabel = cachedUser?.email ?: "未登录",
-                subscriptionLabel = if (cachedOrders.isEmpty()) "暂无本地订单缓存" else "${cachedOrders.size} 笔本地订单缓存",
+                subscriptionLabel = if (cachedOrders.isEmpty()) "暂无订单" else "${cachedOrders.size} 笔订单",
             )
         }
 
@@ -287,13 +287,13 @@ class RealP0Repository(context: Context) : P0Repository {
                 buildStatus = "已清理残留会话",
                 progress = 1f,
                 progressHeadline = "进入登录",
-                progressDetail = "检测到失效的本地 token 残留，已清理并进入登录页。",
+                progressDetail = "检测到失效的数据，清理并进入登录页。",
                 authResolved = true,
                 readyToNavigate = true,
                 nextRoute = CryptoVpnRouteSpec.emailLogin.pattern,
                 loadState = P0LoadState.READY,
                 accountLabel = "未登录",
-                subscriptionLabel = "无本地缓存",
+                subscriptionLabel = "无本地数据",
             )
         }
 
@@ -303,14 +303,14 @@ class RealP0Repository(context: Context) : P0Repository {
             buildStatus = cachedUser?.email ?: "账户同步失败",
             progress = 0.58f,
             progressHeadline = "账户服务不可用",
-            progressDetail = "无法完成真实账号同步，请重试后再进入应用。",
+            progressDetail = "无法完成账号同步，请重试后再进入应用。",
             authResolved = false,
             readyToNavigate = false,
             loadState = P0LoadState.UNAVAILABLE,
             accountLabel = cachedUser?.email ?: "未知账号",
-            subscriptionLabel = if (cachedOrders.isEmpty()) "未同步订阅" else "${cachedOrders.size} 笔本地订单缓存",
+            subscriptionLabel = if (cachedOrders.isEmpty()) "未同步订阅" else "${cachedOrders.size} 笔订单",
             errorMessage = failureMessage,
-            unavailableMessage = "启动必须依赖真实账户状态；当前网络或后端不可用。",
+            unavailableMessage = "当前网络或后端不可用。",
         )
     }
 
@@ -322,11 +322,11 @@ class RealP0Repository(context: Context) : P0Repository {
             email = cachedUser?.email ?: cachedUser?.username.orEmpty(),
             rememberMe = paymentRepository.isTokenValid(),
             helperText = if (cachedUser != null) {
-                "当前设备已识别账号 ${cachedUser.email ?: cachedUser.username}，登录后会刷新订阅、VPN 状态和订单缓存。"
+                "当前设备已识别账号 ${cachedUser.email ?: cachedUser.username}，正在刷新订阅、VPN 状态和订单。"
             } else {
-                "使用真实 CryptoVPN 账号登录后，当前 Compose 页会同步订阅、VPN 区域和支付记录。"
+                "账号登录后，同步订阅、VPN 区域和支付记录。"
             },
-            successMessage = if (cachedOrders.isNotEmpty()) "检测到 ${cachedOrders.size} 笔真实订单缓存。" else null,
+            successMessage = if (cachedOrders.isNotEmpty()) "检测到 ${cachedOrders.size} 笔订单。" else null,
         )
     }
 
@@ -367,7 +367,21 @@ class RealP0Repository(context: Context) : P0Repository {
                         meSnapshot = meResult.getOrNull(),
                     )
                     warmSyncResult.fold(
-                        onSuccess = { LoginResult(success = true) },
+                        onSuccess = {
+                            val bindPendingResult = paymentRepository.tryBindPendingReferralCode()
+                            if (bindPendingResult.isFailure) {
+                                LoginResult(
+                                    success = false,
+                                    errorMessage = bindPendingResult.exceptionOrNull()?.message ?: "邀请码绑定失败",
+                                    unavailable = true,
+                                )
+                            } else {
+                                LoginResult(
+                                    success = true,
+                                    nextRoute = resolvePostAuthRoute(),
+                                )
+                            }
+                        },
                         onFailure = { error ->
                             LoginResult(
                                 success = false,
@@ -400,33 +414,37 @@ class RealP0Repository(context: Context) : P0Repository {
         val me = paymentRepository.getMe().getOrNull()
         val subscription = paymentRepository.getSubscription().getOrNull() ?: me?.subscription
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        val hasUsableWallet = lifecycle?.walletExists == true &&
+            !lifecycle.sourceType.equals("LEGACY", ignoreCase = true)
         val accountLabel = me?.email ?: cachedUser?.email ?: cachedUser?.username ?: "未登录"
         if (me == null && cachedUser == null) {
             return WalletOnboardingUiState(
                 accountLabel = accountLabel,
-                summary = "钱包入口依赖真实登录态，请先登录再继续。",
-                unavailableMessage = "当前没有可用的真实账号上下文。",
+                summary = "",
+                unavailableMessage = "当前没有可用的账号",
                 focusedChains = listOf("SOLANA", "TRON"),
             )
         }
 
         return WalletOnboardingUiState(
             accountLabel = accountLabel,
-            summary = if (lifecycle?.walletExists == true) {
-                "${lifecycle.displayName ?: "当前钱包"} 已建立，可继续进入钱包总览或重新导入。"
+            summary = if (hasUsableWallet) {
+                ""
             } else if (subscription?.status == "ACTIVE") {
-                "账号已开通 ${subscription.planCode ?: "订阅"}，请先创建或导入钱包后再进行收款。"
+                ""
             } else {
-                "账号已登录，但链上钱包资料仍未建立；请选择创建或导入路径。"
+                ""
             },
-            warningMessage = if (lifecycle?.walletExists == true) {
+            warningMessage = if (lifecycle?.walletExists == true && !hasUsableWallet) {
+                "检测到历史公开地址记录，仍需完成钱包创建或导入流程。"
+            } else if (hasUsableWallet) {
                 "检测到服务端已有钱包状态；再次导入会覆盖当前默认钱包入口。"
             } else {
-                "当前入口已切到服务端钱包生命周期状态。"
+                "已同步钱包状态。"
             },
             focusedChains = listOf("SOLANA", "TRON"),
-            primaryActionLabel = if (lifecycle?.walletExists == true) "进入钱包总览" else "继续到钱包入口",
-            walletExists = lifecycle?.walletExists == true,
+            primaryActionLabel = if (hasUsableWallet) "进入钱包总览" else "继续到钱包入口",
+            walletExists = hasUsableWallet,
             lifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
             walletId = lifecycle?.walletId,
             walletDisplayName = lifecycle?.displayName,
@@ -505,8 +523,8 @@ class RealP0Repository(context: Context) : P0Repository {
                 unavailableMessage = null,
                 connectionStatus = resolvedConnectionStatus,
                 selectedRegion = selectedLocalRegion ?: RegionSpeed(
-                    regionName = "待同步",
-                    protocol = "配置待同步",
+                    regionName = "未获取区域",
+                    protocol = "配置信息未返回",
                     latencyMs = 0,
                     load = "--",
                 ),
@@ -552,7 +570,7 @@ class RealP0Repository(context: Context) : P0Repository {
                         }
                     }
                 } ?: if (cachedNodeSnapshots.isNotEmpty()) {
-                    "已识别 ${cachedNodeSnapshots.size} 个缓存节点"
+                    "已加载 ${cachedNodeSnapshots.size} 个节点"
                 } else {
                     resolveOrdersFallbackLabel(orderSnapshot.syncUnavailable)
                 },
@@ -611,24 +629,24 @@ class RealP0Repository(context: Context) : P0Repository {
             connectionStatus = connectionStatus,
             accountLabel = me.email,
             selectedRegion = selectedRegion ?: RegionSpeed(
-                regionName = "待同步",
-                protocol = "区域待同步",
+                regionName = "未获取区域",
+                protocol = "区域信息未返回",
                 latencyMs = 0,
                 load = "--",
             ),
             subscription = subscription?.toSummary() ?: SubscriptionSummary(
-                planName = "待同步订阅",
+                planName = "未获取订阅",
                 expiresInDays = 0,
                 autoRenew = false,
-                nextBillingLabel = "待同步",
+                nextBillingLabel = "未返回",
                 status = "NONE",
             ),
             autoConnectEnabled = vpnStatus?.canIssueConfig == true || hasLocalConfig,
             oneTapLabel = when {
                 connectionStatus == VpnConnectionStatus.CONNECTED -> "断开并刷新状态"
                 connectionStatus == VpnConnectionStatus.CONNECTING -> "连接中"
-                hasLocalConfig -> "启动已导入配置"
-                vpnStatus?.canIssueConfig == true -> "当前账号可签发配置"
+                hasLocalConfig -> "启动配置"
+                vpnStatus?.canIssueConfig == true -> "当前账号可同步配置"
                 else -> "购买套餐后连接"
             },
             speedNodes = if (cachedNodeSnapshots.isNotEmpty()) {
@@ -683,6 +701,8 @@ class RealP0Repository(context: Context) : P0Repository {
     override suspend fun getWalletHomeState(): WalletHomeUiState {
         val walletOverview = paymentRepository.getWalletOverview().getOrNull()
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        val hasUsableWallet = lifecycle?.walletExists == true &&
+            !lifecycle.sourceType.equals("LEGACY", ignoreCase = true)
         if (walletOverview != null) {
             val chains = walletOverview.chainItems.map { chain ->
                 WalletChainSummary(
@@ -711,14 +731,14 @@ class RealP0Repository(context: Context) : P0Repository {
                 isLoading = false,
                 loadState = if (assets.isEmpty()) P0LoadState.EMPTY else P0LoadState.READY,
                 accountLabel = walletOverview.accountEmail,
-                totalBalanceText = "${assets.sumOf { it.balanceText.substringBefore(" ").toIntOrNull() ?: 0 }} 笔真实记录",
-                summaryLabel = walletOverview.alerts.firstOrNull() ?: "钱包总览已切到服务端真实数据",
+                totalBalanceText = "${assets.sumOf { it.balanceText.substringBefore(" ").toIntOrNull() ?: 0 }} 笔交易",
+                summaryLabel = walletOverview.alerts.firstOrNull() ?: "交易记录",
                 selectedChainId = walletOverview.selectedNetworkCode.lowercase(Locale.ROOT),
                 chains = chains,
                 assets = assets,
                 alertBanner = walletOverview.alerts.joinToString(" · "),
-                emptyMessage = if (assets.isEmpty()) "当前服务端钱包总览还没有可展示的链上资产或订单记录。" else null,
-                walletExists = lifecycle?.walletExists == true,
+                emptyMessage = if (assets.isEmpty()) "当前没有链上资产或订单记录。" else null,
+                walletExists = hasUsableWallet,
                 walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
                 walletId = lifecycle?.walletId,
                 walletDisplayName = lifecycle?.displayName,
@@ -735,11 +755,11 @@ class RealP0Repository(context: Context) : P0Repository {
                 loadState = if (cachedUser == null) P0LoadState.UNAVAILABLE else P0LoadState.ERROR,
                 accountLabel = cachedUser?.email ?: cachedUser?.username ?: "未登录",
                 errorMessage = failureMessage,
-                unavailableMessage = if (cachedUser == null) "请先登录后再查看真实支付记录。" else null,
+                unavailableMessage = if (cachedUser == null) "请先登录后再查看支付记录。" else null,
                 totalBalanceText = "--",
-                summaryLabel = "无法同步真实支付数据",
-                alertBanner = "当前页面不再展示假余额；同步失败时只保留真实错误信息。",
-                walletExists = lifecycle?.walletExists == true,
+                summaryLabel = "无法同步区块数据",
+                alertBanner = "请确认",
+                walletExists = hasUsableWallet,
                 walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
                 walletId = lifecycle?.walletId,
                 walletDisplayName = lifecycle?.displayName,
@@ -756,11 +776,11 @@ class RealP0Repository(context: Context) : P0Repository {
                 isLoading = false,
                 loadState = P0LoadState.EMPTY,
                 accountLabel = me.email,
-                totalBalanceText = "0 笔真实订单",
-                summaryLabel = subscription?.planCode ?: "暂无支付记录",
-                emptyMessage = "当前账号还没有同步到真实支付记录。创建订单或完成支付后，这里会展示真实订单摘要。",
-                alertBanner = "当前页面展示的是支付与订单数据，不再冒充链上钱包余额。",
-                walletExists = lifecycle?.walletExists == true,
+                totalBalanceText = "0 笔订单",
+                summaryLabel = subscription?.planName ?: subscription?.planCode ?: "暂无支付记录",
+                emptyMessage = "当前账号还没有同步支付记录。",
+                alertBanner = " 支付与订单 ",
+                walletExists = hasUsableWallet,
                 walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
                 walletId = lifecycle?.walletId,
                 walletDisplayName = lifecycle?.displayName,
@@ -776,7 +796,7 @@ class RealP0Repository(context: Context) : P0Repository {
                     chainId = chainId,
                     label = chainLabel(chainId),
                     balanceText = "${items.size} 笔订单",
-                    accent = "真实支付网络",
+                    accent = "区块支付网络",
                     itemCount = items.size,
                 )
             }
@@ -803,19 +823,35 @@ class RealP0Repository(context: Context) : P0Repository {
             isLoading = false,
             loadState = P0LoadState.READY,
             accountLabel = me.email,
-            totalBalanceText = "${orders.size} 笔真实支付记录",
-            summaryLabel = subscription?.let { "${it.planCode ?: "订阅"} · ${it.status}" } ?: "暂无有效订阅",
+            totalBalanceText = "${orders.size} 笔支付记录",
+            summaryLabel = subscription?.let { "${it.planName ?: it.planCode ?: "订阅"} · ${it.status}" } ?: "暂无有效订阅",
             selectedChainId = chains.firstOrNull()?.chainId ?: "all",
             chains = chains,
             assets = assets,
             alertBanner = latestOrder?.let { "最新订单：${it.planName} · ${it.statusText}" }
-                ?: "当前页面展示的是当前账号的真实订单与支付网络摘要。",
-            walletExists = lifecycle?.walletExists == true,
+                ?: "订单与区块记录",
+            walletExists = hasUsableWallet,
             walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
             walletId = lifecycle?.walletId,
             walletDisplayName = lifecycle?.displayName,
             walletNextAction = lifecycle?.nextAction ?: "CREATE_OR_IMPORT",
         )
+    }
+
+    private suspend fun resolvePostAuthRoute(): String {
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        return when {
+            lifecycle?.walletExists != true ||
+                lifecycle.sourceType.equals("LEGACY", ignoreCase = true) ->
+                CryptoVpnRouteSpec.walletOnboarding.pattern
+            lifecycle.nextAction.equals("BACKUP_MNEMONIC", ignoreCase = true) &&
+                !lifecycle.walletId.isNullOrBlank() ->
+                CryptoVpnRouteSpec.backupMnemonicRoute(lifecycle.walletId)
+            lifecycle.nextAction.equals("CONFIRM_MNEMONIC", ignoreCase = true) &&
+                !lifecycle.walletId.isNullOrBlank() ->
+                CryptoVpnRouteSpec.confirmMnemonicRoute(lifecycle.walletId)
+            else -> CryptoVpnRouteSpec.walletHome.pattern
+        }
     }
 
     private suspend fun loadOrders(): List<Order> {
@@ -876,7 +912,7 @@ class RealP0Repository(context: Context) : P0Repository {
         signals += WatchSignal(
             symbol = "SUB",
             reason = subscription?.let {
-                "${it.planCode ?: "当前订阅"} · ${it.status}"
+                "${it.planName ?: it.planCode ?: "当前订阅"} · ${it.status}"
             } ?: "暂无有效订阅",
             changeText = subscription?.daysRemaining?.let { "剩余 ${it} 天" } ?: "等待购买",
             volumeText = subscription?.expireAt?.let(::formatDateLabel) ?: "--",
@@ -884,7 +920,7 @@ class RealP0Repository(context: Context) : P0Repository {
         )
         signals += WatchSignal(
             symbol = "VPN",
-            reason = vpnStatus?.sessionStatus ?: "未同步 VPN 会话",
+            reason = vpnStatus?.sessionStatus ?: "未同步节点",
             changeText = when {
                 hasLocalConfig -> "已有配置"
                 vpnStatus?.canIssueConfig == true -> "可签发配置"
@@ -926,7 +962,7 @@ class RealP0Repository(context: Context) : P0Repository {
 
     private fun CurrentSubscriptionData.toSummary(): SubscriptionSummary {
         return SubscriptionSummary(
-            planName = planCode ?: "待同步订阅",
+            planName = planName ?: planCode ?: "待同步订阅",
             expiresInDays = daysRemaining ?: 0,
             autoRenew = false,
             nextBillingLabel = expireAt?.let(::formatDateLabel) ?: "待同步",
@@ -1053,10 +1089,10 @@ class RealP0Repository(context: Context) : P0Repository {
                 status = order.status,
             )
             hasSavedSubscriptionUrl -> SubscriptionSummary(
-                planName = "本地已导入订阅",
+                planName = "已导入订阅",
                 expiresInDays = 0,
                 autoRenew = false,
-                nextBillingLabel = "已导入本地订阅",
+                nextBillingLabel = "已导入订阅",
                 status = "LOCAL_CONFIG",
             )
             else -> null
@@ -1084,8 +1120,8 @@ class RealP0Repository(context: Context) : P0Repository {
             signals += WatchSignal(
                 symbol = "VLESS",
                 reason = shortenSensitiveUrl(url),
-                changeText = selectedNode?.lineName ?: "已保存订阅配置",
-                volumeText = if (hasLocalConfig) "本地配置可用" else "待导入节点",
+                changeText = selectedNode?.lineName ?: "已保存订阅",
+                volumeText = if (hasLocalConfig) "配置可用" else "待导入节点",
                 isPositive = true,
             )
         }
@@ -1109,10 +1145,10 @@ class RealP0Repository(context: Context) : P0Repository {
     ): String {
         return when {
             (localSubscriptionUrl != null || hasLocalConfig) && localNodeCount > 0 -> "已就绪"
-            localSubscriptionUrl != null -> "已保存订阅配置"
+            localSubscriptionUrl != null -> "已保存订阅"
             hasLocalConfig -> "已就绪"
-            remoteIssuable -> "可签发配置"
-            else -> "配置待同步"
+            remoteIssuable -> "可签发"
+            else -> "待同步"
         }
     }
 
@@ -1198,7 +1234,7 @@ class RealP0Repository(context: Context) : P0Repository {
     }
 
     private fun resolveOrdersFallbackLabel(ordersSyncUnavailable: Boolean): String {
-        return if (ordersSyncUnavailable) "订单接口待同步" else "暂无订单"
+        return if (ordersSyncUnavailable) "订单待同步" else "暂无订单"
     }
 
     private fun calculateNodeHealthPercent(

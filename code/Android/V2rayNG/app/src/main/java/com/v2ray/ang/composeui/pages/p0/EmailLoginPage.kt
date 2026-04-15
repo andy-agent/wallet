@@ -10,10 +10,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.model.LoginEvent
 import com.v2ray.ang.composeui.p0.model.LoginUiState
-import com.v2ray.ang.composeui.p0.repository.MockP0Repository
+import com.v2ray.ang.composeui.p0.model.loginPreviewState
 import com.v2ray.ang.composeui.p0.ui.P01ButtonRow
 import com.v2ray.ang.composeui.p0.ui.P01Card
 import com.v2ray.ang.composeui.p0.ui.P01CardCopy
@@ -41,6 +44,7 @@ fun EmailLoginRoute(
         onEmailChange = { viewModel.onEvent(LoginEvent.EmailChanged(it)) },
         onPasswordChange = { viewModel.onEvent(LoginEvent.PasswordChanged(it)) },
         onPrimary = { viewModel.onEvent(LoginEvent.LoginClicked, onLoginSuccess) },
+        onDismissDialog = { viewModel.onEvent(LoginEvent.DialogDismissed) },
         onRegister = onRegister,
         onWalletImport = onWalletOnboarding,
         onBottomNav = onBottomNav,
@@ -54,20 +58,33 @@ fun EmailLoginScreen(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onPrimary: () -> Unit,
+    onDismissDialog: () -> Unit,
     onRegister: () -> Unit,
     onWalletImport: () -> Unit,
     onBottomNav: (String) -> Unit = {},
     onForgotPassword: () -> Unit = {},
 ) {
+    uiState.dialogMessage?.takeIf { it.isNotBlank() }?.let { message ->
+        AlertDialog(
+            onDismissRequest = onDismissDialog,
+            title = { Text(uiState.dialogTitle ?: "登录失败") },
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(onClick = onDismissDialog) {
+                    Text("知道了")
+                }
+            },
+        )
+    }
+
     P01PhoneScaffold(
-        statusTime = "18:05",
         currentRoute = CryptoVpnRouteSpec.vpnHome.name,
         onBottomNav = onBottomNav,
     ) {
         P01Header(
             eyebrow = "WELCOME BACK",
             title = "欢迎回来",
-            subtitle = "继续访问你的多链资产、订阅状态与全球隐私节点。",
+            subtitle = "",
         )
 
         P01Card {
@@ -99,36 +116,17 @@ fun EmailLoginScreen(
                         modifier = Modifier.weight(1f),
                     )
                     com.v2ray.ang.composeui.p0.ui.P01SecondaryButton(
-                        text = "导入钱包",
+                        text = "注册后导入",
                         onClick = onWalletImport,
                         modifier = Modifier.weight(1f),
                     )
                 }
+                uiState.successMessage?.takeIf { it.isNotBlank() }?.let { message ->
+                    P01CardCopy(message)
+                }
             }
         }
 
-        P01Card {
-            P01CardHeader(
-                title = "本次会话将同步",
-                trailing = {
-                    com.v2ray.ang.composeui.p0.ui.P01Chip(text = "端到端安全")
-                },
-            )
-            P01List {
-                P01ListRow(
-                    title = "VPN订阅与节点偏好",
-                    copy = "自动恢复最近连接的区域与智能路由策略。",
-                )
-                P01ListRow(
-                    title = "多链资产与支付能力",
-                    copy = "SOL、USDT-SOL、USDT-TRON 可直接支付套餐。",
-                )
-                P01ListRow(
-                    title = "高风险状态预警",
-                    copy = uiState.helperText.ifBlank { "交易确认、节点波动、会话异常同时提醒。" },
-                )
-            }
-        }
     }
 }
 
@@ -137,10 +135,11 @@ fun EmailLoginScreen(
 private fun EmailLoginPreview() {
     CryptoVpnTheme {
         EmailLoginScreen(
-            uiState = LoginViewModel(MockP0Repository()).uiState.value,
+            uiState = loginPreviewState(),
             onEmailChange = {},
             onPasswordChange = {},
             onPrimary = {},
+            onDismissDialog = {},
             onRegister = {},
             onWalletImport = {},
         )

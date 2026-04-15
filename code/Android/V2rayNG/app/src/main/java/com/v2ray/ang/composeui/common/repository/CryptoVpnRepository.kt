@@ -13,6 +13,12 @@ data class WalletLifecycleMutationResult(
     val errorMessage: String? = null,
 )
 
+data class SendSubmissionResult(
+    val success: Boolean,
+    val txHash: String? = null,
+    val errorMessage: String? = null,
+)
+
 interface CryptoVpnRepository {
     suspend fun getForceUpdateState(): ForceUpdateUiState
     suspend fun getOptionalUpdateState(): OptionalUpdateUiState
@@ -56,6 +62,8 @@ interface CryptoVpnRepository {
     suspend fun getCachedReceiveState(args: ReceiveRouteArgs): ReceiveUiState? = null
     suspend fun getReceiveState(args: ReceiveRouteArgs): ReceiveUiState
     suspend fun getSendState(args: SendRouteArgs): SendUiState
+    suspend fun submitSend(args: SendRouteArgs, toAddress: String, amount: String, memo: String = ""): SendSubmissionResult =
+        SendSubmissionResult(success = false, errorMessage = "Send unavailable")
     suspend fun getSendResultState(args: SendResultRouteArgs): SendResultUiState
     suspend fun getInviteCenterState(): InviteCenterUiState
     suspend fun getInviteShareState(): InviteShareUiState

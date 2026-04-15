@@ -14,8 +14,8 @@ android {
         applicationId = "com.v2ray.ang"
         minSdk = 24
         targetSdk = 36
-        versionCode = 721
-        versionName = "2.0.17.04"
+        versionCode = 723
+        versionName = "2.0.17.06"
         multiDexEnabled = true
 
         val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
@@ -164,6 +164,10 @@ dependencies {
     implementation(libs.mmkv.static)
     implementation(libs.gson)
     implementation(libs.okhttp)
+    implementation("org.bitcoinj:bitcoinj-core:0.16.3") {
+        exclude(group = "org.bouncycastle", module = "bcprov-jdk15to18")
+    }
+    implementation("org.bouncycastle:bcprov-jdk18on:1.80")
 
     // Payment Module - Retrofit HTTP Client
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

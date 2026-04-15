@@ -10,9 +10,9 @@
 | DB / Redis | 🟢 已剥离 | 状态服务物理落在服务器二，API 机通过本地隧道端口访问 |
 | Android 集成 | 🟡 进入 Compose 并入阶段 | 现有 XML App 保持可用，`vpnui` 并入方案与目录裁决均已冻结 |
 | Android 编译/构建 | 🟢 Compose APK 构建已恢复 | `7x4.2` 已修复 Kotlin/AGP 冲突，`assembleFdroidDebug` 可在主线通过 |
-| Android 运行验证 | 🟡 Compose 容器安装已验证 | `7x4.3` 已把新 APK 安装到 `emulator-5554`，但页面级真实回归仍待后续 UI 迁移完成 |
-| Compose copy-card 清理 | 🟡 Batch 1 / 2 已完成 | 共享组件抑制与 mounted 页面说明型卡片删除已落地，后续仍需 contract 默认值与 preview/dev residue 清理 |
-| 邀请/分享收口 | 🟡 App 侧已收口，Web 页已随 admin-web 部署 | `InviteLanding` 源码已纳入主线并随 admin-web 发布到服务器三，但 `vpn.residential-agent.com/invite` 是否对外生效仍取决于独立 nginx 路由接线 |
+| Android 运行验证 | 🟡 Compose 容器与真机安装已验证 | 最新 `fdroidDebug` 包已重装到 `ba2b016`，`v2rayng://invite?code=...` 冒烟已通过，但真实登录/下单/收发款仍待人工联动 |
+| Compose copy-card 清理 | 🟢 Batch 1 / 2 / 3 / 4 已完成 | 共享组件抑制、mounted 页面说明型卡片删除、contract 默认值清理、preview/dev residue 收口均已落地 |
+| 邀请/分享收口 | 🟡 App/Web 主链路已打通 | App 内已收口为“邀请中心”唯一入口；`api.residential-agent.com/invite?code=...` 已在线返回落地页；Android `v2rayng://invite?code=...` 已能保存 pending referral |
 | 真实业务 smoke | 🟢 已推进 | 基础接口 smoke 已通过，订单最小链路已通过远程 Solana 服务完成真实 smoke |
 | Sol 链侧服务 | 🟢 可用 | `sol.residential-agent.com` 内外健康检查均通过 |
 | USDT/TRON 链侧服务 | 🟢 可用 | `usdt.residential-agent.com` 已接真实 TRON RPC，健康/区块/交易查询通过 |
@@ -20,6 +20,55 @@
 | Admin 后台 | 🟢 已具备套餐管理闭环 | `liaojiang-kbf8`、`liaojiang-zhy8`、`liaojiang-xwhq` 已完成，`/admin` 子路径白屏与套餐创建 404 均已完成线上修复 |
 
 ## 本轮完成
+
+- 完成 钱包托管 / 恢复 / 发送基础能力第一阶段
+  - Android 已新增本地可签名材料托管：
+    - 12 词助记词生成
+    - `Android Keystore + AES-GCM` 本地加密保存
+    - 基于本地助记词的 Solana / TRON 地址派生
+    - 本地 Solana message / TRON txId 签名能力
+  - Android 创建/导入钱包已改为：
+    - 本地保存助记词
+    - 仅向 backend 上送 `mnemonicHash / mnemonicWordCount`
+    - 同步派生公开地址到 `/api/client/v1/wallet/public-addresses`
+    - 上传加密备份到 `/api/client/v1/wallet/secret-backups`
+  - backend 已新增钱包加密备份能力：
+    - `POST /api/client/v1/wallet/secret-backups`
+    - `GET /api/client/v1/wallet/secret-backups`
+    - 主后端只保存密文和元数据，不保存恢复私钥
+    - `age` 加密由 [wallet-backup-crypto.service.ts](/Users/cnyirui/git/projects/liaojiang/code/backend/src/modules/wallet/wallet-backup-crypto.service.ts) 调用独立 Node 脚本完成
+    - 已预留独立备份服务器 relay 元数据：
+      - `replicatedToBackupServer`
+      - `backupServerReference`
+      - `lastReplicationError`
+  - backend 已新增多链发送构建端点：
+    - `POST /api/client/v1/wallet/transfer/build`
+    - 当前可生成：
+      - Solana `SOL`
+      - Solana `USDT`
+      - TRON `TRX`
+      - TRON `USDT`
+    - Android 发送链路已改成：
+      - `precheck`
+      - `build`
+      - 本地签名
+      - `proxy-broadcast`
+      - 成功后跳真实 `send_result/{txHash}`
+  - 管理员恢复私钥已在本机创建：
+    - [区块恢复私钥](/Users/cnyirui/server/区块恢复私钥)
+    - 权限 `600`
+    - 已导出对应 recipient：
+      - [区块恢复私钥.recipient](/Users/cnyirui/server/区块恢复私钥.recipient)
+      - 当前值 `age1r93k3yd97gqfwcmqhanaxsqlhrsyqwcj4jlz958c4qpzvw64hcws68fsh3`
+  - 当前验证已通过：
+    - `code/backend`: `pnpm typecheck`
+    - `code/backend`: `pnpm test:e2e -- wallet-postgres.e2e-spec.ts`
+    - `code/Android/V2rayNG`: `./gradlew :app:compileFdroidDebugKotlin --rerun-tasks`
+  - 当前仍未完成：
+    - 独立备份服务器本体与定时增量备份任务尚未落地
+    - Solana / TRON 真机或真实链环境的端到端发送验收尚未补证据
+  - 方案文档：
+    - [2026-04-16-wallet-custody-and-send-architecture.md](/Users/cnyirui/git/projects/liaojiang/docs/plans/2026-04-16-wallet-custody-and-send-architecture.md)
 
 - 完成 `liaojiang-xn6o.5`
   - 共享组件已支持“空文案不渲染”
@@ -66,6 +115,8 @@
     - 打开 App CTA
     - 复制邀请码 / 复制邀请链接
   - `code/admin-web` 本地 `npm run build` 通过
+  - `api.residential-agent.com/invite?code=...` 已线上返回 HTML
+  - `https://api.residential-agent.com/downloads/cryptovpn-android.apk` 已线上返回 `200`
 - 完成 `liaojiang-xn6o.12` 方案设计
   - 已确定“直接 Web 下载 APK”场景的最小闭环：
     - web `/invite?code=...`
@@ -73,6 +124,25 @@
     - App 本地保存 pending referral
     - 登录/注册后自动调用 `bindReferralCode`
   - 已明确当前不上商店时，无法做到“安装后完全自动归因”
+- 完成 `liaojiang-xn6o.12.2`
+  - Android 已接入：
+    - `v2rayng://invite?code=...`
+    - `pending_referral_code` 本地保存
+    - 登录/注册成功后自动尝试绑定 pending referral
+  - 真机冒烟已验证：
+    - `v2rayng://invite?code=FLOW2026`
+    - 设备本地 `pending_referral_code=FLOW2026`
+- 完成 `liaojiang-xn6o.13`
+  - contract 默认值清理已完成
+  - 已去除剩余 `预览态 / 本地预览 / 不代表真实 / 已补齐 / 可继续替换 / 默认演示值` 等残留
+- 完成 `liaojiang-xn6o.14`
+  - Android `assembleFdroidDebug` 被 BouncyCastle 重复类阻塞的问题已修复
+  - 已在 [app/build.gradle.kts](/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/build.gradle.kts) 中排除 `bitcoinj` 传递的旧版 `bcprov-jdk15to18`
+  - `:app:assembleFdroidDebug` 已恢复通过
+- 完成 `liaojiang-xn6o.15`
+  - preview/dev residue 收尾已完成
+  - [MockCryptoVpnRepository.kt](/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/composeui/common/repository/MockCryptoVpnRepository.kt) 已收敛为明确 `preview-only` 语义
+  - `BridgePage / SwapPage / SecurityCenterPage / ExpiryReminderContract` 中残留的 `已补齐 / 可继续替换 / 默认演示值` 已清理
 
 - 完成 `liaojiang-vd3i`
   - 后台已补齐套餐管理闭环：
@@ -245,10 +315,10 @@
 - Android 代码已同步切换到 `api` 子域：
   - [PaymentConfig.kt](/Users/cnyirui/git/projects/liaojiang/code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/payment/PaymentConfig.kt)
 - 推广分享默认 web 链接当前由 backend 生成到：
-  - `https://vpn.residential-agent.com/invite?code=...`
-- 代码侧已补齐 `admin-web` 的公开 `/invite` 页面，但线上是否真正可用仍取决于：
-  - `vpn.residential-agent.com/invite` 是否切到该前端
-  - `BrowserRouter` 的 `index.html` fallback 是否配置正确
+  - backend 默认值仍是 `https://vpn.residential-agent.com/invite?code=...`
+  - App 侧分享已在客户端规范化为 `https://api.residential-agent.com/invite?code=...`
+- `api.residential-agent.com/invite?code=...` 已在线可打开
+- `vpn.residential-agent.com/invite?code=...` 是否同样生效，仍取决于该域名当前独立 HTTPS / nginx 转发配置
 
 ### 已验证通过的真实链路
 
@@ -368,22 +438,22 @@
 ### 当前 beads 状态
 
 - `liaojiang-rcb.17` 已完成实现、验收与 continuity 刷新
-- `liaojiang-xn6o.5 / .6 / .7 / .8 / .9 / .10 / .11` 已完成
-- `liaojiang-xn6o.12` 当前为“直接下载 APK 归因”设计已完成、实现待接入
+- `liaojiang-xn6o.5 / .6 / .7 / .8 / .9 / .10 / .11 / .12.2 / .13 / .14` 已完成
+- `liaojiang-xn6o.12` 当前最小闭环已落地：web `/invite` + Android deep link + 登录/注册后自动绑定
 - 当前实质 blocker 仍是人工联动验证：
   - Android 真实登录
   - 创建真实订单
   - 收款 / 发送
-  - 推广分享 Web 落地页线上接线
+  - 推广分享链路的人类端到端验证
 
 ## 下一步
 
-1. 把 `admin-web` 的 `/invite` 页面接到 `vpn.residential-agent.com/invite?code=...`，并验证直接打开不为空。
-2. 实现 `liaojiang-xn6o.12` 最小闭环：
-   - Android `invite` deep link
-   - pending referral 本地保存
-   - 登录/注册后自动绑定
-3. 继续按 [COMPOSE_COPY_CARD_DELETION_MATRIX_2026-04-16.md](/Users/cnyirui/git/projects/liaojiang/docs/COMPOSE_COPY_CARD_DELETION_MATRIX_2026-04-16.md) 推进：
+1. 继续按 [COMPOSE_COPY_CARD_DELETION_MATRIX_2026-04-16.md](/Users/cnyirui/git/projects/liaojiang/docs/COMPOSE_COPY_CARD_DELETION_MATRIX_2026-04-16.md) 推进：
    - contract 默认值清理
    - preview/dev residue 清理
-4. 恢复 `liaojiang-4j0.2` / `liaojiang-xn6o.1.1` 人工联动验证，继续真实登录/下单/支付/收发款回归。
+2. 恢复 `liaojiang-4j0.2` / `liaojiang-xn6o.1.1` 人工联动验证，继续真实登录/下单/支付/收发款回归。
+3. 邀请链路的人类最小验证：
+   - 打开 `https://api.residential-agent.com/invite?code=...`
+   - 下载并安装 APK
+   - 回邀请页点“打开 App”
+   - 登录/注册后确认推广关系已自动绑定

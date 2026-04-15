@@ -5,9 +5,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
-import com.v2ray.ang.composeui.common.repository.MockCryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.cryptoVpnViewModelFactory
-import com.v2ray.ang.composeui.p0.repository.MockP0Repository
+import com.v2ray.ang.composeui.p0.model.WalletCreationMode
 import com.v2ray.ang.composeui.p0.repository.P0Repository
 import com.v2ray.ang.composeui.p0.viewmodel.*
 import com.v2ray.ang.composeui.pages.p0.*
@@ -15,8 +14,8 @@ import com.v2ray.ang.composeui.pages.p0.*
 
 fun NavGraphBuilder.installCryptoVpnP0Routes(
     navController: NavHostController,
-    p0Repository: P0Repository = MockP0Repository(),
-    repository: CryptoVpnRepository = MockCryptoVpnRepository(),
+    p0Repository: P0Repository,
+    repository: CryptoVpnRepository,
 ) {
     composable(CryptoVpnRouteSpec.splash.pattern) {
         val vm: SplashViewModel = viewModel(
@@ -24,8 +23,10 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
         )
         SplashRoute(
             viewModel = vm,
-            onFinished = {
-                navController.navigateSingleTop(CryptoVpnRouteSpec.emailLogin.pattern)
+            onFinished = { route ->
+                navController.navigateSingleTop(
+                    route.ifBlank { CryptoVpnRouteSpec.emailLogin.pattern },
+                )
             },
         )
     }
@@ -37,7 +38,7 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
         EmailLoginRoute(
             viewModel = vm,
             onLoginSuccess = {
-                navController.navigateSingleTop(CryptoVpnRouteSpec.vpnHome.pattern)
+                navController.navigateSingleTop(vm.nextRoute ?: CryptoVpnRouteSpec.walletOnboarding.pattern)
             },
             onForgotPassword = {
                 navController.navigateSingleTop(CryptoVpnRouteSpec.resetPassword.pattern)
@@ -46,7 +47,7 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
                 navController.navigateSingleTop(CryptoVpnRouteSpec.emailRegister.pattern)
             },
             onWalletOnboarding = {
-                navController.navigateSingleTop(CryptoVpnRouteSpec.walletOnboarding.pattern)
+                navController.navigateSingleTop(CryptoVpnRouteSpec.emailRegister.pattern)
             },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
@@ -58,8 +59,31 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
         )
         WalletOnboardingRoute(
             viewModel = vm,
-            onContinue = {
-                navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern)
+            onContinue = { mode ->
+                when {
+                    vm.uiState.value.walletExists &&
+                        vm.uiState.value.walletNextAction.equals("BACKUP_MNEMONIC", ignoreCase = true) &&
+                        !vm.uiState.value.walletId.isNullOrBlank() ->
+                        navController.navigateSingleTop(
+                            CryptoVpnRouteSpec.backupMnemonicRoute(vm.uiState.value.walletId!!),
+                        )
+
+                    vm.uiState.value.walletExists &&
+                        vm.uiState.value.walletNextAction.equals("CONFIRM_MNEMONIC", ignoreCase = true) &&
+                        !vm.uiState.value.walletId.isNullOrBlank() ->
+                        navController.navigateSingleTop(
+                            CryptoVpnRouteSpec.confirmMnemonicRoute(vm.uiState.value.walletId!!),
+                        )
+
+                    vm.uiState.value.walletExists ->
+                        navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern)
+
+                    mode == WalletCreationMode.CREATE ->
+                        navController.navigateSingleTop(CryptoVpnRouteSpec.createWalletRoute("create"))
+
+                    else ->
+                        navController.navigateSingleTop(CryptoVpnRouteSpec.importWalletMethod.pattern)
+                }
             },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
@@ -90,6 +114,27 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
             currentRoute = CryptoVpnRouteSpec.walletHome.name,
             viewModel = vm,
             onBottomNav = { navController.navigateSingleTop(it) },
+            onReceive = { assetId, chainId ->
+                when {
+                    !vm.uiState.value.walletExists ->
+                        navController.navigateSingleTop(CryptoVpnRouteSpec.walletOnboarding.pattern)
+
+                    vm.uiState.value.walletNextAction.equals("BACKUP_MNEMONIC", ignoreCase = true) &&
+                        !vm.uiState.value.walletId.isNullOrBlank() ->
+                        navController.navigateSingleTop(
+                            CryptoVpnRouteSpec.backupMnemonicRoute(vm.uiState.value.walletId!!),
+                        )
+
+                    vm.uiState.value.walletNextAction.equals("CONFIRM_MNEMONIC", ignoreCase = true) &&
+                        !vm.uiState.value.walletId.isNullOrBlank() ->
+                        navController.navigateSingleTop(
+                            CryptoVpnRouteSpec.confirmMnemonicRoute(vm.uiState.value.walletId!!),
+                        )
+
+                    else ->
+                        navController.navigateSingleTop(CryptoVpnRouteSpec.receiveRoute(assetId, chainId))
+                }
+            },
         )
     }
     composable(CryptoVpnRouteSpec.forceUpdate.pattern) {
@@ -122,7 +167,9 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
         )
         EmailRegisterRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.vpnHome.pattern) },
+            onPrimaryAction = {
+                navController.navigateSingleTop(vm.nextRoute ?: CryptoVpnRouteSpec.walletOnboarding.pattern)
+            },
             onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.emailLogin.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )

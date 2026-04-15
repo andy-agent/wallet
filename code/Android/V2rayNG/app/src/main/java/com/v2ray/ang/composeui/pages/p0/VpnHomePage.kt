@@ -72,7 +72,7 @@ import com.v2ray.ang.composeui.p0.model.VpnConnectionStatus
 import com.v2ray.ang.composeui.p0.model.VpnHomeEvent
 import com.v2ray.ang.composeui.p0.model.VpnHomeUiState
 import com.v2ray.ang.composeui.p0.model.WatchSignal
-import com.v2ray.ang.composeui.p0.repository.MockP0Repository
+import com.v2ray.ang.composeui.p0.model.vpnHomePreviewState
 import com.v2ray.ang.composeui.p0.ui.P01BottomIcon
 import com.v2ray.ang.composeui.p0.ui.P01BottomIconKind
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
@@ -271,7 +271,7 @@ fun VpnHomeRoute(
                         return@launch
                     }
                 }
-                Toast.makeText(context, "订阅待同步，请重新登录或稍后重试。", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "请重新登录或稍后重试。", Toast.LENGTH_SHORT).show()
                 onPlans()
             }
             return
@@ -310,10 +310,10 @@ fun VpnHomeScreen(
 ) {
     val actions = listOf(
         OverviewAction("收款", OverviewGlyph.RECEIVE, OverviewBlue) {
-            onBottomNav(CryptoVpnRouteSpec.receiveRoute("USDT", "tron"))
+            onWalletHome()
         },
         OverviewAction("发送", OverviewGlyph.SEND, OverviewBlue) {
-            onBottomNav(CryptoVpnRouteSpec.sendRoute("USDT", "tron"))
+            onWalletHome()
         },
         OverviewAction("选区", OverviewGlyph.REGION, OverviewBlue) {
             onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern)
@@ -1087,8 +1087,8 @@ private fun buildOverviewAlerts(
             title = when (signal.symbol) {
                 "NODE" -> "节点状态已同步"
                 "VPN" -> "VPN 状态已确认"
-                "SUB" -> "订阅有效期已同步"
-                "VLESS" -> "VLESS 配置已同步"
+                "SUB" -> "订阅已同步"
+                "VLESS" -> "节点配置已同步"
                 else -> "${signal.symbol} 数据更新"
             },
             subtitle = listOf(signal.reason, signal.volumeText.takeIf { it.isNotBlank() }).filterNotNull().joinToString(" · ").ifBlank {
@@ -1203,7 +1203,7 @@ private fun VpnHomePreview() {
     CryptoVpnTheme {
         VpnHomeScreen(
             currentRoute = CryptoVpnRouteSpec.vpnHome.name,
-            uiState = VpnHomeViewModel(MockP0Repository()).uiState.value,
+            uiState = vpnHomePreviewState(),
             onToggleConnection = {},
             onSelectRegion = {},
             onBottomNav = {},

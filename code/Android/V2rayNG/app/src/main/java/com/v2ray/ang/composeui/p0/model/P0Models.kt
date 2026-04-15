@@ -1,5 +1,13 @@
 package com.v2ray.ang.composeui.p0.model
 
+enum class P0LoadState {
+    LOADING,
+    READY,
+    EMPTY,
+    ERROR,
+    UNAVAILABLE,
+}
+
 enum class VpnConnectionStatus {
     DISCONNECTED,
     CONNECTING,
@@ -8,13 +16,19 @@ enum class VpnConnectionStatus {
 
 data class SplashUiState(
     val checkingSecureBoot: Boolean = true,
-    val versionLabel: String = "v1.0.0",
-    val buildStatus: String = "Verifying secure module",
+    val versionLabel: String = "",
+    val buildStatus: String = "正在检查登录状态",
     val progress: Float = 0.08f,
     val progressHeadline: String = "系统正在准备",
-    val progressDetail: String = "初始化加密模块、节点探测与资产索引…",
+    val progressDetail: String = "正在读取账号、订单、节点和钱包状态。",
     val authResolved: Boolean = false,
     val readyToNavigate: Boolean = false,
+    val nextRoute: String = "",
+    val loadState: P0LoadState = P0LoadState.LOADING,
+    val accountLabel: String = "未识别账号",
+    val subscriptionLabel: String = "未同步订阅",
+    val errorMessage: String? = null,
+    val unavailableMessage: String? = null,
 )
 
 sealed interface SplashEvent {
@@ -28,6 +42,11 @@ data class LoginUiState(
     val isLoading: Boolean = false,
     val rememberMe: Boolean = true,
     val helperText: String = "Self-custody wallet + VPN, one secure shell.",
+    val errorMessage: String? = null,
+    val unavailableMessage: String? = null,
+    val successMessage: String? = null,
+    val dialogTitle: String? = null,
+    val dialogMessage: String? = null,
 )
 
 sealed interface LoginEvent {
@@ -35,6 +54,7 @@ sealed interface LoginEvent {
     data class PasswordChanged(val value: String) : LoginEvent
     data class RememberMeChanged(val value: Boolean) : LoginEvent
     data object LoginClicked : LoginEvent
+    data object DialogDismissed : LoginEvent
 }
 
 enum class WalletCreationMode {
@@ -45,6 +65,16 @@ enum class WalletCreationMode {
 data class WalletOnboardingUiState(
     val selectedMode: WalletCreationMode = WalletCreationMode.CREATE,
     val focusedChains: List<String> = listOf("ETH", "BSC", "Polygon", "Arbitrum", "Base", "Solana", "TRON"),
+    val accountLabel: String = "未登录",
+    val summary: String = "",
+    val warningMessage: String? = null,
+    val unavailableMessage: String? = null,
+    val primaryActionLabel: String = "继续",
+    val walletExists: Boolean = false,
+    val lifecycleStatus: String = "NOT_CREATED",
+    val walletId: String? = null,
+    val walletDisplayName: String? = null,
+    val walletNextAction: String = "CREATE_OR_IMPORT",
 )
 
 sealed interface WalletOnboardingEvent {
@@ -57,6 +87,7 @@ data class SubscriptionSummary(
     val expiresInDays: Int,
     val autoRenew: Boolean,
     val nextBillingLabel: String,
+    val status: String = "NONE",
 )
 
 data class RegionSpeed(
@@ -64,6 +95,8 @@ data class RegionSpeed(
     val protocol: String,
     val latencyMs: Int,
     val load: String,
+    val regionCode: String = "",
+    val isAllowed: Boolean = true,
 )
 
 data class WatchSignal(
@@ -75,19 +108,28 @@ data class WatchSignal(
 )
 
 data class VpnHomeUiState(
+    val isLoading: Boolean = true,
+    val loadState: P0LoadState = P0LoadState.LOADING,
+    val errorMessage: String? = null,
+    val unavailableMessage: String? = null,
+    val emptyMessage: String? = null,
     val connectionStatus: VpnConnectionStatus = VpnConnectionStatus.DISCONNECTED,
-    val selectedRegion: RegionSpeed = RegionSpeed("Singapore - Premium", "VLESS / Reality", 48, "11% load"),
-    val subscription: SubscriptionSummary = SubscriptionSummary(
-        planName = "Pro Mesh 30D",
-        expiresInDays = 18,
-        autoRenew = true,
-        nextBillingLabel = "Renews 2025-04-27",
-    ),
-    val autoConnectEnabled: Boolean = true,
-    val oneTapLabel: String = "Quick Secure Connect",
+    val accountLabel: String = "未登录",
+    val selectedRegion: RegionSpeed = RegionSpeed("未获取区域", "节点状态未返回", 0, "--"),
+    val subscription: SubscriptionSummary? = null,
+    val autoConnectEnabled: Boolean = false,
+    val oneTapLabel: String = "等待状态返回",
     val speedNodes: List<RegionSpeed> = emptyList(),
     val watchSignals: List<WatchSignal> = emptyList(),
-    val walletTotalLabel: String = "$24,860.42",
+    val overviewValueText: String = "$0.00",
+    val overviewSummaryText: String = "暂无订单与节点信息",
+    val alertCount: Int = 0,
+    val nodeHealthPercent: Int = 0,
+    val vlessExpiryLabel: String = "待同步",
+    val vlessRegionLabel: String = "未签发",
+    val configStatusLabel: String = "未同步配置状态",
+    val latestOrderLabel: String = "暂无订单",
+    val canConnect: Boolean = false,
 )
 
 sealed interface VpnHomeEvent {
@@ -102,6 +144,7 @@ data class WalletChainSummary(
     val label: String,
     val balanceText: String,
     val accent: String,
+    val itemCount: Int = 0,
 )
 
 data class AssetHolding(
@@ -111,14 +154,27 @@ data class AssetHolding(
     val valueText: String,
     val changeText: String,
     val changePositive: Boolean,
+    val detailText: String = "",
 )
 
 data class WalletHomeUiState(
-    val totalBalanceText: String = "$24,860.42",
-    val selectedChainId: String = "ethereum",
+    val isLoading: Boolean = true,
+    val loadState: P0LoadState = P0LoadState.LOADING,
+    val errorMessage: String? = null,
+    val unavailableMessage: String? = null,
+    val emptyMessage: String? = null,
+    val totalBalanceText: String = "--",
+    val summaryLabel: String = "支付与账户摘要",
+    val selectedChainId: String = "all",
     val chains: List<WalletChainSummary> = emptyList(),
     val assets: List<AssetHolding> = emptyList(),
-    val alertBanner: String = "2 approvals need review · 1 backup reminder",
+    val alertBanner: String = "",
+    val accountLabel: String = "未登录",
+    val walletExists: Boolean = false,
+    val walletLifecycleStatus: String = "NOT_CREATED",
+    val walletId: String? = null,
+    val walletDisplayName: String? = null,
+    val walletNextAction: String = "CREATE_OR_IMPORT",
 )
 
 sealed interface WalletHomeEvent {
@@ -128,4 +184,62 @@ sealed interface WalletHomeEvent {
 
 data class LoginResult(
     val success: Boolean,
+    val errorMessage: String? = null,
+    val unavailable: Boolean = false,
+    val nextRoute: String? = null,
+)
+
+fun splashPreviewState(): SplashUiState = SplashUiState(
+    checkingSecureBoot = false,
+    versionLabel = "v2.4.0",
+    buildStatus = "本地安全模块和缓存已就绪",
+    progress = 0.12f,
+    progressHeadline = "连接钱包与网络",
+    progressDetail = "初始化加密模块、节点探测与资产索引…",
+    authResolved = false,
+    readyToNavigate = false,
+)
+
+fun loginPreviewState(): LoginUiState = LoginUiState(
+    helperText = "VPN 订阅、多链钱包与安全切换聚合在同一个壳里。",
+)
+
+fun walletOnboardingPreviewState(): WalletOnboardingUiState = WalletOnboardingUiState()
+
+fun vpnHomePreviewState(): VpnHomeUiState = VpnHomeUiState(
+    isLoading = false,
+    loadState = P0LoadState.READY,
+    connectionStatus = VpnConnectionStatus.CONNECTED,
+    speedNodes = listOf(
+        RegionSpeed("Singapore - Premium", "VLESS / Reality", 48, "11% load"),
+        RegionSpeed("Tokyo - Ultra", "XTLS / Vision", 61, "18% load"),
+        RegionSpeed("Frankfurt - Mesh", "VLESS / TCP", 118, "27% load"),
+    ),
+    watchSignals = listOf(
+        WatchSignal("ENJ", "Unusual inflow on tracked pairs", "+44.1%", "$246M", true),
+        WatchSignal("SOL", "Fast volume rotation before pullback", "-12.3%", "$310M", false),
+        WatchSignal("ARB", "Volatility spike on perp books", "+18.6%", "$132M", true),
+    ),
+)
+
+fun walletHomePreviewState(): WalletHomeUiState = WalletHomeUiState(
+    isLoading = false,
+    loadState = P0LoadState.READY,
+    chains = listOf(
+        WalletChainSummary("ethereum", "ETH", "$8,920.22", "Main execution layer"),
+        WalletChainSummary("bsc", "BSC", "$2,218.10", "Gas-efficient trading"),
+        WalletChainSummary("polygon", "Polygon", "$1,604.12", "Stable consumer flows"),
+        WalletChainSummary("arbitrum", "Arbitrum", "$4,412.18", "Fast rollup liquidity"),
+        WalletChainSummary("base", "Base", "$2,986.60", "Coinbase ecosystem"),
+        WalletChainSummary("solana", "Solana", "$3,905.11", "Fast payment rail"),
+        WalletChainSummary("tron", "TRON", "$813.09", "USDT transfer lane"),
+    ),
+    assets = listOf(
+        AssetHolding("ETH", "Ethereum", "2.84 ETH", "$9,214.80", "+2.4%", true),
+        AssetHolding("USDT", "TRON", "12,450 USDT", "$12,450.00", "0.0%", true),
+        AssetHolding("MATIC", "Polygon", "1,202 MATIC", "$1,103.24", "+6.1%", true),
+        AssetHolding("ARB", "Arbitrum", "856 ARB", "$1,202.84", "-3.4%", false),
+        AssetHolding("SOL", "Solana", "9.8 SOL", "$1,860.44", "+4.7%", true),
+        AssetHolding("BNB", "BSC", "1.2 BNB", "$685.10", "+1.3%", true),
+    ),
 )

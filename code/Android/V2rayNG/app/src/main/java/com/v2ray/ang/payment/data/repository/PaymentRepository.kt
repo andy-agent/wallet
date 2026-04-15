@@ -32,9 +32,21 @@ import com.v2ray.ang.payment.data.api.VpnConfigIssueData
 import com.v2ray.ang.payment.data.api.VpnNodeItem
 import com.v2ray.ang.payment.data.api.VpnRegionItem
 import com.v2ray.ang.payment.data.api.VpnStatusData
+import com.v2ray.ang.payment.data.api.WalletChainItemData
 import com.v2ray.ang.payment.data.api.WalletOverviewData
+import com.v2ray.ang.payment.data.api.WalletPublicAddressData
+import com.v2ray.ang.payment.data.api.WalletPublicAddressUpsertRequest
 import com.v2ray.ang.payment.data.api.WalletLifecycleData
 import com.v2ray.ang.payment.data.api.WalletLifecycleUpsertRequest
+import com.v2ray.ang.payment.data.api.WalletSecretBackupData
+import com.v2ray.ang.payment.data.api.WalletSecretBackupMetadataData
+import com.v2ray.ang.payment.data.api.WalletSecretBackupUpsertRequest
+import com.v2ray.ang.payment.data.api.WalletTransferBuildData
+import com.v2ray.ang.payment.data.api.WalletTransferBuildRequest
+import com.v2ray.ang.payment.data.api.WalletTransferPrecheckData
+import com.v2ray.ang.payment.data.api.WalletTransferPrecheckRequest
+import com.v2ray.ang.payment.data.api.WalletTransferProxyBroadcastData
+import com.v2ray.ang.payment.data.api.WalletTransferProxyBroadcastRequest
 import com.v2ray.ang.payment.data.api.WalletAssetItemData
 import com.v2ray.ang.payment.data.api.WalletReceiveContextData
 import com.v2ray.ang.payment.data.api.WithdrawalItem
@@ -44,10 +56,16 @@ import com.v2ray.ang.payment.data.local.entity.PaymentHistoryEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeCacheEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
+import com.v2ray.ang.payment.data.local.entity.WalletOverviewCacheEntity
+import com.v2ray.ang.payment.data.local.entity.WalletPublicAddressCacheEntity
+import com.v2ray.ang.payment.data.local.entity.WalletReceiveContextCacheEntity
 import com.v2ray.ang.payment.data.model.*
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.service.SessionKeepAliveService
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -68,6 +86,8 @@ class PaymentRepository(context: Context) {
 
     private val prefs: SharedPreferences = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val localRepository = LocalPaymentRepository(appContext)
+    private val paymentApiGson: Gson by lazy { createPaymentApiGson() }
+    private val cacheSyncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val api: PaymentApi by lazy {
         // 创建信任所有证书的 SSL Socket Factory (用于自签名证书)
@@ -99,7 +119,7 @@ class PaymentRepository(context: Context) {
         Retrofit.Builder()
             .baseUrl(PaymentConfig.API_BASE_URL)
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create(createPaymentApiGson()))
+            .addConverterFactory(GsonConverterFactory.create(paymentApiGson))
             .build()
             .create(PaymentApi::class.java)
     }
@@ -110,8 +130,10 @@ class PaymentRepository(context: Context) {
     companion object {
         private const val PREFS_NAME = "payment_prefs"
         private const val KEY_CURRENT_USER_ID = "current_user_id"
+        private const val KEY_PENDING_REFERRAL_CODE = "pending_referral_code"
         private const val ORDER_SYNC_THROTTLE_MS = 60_000L
         private const val VPN_NODE_SYNC_THROTTLE_MS = 60_000L
+        private const val WALLET_CACHE_SYNC_THROTTLE_MS = 60_000L
         private const val ORDER_PAGE_SIZE = 100
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
@@ -166,6 +188,20 @@ class PaymentRepository(context: Context) {
      */
     fun getCurrentUserId(): String? {
         return prefs.getString(KEY_CURRENT_USER_ID, null)
+    }
+
+    fun savePendingReferralCode(code: String) {
+        val normalizedCode = code.trim()
+        if (normalizedCode.isBlank()) return
+        prefs.edit().putString(KEY_PENDING_REFERRAL_CODE, normalizedCode).apply()
+    }
+
+    fun getPendingReferralCode(): String? {
+        return prefs.getString(KEY_PENDING_REFERRAL_CODE, null)?.trim()?.takeIf { it.isNotBlank() }
+    }
+
+    fun clearPendingReferralCode() {
+        prefs.edit().remove(KEY_PENDING_REFERRAL_CODE).apply()
     }
 
     /**
@@ -477,8 +513,6 @@ class PaymentRepository(context: Context) {
         clientToken: String? = null
     ): Result<Order> = withContext(Dispatchers.IO) {
         try {
-            val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
             val request = CreateOrderRequest(
                 planCode = planId,
                 orderType = purchaseType,
@@ -486,11 +520,13 @@ class PaymentRepository(context: Context) {
                 quoteNetworkCode = networkCode
             )
 
-            val response = api.createOrder(
-                authorization = "Bearer $token",
-                idempotencyKey = UUID.randomUUID().toString(),
-                request = request
-            )
+            val (response, token) = executeAuthenticatedRequest {
+                api.createOrder(
+                    authorization = "Bearer $it",
+                    idempotencyKey = UUID.randomUUID().toString(),
+                    request = request
+                )
+            } ?: return@withContext Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val order = response.body()?.data
                 if (order != null) {
@@ -507,7 +543,7 @@ class PaymentRepository(context: Context) {
                     Result.failure(Exception("订单数据为空"))
                 }
             } else {
-                Result.failure(Exception(response.body()?.message ?: "创建订单失败"))
+                Result.failure(Exception(extractApiErrorMessage(response, "创建订单失败")))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -519,9 +555,9 @@ class PaymentRepository(context: Context) {
      */
     suspend fun getOrder(orderNo: String): Result<Order> = withContext(Dispatchers.IO) {
         try {
-            val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
-            val response = api.refreshOrderStatus("Bearer $token", orderNo)
+            val (response, token) = executeAuthenticatedRequest {
+                api.refreshOrderStatus("Bearer $it", orderNo)
+            } ?: return@withContext Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val order = response.body()?.data?.let { latest ->
                     latest.copy(
@@ -538,7 +574,7 @@ class PaymentRepository(context: Context) {
                     Result.failure(Exception("订单数据为空"))
                 }
             } else {
-                Result.failure(Exception(response.body()?.message ?: "查询订单失败"))
+                Result.failure(Exception(extractApiErrorMessage(response, "查询订单失败")))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -1109,11 +1145,39 @@ class PaymentRepository(context: Context) {
         }
         var token = getAccessToken() ?: return null
         var response = call(token)
-        if (response.code() == 401 && forceRefreshToken()) {
-            token = getAccessToken() ?: return Pair(response, token)
-            response = call(token)
+        if (response.code() == 401) {
+            val refreshed = forceRefreshToken()
+            if (refreshed) {
+                token = getAccessToken() ?: return Pair(response, token)
+                response = call(token)
+            }
+            if (response.code() == 401) {
+                clearAuth()
+            }
         }
         return Pair(response, token)
+    }
+
+    private fun <T> extractApiErrorMessage(response: Response<T>, fallback: String): String {
+        response.body()?.let { body ->
+            val messageField = runCatching {
+                paymentApiGson.toJsonTree(body).asJsonObject.get("message")?.asString
+            }.getOrNull()
+            if (!messageField.isNullOrBlank()) {
+                return messageField
+            }
+        }
+        val errorMessage = runCatching {
+            response.errorBody()?.string()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { raw ->
+                    val json = paymentApiGson.fromJson(raw, Map::class.java)
+                    json["message"]?.toString()
+                        ?: json["error"]?.toString()
+                        ?: raw
+                }
+        }.getOrNull()
+        return errorMessage?.takeIf { it.isNotBlank() } ?: fallback
     }
 
     suspend fun warmSyncAfterLogin(
@@ -1214,6 +1278,18 @@ class PaymentRepository(context: Context) {
         }
     }
 
+    suspend fun tryBindPendingReferralCode(): Result<Boolean> = withContext(Dispatchers.IO) {
+        val pendingCode = getPendingReferralCode()
+            ?: return@withContext Result.success(false)
+        val bindResult = bindReferralCode(pendingCode)
+        if (bindResult.isSuccess) {
+            clearPendingReferralCode()
+            Result.success(true)
+        } else {
+            Result.failure(bindResult.exceptionOrNull() ?: Exception("邀请码绑定失败"))
+        }
+    }
+
     suspend fun getCommissionSummary(): Result<CommissionSummaryData> = withContext(Dispatchers.IO) {
         try {
             if (!refreshTokenIfNeeded()) {
@@ -1233,23 +1309,70 @@ class PaymentRepository(context: Context) {
         }
     }
 
-    suspend fun getWalletOverview(): Result<WalletOverviewData> = withContext(Dispatchers.IO) {
+    suspend fun getCachedWalletOverview(userId: String? = getCurrentUserId()): WalletOverviewData? = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext null
+        localRepository.getWalletOverviewCache(resolvedUserId)?.toWalletOverviewData()
+    }
+
+    suspend fun syncWalletOverviewFromServer(
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<WalletOverviewData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId
+        val cached = resolvedUserId?.let { localRepository.getWalletOverviewCache(it) }
+        val now = System.currentTimeMillis()
+        if (!force && cached != null && now - cached.updatedAt < WALLET_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached.toWalletOverviewData())
+        }
+
         try {
             if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+                return@withContext cached?.let { Result.success(it.toWalletOverviewData()) }
+                    ?: Result.failure(Exception("Token 已过期，请重新登录"))
             }
             val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
+                ?: return@withContext cached?.let { Result.success(it.toWalletOverviewData()) }
+                    ?: Result.failure(Exception("未登录"))
             val response = api.getWalletOverview("Bearer $token")
             if (response.isSuccessful && response.body()?.code == "OK") {
-                response.body()?.data?.let { Result.success(it) }
+                response.body()?.data?.let { data ->
+                    val cacheUserId = resolvedUserId ?: getCurrentUserId()
+                    if (!cacheUserId.isNullOrBlank()) {
+                        localRepository.saveWalletOverviewCache(
+                            WalletOverviewCacheEntity(
+                                userId = cacheUserId,
+                                accountId = data.accountId,
+                                accountEmail = data.accountEmail,
+                                selectedNetworkCode = data.selectedNetworkCode,
+                                chainItemsJson = paymentApiGson.toJson(data.chainItems),
+                                assetItemsJson = paymentApiGson.toJson(data.assetItems),
+                                alertsJson = paymentApiGson.toJson(data.alerts),
+                                updatedAt = now,
+                            ),
+                        )
+                    }
+                    Result.success(data)
+                } ?: cached?.let { Result.success(it.toWalletOverviewData()) }
                     ?: Result.failure(Exception("钱包总览为空"))
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取钱包总览失败"))
+                cached?.let { Result.success(it.toWalletOverviewData()) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取钱包总览失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(it.toWalletOverviewData()) } ?: Result.failure(e)
         }
+    }
+
+    suspend fun getWalletOverview(): Result<WalletOverviewData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = getCurrentUserId()
+        val cached = getCachedWalletOverview(resolvedUserId)
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncWalletOverviewFromServer(force = true, userId = resolvedUserId)
+            }
+            return@withContext Result.success(cached)
+        }
+        syncWalletOverviewFromServer(force = true, userId = resolvedUserId)
     }
 
     suspend fun getWalletLifecycle(): Result<WalletLifecycleData> = withContext(Dispatchers.IO) {
@@ -1275,6 +1398,8 @@ class PaymentRepository(context: Context) {
         action: String,
         displayName: String? = null,
         mnemonic: String? = null,
+        mnemonicHash: String? = null,
+        mnemonicWordCount: Int? = null,
     ): Result<WalletLifecycleData> = withContext(Dispatchers.IO) {
         try {
             if (!refreshTokenIfNeeded()) {
@@ -1288,6 +1413,8 @@ class PaymentRepository(context: Context) {
                     action = action,
                     displayName = displayName?.trim()?.takeIf { it.isNotBlank() },
                     mnemonic = mnemonic?.trim()?.takeIf { it.isNotBlank() },
+                    mnemonicHash = mnemonicHash?.trim()?.takeIf { it.isNotBlank() },
+                    mnemonicWordCount = mnemonicWordCount,
                 ),
             )
             if (response.isSuccessful && response.body()?.code == "OK") {
@@ -1301,26 +1428,314 @@ class PaymentRepository(context: Context) {
         }
     }
 
-    suspend fun getWalletAssetCatalog(
-        networkCode: String? = null,
-    ): Result<List<WalletAssetItemData>> = withContext(Dispatchers.IO) {
+    suspend fun upsertWalletSecretBackup(
+        request: WalletSecretBackupUpsertRequest,
+    ): Result<WalletSecretBackupData> = withContext(Dispatchers.IO) {
         try {
             if (!refreshTokenIfNeeded()) {
                 return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
             }
             val token = getAccessToken()
                 ?: return@withContext Result.failure(Exception("未登录"))
-            val response = api.getWalletAssetCatalog(
+            val response = api.upsertWalletSecretBackup(
                 authorization = "Bearer $token",
-                networkCode = networkCode,
+                request = request,
             )
             if (response.isSuccessful && response.body()?.code == "OK") {
-                Result.success(response.body()?.data?.items.orEmpty())
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("钱包备份结果为空"))
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取钱包资产目录失败"))
+                Result.failure(Exception(response.body()?.message ?: "上传钱包备份失败"))
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    suspend fun getWalletSecretBackupMetadata(): Result<WalletSecretBackupMetadataData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getWalletSecretBackupMetadata("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("钱包备份状态为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取钱包备份状态失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun upsertWalletPublicAddress(
+        networkCode: String,
+        assetCode: String,
+        address: String,
+        isDefault: Boolean,
+    ): Result<WalletPublicAddressData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.upsertWalletPublicAddress(
+                authorization = "Bearer $token",
+                request = WalletPublicAddressUpsertRequest(
+                    networkCode = networkCode,
+                    assetCode = assetCode,
+                    address = address,
+                    isDefault = isDefault,
+                ),
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("公开地址结果为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "同步公开地址失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun buildWalletTransfer(
+        networkCode: String,
+        assetCode: String,
+        fromAddress: String,
+        toAddress: String,
+        amount: String,
+        orderNo: String? = null,
+    ): Result<WalletTransferBuildData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.buildWalletTransfer(
+                authorization = "Bearer $token",
+                request = WalletTransferBuildRequest(
+                    networkCode = networkCode,
+                    assetCode = assetCode,
+                    fromAddress = fromAddress,
+                    toAddress = toAddress,
+                    amount = amount,
+                    orderNo = orderNo,
+                ),
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("构建转账结果为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "构建转账失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun precheckWalletTransfer(
+        networkCode: String,
+        assetCode: String,
+        toAddress: String,
+        amount: String,
+        orderNo: String? = null,
+    ): Result<WalletTransferPrecheckData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.precheckWalletTransfer(
+                authorization = "Bearer $token",
+                request = WalletTransferPrecheckRequest(
+                    networkCode = networkCode,
+                    assetCode = assetCode,
+                    toAddress = toAddress,
+                    amount = amount,
+                    orderNo = orderNo,
+                ),
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("预检查结果为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "预检查失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun proxyBroadcastWalletTransfer(
+        request: WalletTransferProxyBroadcastRequest,
+    ): Result<WalletTransferProxyBroadcastData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.proxyBroadcastWalletTransfer(
+                authorization = "Bearer $token",
+                request = request,
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("广播结果为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "广播失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getWalletAssetCatalog(
+        networkCode: String? = null,
+    ): Result<List<WalletAssetItemData>> = withContext(Dispatchers.IO) {
+        try {
+            val (response, _) = executeAuthenticatedRequest { token ->
+                api.getWalletAssetCatalog(
+                    authorization = "Bearer $token",
+                    networkCode = networkCode,
+                )
+            } ?: return@withContext Result.failure(Exception("未登录"))
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                Result.success(response.body()?.data?.items.orEmpty())
+            } else {
+                Result.failure(Exception(extractApiErrorMessage(response, "获取钱包资产目录失败")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getCachedWalletReceiveContext(
+        networkCode: String? = null,
+        assetCode: String? = null,
+        userId: String? = getCurrentUserId(),
+    ): WalletReceiveContextData? = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext null
+        val requestNetworkCode = normalizeWalletCacheKey(networkCode)
+        val requestAssetCode = normalizeWalletCacheKey(assetCode)
+        val context = localRepository.getWalletReceiveContextCache(
+            userId = resolvedUserId,
+            requestNetworkCode = requestNetworkCode,
+            requestAssetCode = requestAssetCode,
+        ) ?: return@withContext null
+        val addresses = localRepository.getWalletPublicAddresses(
+            userId = resolvedUserId,
+            networkCode = context.selectedNetworkCode,
+            assetCode = context.selectedAssetCode,
+        )
+        context.toWalletReceiveContextData(addresses)
+    }
+
+    suspend fun syncWalletReceiveContextFromServer(
+        networkCode: String? = null,
+        assetCode: String? = null,
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<WalletReceiveContextData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId
+        val requestNetworkCode = normalizeWalletCacheKey(networkCode)
+        val requestAssetCode = normalizeWalletCacheKey(assetCode)
+        val cachedEntity = if (!resolvedUserId.isNullOrBlank()) {
+            localRepository.getWalletReceiveContextCache(
+                userId = resolvedUserId,
+                requestNetworkCode = requestNetworkCode,
+                requestAssetCode = requestAssetCode,
+            )
+        } else {
+            null
+        }
+        val cached = if (!resolvedUserId.isNullOrBlank() && cachedEntity != null) {
+            cachedEntity.toWalletReceiveContextData(
+                localRepository.getWalletPublicAddresses(
+                    userId = resolvedUserId,
+                    networkCode = cachedEntity.selectedNetworkCode,
+                    assetCode = cachedEntity.selectedAssetCode,
+                ),
+            )
+        } else {
+            null
+        }
+        val now = System.currentTimeMillis()
+        if (!force && cachedEntity != null && now - cachedEntity.updatedAt < WALLET_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached!!)
+        }
+
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception("未登录"))
+            val response = api.getWalletReceiveContext(
+                authorization = "Bearer $token",
+                networkCode = networkCode,
+                assetCode = assetCode,
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { data ->
+                    val cacheUserId = resolvedUserId ?: getCurrentUserId()
+                    if (!cacheUserId.isNullOrBlank()) {
+                        localRepository.syncWalletPublicAddresses(
+                            userId = cacheUserId,
+                            networkCode = data.selectedNetworkCode,
+                            assetCode = data.selectedAssetCode,
+                            items = data.addresses.map { address ->
+                                WalletPublicAddressCacheEntity(
+                                    userId = cacheUserId,
+                                    addressId = address.addressId,
+                                    accountId = address.accountId,
+                                    networkCode = address.networkCode,
+                                    assetCode = address.assetCode,
+                                    address = address.address,
+                                    isDefault = address.isDefault,
+                                    createdAt = address.createdAt,
+                                    updatedAt = now,
+                                )
+                            },
+                        )
+                        localRepository.saveWalletReceiveContextCache(
+                            WalletReceiveContextCacheEntity(
+                                userId = cacheUserId,
+                                requestNetworkCode = requestNetworkCode,
+                                requestAssetCode = requestAssetCode,
+                                selectedNetworkCode = data.selectedNetworkCode,
+                                selectedAssetCode = data.selectedAssetCode,
+                                chainItemsJson = paymentApiGson.toJson(data.chainItems),
+                                assetItemsJson = paymentApiGson.toJson(data.assetItems),
+                                defaultAddress = data.defaultAddress,
+                                canShare = data.canShare,
+                                walletExists = data.walletExists,
+                                receiveState = data.receiveState,
+                                status = data.status,
+                                note = data.note,
+                                shareText = data.shareText,
+                                updatedAt = now,
+                            ),
+                        )
+                    }
+                    Result.success(data)
+                } ?: cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception("收款上下文为空"))
+            } else {
+                cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取收款上下文失败"))
+            }
+        } catch (e: Exception) {
+            cached?.let { Result.success(it) } ?: Result.failure(e)
         }
     }
 
@@ -1328,26 +1743,29 @@ class PaymentRepository(context: Context) {
         networkCode: String? = null,
         assetCode: String? = null,
     ): Result<WalletReceiveContextData> = withContext(Dispatchers.IO) {
-        try {
-            if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+        val resolvedUserId = getCurrentUserId()
+        val cached = getCachedWalletReceiveContext(
+            networkCode = networkCode,
+            assetCode = assetCode,
+            userId = resolvedUserId,
+        )
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncWalletReceiveContextFromServer(
+                    networkCode = networkCode,
+                    assetCode = assetCode,
+                    force = true,
+                    userId = resolvedUserId,
+                )
             }
-            val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
-            val response = api.getWalletReceiveContext(
-                authorization = "Bearer $token",
-                networkCode = networkCode,
-                assetCode = assetCode,
-            )
-            if (response.isSuccessful && response.body()?.code == "OK") {
-                response.body()?.data?.let { Result.success(it) }
-                    ?: Result.failure(Exception("收款上下文为空"))
-            } else {
-                Result.failure(Exception(response.body()?.message ?: "获取收款上下文失败"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+            return@withContext Result.success(cached)
         }
+        syncWalletReceiveContextFromServer(
+            networkCode = networkCode,
+            assetCode = assetCode,
+            force = true,
+            userId = resolvedUserId,
+        )
     }
 
     suspend fun getCommissionLedger(status: String? = null): Result<CommissionLedgerPageData> = withContext(Dispatchers.IO) {
@@ -1527,6 +1945,63 @@ class PaymentRepository(context: Context) {
      * 解析 ISO 8601 日期字符串
      */
     private fun parseIsoDate(dateString: String): Long? = parseIsoDateInternal(dateString)
+
+    private fun normalizeWalletCacheKey(value: String?): String = value?.trim().orEmpty()
+
+    private fun WalletOverviewCacheEntity.toWalletOverviewData(): WalletOverviewData {
+        return WalletOverviewData(
+            accountId = accountId,
+            accountEmail = accountEmail,
+            selectedNetworkCode = selectedNetworkCode,
+            chainItems = paymentApiGson.fromJson(
+                chainItemsJson,
+                object : TypeToken<List<WalletChainItemData>>() {}.type,
+            ),
+            assetItems = paymentApiGson.fromJson(
+                assetItemsJson,
+                object : TypeToken<List<WalletAssetItemData>>() {}.type,
+            ),
+            alerts = paymentApiGson.fromJson(
+                alertsJson,
+                object : TypeToken<List<String>>() {}.type,
+            ),
+        )
+    }
+
+    private fun WalletReceiveContextCacheEntity.toWalletReceiveContextData(
+        addresses: List<WalletPublicAddressCacheEntity>,
+    ): WalletReceiveContextData {
+        return WalletReceiveContextData(
+            selectedNetworkCode = selectedNetworkCode,
+            selectedAssetCode = selectedAssetCode,
+            chainItems = paymentApiGson.fromJson(
+                chainItemsJson,
+                object : TypeToken<List<WalletChainItemData>>() {}.type,
+            ),
+            assetItems = paymentApiGson.fromJson(
+                assetItemsJson,
+                object : TypeToken<List<WalletAssetItemData>>() {}.type,
+            ),
+            addresses = addresses.map { address ->
+                WalletPublicAddressData(
+                    addressId = address.addressId,
+                    accountId = address.accountId,
+                    networkCode = address.networkCode,
+                    assetCode = address.assetCode,
+                    address = address.address,
+                    isDefault = address.isDefault,
+                    createdAt = address.createdAt,
+                )
+            },
+            defaultAddress = defaultAddress,
+            canShare = canShare,
+            walletExists = walletExists,
+            receiveState = receiveState,
+            status = status,
+            note = note,
+            shareText = shareText,
+        )
+    }
 }
 
 private class OrderCreatedAtFallbackAdapterFactory : TypeAdapterFactory {
