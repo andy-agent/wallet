@@ -24,6 +24,7 @@ import com.v2ray.ang.composeui.p0.ui.P01SecondaryButton
 import com.v2ray.ang.composeui.p0.ui.P01Tab
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutEvent
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutUiState
+import com.v2ray.ang.composeui.p1.model.checkoutPaymentLabel
 import com.v2ray.ang.composeui.p1.model.orderCheckoutPreviewState
 import com.v2ray.ang.composeui.p1.model.resolvedPaymentQrText
 import com.v2ray.ang.composeui.p1.viewmodel.OrderCheckoutViewModel
@@ -41,6 +42,7 @@ fun OrderCheckoutRoute(
     OrderCheckoutScreen(
         uiState = uiState,
         onRefresh = { viewModel.onEvent(OrderCheckoutEvent.Refresh) },
+        onCreateOrder = { viewModel.onEvent(OrderCheckoutEvent.CreateOrderClicked) },
         onPrimaryAction = {
             viewModel.onEvent(OrderCheckoutEvent.PrimaryActionClicked)
             uiState.orderNo?.let(onPrimaryAction)
@@ -58,6 +60,7 @@ fun OrderCheckoutRoute(
 fun OrderCheckoutScreen(
     uiState: OrderCheckoutUiState,
     onRefresh: () -> Unit,
+    onCreateOrder: () -> Unit,
     onPrimaryAction: () -> Unit,
     onSecondaryAction: () -> Unit,
     onPaymentOptionRoute: (String) -> Unit,
@@ -65,36 +68,46 @@ fun OrderCheckoutScreen(
 ) {
     val clipboardManager = LocalClipboardManager.current
     val qrText = uiState.resolvedPaymentQrText()
+    val paymentLabel = checkoutPaymentLabel(uiState.assetCode, uiState.networkCode)
     val rows = listOfNotNull(
         "套餐" to uiState.planTitle.ifBlank { uiState.planCode.orEmpty() }.ifBlank { null },
-        "支付网络" to uiState.networkCode.ifBlank { null },
+        "节点区域" to uiState.selectedRegionLabel.ifBlank { "支付后补选" },
+        "支付网络" to paymentLabel.ifBlank { null },
         "订单金额" to uiState.payableAmount.takeIf { it.isNotBlank() }?.let { "$it ${uiState.assetCode}" },
     )
     val orderLabel = uiState.orderNo?.let { "ORD-${it.takeLast(8)}" }
+    val statusMessage = uiState.screenState.unavailableMessage
+        ?: uiState.screenState.errorMessage
+        ?: uiState.screenState.emptyMessage
+        ?: uiState.summary
+    val secondaryButtonText = when {
+        uiState.collectionAddress.isNotBlank() -> "复制地址"
+        uiState.orderNo != null -> "刷新订单"
+        else -> "重选区域"
+    }
+    val primaryButtonText = when {
+        uiState.orderNo != null -> "我已完成支付"
+        uiState.screenState.isLoading -> "正在创建订单"
+        else -> "创建订单"
+    }
 
     P01PhoneScaffold(
-        statusTime = "18:33",
         currentRoute = CryptoVpnRouteSpec.orderCheckout.name,
         onBottomNav = onBottomNav,
     ) {
         P01Header(
             eyebrow = "CHECKOUT",
             title = "订单收银台",
-            subtitle = "确认套餐、支付网络与到账说明。",
-            chips = listOf(uiState.expiresAt?.substringBefore('.')?.replace('T', ' ') ?: "当前订单"),
+            subtitle = "",
+            chips = listOf(uiState.expiresAt?.substringBefore('.')?.replace('T', ' ') ?: "待创建订单"),
             backLabel = "<",
             onBack = onSecondaryAction,
-            trailing = { P1SecureHub(label = uiState.networkCode.ifBlank { "PAY" }) },
+            trailing = { P1SecureHub(label = paymentLabel.ifBlank { "PAY" }) },
         )
 
         P01Card {
             P01CardHeader(title = "订单信息")
-            P01CardCopy(
-                uiState.screenState.unavailableMessage
-                    ?: uiState.screenState.errorMessage
-                    ?: uiState.screenState.emptyMessage
-                    ?: "当前页面直接展示真实订单号与真实 payment target，不再使用示例地址。"
-            )
+            P01CardCopy(statusMessage)
             P01List {
                 rows.forEach { (title, value) ->
                     value?.let {
@@ -109,8 +122,8 @@ fun OrderCheckoutScreen(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (uiState.networkCode.isNotBlank()) {
-                P01Chip(text = uiState.networkCode)
+            if (paymentLabel.isNotBlank()) {
+                P01Chip(text = paymentLabel)
             }
         }
 
@@ -138,33 +151,40 @@ fun OrderCheckoutScreen(
                         )
                     }
                 }
-                P01CardCopy("支付选项来自服务端钱包资产目录，切换后会重新创建对应真实订单。")
             }
         }
 
-        P1SelectableCard(
-            selected = qrText.isNotBlank(),
-        ) {
-            P01CardHeader(
-                title = "扫码支付",
-                trailing = {
-                    if (!orderLabel.isNullOrBlank()) {
-                        P01Chip(text = orderLabel)
+        if (uiState.orderNo != null || qrText.isNotBlank() || uiState.collectionAddress.isNotBlank()) {
+            P1SelectableCard(
+                selected = qrText.isNotBlank(),
+            ) {
+                P01CardHeader(
+                    title = "扫码支付",
+                    trailing = {
+                        if (!orderLabel.isNullOrBlank()) {
+                            P01Chip(text = orderLabel)
+                        }
+                    },
+                )
+                P01CardCopy(
+                    if (uiState.screenState.isUnavailable) {
+                        statusMessage
+                    } else {
+                        ""
                     }
-                },
-            )
-            P01CardCopy(
-                if (uiState.collectionAddress.isBlank()) {
-                    "当前服务不可签发链路"
+                )
+                if (qrText.isNotBlank()) {
+                    P01RealQr(content = qrText)
+                    P01CardCopy(uiState.collectionAddress)
                 } else {
-                    "二维码来自真实订单 payload，复制地址可用于手动转账。"
-                },
-            )
-            if (qrText.isNotBlank()) {
-                P01RealQr(content = qrText)
-                P01CardCopy(uiState.collectionAddress)
-            } else {
-                P01CardCopy("当前没有可用的真实收款地址，请刷新订单。")
+                    P01CardCopy(
+                        if (uiState.screenState.isUnavailable) {
+                            statusMessage
+                        } else {
+                            uiState.collectionAddress
+                        },
+                    )
+                }
             }
         }
 
@@ -173,27 +193,37 @@ fun OrderCheckoutScreen(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             P01SecondaryButton(
-                text = if (uiState.collectionAddress.isBlank()) "刷新订单" else "复制地址",
+                text = secondaryButtonText,
                 onClick = {
-                    if (uiState.collectionAddress.isBlank()) {
-                        onRefresh()
-                    } else {
-                        clipboardManager.setText(AnnotatedString(uiState.collectionAddress))
+                    when {
+                        uiState.collectionAddress.isNotBlank() -> {
+                            clipboardManager.setText(AnnotatedString(uiState.collectionAddress))
+                        }
+                        uiState.orderNo != null -> {
+                            onRefresh()
+                        }
+                        else -> {
+                            onSecondaryAction()
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f),
             )
             P1PrimaryCta(
-                text = if (uiState.orderNo == null) "重试创建订单" else "我已完成支付",
+                text = primaryButtonText,
                 onClick = {
                     if (uiState.orderNo == null) {
-                        onRefresh()
+                        onCreateOrder()
                     } else {
                         onPrimaryAction()
                     }
                 },
                 modifier = Modifier.weight(1f),
-                active = uiState.orderNo != null || uiState.screenState.hasError,
+                active = if (uiState.orderNo == null) {
+                    uiState.paymentOptions.isNotEmpty() && !uiState.screenState.isLoading
+                } else {
+                    true
+                },
             )
         }
     }
@@ -206,6 +236,7 @@ private fun OrderCheckoutPreview() {
         OrderCheckoutScreen(
             uiState = orderCheckoutPreviewState(),
             onRefresh = {},
+            onCreateOrder = {},
             onPrimaryAction = {},
             onSecondaryAction = {},
             onPaymentOptionRoute = {},

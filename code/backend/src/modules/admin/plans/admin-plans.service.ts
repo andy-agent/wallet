@@ -1,6 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { PostgresDataAccessService } from '../../database/postgres-data-access.service';
+import {
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import {
+  PlanMutationInput,
+  PostgresDataAccessService,
+} from '../../database/postgres-data-access.service';
 import { PlansService } from '../../plans/plans.service';
+import { UpsertAdminPlanRequestDto } from './dto/upsert-admin-plan.request';
 
 @Injectable()
 export class AdminPlansService {
@@ -37,6 +45,72 @@ export class AdminPlansService {
       page,
       pageSize,
       total,
+    };
+  }
+
+  async createPlan(body: UpsertAdminPlanRequestDto) {
+    if (!this.postgresDataAccessService.isEnabled()) {
+      throw new ServiceUnavailableException({
+        code: 'PLAN_MANAGEMENT_UNAVAILABLE',
+        message: 'Plan management requires PostgreSQL backend',
+      });
+    }
+
+    const result = await this.postgresDataAccessService.createPlan(
+      this.toPlanMutationInput(body),
+    );
+    if (!result) {
+      throw new ServiceUnavailableException({
+        code: 'PLAN_CREATE_FAILED',
+        message: 'Failed to create plan',
+      });
+    }
+    return result;
+  }
+
+  async updatePlan(planId: string, body: UpsertAdminPlanRequestDto) {
+    if (!this.postgresDataAccessService.isEnabled()) {
+      throw new ServiceUnavailableException({
+        code: 'PLAN_MANAGEMENT_UNAVAILABLE',
+        message: 'Plan management requires PostgreSQL backend',
+      });
+    }
+
+    const existing = await this.postgresDataAccessService.getPlanById(planId);
+    if (!existing) {
+      throw new NotFoundException({
+        code: 'PLAN_NOT_FOUND',
+        message: 'Plan not found',
+      });
+    }
+
+    const result = await this.postgresDataAccessService.updatePlan(
+      planId,
+      this.toPlanMutationInput(body),
+    );
+    if (!result) {
+      throw new ServiceUnavailableException({
+        code: 'PLAN_UPDATE_FAILED',
+        message: 'Failed to update plan',
+      });
+    }
+    return result;
+  }
+
+  private toPlanMutationInput(body: UpsertAdminPlanRequestDto): PlanMutationInput {
+    return {
+      planCode: body.planCode.trim(),
+      name: body.name.trim(),
+      description: body.description?.trim() || null,
+      billingCycleMonths: body.billingCycleMonths,
+      priceUsd: body.priceUsd.trim(),
+      isUnlimitedTraffic: body.isUnlimitedTraffic,
+      maxActiveSessions: body.maxActiveSessions,
+      regionAccessPolicy: body.regionAccessPolicy,
+      includesAdvancedRegions: body.includesAdvancedRegions,
+      allowedRegionIds: body.allowedRegionIds ?? [],
+      displayOrder: body.displayOrder,
+      status: body.status,
     };
   }
 }

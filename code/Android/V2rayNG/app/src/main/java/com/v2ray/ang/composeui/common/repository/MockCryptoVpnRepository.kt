@@ -77,10 +77,20 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         )
     }
 
+    override suspend fun prepareOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState {
+        return orderCheckoutPreviewState().copy(
+            summary = "先确认节点区域和支付网络，再生成订单。" + " · " + "导航参数" + "：" + args.planId,
+            note = "Mock repository 已切换为手动创建订单流程。",
+            orderNo = null,
+            collectionAddress = "",
+            qrText = "",
+        )
+    }
+
     override suspend fun getOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState {
         return orderCheckoutPreviewState().copy(
             summary = "订单确认与支付前置页，承接套餐、支付方式与开票信息确认。" + " · " + "导航参数" + "：" + args.planId,
-            note = "Mock repository 已回填 订单收银台 的路由参数，可继续替换为真实仓储实现。",
+            note = "Mock repository 已回填真实创建订单结果。",
         )
     }
 

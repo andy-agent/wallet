@@ -140,6 +140,7 @@ export interface Plan {
   description: string;
   billingCycleMonths: number;
   priceUsd: string;
+  isUnlimitedTraffic: boolean;
   maxActiveSessions: number;
   regionAccessPolicy: string;
   includesAdvancedRegions: boolean;
@@ -150,8 +151,27 @@ export interface Plan {
 
 export type PlanListResponse = PaginatedResult<Plan>;
 
+export type PlanStatus = 'DRAFT' | 'ACTIVE' | 'DISABLED';
+
+export type RegionAccessPolicy = 'BASIC_ONLY' | 'INCLUDE_ADVANCED' | 'CUSTOM';
+
 export interface PlanQueryParams {
   status?: string;
+}
+
+export interface PlanMutationPayload {
+  planCode: string;
+  name: string;
+  description?: string;
+  billingCycleMonths: number;
+  priceUsd: string;
+  isUnlimitedTraffic: boolean;
+  maxActiveSessions: number;
+  regionAccessPolicy: RegionAccessPolicy;
+  includesAdvancedRegions: boolean;
+  allowedRegionIds: string[];
+  displayOrder: number;
+  status: PlanStatus;
 }
 
 export interface AuditLog {

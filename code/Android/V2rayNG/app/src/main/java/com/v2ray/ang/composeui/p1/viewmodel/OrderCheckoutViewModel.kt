@@ -17,14 +17,7 @@ class OrderCheckoutViewModel(
 
     fun onEvent(event: OrderCheckoutEvent) {
         when (event) {
-            is OrderCheckoutEvent.FieldChanged -> {
-                _uiState.value = _uiState.value.copy(
-                    fields = _uiState.value.fields.map { field ->
-                        if (field.key == event.key) field.copy(value = event.value) else field
-                    },
-                )
-            }
-
+            OrderCheckoutEvent.CreateOrderClicked -> createOrder()
             OrderCheckoutEvent.PrimaryActionClicked -> Unit
             OrderCheckoutEvent.SecondaryActionClicked -> Unit
             OrderCheckoutEvent.Refresh -> refresh()
@@ -33,7 +26,31 @@ class OrderCheckoutViewModel(
 
     private fun refresh() {
         launchLoad {
-            repository.getOrderCheckoutState(routeArgs)
+            repository.prepareOrderCheckoutState(currentRouteArgs())
         }
+    }
+
+    private fun createOrder() {
+        val current = _uiState.value
+        _uiState.value = current.copy(
+            summary = "正在创建订单",
+            screenState = current.screenState.copy(
+                isLoading = true,
+                errorMessage = null,
+                emptyMessage = null,
+                unavailableMessage = null,
+            ),
+        )
+        launchLoad {
+            repository.getOrderCheckoutState(currentRouteArgs())
+        }
+    }
+
+    private fun currentRouteArgs(): OrderCheckoutRouteArgs {
+        val current = _uiState.value
+        return routeArgs.copy(
+            assetCode = current.assetCode.ifBlank { routeArgs.assetCode },
+            networkCode = current.networkCode.ifBlank { routeArgs.networkCode },
+        )
     }
 }

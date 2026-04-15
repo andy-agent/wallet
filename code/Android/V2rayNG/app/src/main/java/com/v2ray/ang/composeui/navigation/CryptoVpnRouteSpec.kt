@@ -76,8 +76,10 @@ object CryptoVpnRouteSpec {
 
     val regionSelection = RouteDefinition(
         name = "region_selection",
-        pattern = "region_selection",
-        params = emptyList(),
+        pattern = "region_selection?planId={planId}",
+        params = listOf(
+        RouteParamInfo(key = "planId", sample = "annual_pro", description = "可选套餐标识，用于购买流程先选节点区域"),
+    ),
     )
 
     val orderCheckout = RouteDefinition(
@@ -392,6 +394,11 @@ object CryptoVpnRouteSpec {
         pattern = "staking_earn",
         params = emptyList(),
     )
+
+    fun regionSelectionRoute(planId: String? = null): String {
+        return planId?.takeIf { it.isNotBlank() }?.let { "region_selection?planId=$it" }
+            ?: "region_selection"
+    }
 
     fun orderCheckoutRoute(
         planId: String,

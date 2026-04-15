@@ -197,6 +197,98 @@ describe('Admin Postgres real data (e2e)', () => {
     );
   });
 
+  it('allows admin to manage plans and exposes active plans to the client catalog', async () => {
+    const createResponse = await request(app.getHttpServer())
+      .post('/api/admin/v1/plans')
+      .set('authorization', `Bearer ${adminToken}`)
+      .send({
+        planCode: 'ADMIN_DYNAMIC_3M',
+        name: '后台动态套餐-3个月',
+        description: '由后台创建并直接供客户端购买',
+        billingCycleMonths: 3,
+        priceUsd: '29.99',
+        isUnlimitedTraffic: true,
+        maxActiveSessions: 3,
+        regionAccessPolicy: 'CUSTOM',
+        includesAdvancedRegions: false,
+        allowedRegionIds: ['region-sg-db'],
+        displayOrder: 3,
+        status: 'ACTIVE',
+      })
+      .expect(201);
+
+    expect(createResponse.body.data).toEqual(
+      expect.objectContaining({
+        planCode: 'ADMIN_DYNAMIC_3M',
+        name: '后台动态套餐-3个月',
+        billingCycleMonths: 3,
+        priceUsd: '29.99',
+        regionAccessPolicy: 'CUSTOM',
+        allowedRegionIds: ['region-sg-db'],
+        status: 'ACTIVE',
+      }),
+    );
+
+    const clientPlansAfterCreate = await request(app.getHttpServer())
+      .get('/api/client/v1/plans')
+      .expect(200);
+
+    expect(clientPlansAfterCreate.body.data.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          planCode: 'ADMIN_DYNAMIC_3M',
+          name: '后台动态套餐-3个月',
+          status: 'ACTIVE',
+        }),
+      ]),
+    );
+
+    const planId = createResponse.body.data.planId;
+    await request(app.getHttpServer())
+      .put(`/api/admin/v1/plans/${planId}`)
+      .set('authorization', `Bearer ${adminToken}`)
+      .send({
+        planCode: 'ADMIN_DYNAMIC_3M',
+        name: '后台动态套餐-已停用',
+        description: '更新后停止对客户端售卖',
+        billingCycleMonths: 6,
+        priceUsd: '49.99',
+        isUnlimitedTraffic: false,
+        maxActiveSessions: 6,
+        regionAccessPolicy: 'CUSTOM',
+        includesAdvancedRegions: true,
+        allowedRegionIds: ['region-eu-db'],
+        displayOrder: 9,
+        status: 'DISABLED',
+      })
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data).toEqual(
+          expect.objectContaining({
+            planId,
+            name: '后台动态套餐-已停用',
+            billingCycleMonths: 6,
+            priceUsd: '49.99',
+            isUnlimitedTraffic: false,
+            maxActiveSessions: 6,
+            includesAdvancedRegions: true,
+            allowedRegionIds: ['region-eu-db'],
+            status: 'DISABLED',
+          }),
+        );
+      });
+
+    const clientPlansAfterDisable = await request(app.getHttpServer())
+      .get('/api/client/v1/plans')
+      .expect(200);
+
+    expect(
+      clientPlansAfterDisable.body.data.items.some(
+        (item: { planCode: string }) => item.planCode === 'ADMIN_DYNAMIC_3M',
+      ),
+    ).toBe(false);
+  });
+
   it('reads persisted commission withdraw requests from PostgreSQL for admin and never falls back to mock rows', async () => {
     const client = await registerClient(app, 'withdraw-admin-db@example.com');
     seedPersistedWithdrawal({

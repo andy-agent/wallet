@@ -108,6 +108,7 @@ fun RegionSelectionRoute(
     viewModel: RegionSelectionViewModel,
     onPrimaryAction: () -> Unit = {},
     onSecondaryAction: (() -> Unit)? = null,
+    emptyActionLabel: String = "返回首页继续连接",
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -124,6 +125,8 @@ fun RegionSelectionRoute(
         onPrimaryAction = { lineCode, nodeId ->
             viewModel.onEvent(RegionSelectionEvent.NodeSelected(lineCode, nodeId))
         },
+        onEmptyAction = onPrimaryAction,
+        emptyActionLabel = emptyActionLabel,
         onSecondaryAction = {
             viewModel.onEvent(RegionSelectionEvent.SecondaryActionClicked)
             onSecondaryAction?.invoke()
@@ -138,6 +141,8 @@ fun RegionSelectionScreen(
     onSearchChange: (String) -> Unit,
     onRefresh: () -> Unit,
     onPrimaryAction: (String, String) -> Unit,
+    onEmptyAction: () -> Unit,
+    emptyActionLabel: String,
     onSecondaryAction: () -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
@@ -168,8 +173,8 @@ fun RegionSelectionScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .widthIn(max = 680.dp),
-            contentPadding = PaddingValues(start = 16.dp, top = 22.dp, end = 16.dp, bottom = 24.dp),
+                .widthIn(max = 420.dp),
+            contentPadding = PaddingValues(start = 16.dp, top = 18.dp, end = 16.dp, bottom = 18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
@@ -212,15 +217,24 @@ fun RegionSelectionScreen(
             item {
                 if (uiState.screenState.hasError || filteredNodes.isEmpty()) {
                     GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = uiState.screenState.unavailableMessage
-                                ?: uiState.screenState.errorMessage
-                                ?: uiState.screenState.emptyMessage
-                                ?: uiState.note.ifBlank { "节点数据来自业务后端真实目录。" },
-                            modifier = Modifier.padding(16.dp),
-                            color = SubtleTextColor,
-                            style = typeScale.body,
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Text(
+                                text = uiState.screenState.unavailableMessage
+                                    ?: uiState.screenState.errorMessage
+                                    ?: uiState.screenState.emptyMessage
+                                    ?: uiState.note.ifBlank { "节点数据同步中" },
+                                color = SubtleTextColor,
+                                style = typeScale.body,
+                            )
+                            TextButton(onClick = onEmptyAction) {
+                                Text(text = emptyActionLabel)
+                            }
+                        }
                     }
                 }
             }
@@ -259,11 +273,13 @@ private fun HeaderSection(
             color = TitleColor,
             style = typeScale.hero,
         )
-        Text(
-            text = subtitle,
-            color = SubtleTextColor,
-            style = typeScale.body,
-        )
+        if (subtitle.isNotBlank()) {
+            Text(
+                text = subtitle,
+                color = SubtleTextColor,
+                style = typeScale.body,
+            )
+        }
     }
 }
 
@@ -691,6 +707,8 @@ private fun RegionSelectionPreview() {
                 onSearchChange = {},
                 onRefresh = {},
                 onPrimaryAction = { _, _ -> },
+                onEmptyAction = {},
+                emptyActionLabel = "返回首页继续连接",
                 onSecondaryAction = {},
             )
         }

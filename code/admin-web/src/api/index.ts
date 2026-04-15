@@ -21,6 +21,7 @@ import type {
   PaginatedResult,
   Plan,
   PlanListResponse,
+  PlanMutationPayload,
   PlanQueryParams,
   RegionListResponse,
   RegionQueryParams,
@@ -110,6 +111,17 @@ export const getPlans = async (
     params,
   })) as RawPaginatedResult<Plan>;
   return normalizePaginatedResult<Plan>(result);
+};
+
+export const createPlan = (data: PlanMutationPayload): Promise<Plan> => {
+  return request.post('/admin/v1/plans', data);
+};
+
+export const updatePlan = (
+  planId: string,
+  data: PlanMutationPayload,
+): Promise<Plan> => {
+  return request.put(`/admin/v1/plans/${planId}`, data);
 };
 
 export const getAuditLogs = async (

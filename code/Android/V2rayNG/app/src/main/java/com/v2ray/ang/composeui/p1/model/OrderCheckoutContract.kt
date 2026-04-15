@@ -2,6 +2,7 @@ package com.v2ray.ang.composeui.p1.model
 
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.navigation.RouteDefinition
+import java.util.Locale
 
 data class OrderCheckoutRouteArgs(
     val planId: String = "",
@@ -20,13 +21,15 @@ data class OrderCheckoutUiState(
     val title: String = "订单结算",
     val subtitle: String = "ORDER CHECKOUT",
     val badge: String = "P1 · LIVE",
-    val summary: String = "创建真实订单中…",
+    val summary: String = "正在创建订单",
     val primaryActionLabel: String = "查看支付确认",
     val secondaryActionLabel: String? = "返回套餐页",
     val heroAccent: String = "order_checkout",
     val screenState: P1ScreenState = P1ScreenState(isLoading = true),
     val planCode: String? = null,
     val planTitle: String = "",
+    val selectedRegionCode: String = "",
+    val selectedRegionLabel: String = "",
     val orderNo: String? = null,
     val orderStatus: String? = null,
     val assetCode: String = "",
@@ -45,6 +48,7 @@ data class OrderCheckoutUiState(
 
 sealed interface OrderCheckoutEvent {
     data object Refresh : OrderCheckoutEvent
+    data object CreateOrderClicked : OrderCheckoutEvent
     data object PrimaryActionClicked : OrderCheckoutEvent
     data object SecondaryActionClicked : OrderCheckoutEvent
 }
@@ -52,25 +56,44 @@ sealed interface OrderCheckoutEvent {
 val orderCheckoutNavigation: RouteDefinition = CryptoVpnRouteSpec.orderCheckout
 
 fun orderCheckoutPreviewState(): OrderCheckoutUiState = OrderCheckoutUiState(
-    summary = "真实订单已创建。",
+    summary = "预览态：展示订单结算布局。",
     screenState = P1ScreenState(),
-    planCode = "BASIC_1M",
-    planTitle = "月卡",
-    orderNo = "ORD-EXAMPLE-0001",
-    orderStatus = "AWAITING_PAYMENT",
-    assetCode = "USDT",
-    networkCode = "SOLANA",
-    payableAmount = "1.000001",
-    baseAmount = "1.000000",
-    uniqueAmountDelta = "0.000001",
-    collectionAddress = "EVYe1JoVU9m46o5QLgJdZM6CCG996jfCvYoKu5DTNEjj",
-    qrText = "solana:EVYe1JoVU9m46o5QLgJdZM6CCG996jfCvYoKu5DTNEjj?amount=1.000001",
-    expiresAt = "2026-04-11T14:53:15.306Z",
-    invoiceEmail = "user@example.com",
-    serviceEnabled = true,
+    planCode = "PLAN_CODE",
+    planTitle = "套餐名称",
+    selectedRegionCode = "JP_BASIC",
+    selectedRegionLabel = "日本基础线路 / NODE_A",
+    orderNo = "ORDER_NO",
+    orderStatus = "PENDING",
+    assetCode = "ASSET",
+    networkCode = "NETWORK",
+    payableAmount = "待接口返回",
+    baseAmount = null,
+    uniqueAmountDelta = null,
+    collectionAddress = "待接口返回",
+    qrText = "",
+    expiresAt = null,
+    invoiceEmail = null,
+    serviceEnabled = false,
     paymentOptions = listOf(
-        CheckoutPaymentOptionUi("USDT", "TRON", "USDT · TRON"),
-        CheckoutPaymentOptionUi("SOL", "SOLANA", "SOL · SOLANA", selected = true),
+        CheckoutPaymentOptionUi("ASSET_A", "NETWORK_A", "待接口返回"),
+        CheckoutPaymentOptionUi("ASSET_B", "NETWORK_B", "待接口返回", selected = true),
     ),
-    note = "Preview only.",
+    note = "仅用于本地预览，不代表真实订单或支付参数。",
 )
+
+fun checkoutPaymentLabel(assetCode: String, networkCode: String): String {
+    if (assetCode.isBlank() || networkCode.isBlank()) {
+        return listOf(assetCode, networkCode).filter { it.isNotBlank() }.joinToString(".")
+    }
+    val assetLabel = if (assetCode.equals("SOL", ignoreCase = true)) {
+        "sol"
+    } else {
+        assetCode.uppercase(Locale.ROOT)
+    }
+    val networkLabel = when (networkCode.uppercase(Locale.ROOT)) {
+        "SOLANA" -> "solana"
+        "TRON" -> "tron"
+        else -> networkCode.lowercase(Locale.ROOT)
+    }
+    return "$assetLabel.$networkLabel"
+}

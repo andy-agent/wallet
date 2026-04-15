@@ -35,6 +35,7 @@ interface CryptoVpnRepository {
     suspend fun getRegionSelectionState(): RegionSelectionUiState
     suspend fun getCachedRegionSelectionState(): RegionSelectionUiState? = null
     suspend fun selectVpnNode(lineCode: String, nodeId: String): RegionSelectionUiState
+    suspend fun prepareOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState
     suspend fun getOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState
     suspend fun getWalletPaymentConfirmState(args: WalletPaymentConfirmRouteArgs): WalletPaymentConfirmUiState
     suspend fun getOrderResultState(args: OrderResultRouteArgs): OrderResultUiState
@@ -52,6 +53,7 @@ interface CryptoVpnRepository {
     suspend fun confirmWalletBackup(): Result<WalletLifecycleData> =
         Result.failure(IllegalStateException("Wallet backup confirmation unavailable"))
     suspend fun getAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState
+    suspend fun getCachedReceiveState(args: ReceiveRouteArgs): ReceiveUiState? = null
     suspend fun getReceiveState(args: ReceiveRouteArgs): ReceiveUiState
     suspend fun getSendState(args: SendRouteArgs): SendUiState
     suspend fun getSendResultState(args: SendResultRouteArgs): SendResultUiState

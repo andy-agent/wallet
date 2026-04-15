@@ -31,6 +31,21 @@ type PlanRow = QueryResultRow & {
   status: string;
 };
 
+export type PlanMutationInput = {
+  planCode: string;
+  name: string;
+  description: string | null;
+  billingCycleMonths: number;
+  priceUsd: string;
+  isUnlimitedTraffic: boolean;
+  maxActiveSessions: number;
+  regionAccessPolicy: string;
+  includesAdvancedRegions: boolean;
+  allowedRegionIds: string[];
+  displayOrder: number;
+  status: string;
+};
+
 type AuditLogRow = QueryResultRow & {
   audit_id: string;
   request_id: string | null;
@@ -223,25 +238,57 @@ export class PostgresDataAccessService {
     }
 
     return {
-      items: rows.map((row) => ({
-        planId: row.plan_id,
-        planCode: row.plan_code,
-        name: row.name,
-        description: row.description,
-        billingCycleMonths: row.billing_cycle_months,
-        priceUsd: this.formatMoney(row.price_usd),
-        isUnlimitedTraffic: row.is_unlimited_traffic,
-        maxActiveSessions: row.max_active_sessions,
-        regionAccessPolicy: row.region_access_policy,
-        includesAdvancedRegions: row.includes_advanced_regions,
-        allowedRegionIds: permissionsByPlanId.get(row.plan_id) ?? [],
-        displayOrder: row.display_order,
-        status: row.status,
-      })),
+      items: this.mapPlans(rows, permissionsByPlanId),
       page,
       pageSize,
       total,
     };
+  }
+
+  async getPlanById(planId: string): Promise<Record<string, unknown> | null> {
+    if (!this.pool) {
+      return null;
+    }
+
+    const rows = await this.fetchRows<PlanRow>(
+      `
+        SELECT
+          id::text AS plan_id,
+          plan_code,
+          name,
+          description,
+          billing_cycle_months,
+          price_usd::text AS price_usd,
+          is_unlimited_traffic,
+          max_active_sessions,
+          region_access_policy::text AS region_access_policy,
+          includes_advanced_regions,
+          display_order,
+          status::text AS status
+        FROM plans
+        WHERE id::text = $1
+        LIMIT 1
+      `,
+      [planId],
+    );
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const permissionsByPlanId = await this.fetchPlanPermissions([planId]);
+    return this.mapPlans(rows, permissionsByPlanId)[0] ?? null;
+  }
+
+  async createPlan(input: PlanMutationInput): Promise<Record<string, unknown> | null> {
+    return this.writePlan(null, input);
+  }
+
+  async updatePlan(
+    planId: string,
+    input: PlanMutationInput,
+  ): Promise<Record<string, unknown> | null> {
+    return this.writePlan(planId, input);
   }
 
   async listAuditLogs(params: {
@@ -955,6 +1002,177 @@ export class PostgresDataAccessService {
 
   private toIsoString(value: Date | string) {
     return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+  }
+
+  private mapPlans(
+    rows: PlanRow[],
+    permissionsByPlanId: Map<string, string[]>,
+  ): Array<Record<string, unknown>> {
+    return rows.map((row) => ({
+      planId: row.plan_id,
+      planCode: row.plan_code,
+      name: row.name,
+      description: row.description,
+      billingCycleMonths: row.billing_cycle_months,
+      priceUsd: this.formatMoney(row.price_usd),
+      isUnlimitedTraffic: row.is_unlimited_traffic,
+      maxActiveSessions: row.max_active_sessions,
+      regionAccessPolicy: row.region_access_policy,
+      includesAdvancedRegions: row.includes_advanced_regions,
+      allowedRegionIds: permissionsByPlanId.get(row.plan_id) ?? [],
+      displayOrder: row.display_order,
+      status: row.status,
+    }));
+  }
+
+  private async fetchPlanPermissions(planIds: string[]) {
+    const permissionsByPlanId = new Map<string, string[]>();
+    if (planIds.length === 0) {
+      return permissionsByPlanId;
+    }
+
+    const permissionRows = await this.fetchRows<
+      QueryResultRow & { plan_id: string; region_id: string }
+    >(
+      `
+        SELECT plan_id::text AS plan_id, region_id::text AS region_id
+        FROM plan_region_permissions
+        WHERE plan_id::text = ANY($1)
+      `,
+      [planIds],
+    );
+
+    for (const row of permissionRows) {
+      const current = permissionsByPlanId.get(row.plan_id) ?? [];
+      current.push(row.region_id);
+      permissionsByPlanId.set(row.plan_id, current);
+    }
+
+    return permissionsByPlanId;
+  }
+
+  private async writePlan(
+    planId: string | null,
+    input: PlanMutationInput,
+  ): Promise<Record<string, unknown> | null> {
+    if (!this.pool) {
+      return null;
+    }
+
+    const resolvedPlanId = planId ?? randomUUID();
+    const allowedRegionIds =
+      input.regionAccessPolicy.toUpperCase() === 'CUSTOM'
+        ? input.allowedRegionIds
+        : [];
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      if (planId == null) {
+        await client.query(
+          `
+            INSERT INTO plans (
+              id,
+              plan_code,
+              name,
+              description,
+              billing_cycle_months,
+              price_usd,
+              is_unlimited_traffic,
+              max_active_sessions,
+              region_access_policy,
+              includes_advanced_regions,
+              status,
+              display_order,
+              created_at,
+              updated_at
+            )
+            VALUES (
+              $1, $2, $3, $4, $5, $6::numeric, $7, $8, $9, $10, $11, $12, NOW(), NOW()
+            )
+          `,
+          [
+            resolvedPlanId,
+            input.planCode,
+            input.name,
+            input.description,
+            input.billingCycleMonths,
+            input.priceUsd,
+            input.isUnlimitedTraffic,
+            input.maxActiveSessions,
+            input.regionAccessPolicy,
+            input.includesAdvancedRegions,
+            input.status,
+            input.displayOrder,
+          ],
+        );
+      } else {
+        const updated = await client.query<{ plan_id: string }>(
+          `
+            UPDATE plans
+            SET
+              plan_code = $2,
+              name = $3,
+              description = $4,
+              billing_cycle_months = $5,
+              price_usd = $6::numeric,
+              is_unlimited_traffic = $7,
+              max_active_sessions = $8,
+              region_access_policy = $9,
+              includes_advanced_regions = $10,
+              status = $11,
+              display_order = $12,
+              updated_at = NOW()
+            WHERE id::text = $1
+            RETURNING id::text AS plan_id
+          `,
+          [
+            resolvedPlanId,
+            input.planCode,
+            input.name,
+            input.description,
+            input.billingCycleMonths,
+            input.priceUsd,
+            input.isUnlimitedTraffic,
+            input.maxActiveSessions,
+            input.regionAccessPolicy,
+            input.includesAdvancedRegions,
+            input.status,
+            input.displayOrder,
+          ],
+        );
+
+        if (updated.rows.length === 0) {
+          await client.query('ROLLBACK');
+          return null;
+        }
+      }
+
+      await client.query(
+        `DELETE FROM plan_region_permissions WHERE plan_id::text = $1`,
+        [resolvedPlanId],
+      );
+
+      for (const regionId of allowedRegionIds) {
+        await client.query(
+          `
+            INSERT INTO plan_region_permissions (id, plan_id, region_id, created_at)
+            VALUES ($1, $2, $3, NOW())
+          `,
+          [randomUUID(), resolvedPlanId, regionId],
+        );
+      }
+
+      await client.query('COMMIT');
+      return this.getPlanById(resolvedPlanId);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      this.logger.error('Postgres plan write failed', error as Error);
+      return null;
+    } finally {
+      client.release();
+    }
   }
 
   private inferValueType(value: string): 'STRING' | 'NUMBER' | 'BOOLEAN' | 'JSON' {

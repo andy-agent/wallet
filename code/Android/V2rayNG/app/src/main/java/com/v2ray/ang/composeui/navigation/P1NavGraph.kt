@@ -7,7 +7,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
-import com.v2ray.ang.composeui.common.repository.MockCryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.cryptoVpnViewModelFactory
 import com.v2ray.ang.composeui.p1.model.*
 import com.v2ray.ang.composeui.p1.viewmodel.*
@@ -15,7 +14,7 @@ import com.v2ray.ang.composeui.pages.p1.*
 
 fun NavGraphBuilder.installCryptoVpnP1Routes(
     navController: NavHostController,
-    repository: CryptoVpnRepository = MockCryptoVpnRepository(),
+    repository: CryptoVpnRepository,
 ) {
     composable(CryptoVpnRouteSpec.plans.pattern) {
         val vm: PlansViewModel = viewModel(
@@ -24,21 +23,48 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
         PlansRoute(
             viewModel = vm,
             onPrimaryAction = { planCode ->
-                navController.navigateSingleTop(CryptoVpnRouteSpec.orderCheckoutRoute(planCode))
+                navController.navigateSingleTop(CryptoVpnRouteSpec.regionSelectionRoute(planCode))
             },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.regionSelection.pattern) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.regionSelectionRoute()) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
 
-    composable(CryptoVpnRouteSpec.regionSelection.pattern) {
+    composable(
+        route = CryptoVpnRouteSpec.regionSelection.pattern,
+        arguments = listOf(
+            navArgument("planId") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            },
+        ),
+    ) { backStackEntry ->
+        val planId = backStackEntry.arguments?.getString("planId")
         val vm: RegionSelectionViewModel = viewModel(
             factory = cryptoVpnViewModelFactory { RegionSelectionViewModel(repository) },
         )
         RegionSelectionRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.vpnHome.pattern) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.vpnHome.pattern) },
+            onPrimaryAction = {
+                if (!planId.isNullOrBlank()) {
+                    navController.navigateSingleTop(CryptoVpnRouteSpec.orderCheckoutRoute(planId))
+                } else {
+                    navController.navigateSingleTop(CryptoVpnRouteSpec.vpnHome.pattern)
+                }
+            },
+            onSecondaryAction = {
+                if (!planId.isNullOrBlank()) {
+                    navController.navigateSingleTop(CryptoVpnRouteSpec.plans.pattern)
+                } else {
+                    navController.navigateSingleTop(CryptoVpnRouteSpec.vpnHome.pattern)
+                }
+            },
+            emptyActionLabel = if (!planId.isNullOrBlank()) {
+                "暂无节点，继续支付"
+            } else {
+                "返回首页继续连接"
+            },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
@@ -74,7 +100,9 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
             onPrimaryAction = { orderNo ->
                 navController.navigateSingleTop(CryptoVpnRouteSpec.walletPaymentConfirmRoute(orderNo))
             },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.plans.pattern) },
+            onSecondaryAction = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.regionSelectionRoute(args.planId))
+            },
             onPaymentOptionRoute = { route ->
                 navController.navigate(route)
             },

@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createHash, randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
 import { RuntimeStateRepository } from '../database/runtime-state.repository';
@@ -16,30 +17,42 @@ import { UpsertWalletLifecycleRequestDto } from './dto/upsert-wallet-lifecycle.r
 import { UpsertWalletPublicAddressRequestDto } from './dto/upsert-wallet-public-address.request';
 import {
   PersistedWalletLifecycleRecord,
+  PersistedWalletPublicAddressRecord,
   WalletLifecycleNextAction,
   WalletLifecycleOrigin,
   WalletLifecycleStatus,
   WalletLifecycleView,
 } from './wallet.types';
 
-export interface WalletPublicAddressItem {
-  addressId: string;
-  accountId: string;
-  networkCode: 'SOLANA' | 'TRON';
-  assetCode: 'SOL' | 'TRX' | 'USDT';
-  address: string;
-  isDefault: boolean;
-  createdAt: string;
-}
+export type WalletPublicAddressItem = PersistedWalletPublicAddressRecord;
 
 export type WalletReceiveState = 'NO_WALLET' | 'NO_ADDRESS' | 'READY';
+
+interface WalletResolvedReceiveSelection {
+  selectedNetworkCode: string;
+  selectedAssetCode: string;
+  assetsForNetwork: Array<{
+    assetId: string;
+    networkCode: string;
+    assetCode: string;
+    displayName: string;
+    symbol: string;
+    decimals: number;
+    isNative: boolean;
+    contractAddress: string | null;
+    walletVisible: boolean;
+    orderPayable: boolean;
+  }>;
+  publicAddresses: WalletPublicAddressItem[];
+  defaultAddress: string | null;
+}
 
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
-  private readonly publicAddresses = new Map<string, WalletPublicAddressItem[]>();
 
   constructor(
+    private readonly configService: ConfigService,
     private readonly authService: AuthService,
     private readonly ordersService: OrdersService,
     private readonly runtimeStateRepository: RuntimeStateRepository,
@@ -75,6 +88,7 @@ export class WalletService {
 
   getAssetCatalog(accessToken: string, networkCode?: string) {
     this.authService.getMe(accessToken);
+    const solanaOrderPayable = this.hasSolanaOrderCapability();
     const items = [
       {
         assetId: randomUUID(),
@@ -86,7 +100,7 @@ export class WalletService {
         isNative: true,
         contractAddress: null,
         walletVisible: true,
-        orderPayable: true,
+        orderPayable: solanaOrderPayable,
       },
       {
         assetId: randomUUID(),
@@ -98,7 +112,7 @@ export class WalletService {
         isNative: false,
         contractAddress: '<SOLANA_USDT_CONTRACT>',
         walletVisible: true,
-        orderPayable: true,
+        orderPayable: solanaOrderPayable,
       },
       {
         assetId: randomUUID(),
@@ -136,7 +150,8 @@ export class WalletService {
     const lifecycle = await this.getWalletLifecycle(accessToken);
     const chains = this.getChains(accessToken).items;
     const assets = this.getAssetCatalog(accessToken).items;
-    const publicAddresses = this.listPublicAddresses(accessToken).items;
+    const publicAddresses = (await this.listPublicAddresses(accessToken)).items;
+    const receiveSelection = await this.resolveReceiveSelection(accessToken);
     const orders = await this.listOwnedOrders(accessToken);
 
     const orderStatsByNetwork = new Map<
@@ -254,7 +269,12 @@ export class WalletService {
       walletName: lifecycle.walletName,
       lifecycleStatus: lifecycle.status,
       nextAction: lifecycle.nextAction,
-      selectedNetworkCode,
+      selectedNetworkCode: receiveSelection.selectedNetworkCode || selectedNetworkCode,
+      selectedAssetCode: receiveSelection.selectedAssetCode,
+      receiveState: lifecycle.receiveState,
+      configuredAddressCount: lifecycle.configuredAddressCount,
+      defaultAddress: receiveSelection.defaultAddress,
+      canShare: Boolean(receiveSelection.defaultAddress),
       chainItems,
       assetItems,
       alerts: this.buildOverviewAlerts({
@@ -271,30 +291,18 @@ export class WalletService {
     requestedAssetCode?: string,
   ) {
     const chains = this.getChains(accessToken).items;
-    const assets = this.getAssetCatalog(accessToken).items.filter((item) => item.walletVisible);
-    const selectedNetworkCode =
-      requestedNetworkCode && chains.some((item) => item.networkCode === requestedNetworkCode)
-        ? requestedNetworkCode
-        : chains[0]?.networkCode ?? 'TRON';
-    const assetsForNetwork = assets.filter((item) => item.networkCode === selectedNetworkCode);
-    const preferredAssetForNetwork = assetsForNetwork.find((item) => item.orderPayable)
-      ?? assetsForNetwork.find((item) => item.assetCode === 'SOL')
-      ?? assetsForNetwork[0];
-    const selectedAssetCode =
-      requestedAssetCode &&
-      assetsForNetwork.some((item) => item.assetCode === requestedAssetCode)
-        ? requestedAssetCode
-        : preferredAssetForNetwork?.assetCode ?? '';
-    const publicAddresses = this.listPublicAddresses(
-      accessToken,
+    const {
       selectedNetworkCode,
-      selectedAssetCode || undefined,
-    ).items;
+      selectedAssetCode,
+      assetsForNetwork,
+      publicAddresses,
+      defaultAddress,
+    } = await this.resolveReceiveSelection(
+      accessToken,
+      requestedNetworkCode,
+      requestedAssetCode,
+    );
     const lifecycle = await this.getWalletLifecycle(accessToken);
-    const defaultAddress =
-      publicAddresses.find((item) => item.isDefault)?.address ??
-      publicAddresses[0]?.address ??
-      null;
 
     return {
       selectedNetworkCode,
@@ -323,7 +331,7 @@ export class WalletService {
           : 'NO_ADDRESS',
       status: defaultAddress ? '已配置收款地址' : '未配置收款地址',
       note: defaultAddress
-        ? '当前展示服务端保存的真实收款地址。'
+        ? '收款地址。'
         : lifecycle.walletExists
           ? '当前账号已创建钱包，但该链/资产下还没有配置收款地址。'
           : '当前账号还没有创建或导入钱包。',
@@ -341,7 +349,11 @@ export class WalletService {
       await this.runtimeStateRepository.findWalletLifecycleByAccountId(
         account.accountId,
       );
-    const configuredAddressCount = (this.publicAddresses.get(account.accountId) ?? []).length;
+    const publicAddresses =
+      await this.runtimeStateRepository.listWalletPublicAddressesByAccountId({
+        accountId: account.accountId,
+      });
+    const configuredAddressCount = publicAddresses.length;
     const walletExists = lifecycle !== null || configuredAddressCount > 0;
     const receiveState: WalletReceiveState = !walletExists
       ? 'NO_WALLET'
@@ -494,8 +506,11 @@ export class WalletService {
 
   async upsertPublicAddress(accessToken: string, dto: UpsertWalletPublicAddressRequestDto) {
     const account = this.authService.getMe(accessToken);
-    await this.ensureWalletLifecycle(account.accountId);
-    const existing = this.publicAddresses.get(account.accountId) ?? [];
+    const lifecycle = await this.ensureWalletLifecycle(account.accountId);
+    const existing =
+      await this.runtimeStateRepository.listWalletPublicAddressesByAccountId({
+        accountId: account.accountId,
+      });
 
     const found = existing.find(
       (item) =>
@@ -504,32 +519,49 @@ export class WalletService {
         item.address === dto.address,
     );
 
+    const now = new Date().toISOString();
+
     if (dto.isDefault) {
-      for (const item of existing) {
-        if (item.networkCode === dto.networkCode && item.assetCode === dto.assetCode) {
-          item.isDefault = false;
-        }
-      }
+      await Promise.all(
+        existing
+          .filter(
+            (item) =>
+              item.networkCode === dto.networkCode &&
+              item.assetCode === dto.assetCode &&
+              item.isDefault,
+          )
+          .map((item) =>
+            this.runtimeStateRepository.upsertWalletPublicAddress({
+              ...item,
+              isDefault: false,
+              updatedAt: now,
+            }),
+          ),
+      );
     }
 
     if (found) {
-      found.isDefault = dto.isDefault;
-      return found;
+      return this.runtimeStateRepository.upsertWalletPublicAddress({
+        ...found,
+        walletId: found.walletId ?? lifecycle.walletId,
+        isDefault: dto.isDefault,
+        updatedAt: now,
+      });
     }
 
     const created: WalletPublicAddressItem = {
       addressId: randomUUID(),
       accountId: account.accountId,
+      walletId: lifecycle.walletId,
       networkCode: dto.networkCode,
       assetCode: dto.assetCode,
       address: dto.address,
       isDefault: dto.isDefault,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     };
 
-    existing.push(created);
-    this.publicAddresses.set(account.accountId, existing);
-    return created;
+    return this.runtimeStateRepository.upsertWalletPublicAddress(created);
   }
 
   private async listOwnedOrders(accessToken: string) {
@@ -556,7 +588,7 @@ export class WalletService {
   }) {
     const alerts: string[] = [];
     if (input.publicAddresses.length === 0) {
-      alerts.push('当前账号尚未配置任何服务端收款地址');
+      alerts.push('当前账号尚未配置收款地址');
     }
     const missingReceivableChains = input.chainItems
       .filter((item) => !item.hasConfiguredAddress)
@@ -565,7 +597,6 @@ export class WalletService {
       alerts.push(`未配置收款地址的链：${missingReceivableChains.join(' / ')}`);
     }
     if (alerts.length === 0) {
-      alerts.push('钱包总览已由服务端真实多链目录驱动');
     }
     return alerts;
   }
@@ -580,31 +611,74 @@ export class WalletService {
     return current > candidate ? current : candidate;
   }
 
-  listPublicAddresses(
+  async listPublicAddresses(
     accessToken: string,
-    networkCode?: string,
-    assetCode?: string,
+    networkCode?: PersistedWalletPublicAddressRecord['networkCode'],
+    assetCode?: PersistedWalletPublicAddressRecord['assetCode'],
   ) {
     const account = this.authService.getMe(accessToken);
-    let items = this.publicAddresses.get(account.accountId) ?? [];
-    if (networkCode) {
-      items = items.filter((item) => item.networkCode === networkCode);
-    }
-    if (assetCode) {
-      items = items.filter((item) => item.assetCode === assetCode);
-    }
+    const items =
+      await this.runtimeStateRepository.listWalletPublicAddressesByAccountId({
+        accountId: account.accountId,
+        networkCode,
+        assetCode,
+      });
     return { items };
+  }
+
+  private async resolveReceiveSelection(
+    accessToken: string,
+    requestedNetworkCode?: string,
+    requestedAssetCode?: string,
+  ): Promise<WalletResolvedReceiveSelection> {
+    const chains = this.getChains(accessToken).items;
+    const assets = this.getAssetCatalog(accessToken).items.filter((item) => item.walletVisible);
+    const selectedNetworkCode =
+      requestedNetworkCode && chains.some((item) => item.networkCode === requestedNetworkCode)
+        ? requestedNetworkCode
+        : chains[0]?.networkCode ?? 'TRON';
+    const assetsForNetwork = assets.filter((item) => item.networkCode === selectedNetworkCode);
+    const preferredAssetForNetwork =
+      assetsForNetwork.find((item) => item.orderPayable) ??
+      assetsForNetwork.find((item) => item.assetCode === 'SOL') ??
+      assetsForNetwork[0];
+    const selectedAssetCode =
+      requestedAssetCode &&
+      assetsForNetwork.some((item) => item.assetCode === requestedAssetCode)
+        ? requestedAssetCode
+        : preferredAssetForNetwork?.assetCode ?? '';
+    const publicAddresses = (
+      await this.listPublicAddresses(
+        accessToken,
+        selectedNetworkCode as PersistedWalletPublicAddressRecord['networkCode'],
+        (selectedAssetCode || undefined) as
+          | PersistedWalletPublicAddressRecord['assetCode']
+          | undefined,
+      )
+    ).items;
+    const defaultAddress =
+      publicAddresses.find((item) => item.isDefault)?.address ??
+      publicAddresses[0]?.address ??
+      null;
+
+    return {
+      selectedNetworkCode,
+      selectedAssetCode,
+      assetsForNetwork,
+      publicAddresses,
+      defaultAddress,
+    };
   }
 
   private async ensureWalletLifecycle(accountId: string) {
     const existing =
       await this.runtimeStateRepository.findWalletLifecycleByAccountId(accountId);
     if (existing) {
-      return;
+      return existing;
     }
 
     const now = new Date().toISOString();
-    await this.runtimeStateRepository.upsertWalletLifecycle({
+    return this.runtimeStateRepository.upsertWalletLifecycle({
       accountId,
       walletId: randomUUID(),
       walletName: 'Primary Wallet',
@@ -617,6 +691,18 @@ export class WalletService {
       createdAt: now,
       updatedAt: now,
     });
+  }
+
+  private hasSolanaOrderCapability() {
+    const configured = this.configService
+      .get<string>('SOLANA_ORDER_COLLECTION_ADDRESS')
+      ?.trim();
+
+    if (!configured) {
+      return false;
+    }
+
+    return this.solanaClient.validateAddress(configured);
   }
 
   private resolveNextAction(
