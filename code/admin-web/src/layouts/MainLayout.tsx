@@ -19,6 +19,7 @@ import {
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 
 const { Header, Sider, Content } = Layout;
+const LOGIN_ROUTE = '/login';
 
 const MainLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -98,7 +99,7 @@ const MainLayout: React.FC = () => {
   const handleUserMenuClick = ({ key }: { key: string }) => {
     if (key === 'logout') {
       localStorage.removeItem('admin_token');
-      navigate('/login');
+      navigate(LOGIN_ROUTE);
     }
   };
 

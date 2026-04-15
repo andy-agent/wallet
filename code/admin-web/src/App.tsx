@@ -9,6 +9,7 @@ import MainLayout from './layouts/MainLayout';
 import Accounts from './pages/Accounts';
 import AuditLogs from './pages/AuditLogs';
 import Login from './pages/Login';
+import InviteLanding from './pages/InviteLanding';
 import Dashboard from './pages/Dashboard';
 import LegalDocs from './pages/LegalDocs';
 import Nodes from './pages/Nodes';
@@ -22,6 +23,11 @@ import Withdrawals from './pages/Withdrawals';
 // 设置 dayjs 语言
 dayjs.locale('zh-cn');
 
+const ROUTER_BASENAME =
+  import.meta.env.BASE_URL === '/'
+    ? '/'
+    : import.meta.env.BASE_URL.replace(/\/$/, '');
+
 // 简单的登录检查组件
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const token = localStorage.getItem('admin_token');
@@ -31,9 +37,10 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const App: React.FC = () => {
   return (
     <ConfigProvider locale={zhCN}>
-      <BrowserRouter>
+      <BrowserRouter basename={ROUTER_BASENAME}>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/invite" element={<InviteLanding />} />
           <Route
             path="/"
             element={

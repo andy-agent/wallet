@@ -3,6 +3,8 @@ import { message } from 'antd';
 
 // API 基础配置
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const APP_BASE_URL = import.meta.env.BASE_URL || '/';
+const LOGIN_URL = `${APP_BASE_URL.endsWith('/') ? APP_BASE_URL : `${APP_BASE_URL}/`}login`;
 
 // 创建 axios 实例
 const request: AxiosInstance = axios.create({
@@ -64,7 +66,7 @@ request.interceptors.response.use(
         case 401:
           message.error('未登录或登录已过期');
           localStorage.removeItem('admin_token');
-          window.location.href = '/login';
+          window.location.href = LOGIN_URL;
           break;
         case 403:
           message.error('没有权限执行此操作');
