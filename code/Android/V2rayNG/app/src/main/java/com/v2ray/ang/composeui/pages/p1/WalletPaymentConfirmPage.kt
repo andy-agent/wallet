@@ -1,15 +1,14 @@
 package com.v2ray.ang.composeui.pages.p1
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.ui.P01Card
 import com.v2ray.ang.composeui.p0.ui.P01CardCopy
@@ -17,28 +16,34 @@ import com.v2ray.ang.composeui.p0.ui.P01CardHeader
 import com.v2ray.ang.composeui.p0.ui.P01Chip
 import com.v2ray.ang.composeui.p0.ui.P01Header
 import com.v2ray.ang.composeui.p0.ui.P01List
-import com.v2ray.ang.composeui.p0.ui.P01MetricCell
-import com.v2ray.ang.composeui.p0.ui.P01MetricGrid
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
+import com.v2ray.ang.composeui.p0.ui.P01RealQr
+import com.v2ray.ang.composeui.p0.ui.P01SecondaryButton
 import com.v2ray.ang.composeui.p1.model.WalletPaymentConfirmEvent
 import com.v2ray.ang.composeui.p1.model.WalletPaymentConfirmUiState
 import com.v2ray.ang.composeui.p1.model.walletPaymentConfirmPreviewState
+import com.v2ray.ang.composeui.p1.model.resolvedPaymentQrText
 import com.v2ray.ang.composeui.p1.viewmodel.WalletPaymentConfirmViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun WalletPaymentConfirmRoute(
     viewModel: WalletPaymentConfirmViewModel,
-    onPrimaryAction: () -> Unit = {},
-    onSecondaryAction: (() -> Unit)? = null,
+    onPrimaryAction: (String) -> Unit = {},
+    onSecondaryAction: ((String) -> Unit)? = null,
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     WalletPaymentConfirmScreen(
         uiState = uiState,
+        onRefresh = { viewModel.onEvent(WalletPaymentConfirmEvent.Refresh) },
         onPrimaryAction = {
             viewModel.onEvent(WalletPaymentConfirmEvent.PrimaryActionClicked)
-            onPrimaryAction()
+            uiState.orderNo?.let(onPrimaryAction)
+        },
+        onSecondaryAction = {
+            viewModel.onEvent(WalletPaymentConfirmEvent.SecondaryActionClicked)
+            uiState.planCode?.let(onSecondaryAction ?: return@WalletPaymentConfirmScreen)
         },
         onBottomNav = onBottomNav,
     )
@@ -47,138 +52,109 @@ fun WalletPaymentConfirmRoute(
 @Composable
 fun WalletPaymentConfirmScreen(
     uiState: WalletPaymentConfirmUiState,
+    onRefresh: () -> Unit,
     onPrimaryAction: () -> Unit,
+    onSecondaryAction: () -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    val rows = paymentConfirmRows(uiState)
-    var focusedSummaryIndex by rememberSaveable {
-        mutableIntStateOf(rows.summaryRows.indexOfFirst { it.first == "支付金额" }.coerceAtLeast(0))
-    }
-    var selectedRiskIndex by rememberSaveable { mutableIntStateOf(-1) }
-    val summaryAccent = if (focusedSummaryIndex == rows.summaryRows.indexOfFirst { it.first == "支付金额" }) {
-        Color(0xFFF6B155)
-    } else {
-        Color(0xFF4276FF)
-    }
+    val qrText = uiState.resolvedPaymentQrText()
+    val rows = listOfNotNull(
+        "套餐" to uiState.planTitle.ifBlank { uiState.planCode.orEmpty() }.ifBlank { null },
+        "订单状态" to uiState.statusText.ifBlank { uiState.status.orEmpty() }.ifBlank { null },
+        "支付资产" to listOf(uiState.assetCode, uiState.networkCode).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { null },
+        "订单号" to uiState.orderNo,
+        "应付金额" to uiState.payableAmount.takeIf { it.isNotBlank() }?.let { "$it ${uiState.assetCode}" },
+        "唯一尾差" to uiState.uniqueAmountDelta,
+        "到期时间" to uiState.expiresAt,
+    )
 
     P01PhoneScaffold(
         statusTime = "18:14",
-        currentRoute = CryptoVpnRouteSpec.plans.name,
+        currentRoute = CryptoVpnRouteSpec.walletPaymentConfirm.name,
         onBottomNav = onBottomNav,
     ) {
         P01Header(
             eyebrow = "WALLET PAYMENT",
             title = "钱包支付确认",
-            subtitle = "把 VPN 续费变成标准的钱包支付流，而不是额外弹窗。",
+            subtitle = uiState.summary,
             chips = listOf("链路安全"),
-            trailing = { P1SecureHub(label = paymentConfirmHubLabel(selectedRiskIndex, focusedSummaryIndex)) },
+            trailing = { P1SecureHub(label = uiState.statusText.ifBlank { "SAFE" }) },
         )
 
         P01Card {
             P01CardHeader(
                 title = "订单摘要",
-                trailing = { P01Chip(text = rows.orderNoLabel) },
+                trailing = {
+                    uiState.orderNo?.let { P01Chip(text = "订单 #$it") }
+                },
+            )
+            P01CardCopy(
+                uiState.screenState.unavailableMessage
+                    ?: uiState.screenState.errorMessage
+                    ?: uiState.screenState.emptyMessage
+                    ?: uiState.note.ifBlank { "钱包支付确认已绑定真实订单。" },
             )
             P01List {
-                rows.summaryRows.forEachIndexed { index, (title, value) ->
+                rows.forEach { (title, value) ->
+                    value?.takeIf { it.isNotBlank() }?.let {
+                        P1FeedbackRow(
+                            title = title,
+                            value = it,
+                            selected = title == "套餐",
+                        )
+                    }
+                }
+                if (uiState.collectionAddress.isNotBlank()) {
                     P1FeedbackRow(
-                        title = title,
-                        value = value,
-                        selected = index == focusedSummaryIndex,
-                        accentColor = if (title == "支付金额") Color(0xFFF6B155) else summaryAccent,
-                        valueColor = if (title == "支付金额") Color(0xFFF6B155) else summaryAccent,
-                        onClick = { focusedSummaryIndex = index },
+                        title = "收款地址",
+                        value = uiState.collectionAddress,
                     )
                 }
             }
         }
 
         P1SelectableCard(
-            selected = true,
-            accentColor = Color(0xFF49D89B),
+            selected = qrText.isNotBlank(),
         ) {
-            P01MetricGrid(
-                items = listOf(
-                    P01MetricCell("剩余余额", rows.balanceText),
-                    P01MetricCell("路由状态", "已加密"),
-                ),
-            )
+            P01CardHeader(title = "扫码支付")
             P01CardCopy(
-                if (selectedRiskIndex >= 0) {
-                    "风控项已确认 · VPN 广播交易。"
+                if (qrText.isBlank()) {
+                    "当前订单没有可用的二维码载荷。"
                 } else {
-                    "支付后 · VPN 广播交易。"
+                    "支付确认页使用真实订单信息生成二维码，与你在结算页看到的目标保持一致。"
                 },
             )
-        }
-
-        P01Card {
-            P01CardHeader(
-                title = "风控提示",
-                trailing = {
-                    P01Chip(
-                        text = if (selectedRiskIndex >= 0) "已核对" else "建议查看",
-                        highlighted = selectedRiskIndex >= 0,
-                    )
-                },
-            )
-            P01List {
-                listOf(
-                    "收款地址已绑定官方商户" to "避免因中间人攻击造成错误转账。",
-                    "当前节点延迟稳定" to "提交交易不会因重试产生重复扣款。",
-                ).forEachIndexed { index, (title, copy) ->
-                    P1FeedbackRow(
-                        title = title,
-                        copy = copy,
-                        selected = index == selectedRiskIndex,
-                        accentColor = Color(0xFF49D89B),
-                        onClick = { selectedRiskIndex = index },
-                    )
+            if (qrText.isNotBlank()) {
+                P01RealQr(content = qrText)
+                if (uiState.collectionAddress.isNotBlank()) {
+                    P01CardCopy(uiState.collectionAddress)
                 }
             }
         }
 
-        P1PrimaryCta(
-            text = "确认支付并开通",
-            onClick = onPrimaryAction,
+        Row(
             modifier = Modifier.fillMaxWidth(),
-        )
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            P01SecondaryButton(
+                text = uiState.secondaryActionLabel ?: "返回结算页",
+                onClick = onSecondaryAction,
+                modifier = Modifier.weight(1f),
+            )
+            P1PrimaryCta(
+                text = if (uiState.orderNo == null) "刷新订单" else uiState.primaryActionLabel,
+                onClick = {
+                    if (uiState.orderNo == null) {
+                        onRefresh()
+                    } else {
+                        onPrimaryAction()
+                    }
+                },
+                modifier = Modifier.weight(1f),
+                active = uiState.orderNo != null || uiState.screenState.hasError,
+            )
+        }
     }
-}
-
-private data class WalletPaymentConfirmRows(
-    val orderNoLabel: String,
-    val balanceText: String,
-    val summaryRows: List<Pair<String, String>>,
-)
-
-private fun paymentConfirmRows(uiState: WalletPaymentConfirmUiState): WalletPaymentConfirmRows {
-    val metrics = uiState.metrics.associate { it.label to it.value }
-    val contentHighlights = uiState.highlights.p1ContentItems()
-    val highlightMap = contentHighlights.associateBy { it.title }
-    val planTitle = highlightMap.keys.firstOrNull { !it.contains("收款地址") && !it.contains("订单状态") }
-    return WalletPaymentConfirmRows(
-        orderNoLabel = metrics["订单号"]?.let { "订单 #$it" } ?: "订单 #CVP-2409",
-        balanceText = "12,781.99",
-        summaryRows = listOf(
-            "套餐" to (planTitle ?: "年度 Pro"),
-            "可用设备" to "5 台",
-            "节点权益" to "高速专线 + 智能分流",
-            "支付资产" to ((metrics["支付币种"] ?: "USDT") + " · TRON"),
-            "支付金额" to (highlightMap[planTitle]?.trailing ?: "58.00 USDT"),
-            "网络费" to (metrics["网络手续费"] ?: "1.24 USDT"),
-            "预计开通" to "1 分钟内",
-        ),
-    )
-}
-
-private fun paymentConfirmHubLabel(
-    selectedRiskIndex: Int,
-    focusedSummaryIndex: Int,
-): String = when {
-    selectedRiskIndex >= 0 -> "CHECK"
-    focusedSummaryIndex >= 4 -> "PAY"
-    else -> "SAFE"
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
@@ -187,7 +163,9 @@ private fun WalletPaymentConfirmPreview() {
     CryptoVpnTheme {
         WalletPaymentConfirmScreen(
             uiState = walletPaymentConfirmPreviewState(),
+            onRefresh = {},
             onPrimaryAction = {},
+            onSecondaryAction = {},
         )
     }
 }

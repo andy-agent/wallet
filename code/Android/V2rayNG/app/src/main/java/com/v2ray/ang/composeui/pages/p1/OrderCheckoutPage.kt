@@ -19,12 +19,13 @@ import com.v2ray.ang.composeui.p0.ui.P01Chip
 import com.v2ray.ang.composeui.p0.ui.P01Header
 import com.v2ray.ang.composeui.p0.ui.P01List
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
-import com.v2ray.ang.composeui.p0.ui.P01QrArt
+import com.v2ray.ang.composeui.p0.ui.P01RealQr
 import com.v2ray.ang.composeui.p0.ui.P01SecondaryButton
 import com.v2ray.ang.composeui.p0.ui.P01Tab
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutEvent
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutUiState
 import com.v2ray.ang.composeui.p1.model.orderCheckoutPreviewState
+import com.v2ray.ang.composeui.p1.model.resolvedPaymentQrText
 import com.v2ray.ang.composeui.p1.viewmodel.OrderCheckoutViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
@@ -63,6 +64,7 @@ fun OrderCheckoutScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     val clipboardManager = LocalClipboardManager.current
+    val qrText = uiState.resolvedPaymentQrText()
     val rows = listOfNotNull(
         "套餐" to uiState.planTitle.ifBlank { uiState.planCode.orEmpty() }.ifBlank { null },
         "支付网络" to uiState.networkCode.ifBlank { null },
@@ -141,7 +143,7 @@ fun OrderCheckoutScreen(
         }
 
         P1SelectableCard(
-            selected = uiState.collectionAddress.isNotBlank(),
+            selected = qrText.isNotBlank(),
         ) {
             P01CardHeader(
                 title = "扫码支付",
@@ -155,11 +157,11 @@ fun OrderCheckoutScreen(
                 if (uiState.collectionAddress.isBlank()) {
                     "当前服务不可签发链路"
                 } else {
-                    "使用当前网络的钱包完成付款，或复制真实收款地址。"
+                    "二维码来自真实订单 payload，复制地址可用于手动转账。"
                 },
             )
-            if (uiState.collectionAddress.isNotBlank()) {
-                P01QrArt()
+            if (qrText.isNotBlank()) {
+                P01RealQr(content = qrText)
                 P01CardCopy(uiState.collectionAddress)
             } else {
                 P01CardCopy("当前没有可用的真实收款地址，请刷新订单。")
