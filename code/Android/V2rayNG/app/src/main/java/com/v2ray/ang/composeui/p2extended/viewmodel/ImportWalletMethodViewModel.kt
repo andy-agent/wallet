@@ -1,13 +1,16 @@
 package com.v2ray.ang.composeui.p2extended.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2extended.model.ImportWalletMethodEvent
 import com.v2ray.ang.composeui.p2extended.model.ImportWalletMethodUiState
+import com.v2ray.ang.composeui.p2extended.model.importWalletMethodLoadingState
+import kotlinx.coroutines.launch
 
 class ImportWalletMethodViewModel(
     private val repository: CryptoVpnRepository,
-) : BaseFeatureViewModel<ImportWalletMethodUiState>(ImportWalletMethodUiState()) {
+) : BaseFeatureViewModel<ImportWalletMethodUiState>(importWalletMethodLoadingState()) {
 
     init {
         refresh()
@@ -30,8 +33,9 @@ class ImportWalletMethodViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getImportWalletMethodState()
+        viewModelScope.launch {
+            _uiState.value = importWalletMethodLoadingState()
+            _uiState.value = repository.getImportWalletMethodState()
         }
     }
 }

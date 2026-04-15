@@ -1,36 +1,44 @@
 package com.v2ray.ang.composeui.pages.p2extended
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
+import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.p2extended.model.BackupMnemonicEvent
 import com.v2ray.ang.composeui.p2extended.model.BackupMnemonicUiState
 import com.v2ray.ang.composeui.p2extended.model.backupMnemonicPreviewState
 import com.v2ray.ang.composeui.p2extended.viewmodel.BackupMnemonicViewModel
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
 @Composable
 fun BackupMnemonicRoute(
     viewModel: BackupMnemonicViewModel,
-    onPrimaryAction: () -> Unit = {},
+    onPrimaryAction: (() -> Unit)? = null,
     onSecondaryAction: (() -> Unit)? = null,
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     BackupMnemonicScreen(
         uiState = uiState,
         onEvent = { event ->
             viewModel.onEvent(event)
             when (event) {
-                BackupMnemonicEvent.PrimaryActionClicked -> onPrimaryAction()
-                BackupMnemonicEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
+                BackupMnemonicEvent.PrimaryActionClicked -> {
+                    if (!uiState.isLoading) {
+                        viewModel.submitBackupAcknowledgement(
+                            onSuccess = { onPrimaryAction?.invoke() },
+                            onError = { message ->
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            },
+                        )
+                    }
+                }
+                BackupMnemonicEvent.SecondaryActionClicked -> if (!uiState.isLoading) onSecondaryAction?.invoke()
                 else -> Unit
             }
         },
@@ -44,60 +52,29 @@ fun BackupMnemonicScreen(
     onEvent: (BackupMnemonicEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    val wordFocus = rememberLoopingIndex(itemCount = 12, durationMillis = 7200)
-    val ruleFocus = rememberLoopingIndex(itemCount = 2, durationMillis = 3600)
-    val backupMetrics = uiState.metrics.take(3).map { it.label to it.value }
-    val metricFocus = if (backupMetrics.isNotEmpty()) wordFocus % backupMetrics.size else -1
-    P2ExtendedPageScaffold(
-        kicker = "Backup",
-        title = "备份助记词",
-        subtitle = "创建成功后立即完成离线备份，这是恢复资产的唯一方式。",
-        hubLabel = "高优先级",
-        onHubClick = { onEvent(BackupMnemonicEvent.Refresh) },
-        primaryActionLabel = "我已安全备份",
+    FeaturePageTemplate(
+        title = uiState.title,
+        subtitle = uiState.subtitle,
+        badge = uiState.badge,
+        summary = uiState.summary,
+        heroAccent = uiState.heroAccent,
+        metrics = uiState.metrics,
+        fields = uiState.fields,
+        highlights = uiState.highlights,
+        checklist = uiState.checklist,
+        note = uiState.note,
+        primaryActionLabel = uiState.primaryActionLabel,
+        secondaryActionLabel = uiState.secondaryActionLabel,
+        showBottomBar = false,
+        currentRoute = "backup_mnemonic",
+        motionProfile = MotionProfile.L1,
+        onBottomNav = onBottomNav,
+        onFieldChanged = { key, value ->
+            onEvent(BackupMnemonicEvent.FieldChanged(key = key, value = value))
+        },
         onPrimaryAction = { onEvent(BackupMnemonicEvent.PrimaryActionClicked) },
-        secondaryActionLabel = "导出到离线打印模板",
         onSecondaryAction = { onEvent(BackupMnemonicEvent.SecondaryActionClicked) },
-    ) {
-        KpiRow(items = backupMetrics, activeIndex = metricFocus)
-        Spacer(modifier = Modifier.height(12.dp))
-        P2Card(title = "请抄写以下 12 个单词", subtitle = "不要截屏、不要存云端、不要分享给任何人。") {
-            MnemonicGrid(
-                words = listOf(
-                    "ocean", "brick", "velvet",
-                    "lamp", "maple", "vivid",
-                    "orbit", "coral", "charge",
-                    "laptop", "anchor", "glow",
-                ),
-                focusIndex = wordFocus,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            SecurityStatusPill(label = "离线抄写确认", healthy = false, animated = true)
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        P2Card(title = "备份规范", subtitle = "通过分步约束降低泄露风险。") {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                P2FlowStepCard(
-                    step = "RULE 1",
-                    title = "仅离线载体保存",
-                    detail = "纸质或离线硬件介质，避免截图与云端笔记",
-                    emphasized = ruleFocus == 0,
-                    animated = true,
-                )
-                P2FlowStepCard(
-                    step = "RULE 2",
-                    title = "至少两份物理备份",
-                    detail = "分地保存，防止单点丢失或损坏",
-                    emphasized = ruleFocus == 1,
-                    animated = true,
-                )
-                P2InlineWarningCard(
-                    title = "高风险提醒",
-                    text = "助记词泄露等同资产所有权转移，无法撤销。",
-                )
-            }
-        }
-    }
+    )
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

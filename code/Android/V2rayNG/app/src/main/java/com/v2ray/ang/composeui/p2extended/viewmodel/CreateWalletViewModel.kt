@@ -1,15 +1,18 @@
 package com.v2ray.ang.composeui.p2extended.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2extended.model.CreateWalletEvent
 import com.v2ray.ang.composeui.p2extended.model.CreateWalletUiState
 import com.v2ray.ang.composeui.p2extended.model.CreateWalletRouteArgs
+import com.v2ray.ang.composeui.p2extended.model.createWalletLoadingState
+import kotlinx.coroutines.launch
 
 class CreateWalletViewModel(
     private val repository: CryptoVpnRepository,
     private val routeArgs: CreateWalletRouteArgs = CreateWalletRouteArgs(),
-) : BaseFeatureViewModel<CreateWalletUiState>(CreateWalletUiState()) {
+) : BaseFeatureViewModel<CreateWalletUiState>(createWalletLoadingState()) {
 
     init {
         refresh()
@@ -32,8 +35,25 @@ class CreateWalletViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getCreateWalletState(routeArgs)
+        viewModelScope.launch {
+            _uiState.value = createWalletLoadingState()
+            _uiState.value = repository.getCreateWalletState(routeArgs)
+        }
+    }
+
+    fun submitCreate(
+        onSuccess: (String?) -> Unit,
+        onError: (String) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val walletName = _uiState.value.fields.firstOrNull { it.key == "name" }?.value.orEmpty()
+            val result = repository.createWallet(walletName)
+            if (result.success) {
+                refresh()
+                onSuccess(result.walletId)
+            } else {
+                onError(result.errorMessage ?: "创建钱包失败")
+            }
         }
     }
 }

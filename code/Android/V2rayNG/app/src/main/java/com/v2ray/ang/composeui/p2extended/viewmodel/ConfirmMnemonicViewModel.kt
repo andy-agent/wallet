@@ -1,15 +1,18 @@
 package com.v2ray.ang.composeui.p2extended.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2extended.model.ConfirmMnemonicEvent
 import com.v2ray.ang.composeui.p2extended.model.ConfirmMnemonicUiState
 import com.v2ray.ang.composeui.p2extended.model.ConfirmMnemonicRouteArgs
+import com.v2ray.ang.composeui.p2extended.model.confirmMnemonicLoadingState
+import kotlinx.coroutines.launch
 
 class ConfirmMnemonicViewModel(
     private val repository: CryptoVpnRepository,
     private val routeArgs: ConfirmMnemonicRouteArgs = ConfirmMnemonicRouteArgs(),
-) : BaseFeatureViewModel<ConfirmMnemonicUiState>(ConfirmMnemonicUiState()) {
+) : BaseFeatureViewModel<ConfirmMnemonicUiState>(confirmMnemonicLoadingState()) {
 
     init {
         refresh()
@@ -32,8 +35,24 @@ class ConfirmMnemonicViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getConfirmMnemonicState(routeArgs)
+        viewModelScope.launch {
+            _uiState.value = confirmMnemonicLoadingState()
+            _uiState.value = repository.getConfirmMnemonicState(routeArgs)
+        }
+    }
+
+    fun submitConfirm(
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val result = repository.confirmWalletBackup()
+            if (result.isSuccess) {
+                refresh()
+                onSuccess()
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "钱包激活失败")
+            }
         }
     }
 }

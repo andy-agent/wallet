@@ -3,7 +3,9 @@ package com.v2ray.ang.composeui.pages.p2extended
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import android.widget.Toast
 import com.v2ray.ang.composeui.components.feature.FeaturePageTemplate
 import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
@@ -15,18 +17,28 @@ import com.v2ray.ang.composeui.p2extended.viewmodel.CreateWalletViewModel
 @Composable
 fun CreateWalletRoute(
     viewModel: CreateWalletViewModel,
-    onPrimaryAction: () -> Unit = {},
+    onPrimaryAction: (String?) -> Unit = { _ -> },
     onSecondaryAction: (() -> Unit)? = null,
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     CreateWalletScreen(
         uiState = uiState,
         onEvent = { event ->
             viewModel.onEvent(event)
             when (event) {
-                CreateWalletEvent.PrimaryActionClicked -> onPrimaryAction()
-                CreateWalletEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
+                CreateWalletEvent.PrimaryActionClicked -> {
+                    if (!uiState.isLoading) {
+                        viewModel.submitCreate(
+                            onSuccess = onPrimaryAction,
+                            onError = { message ->
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            },
+                        )
+                    }
+                }
+                CreateWalletEvent.SecondaryActionClicked -> if (!uiState.isLoading) onSecondaryAction?.invoke()
                 else -> Unit
             }
         },
