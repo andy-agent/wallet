@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,11 +51,13 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.effects.TechParticleBackground
@@ -65,6 +68,7 @@ import com.v2ray.ang.composeui.p0.ui.defaultP01Destinations
 import com.v2ray.ang.composeui.p0.ui.P01BottomNav
 import com.v2ray.ang.composeui.p0.ui.P01HeaderHeroRing
 import com.v2ray.ang.composeui.p0.ui.defaultP01Destinations
+import com.v2ray.ang.util.QRCodeDecoder
 import kotlinx.coroutines.delay
 
 private val CorePageBackground = Brush.verticalGradient(
@@ -815,6 +819,7 @@ internal fun P2CoreQrAddressCard(
     subtitle: String,
     address: String,
     modifier: Modifier = Modifier,
+    qrContent: String = address,
     addressLabel: String = "二维码内容",
     supportingText: String? = null,
     status: String? = null,
@@ -844,7 +849,10 @@ internal fun P2CoreQrAddressCard(
                 .padding(vertical = 22.dp),
             contentAlignment = Alignment.Center,
         ) {
-            P2CoreQrPlaceholder()
+            P2CoreQrContent(
+                content = qrContent,
+                emptyLabel = "暂无可生成二维码",
+            )
         }
         Column(
             modifier = Modifier
@@ -861,6 +869,37 @@ internal fun P2CoreQrAddressCard(
             }
         }
         footer()
+    }
+}
+
+@Composable
+private fun P2CoreQrContent(
+    content: String,
+    emptyLabel: String,
+) {
+    val normalized = content.trim().takeUnless { it.isBlank() || it == "--" }
+    val qrBitmap = remember(normalized) {
+        normalized?.let { QRCodeDecoder.createQRCode(it, size = 720) }
+    }
+    if (qrBitmap != null) {
+        Image(
+            bitmap = qrBitmap.asImageBitmap(),
+            contentDescription = "二维码",
+            modifier = Modifier.size(188.dp),
+            contentScale = ContentScale.Fit,
+        )
+        return
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(
+            text = emptyLabel,
+            style = MaterialTheme.typography.bodySmall,
+            color = CoreSubtleText,
+        )
     }
 }
 

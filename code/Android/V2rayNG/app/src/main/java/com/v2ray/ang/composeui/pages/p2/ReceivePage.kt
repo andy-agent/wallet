@@ -45,6 +45,9 @@ fun ReceiveScreen(
     val context = LocalContext.current
     val chips = uiState.metrics.take(3).map { it.value }
     val address = uiState.fields.firstOrNull()?.value ?: "--"
+    val qrContent = uiState.shareText.ifBlank {
+        address.takeUnless { it.isBlank() || it == "--" }.orEmpty()
+    }
     val status = uiState.metrics.getOrNull(3)?.value ?: "已校验"
     val addressPreview = if (address.length > 14) "${address.take(6)}...${address.takeLast(6)}" else address
     P2CorePageScaffold(
@@ -72,6 +75,7 @@ fun ReceiveScreen(
             status = status,
             statusColor = androidx.compose.ui.graphics.Color(0xFFE6FFF6),
             address = address,
+            qrContent = qrContent,
             addressLabel = "收款地址",
             supportingText = uiState.note,
         ) {
