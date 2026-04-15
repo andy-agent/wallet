@@ -1188,8 +1188,10 @@ class PaymentRepository(context: Context) {
         val resolvedUserId = userId ?: me?.accountId ?: getCurrentUserId()
             ?: return@withContext Result.failure(Exception("未识别当前用户"))
 
-        syncOrdersFromServer(force = true, userId = resolvedUserId).getOrElse {
-            return@withContext Result.failure(it)
+        syncOrdersFromServer(force = true, userId = resolvedUserId).getOrElse { error ->
+            if (!isNonFatalOrderSyncFailure(error.message)) {
+                return@withContext Result.failure(error)
+            }
         }
 
         val subscription = getSubscription().getOrElse {
@@ -1220,6 +1222,10 @@ class PaymentRepository(context: Context) {
 
         SessionKeepAliveService.start(appContext)
         Result.success(Unit)
+    }
+
+    private fun isNonFatalOrderSyncFailure(message: String?): Boolean {
+        return message?.contains("订单接口待同步") == true
     }
 
     suspend fun getReferralOverview(): Result<ReferralOverviewData> = withContext(Dispatchers.IO) {

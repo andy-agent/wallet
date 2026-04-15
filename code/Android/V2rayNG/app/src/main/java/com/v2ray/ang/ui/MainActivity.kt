@@ -49,6 +49,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelectedListener {
+    companion object {
+        const val EXTRA_FORCE_LEGACY = "force_legacy_main"
+    }
+
     private val binding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
@@ -91,9 +95,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (shouldLaunchComposeHome(savedInstanceState)) {
-            startActivity(ComposeContainerActivity.createIntent(this))
-            finish()
+        if (rerouteToComposeIfNeeded(savedInstanceState, intent)) {
             return
         }
 
@@ -137,18 +139,35 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         }
     }
 
-    private fun shouldLaunchComposeHome(savedInstanceState: Bundle?): Boolean {
-        if (savedInstanceState != null || !isTaskRoot) {
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        rerouteToComposeIfNeeded(savedInstanceState = null, currentIntent = intent)
+    }
+
+    private fun rerouteToComposeIfNeeded(
+        savedInstanceState: Bundle?,
+        currentIntent: Intent?,
+    ): Boolean {
+        if (!shouldLaunchComposeHome(savedInstanceState, currentIntent)) {
             return false
         }
-        val currentIntent = intent ?: return false
-        if (currentIntent.action != Intent.ACTION_MAIN) {
+        startActivity(ComposeContainerActivity.createIntent(this))
+        finish()
+        return true
+    }
+
+    private fun shouldLaunchComposeHome(
+        savedInstanceState: Bundle?,
+        currentIntent: Intent?,
+    ): Boolean {
+        if (currentIntent?.getBooleanExtra(EXTRA_FORCE_LEGACY, false) == true) {
             return false
         }
-        val categories = currentIntent.categories
-        return categories == null ||
-            categories.contains(Intent.CATEGORY_LAUNCHER) ||
-            categories.contains(Intent.CATEGORY_LEANBACK_LAUNCHER)
+        if (savedInstanceState != null) {
+            return false
+        }
+        return true
     }
 
     private fun setupViewModel() {

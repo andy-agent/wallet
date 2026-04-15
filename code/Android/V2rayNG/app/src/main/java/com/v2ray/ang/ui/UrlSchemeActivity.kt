@@ -11,6 +11,8 @@ import com.v2ray.ang.databinding.ActivityLogcatBinding
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.extension.toastError
 import com.v2ray.ang.handler.AngConfigManager
+import com.v2ray.ang.payment.data.repository.PaymentRepository
+import com.v2ray.ang.ui.compose.ComposeContainerActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -18,6 +20,7 @@ import java.net.URLDecoder
 
 class UrlSchemeActivity : BaseActivity() {
     private val binding by lazy { ActivityLogcatBinding.inflate(layoutInflater) }
+    private val paymentRepository by lazy { PaymentRepository(applicationContext) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +48,16 @@ class UrlSchemeActivity : BaseActivity() {
                             parseUri(shareUrl, uri?.fragment)
                         }
 
+                        "invite" -> {
+                            val uri: Uri? = intent.data
+                            val referralCode = uri?.getQueryParameter("code").orEmpty().trim()
+                            if (referralCode.isNotBlank()) {
+                                paymentRepository.savePendingReferralCode(referralCode)
+                            } else {
+                                toastError(R.string.toast_failure)
+                            }
+                        }
+
                         else -> {
                             toastError(R.string.toast_failure)
                         }
@@ -52,7 +65,7 @@ class UrlSchemeActivity : BaseActivity() {
                 }
             }
 
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(ComposeContainerActivity.createIntent(this))
             finish()
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "Error processing URL scheme", e)
