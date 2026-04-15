@@ -12,7 +12,11 @@ import {
   VerificationCodeRecord,
 } from '../auth/auth.types';
 import { OrderStatus } from '../orders/orders.types';
-import { PersistedWalletLifecycleRecord } from '../wallet/wallet.types';
+import {
+  PersistedWalletLifecycleRecord,
+  PersistedWalletPublicAddressRecord,
+  PersistedWalletSecretBackupRecord,
+} from '../wallet/wallet.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 import { RuntimeStateRepository } from './runtime-state.repository';
 import {
@@ -26,11 +30,13 @@ import {
 } from './runtime-state.types';
 
 const EMPTY_RUNTIME_STATE: RuntimeStateSnapshot = {
-  version: 4,
+  version: 5,
   orders: [],
   idempotencyIndex: {},
   subscriptions: [],
   walletLifecycles: [],
+  walletPublicAddresses: [],
+  walletSecretBackups: [],
   accounts: [],
   sessions: [],
   verificationCodes: [],
@@ -349,6 +355,79 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
     return record;
   }
 
+  async listWalletPublicAddressesByAccountId(params: {
+    accountId: string;
+    networkCode?: PersistedWalletPublicAddressRecord['networkCode'];
+    assetCode?: PersistedWalletPublicAddressRecord['assetCode'];
+  }): Promise<PersistedWalletPublicAddressRecord[]> {
+    let items = this.readSnapshot().walletPublicAddresses.filter(
+      (item) => item.accountId === params.accountId,
+    );
+
+    if (params.networkCode) {
+      items = items.filter((item) => item.networkCode === params.networkCode);
+    }
+
+    if (params.assetCode) {
+      items = items.filter((item) => item.assetCode === params.assetCode);
+    }
+
+    return items
+      .slice()
+      .sort((left, right) => {
+        const defaultDelta = Number(right.isDefault) - Number(left.isDefault);
+        if (defaultDelta !== 0) {
+          return defaultDelta;
+        }
+        return left.createdAt.localeCompare(right.createdAt);
+      });
+  }
+
+  async countWalletPublicAddressesByAccountId(accountId: string): Promise<number> {
+    return this.readSnapshot().walletPublicAddresses.filter(
+      (item) => item.accountId === accountId,
+    ).length;
+  }
+
+  async upsertWalletPublicAddress(
+    record: PersistedWalletPublicAddressRecord,
+  ): Promise<PersistedWalletPublicAddressRecord> {
+    const snapshot = this.readSnapshot();
+    const nextAddresses = snapshot.walletPublicAddresses.filter(
+      (item) => item.addressId !== record.addressId,
+    );
+
+    nextAddresses.push(record);
+    snapshot.walletPublicAddresses = nextAddresses;
+    this.writeSnapshot(snapshot);
+    return record;
+  }
+
+  async findWalletSecretBackupByAccountId(
+    accountId: string,
+  ): Promise<PersistedWalletSecretBackupRecord | null> {
+    return (
+      this.readSnapshot().walletSecretBackups
+        .filter((item) => item.accountId === accountId)
+        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))[0] ??
+      null
+    );
+  }
+
+  async upsertWalletSecretBackup(
+    record: PersistedWalletSecretBackupRecord,
+  ): Promise<PersistedWalletSecretBackupRecord> {
+    const snapshot = this.readSnapshot();
+    const nextBackups = snapshot.walletSecretBackups.filter(
+      (item) => item.accountId !== record.accountId,
+    );
+
+    nextBackups.push(record);
+    snapshot.walletSecretBackups = nextBackups;
+    this.writeSnapshot(snapshot);
+    return record;
+  }
+
   private ensureStateFile() {
     const directory = dirname(this.stateFilePath);
     if (!existsSync(directory)) {
@@ -382,11 +461,13 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
 
   private normalizeSnapshot(raw: Partial<RuntimeStateSnapshot>) {
     return {
-      version: 4,
+      version: 5,
       orders: raw.orders ?? [],
       idempotencyIndex: raw.idempotencyIndex ?? {},
       subscriptions: raw.subscriptions ?? [],
       walletLifecycles: raw.walletLifecycles ?? [],
+      walletPublicAddresses: raw.walletPublicAddresses ?? [],
+      walletSecretBackups: raw.walletSecretBackups ?? [],
       accounts: raw.accounts ?? [],
       sessions: raw.sessions ?? [],
       verificationCodes: raw.verificationCodes ?? [],

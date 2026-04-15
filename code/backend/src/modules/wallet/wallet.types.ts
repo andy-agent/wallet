@@ -38,6 +38,22 @@ export interface PersistedWalletPublicAddressRecord {
   updatedAt: string;
 }
 
+export interface PersistedWalletSecretBackupRecord {
+  backupId: string;
+  accountId: string;
+  walletId: string;
+  secretType: 'MNEMONIC';
+  encryptionScheme: 'AGE';
+  recoveryKeyVersion: string;
+  recipientFingerprint: string;
+  ciphertext: string;
+  replicatedToBackupServer: boolean;
+  backupServerReference: string | null;
+  lastReplicationError: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface WalletLifecycleView {
   accountId: string;
   walletExists: boolean;

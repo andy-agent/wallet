@@ -1,8 +1,10 @@
 import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
+import { BuildTransferRequestDto } from './dto/build-transfer.request';
 import { ProxyBroadcastRequestDto } from './dto/proxy-broadcast.request';
 import { TransferPrecheckRequestDto } from './dto/transfer-precheck.request';
 import { UpsertWalletLifecycleRequestDto } from './dto/upsert-wallet-lifecycle.request';
 import { UpsertWalletPublicAddressRequestDto } from './dto/upsert-wallet-public-address.request';
+import { UpsertWalletSecretBackupRequestDto } from './dto/upsert-wallet-secret-backup.request';
 import { WalletService } from './wallet.service';
 
 @Controller('client/v1/wallet')
@@ -49,13 +51,12 @@ export class WalletController {
   @Get('receive-context')
   getReceiveContext(
     @Headers('authorization') authorization?: string,
-    @Query('networkCode') networkCode?: string,
-    @Query('assetCode') assetCode?: string,
+    @Query() query?: Record<string, string | undefined>,
   ) {
     return this.walletService.getReceiveContext(
       this.extractBearer(authorization),
-      networkCode,
-      assetCode,
+      this.resolveNetworkCode(query),
+      this.resolveAssetCode(query),
     );
   }
 
@@ -70,14 +71,36 @@ export class WalletController {
   @Get('public-addresses')
   listPublicAddresses(
     @Headers('authorization') authorization?: string,
-    @Query('networkCode') networkCode?: string,
-    @Query('assetCode') assetCode?: string,
+    @Query() query?: Record<string, string | undefined>,
   ) {
     return this.walletService.listPublicAddresses(
       this.extractBearer(authorization),
-      networkCode,
-      assetCode,
+      this.resolveNetworkCode(query) as 'SOLANA' | 'TRON' | undefined,
+      this.resolveAssetCode(query) as 'SOL' | 'TRX' | 'USDT' | undefined,
     );
+  }
+
+  @Post('secret-backups')
+  upsertSecretBackup(
+    @Headers('authorization') authorization: string | undefined,
+    @Body() body: UpsertWalletSecretBackupRequestDto,
+  ) {
+    return this.walletService.upsertSecretBackup(this.extractBearer(authorization), body);
+  }
+
+  @Get('secret-backups')
+  getSecretBackupMetadata(
+    @Headers('authorization') authorization: string | undefined,
+  ) {
+    return this.walletService.getSecretBackupMetadata(this.extractBearer(authorization));
+  }
+
+  @Post('transfer/build')
+  async buildTransfer(
+    @Headers('authorization') authorization: string | undefined,
+    @Body() body: BuildTransferRequestDto,
+  ) {
+    return this.walletService.buildTransfer(this.extractBearer(authorization), body);
   }
 
   @Post('transfer/precheck')
@@ -101,5 +124,13 @@ export class WalletController {
       return '';
     }
     return authorization.slice('Bearer '.length);
+  }
+
+  private resolveNetworkCode(query?: Record<string, string | undefined>) {
+    return query?.networkCode ?? query?.chainId;
+  }
+
+  private resolveAssetCode(query?: Record<string, string | undefined>) {
+    return query?.assetCode ?? query?.assetId;
   }
 }

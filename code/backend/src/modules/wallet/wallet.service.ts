@@ -6,18 +6,35 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, randomUUID } from 'crypto';
+import {
+  createAssociatedTokenAccountInstruction,
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddressSync,
+} from '@solana/spl-token';
+import {
+  Connection,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from '@solana/web3.js';
+import { TronWeb } from 'tronweb';
 import { AuthService } from '../auth/auth.service';
 import { RuntimeStateRepository } from '../database/runtime-state.repository';
 import { OrdersService } from '../orders/orders.service';
+import { BuildTransferRequestDto } from './dto/build-transfer.request';
 import { SolanaClientService } from '../solana-client/solana-client.service';
 import { TronClientService } from '../tron-client/tron-client.service';
 import { ProxyBroadcastRequestDto } from './dto/proxy-broadcast.request';
 import { TransferPrecheckRequestDto } from './dto/transfer-precheck.request';
 import { UpsertWalletLifecycleRequestDto } from './dto/upsert-wallet-lifecycle.request';
 import { UpsertWalletPublicAddressRequestDto } from './dto/upsert-wallet-public-address.request';
+import { UpsertWalletSecretBackupRequestDto } from './dto/upsert-wallet-secret-backup.request';
+import { WalletBackupCryptoService } from './wallet-backup-crypto.service';
+import { WalletBackupRelayService } from './wallet-backup-relay.service';
 import {
   PersistedWalletLifecycleRecord,
   PersistedWalletPublicAddressRecord,
+  PersistedWalletSecretBackupRecord,
   WalletLifecycleNextAction,
   WalletLifecycleOrigin,
   WalletLifecycleStatus,
@@ -58,6 +75,8 @@ export class WalletService {
     private readonly runtimeStateRepository: RuntimeStateRepository,
     private readonly solanaClient: SolanaClientService,
     private readonly tronClient: TronClientService,
+    private readonly walletBackupCryptoService: WalletBackupCryptoService,
+    private readonly walletBackupRelayService: WalletBackupRelayService,
   ) {}
 
   getChains(accessToken: string) {
@@ -110,7 +129,7 @@ export class WalletService {
         symbol: 'USDT',
         decimals: 6,
         isNative: false,
-        contractAddress: '<SOLANA_USDT_CONTRACT>',
+        contractAddress: this.solanaClient.getUsdtMint(),
         walletVisible: true,
         orderPayable: solanaOrderPayable,
       },
@@ -134,7 +153,9 @@ export class WalletService {
         symbol: 'USDT',
         decimals: 6,
         isNative: false,
-        contractAddress: '<TRON_USDT_CONTRACT>',
+        contractAddress:
+          process.env.TRON_USDT_CONTRACT?.trim() ||
+          'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
         walletVisible: true,
         orderPayable: true,
       },
@@ -341,6 +362,32 @@ export class WalletService {
     };
   }
 
+  async buildTransfer(accessToken: string, dto: BuildTransferRequestDto) {
+    this.authService.getMe(accessToken);
+    const chain = this.getChains(accessToken).items.find(
+      (item) => item.networkCode === dto.networkCode,
+    );
+    const asset = this.getAssetCatalog(accessToken, dto.networkCode).items.find(
+      (item) => item.assetCode === dto.assetCode,
+    );
+    if (!chain || !asset) {
+      throw new BadRequestException({
+        code: 'WALLET_UNSUPPORTED_ASSET',
+        message: 'Unsupported asset',
+      });
+    }
+    if (!this.isAddressValid(dto.networkCode, dto.fromAddress) || !this.isAddressValid(dto.networkCode, dto.toAddress)) {
+      throw new BadRequestException({
+        code: 'WALLET_INVALID_ADDRESS',
+        message: 'Wallet address invalid',
+      });
+    }
+
+    return dto.networkCode === 'SOLANA'
+      ? this.buildSolanaTransfer(chain.publicRpcUrl ?? 'https://api.mainnet-beta.solana.com', dto)
+      : this.buildTronTransfer(asset.contractAddress, dto);
+  }
+
   async getWalletLifecycle(
     accessToken: string,
   ): Promise<WalletLifecycleView> {
@@ -425,14 +472,24 @@ export class WalletService {
     let next: PersistedWalletLifecycleRecord | null = null;
     switch (dto.action) {
       case 'CREATE':
+        if (
+          dto.mnemonicWordCount !== undefined &&
+          ![12, 24].includes(dto.mnemonicWordCount)
+        ) {
+          throw new BadRequestException({
+            code: 'WALLET_INVALID_MNEMONIC',
+            message: 'Mnemonic word count must be 12 or 24',
+          });
+        }
         next = {
           accountId: account.accountId,
           walletId: existing?.walletId ?? randomUUID(),
           walletName: dto.displayName?.trim() || existing?.walletName || 'Primary Wallet',
           status: 'CREATED_PENDING_BACKUP',
           origin: 'CREATED',
-          mnemonicHash: this.hashMnemonicSeed(account.accountId, now),
-          mnemonicWordCount: 12,
+          mnemonicHash:
+            dto.mnemonicHash?.trim() || existing?.mnemonicHash || this.hashMnemonicSeed(account.accountId, now),
+          mnemonicWordCount: dto.mnemonicWordCount ?? existing?.mnemonicWordCount ?? 12,
           backupAcknowledgedAt: null,
           activatedAt: null,
           createdAt: existing?.createdAt ?? now,
@@ -444,10 +501,25 @@ export class WalletService {
           ?.trim()
           .split(/\s+/)
           .filter((item) => item.length > 0) ?? [];
-        if (normalizedMnemonic.length > 0 && ![12, 24].includes(normalizedMnemonic.length)) {
+        const resolvedWordCount =
+          dto.mnemonicWordCount ??
+          (normalizedMnemonic.length > 0 ? normalizedMnemonic.length : existing?.mnemonicWordCount ?? 0);
+        if (resolvedWordCount > 0 && ![12, 24].includes(resolvedWordCount)) {
           throw new BadRequestException({
             code: 'WALLET_INVALID_MNEMONIC',
             message: 'Mnemonic word count must be 12 or 24',
+          });
+        }
+        const resolvedMnemonicHash =
+          dto.mnemonicHash?.trim() ||
+          (normalizedMnemonic.length > 0
+            ? createHash('sha256').update(normalizedMnemonic.join(' ')).digest('hex')
+            : existing?.mnemonicHash ??
+              null);
+        if (!resolvedMnemonicHash) {
+          throw new BadRequestException({
+            code: 'WALLET_INVALID_MNEMONIC',
+            message: 'Mnemonic metadata is required for import',
           });
         }
         next = {
@@ -456,13 +528,8 @@ export class WalletService {
           walletName: dto.displayName?.trim() || existing?.walletName || 'Imported Wallet',
           status: 'ACTIVE',
           origin: 'IMPORTED',
-          mnemonicHash: normalizedMnemonic.length > 0
-            ? createHash('sha256').update(normalizedMnemonic.join(' ')).digest('hex')
-            : existing?.mnemonicHash ?? null,
-          mnemonicWordCount:
-            normalizedMnemonic.length > 0
-              ? normalizedMnemonic.length
-              : existing?.mnemonicWordCount ?? null,
+          mnemonicHash: resolvedMnemonicHash,
+          mnemonicWordCount: resolvedWordCount || null,
           backupAcknowledgedAt: existing?.backupAcknowledgedAt ?? null,
           activatedAt: existing?.activatedAt ?? now,
           createdAt: existing?.createdAt ?? now,
@@ -624,6 +691,123 @@ export class WalletService {
         assetCode,
       });
     return { items };
+  }
+
+  async upsertSecretBackup(
+    accessToken: string,
+    dto: UpsertWalletSecretBackupRequestDto,
+  ) {
+    const account = this.authService.getMe(accessToken);
+    const lifecycle = await this.ensureWalletLifecycle(account.accountId);
+    const normalizedMnemonic = dto.mnemonic
+      .trim()
+      .split(/\s+/)
+      .filter((item) => item.length > 0);
+    if (![12, 24].includes(dto.mnemonicWordCount) || normalizedMnemonic.length !== dto.mnemonicWordCount) {
+      throw new BadRequestException({
+        code: 'WALLET_INVALID_MNEMONIC',
+        message: 'Mnemonic word count must be 12 or 24 and match the submitted mnemonic',
+      });
+    }
+    const normalizedHash = createHash('sha256').update(normalizedMnemonic.join(' ')).digest('hex');
+    if (dto.mnemonicHash !== normalizedHash) {
+      throw new BadRequestException({
+        code: 'WALLET_MNEMONIC_HASH_MISMATCH',
+        message: 'Mnemonic hash does not match payload',
+      });
+    }
+
+    const now = new Date().toISOString();
+    const walletId = dto.walletId?.trim() || lifecycle.walletId || randomUUID();
+    const ciphertext = await this.walletBackupCryptoService.encryptBackup({
+      accountId: account.accountId,
+      walletId,
+      walletName: dto.walletName?.trim() || lifecycle.walletName || null,
+      secretType: dto.secretType,
+      mnemonic: normalizedMnemonic.join(' '),
+      mnemonicHash: dto.mnemonicHash,
+      mnemonicWordCount: dto.mnemonicWordCount,
+      sourceType: dto.sourceType?.trim() || null,
+      publicAddresses: dto.publicAddresses?.map((item) => ({
+        networkCode: item.networkCode,
+        assetCode: item.assetCode,
+        address: item.address.trim(),
+        isDefault: item.isDefault,
+      })) ?? [],
+      exportedAt: now,
+    });
+
+    let record: PersistedWalletSecretBackupRecord = {
+      backupId: randomUUID(),
+      accountId: account.accountId,
+      walletId,
+      secretType: dto.secretType,
+      encryptionScheme: 'AGE',
+      recoveryKeyVersion: this.walletBackupCryptoService.getRecoveryKeyVersion(),
+      recipientFingerprint: this.walletBackupCryptoService.getRecipientFingerprint(),
+      ciphertext,
+      replicatedToBackupServer: false,
+      backupServerReference: null,
+      lastReplicationError: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const relay = await this.walletBackupRelayService.replicate(record);
+    record = {
+      ...record,
+      replicatedToBackupServer: relay.replicatedToBackupServer,
+      backupServerReference: relay.backupServerReference,
+      lastReplicationError: relay.lastReplicationError,
+      updatedAt: new Date().toISOString(),
+    };
+    const saved = await this.runtimeStateRepository.upsertWalletSecretBackup(record);
+
+    for (const item of dto.publicAddresses ?? []) {
+      await this.upsertPublicAddress(accessToken, {
+        networkCode: item.networkCode,
+        assetCode: item.assetCode,
+        address: item.address.trim(),
+        isDefault: item.isDefault,
+      });
+    }
+
+    return {
+      backupId: saved.backupId,
+      accountId: saved.accountId,
+      walletId: saved.walletId,
+      secretType: saved.secretType,
+      encryptionScheme: saved.encryptionScheme,
+      recoveryKeyVersion: saved.recoveryKeyVersion,
+      recipientFingerprint: saved.recipientFingerprint,
+      replicatedToBackupServer: saved.replicatedToBackupServer,
+      backupServerReference: saved.backupServerReference,
+      lastReplicationError: saved.lastReplicationError,
+      updatedAt: saved.updatedAt,
+    };
+  }
+
+  async getSecretBackupMetadata(accessToken: string) {
+    const account = this.authService.getMe(accessToken);
+    const backup = await this.runtimeStateRepository.findWalletSecretBackupByAccountId(account.accountId);
+    if (!backup) {
+      return {
+        exists: false,
+      };
+    }
+    return {
+      exists: true,
+      backupId: backup.backupId,
+      accountId: backup.accountId,
+      walletId: backup.walletId,
+      secretType: backup.secretType,
+      encryptionScheme: backup.encryptionScheme,
+      recoveryKeyVersion: backup.recoveryKeyVersion,
+      recipientFingerprint: backup.recipientFingerprint,
+      replicatedToBackupServer: backup.replicatedToBackupServer,
+      backupServerReference: backup.backupServerReference,
+      lastReplicationError: backup.lastReplicationError,
+      updatedAt: backup.updatedAt,
+    };
   }
 
   private async resolveReceiveSelection(
@@ -887,6 +1071,21 @@ export class WalletService {
       });
     }
 
+    if (dto.networkCode === 'SOLANA' && dto.unsignedPayload && dto.signature) {
+      dto.serializedTx = this.attachSolanaSignature(
+        dto.unsignedPayload,
+        dto.signature,
+      );
+    }
+
+    if (dto.networkCode === 'TRON' && dto.unsignedPayload && dto.signature) {
+      const signedTransaction = this.attachTronSignature(
+        dto.unsignedPayload,
+        dto.signature,
+      );
+      return this.broadcastBuiltTronTransaction(dto.networkCode, signedTransaction);
+    }
+
     // Use SolanaClientService for SOLANA network
     if (dto.networkCode === 'SOLANA') {
       this.logger.debug('Using SolanaClientService for proxy broadcast');
@@ -1019,6 +1218,198 @@ export class WalletService {
       txHash: dto.clientTxHash ?? `proxy_${randomUUID()}`,
       acceptedAt: new Date().toISOString(),
     };
+  }
+
+  private async buildSolanaTransfer(
+    rpcUrl: string,
+    dto: BuildTransferRequestDto,
+  ) {
+    const connection = new Connection(rpcUrl, 'confirmed');
+    const fromPubkey = new PublicKey(dto.fromAddress);
+    const toPubkey = new PublicKey(dto.toAddress);
+    const transaction = new Transaction();
+    transaction.feePayer = fromPubkey;
+    transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+    if (dto.assetCode === 'SOL') {
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey,
+          toPubkey,
+          lamports: Number(this.toMinorUnits(dto.amount, 9)),
+        }),
+      );
+    } else {
+      const mint = new PublicKey(this.solanaClient.getUsdtMint());
+      const fromAta = getAssociatedTokenAddressSync(mint, fromPubkey, false);
+      const toAta = getAssociatedTokenAddressSync(mint, toPubkey, false);
+      const destinationAccount = await connection.getAccountInfo(toAta);
+      if (!destinationAccount) {
+        transaction.add(
+          createAssociatedTokenAccountInstruction(
+            fromPubkey,
+            toAta,
+            toPubkey,
+            mint,
+          ),
+        );
+      }
+      transaction.add(
+        createTransferCheckedInstruction(
+          fromAta,
+          mint,
+          toAta,
+          fromPubkey,
+          this.toMinorUnits(dto.amount, 6),
+          6,
+        ),
+      );
+    }
+
+    const estimatedFee =
+      (await connection.getFeeForMessage(transaction.compileMessage(), 'confirmed')).value ?? 0;
+
+    return {
+      networkCode: dto.networkCode,
+      assetCode: dto.assetCode,
+      fromAddress: dto.fromAddress,
+      toAddress: dto.toAddress,
+      amount: dto.amount,
+      signingKind: 'SOLANA_MESSAGE',
+      signingPayload: transaction.serializeMessage().toString('base64'),
+      unsignedPayload: transaction.serialize({
+        verifySignatures: false,
+        requireAllSignatures: false,
+      }).toString('base64'),
+      estimatedFee: this.fromMinorUnits(BigInt(estimatedFee), 9),
+    };
+  }
+
+  private async buildTronTransfer(
+    contractAddress: string | null,
+    dto: BuildTransferRequestDto,
+  ) {
+    const tronWeb = this.createTronWeb();
+
+    if (dto.assetCode === 'TRX') {
+      const transaction = await tronWeb.transactionBuilder.sendTrx(
+        dto.toAddress,
+        Number(this.toMinorUnits(dto.amount, 6)),
+        dto.fromAddress,
+      );
+      return {
+        networkCode: dto.networkCode,
+        assetCode: dto.assetCode,
+        fromAddress: dto.fromAddress,
+        toAddress: dto.toAddress,
+        amount: dto.amount,
+        signingKind: 'TRON_TX_ID',
+        signingPayload: transaction.txID,
+        unsignedPayload: Buffer.from(JSON.stringify(transaction), 'utf8').toString('base64'),
+        estimatedFee: '1.000000',
+      };
+    }
+
+    const resolvedContract =
+      contractAddress && !contractAddress.startsWith('<')
+        ? contractAddress
+        : process.env.TRON_USDT_CONTRACT?.trim() || 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+    const wrapped = await tronWeb.transactionBuilder.triggerSmartContract(
+      resolvedContract,
+      'transfer(address,uint256)',
+      { feeLimit: 100_000_000 },
+      [
+        { type: 'address', value: dto.toAddress },
+        { type: 'uint256', value: this.toMinorUnits(dto.amount, 6).toString() },
+      ],
+      dto.fromAddress,
+    );
+    return {
+      networkCode: dto.networkCode,
+      assetCode: dto.assetCode,
+      fromAddress: dto.fromAddress,
+      toAddress: dto.toAddress,
+      amount: dto.amount,
+      signingKind: 'TRON_TX_ID',
+      signingPayload: wrapped.transaction.txID,
+      unsignedPayload: Buffer.from(JSON.stringify(wrapped.transaction), 'utf8').toString('base64'),
+      estimatedFee: '20.000000',
+    };
+  }
+
+  private attachSolanaSignature(unsignedPayload: string, signature: string): string {
+    const transaction = Transaction.from(Buffer.from(unsignedPayload, 'base64'));
+    const signer = transaction.feePayer;
+    if (!signer) {
+      throw new BadRequestException({
+        code: 'WALLET_UNSIGNED_PAYLOAD_INVALID',
+        message: 'Missing Solana fee payer in unsigned payload',
+      });
+    }
+    transaction.addSignature(signer, Buffer.from(signature, 'base64'));
+    return transaction.serialize({
+      verifySignatures: false,
+      requireAllSignatures: false,
+    }).toString('base64');
+  }
+
+  private attachTronSignature(unsignedPayload: string, signature: string) {
+    const transaction = JSON.parse(
+      Buffer.from(unsignedPayload, 'base64').toString('utf8'),
+    ) as { signature?: string[] };
+    transaction.signature = [signature];
+    return transaction;
+  }
+
+  private async broadcastBuiltTronTransaction(
+    networkCode: 'SOLANA' | 'TRON',
+    transaction: Record<string, unknown>,
+  ) {
+    const tronWeb = this.createTronWeb();
+    const result = await tronWeb.trx.sendRawTransaction(transaction as any);
+    if (!result.result) {
+      throw new ConflictException({
+        code: 'TRON_BROADCAST_FAILED',
+        message: result.code || result.message || 'Tron broadcast failed',
+      });
+    }
+    return {
+      networkCode,
+      broadcasted: true,
+      txHash: (transaction as { txID?: string }).txID ?? result.txid ?? `tron_proxy_${randomUUID()}`,
+      acceptedAt: new Date().toISOString(),
+      serviceEnabled: true,
+    };
+  }
+
+  private createTronWeb() {
+    const headers = process.env.TRON_API_KEY?.trim()
+      ? { 'TRON-PRO-API-KEY': process.env.TRON_API_KEY.trim() }
+      : undefined;
+    return new TronWeb({
+      fullHost: process.env.TRON_FULL_NODE?.trim() || 'https://api.trongrid.io',
+      headers,
+    });
+  }
+
+  private toMinorUnits(amount: string, decimals: number) {
+    const normalized = amount.trim();
+    const negative = normalized.startsWith('-');
+    const unsigned = negative ? normalized.slice(1) : normalized;
+    const [wholePart, fractionPart = ''] = unsigned.split('.');
+    const whole = wholePart === '' ? '0' : wholePart;
+    const fraction = fractionPart.padEnd(decimals, '0').slice(0, decimals);
+    const minor = BigInt(`${whole}${fraction}`);
+    return negative ? minor * -1n : minor;
+  }
+
+  private fromMinorUnits(amountMinor: bigint, decimals: number) {
+    const negative = amountMinor < 0n;
+    const normalized = negative ? amountMinor * -1n : amountMinor;
+    const raw = normalized.toString().padStart(decimals + 1, '0');
+    const whole = raw.slice(0, raw.length - decimals);
+    const fraction = raw.slice(raw.length - decimals);
+    return `${negative ? '-' : ''}${whole}.${fraction}`;
   }
 
   private isAddressValid(networkCode: 'SOLANA' | 'TRON', address: string) {

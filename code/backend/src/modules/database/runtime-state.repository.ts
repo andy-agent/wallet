@@ -13,7 +13,11 @@ import {
   StoredOnchainReceiptRecord,
   StoredOrderRecord,
 } from './runtime-state.types';
-import { PersistedWalletLifecycleRecord } from '../wallet/wallet.types';
+import {
+  PersistedWalletLifecycleRecord,
+  PersistedWalletPublicAddressRecord,
+  PersistedWalletSecretBackupRecord,
+} from '../wallet/wallet.types';
 
 export abstract class RuntimeStateRepository {
   abstract listAccounts(): Promise<AuthAccount[]>;
@@ -90,6 +94,26 @@ export abstract class RuntimeStateRepository {
   abstract upsertWalletLifecycle(
     record: PersistedWalletLifecycleRecord,
   ): Promise<PersistedWalletLifecycleRecord>;
+
+  abstract listWalletPublicAddressesByAccountId(params: {
+    accountId: string;
+    networkCode?: PersistedWalletPublicAddressRecord['networkCode'];
+    assetCode?: PersistedWalletPublicAddressRecord['assetCode'];
+  }): Promise<PersistedWalletPublicAddressRecord[]>;
+
+  abstract countWalletPublicAddressesByAccountId(accountId: string): Promise<number>;
+
+  abstract upsertWalletPublicAddress(
+    record: PersistedWalletPublicAddressRecord,
+  ): Promise<PersistedWalletPublicAddressRecord>;
+
+  abstract findWalletSecretBackupByAccountId(
+    accountId: string,
+  ): Promise<PersistedWalletSecretBackupRecord | null>;
+
+  abstract upsertWalletSecretBackup(
+    record: PersistedWalletSecretBackupRecord,
+  ): Promise<PersistedWalletSecretBackupRecord>;
 
   onModuleDestroy?(): Promise<void>;
 }
