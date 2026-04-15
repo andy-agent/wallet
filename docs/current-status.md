@@ -17,7 +17,7 @@
 | Sol 链侧服务 | 🟢 可用 | `sol.residential-agent.com` 内外健康检查均通过 |
 | USDT/TRON 链侧服务 | 🟢 可用 | `usdt.residential-agent.com` 已接真实 TRON RPC，健康/区块/交易查询通过 |
 | 链侧客户端接线 | 🟢 已完成最小链路 | `liaojiang-rcb.14` 已关闭，订单最小链路已接远程链侧 |
-| Admin 后台 | 🟢 已具备套餐管理闭环 | `liaojiang-kbf8` 与 `liaojiang-zhy8` 已完成，`/admin` 子路径路由白屏已修复并重部署到线上 |
+| Admin 后台 | 🟢 已具备套餐管理闭环 | `liaojiang-kbf8`、`liaojiang-zhy8`、`liaojiang-xwhq` 已完成，`/admin` 子路径白屏与套餐创建 404 均已完成线上修复 |
 
 ## 本轮完成
 
@@ -129,6 +129,27 @@
     - 新 bundle 已包含 `/admin` 子路径路由基准逻辑
   - 代码提交与推送：
     - commit `036dcd62`
+
+- 完成 `liaojiang-xwhq`
+  - 已复现线上“新建套餐 -> 请求的资源不存在”
+  - 根因已定位为：
+    - admin-web 已部署到新版本
+    - 但服务器三 backend 仍运行旧版代码
+    - live 环境 `GET /api/admin/v1/plans` 已命中路由并返回 `401`
+    - live 环境 `POST /api/admin/v1/plans` 当时仍返回 `404 Cannot POST /api/admin/v1/plans`
+  - 已完成 backend 线上重部署：
+    - 同步最新 `code/backend` 到 `154.37.208.72:/opt/cryptovpn/backend`
+    - 远端执行 `pnpm install --frozen-lockfile`
+    - 远端执行 `pnpm build`
+    - `systemctl restart cryptovpn-backend`
+  - 为使远端构建成功，本轮补齐并提交了之前仅存在于本地工作区的 backend 依赖/类型/钱包状态接口修复：
+    - `b7ce4623` `fix: restore wallet runtime state interfaces`
+    - `57de0521` `fix: include wallet backup build dependencies`
+    - `1a0c5baf` `fix: add backend wallet build requirements`
+  - 线上回归结果：
+    - `GET /api/admin/v1/plans` 返回 `401 ADMIN_AUTH_INVALID`
+    - `POST /api/admin/v1/plans` 现也返回 `401 ADMIN_AUTH_INVALID`
+    - 说明创建套餐路由已上线，不再是 404
 
 - 完成 `liaojiang-rcb.13.1`
   - 回收 Kimi 产出并并入主线
@@ -260,6 +281,8 @@
   - plans 管理 API 已验证：
     - `POST /api/admin/v1/plans`
     - `PUT /api/admin/v1/plans/:planId`
+    - `POST /api/admin/v1/plans` 已不再返回 `404 Cannot POST ...`
+    - 无 token 情况下已返回 `401 ADMIN_AUTH_INVALID`
   - client 动态套餐链路已验证：
     - `GET /api/client/v1/plans` 可反映后台启用/停用结果
     - `GET /api/client/v1/subscriptions/current` 可返回 `planName`
