@@ -7,6 +7,7 @@ import com.v2ray.ang.composeui.common.model.FeatureBullet
 import com.v2ray.ang.composeui.common.model.FeatureField
 import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.common.model.FeatureMetric
+import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.global.session.SessionEvictedDialogUiState
 import com.v2ray.ang.composeui.global.session.sessionEvictedDialogPreviewState
 import com.v2ray.ang.composeui.p0.model.EmailRegisterActionResult
@@ -149,6 +150,7 @@ import com.v2ray.ang.payment.data.api.MeData
 import com.v2ray.ang.payment.data.api.PasswordResetCodeRequest
 import com.v2ray.ang.payment.data.api.PasswordResetRequest
 import com.v2ray.ang.payment.data.api.ReferralOverviewData
+import com.v2ray.ang.payment.data.api.WalletLifecycleData
 import com.v2ray.ang.payment.data.api.WithdrawalItem
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
@@ -728,6 +730,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
     }
 
+    override suspend fun getWalletLifecycleState(): Result<WalletLifecycleData> {
+        return paymentRepository.getWalletLifecycle()
+    }
+
     override suspend fun getAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState {
         val relatedOrders = loadCachedOrders().filter { it.assetCode.equals(args.assetId, ignoreCase = true) }
         val total = relatedOrders.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
@@ -748,6 +754,25 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getReceiveState(args: ReceiveRouteArgs): ReceiveUiState {
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        if (lifecycle?.receiveState == "NO_WALLET") {
+            return ReceiveUiState(
+                badge = "需要钱包",
+                summary = "当前账号还没有创建或导入钱包，收款前需要先完成钱包初始化。",
+                metrics = listOf(
+                    FeatureMetric("钱包状态", lifecycle.lifecycleStatus),
+                    FeatureMetric("收款状态", lifecycle.receiveState),
+                    FeatureMetric("地址数", lifecycle.configuredAddressCount.toString()),
+                ),
+                fields = listOf(
+                    FeatureField("address", "收款地址", "--", "创建或导入钱包后才会生成收款上下文"),
+                ),
+                note = "后端已确认当前账号无钱包，正在跳转到钱包创建/导入流程。",
+                canShare = false,
+                shareText = "",
+                redirectRoute = CryptoVpnRouteSpec.walletOnboarding.pattern,
+            )
+        }
         val context = paymentRepository.getWalletReceiveContext(
             networkCode = routeChainIdToNetworkCode(args.chainId),
             assetCode = args.assetId.takeIf { it.isNotBlank() },
@@ -787,6 +812,8 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 },
                 canShare = context.canShare,
                 shareText = context.shareText.orEmpty(),
+                walletExists = context.walletExists,
+                receiveState = context.receiveState,
                 note = context.note,
             )
         }
@@ -805,6 +832,8 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             note = "当前地址视图仍未拿到服务端真实收款地址。",
             canShare = false,
             shareText = "",
+            walletExists = false,
+            receiveState = "NO_WALLET",
         )
     }
 
@@ -1167,34 +1196,61 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getCreateWalletState(args: CreateWalletRouteArgs): CreateWalletUiState {
         val user = paymentRepository.getCachedCurrentUser()
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         val defaultName = user?.username?.let { "$it Wallet" } ?: "Primary Wallet"
 
         return CreateWalletUiState(
             metrics = listOf(
                 FeatureMetric("模式", args.mode),
                 FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
-                FeatureMetric("数据源", "BLOCKED"),
+                FeatureMetric("数据源", "wallet/lifecycle"),
             ),
             fields = listOf(
                 FeatureField(
                     key = "name",
                     label = "钱包名称",
-                    value = defaultName,
-                    supportingText = "当前尚未接入真实钱包引擎，页面仅保留待实现输入上下文。",
+                    value = lifecycle?.displayName ?: defaultName,
+                    supportingText = "创建动作会把钱包存在态写入服务端生命周期状态。",
                 ),
             ),
             highlights = listOf(
-                FeatureListItem("创建模式", args.mode, "真实钱包创建能力未接入", "BLOCKED"),
+                FeatureListItem("创建模式", args.mode, lifecycle?.lifecycleStatus ?: "NOT_CREATED", "LIVE"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据源", "等待钱包引擎", "", "BLOCKED"),
+                FeatureListItem("数据源", "wallet/lifecycle", "", "REAL"),
             ),
-            note = "D 类阻塞：当前没有真实钱包创建/保存/派生能力，页面不能视为已真实落地。",
+            note = if (lifecycle?.walletExists == true) {
+                "服务端已记录该账号的钱包存在态；再次创建会刷新默认钱包入口。"
+            } else {
+                "点击主按钮后会将钱包创建状态写入服务端。"
+            },
         )
+    }
+
+    override suspend fun createWallet(displayName: String): WalletLifecycleMutationResult {
+        val result = paymentRepository.upsertWalletLifecycle(action = "CREATE", displayName = displayName)
+        val lifecycle = result.getOrNull()
+        return if (lifecycle?.walletExists == true) {
+            WalletLifecycleMutationResult(success = true, walletId = lifecycle.walletId)
+        } else {
+            WalletLifecycleMutationResult(
+                success = false,
+                errorMessage = result.exceptionOrNull()?.message ?: "创建钱包失败",
+            )
+        }
+    }
+
+    override suspend fun acknowledgeWalletBackup(): Result<WalletLifecycleData> {
+        return paymentRepository.upsertWalletLifecycle(action = "ACKNOWLEDGE_BACKUP")
+    }
+
+    override suspend fun confirmWalletBackup(): Result<WalletLifecycleData> {
+        return paymentRepository.upsertWalletLifecycle(action = "CONFIRM_BACKUP")
     }
 
     override suspend fun getImportWalletMethodState(): ImportWalletMethodUiState {
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         return ImportWalletMethodUiState(
             metrics = listOf(
                 FeatureMetric("当前账户", if (user != null) "已登录" else "未登录"),
@@ -1204,9 +1260,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             highlights = listOf(
                 FeatureListItem("默认方式", "优先使用助记词恢复多链钱包", "助记词", "LIVE"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "真实账户缓存 + 本地状态", "", "REAL"),
+                FeatureListItem("当前钱包", lifecycle?.displayName ?: "未创建", lifecycle?.lifecycleStatus ?: "NOT_CREATED", "REAL"),
             ),
-            note = "导入钱包方式页已切断 Mock 仓库，当前使用真实账户上下文与本地状态种子。",
+            note = "导入钱包方式页已切断 Mock 仓库，当前使用真实账户上下文与服务端钱包生命周期状态。",
         )
     }
 
@@ -1216,15 +1272,57 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("导入来源", args.source),
                 FeatureMetric("账户状态", if (user != null) "已登录" else "未登录"),
-                FeatureMetric("恢复能力", "BLOCKED"),
+                FeatureMetric("恢复能力", "wallet/lifecycle"),
+            ),
+            fields = listOf(
+                FeatureField(
+                    key = "mnemonic",
+                    label = "助记词",
+                    value = "",
+                    supportingText = "请输入 12 或 24 个单词，使用空格分隔。",
+                ),
+                FeatureField(
+                    key = "walletName",
+                    label = "恢复后钱包名",
+                    value = user?.username?.let { "$it Wallet" } ?: "Imported Wallet",
+                    supportingText = "恢复后将作为默认钱包名称展示。",
+                ),
             ),
             highlights = listOf(
-                FeatureListItem("恢复来源", args.source, "真实助记词导入未接入", "BLOCKED"),
+                FeatureListItem("恢复来源", args.source, "真实服务端生命周期状态", "REAL"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "等待钱包引擎", "", "BLOCKED"),
+                FeatureListItem("数据来源", "wallet/lifecycle", "", "REAL"),
             ),
-            note = "D 类阻塞：当前没有真实助记词解析/派生/导入能力。",
+            note = "提交后会把导入钱包状态写入服务端，并结束钱包引导流程。",
         )
+    }
+
+    override suspend fun importWalletFromMnemonic(
+        source: String,
+        mnemonic: String,
+        walletName: String,
+    ): WalletLifecycleMutationResult {
+        val normalizedMnemonic = mnemonic.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+        if (normalizedMnemonic.size !in setOf(12, 24)) {
+            return WalletLifecycleMutationResult(
+                success = false,
+                errorMessage = "助记词词数必须是 12 或 24 个",
+            )
+        }
+        val result = paymentRepository.upsertWalletLifecycle(
+            action = "IMPORT",
+            displayName = walletName.ifBlank { "Imported Wallet" },
+            mnemonic = normalizedMnemonic.joinToString(" "),
+        )
+        val lifecycle = result.getOrNull()
+        return if (lifecycle?.walletExists == true) {
+            WalletLifecycleMutationResult(success = true, walletId = lifecycle.walletId)
+        } else {
+            WalletLifecycleMutationResult(
+                success = false,
+                errorMessage = result.exceptionOrNull()?.message ?: "导入钱包失败",
+            )
+        }
     }
 
     override suspend fun getImportPrivateKeyState(args: ImportPrivateKeyRouteArgs): ImportPrivateKeyUiState =
@@ -1239,30 +1337,37 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getBackupMnemonicState(args: BackupMnemonicRouteArgs): BackupMnemonicUiState {
         val user = paymentRepository.getCachedCurrentUser()
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         return BackupMnemonicUiState(
             metrics = listOf(
                 FeatureMetric("钱包标识", args.walletId),
                 FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
-                FeatureMetric("备份策略", "BLOCKED"),
+                FeatureMetric("当前阶段", lifecycle?.status ?: lifecycle?.lifecycleStatus ?: "CREATED_PENDING_BACKUP"),
             ),
             highlights = listOf(
-                FeatureListItem("钱包标识", args.walletId, "真实助记词未接入", "BLOCKED"),
+                FeatureListItem("钱包标识", args.walletId, lifecycle?.walletName ?: lifecycle?.displayName ?: "Primary Wallet", "REAL"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "等待钱包引擎", "", "BLOCKED"),
+                FeatureListItem("数据来源", "wallet/lifecycle", "", "REAL"),
             ),
-            note = "D 类阻塞：当前没有真实种子生成/读取能力，不能把页面视为有效备份页。",
+            note = "当前页不再展示假助记词。主按钮会先确认你已完成离线备份，再进入最终确认。",
         )
     }
 
     override suspend fun getConfirmMnemonicState(args: ConfirmMnemonicRouteArgs): ConfirmMnemonicUiState =
-        ConfirmMnemonicUiState(
-            metrics = listOf(
-                FeatureMetric("钱包标识", args.walletId),
-                FeatureMetric("校验方式", "BLOCKED"),
-                FeatureMetric("状态", "未接入"),
-            ),
-            note = "D 类阻塞：当前没有真实助记词 challenge/verify 流程。",
-        )
+        paymentRepository.getWalletLifecycle().getOrNull().let { lifecycle ->
+            ConfirmMnemonicUiState(
+                metrics = listOf(
+                    FeatureMetric("钱包标识", args.walletId),
+                    FeatureMetric("当前阶段", lifecycle?.nextAction ?: "CONFIRM_MNEMONIC"),
+                    FeatureMetric("状态", lifecycle?.status ?: lifecycle?.lifecycleStatus ?: "BACKUP_PENDING_CONFIRMATION"),
+                ),
+                highlights = listOf(
+                    FeatureListItem("钱包名称", lifecycle?.walletName ?: lifecycle?.displayName ?: "Primary Wallet", "", "REAL"),
+                    FeatureListItem("生命周期", lifecycle?.status ?: lifecycle?.lifecycleStatus ?: "BACKUP_PENDING_CONFIRMATION", lifecycle?.origin ?: "", "STATE"),
+                ),
+                note = "主按钮会把钱包生命周期切到 ACTIVE，收款入口之后将直接进入收款页。",
+            )
+        }
 
     override suspend fun getSecurityCenterState(): SecurityCenterUiState {
         val user = paymentRepository.getCachedCurrentUser()
@@ -1283,14 +1388,28 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState =
-        ChainManagerUiState(
-            metrics = listOf(
-                FeatureMetric("钱包标识", args.walletId),
-                FeatureMetric("启用链", "--"),
-                FeatureMetric("默认链", "--"),
-            ),
-            note = "D 类阻塞：当前没有真实多链钱包配置读写能力。",
-        )
+        paymentRepository.getWalletOverview().getOrNull().let { overview ->
+            ChainManagerUiState(
+                metrics = listOf(
+                    FeatureMetric("钱包标识", args.walletId),
+                    FeatureMetric("启用链", overview?.chainItems?.size?.toString() ?: "0"),
+                    FeatureMetric("默认链", overview?.selectedNetworkCode ?: "--"),
+                ),
+                highlights = overview?.chainItems.orEmpty().map {
+                    FeatureListItem(
+                        title = it.displayName,
+                        subtitle = it.networkCode,
+                        trailing = if (it.hasConfiguredAddress == true) "已配置地址" else "待配置地址",
+                        badge = "REAL",
+                    )
+                },
+                note = if (overview != null) {
+                    "链管理页当前展示真实钱包总览中的多链目录。"
+                } else {
+                    "当前还没有可用的钱包多链目录。"
+                },
+            )
+        }
 
     override suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState =
         AddCustomTokenUiState(
@@ -1305,20 +1424,25 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState {
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
 
         return WalletManagerUiState(
             metrics = listOf(
-                FeatureMetric("钱包数量", "--"),
-                FeatureMetric("默认钱包", args.walletId),
+                FeatureMetric("钱包数量", if (lifecycle?.walletExists == true) "1" else "0"),
+                FeatureMetric("默认钱包", lifecycle?.walletName ?: lifecycle?.displayName ?: args.walletId),
                 FeatureMetric("关联订单", orders.size.toString()),
             ),
             highlights = listOf(
-                FeatureListItem("默认钱包", args.walletId, "真实钱包列表未接入", "BLOCKED"),
+                FeatureListItem("默认钱包", lifecycle?.walletName ?: lifecycle?.displayName ?: args.walletId, lifecycle?.lifecycleStatus ?: "NOT_CREATED", "REAL"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据源", "等待钱包引擎", "", "BLOCKED"),
+                FeatureListItem("数据源", "wallet/lifecycle", lifecycle?.sourceType ?: lifecycle?.origin ?: "--", "REAL"),
             ),
-            summary = "钱包管理页当前仍未接入真实多钱包列表与切换能力。",
-            note = "D 类阻塞：当前不能把该页面视为真实钱包管理页。",
+            summary = if (lifecycle?.walletExists == true) {
+                "钱包管理页当前展示真实默认钱包生命周期状态。"
+            } else {
+                "当前账号还没有创建钱包。"
+            },
+            note = "当前阶段只维护一个默认钱包；多钱包切换能力仍待后续扩展。",
         )
     }
 

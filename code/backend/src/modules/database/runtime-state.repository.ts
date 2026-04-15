@@ -13,6 +13,7 @@ import {
   StoredOnchainReceiptRecord,
   StoredOrderRecord,
 } from './runtime-state.types';
+import { PersistedWalletLifecycleRecord } from '../wallet/wallet.types';
 
 export abstract class RuntimeStateRepository {
   abstract listAccounts(): Promise<AuthAccount[]>;
@@ -81,6 +82,14 @@ export abstract class RuntimeStateRepository {
   ): Promise<PersistedSubscriptionRecord>;
 
   abstract countActiveSubscriptions(): Promise<number>;
+
+  abstract findWalletLifecycleByAccountId(
+    accountId: string,
+  ): Promise<PersistedWalletLifecycleRecord | null>;
+
+  abstract upsertWalletLifecycle(
+    record: PersistedWalletLifecycleRecord,
+  ): Promise<PersistedWalletLifecycleRecord>;
 
   onModuleDestroy?(): Promise<void>;
 }

@@ -5,6 +5,7 @@ import com.v2ray.ang.composeui.p0.model.*
 import com.v2ray.ang.composeui.p1.model.*
 import com.v2ray.ang.composeui.p2.model.*
 import com.v2ray.ang.composeui.p2extended.model.*
+import com.v2ray.ang.payment.data.api.WalletLifecycleData
 
 class MockCryptoVpnRepository : CryptoVpnRepository {
     override suspend fun getForceUpdateState(): ForceUpdateUiState {
@@ -19,8 +20,45 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         return emailRegisterPreviewState()
     }
 
+    override suspend fun requestEmailRegisterCode(email: String): EmailRegisterActionResult {
+        return EmailRegisterActionResult(
+            success = true,
+            successMessage = "Preview: 验证码已发送到 $email",
+        )
+    }
+
+    override suspend fun registerEmail(
+        email: String,
+        password: String,
+        code: String,
+        inviteCode: String,
+    ): EmailRegisterActionResult {
+        return EmailRegisterActionResult(
+            success = true,
+            successMessage = "Preview: 账户 $email 已创建",
+        )
+    }
+
     override suspend fun getResetPasswordState(): ResetPasswordUiState {
         return resetPasswordPreviewState()
+    }
+
+    override suspend fun requestResetPasswordCode(email: String): ResetPasswordActionResult {
+        return ResetPasswordActionResult(
+            success = true,
+            successMessage = "Preview: 重置验证码已发送到 $email",
+        )
+    }
+
+    override suspend fun resetPassword(
+        email: String,
+        code: String,
+        password: String,
+    ): ResetPasswordActionResult {
+        return ResetPasswordActionResult(
+            success = true,
+            successMessage = "Preview: 密码已重置",
+        )
     }
 
     override suspend fun getPlansState(): PlansUiState {
@@ -29,6 +67,14 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
 
     override suspend fun getRegionSelectionState(): RegionSelectionUiState {
         return regionSelectionPreviewState()
+    }
+
+    override suspend fun selectVpnNode(lineCode: String, nodeId: String): RegionSelectionUiState {
+        return regionSelectionPreviewState().copy(
+            selectedLineCode = lineCode,
+            selectedNodeId = nodeId,
+            selectionApplied = true,
+        )
     }
 
     override suspend fun getOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState {
@@ -162,6 +208,44 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         )
     }
 
+    override suspend fun createWallet(displayName: String): WalletLifecycleMutationResult {
+        return WalletLifecycleMutationResult(
+            success = displayName.isNotBlank(),
+            walletId = "mock-wallet",
+            errorMessage = if (displayName.isBlank()) "请输入钱包名称" else null,
+        )
+    }
+
+    override suspend fun acknowledgeWalletBackup(): Result<WalletLifecycleData> {
+        return Result.success(
+            WalletLifecycleData(
+                accountId = "mock-account",
+                walletExists = true,
+                receiveState = "NO_ADDRESS",
+                lifecycleStatus = "CREATED",
+                sourceType = "CREATE",
+                walletId = "mock-wallet",
+                displayName = "Mock Wallet",
+                configuredAddressCount = 0,
+            ),
+        )
+    }
+
+    override suspend fun confirmWalletBackup(): Result<WalletLifecycleData> {
+        return Result.success(
+            WalletLifecycleData(
+                accountId = "mock-account",
+                walletExists = true,
+                receiveState = "NO_ADDRESS",
+                lifecycleStatus = "ACTIVE",
+                sourceType = "CREATE",
+                walletId = "mock-wallet",
+                displayName = "Mock Wallet",
+                configuredAddressCount = 0,
+            ),
+        )
+    }
+
     override suspend fun getImportWalletMethodState(): ImportWalletMethodUiState {
         return importWalletMethodPreviewState()
     }
@@ -170,6 +254,18 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         return importMnemonicPreviewState().copy(
             summary = "助记词导入页提供文本输入、词数校验与恢复后的链列表预估。" + " · " + "导航参数" + "：" + args.source,
             note = "Mock repository 已回填 输入助记词 的路由参数，可继续替换为真实仓储实现。",
+        )
+    }
+
+    override suspend fun importWalletFromMnemonic(
+        source: String,
+        mnemonic: String,
+        walletName: String,
+    ): WalletLifecycleMutationResult {
+        return WalletLifecycleMutationResult(
+            success = mnemonic.isNotBlank() && walletName.isNotBlank(),
+            walletId = "mock-wallet",
+            errorMessage = if (mnemonic.isBlank() || walletName.isBlank()) "请填写助记词和钱包名称" else null,
         )
     }
 

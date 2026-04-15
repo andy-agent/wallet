@@ -5,6 +5,13 @@ import com.v2ray.ang.composeui.p0.model.*
 import com.v2ray.ang.composeui.p1.model.*
 import com.v2ray.ang.composeui.p2.model.*
 import com.v2ray.ang.composeui.p2extended.model.*
+import com.v2ray.ang.payment.data.api.WalletLifecycleData
+
+data class WalletLifecycleMutationResult(
+    val success: Boolean,
+    val walletId: String? = null,
+    val errorMessage: String? = null,
+)
 
 interface CryptoVpnRepository {
     suspend fun getForceUpdateState(): ForceUpdateUiState
@@ -34,6 +41,16 @@ interface CryptoVpnRepository {
     suspend fun getOrderListState(): OrderListUiState
     suspend fun getOrderDetailState(args: OrderDetailRouteArgs): OrderDetailUiState
     suspend fun getWalletPaymentState(): WalletPaymentUiState
+    suspend fun getWalletLifecycleState(): Result<WalletLifecycleData> =
+        Result.failure(IllegalStateException("Wallet lifecycle unavailable"))
+    suspend fun createWalletProfile(displayName: String): Result<WalletLifecycleData> =
+        Result.failure(IllegalStateException("Wallet create unavailable"))
+    suspend fun importWalletProfile(displayName: String, mnemonic: String): Result<WalletLifecycleData> =
+        Result.failure(IllegalStateException("Wallet import unavailable"))
+    suspend fun acknowledgeWalletBackup(): Result<WalletLifecycleData> =
+        Result.failure(IllegalStateException("Wallet backup acknowledgement unavailable"))
+    suspend fun confirmWalletBackup(): Result<WalletLifecycleData> =
+        Result.failure(IllegalStateException("Wallet backup confirmation unavailable"))
     suspend fun getAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState
     suspend fun getReceiveState(args: ReceiveRouteArgs): ReceiveUiState
     suspend fun getSendState(args: SendRouteArgs): SendUiState
@@ -51,8 +68,14 @@ interface CryptoVpnRepository {
     suspend fun getNodeSpeedTestState(args: NodeSpeedTestRouteArgs): NodeSpeedTestUiState
     suspend fun getAutoConnectRulesState(): AutoConnectRulesUiState
     suspend fun getCreateWalletState(args: CreateWalletRouteArgs): CreateWalletUiState
+    suspend fun createWallet(displayName: String): WalletLifecycleMutationResult
     suspend fun getImportWalletMethodState(): ImportWalletMethodUiState
     suspend fun getImportMnemonicState(args: ImportMnemonicRouteArgs): ImportMnemonicUiState
+    suspend fun importWalletFromMnemonic(
+        source: String,
+        mnemonic: String,
+        walletName: String,
+    ): WalletLifecycleMutationResult
     suspend fun getImportPrivateKeyState(args: ImportPrivateKeyRouteArgs): ImportPrivateKeyUiState
     suspend fun getBackupMnemonicState(args: BackupMnemonicRouteArgs): BackupMnemonicUiState
     suspend fun getConfirmMnemonicState(args: ConfirmMnemonicRouteArgs): ConfirmMnemonicUiState

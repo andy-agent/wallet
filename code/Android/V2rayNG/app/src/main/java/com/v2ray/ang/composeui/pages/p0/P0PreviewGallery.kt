@@ -48,7 +48,7 @@ private fun WalletOnboardingRoutePreview() {
         val viewModel = remember { WalletOnboardingViewModel(repository) }
         WalletOnboardingRoute(
             viewModel = viewModel,
-            onContinue = {},
+            onContinue = { },
         )
     }
 }
@@ -79,7 +79,7 @@ private fun WalletHomeRoutePreview() {
             currentRoute = "wallet_home",
             viewModel = viewModel,
             onBottomNav = {},
-            onReceive = {},
+            onReceive = { _, _ -> },
             onSend = {},
         )
     }

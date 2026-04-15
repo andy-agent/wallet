@@ -6,6 +6,7 @@ import {
   VerificationCodeRecord,
 } from '../auth/auth.types';
 import { OrderStatus } from '../orders/orders.types';
+import { PersistedWalletLifecycleRecord } from '../wallet/wallet.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 import { RuntimeStateRepository } from './runtime-state.repository';
 import {
@@ -25,6 +26,7 @@ const ORDERS_TABLE = 'runtime_state_orders';
 const ONCHAIN_RECEIPTS_TABLE = 'runtime_state_onchain_receipts';
 const PAYMENT_SCAN_CURSORS_TABLE = 'runtime_state_payment_scan_cursors';
 const SUBSCRIPTIONS_TABLE = 'runtime_state_subscriptions';
+const WALLET_LIFECYCLES_TABLE = 'runtime_state_wallet_lifecycles';
 const ACCOUNT_COLUMNS = `
   id::text AS account_id,
   email::text AS email,
@@ -94,6 +96,19 @@ const SUBSCRIPTION_COLUMNS = `
   subscription_url,
   selected_line_code,
   selected_node_id
+`;
+const WALLET_LIFECYCLE_COLUMNS = `
+  account_id,
+  wallet_id,
+  wallet_name,
+  status,
+  origin,
+  mnemonic_hash,
+  mnemonic_word_count,
+  backup_acknowledged_at,
+  activated_at,
+  created_at,
+  updated_at
 `;
 const ONCHAIN_RECEIPT_COLUMNS = `
   receipt_id,
@@ -171,6 +186,20 @@ interface RuntimeStateSubscriptionRow {
   subscription_url: string | null;
   selected_line_code: string | null;
   selected_node_id: string | null;
+}
+
+interface RuntimeStateWalletLifecycleRow {
+  account_id: string;
+  wallet_id: string;
+  wallet_name: string;
+  status: PersistedWalletLifecycleRecord['status'];
+  origin: PersistedWalletLifecycleRecord['origin'];
+  mnemonic_hash: string | null;
+  mnemonic_word_count: number | null;
+  backup_acknowledged_at: Date | string | null;
+  activated_at: Date | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
 }
 
 interface RuntimeStateOnchainReceiptRow {
@@ -1047,6 +1076,87 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     return result.rows[0]?.count ?? 0;
   }
 
+  async findWalletLifecycleByAccountId(
+    accountId: string,
+  ): Promise<PersistedWalletLifecycleRecord | null> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletLifecycleRow>(
+      `
+        SELECT ${WALLET_LIFECYCLE_COLUMNS}
+        FROM ${WALLET_LIFECYCLES_TABLE}
+        WHERE account_id = $1
+        LIMIT 1
+      `,
+      [accountId],
+    );
+
+    return result.rows[0] ? this.mapWalletLifecycle(result.rows[0]) : null;
+  }
+
+  async upsertWalletLifecycle(
+    record: PersistedWalletLifecycleRecord,
+  ): Promise<PersistedWalletLifecycleRecord> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletLifecycleRow>(
+      `
+        INSERT INTO ${WALLET_LIFECYCLES_TABLE} (
+          account_id,
+          wallet_id,
+          wallet_name,
+          status,
+          origin,
+          mnemonic_hash,
+          mnemonic_word_count,
+          backup_acknowledged_at,
+          activated_at,
+          created_at,
+          updated_at
+        )
+        VALUES (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          $7,
+          $8,
+          $9,
+          $10,
+          $11
+        )
+        ON CONFLICT (account_id) DO UPDATE
+        SET
+          wallet_id = EXCLUDED.wallet_id,
+          wallet_name = EXCLUDED.wallet_name,
+          status = EXCLUDED.status,
+          origin = EXCLUDED.origin,
+          mnemonic_hash = EXCLUDED.mnemonic_hash,
+          mnemonic_word_count = EXCLUDED.mnemonic_word_count,
+          backup_acknowledged_at = EXCLUDED.backup_acknowledged_at,
+          activated_at = EXCLUDED.activated_at,
+          created_at = EXCLUDED.created_at,
+          updated_at = EXCLUDED.updated_at
+        RETURNING ${WALLET_LIFECYCLE_COLUMNS}
+      `,
+      [
+        record.accountId,
+        record.walletId,
+        record.walletName,
+        record.status,
+        record.origin,
+        record.mnemonicHash,
+        record.mnemonicWordCount,
+        record.backupAcknowledgedAt,
+        record.activatedAt,
+        record.createdAt,
+        record.updatedAt,
+      ],
+    );
+
+    return this.mapWalletLifecycle(result.rows[0]);
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.pool.end();
   }
@@ -1310,6 +1420,25 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       CREATE INDEX IF NOT EXISTS idx_runtime_state_subscriptions_status
       ON ${SUBSCRIPTIONS_TABLE} (status)
     `);
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${WALLET_LIFECYCLES_TABLE} (
+        account_id text PRIMARY KEY REFERENCES ${ACCOUNTS_TABLE} (id) ON DELETE CASCADE,
+        wallet_id text NOT NULL,
+        wallet_name text NOT NULL,
+        status text NOT NULL,
+        origin text NOT NULL,
+        mnemonic_hash text NULL,
+        mnemonic_word_count integer NULL,
+        backup_acknowledged_at timestamptz NULL,
+        activated_at timestamptz NULL,
+        created_at timestamptz NOT NULL,
+        updated_at timestamptz NOT NULL
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_wallet_lifecycles_status
+      ON ${WALLET_LIFECYCLES_TABLE} (status)
+    `);
   }
 
   private buildOrderFilters(params: RuntimeStateListOrdersParams) {
@@ -1554,6 +1683,24 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       subscriptionUrl: row.subscription_url,
       selectedLineCode: row.selected_line_code,
       selectedNodeId: row.selected_node_id,
+    };
+  }
+
+  private mapWalletLifecycle(
+    row: RuntimeStateWalletLifecycleRow,
+  ): PersistedWalletLifecycleRecord {
+    return {
+      accountId: row.account_id,
+      walletId: row.wallet_id,
+      walletName: row.wallet_name,
+      status: row.status,
+      origin: row.origin,
+      mnemonicHash: row.mnemonic_hash,
+      mnemonicWordCount: row.mnemonic_word_count,
+      backupAcknowledgedAt: this.toIsoString(row.backup_acknowledged_at),
+      activatedAt: this.toIsoString(row.activated_at),
+      createdAt: this.toIsoString(row.created_at)!,
+      updatedAt: this.toIsoString(row.updated_at)!,
     };
   }
 

@@ -4,14 +4,23 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
+import { RuntimeStateRepository } from '../database/runtime-state.repository';
 import { OrdersService } from '../orders/orders.service';
 import { SolanaClientService } from '../solana-client/solana-client.service';
 import { TronClientService } from '../tron-client/tron-client.service';
 import { ProxyBroadcastRequestDto } from './dto/proxy-broadcast.request';
 import { TransferPrecheckRequestDto } from './dto/transfer-precheck.request';
+import { UpsertWalletLifecycleRequestDto } from './dto/upsert-wallet-lifecycle.request';
 import { UpsertWalletPublicAddressRequestDto } from './dto/upsert-wallet-public-address.request';
+import {
+  PersistedWalletLifecycleRecord,
+  WalletLifecycleNextAction,
+  WalletLifecycleOrigin,
+  WalletLifecycleStatus,
+  WalletLifecycleView,
+} from './wallet.types';
 
 export interface WalletPublicAddressItem {
   addressId: string;
@@ -23,6 +32,8 @@ export interface WalletPublicAddressItem {
   createdAt: string;
 }
 
+export type WalletReceiveState = 'NO_WALLET' | 'NO_ADDRESS' | 'READY';
+
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
@@ -31,6 +42,7 @@ export class WalletService {
   constructor(
     private readonly authService: AuthService,
     private readonly ordersService: OrdersService,
+    private readonly runtimeStateRepository: RuntimeStateRepository,
     private readonly solanaClient: SolanaClientService,
     private readonly tronClient: TronClientService,
   ) {}
@@ -121,6 +133,7 @@ export class WalletService {
 
   async getOverview(accessToken: string) {
     const account = this.authService.getMe(accessToken);
+    const lifecycle = await this.getWalletLifecycle(accessToken);
     const chains = this.getChains(accessToken).items;
     const assets = this.getAssetCatalog(accessToken).items;
     const publicAddresses = this.listPublicAddresses(accessToken).items;
@@ -236,6 +249,11 @@ export class WalletService {
     return {
       accountId: account.accountId,
       accountEmail: account.email,
+      walletExists: lifecycle.walletExists,
+      walletId: lifecycle.walletId,
+      walletName: lifecycle.walletName,
+      lifecycleStatus: lifecycle.status,
+      nextAction: lifecycle.nextAction,
       selectedNetworkCode,
       chainItems,
       assetItems,
@@ -272,6 +290,7 @@ export class WalletService {
       selectedNetworkCode,
       selectedAssetCode || undefined,
     ).items;
+    const lifecycle = await this.getWalletLifecycle(accessToken);
     const defaultAddress =
       publicAddresses.find((item) => item.isDefault)?.address ??
       publicAddresses[0]?.address ??
@@ -296,18 +315,186 @@ export class WalletService {
       addresses: publicAddresses,
       defaultAddress,
       canShare: Boolean(defaultAddress),
+      walletExists: lifecycle.walletExists,
+      receiveState: !lifecycle.walletExists
+        ? 'NO_WALLET'
+        : defaultAddress
+          ? 'READY'
+          : 'NO_ADDRESS',
       status: defaultAddress ? '已配置收款地址' : '未配置收款地址',
       note: defaultAddress
         ? '当前展示服务端保存的真实收款地址。'
-        : '当前账号在该链/资产下还没有配置收款地址。',
+        : lifecycle.walletExists
+          ? '当前账号已创建钱包，但该链/资产下还没有配置收款地址。'
+          : '当前账号还没有创建或导入钱包。',
       shareText: defaultAddress
         ? `${selectedAssetCode} · ${selectedNetworkCode}\n${defaultAddress}`
         : '',
     };
   }
 
-  upsertPublicAddress(accessToken: string, dto: UpsertWalletPublicAddressRequestDto) {
+  async getWalletLifecycle(
+    accessToken: string,
+  ): Promise<WalletLifecycleView> {
     const account = this.authService.getMe(accessToken);
+    const lifecycle =
+      await this.runtimeStateRepository.findWalletLifecycleByAccountId(
+        account.accountId,
+      );
+    const configuredAddressCount = (this.publicAddresses.get(account.accountId) ?? []).length;
+    const walletExists = lifecycle !== null || configuredAddressCount > 0;
+    const receiveState: WalletReceiveState = !walletExists
+      ? 'NO_WALLET'
+      : configuredAddressCount > 0
+        ? 'READY'
+        : 'NO_ADDRESS';
+
+    if (lifecycle === null && configuredAddressCount > 0) {
+      return {
+        accountId: account.accountId,
+        walletExists: true,
+        receiveReady: true,
+        walletId: null,
+        walletName: 'Legacy Wallet',
+        lifecycleStatus: 'ACTIVE',
+        sourceType: 'LEGACY',
+        displayName: 'Legacy Wallet',
+        status: 'ACTIVE',
+        origin: 'LEGACY',
+        nextAction: 'READY',
+        hasAnyPublicAddress: true,
+        configuredAddressCount,
+        source: 'PUBLIC_ADDRESS_FALLBACK',
+        createdAt: null,
+        updatedAt: null,
+        backupAcknowledgedAt: null,
+        activatedAt: null,
+        receiveState,
+      };
+    }
+
+    return {
+      accountId: account.accountId,
+      walletExists,
+      receiveReady: walletExists,
+      walletId: lifecycle?.walletId ?? null,
+      walletName: lifecycle?.walletName ?? null,
+      lifecycleStatus: this.toLegacyLifecycleStatus(
+        lifecycle?.status ?? 'NONE',
+        lifecycle?.origin ?? null,
+      ),
+      sourceType: this.toLegacySourceType(lifecycle?.origin ?? null),
+      displayName: lifecycle?.walletName ?? null,
+      status: lifecycle?.status ?? 'NONE',
+      origin: lifecycle?.origin ?? null,
+      nextAction: this.resolveNextAction(lifecycle?.status ?? 'NONE'),
+      hasAnyPublicAddress: configuredAddressCount > 0,
+      configuredAddressCount,
+      source: lifecycle ? 'RUNTIME_STATE' : 'EMPTY',
+      createdAt: lifecycle?.createdAt ?? null,
+      updatedAt: lifecycle?.updatedAt ?? null,
+      backupAcknowledgedAt: lifecycle?.backupAcknowledgedAt ?? null,
+      activatedAt: lifecycle?.activatedAt ?? null,
+      receiveState,
+    };
+  }
+
+  async upsertWalletLifecycle(
+    accessToken: string,
+    dto: UpsertWalletLifecycleRequestDto,
+  ) {
+    const account = this.authService.getMe(accessToken);
+    const now = new Date().toISOString();
+    const existing =
+      await this.runtimeStateRepository.findWalletLifecycleByAccountId(
+        account.accountId,
+      );
+
+    let next: PersistedWalletLifecycleRecord | null = null;
+    switch (dto.action) {
+      case 'CREATE':
+        next = {
+          accountId: account.accountId,
+          walletId: existing?.walletId ?? randomUUID(),
+          walletName: dto.displayName?.trim() || existing?.walletName || 'Primary Wallet',
+          status: 'CREATED_PENDING_BACKUP',
+          origin: 'CREATED',
+          mnemonicHash: this.hashMnemonicSeed(account.accountId, now),
+          mnemonicWordCount: 12,
+          backupAcknowledgedAt: null,
+          activatedAt: null,
+          createdAt: existing?.createdAt ?? now,
+          updatedAt: now,
+        };
+        break;
+      case 'IMPORT':
+        const normalizedMnemonic = dto.mnemonic
+          ?.trim()
+          .split(/\s+/)
+          .filter((item) => item.length > 0) ?? [];
+        if (normalizedMnemonic.length > 0 && ![12, 24].includes(normalizedMnemonic.length)) {
+          throw new BadRequestException({
+            code: 'WALLET_INVALID_MNEMONIC',
+            message: 'Mnemonic word count must be 12 or 24',
+          });
+        }
+        next = {
+          accountId: account.accountId,
+          walletId: existing?.walletId ?? randomUUID(),
+          walletName: dto.displayName?.trim() || existing?.walletName || 'Imported Wallet',
+          status: 'ACTIVE',
+          origin: 'IMPORTED',
+          mnemonicHash: normalizedMnemonic.length > 0
+            ? createHash('sha256').update(normalizedMnemonic.join(' ')).digest('hex')
+            : existing?.mnemonicHash ?? null,
+          mnemonicWordCount:
+            normalizedMnemonic.length > 0
+              ? normalizedMnemonic.length
+              : existing?.mnemonicWordCount ?? null,
+          backupAcknowledgedAt: existing?.backupAcknowledgedAt ?? null,
+          activatedAt: existing?.activatedAt ?? now,
+          createdAt: existing?.createdAt ?? now,
+          updatedAt: now,
+        };
+        break;
+      case 'ACKNOWLEDGE_BACKUP':
+        if (!existing) {
+          throw new ConflictException({
+            code: 'WALLET_NOT_CREATED',
+            message: 'Wallet has not been created',
+          });
+        }
+        next = {
+          ...existing,
+          status: 'BACKUP_PENDING_CONFIRMATION',
+          backupAcknowledgedAt: now,
+          updatedAt: now,
+        };
+        break;
+      case 'CONFIRM_BACKUP':
+        if (!existing) {
+          throw new ConflictException({
+            code: 'WALLET_NOT_CREATED',
+            message: 'Wallet has not been created',
+          });
+        }
+        next = {
+          ...existing,
+          status: 'ACTIVE',
+          backupAcknowledgedAt: existing.backupAcknowledgedAt ?? now,
+          activatedAt: now,
+          updatedAt: now,
+        };
+        break;
+    }
+
+    await this.runtimeStateRepository.upsertWalletLifecycle(next);
+    return this.getWalletLifecycle(accessToken);
+  }
+
+  async upsertPublicAddress(accessToken: string, dto: UpsertWalletPublicAddressRequestDto) {
+    const account = this.authService.getMe(accessToken);
+    await this.ensureWalletLifecycle(account.accountId);
     const existing = this.publicAddresses.get(account.accountId) ?? [];
 
     const found = existing.find(
@@ -407,6 +594,80 @@ export class WalletService {
       items = items.filter((item) => item.assetCode === assetCode);
     }
     return { items };
+  }
+
+  private async ensureWalletLifecycle(accountId: string) {
+    const existing =
+      await this.runtimeStateRepository.findWalletLifecycleByAccountId(accountId);
+    if (existing) {
+      return;
+    }
+
+    const now = new Date().toISOString();
+    await this.runtimeStateRepository.upsertWalletLifecycle({
+      accountId,
+      walletId: randomUUID(),
+      walletName: 'Primary Wallet',
+      status: 'ACTIVE',
+      origin: 'LEGACY',
+      mnemonicHash: null,
+      mnemonicWordCount: null,
+      backupAcknowledgedAt: null,
+      activatedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  private resolveNextAction(
+    status: WalletLifecycleStatus,
+  ): WalletLifecycleNextAction {
+    switch (status) {
+      case 'CREATED_PENDING_BACKUP':
+        return 'BACKUP_MNEMONIC';
+      case 'BACKUP_PENDING_CONFIRMATION':
+        return 'CONFIRM_MNEMONIC';
+      case 'ACTIVE':
+        return 'READY';
+      default:
+        return 'CREATE_OR_IMPORT';
+    }
+  }
+
+  private hashMnemonicSeed(accountId: string, now: string): string {
+    return createHash('sha256').update(`${accountId}:${now}:${randomUUID()}`).digest('hex');
+  }
+
+  private toLegacyLifecycleStatus(
+    status: WalletLifecycleStatus,
+    origin: WalletLifecycleOrigin | null,
+  ): WalletLifecycleView['lifecycleStatus'] {
+    switch (status) {
+      case 'NONE':
+        return 'NOT_CREATED';
+      case 'CREATED_PENDING_BACKUP':
+      case 'BACKUP_PENDING_CONFIRMATION':
+        return 'CREATED';
+      case 'ACTIVE':
+        return origin === 'IMPORTED' ? 'IMPORTED' : 'ACTIVE';
+      default:
+        return 'NOT_CREATED';
+    }
+  }
+
+  private toLegacySourceType(
+    origin: WalletLifecycleOrigin | null,
+  ): 'CREATE' | 'IMPORT' | 'LEGACY' | null {
+    switch (origin) {
+      case 'CREATED':
+        return 'CREATE';
+      case 'IMPORTED':
+        return 'IMPORT';
+      case 'LEGACY':
+        return 'LEGACY';
+      default:
+        return null;
+    }
   }
 
   async transferPrecheck(accessToken: string, dto: TransferPrecheckRequestDto) {

@@ -33,6 +33,8 @@ import com.v2ray.ang.payment.data.api.VpnNodeItem
 import com.v2ray.ang.payment.data.api.VpnRegionItem
 import com.v2ray.ang.payment.data.api.VpnStatusData
 import com.v2ray.ang.payment.data.api.WalletOverviewData
+import com.v2ray.ang.payment.data.api.WalletLifecycleData
+import com.v2ray.ang.payment.data.api.WalletLifecycleUpsertRequest
 import com.v2ray.ang.payment.data.api.WalletAssetItemData
 import com.v2ray.ang.payment.data.api.WalletReceiveContextData
 import com.v2ray.ang.payment.data.api.WithdrawalItem
@@ -1244,6 +1246,55 @@ class PaymentRepository(context: Context) {
                     ?: Result.failure(Exception("钱包总览为空"))
             } else {
                 Result.failure(Exception(response.body()?.message ?: "获取钱包总览失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getWalletLifecycle(): Result<WalletLifecycleData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getWalletLifecycle("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("钱包生命周期为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "获取钱包生命周期失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun upsertWalletLifecycle(
+        action: String,
+        displayName: String? = null,
+        mnemonic: String? = null,
+    ): Result<WalletLifecycleData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.upsertWalletLifecycle(
+                authorization = "Bearer $token",
+                request = WalletLifecycleUpsertRequest(
+                    action = action,
+                    displayName = displayName?.trim()?.takeIf { it.isNotBlank() },
+                    mnemonic = mnemonic?.trim()?.takeIf { it.isNotBlank() },
+                ),
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("钱包生命周期为空"))
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "更新钱包生命周期失败"))
             }
         } catch (e: Exception) {
             Result.failure(e)

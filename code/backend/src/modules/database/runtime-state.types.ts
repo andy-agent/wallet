@@ -4,6 +4,7 @@ import {
   VerificationCodeRecord,
 } from '../auth/auth.types';
 import { OrderRecord } from '../orders/orders.types';
+import { PersistedWalletLifecycleRecord } from '../wallet/wallet.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 
 export interface StoredOrderRecord extends OrderRecord {
@@ -59,10 +60,11 @@ export interface PaymentScanCursorRecord extends RuntimeStatePaymentContext {
 }
 
 export interface RuntimeStateSnapshot {
-  version: 1 | 2 | 3;
+  version: 1 | 2 | 3 | 4;
   orders: StoredOrderRecord[];
   idempotencyIndex: Record<string, string>;
   subscriptions: PersistedSubscriptionRecord[];
+  walletLifecycles: PersistedWalletLifecycleRecord[];
   accounts: AuthAccount[];
   sessions: AuthSession[];
   verificationCodes: VerificationCodeRecord[];

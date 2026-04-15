@@ -37,10 +37,13 @@ data class ReceiveUiState(
         val variants: List<ReceiveVariantUi> = emptyList(),
         val canShare: Boolean = false,
         val shareText: String = "",
+        val walletExists: Boolean = true,
+        val receiveState: String? = null,
         val checklist: List<FeatureBullet> = emptyList(),
         val note: String = "正在从真实收款服务同步数据。",
         val banner: P2SurfaceBanner = p2LoadingBanner(),
         val feedbackMessage: String? = null,
+        val redirectRoute: String? = null,
     )
 
     sealed interface ReceiveEvent {

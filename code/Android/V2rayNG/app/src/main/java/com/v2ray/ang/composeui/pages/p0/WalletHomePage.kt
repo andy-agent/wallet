@@ -34,7 +34,7 @@ fun WalletHomeRoute(
     currentRoute: String,
     viewModel: WalletHomeViewModel,
     onBottomNav: (String) -> Unit,
-    onReceive: (() -> Unit)? = null,
+    onReceive: ((String, String) -> Unit)? = null,
     onSend: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -42,12 +42,21 @@ fun WalletHomeRoute(
     val selectedAssets = uiState.assets.filter { inferChain(it.chainLabel) == selectedChainId }
     val activeAsset = selectedAssets.firstOrNull() ?: uiState.assets.firstOrNull()
     val activeAssetId = activeAsset?.symbol ?: if (selectedChainId == "solana") "SOL" else "USDT"
+    val receiveEntryRoute = resolveWalletReceiveRoute(
+        walletExists = uiState.walletExists,
+        nextAction = uiState.walletNextAction,
+        walletId = uiState.walletId,
+        assetId = activeAssetId,
+        chainId = selectedChainId,
+    )
     WalletHomeScreen(
         currentRoute = currentRoute,
         uiState = uiState,
         onSelectChain = { viewModel.onEvent(WalletHomeEvent.ChainSelected(it)) },
         onBottomNav = onBottomNav,
-        onReceive = onReceive ?: { onBottomNav(CryptoVpnRouteSpec.receiveRoute(activeAssetId, selectedChainId)) },
+        onReceive = {
+            onReceive?.invoke(activeAssetId, selectedChainId) ?: onBottomNav(receiveEntryRoute)
+        },
         onSend = onSend ?: { onBottomNav(CryptoVpnRouteSpec.sendRoute(activeAssetId, selectedChainId)) },
     )
 }
@@ -175,6 +184,23 @@ private fun inferChain(chainLabel: String): String = when {
     chainLabel.contains("eth", ignoreCase = true) -> "ethereum"
     chainLabel.contains("base", ignoreCase = true) -> "base"
     else -> "tron"
+}
+
+private fun resolveWalletReceiveRoute(
+    walletExists: Boolean,
+    nextAction: String,
+    walletId: String?,
+    assetId: String,
+    chainId: String,
+): String {
+    return when {
+        !walletExists -> CryptoVpnRouteSpec.walletOnboarding.pattern
+        nextAction.equals("BACKUP_MNEMONIC", ignoreCase = true) && !walletId.isNullOrBlank() ->
+            CryptoVpnRouteSpec.backupMnemonicRoute(walletId)
+        nextAction.equals("CONFIRM_MNEMONIC", ignoreCase = true) && !walletId.isNullOrBlank() ->
+            CryptoVpnRouteSpec.confirmMnemonicRoute(walletId)
+        else -> CryptoVpnRouteSpec.receiveRoute(assetId, chainId)
+    }
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

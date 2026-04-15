@@ -132,6 +132,17 @@ interface PaymentApi {
         @Header("Authorization") authorization: String
     ): Response<WalletOverviewResponse>
 
+    @GET("${PaymentConfig.API_VERSION}/wallet/lifecycle")
+    suspend fun getWalletLifecycle(
+        @Header("Authorization") authorization: String
+    ): Response<WalletLifecycleResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/wallet/lifecycle")
+    suspend fun upsertWalletLifecycle(
+        @Header("Authorization") authorization: String,
+        @Body request: WalletLifecycleUpsertRequest
+    ): Response<WalletLifecycleResponse>
+
     @GET("${PaymentConfig.API_VERSION}/wallet/receive-context")
     suspend fun getWalletReceiveContext(
         @Header("Authorization") authorization: String,
@@ -565,6 +576,56 @@ data class WalletOverviewData(
     val alerts: List<String> = emptyList(),
 )
 
+data class WalletLifecycleResponse(
+    val code: String,
+    val message: String,
+    val data: WalletLifecycleData?
+)
+
+data class WalletLifecycleData(
+    @SerializedName("accountId")
+    val accountId: String,
+    @SerializedName("walletExists")
+    val walletExists: Boolean,
+    @SerializedName("receiveState")
+    val receiveState: String,
+    @SerializedName("lifecycleStatus")
+    val lifecycleStatus: String,
+    @SerializedName("sourceType")
+    val sourceType: String? = null,
+    @SerializedName("walletId")
+    val walletId: String? = null,
+    @SerializedName("displayName")
+    val displayName: String? = null,
+    @SerializedName("status")
+    val status: String? = null,
+    @SerializedName("origin")
+    val origin: String? = null,
+    @SerializedName("nextAction")
+    val nextAction: String? = null,
+    @SerializedName("walletName")
+    val walletName: String? = null,
+    @SerializedName("configuredAddressCount")
+    val configuredAddressCount: Int = 0,
+    @SerializedName("createdAt")
+    val createdAt: String? = null,
+    @SerializedName("updatedAt")
+    val updatedAt: String? = null,
+    @SerializedName("backupAcknowledgedAt")
+    val backupAcknowledgedAt: String? = null,
+    @SerializedName("activatedAt")
+    val activatedAt: String? = null,
+)
+
+data class WalletLifecycleUpsertRequest(
+    @SerializedName("action")
+    val action: String,
+    @SerializedName("displayName")
+    val displayName: String? = null,
+    @SerializedName("mnemonic")
+    val mnemonic: String? = null,
+)
+
 data class WalletReceiveContextResponse(
     val code: String,
     val message: String,
@@ -585,6 +646,10 @@ data class WalletReceiveContextData(
     val defaultAddress: String? = null,
     @SerializedName("canShare")
     val canShare: Boolean,
+    @SerializedName("walletExists")
+    val walletExists: Boolean = false,
+    @SerializedName("receiveState")
+    val receiveState: String? = null,
     val status: String,
     val note: String,
     @SerializedName("shareText")

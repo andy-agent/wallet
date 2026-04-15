@@ -78,7 +78,107 @@ describe('Wallet (e2e)', () => {
     process.env.TRON_SERVICE_ENABLED = originalTronServiceEnabled;
   });
 
+  it('wallet lifecycle exposes no-wallet vs created-wallet receive gating state', async () => {
+    await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/lifecycle')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.walletExists).toBe(false);
+        expect(res.body.data.lifecycleStatus).toBe('NOT_CREATED');
+        expect(res.body.data.receiveState).toBe('NO_WALLET');
+        expect(res.body.data.configuredAddressCount).toBe(0);
+        expect(res.body.data.nextAction).toBe('CREATE_OR_IMPORT');
+      });
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallet/lifecycle')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        action: 'CREATE',
+        displayName: 'Primary Wallet',
+      })
+      .expect(201)
+      .expect((res) => {
+        expect(res.body.data.walletExists).toBe(true);
+        expect(res.body.data.lifecycleStatus).toBe('CREATED');
+        expect(res.body.data.status).toBe('CREATED_PENDING_BACKUP');
+        expect(res.body.data.sourceType).toBe('CREATE');
+        expect(res.body.data.receiveState).toBe('NO_ADDRESS');
+        expect(res.body.data.displayName).toBe('Primary Wallet');
+        expect(res.body.data.nextAction).toBe('BACKUP_MNEMONIC');
+      });
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallet/lifecycle')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        action: 'ACKNOWLEDGE_BACKUP',
+      })
+      .expect(201)
+      .expect((res) => {
+        expect(res.body.data.lifecycleStatus).toBe('CREATED');
+        expect(res.body.data.status).toBe('BACKUP_PENDING_CONFIRMATION');
+        expect(res.body.data.nextAction).toBe('CONFIRM_MNEMONIC');
+      });
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallet/lifecycle')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        action: 'CONFIRM_BACKUP',
+      })
+      .expect(201)
+      .expect((res) => {
+        expect(res.body.data.lifecycleStatus).toBe('ACTIVE');
+        expect(res.body.data.nextAction).toBe('READY');
+      });
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallet/public-addresses')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        networkCode: 'SOLANA',
+        assetCode: 'USDT',
+        address: 'So11111111111111111111111111111111111111112',
+        isDefault: true,
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/lifecycle')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.walletExists).toBe(true);
+        expect(res.body.data.receiveState).toBe('READY');
+        expect(res.body.data.configuredAddressCount).toBe(1);
+      });
+  });
+
   it('wallet metadata and fallback flow', async () => {
+    await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/lifecycle')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.walletExists).toBe(false);
+        expect(res.body.data.nextAction).toBe('CREATE_OR_IMPORT');
+      });
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallet/lifecycle')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        action: 'CREATE',
+        displayName: 'Primary Wallet',
+      })
+      .expect(201)
+      .expect((res) => {
+        expect(res.body.data.walletExists).toBe(true);
+        expect(res.body.data.status).toBe('CREATED_PENDING_BACKUP');
+      });
+
     await request(app.getHttpServer())
       .get('/api/client/v1/wallet/chains')
       .set('authorization', `Bearer ${accessToken}`)
@@ -131,6 +231,8 @@ describe('Wallet (e2e)', () => {
       .expect((res) => {
         expect(res.body.data.selectedNetworkCode).toBe('SOLANA');
         expect(res.body.data.selectedAssetCode).toBe('USDT');
+        expect(res.body.data.walletExists).toBe(true);
+        expect(res.body.data.receiveState).toBe('READY');
         expect(res.body.data.status).toBe('已配置收款地址');
         expect(res.body.data.defaultAddress).toBe(
           'So11111111111111111111111111111111111111112',

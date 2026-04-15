@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
 import { ProxyBroadcastRequestDto } from './dto/proxy-broadcast.request';
 import { TransferPrecheckRequestDto } from './dto/transfer-precheck.request';
+import { UpsertWalletLifecycleRequestDto } from './dto/upsert-wallet-lifecycle.request';
 import { UpsertWalletPublicAddressRequestDto } from './dto/upsert-wallet-public-address.request';
 import { WalletService } from './wallet.service';
 
@@ -27,6 +28,22 @@ export class WalletController {
   @Get('overview')
   getOverview(@Headers('authorization') authorization?: string) {
     return this.walletService.getOverview(this.extractBearer(authorization));
+  }
+
+  @Get('lifecycle')
+  getLifecycle(@Headers('authorization') authorization?: string) {
+    return this.walletService.getWalletLifecycle(this.extractBearer(authorization));
+  }
+
+  @Post('lifecycle')
+  upsertLifecycle(
+    @Headers('authorization') authorization: string | undefined,
+    @Body() body: UpsertWalletLifecycleRequestDto,
+  ) {
+    return this.walletService.upsertWalletLifecycle(
+      this.extractBearer(authorization),
+      body,
+    );
   }
 
   @Get('receive-context')

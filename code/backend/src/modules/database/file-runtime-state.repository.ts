@@ -12,6 +12,7 @@ import {
   VerificationCodeRecord,
 } from '../auth/auth.types';
 import { OrderStatus } from '../orders/orders.types';
+import { PersistedWalletLifecycleRecord } from '../wallet/wallet.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 import { RuntimeStateRepository } from './runtime-state.repository';
 import {
@@ -25,10 +26,11 @@ import {
 } from './runtime-state.types';
 
 const EMPTY_RUNTIME_STATE: RuntimeStateSnapshot = {
-  version: 3,
+  version: 4,
   orders: [],
   idempotencyIndex: {},
   subscriptions: [],
+  walletLifecycles: [],
   accounts: [],
   sessions: [],
   verificationCodes: [],
@@ -322,6 +324,31 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
     ).length;
   }
 
+  async findWalletLifecycleByAccountId(
+    accountId: string,
+  ): Promise<PersistedWalletLifecycleRecord | null> {
+    return (
+      this.readSnapshot().walletLifecycles
+        .filter((item) => item.accountId === accountId)
+        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))[0] ??
+      null
+    );
+  }
+
+  async upsertWalletLifecycle(
+    record: PersistedWalletLifecycleRecord,
+  ): Promise<PersistedWalletLifecycleRecord> {
+    const snapshot = this.readSnapshot();
+    const nextWalletLifecycles = snapshot.walletLifecycles.filter(
+      (item) => item.accountId !== record.accountId,
+    );
+
+    nextWalletLifecycles.push(record);
+    snapshot.walletLifecycles = nextWalletLifecycles;
+    this.writeSnapshot(snapshot);
+    return record;
+  }
+
   private ensureStateFile() {
     const directory = dirname(this.stateFilePath);
     if (!existsSync(directory)) {
@@ -355,10 +382,11 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
 
   private normalizeSnapshot(raw: Partial<RuntimeStateSnapshot>) {
     return {
-      version: 3,
+      version: 4,
       orders: raw.orders ?? [],
       idempotencyIndex: raw.idempotencyIndex ?? {},
       subscriptions: raw.subscriptions ?? [],
+      walletLifecycles: raw.walletLifecycles ?? [],
       accounts: raw.accounts ?? [],
       sessions: raw.sessions ?? [],
       verificationCodes: raw.verificationCodes ?? [],
