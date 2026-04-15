@@ -203,3 +203,21 @@ export const getSystemConfigs = async (
   })) as RawPaginatedResult<SystemConfig>;
   return normalizePaginatedResult<SystemConfig>(result);
 };
+
+export type PublicReferralResolve = {
+  referralCode: string;
+  inviterLabel: string;
+  shareTitle: string;
+  headline: string;
+  description: string;
+  downloadUrl: string | null;
+  openAppUrl: string | null;
+};
+
+export const resolvePublicReferral = (
+  code: string,
+): Promise<PublicReferralResolve> => {
+  return request.get('/client/v1/referral/resolve-public', {
+    params: { code },
+  });
+};
