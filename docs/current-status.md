@@ -12,7 +12,7 @@
 | Android 编译/构建 | 🟢 Compose APK 构建已恢复 | `7x4.2` 已修复 Kotlin/AGP 冲突，`assembleFdroidDebug` 可在主线通过 |
 | Android 运行验证 | 🟡 Compose 容器与真机安装已验证 | 最新 `fdroidDebug` 包已重装到 `ba2b016`，`v2rayng://invite?code=...` 冒烟已通过，但真实登录/下单/收发款仍待人工联动 |
 | Compose copy-card 清理 | 🟢 Batch 1 / 2 / 3 / 4 已完成 | 共享组件抑制、mounted 页面说明型卡片删除、contract 默认值清理、preview/dev residue 收口均已落地 |
-| 邀请/分享收口 | 🟡 App/Web 主链路已打通 | App 内已收口为“邀请中心”唯一入口；`api.residential-agent.com/invite?code=...` 已在线返回落地页；Android `v2rayng://invite?code=...` 已能保存 pending referral |
+| 邀请/分享收口 | 🟡 App/Web 主链路已打通 | App 内已收口为“邀请中心”唯一入口；`api.residential-agent.com/invite?code=...` 已在线返回静态邀请页；Android `v2rayng://invite?code=...` 已能保存 pending referral |
 | 真实业务 smoke | 🟢 已推进 | 基础接口 smoke 已通过，订单最小链路已通过远程 Solana 服务完成真实 smoke |
 | Sol 链侧服务 | 🟢 可用 | `sol.residential-agent.com` 内外健康检查均通过 |
 | USDT/TRON 链侧服务 | 🟢 可用 | `usdt.residential-agent.com` 已接真实 TRON RPC，健康/区块/交易查询通过 |
@@ -115,7 +115,7 @@
     - 打开 App CTA
     - 复制邀请码 / 复制邀请链接
   - `code/admin-web` 本地 `npm run build` 通过
-  - `api.residential-agent.com/invite?code=...` 已线上返回 HTML
+  - `api.residential-agent.com/invite?code=...` 已线上返回静态邀请页，不再空白
   - `https://api.residential-agent.com/downloads/cryptovpn-android.apk` 已线上返回 `200`
 - 完成 `liaojiang-xn6o.12` 方案设计
   - 已确定“直接 Web 下载 APK”场景的最小闭环：
