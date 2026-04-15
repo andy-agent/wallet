@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export class UpsertWalletLifecycleRequestDto {
   @IsString()
@@ -13,4 +13,13 @@ export class UpsertWalletLifecycleRequestDto {
   @IsOptional()
   @IsString()
   mnemonic?: string;
+
+  @IsOptional()
+  @IsString()
+  mnemonicHash?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  mnemonicWordCount?: number;
 }

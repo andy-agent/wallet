@@ -25,4 +25,12 @@ export class ProxyBroadcastRequestDto {
   @IsOptional()
   @IsString()
   serializedTx?: string;
+
+  @IsOptional()
+  @IsString()
+  unsignedPayload?: string;
+
+  @IsOptional()
+  @IsString()
+  signature?: string;
 }
