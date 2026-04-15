@@ -6,7 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.cryptoVpnViewModelFactory
-import com.v2ray.ang.composeui.p0.model.WalletCreationMode
+import com.v2ray.ang.composeui.p0.model.resolveContinueRoute
 import com.v2ray.ang.composeui.p0.repository.P0Repository
 import com.v2ray.ang.composeui.p0.viewmodel.*
 import com.v2ray.ang.composeui.pages.p0.*
@@ -59,31 +59,14 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
         )
         WalletOnboardingRoute(
             viewModel = vm,
-            onContinue = { mode ->
-                when {
-                    vm.uiState.value.walletExists &&
-                        vm.uiState.value.walletNextAction.equals("BACKUP_MNEMONIC", ignoreCase = true) &&
-                        !vm.uiState.value.walletId.isNullOrBlank() ->
-                        navController.navigateSingleTop(
-                            CryptoVpnRouteSpec.backupMnemonicRoute(vm.uiState.value.walletId!!),
-                        )
-
-                    vm.uiState.value.walletExists &&
-                        vm.uiState.value.walletNextAction.equals("CONFIRM_MNEMONIC", ignoreCase = true) &&
-                        !vm.uiState.value.walletId.isNullOrBlank() ->
-                        navController.navigateSingleTop(
-                            CryptoVpnRouteSpec.confirmMnemonicRoute(vm.uiState.value.walletId!!),
-                        )
-
-                    vm.uiState.value.walletExists ->
-                        navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern)
-
-                    mode == WalletCreationMode.CREATE ->
-                        navController.navigateSingleTop(CryptoVpnRouteSpec.createWalletRoute("create"))
-
-                    else ->
-                        navController.navigateSingleTop(CryptoVpnRouteSpec.importWalletMethod.pattern)
-                }
+            onCreateWallet = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.createWalletRoute("create"))
+            },
+            onImportWallet = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.importWalletMethod.pattern)
+            },
+            onContinue = {
+                navController.navigateSingleTop(vm.uiState.value.resolveContinueRoute())
             },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
