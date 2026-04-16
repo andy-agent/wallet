@@ -19,7 +19,7 @@
 - 建立第一批 XML token 资源占位
 - 建立统一卡片、状态徽标、标签值行、复制分享动作组等公共视觉组件
 - 用 wrapper 方式收口三套 Compose 骨架的视觉层
-- 选择 1 到 2 个低风险页面做试点替换
+- 选择 2 到 4 个试点页面做替换验证，其中优先包含低风险页，并补充网络/资产总览页作为扩展试点
 
 ### 本阶段不做
 
@@ -196,11 +196,11 @@
 
 | 组件名 | 来源 | 优先级 | 试点页面 |
 |---|---|---|---|
-| `AppPageScaffold` | Compose | P0 | `InviteCenterPage`, `InviteSharePage` |
-| `AppCard` | Compose | P0 | `InviteCenterPage`, `InviteSharePage` |
-| `AppStatusChip` | Compose | P0 | `InviteCenterPage`, `InviteSharePage` |
+| `AppPageScaffold` | Compose | P0 | `InviteCenterPage`, `InviteSharePage`, `VpnHomePage`, `WalletHomePage` |
+| `AppCard` | Compose | P0 | `InviteCenterPage`, `InviteSharePage`, `VpnHomePage`, `WalletHomePage` |
+| `AppStatusChip` | Compose | P0 | `InviteCenterPage`, `InviteSharePage`, `VpnHomePage`, `WalletHomePage` |
 | `AppCopyShareActions` | Compose | P0 | `InviteCenterPage`, `InviteSharePage` |
-| `AppLabelValueRow` | Compose，后续可镜像到 XML | P1 | `InviteCenterPage`，下一步扩到 `CommissionLedger/Profile` 类页面 |
+| `AppLabelValueRow` | Compose，后续可镜像到 XML | P1 | `InviteCenterPage`, `WalletHomePage`，下一步扩到 `CommissionLedger/Profile` 类页面 |
 
 ## 8. 推荐试点页面
 
@@ -220,18 +220,35 @@
   - 逻辑很薄，主要是展示、复制、分享
   - 与 `InviteCenterPage` 处于同一骨架体系，适合验证同骨架下的视觉收敛效果
 
+### 试点 3
+
+- `code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/composeui/pages/p0/VpnHomePage.kt`
+- 原因：
+  - 属于“网络总览页”，能验证 Dashboard 型页面在新视觉系统下的节奏与层次
+  - 覆盖主指标卡、快捷操作区、状态块、顶部摘要等高复用模块
+  - 虽然复杂度高于邀请页，但能尽早暴露总览页组件的不足
+
+### 试点 4
+
+- `code/Android/V2rayNG/app/src/main/java/com/v2ray/ang/composeui/pages/p0/WalletHomePage.kt`
+- 原因：
+  - 属于“资产总览页”，能验证资产卡片、资产行、摘要区、操作入口的通用性
+  - 与 `VpnHomePage` 共同构成 Dashboard 级试点，可以补齐试点覆盖面
+  - 后续 `AssetRow / MetricCard / ActionCluster` 的复用价值在该页最明显
+
 ## 9. 第一阶段验收标准
 
 - 试点页面业务行为完全不变：
   - 复制仍复制原内容
   - 分享仍调用原系统分享
   - Toast 文案和触发时机不变
-- `InviteCenterPage` 与 `InviteSharePage` 的以下视觉项应明显统一：
+- `InviteCenterPage`、`InviteSharePage`、`VpnHomePage`、`WalletHomePage` 的以下视觉项应明显统一：
   - 卡片圆角
   - 按钮高度
   - badge 样式
   - 间距节奏
   - 标签值行表现
+  - 总览卡与列表卡的层级关系
 - 三套 Compose 骨架的页面调用方式基本不变：
   - 页面仍传原参数
   - 只增加 wrapper / 适配层
@@ -254,7 +271,7 @@
 3. 再做 `AppCard / AppStatusChip / AppPageScaffold / AppCopyShareActions`
 4. 然后修改 `TechCards / GlowButtons / FeaturePageTemplate`
 5. 再给 `P01Chrome / P2CoreH5Scaffold / P2ExtendedH5Scaffold` 接 wrapper
-6. 最后只改 `InviteCenterPage / InviteSharePage` 两个试点页面做验证
+6. 最后先改 `InviteCenterPage / InviteSharePage`，再把 `VpnHomePage / WalletHomePage` 作为扩展试点接入验证
 
 ## 11. 本文用途
 
