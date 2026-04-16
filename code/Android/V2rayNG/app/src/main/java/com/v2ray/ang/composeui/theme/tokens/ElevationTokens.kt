@@ -1,16 +1,22 @@
 package com.v2ray.ang.composeui.theme.tokens
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-object ElevationTokens {
-    val CardLow: Dp = 6.dp
-    val CardMedium: Dp = 10.dp
-    val Floating: Dp = 14.dp
-    val FocusGlow: Dp = 18.dp
+@Immutable
+data class AppElevationTokens(
+    val none: Dp,
+    val card: Dp,
+    val floating: Dp,
+    val hero: Dp,
+)
 
-    val ShadowOffsetLow: Dp = 4.dp
-    val ShadowBlurLow: Dp = 16.dp
-    val ShadowOffsetMedium: Dp = 8.dp
-    val ShadowBlurMedium: Dp = 24.dp
+object ElevationTokens {
+    val default = AppElevationTokens(
+        none = 0.dp,
+        card = 6.dp,
+        floating = 10.dp,
+        hero = 14.dp,
+    )
 }

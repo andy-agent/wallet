@@ -1,46 +1,36 @@
 package com.v2ray.ang.composeui.theme.tokens
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Brush
 
+@Immutable
+data class AppGradientTokens(
+    val primaryGradient: Brush,
+    val heroGlowGradient: Brush,
+    val cardGlowGradient: Brush,
+)
+
 object GradientTokens {
-    val PrimaryGradient: Brush
-        get() = Brush.horizontalGradient(
+    fun from(colors: AppColorTokens): AppGradientTokens = AppGradientTokens(
+        primaryGradient = Brush.horizontalGradient(
             colors = listOf(
-                ColorTokens.BrandPrimary,
-                ColorTokens.BrandSecondary,
+                colors.brandPrimary,
+                colors.brandSecondary,
             ),
-        )
-
-    val HeroGlowGradient: Brush
-        get() = Brush.linearGradient(
+        ),
+        heroGlowGradient = Brush.linearGradient(
             colors = listOf(
-                ColorTokens.AccentPurple,
-                ColorTokens.BrandPrimary,
-                ColorTokens.BrandSecondary,
+                colors.accentPurple,
+                colors.brandPrimary,
+                colors.brandSecondary,
             ),
-        )
-
-    val SoftBackgroundGradient: Brush
-        get() = Brush.verticalGradient(
+        ),
+        cardGlowGradient = Brush.linearGradient(
             colors = listOf(
-                ColorTokens.BackgroundBase,
-                ColorTokens.BackgroundSoftTint,
+                colors.surfaceGlowStrong,
+                colors.surfaceGlowWeak,
+                colors.bgSubtle,
             ),
-        )
-
-    val InfoTintGradient: Brush
-        get() = Brush.horizontalGradient(
-            colors = listOf(
-                ColorTokens.StatusInfoBg,
-                ColorTokens.CardBase,
-            ),
-        )
-
-    val SuccessTintGradient: Brush
-        get() = Brush.horizontalGradient(
-            colors = listOf(
-                ColorTokens.StatusSuccessBg,
-                ColorTokens.CardBase,
-            ),
-        )
+        ),
+    )
 }

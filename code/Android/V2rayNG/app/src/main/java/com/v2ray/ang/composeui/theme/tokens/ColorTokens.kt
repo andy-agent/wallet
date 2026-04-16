@@ -1,51 +1,93 @@
 package com.v2ray.ang.composeui.theme.tokens
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
+@Immutable
+data class AppColorTokens(
+    val bgApp: Color,
+    val bgSubtle: Color,
+    val surfaceCard: Color,
+    val surfaceElevated: Color,
+    val surfaceGlowWeak: Color,
+    val surfaceGlowStrong: Color,
+    val textPrimary: Color,
+    val textSecondary: Color,
+    val textTertiary: Color,
+    val textOnPrimary: Color,
+    val textDisabled: Color,
+    val brandPrimary: Color,
+    val brandSecondary: Color,
+    val accentPurple: Color,
+    val accentMint: Color,
+    val accentSky: Color,
+    val success: Color,
+    val successBg: Color,
+    val warning: Color,
+    val warningBg: Color,
+    val error: Color,
+    val errorBg: Color,
+    val info: Color,
+    val infoBg: Color,
+    val borderSubtle: Color,
+    val dividerSubtle: Color,
+    val borderFocus: Color,
+    val navInactive: Color,
+    val shadowColor: Color,
+)
+
 object ColorTokens {
-    val BrandPrimary = Color(0xFF4F7CFF)
-    val BrandSecondary = Color(0xFF25D7FF)
-    val AccentPurple = Color(0xFF8C7CFF)
-    val AccentMint = Color(0xFF2ED8A3)
-    val AccentSky = Color(0xFFA9E8FF)
+    val light = AppColorTokens(
+        bgApp = Color(0xFFF7FAFF),
+        bgSubtle = Color(0xFFF2F8FF),
+        surfaceCard = Color(0xFFFFFFFF),
+        surfaceElevated = Color(0xFFFBFDFF),
+        surfaceGlowWeak = Color(0x0FFFFFFF),
+        surfaceGlowStrong = Color(0x24FFFFFF),
+        textPrimary = Color(0xFF16233B),
+        textSecondary = Color(0xFF5E6C84),
+        textTertiary = Color(0xFF8C97AB),
+        textOnPrimary = Color(0xFFFFFFFF),
+        textDisabled = Color(0xFFB8C1D1),
+        brandPrimary = Color(0xFF4F7CFF),
+        brandSecondary = Color(0xFF25D7FF),
+        accentPurple = Color(0xFF8C7CFF),
+        accentMint = Color(0xFF2ED8A3),
+        accentSky = Color(0xFFA9E8FF),
+        success = Color(0xFF2ED8A3),
+        successBg = Color(0xFFE8FFF6),
+        warning = Color(0xFFFFB84D),
+        warningBg = Color(0xFFFFF6E8),
+        error = Color(0xFFFF6B7A),
+        errorBg = Color(0xFFFFF0F3),
+        info = Color(0xFF4F7CFF),
+        infoBg = Color(0xFFEEF4FF),
+        borderSubtle = Color(0x14B8CAE6),
+        dividerSubtle = Color(0x26D7E4F5),
+        borderFocus = Color(0x594F7CFF),
+        navInactive = Color(0xFF8C97AB),
+        shadowColor = Color(0x143B5EA8),
+    )
 
-    val SoftLavender = Color(0xFFEDE8FF)
-    val SoftMintBg = Color(0xFFE8FFF6)
-    val SoftSkyBg = Color(0xFFEFFBFF)
-
-    val BackgroundBase = Color(0xFFF7FAFF)
-    val BackgroundElevated = Color(0xFFFBFDFF)
-    val BackgroundSoftTint = Color(0xFFF2F8FF)
-
-    val CardBase = Color(0xFFFFFFFF)
-    val CardSoft = Color(0xFFFCFEFF)
-    val CardOverlayWeak = Color(0x0FFFFFFF)
-    val CardOverlayStrong = Color(0x24FFFFFF)
-
-    val TextPrimary = Color(0xFF16233B)
-    val TextSecondary = Color(0xFF5E6C84)
-    val TextTertiary = Color(0xFF8C97AB)
-    val TextOnPrimary = Color(0xFFFFFFFF)
-    val TextDisabled = Color(0xFFB8C1D1)
-
-    val BorderSubtle = Color(0x14B8CAE6)
-    val BorderLight = Color(0x26D7E4F5)
-    val BorderFocus = Color(0x594F7CFF)
-
-    val StatusSuccess = Color(0xFF2ED8A3)
-    val StatusSuccessBg = Color(0xFFE8FFF6)
-    val StatusWarning = Color(0xFFFFB84D)
-    val StatusWarningBg = Color(0xFFFFF6E8)
-    val StatusError = Color(0xFFFF6B7A)
-    val StatusErrorBg = Color(0xFFFFF0F3)
-    val StatusInfo = Color(0xFF4F7CFF)
-    val StatusInfoBg = Color(0xFFEEF4FF)
-
-    val ShadowColor = Color(0x143B5EA8)
-    val GlowPrimary = Color(0x334F7CFF)
-    val GlowSecondary = Color(0x3325D7FF)
-    val GlowPurple = Color(0x338C7CFF)
-
-    val NavInactive = Color(0xFF8C97AB)
-    val ScreenStroke = Color(0x29788FDA)
+    val dark = light.copy(
+        bgApp = Color(0xFF0D1524),
+        bgSubtle = Color(0xFF19253B),
+        surfaceCard = Color(0xFF111B2C),
+        surfaceElevated = Color(0xFF162136),
+        surfaceGlowWeak = Color(0x121F2D46),
+        surfaceGlowStrong = Color(0x243B4D70),
+        textPrimary = Color(0xFFEAF1FF),
+        textSecondary = Color(0xFFC8D3E8),
+        textTertiary = Color(0xFFA7B3C8),
+        textDisabled = Color(0xFF73819A),
+        successBg = Color(0x1A2ED8A3),
+        warningBg = Color(0x1AFFB84D),
+        errorBg = Color(0x1AFF6B7A),
+        infoBg = Color(0x1A4F7CFF),
+        borderSubtle = Color(0x33324158),
+        dividerSubtle = Color(0x66324158),
+        borderFocus = Color(0x804F7CFF),
+        navInactive = Color(0xFFA7B3C8),
+        shadowColor = Color(0x33000000),
+    )
 }

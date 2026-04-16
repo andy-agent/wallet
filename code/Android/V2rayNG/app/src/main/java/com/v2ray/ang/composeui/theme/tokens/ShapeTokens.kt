@@ -1,21 +1,38 @@
 package com.v2ray.ang.composeui.theme.tokens
 
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Shapes
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-object ShapeTokens {
-    val RadiusXs: Dp = 8.dp
-    val RadiusS: Dp = 12.dp
-    val RadiusM: Dp = 16.dp
-    val RadiusL: Dp = 20.dp
-    val RadiusXl: Dp = 24.dp
-    val RadiusPill: Dp = 999.dp
+@Immutable
+data class AppShapeTokens(
+    val radiusXs: Dp,
+    val radiusSm: Dp,
+    val radiusMd: Dp,
+    val radiusLg: Dp,
+    val radiusXl: Dp,
+    val radiusPill: Dp,
+)
 
-    val Xs = RoundedCornerShape(RadiusXs)
-    val S = RoundedCornerShape(RadiusS)
-    val M = RoundedCornerShape(RadiusM)
-    val L = RoundedCornerShape(RadiusL)
-    val Xl = RoundedCornerShape(RadiusXl)
-    val Pill = RoundedCornerShape(RadiusPill)
+object ShapeTokens {
+    val default = AppShapeTokens(
+        radiusXs = 8.dp,
+        radiusSm = 12.dp,
+        radiusMd = 16.dp,
+        radiusLg = 20.dp,
+        radiusXl = 24.dp,
+        radiusPill = 999.dp,
+    )
 }
+
+fun AppShapeTokens.toMaterialShapes(): Shapes = Shapes(
+    extraSmall = RoundedCornerShape(radiusXs),
+    small = RoundedCornerShape(radiusSm),
+    medium = RoundedCornerShape(radiusMd),
+    large = RoundedCornerShape(radiusLg),
+    extraLarge = RoundedCornerShape(radiusXl),
+)
+
+fun AppShapeTokens.pill() = RoundedCornerShape(radiusPill)

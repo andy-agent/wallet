@@ -4,14 +4,15 @@ import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import com.v2ray.ang.composeui.theme.tokens.TypographyTokens
+import com.v2ray.ang.composeui.theme.tokens.toMaterialTypography
 
 object AppTypographyFactory {
 
-    fun small(): Typography = TypographyTokens.materialCompact()
+    fun small(): Typography = TypographyTokens.compact().toMaterialTypography()
 
-    fun normal(): Typography = TypographyTokens.materialMedium()
+    fun normal(): Typography = TypographyTokens.medium().toMaterialTypography()
 
-    fun large(): Typography = TypographyTokens.materialExpanded()
+    fun large(): Typography = TypographyTokens.expanded().toMaterialTypography()
 }
 
 @Composable

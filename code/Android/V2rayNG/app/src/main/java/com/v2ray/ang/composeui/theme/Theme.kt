@@ -5,53 +5,108 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.v2ray.ang.composeui.theme.tokens.ColorTokens
+import com.v2ray.ang.composeui.theme.tokens.AppColorTokens
+import com.v2ray.ang.composeui.theme.tokens.AppElevationTokens
+import com.v2ray.ang.composeui.theme.tokens.AppGradientTokens
+import com.v2ray.ang.composeui.theme.tokens.AppShapeTokens
+import com.v2ray.ang.composeui.theme.tokens.AppSpacingTokens
+import com.v2ray.ang.composeui.theme.tokens.AppTypographyTokens
+import com.v2ray.ang.composeui.theme.tokens.ElevationTokens
+import com.v2ray.ang.composeui.theme.tokens.GradientTokens
+import com.v2ray.ang.composeui.theme.tokens.ShapeTokens
+import com.v2ray.ang.composeui.theme.tokens.SpacingTokens
+import com.v2ray.ang.composeui.theme.tokens.TypographyTokens
+import com.v2ray.ang.composeui.theme.tokens.toMaterialShapes
+import com.v2ray.ang.composeui.theme.tokens.toMaterialTypography
 
-private val CryptoVpnLightColors = lightColorScheme(
-    primary = ColorTokens.BrandPrimary,
-    onPrimary = ColorTokens.TextOnPrimary,
-    primaryContainer = ColorTokens.StatusInfoBg,
-    onPrimaryContainer = ColorTokens.TextPrimary,
-    secondary = ColorTokens.BrandSecondary,
-    onSecondary = ColorTokens.TextOnPrimary,
-    secondaryContainer = ColorTokens.SoftSkyBg,
-    onSecondaryContainer = ColorTokens.TextPrimary,
-    tertiary = ColorTokens.AccentPurple,
-    onTertiary = ColorTokens.TextOnPrimary,
-    tertiaryContainer = ColorTokens.SoftLavender,
-    onTertiaryContainer = ColorTokens.TextPrimary,
-    background = ColorTokens.BackgroundBase,
-    onBackground = ColorTokens.TextPrimary,
-    surface = ColorTokens.CardBase,
-    onSurface = ColorTokens.TextPrimary,
-    surfaceVariant = ColorTokens.BackgroundSoftTint,
-    onSurfaceVariant = ColorTokens.TextSecondary,
-    outline = ColorTokens.BorderLight,
-    outlineVariant = ColorTokens.BorderSubtle,
-    error = ColorTokens.StatusError,
-    onError = ColorTokens.TextOnPrimary,
-    errorContainer = ColorTokens.StatusErrorBg,
-    onErrorContainer = ColorTokens.StatusError,
-    surfaceTint = ColorTokens.BrandPrimary,
+private val LocalAppColors = staticCompositionLocalOf { ColorTokens.light }
+private val LocalAppTypography = staticCompositionLocalOf { TypographyTokens.medium() }
+private val LocalAppShapes = staticCompositionLocalOf { ShapeTokens.default }
+private val LocalAppSpacing = staticCompositionLocalOf { SpacingTokens.default }
+private val LocalAppElevation = staticCompositionLocalOf { ElevationTokens.default }
+private val LocalAppGradients = staticCompositionLocalOf { GradientTokens.from(ColorTokens.light) }
+
+object AppTheme {
+    val colors: AppColorTokens
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAppColors.current
+
+    val typography: AppTypographyTokens
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAppTypography.current
+
+    val shapes: AppShapeTokens
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAppShapes.current
+
+    val spacing: AppSpacingTokens
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAppSpacing.current
+
+    val elevation: AppElevationTokens
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAppElevation.current
+
+    val gradients: AppGradientTokens
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAppGradients.current
+}
+
+private fun AppColorTokens.toLightColorScheme() = lightColorScheme(
+    primary = brandPrimary,
+    onPrimary = textOnPrimary,
+    primaryContainer = infoBg,
+    onPrimaryContainer = textPrimary,
+    secondary = brandSecondary,
+    onSecondary = textOnPrimary,
+    secondaryContainer = bgSubtle,
+    onSecondaryContainer = textPrimary,
+    tertiary = accentPurple,
+    onTertiary = textOnPrimary,
+    tertiaryContainer = surfaceElevated,
+    onTertiaryContainer = textPrimary,
+    background = bgApp,
+    onBackground = textPrimary,
+    surface = surfaceCard,
+    onSurface = textPrimary,
+    surfaceVariant = bgSubtle,
+    onSurfaceVariant = textSecondary,
+    outline = dividerSubtle,
+    outlineVariant = borderSubtle,
+    error = error,
+    onError = textOnPrimary,
+    errorContainer = errorBg,
+    onErrorContainer = error,
+    surfaceTint = brandPrimary,
     scrim = Color(0x66000000),
 )
 
-private val CryptoVpnDarkColors = darkColorScheme(
-    primary = ColorTokens.BrandPrimary,
-    onPrimary = ColorTokens.TextOnPrimary,
-    secondary = ColorTokens.BrandSecondary,
-    tertiary = ColorTokens.AccentPurple,
-    background = Color(0xFF0D1524),
-    onBackground = Color(0xFFEAF1FF),
-    surface = Color(0xFF111B2C),
-    onSurface = Color(0xFFEAF1FF),
-    surfaceVariant = Color(0xFF19253B),
-    onSurfaceVariant = Color(0xFFB8C1D1),
-    outline = Color(0xFF324158),
-    outlineVariant = Color(0xFF26354A),
-    error = ColorTokens.StatusError,
-    onError = ColorTokens.TextOnPrimary,
+private fun AppColorTokens.toDarkColorScheme() = darkColorScheme(
+    primary = brandPrimary,
+    onPrimary = textOnPrimary,
+    secondary = brandSecondary,
+    tertiary = accentPurple,
+    background = bgApp,
+    onBackground = textPrimary,
+    surface = surfaceCard,
+    onSurface = textPrimary,
+    surfaceVariant = bgSubtle,
+    onSurfaceVariant = textSecondary,
+    outline = dividerSubtle,
+    outlineVariant = borderSubtle,
+    error = error,
+    onError = textOnPrimary,
 )
 
 @Composable
@@ -59,11 +114,30 @@ fun CryptoVpnTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val typography = rememberAdaptiveTypography()
-    MaterialTheme(
-        colorScheme = if (darkTheme) CryptoVpnDarkColors else CryptoVpnLightColors,
-        typography = typography,
-        shapes = CryptoVpnShapes,
-        content = content,
-    )
+    val colors = if (darkTheme) ColorTokens.dark else ColorTokens.light
+    val typography = when {
+        androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp < 360 -> TypographyTokens.compact()
+        androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp < 412 -> TypographyTokens.medium()
+        else -> TypographyTokens.expanded()
+    }
+    val shapes = ShapeTokens.default
+    val spacing = SpacingTokens.default
+    val elevation = ElevationTokens.default
+    val gradients = GradientTokens.from(colors)
+
+    CompositionLocalProvider(
+        LocalAppColors provides colors,
+        LocalAppTypography provides typography,
+        LocalAppShapes provides shapes,
+        LocalAppSpacing provides spacing,
+        LocalAppElevation provides elevation,
+        LocalAppGradients provides gradients,
+    ) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) colors.toDarkColorScheme() else colors.toLightColorScheme(),
+            typography = typography.toMaterialTypography(),
+            shapes = shapes.toMaterialShapes(),
+            content = content,
+        )
+    }
 }

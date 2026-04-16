@@ -1,21 +1,36 @@
 package com.v2ray.ang.composeui.theme.tokens
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-object SpacingTokens {
-    val Space4: Dp = 4.dp
-    val Space8: Dp = 8.dp
-    val Space12: Dp = 12.dp
-    val Space16: Dp = 16.dp
-    val Space20: Dp = 20.dp
-    val Space24: Dp = 24.dp
-    val Space32: Dp = 32.dp
+@Immutable
+data class AppSpacingTokens(
+    val space4: Dp,
+    val space8: Dp,
+    val space12: Dp,
+    val space16: Dp,
+    val space20: Dp,
+    val space24: Dp,
+    val space32: Dp,
+    val pageHorizontal: Dp,
+    val cardPadding: Dp,
+    val sectionGap: Dp,
+    val itemGap: Dp,
+)
 
-    val PageHorizontal: Dp = Space20
-    val CardPadding: Dp = Space16
-    val SectionGap: Dp = Space16
-    val FieldGap: Dp = Space12
-    val TitleSubtitleGap: Dp = Space8
-    val BottomActionInset: Dp = Space20
+object SpacingTokens {
+    val default = AppSpacingTokens(
+        space4 = 4.dp,
+        space8 = 8.dp,
+        space12 = 12.dp,
+        space16 = 16.dp,
+        space20 = 20.dp,
+        space24 = 24.dp,
+        space32 = 32.dp,
+        pageHorizontal = 20.dp,
+        cardPadding = 16.dp,
+        sectionGap = 16.dp,
+        itemGap = 12.dp,
+    )
 }
