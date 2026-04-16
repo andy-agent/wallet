@@ -184,7 +184,7 @@ export class ReferralService {
   recordCompletedOrder(input: {
     accountId: string;
     orderNo: string;
-    sourceAssetCode: 'SOL' | 'USDT';
+    sourceAssetCode: string;
     sourceAmount: string;
   }) {
     const binding = this.bindings.get(input.accountId);
@@ -243,7 +243,7 @@ export class ReferralService {
 
   private addLedgerEntry(
     beneficiaryAccountId: string,
-    input: { accountId: string; orderNo: string; sourceAssetCode: 'SOL' | 'USDT'; sourceAmount: string },
+    input: { accountId: string; orderNo: string; sourceAssetCode: string; sourceAmount: string },
     level: 'LEVEL1' | 'LEVEL2',
     rate: number,
   ) {

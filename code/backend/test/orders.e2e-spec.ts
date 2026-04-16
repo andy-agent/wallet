@@ -16,6 +16,10 @@ describe('Orders (e2e)', () => {
   let runtimeStateFile: string;
   const solanaCollectionAddress =
     '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV';
+  const originalSolanaCustomOrderAssetsJson =
+    process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON;
+  const originalMarzbanMockMode = process.env.MARZBAN_MOCK_MODE;
+  const originalMarzbanBaseUrl = process.env.MARZBAN_BASE_URL;
 
   beforeEach(async () => {
     runtimeDir = mkdtempSync(join(tmpdir(), 'backend-orders-'));
@@ -23,6 +27,8 @@ describe('Orders (e2e)', () => {
     process.env.NODE_ENV = 'test';
     process.env.RUNTIME_STATE_FILE = runtimeStateFile;
     process.env.SOLANA_ORDER_COLLECTION_ADDRESS = solanaCollectionAddress;
+    process.env.MARZBAN_MOCK_MODE = 'true';
+    process.env.MARZBAN_BASE_URL = 'https://vpn.residential-agent.com';
     delete process.env.RUNTIME_STATE_BACKEND;
 
     app = await bootstrapApp();
@@ -51,6 +57,22 @@ describe('Orders (e2e)', () => {
     delete process.env.RUNTIME_STATE_FILE;
     delete process.env.RUNTIME_STATE_BACKEND;
     delete process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
+    if (originalMarzbanMockMode === undefined) {
+      delete process.env.MARZBAN_MOCK_MODE;
+    } else {
+      process.env.MARZBAN_MOCK_MODE = originalMarzbanMockMode;
+    }
+    if (originalMarzbanBaseUrl === undefined) {
+      delete process.env.MARZBAN_BASE_URL;
+    } else {
+      process.env.MARZBAN_BASE_URL = originalMarzbanBaseUrl;
+    }
+    if (originalSolanaCustomOrderAssetsJson === undefined) {
+      delete process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON;
+    } else {
+      process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON =
+        originalSolanaCustomOrderAssetsJson;
+    }
     rmSync(runtimeDir, { recursive: true, force: true });
   });
 
@@ -139,6 +161,76 @@ describe('Orders (e2e)', () => {
       .expect(200);
 
     expect(targetAfterRestart.body.data).toEqual(firstPaymentTarget.body.data);
+  });
+
+  it('creates Solana custom-token orders when a payable SPL token is configured', async () => {
+    process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON = JSON.stringify([
+      {
+        assetCode: 'USDC',
+        displayName: 'USD Coin (Solana)',
+        symbol: 'USDC',
+        decimals: 6,
+        contractAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+        usdPrice: '1',
+      },
+    ]);
+    await app.close();
+    app = await bootstrapApp();
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/auth/register/email/request-code')
+      .send({ email: 'order-custom-token@example.com' })
+      .expect(200);
+
+    const registerResponse = await request(app.getHttpServer())
+      .post('/api/client/v1/auth/register/email')
+      .set('x-idempotency-key', 'order-register-custom-token')
+      .send({
+        email: 'order-custom-token@example.com',
+        code: '123456',
+        password: 'Passw0rd!',
+      })
+      .expect(200);
+
+    const customTokenAccessToken = registerResponse.body.data.accessToken;
+
+    const createResponse = await request(app.getHttpServer())
+      .post('/api/client/v1/orders')
+      .set('authorization', `Bearer ${customTokenAccessToken}`)
+      .set('x-idempotency-key', 'order-custom-token')
+      .send({
+        planCode: 'BASIC_1M',
+        orderType: 'NEW',
+        quoteAssetCode: 'USDC',
+        quoteNetworkCode: 'SOLANA',
+      })
+      .expect(201);
+
+    expect(createResponse.body.data).toEqual(
+      expect.objectContaining({
+        quoteAssetCode: 'USDC',
+        quoteNetworkCode: 'SOLANA',
+        baseAmount: '9.990000',
+      }),
+    );
+
+    const orderNo = createResponse.body.data.orderNo;
+    await request(app.getHttpServer())
+      .get(`/api/client/v1/orders/${orderNo}/payment-target`)
+      .set('authorization', `Bearer ${customTokenAccessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data).toEqual(
+          expect.objectContaining({
+            assetCode: 'USDC',
+            networkCode: 'SOLANA',
+            collectionAddress: solanaCollectionAddress,
+          }),
+        );
+        expect(res.body.data.qrText).toBe(
+          `solana:${solanaCollectionAddress}?amount=${res.body.data.payableAmount}&spl-token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`,
+        );
+      });
   });
 
   it('requires SOLANA transfer verification before provisioning and supports replacement tx submission', async () => {

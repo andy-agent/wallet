@@ -13,6 +13,7 @@ import {
   NormalizedIncomingTransfer,
   ScanIncomingTransfersResponse,
 } from '../solana-client/solana-client.types';
+import { resolvePaymentAsset } from '../payments/payment-asset-catalog';
 import { OrderStatus } from './orders.types';
 
 const MATCHER_SCAN_STATUSES: OrderStatus[] = [
@@ -143,10 +144,10 @@ export class OrderPaymentMatcherService {
     return this.solanaClient.scanIncomingTransfers({
       collectionAddress: context.collectionAddress,
       assetCode: context.quoteAssetCode,
-      mint:
-        context.quoteAssetCode === 'USDT'
-          ? this.solanaClient.getUsdtMint()
-          : null,
+      mint: this.resolveSolanaMint(
+        context.quoteNetworkCode,
+        context.quoteAssetCode,
+      ),
       cursor: cursor
         ? {
             // Drive incremental scans forward by slot floor.
@@ -157,6 +158,16 @@ export class OrderPaymentMatcherService {
         : null,
       limit: 50,
     });
+  }
+
+  private resolveSolanaMint(networkCode: string, assetCode: string) {
+    const asset = resolvePaymentAsset(
+      this.configService,
+      this.solanaClient,
+      networkCode,
+      assetCode,
+    );
+    return asset?.isNative ? null : asset?.contractAddress ?? null;
   }
 
   private toOnchainReceipt(

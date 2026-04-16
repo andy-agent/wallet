@@ -19,7 +19,7 @@ export class ProvisioningService {
   async provisionPaidOrder(
     input: ProvisionOrderInput & {
       orderNo: string;
-      sourceAssetCode: 'SOL' | 'USDT';
+      sourceAssetCode: string;
       sourceAmount: string;
     },
   ) {

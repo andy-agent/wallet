@@ -12,6 +12,7 @@ import { ClientCatalogService } from '../database/client-catalog.service';
 import { RuntimeStateRepository } from '../database/runtime-state.repository';
 import { StoredOrderRecord } from '../database/runtime-state.types';
 import { MarketService } from '../market/market.service';
+import { resolvePaymentAsset } from '../payments/payment-asset-catalog';
 import { ProvisioningService } from '../provisioning/provisioning.service';
 import { SolanaClientService } from '../solana-client/solana-client.service';
 import { VerifyIncomingTransferResponse } from '../solana-client/solana-client.types';
@@ -57,11 +58,21 @@ export class OrdersService {
         message: 'Plan not found',
       });
     }
+    const quoteAsset = this.resolveQuoteAssetDefinition(
+      dto.quoteNetworkCode,
+      dto.quoteAssetCode,
+    );
+    if (!quoteAsset?.orderPayable) {
+      throw new NotFoundException({
+        code: 'ORDER_ASSET_UNSUPPORTED',
+        message: 'Payment asset is unavailable for ordering',
+      });
+    }
 
     const orderId = randomUUID();
     const orderNo = `ORD-${Date.now()}-${orderId.slice(0, 8).toUpperCase()}`;
     const collectionAddress = this.resolveCollectionAddress(dto.quoteNetworkCode);
-    const baseAmount = await this.resolveBaseAmount(dto.quoteAssetCode, plan.priceUsd);
+    const baseAmount = await this.resolveBaseAmount(quoteAsset, plan.priceUsd);
     const uniqueAmountDelta = await this.allocateUniqueAmountDelta({
       collectionAddress,
       quoteAssetCode: dto.quoteAssetCode,
@@ -185,14 +196,15 @@ export class OrdersService {
 
     if (order.quoteNetworkCode === 'SOLANA') {
       try {
+        const quoteAsset = this.resolveQuoteAssetDefinition(
+          order.quoteNetworkCode,
+          order.quoteAssetCode,
+        );
         const verification = await this.solanaClient.verifyIncomingTransfer({
           signature: order.submittedClientTxHash,
           recipientAddress: order.collectionAddress,
           assetCode: order.quoteAssetCode,
-          mint:
-            order.quoteAssetCode === 'USDT'
-              ? this.solanaClient.getUsdtMint()
-              : null,
+          mint: quoteAsset?.isNative ? null : quoteAsset?.contractAddress ?? null,
           expectedAmount: order.payableAmount,
         });
 
@@ -440,12 +452,16 @@ export class OrdersService {
 
   private buildPaymentQrText(order: StoredOrderRecord) {
     if (order.quoteNetworkCode === 'SOLANA') {
+      const quoteAsset = this.resolveQuoteAssetDefinition(
+        order.quoteNetworkCode,
+        order.quoteAssetCode,
+      );
       const params = new URLSearchParams({
         amount: order.payableAmount,
       });
 
-      if (order.quoteAssetCode === 'USDT') {
-        params.set('spl-token', this.solanaClient.getUsdtMint());
+      if (quoteAsset && !quoteAsset.isNative && quoteAsset.contractAddress) {
+        params.set('spl-token', quoteAsset.contractAddress);
       }
 
       return `solana:${order.collectionAddress}?${params.toString()}`;
@@ -471,12 +487,21 @@ export class OrdersService {
   }
 
   private async resolveBaseAmount(
-    assetCode: StoredOrderRecord['quoteAssetCode'],
+    asset: ReturnType<OrdersService['resolveQuoteAssetDefinition']>,
     planPriceUsd: string,
   ) {
-    if (assetCode === 'SOL') {
+    if (!asset) {
+      throw new ServiceUnavailableException({
+        code: 'ORDER_ASSET_UNSUPPORTED',
+        message: 'Payment asset is unavailable for ordering',
+      });
+    }
+
+    if (asset.usdPriceMode === 'market') {
       try {
-        const detail = await this.marketService.getInstrumentDetail('solana');
+        const detail = await this.marketService.getInstrumentDetail(
+          asset.marketInstrumentId ?? 'solana',
+        );
         const lastPrice = detail.ticker24h.lastPrice;
         const usdPrice = lastPrice ? Number(lastPrice) : NaN;
         if (Number.isFinite(usdPrice) && usdPrice > 0) {
@@ -488,19 +513,26 @@ export class OrdersService {
           error instanceof Error ? error.message : `${error}`,
         );
       }
-      return '0.045000000';
+      return asset.assetCode === 'SOL' ? '0.045000000' : Number(planPriceUsd).toFixed(asset.decimals);
     }
-    return Number(planPriceUsd).toFixed(6);
+
+    if (asset.usdPriceValue) {
+      const usdPrice = Number(asset.usdPriceValue);
+      if (Number.isFinite(usdPrice) && usdPrice > 0) {
+        return (Number(planPriceUsd) / usdPrice).toFixed(asset.decimals);
+      }
+    }
+
+    return Number(planPriceUsd).toFixed(asset.decimals);
   }
 
   private getAssetDecimals(
     networkCode: StoredOrderRecord['quoteNetworkCode'],
     assetCode: StoredOrderRecord['quoteAssetCode'],
   ) {
-    if (networkCode === 'SOLANA' && assetCode === 'SOL') {
-      return 9;
-    }
-    return 6;
+    return (
+      this.resolveQuoteAssetDefinition(networkCode, assetCode)?.decimals ?? 6
+    );
   }
 
   private toMinorUnits(amount: string, decimals: number) {
@@ -526,7 +558,19 @@ export class OrdersService {
   private zeroMinorUnits(assetCode: StoredOrderRecord['quoteAssetCode']) {
     return this.fromMinorUnits(
       0n,
-      assetCode === 'SOL' ? 9 : 6,
+      this.getAssetDecimals('SOLANA', assetCode),
+    );
+  }
+
+  private resolveQuoteAssetDefinition(
+    networkCode: StoredOrderRecord['quoteNetworkCode'],
+    assetCode: StoredOrderRecord['quoteAssetCode'],
+  ) {
+    return resolvePaymentAsset(
+      this.configService,
+      this.solanaClient,
+      networkCode,
+      assetCode,
     );
   }
 

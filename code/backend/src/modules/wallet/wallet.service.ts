@@ -21,6 +21,10 @@ import { TronWeb } from 'tronweb';
 import { AuthService } from '../auth/auth.service';
 import { RuntimeStateRepository } from '../database/runtime-state.repository';
 import { OrdersService } from '../orders/orders.service';
+import {
+  buildPaymentAssetCatalog,
+  type PaymentAssetDefinition,
+} from '../payments/payment-asset-catalog';
 import { BuildTransferRequestDto } from './dto/build-transfer.request';
 import { SolanaClientService } from '../solana-client/solana-client.service';
 import { TronClientService } from '../tron-client/tron-client.service';
@@ -118,59 +122,10 @@ export class WalletService {
 
   getAssetCatalog(accessToken: string, networkCode?: string) {
     this.authService.getMe(accessToken);
-    const solanaOrderPayable = this.hasSolanaOrderCapability();
-    const items = [
-      {
-        assetId: randomUUID(),
-        networkCode: 'SOLANA',
-        assetCode: 'SOL',
-        displayName: 'Solana',
-        symbol: 'SOL',
-        decimals: 9,
-        isNative: true,
-        contractAddress: null,
-        walletVisible: true,
-        orderPayable: solanaOrderPayable,
-      },
-      {
-        assetId: randomUUID(),
-        networkCode: 'SOLANA',
-        assetCode: 'USDT',
-        displayName: 'Tether USD (Solana)',
-        symbol: 'USDT',
-        decimals: 6,
-        isNative: false,
-        contractAddress: this.solanaClient.getUsdtMint(),
-        walletVisible: true,
-        orderPayable: solanaOrderPayable,
-      },
-      {
-        assetId: randomUUID(),
-        networkCode: 'TRON',
-        assetCode: 'TRX',
-        displayName: 'TRON',
-        symbol: 'TRX',
-        decimals: 6,
-        isNative: true,
-        contractAddress: null,
-        walletVisible: true,
-        orderPayable: false,
-      },
-      {
-        assetId: randomUUID(),
-        networkCode: 'TRON',
-        assetCode: 'USDT',
-        displayName: 'Tether USD (TRC20)',
-        symbol: 'USDT',
-        decimals: 6,
-        isNative: false,
-        contractAddress:
-          process.env.TRON_USDT_CONTRACT?.trim() ||
-          'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
-        walletVisible: true,
-        orderPayable: true,
-      },
-    ];
+    const items = buildPaymentAssetCatalog(
+      this.configService,
+      this.solanaClient,
+    ).map((item) => this.toWalletAssetCatalogItem(item));
 
     return {
       items: networkCode ? items.filter((item) => item.networkCode === networkCode) : items,
@@ -1119,16 +1074,19 @@ export class WalletService {
     });
   }
 
-  private hasSolanaOrderCapability() {
-    const configured = this.configService
-      .get<string>('SOLANA_ORDER_COLLECTION_ADDRESS')
-      ?.trim();
-
-    if (!configured) {
-      return false;
-    }
-
-    return this.solanaClient.validateAddress(configured);
+  private toWalletAssetCatalogItem(item: PaymentAssetDefinition) {
+    return {
+      assetId: randomUUID(),
+      networkCode: item.networkCode,
+      assetCode: item.assetCode,
+      displayName: item.displayName,
+      symbol: item.symbol,
+      decimals: item.decimals,
+      isNative: item.isNative,
+      contractAddress: item.contractAddress,
+      walletVisible: item.walletVisible,
+      orderPayable: item.orderPayable,
+    };
   }
 
   private resolveNextAction(

@@ -9,8 +9,7 @@ export class CreateOrderRequestDto {
   orderType!: 'NEW' | 'RENEWAL';
 
   @IsString()
-  @IsIn(['SOL', 'USDT'])
-  quoteAssetCode!: 'SOL' | 'USDT';
+  quoteAssetCode!: string;
 
   @IsString()
   @IsIn(['SOLANA', 'TRON'])

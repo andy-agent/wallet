@@ -14,7 +14,7 @@ export interface CommissionLedgerRecord {
   sourceOrderNo: string;
   sourceAccountId: string;
   commissionLevel: 'LEVEL1' | 'LEVEL2';
-  sourceAssetCode: 'SOL' | 'USDT';
+  sourceAssetCode: string;
   sourceAmount: string;
   fxRateSnapshot: string;
   settlementAmountUsdt: string;

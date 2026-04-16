@@ -13,6 +13,8 @@ describe('Wallet (e2e)', () => {
   const originalTronServiceEnabled = process.env.TRON_SERVICE_ENABLED;
   const originalSolanaOrderCollectionAddress =
     process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
+  const originalSolanaCustomOrderAssetsJson =
+    process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON;
 
   async function bootstrapApp(
     tronClientOverride?: Partial<
@@ -81,11 +83,18 @@ describe('Wallet (e2e)', () => {
 
     if (originalSolanaOrderCollectionAddress === undefined) {
       delete process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
+    } else {
+      process.env.SOLANA_ORDER_COLLECTION_ADDRESS =
+        originalSolanaOrderCollectionAddress;
+    }
+
+    if (originalSolanaCustomOrderAssetsJson === undefined) {
+      delete process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON;
       return;
     }
 
-    process.env.SOLANA_ORDER_COLLECTION_ADDRESS =
-      originalSolanaOrderCollectionAddress;
+    process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON =
+      originalSolanaCustomOrderAssetsJson;
   });
 
   it('wallet lifecycle exposes no-wallet vs created-wallet receive gating state', async () => {
@@ -295,6 +304,16 @@ describe('Wallet (e2e)', () => {
 
     process.env.SOLANA_ORDER_COLLECTION_ADDRESS =
       '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV';
+    process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON = JSON.stringify([
+      {
+        assetCode: 'USDC',
+        displayName: 'USD Coin (Solana)',
+        symbol: 'USDC',
+        decimals: 6,
+        contractAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+        usdPrice: '1',
+      },
+    ]);
     await app.close();
     await bootstrapApp();
 
@@ -315,6 +334,17 @@ describe('Wallet (e2e)', () => {
               item.networkCode === 'SOLANA' && item.assetCode === 'USDT',
           )?.orderPayable,
         ).toBe(true);
+        expect(
+          res.body.data.items.find(
+            (item: { networkCode: string; assetCode: string }) =>
+              item.networkCode === 'SOLANA' && item.assetCode === 'USDC',
+          ),
+        ).toEqual(
+          expect.objectContaining({
+            orderPayable: true,
+            contractAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+          }),
+        );
       });
   });
 

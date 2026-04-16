@@ -18,7 +18,7 @@ export interface OrderRecord {
   planCode: string;
   planName: string;
   orderType: 'NEW' | 'RENEWAL';
-  quoteAssetCode: 'SOL' | 'USDT';
+  quoteAssetCode: string;
   quoteNetworkCode: 'SOLANA' | 'TRON';
   quoteUsdAmount: string;
   baseAmount: string;
