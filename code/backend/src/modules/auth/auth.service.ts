@@ -126,7 +126,7 @@ export class AuthService implements OnModuleInit {
   async register(
     params: {
       email: string;
-      code: string;
+      code?: string;
       password: string;
       installationId?: string;
     },
@@ -139,8 +139,6 @@ export class AuthService implements OnModuleInit {
         message: 'Email already exists',
       });
     }
-
-    this.assertCode(email, params.code, 'REGISTER');
 
     const now = new Date().toISOString();
     const account: AuthAccount = {
@@ -294,8 +292,9 @@ export class AuthService implements OnModuleInit {
   }
 
   findAccountByReferralCode(referralCode: string) {
+    const normalizedReferralCode = referralCode.trim().toUpperCase();
     for (const account of this.accounts.values()) {
-      if (account.referralCode === referralCode) {
+      if (account.referralCode === normalizedReferralCode) {
         return account;
       }
     }

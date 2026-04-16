@@ -60,6 +60,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -121,7 +122,6 @@ data class P01MetricCell(
 
 @Composable
 fun P01PhoneScaffold(
-    statusTime: String,
     currentRoute: String,
     onBottomNav: (String) -> Unit = {},
     destinations: List<P01BottomDestination> = defaultP01Destinations(),
@@ -246,6 +246,7 @@ fun P01Header(
     onBack: (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = { P01HeaderHeroRing() },
 ) {
+    val visibleChips = chips.filter { it.isNotBlank() }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (backLabel != null) {
             Text(
@@ -264,18 +265,20 @@ fun P01Header(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(
-                    text = eyebrow,
-                    style = MaterialTheme.typography.labelSmall.merge(
-                        TextStyle(
-                        color = P01TextSoft,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.4.sp,
-                    )),
-                )
-                if (chips.isNotEmpty()) {
+                if (eyebrow.isNotBlank()) {
+                    Text(
+                        text = eyebrow,
+                        style = MaterialTheme.typography.labelSmall.merge(
+                            TextStyle(
+                            color = P01TextSoft,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 2.4.sp,
+                        )),
+                    )
+                }
+                if (visibleChips.isNotEmpty()) {
                     P01FlowRow(horizontalGap = 8.dp, verticalGap = 8.dp) {
-                        chips.forEach { label ->
+                        visibleChips.forEach { label ->
                             P01Chip(text = label)
                         }
                     }
@@ -358,6 +361,7 @@ fun P01CardHeader(
 
 @Composable
 fun P01CardCopy(text: String, modifier: Modifier = Modifier) {
+    if (text.isBlank()) return
     Text(
         text = text,
         modifier = modifier,
@@ -368,6 +372,7 @@ fun P01CardCopy(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun P01Chip(text: String, highlighted: Boolean = true) {
+    if (text.isBlank()) return
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(999.dp))
@@ -431,11 +436,13 @@ fun P01MetricGrid(
     items: List<P01MetricCell>,
     modifier: Modifier = Modifier,
 ) {
+    val visibleItems = items.filter { it.label.isNotBlank() || it.value.isNotBlank() }
+    if (visibleItems.isEmpty()) return
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        items.chunked(2).forEach { row ->
+        visibleItems.chunked(2).forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -1151,17 +1158,31 @@ fun P01RealQr(
     }
 
     if (qrBitmap != null) {
-        Image(
-            bitmap = qrBitmap.asImageBitmap(),
-            contentDescription = "真实支付二维码",
-            modifier = modifier.size(188.dp),
-            contentScale = ContentScale.Fit,
-        )
+        Box(
+            modifier = modifier
+                .size(212.dp)
+                .background(Color.White, RoundedCornerShape(20.dp))
+                .border(1.dp, P01BorderStrong.copy(alpha = 0.8f), RoundedCornerShape(20.dp))
+                .padding(12.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                bitmap = qrBitmap.asImageBitmap(),
+                contentDescription = "支付二维码",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+                filterQuality = FilterQuality.None,
+            )
+        }
         return
     }
 
     Column(
-        modifier = modifier.size(188.dp),
+        modifier = modifier
+            .size(212.dp)
+            .background(Color.White, RoundedCornerShape(20.dp))
+            .border(1.dp, P01BorderStrong.copy(alpha = 0.8f), RoundedCornerShape(20.dp))
+            .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

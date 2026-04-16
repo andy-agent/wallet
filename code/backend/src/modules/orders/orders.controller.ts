@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Query } from '@nestjs/common';
 import { CreateOrderRequestDto } from './dto/create-order.request';
 import { RefreshOrderStatusRequestDto } from './dto/refresh-order-status.request';
 import { SubmitClientTxRequestDto } from './dto/submit-client-tx.request';
@@ -7,6 +7,22 @@ import { OrdersService } from './orders.service';
 @Controller('client/v1/orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  @Get()
+  listOrders(
+    @Headers('authorization') authorization: string | undefined,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('orderNo') orderNo?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.ordersService.listOwnedOrders(this.extractBearer(authorization), {
+      page: page ? parseInt(page, 10) : undefined,
+      pageSize: pageSize ? parseInt(pageSize, 10) : undefined,
+      orderNo,
+      status,
+    });
+  }
 
   @Post()
   createOrder(

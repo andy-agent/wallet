@@ -64,6 +64,17 @@ interface WalletResolvedReceiveSelection {
   defaultAddress: string | null;
 }
 
+type WalletAssetBalanceStatus = 'NO_ADDRESS' | 'UNAVAILABLE' | 'READY';
+
+interface WalletAssetBalanceView {
+  networkCode: string;
+  assetCode: string;
+  address: string | null;
+  balanceMinor: string | null;
+  balanceUiAmount: string | null;
+  balanceStatus: WalletAssetBalanceStatus;
+}
+
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
@@ -228,6 +239,11 @@ export class WalletService {
       );
     }
 
+    const assetBalanceViews = await this.resolveAssetBalanceViews(
+      assets,
+      publicAddresses,
+    );
+
     const chainItems = chains.map((chain) => {
       const assetsOnChain = assets.filter((item) => item.networkCode === chain.networkCode);
       const networkStats = orderStatsByNetwork.get(chain.networkCode);
@@ -250,6 +266,7 @@ export class WalletService {
     const assetItems = assets.map((asset) => {
       const assetKey = `${asset.networkCode}:${asset.assetCode}`;
       const assetStats = orderStatsByAsset.get(assetKey);
+      const balanceView = assetBalanceViews.get(assetKey);
       return {
         assetId: asset.assetId,
         networkCode: asset.networkCode,
@@ -258,6 +275,7 @@ export class WalletService {
         symbol: asset.symbol,
         decimals: asset.decimals,
         isNative: asset.isNative,
+        contractAddress: asset.contractAddress,
         walletVisible: asset.walletVisible,
         orderPayable: asset.orderPayable,
         publicAddressCount: publicAddressCountByAsset.get(assetKey) ?? 0,
@@ -265,6 +283,10 @@ export class WalletService {
         totalPayableAmount: assetStats
           ? assetStats.totalPayableAmount.toFixed(asset.assetCode === 'SOL' ? 6 : 6)
           : '0.000000',
+        availableBalanceMinor: balanceView?.balanceMinor ?? null,
+        availableBalanceUiAmount: balanceView?.balanceUiAmount ?? null,
+        availableBalanceStatus: balanceView?.balanceStatus ?? 'NO_ADDRESS',
+        balanceAddress: balanceView?.address ?? null,
         lastOrderAt: assetStats?.lastOrderAt ?? null,
         lastOrderStatus: assetStats?.lastOrderStatus ?? null,
       };
@@ -302,6 +324,42 @@ export class WalletService {
         chainItems,
         assetItems,
         publicAddresses,
+      }),
+    };
+  }
+
+  async getBalances(accessToken: string) {
+    const account = this.authService.getMe(accessToken);
+    const assets = this.getAssetCatalog(accessToken).items.filter(
+      (item) => item.walletVisible,
+    );
+    const publicAddresses =
+      await this.runtimeStateRepository.listWalletPublicAddressesByAccountId({
+        accountId: account.accountId,
+      });
+    const assetBalanceViews = await this.resolveAssetBalanceViews(
+      assets,
+      publicAddresses,
+    );
+
+    return {
+      accountId: account.accountId,
+      accountEmail: account.email,
+      items: assets.map((asset) => {
+        const assetKey = `${asset.networkCode}:${asset.assetCode}`;
+        const balanceView = assetBalanceViews.get(assetKey);
+        return {
+          assetId: asset.assetId,
+          networkCode: asset.networkCode,
+          assetCode: asset.assetCode,
+          displayName: asset.displayName,
+          symbol: asset.symbol,
+          decimals: asset.decimals,
+          address: balanceView?.address ?? null,
+          availableBalanceMinor: balanceView?.balanceMinor ?? null,
+          availableBalanceUiAmount: balanceView?.balanceUiAmount ?? null,
+          availableBalanceStatus: balanceView?.balanceStatus ?? 'NO_ADDRESS',
+        };
       }),
     };
   }
@@ -678,6 +736,160 @@ export class WalletService {
     return current > candidate ? current : candidate;
   }
 
+  private async resolveAssetBalanceViews(
+    assets: Array<ReturnType<WalletService['getAssetCatalog']>['items'][number]>,
+    publicAddresses: WalletPublicAddressItem[],
+  ) {
+    const entries = await Promise.all(
+      assets.map(async (asset) => {
+        const assetKey = `${asset.networkCode}:${asset.assetCode}`;
+        const assetAddress =
+          publicAddresses.find(
+            (item) =>
+              item.networkCode === asset.networkCode &&
+              item.assetCode === asset.assetCode &&
+              item.isDefault,
+          )?.address ??
+          publicAddresses.find(
+            (item) =>
+              item.networkCode === asset.networkCode &&
+              item.assetCode === asset.assetCode,
+          )?.address ??
+          publicAddresses.find(
+            (item) => item.networkCode === asset.networkCode && item.isDefault,
+          )?.address ??
+          publicAddresses.find((item) => item.networkCode === asset.networkCode)
+            ?.address ??
+          null;
+
+        if (!assetAddress) {
+          return [
+            assetKey,
+            {
+              networkCode: asset.networkCode,
+              assetCode: asset.assetCode,
+              address: null,
+              balanceMinor: null,
+              balanceUiAmount: null,
+              balanceStatus: 'NO_ADDRESS' as WalletAssetBalanceStatus,
+            },
+          ] as const;
+        }
+
+        try {
+          if (asset.networkCode === 'SOLANA') {
+            if (!this.solanaClient.isEnabled()) {
+              return [
+                assetKey,
+                {
+                  networkCode: asset.networkCode,
+                  assetCode: asset.assetCode,
+                  address: assetAddress,
+                  balanceMinor: null,
+                  balanceUiAmount: null,
+                  balanceStatus: 'UNAVAILABLE' as WalletAssetBalanceStatus,
+                },
+              ] as const;
+            }
+
+            const balance = await this.solanaClient.getBalance({
+              address: assetAddress,
+              mint: asset.isNative ? undefined : asset.contractAddress ?? undefined,
+            });
+
+            return [
+              assetKey,
+              {
+                networkCode: asset.networkCode,
+                assetCode: asset.assetCode,
+                address: assetAddress,
+                balanceMinor: balance.balance,
+                balanceUiAmount: balance.uiAmount,
+                balanceStatus: 'READY' as WalletAssetBalanceStatus,
+              },
+            ] as const;
+          }
+
+          if (!this.tronClient.isEnabled()) {
+            return [
+              assetKey,
+              {
+                networkCode: asset.networkCode,
+                assetCode: asset.assetCode,
+                address: assetAddress,
+                balanceMinor: null,
+                balanceUiAmount: null,
+                balanceStatus: 'UNAVAILABLE' as WalletAssetBalanceStatus,
+              },
+            ] as const;
+          }
+
+          const tronBalance = await this.getTronAssetBalance(assetAddress, asset);
+          return [
+            assetKey,
+            {
+              networkCode: asset.networkCode,
+              assetCode: asset.assetCode,
+              address: assetAddress,
+              balanceMinor: tronBalance.balanceMinor,
+              balanceUiAmount: tronBalance.balanceUiAmount,
+              balanceStatus: 'READY' as WalletAssetBalanceStatus,
+            },
+          ] as const;
+        } catch (error) {
+          this.logger.warn(
+            `Failed to resolve wallet balance for ${asset.networkCode}:${asset.assetCode}`,
+            error as Error,
+          );
+          return [
+            assetKey,
+            {
+              networkCode: asset.networkCode,
+              assetCode: asset.assetCode,
+              address: assetAddress,
+              balanceMinor: null,
+              balanceUiAmount: null,
+              balanceStatus: 'UNAVAILABLE' as WalletAssetBalanceStatus,
+            },
+          ] as const;
+        }
+      }),
+    );
+
+    return new Map<string, WalletAssetBalanceView>(entries);
+  }
+
+  private async getTronAssetBalance(
+    address: string,
+    asset: {
+      assetCode: string;
+      contractAddress: string | null;
+      decimals: number;
+      isNative: boolean;
+    },
+  ) {
+    const tronWeb = this.createTronWeb();
+    if (asset.isNative || asset.assetCode === 'TRX') {
+      const balanceSun = await tronWeb.trx.getBalance(address);
+      return {
+        balanceMinor: balanceSun.toString(),
+        balanceUiAmount: this.fromMinorUnits(BigInt(balanceSun), asset.decimals),
+      };
+    }
+
+    const contractAddress =
+      asset.contractAddress?.trim() ||
+      process.env.TRON_USDT_CONTRACT?.trim() ||
+      'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+    const contract = await tronWeb.contract().at(contractAddress);
+    const rawBalance = await contract.balanceOf(address).call();
+    const balanceMinor = rawBalance?.toString?.() ?? String(rawBalance ?? '0');
+    return {
+      balanceMinor,
+      balanceUiAmount: this.fromMinorUnits(BigInt(balanceMinor), asset.decimals),
+    };
+  }
+
   async listPublicAddresses(
     accessToken: string,
     networkCode?: PersistedWalletPublicAddressRecord['networkCode'],
@@ -807,6 +1019,36 @@ export class WalletService {
       backupServerReference: backup.backupServerReference,
       lastReplicationError: backup.lastReplicationError,
       updatedAt: backup.updatedAt,
+    };
+  }
+
+  async getSecretBackupExport(accessToken: string) {
+    const account = this.authService.getMe(accessToken);
+    const backup =
+      await this.runtimeStateRepository.findWalletSecretBackupByAccountId(
+        account.accountId,
+      );
+    if (!backup) {
+      return {
+        exists: false,
+      };
+    }
+    return {
+      exists: true,
+      fileName: `cryptovpn-wallet-backup-${backup.walletId}.json`,
+      payload: {
+        version: 'cryptovpn-wallet-backup-v1',
+        backupId: backup.backupId,
+        accountId: backup.accountId,
+        walletId: backup.walletId,
+        secretType: backup.secretType,
+        encryptionScheme: backup.encryptionScheme,
+        recoveryKeyVersion: backup.recoveryKeyVersion,
+        recipientFingerprint: backup.recipientFingerprint,
+        ciphertext: backup.ciphertext,
+        createdAt: backup.createdAt,
+        updatedAt: backup.updatedAt,
+      },
     };
   }
 

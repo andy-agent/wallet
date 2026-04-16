@@ -1,0 +1,78 @@
+{
+  "generated_at": "2026-04-12T00:34:31Z",
+  "source": "beads",
+  "repo_root": "/Users/cnyirui/git/projects/liaojiang",
+  "session_id": "20260412-083427-6bd3480d-426c",
+  "active_goal": "AUTO: Resume unfinished work",
+  "summary": {
+    "total": 3,
+    "open": 0,
+    "in_progress": 0,
+    "ready": 0,
+    "blocked": 0,
+    "closed": 3
+  },
+  "tasks": [
+    {
+      "id": "liaojiang-68r",
+      "title": "AUTO: Resume unfinished work",
+      "description": "Auto-created by auto_resume_unfinished.sh\\nRepository: /Users/cnyirui/git/projects/liaojiang\\nDirty files: 2\\nGenerated at: 2026-04-10T04:00:11Z\\n\\nGoal:\\n- Rebuild runnable context\\n- Confirm next milestone\\n- Continue from repository-first recovery",
+      "status": "closed",
+      "priority": 2,
+      "issue_type": "task",
+      "owner": "liaojiang@local.dev",
+      "created_at": "2026-04-10T04:00:12Z",
+      "created_by": "Liaojiang Dev",
+      "updated_at": "2026-04-10T04:04:07Z",
+      "closed_at": "2026-04-10T04:04:07Z",
+      "close_reason": "Bootstrap recovery completed; active mainline has been redefined to the full-delivery HTML5 rebuild workflow.",
+      "labels": [
+        "auto-resume-bootstrap",
+        "codex"
+      ],
+      "dependency_count": 0,
+      "dependent_count": 0,
+      "comment_count": 0
+    },
+    {
+      "id": "liaojiang-92m",
+      "title": "AUTO: Resume unfinished work",
+      "description": "Auto-created by auto_resume_unfinished.sh\\nRepository: /Users/cnyirui/git/projects/liaojiang\\nDirty files: 60\\nGenerated at: 2026-04-01T12:24:46Z\\n\\nGoal:\\n- Rebuild runnable context\\n- Confirm next milestone\\n- Continue from repository-first recovery",
+      "status": "closed",
+      "priority": 2,
+      "issue_type": "task",
+      "created_at": "2026-04-01T12:24:47Z",
+      "created_by": "cnyirui",
+      "updated_at": "2026-04-03T03:45:32Z",
+      "closed_at": "2026-04-03T03:45:32Z",
+      "close_reason": "Repository-first recovery completed; active milestone confirmed as liaojiang-7da.",
+      "labels": [
+        "auto-resume-bootstrap",
+        "codex"
+      ],
+      "dependency_count": 0,
+      "dependent_count": 0,
+      "comment_count": 0
+    },
+    {
+      "id": "liaojiang-0vn",
+      "title": "AUTO: Resume unfinished work",
+      "description": "Auto-created by auto_resume_unfinished.sh\\nRepository: /Users/cnyirui/git/projects/liaojiang\\nDirty files: 8\\nGenerated at: 2026-03-29T14:27:01Z\\n\\nGoal:\\n- Rebuild runnable context\\n- Confirm next milestone\\n- Continue from repository-first recovery",
+      "status": "closed",
+      "priority": 2,
+      "issue_type": "task",
+      "created_at": "2026-03-29T14:27:02Z",
+      "created_by": "cnyirui",
+      "updated_at": "2026-03-31T13:30:26Z",
+      "closed_at": "2026-03-31T13:30:26Z",
+      "close_reason": "Closed",
+      "labels": [
+        "auto-resume-bootstrap",
+        "codex"
+      ],
+      "dependency_count": 0,
+      "dependent_count": 0,
+      "comment_count": 0
+    }
+  ]
+}

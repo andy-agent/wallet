@@ -39,7 +39,7 @@ public final class OrderDao_Impl implements OrderDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `orders` (`orderNo`,`planName`,`planId`,`amount`,`assetCode`,`status`,`createdAt`,`paidAt`,`fulfilledAt`,`expiredAt`,`subscriptionUrl`,`marzbanUsername`,`userId`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `orders` (`orderNo`,`planName`,`planId`,`amount`,`usdAmount`,`assetCode`,`networkCode`,`status`,`createdAt`,`paidAt`,`fulfilledAt`,`expiredAt`,`subscriptionUrl`,`marzbanUsername`,`userId`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -65,46 +65,56 @@ public final class OrderDao_Impl implements OrderDao {
         } else {
           statement.bindText(4, entity.getAmount());
         }
-        if (entity.getAssetCode() == null) {
+        if (entity.getUsdAmount() == null) {
           statement.bindNull(5);
         } else {
-          statement.bindText(5, entity.getAssetCode());
+          statement.bindText(5, entity.getUsdAmount());
         }
-        if (entity.getStatus() == null) {
+        if (entity.getAssetCode() == null) {
           statement.bindNull(6);
         } else {
-          statement.bindText(6, entity.getStatus());
+          statement.bindText(6, entity.getAssetCode());
         }
-        statement.bindLong(7, entity.getCreatedAt());
-        if (entity.getPaidAt() == null) {
+        if (entity.getNetworkCode() == null) {
+          statement.bindNull(7);
+        } else {
+          statement.bindText(7, entity.getNetworkCode());
+        }
+        if (entity.getStatus() == null) {
           statement.bindNull(8);
         } else {
-          statement.bindLong(8, entity.getPaidAt());
+          statement.bindText(8, entity.getStatus());
         }
-        if (entity.getFulfilledAt() == null) {
-          statement.bindNull(9);
-        } else {
-          statement.bindLong(9, entity.getFulfilledAt());
-        }
-        if (entity.getExpiredAt() == null) {
+        statement.bindLong(9, entity.getCreatedAt());
+        if (entity.getPaidAt() == null) {
           statement.bindNull(10);
         } else {
-          statement.bindLong(10, entity.getExpiredAt());
+          statement.bindLong(10, entity.getPaidAt());
         }
-        if (entity.getSubscriptionUrl() == null) {
+        if (entity.getFulfilledAt() == null) {
           statement.bindNull(11);
         } else {
-          statement.bindText(11, entity.getSubscriptionUrl());
+          statement.bindLong(11, entity.getFulfilledAt());
         }
-        if (entity.getMarzbanUsername() == null) {
+        if (entity.getExpiredAt() == null) {
           statement.bindNull(12);
         } else {
-          statement.bindText(12, entity.getMarzbanUsername());
+          statement.bindLong(12, entity.getExpiredAt());
         }
-        if (entity.getUserId() == null) {
+        if (entity.getSubscriptionUrl() == null) {
           statement.bindNull(13);
         } else {
-          statement.bindText(13, entity.getUserId());
+          statement.bindText(13, entity.getSubscriptionUrl());
+        }
+        if (entity.getMarzbanUsername() == null) {
+          statement.bindNull(14);
+        } else {
+          statement.bindText(14, entity.getMarzbanUsername());
+        }
+        if (entity.getUserId() == null) {
+          statement.bindNull(15);
+        } else {
+          statement.bindText(15, entity.getUserId());
         }
       }
     };
@@ -129,7 +139,7 @@ public final class OrderDao_Impl implements OrderDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `orders` SET `orderNo` = ?,`planName` = ?,`planId` = ?,`amount` = ?,`assetCode` = ?,`status` = ?,`createdAt` = ?,`paidAt` = ?,`fulfilledAt` = ?,`expiredAt` = ?,`subscriptionUrl` = ?,`marzbanUsername` = ?,`userId` = ? WHERE `orderNo` = ?";
+        return "UPDATE OR ABORT `orders` SET `orderNo` = ?,`planName` = ?,`planId` = ?,`amount` = ?,`usdAmount` = ?,`assetCode` = ?,`networkCode` = ?,`status` = ?,`createdAt` = ?,`paidAt` = ?,`fulfilledAt` = ?,`expiredAt` = ?,`subscriptionUrl` = ?,`marzbanUsername` = ?,`userId` = ? WHERE `orderNo` = ?";
       }
 
       @Override
@@ -155,51 +165,61 @@ public final class OrderDao_Impl implements OrderDao {
         } else {
           statement.bindText(4, entity.getAmount());
         }
-        if (entity.getAssetCode() == null) {
+        if (entity.getUsdAmount() == null) {
           statement.bindNull(5);
         } else {
-          statement.bindText(5, entity.getAssetCode());
+          statement.bindText(5, entity.getUsdAmount());
         }
-        if (entity.getStatus() == null) {
+        if (entity.getAssetCode() == null) {
           statement.bindNull(6);
         } else {
-          statement.bindText(6, entity.getStatus());
+          statement.bindText(6, entity.getAssetCode());
         }
-        statement.bindLong(7, entity.getCreatedAt());
-        if (entity.getPaidAt() == null) {
+        if (entity.getNetworkCode() == null) {
+          statement.bindNull(7);
+        } else {
+          statement.bindText(7, entity.getNetworkCode());
+        }
+        if (entity.getStatus() == null) {
           statement.bindNull(8);
         } else {
-          statement.bindLong(8, entity.getPaidAt());
+          statement.bindText(8, entity.getStatus());
         }
-        if (entity.getFulfilledAt() == null) {
-          statement.bindNull(9);
-        } else {
-          statement.bindLong(9, entity.getFulfilledAt());
-        }
-        if (entity.getExpiredAt() == null) {
+        statement.bindLong(9, entity.getCreatedAt());
+        if (entity.getPaidAt() == null) {
           statement.bindNull(10);
         } else {
-          statement.bindLong(10, entity.getExpiredAt());
+          statement.bindLong(10, entity.getPaidAt());
         }
-        if (entity.getSubscriptionUrl() == null) {
+        if (entity.getFulfilledAt() == null) {
           statement.bindNull(11);
         } else {
-          statement.bindText(11, entity.getSubscriptionUrl());
+          statement.bindLong(11, entity.getFulfilledAt());
         }
-        if (entity.getMarzbanUsername() == null) {
+        if (entity.getExpiredAt() == null) {
           statement.bindNull(12);
         } else {
-          statement.bindText(12, entity.getMarzbanUsername());
+          statement.bindLong(12, entity.getExpiredAt());
         }
-        if (entity.getUserId() == null) {
+        if (entity.getSubscriptionUrl() == null) {
           statement.bindNull(13);
         } else {
-          statement.bindText(13, entity.getUserId());
+          statement.bindText(13, entity.getSubscriptionUrl());
         }
-        if (entity.getOrderNo() == null) {
+        if (entity.getMarzbanUsername() == null) {
           statement.bindNull(14);
         } else {
-          statement.bindText(14, entity.getOrderNo());
+          statement.bindText(14, entity.getMarzbanUsername());
+        }
+        if (entity.getUserId() == null) {
+          statement.bindNull(15);
+        } else {
+          statement.bindText(15, entity.getUserId());
+        }
+        if (entity.getOrderNo() == null) {
+          statement.bindNull(16);
+        } else {
+          statement.bindText(16, entity.getOrderNo());
         }
       }
     };
@@ -249,7 +269,9 @@ public final class OrderDao_Impl implements OrderDao {
         final int _columnIndexOfPlanName = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "planName");
         final int _columnIndexOfPlanId = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "planId");
         final int _columnIndexOfAmount = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "amount");
+        final int _columnIndexOfUsdAmount = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "usdAmount");
         final int _columnIndexOfAssetCode = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "assetCode");
+        final int _columnIndexOfNetworkCode = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "networkCode");
         final int _columnIndexOfStatus = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "status");
         final int _columnIndexOfCreatedAt = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "createdAt");
         final int _columnIndexOfPaidAt = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "paidAt");
@@ -284,11 +306,23 @@ public final class OrderDao_Impl implements OrderDao {
           } else {
             _tmpAmount = _stmt.getText(_columnIndexOfAmount);
           }
+          final String _tmpUsdAmount;
+          if (_stmt.isNull(_columnIndexOfUsdAmount)) {
+            _tmpUsdAmount = null;
+          } else {
+            _tmpUsdAmount = _stmt.getText(_columnIndexOfUsdAmount);
+          }
           final String _tmpAssetCode;
           if (_stmt.isNull(_columnIndexOfAssetCode)) {
             _tmpAssetCode = null;
           } else {
             _tmpAssetCode = _stmt.getText(_columnIndexOfAssetCode);
+          }
+          final String _tmpNetworkCode;
+          if (_stmt.isNull(_columnIndexOfNetworkCode)) {
+            _tmpNetworkCode = null;
+          } else {
+            _tmpNetworkCode = _stmt.getText(_columnIndexOfNetworkCode);
           }
           final String _tmpStatus;
           if (_stmt.isNull(_columnIndexOfStatus)) {
@@ -334,7 +368,7 @@ public final class OrderDao_Impl implements OrderDao {
           } else {
             _tmpUserId = _stmt.getText(_columnIndexOfUserId);
           }
-          _result = new OrderEntity(_tmpOrderNo,_tmpPlanName,_tmpPlanId,_tmpAmount,_tmpAssetCode,_tmpStatus,_tmpCreatedAt,_tmpPaidAt,_tmpFulfilledAt,_tmpExpiredAt,_tmpSubscriptionUrl,_tmpMarzbanUsername,_tmpUserId);
+          _result = new OrderEntity(_tmpOrderNo,_tmpPlanName,_tmpPlanId,_tmpAmount,_tmpUsdAmount,_tmpAssetCode,_tmpNetworkCode,_tmpStatus,_tmpCreatedAt,_tmpPaidAt,_tmpFulfilledAt,_tmpExpiredAt,_tmpSubscriptionUrl,_tmpMarzbanUsername,_tmpUserId);
         } else {
           _result = null;
         }
@@ -362,7 +396,9 @@ public final class OrderDao_Impl implements OrderDao {
         final int _columnIndexOfPlanName = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "planName");
         final int _columnIndexOfPlanId = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "planId");
         final int _columnIndexOfAmount = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "amount");
+        final int _columnIndexOfUsdAmount = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "usdAmount");
         final int _columnIndexOfAssetCode = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "assetCode");
+        final int _columnIndexOfNetworkCode = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "networkCode");
         final int _columnIndexOfStatus = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "status");
         final int _columnIndexOfCreatedAt = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "createdAt");
         final int _columnIndexOfPaidAt = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "paidAt");
@@ -398,11 +434,23 @@ public final class OrderDao_Impl implements OrderDao {
           } else {
             _tmpAmount = _stmt.getText(_columnIndexOfAmount);
           }
+          final String _tmpUsdAmount;
+          if (_stmt.isNull(_columnIndexOfUsdAmount)) {
+            _tmpUsdAmount = null;
+          } else {
+            _tmpUsdAmount = _stmt.getText(_columnIndexOfUsdAmount);
+          }
           final String _tmpAssetCode;
           if (_stmt.isNull(_columnIndexOfAssetCode)) {
             _tmpAssetCode = null;
           } else {
             _tmpAssetCode = _stmt.getText(_columnIndexOfAssetCode);
+          }
+          final String _tmpNetworkCode;
+          if (_stmt.isNull(_columnIndexOfNetworkCode)) {
+            _tmpNetworkCode = null;
+          } else {
+            _tmpNetworkCode = _stmt.getText(_columnIndexOfNetworkCode);
           }
           final String _tmpStatus;
           if (_stmt.isNull(_columnIndexOfStatus)) {
@@ -448,7 +496,7 @@ public final class OrderDao_Impl implements OrderDao {
           } else {
             _tmpUserId = _stmt.getText(_columnIndexOfUserId);
           }
-          _item = new OrderEntity(_tmpOrderNo,_tmpPlanName,_tmpPlanId,_tmpAmount,_tmpAssetCode,_tmpStatus,_tmpCreatedAt,_tmpPaidAt,_tmpFulfilledAt,_tmpExpiredAt,_tmpSubscriptionUrl,_tmpMarzbanUsername,_tmpUserId);
+          _item = new OrderEntity(_tmpOrderNo,_tmpPlanName,_tmpPlanId,_tmpAmount,_tmpUsdAmount,_tmpAssetCode,_tmpNetworkCode,_tmpStatus,_tmpCreatedAt,_tmpPaidAt,_tmpFulfilledAt,_tmpExpiredAt,_tmpSubscriptionUrl,_tmpMarzbanUsername,_tmpUserId);
           _result.add(_item);
         }
         return _result;
@@ -481,7 +529,9 @@ public final class OrderDao_Impl implements OrderDao {
         final int _columnIndexOfPlanName = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "planName");
         final int _columnIndexOfPlanId = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "planId");
         final int _columnIndexOfAmount = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "amount");
+        final int _columnIndexOfUsdAmount = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "usdAmount");
         final int _columnIndexOfAssetCode = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "assetCode");
+        final int _columnIndexOfNetworkCode = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "networkCode");
         final int _columnIndexOfStatus = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "status");
         final int _columnIndexOfCreatedAt = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "createdAt");
         final int _columnIndexOfPaidAt = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "paidAt");
@@ -517,11 +567,23 @@ public final class OrderDao_Impl implements OrderDao {
           } else {
             _tmpAmount = _stmt.getText(_columnIndexOfAmount);
           }
+          final String _tmpUsdAmount;
+          if (_stmt.isNull(_columnIndexOfUsdAmount)) {
+            _tmpUsdAmount = null;
+          } else {
+            _tmpUsdAmount = _stmt.getText(_columnIndexOfUsdAmount);
+          }
           final String _tmpAssetCode;
           if (_stmt.isNull(_columnIndexOfAssetCode)) {
             _tmpAssetCode = null;
           } else {
             _tmpAssetCode = _stmt.getText(_columnIndexOfAssetCode);
+          }
+          final String _tmpNetworkCode;
+          if (_stmt.isNull(_columnIndexOfNetworkCode)) {
+            _tmpNetworkCode = null;
+          } else {
+            _tmpNetworkCode = _stmt.getText(_columnIndexOfNetworkCode);
           }
           final String _tmpStatus;
           if (_stmt.isNull(_columnIndexOfStatus)) {
@@ -567,7 +629,7 @@ public final class OrderDao_Impl implements OrderDao {
           } else {
             _tmpUserId = _stmt.getText(_columnIndexOfUserId);
           }
-          _item = new OrderEntity(_tmpOrderNo,_tmpPlanName,_tmpPlanId,_tmpAmount,_tmpAssetCode,_tmpStatus,_tmpCreatedAt,_tmpPaidAt,_tmpFulfilledAt,_tmpExpiredAt,_tmpSubscriptionUrl,_tmpMarzbanUsername,_tmpUserId);
+          _item = new OrderEntity(_tmpOrderNo,_tmpPlanName,_tmpPlanId,_tmpAmount,_tmpUsdAmount,_tmpAssetCode,_tmpNetworkCode,_tmpStatus,_tmpCreatedAt,_tmpPaidAt,_tmpFulfilledAt,_tmpExpiredAt,_tmpSubscriptionUrl,_tmpMarzbanUsername,_tmpUserId);
           _result.add(_item);
         }
         return _result;
@@ -596,7 +658,9 @@ public final class OrderDao_Impl implements OrderDao {
         final int _columnIndexOfPlanName = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "planName");
         final int _columnIndexOfPlanId = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "planId");
         final int _columnIndexOfAmount = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "amount");
+        final int _columnIndexOfUsdAmount = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "usdAmount");
         final int _columnIndexOfAssetCode = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "assetCode");
+        final int _columnIndexOfNetworkCode = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "networkCode");
         final int _columnIndexOfStatus = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "status");
         final int _columnIndexOfCreatedAt = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "createdAt");
         final int _columnIndexOfPaidAt = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "paidAt");
@@ -632,11 +696,23 @@ public final class OrderDao_Impl implements OrderDao {
           } else {
             _tmpAmount = _stmt.getText(_columnIndexOfAmount);
           }
+          final String _tmpUsdAmount;
+          if (_stmt.isNull(_columnIndexOfUsdAmount)) {
+            _tmpUsdAmount = null;
+          } else {
+            _tmpUsdAmount = _stmt.getText(_columnIndexOfUsdAmount);
+          }
           final String _tmpAssetCode;
           if (_stmt.isNull(_columnIndexOfAssetCode)) {
             _tmpAssetCode = null;
           } else {
             _tmpAssetCode = _stmt.getText(_columnIndexOfAssetCode);
+          }
+          final String _tmpNetworkCode;
+          if (_stmt.isNull(_columnIndexOfNetworkCode)) {
+            _tmpNetworkCode = null;
+          } else {
+            _tmpNetworkCode = _stmt.getText(_columnIndexOfNetworkCode);
           }
           final String _tmpStatus;
           if (_stmt.isNull(_columnIndexOfStatus)) {
@@ -682,7 +758,7 @@ public final class OrderDao_Impl implements OrderDao {
           } else {
             _tmpUserId = _stmt.getText(_columnIndexOfUserId);
           }
-          _item = new OrderEntity(_tmpOrderNo,_tmpPlanName,_tmpPlanId,_tmpAmount,_tmpAssetCode,_tmpStatus,_tmpCreatedAt,_tmpPaidAt,_tmpFulfilledAt,_tmpExpiredAt,_tmpSubscriptionUrl,_tmpMarzbanUsername,_tmpUserId);
+          _item = new OrderEntity(_tmpOrderNo,_tmpPlanName,_tmpPlanId,_tmpAmount,_tmpUsdAmount,_tmpAssetCode,_tmpNetworkCode,_tmpStatus,_tmpCreatedAt,_tmpPaidAt,_tmpFulfilledAt,_tmpExpiredAt,_tmpSubscriptionUrl,_tmpMarzbanUsername,_tmpUserId);
           _result.add(_item);
         }
         return _result;
@@ -713,7 +789,9 @@ public final class OrderDao_Impl implements OrderDao {
         final int _columnIndexOfPlanName = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "planName");
         final int _columnIndexOfPlanId = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "planId");
         final int _columnIndexOfAmount = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "amount");
+        final int _columnIndexOfUsdAmount = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "usdAmount");
         final int _columnIndexOfAssetCode = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "assetCode");
+        final int _columnIndexOfNetworkCode = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "networkCode");
         final int _columnIndexOfStatus = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "status");
         final int _columnIndexOfCreatedAt = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "createdAt");
         final int _columnIndexOfPaidAt = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "paidAt");
@@ -749,11 +827,23 @@ public final class OrderDao_Impl implements OrderDao {
           } else {
             _tmpAmount = _stmt.getText(_columnIndexOfAmount);
           }
+          final String _tmpUsdAmount;
+          if (_stmt.isNull(_columnIndexOfUsdAmount)) {
+            _tmpUsdAmount = null;
+          } else {
+            _tmpUsdAmount = _stmt.getText(_columnIndexOfUsdAmount);
+          }
           final String _tmpAssetCode;
           if (_stmt.isNull(_columnIndexOfAssetCode)) {
             _tmpAssetCode = null;
           } else {
             _tmpAssetCode = _stmt.getText(_columnIndexOfAssetCode);
+          }
+          final String _tmpNetworkCode;
+          if (_stmt.isNull(_columnIndexOfNetworkCode)) {
+            _tmpNetworkCode = null;
+          } else {
+            _tmpNetworkCode = _stmt.getText(_columnIndexOfNetworkCode);
           }
           final String _tmpStatus;
           if (_stmt.isNull(_columnIndexOfStatus)) {
@@ -799,7 +889,7 @@ public final class OrderDao_Impl implements OrderDao {
           } else {
             _tmpUserId = _stmt.getText(_columnIndexOfUserId);
           }
-          _item = new OrderEntity(_tmpOrderNo,_tmpPlanName,_tmpPlanId,_tmpAmount,_tmpAssetCode,_tmpStatus,_tmpCreatedAt,_tmpPaidAt,_tmpFulfilledAt,_tmpExpiredAt,_tmpSubscriptionUrl,_tmpMarzbanUsername,_tmpUserId);
+          _item = new OrderEntity(_tmpOrderNo,_tmpPlanName,_tmpPlanId,_tmpAmount,_tmpUsdAmount,_tmpAssetCode,_tmpNetworkCode,_tmpStatus,_tmpCreatedAt,_tmpPaidAt,_tmpFulfilledAt,_tmpExpiredAt,_tmpSubscriptionUrl,_tmpMarzbanUsername,_tmpUserId);
           _result.add(_item);
         }
         return _result;

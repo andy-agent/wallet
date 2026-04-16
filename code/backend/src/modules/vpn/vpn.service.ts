@@ -3,7 +3,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { createHash, randomUUID } from 'crypto';
+import { randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
 import { ClientCatalogService } from '../database/client-catalog.service';
 import { MarzbanService } from '../marzban/marzban.service';
@@ -365,54 +365,31 @@ export class VpnService {
       return this.toSubscriptionState(expiredSubscription);
     }
 
-    const reconciled = await this.reconcileMarzbanAccessIfNeeded(subscription);
-    return this.toSubscriptionState(reconciled);
+    const normalized = await this.normalizePersistedSubscriptionUrl(subscription);
+    return this.toSubscriptionState(normalized);
   }
 
-  private async reconcileMarzbanAccessIfNeeded(
+  private async normalizePersistedSubscriptionUrl(
     subscription: PersistedSubscriptionRecord,
   ): Promise<PersistedSubscriptionRecord> {
-    if (subscription.status !== 'ACTIVE') {
+    if (
+      subscription.status !== 'ACTIVE' ||
+      !subscription.subscriptionUrl?.trim()
+    ) {
       return subscription;
     }
 
-    if (
-      subscription.marzbanUsername?.trim() &&
-      subscription.subscriptionUrl?.trim()
-    ) {
-      const normalizedUrl = this.marzbanService.normalizeSubscriptionUrl(
-        subscription.subscriptionUrl,
-      );
-      if (normalizedUrl === subscription.subscriptionUrl) {
-        return subscription;
-      }
-
-      const updated: PersistedSubscriptionRecord = {
-        ...subscription,
-        updatedAt: new Date().toISOString(),
-        subscriptionUrl: normalizedUrl,
-      };
-      await this.runtimeStateRepository.upsertSubscription(updated);
-      return updated;
+    const normalizedUrl = this.marzbanService.normalizeSubscriptionUrl(
+      subscription.subscriptionUrl,
+    );
+    if (normalizedUrl === subscription.subscriptionUrl) {
+      return subscription;
     }
 
-    const marzbanUser = await this.marzbanService.ensureUserForSubscription({
-      subscriptionId: subscription.subscriptionId,
-      existingUsername: subscription.marzbanUsername,
-      expireAt: subscription.expireAt,
-      isUnlimitedTraffic: subscription.isUnlimitedTraffic,
-    });
-
-    const nextExpireAt = marzbanUser.expireAt ?? subscription.expireAt;
     const updated: PersistedSubscriptionRecord = {
       ...subscription,
       updatedAt: new Date().toISOString(),
-      expireAt: nextExpireAt,
-      daysRemaining: nextExpireAt
-        ? this.calculateDaysRemaining(new Date(), new Date(nextExpireAt))
-        : subscription.daysRemaining,
-      marzbanUsername: marzbanUser.username,
-      subscriptionUrl: marzbanUser.subscriptionUrl,
+      subscriptionUrl: normalizedUrl,
     };
     await this.runtimeStateRepository.upsertSubscription(updated);
     return updated;
@@ -463,14 +440,8 @@ export class VpnService {
   private async resolveNodesForLine(
     line: AllowedLineView,
     subscription: SubscriptionState,
-    allowedLineCount: number,
+    _allowedLineCount: number,
   ): Promise<VpnNodeView[]> {
-    const marzbanHosts =
-      allowedLineCount === 1 ? await this.resolveNodesFromMarzbanHosts(line, subscription) : [];
-    if (marzbanHosts.length > 0) {
-      return marzbanHosts;
-    }
-
     const catalogNodes = await this.clientCatalogService.listNodes({
       regionIds: [line.regionId],
       status: 'ACTIVE',
@@ -478,30 +449,6 @@ export class VpnService {
     return catalogNodes.map((node) =>
       this.toCatalogNodeView(line, node, subscription.selectedNodeId),
     );
-  }
-
-  private async resolveNodesFromMarzbanHosts(
-    line: AllowedLineView,
-    subscription: SubscriptionState,
-  ): Promise<VpnNodeView[]> {
-    const hosts = await this.marzbanService.listHostSettings();
-    return hosts.map((host) => {
-      const nodeId = this.buildHostNodeId(host.inboundTag, host.address, host.port, host.remark);
-      return {
-        nodeId,
-        nodeName: host.remark,
-        lineCode: line.lineCode,
-        lineName: line.lineName,
-        regionCode: line.regionGroupCode,
-        regionName: line.regionGroupName,
-        host: host.address,
-        port: host.port,
-        status: host.isDisabled ? 'DISABLED' : 'ACTIVE',
-        healthStatus: 'HEALTHY',
-        selected: subscription.selectedNodeId === nodeId,
-        source: 'marzban-host' as const,
-      };
-    });
   }
 
   private toCatalogNodeView(
@@ -523,18 +470,6 @@ export class VpnService {
       selected: selectedNodeId === node.nodeId,
       source: 'catalog-node',
     };
-  }
-
-  private buildHostNodeId(
-    inboundTag: string,
-    address: string,
-    port: number,
-    remark: string,
-  ) {
-    return createHash('sha1')
-      .update(`${inboundTag}|${address}|${port}|${remark}`)
-      .digest('hex')
-      .slice(0, 24);
   }
 
   private toLineIdentity(region: ClientCatalogVpnRegion) {

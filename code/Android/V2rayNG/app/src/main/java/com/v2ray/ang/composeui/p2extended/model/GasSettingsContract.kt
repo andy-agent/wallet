@@ -12,33 +12,32 @@ data class GasSettingsRouteArgs(val chainId: String = "ethereum")
 data class GasSettingsUiState(
         val title: String = "Gas 设置",
         val subtitle: String = "GAS SETTINGS",
-        val badge: String = "P2 · EXTENDED",
-        val summary: String = "Gas 设置页支持慢 / 中 / 快档位与高级自定义参数。",
+        val badge: String = "待估算",
+        val summary: String = "等待链上 gas 估算结果返回。",
         val primaryActionLabel: String = "保存并返回发送页",
         val secondaryActionLabel: String? = "取消修改",
         val heroAccent: String = "gas_settings",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "推荐档位", value = "Medium"),
-    FeatureMetric(label = "Base Fee", value = "21 gwei"),
-    FeatureMetric(label = "优先费", value = "2 gwei"),
+    FeatureMetric(label = "推荐档位", value = "待估算"),
+    FeatureMetric(label = "Base Fee", value = "待估算"),
+    FeatureMetric(label = "优先费", value = "待估算"),
 ),
         val fields: List<FeatureField> = listOf(
-    FeatureField(key = "maxFee", label = "Max Fee", value = "28", supportingText = "可切换到真实单位与链上估算"),
-    FeatureField(key = "priorityFee", label = "Priority Fee", value = "2", supportingText = "与网络拥堵动态联动"),
+    FeatureField(key = "maxFee", label = "Max Fee", value = "", supportingText = "等待链上估算返回"),
+    FeatureField(key = "priorityFee", label = "Priority Fee", value = "", supportingText = "等待优先费估算返回"),
 ),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "Gas 设置页支持慢 / 中 / 快档位与高级自定义参数。", trailing = "gas_settings", badge = "P2 扩展页"),
+    FeatureListItem(title = "估算状态", subtitle = "等待链上返回 gas 推荐值。", trailing = "待估算", badge = "State"),
     FeatureListItem(title = "导航参数", subtitle = "chainId", trailing = "1 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "Max Fee、Priority Fee", trailing = "2 项", badge = "Form"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
+    FeatureListItem(title = "表单状态", subtitle = "Max Fee 与 Priority Fee 待返回", trailing = "2 项", badge = "Form"),
+    FeatureListItem(title = "数据来源", subtitle = "由链上估算接口实时返回。", trailing = "Runtime", badge = "Source"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "Gas 设置 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 GasSettingsPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "createRoute builder 与 NavGraph 参数解析已补齐。"),
+    FeatureBullet(title = "链上估算", detail = "未返回真实 gas 前，不展示伪造费率。"),
+    FeatureBullet(title = "参数保存", detail = "保存前需确认估算结果已返回。"),
+    FeatureBullet(title = "导航参数", detail = "根据 chainId 选择链路。"),
 ),
-        val note: String = "Gas 设置 已按 P2 扩展页 页面补齐，可继续替换为真实业务逻辑与接口数据。",
+        val note: String = "当前未返回 gas 估算结果。",
     )
 
     sealed interface GasSettingsEvent {

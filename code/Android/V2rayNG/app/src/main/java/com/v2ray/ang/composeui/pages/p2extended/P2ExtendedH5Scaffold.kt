@@ -9,6 +9,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,12 +48,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.effects.TechParticleBackground
+import com.v2ray.ang.composeui.p0.ui.P01BottomNav
+import com.v2ray.ang.composeui.p0.ui.P01HeaderHeroRing
+import com.v2ray.ang.composeui.p0.ui.defaultP01Destinations
 
 @Composable
 internal fun P2ExtendedPageScaffold(
     kicker: String,
     title: String,
     subtitle: String,
+    currentRoute: String = "",
+    onBottomNav: (String) -> Unit = {},
     hubLabel: String,
     onHubClick: () -> Unit,
     primaryActionLabel: String? = null,
@@ -61,6 +67,8 @@ internal fun P2ExtendedPageScaffold(
     onSecondaryAction: (() -> Unit)? = null,
     content: @Composable ColumnScopeWrapper.() -> Unit,
 ) {
+    val heroKicker = kicker.takeIf { it.isNotBlank() }.orEmpty()
+    val heroSubtitle = subtitle.takeIf { it.isNotBlank() }.orEmpty()
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color.Transparent,
@@ -74,41 +82,52 @@ internal fun P2ExtendedPageScaffold(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .statusBarsPadding()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .statusBarsPadding(),
             ) {
-                HeroSection(
-                    kicker = kicker,
-                    title = title,
-                    subtitle = subtitle,
-                    hubLabel = hubLabel,
-                    onHubClick = onHubClick,
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                ColumnScopeWrapper.content()
-                if (primaryActionLabel != null && onPrimaryAction != null) {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    ExtendedPrimaryButton(
-                        label = primaryActionLabel,
-                        onClick = onPrimaryAction,
-                        modifier = Modifier.fillMaxWidth(),
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                ) {
+                    HeroSection(
+                        kicker = heroKicker,
+                        title = title,
+                        subtitle = heroSubtitle,
+                        hubLabel = hubLabel,
+                        onHubClick = onHubClick,
                     )
-                }
-                if (secondaryActionLabel != null && onSecondaryAction != null) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedButton(
-                        onClick = onSecondaryAction,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD6DDFE)),
-                    ) {
-                        Text(secondaryActionLabel, color = Color(0xFF3C4D8A), style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    ColumnScopeWrapper.content()
+                    if (primaryActionLabel != null && onPrimaryAction != null) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        ExtendedPrimaryButton(
+                            label = primaryActionLabel,
+                            onClick = onPrimaryAction,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
+                    if (secondaryActionLabel != null && onSecondaryAction != null) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        OutlinedButton(
+                            onClick = onSecondaryAction,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD6DDFE)),
+                        ) {
+                            Text(secondaryActionLabel, color = Color(0xFF3C4D8A), style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(110.dp))
                 }
-                Spacer(modifier = Modifier.height(14.dp))
+                P01BottomNav(
+                    currentRoute = currentRoute,
+                    destinations = defaultP01Destinations(),
+                    onNavigate = onBottomNav,
+                )
             }
         }
     }
@@ -200,26 +219,22 @@ private fun HeroSection(
             .padding(18.dp),
     ) {
         Column(modifier = Modifier.padding(end = 96.dp)) {
-            Text(kicker, color = Color(0xFFAEC4FF), style = MaterialTheme.typography.labelLarge)
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(title, color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(subtitle, color = Color(0xFFE3EAFF), style = MaterialTheme.typography.bodyMedium)
-        }
-        Row(
-            modifier = Modifier.align(Alignment.TopEnd),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .background(Color(0x26FFFFFF), RoundedCornerShape(999.dp))
-                    .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(999.dp))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-            ) {
-                Text(hubLabel, color = Color.White, style = MaterialTheme.typography.labelMedium)
+            if (kicker.isNotBlank()) {
+                Text(kicker, color = Color(0xFFAEC4FF), style = MaterialTheme.typography.labelLarge)
+                Spacer(modifier = Modifier.height(6.dp))
             }
-            P2HubOrb(onClick = onHubClick)
+            Text(title, color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            if (subtitle.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(subtitle, color = Color(0xFFE3EAFF), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .clickable(onClick = onHubClick),
+        ) {
+            P01HeaderHeroRing()
         }
     }
 }
@@ -313,6 +328,7 @@ internal fun P2Card(
     subtitle: String? = null,
     content: @Composable () -> Unit,
 ) {
+    val hasSubtitle = !subtitle.isNullOrBlank()
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -321,7 +337,7 @@ internal fun P2Card(
             .padding(16.dp),
     ) {
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF192140))
-        if (subtitle != null) {
+        if (hasSubtitle) {
             Spacer(modifier = Modifier.height(6.dp))
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF6671A1))
         }
@@ -515,7 +531,7 @@ internal fun OptionCard(
             Text(title, style = MaterialTheme.typography.bodyLarge, color = Color(0xFF1E274D), fontWeight = FontWeight.SemiBold)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF68739E))
         }
-        if (badge != null) {
+        if (!badge.isNullOrBlank()) {
             Spacer(modifier = Modifier.width(8.dp))
             Box(
                 modifier = Modifier
@@ -1002,6 +1018,7 @@ internal fun P2SecurityActionCard(
     detail: String,
     badge: String? = null,
     risk: Boolean = false,
+    onClick: (() -> Unit)? = null,
 ) {
     val border = if (risk) Color(0xFFFFD7C2) else Color(0xFFE8ECF8)
     val background = if (risk) Color(0xFFFFFAF6) else Color.White
@@ -1012,6 +1029,13 @@ internal fun P2SecurityActionCard(
             .fillMaxWidth()
             .background(background, RoundedCornerShape(14.dp))
             .border(1.dp, border, RoundedCornerShape(14.dp))
+            .let { base ->
+                if (onClick != null) {
+                    base.clickable(onClick = onClick)
+                } else {
+                    base
+                }
+            }
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1043,7 +1067,7 @@ internal fun P2SecurityActionCard(
                 color = Color(0xFF6673A0),
             )
         }
-        if (badge != null) {
+        if (!badge.isNullOrBlank()) {
             Box(
                 modifier = Modifier
                     .background(badgeBg, RoundedCornerShape(999.dp))

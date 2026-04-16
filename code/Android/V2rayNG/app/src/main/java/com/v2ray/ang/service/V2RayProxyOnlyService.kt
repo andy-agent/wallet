@@ -41,6 +41,7 @@ class V2RayProxyOnlyService : Service(), ServiceControl {
     override fun onDestroy() {
         super.onDestroy()
         V2RayServiceManager.stopCoreLoop()
+        SessionKeepAliveService.restartIfLoggedIn(this)
     }
 
     /**

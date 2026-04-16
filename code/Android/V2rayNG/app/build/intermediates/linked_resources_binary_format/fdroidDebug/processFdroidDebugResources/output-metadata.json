@@ -11,9 +11,35 @@
       "type": "UNIVERSAL",
       "filters": [],
       "attributes": [],
-      "versionCode": 5071700,
-      "versionName": "2.0.17",
+      "versionCode": 5072300,
+      "versionName": "2.0.17.06",
       "outputFile": "linked-resources-binary-format-fdroidUniversalDebug.ap_"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "armeabi-v7a"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 5072302,
+      "versionName": "2.0.17.06",
+      "outputFile": "linked-resources-binary-format-fdroidArmeabi-v7aDebug.ap_"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "x86_64"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 5072303,
+      "versionName": "2.0.17.06",
+      "outputFile": "linked-resources-binary-format-fdroidX86_64Debug.ap_"
     },
     {
       "type": "ONE_OF_MANY",
@@ -24,8 +50,8 @@
         }
       ],
       "attributes": [],
-      "versionCode": 5071704,
-      "versionName": "2.0.17",
+      "versionCode": 5072304,
+      "versionName": "2.0.17.06",
       "outputFile": "linked-resources-binary-format-fdroidX86Debug.ap_"
     },
     {
@@ -37,35 +63,9 @@
         }
       ],
       "attributes": [],
-      "versionCode": 5071701,
-      "versionName": "2.0.17",
+      "versionCode": 5072301,
+      "versionName": "2.0.17.06",
       "outputFile": "linked-resources-binary-format-fdroidArm64-v8aDebug.ap_"
-    },
-    {
-      "type": "ONE_OF_MANY",
-      "filters": [
-        {
-          "filterType": "ABI",
-          "value": "x86_64"
-        }
-      ],
-      "attributes": [],
-      "versionCode": 5071703,
-      "versionName": "2.0.17",
-      "outputFile": "linked-resources-binary-format-fdroidX86_64Debug.ap_"
-    },
-    {
-      "type": "ONE_OF_MANY",
-      "filters": [
-        {
-          "filterType": "ABI",
-          "value": "armeabi-v7a"
-        }
-      ],
-      "attributes": [],
-      "versionCode": 5071702,
-      "versionName": "2.0.17",
-      "outputFile": "linked-resources-binary-format-fdroidArmeabi-v7aDebug.ap_"
     }
   ],
   "elementType": "File"

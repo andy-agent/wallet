@@ -1,0 +1,36 @@
+#!/usr/bin/expect -f
+set timeout -1
+
+set worktree [lindex $argv 0]
+set prompt_file [lindex $argv 1]
+set timeout_sec [lindex $argv 2]
+set art_dir_rel [lindex $argv 3]
+set kimi_bin [lindex $argv 4]
+
+set fp [open $prompt_file r]
+set task_prompt [read $fp]
+close $fp
+
+cd $worktree
+
+send_user "[INFO] launching kimi\n"
+spawn $kimi_bin
+
+sleep 2
+send "/yolo\r"
+sleep 1
+send -- "$task_prompt\r"
+
+send_user "[INFO] waiting ${timeout_sec}s for execution window\n"
+set t [expr {$timeout_sec + 0}]
+if {$t < 1} {
+  set t 1
+}
+sleep $t
+
+send "/export ${art_dir_rel}/kimi-last-session.md\r"
+sleep 2
+send "/exit\r"
+
+expect eof
+send_user "[OK] kimi session finished\n"

@@ -410,6 +410,25 @@ describe('Wallet (e2e)', () => {
         expect(res.body.data.shareLink).toContain(res.body.data.referralCode);
       });
 
+    const shareContext = await request(app.getHttpServer())
+      .get('/api/client/v1/referral/share-context')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get(
+        `/api/client/v1/referral/resolve-public?code=${encodeURIComponent(
+          shareContext.body.data.referralCode,
+        )}`,
+      )
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.referralCode).toBe(shareContext.body.data.referralCode);
+        expect(res.body.data.inviterLabel).toContain('@');
+        expect(res.body.data.downloadUrl).not.toBeUndefined();
+        expect(res.body.data.openAppUrl).not.toBeUndefined();
+      });
+
     await app.close();
     await bootstrapApp();
 

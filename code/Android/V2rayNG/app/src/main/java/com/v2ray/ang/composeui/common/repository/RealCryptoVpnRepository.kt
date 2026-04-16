@@ -1,6 +1,7 @@
 package com.v2ray.ang.composeui.common.repository
 
 import android.content.Context
+import com.google.gson.Gson
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.composeui.common.model.FeatureBullet
@@ -202,12 +203,11 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val cached = paymentRepository.getCachedCurrentUser()
         return EmailRegisterUiState(
             fields = listOf(
-                FeatureField("email", "邮箱", cached?.email ?: "", "将作为登录与找回凭据"),
-                FeatureField("code", "验证码", "", "先点击发送验证码，再填写收到的 6 位验证码"),
+                FeatureField("email", "邮箱", "", "将作为登录与找回凭据"),
                 FeatureField("password", "登录密码", "", "至少 8 位，建议混合字母和数字"),
                 FeatureField("invite", "邀请码", "", "选填，注册成功后会尝试真实绑定"),
             ),
-            summary = "完成 注册和邀请码绑定。",
+            summary = "完成账户创建和邀请码绑定。",
             note = " 只有成功后才进入主界面。",
         )
     }
@@ -253,29 +253,35 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun registerEmail(
         email: String,
         password: String,
-        code: String,
         inviteCode: String,
     ): EmailRegisterActionResult = withContext(Dispatchers.IO) {
-        val normalizedEmail = email.trim()
-        val normalizedCode = code.trim()
-        val normalizedInvite = inviteCode.trim()
-        if (normalizedEmail.isBlank() || normalizedCode.isBlank() || password.isBlank()) {
+        if (walletSecretStore.getAnyMnemonicRecord() != null) {
             return@withContext EmailRegisterActionResult(
                 success = false,
-                errorMessage = "邮箱、验证码和密码都必须填写",
+                errorMessage = "当前设备钱包已绑定其他账号；请使用原账号登录或先手动清除本地钱包。",
+                unavailable = false,
+            )
+        }
+        val normalizedEmail = email.trim()
+        val normalizedInvite = inviteCode.trim()
+        if (normalizedEmail.isBlank() || password.isBlank()) {
+            return@withContext EmailRegisterActionResult(
+                success = false,
+                errorMessage = "邮箱和密码都必须填写",
             )
         }
 
         val registerResult = paymentRepository.register(
             email = normalizedEmail,
             password = password,
-            code = normalizedCode,
         )
         if (registerResult.isFailure) {
+            val mappedMessage = mapRegisterFailureMessage(registerResult.exceptionOrNull()?.message)
+            val serviceUnavailable = isRegisterServiceUnavailable(registerResult.exceptionOrNull()?.message)
             return@withContext EmailRegisterActionResult(
                 success = false,
-                errorMessage = registerResult.exceptionOrNull()?.message ?: "注册失败",
-                unavailable = true,
+                errorMessage = mappedMessage,
+                unavailable = serviceUnavailable,
             )
         }
 
@@ -306,6 +312,26 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             completed = true,
             nextRoute = CryptoVpnRouteSpec.walletOnboarding.pattern,
         )
+    }
+
+    private fun mapRegisterFailureMessage(message: String?): String {
+        val normalized = message.orEmpty().uppercase(Locale.ROOT)
+        return when {
+            "EMAIL_ALREADY_EXISTS" in normalized || "EMAIL ALREADY EXISTS" in normalized ->
+                "该邮箱已注册，请直接登录"
+            "CODE MUST" in normalized || "CODE SHOULD" in normalized || "VERIFICATION" in normalized ->
+                "线上注册服务仍在旧版本，当前还要求验证码；需要同步部署后端注册接口"
+            message.isNullOrBlank() -> "注册失败，请稍后重试"
+            else -> message
+        }
+    }
+
+    private fun isRegisterServiceUnavailable(message: String?): Boolean {
+        val normalized = message.orEmpty().uppercase(Locale.ROOT)
+        return when {
+            "EMAIL_ALREADY_EXISTS" in normalized || "EMAIL ALREADY EXISTS" in normalized -> false
+            else -> true
+        }
     }
 
     override suspend fun requestResetPasswordCode(email: String): ResetPasswordActionResult = withContext(Dispatchers.IO) {
@@ -1254,19 +1280,30 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val user = paymentRepository.getCachedCurrentUser()
         val me = paymentRepository.getMe().getOrNull()
         val orders = user?.userId?.let { paymentRepository.getCachedOrders(it) }.orEmpty()
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        val accountLabel = me?.email ?: user?.email ?: user?.username ?: "--"
+        val planLabel = me?.subscription?.planName ?: me?.subscription?.planCode ?: "未订阅"
+        val accountStatus = me?.status ?: if (paymentRepository.isTokenValid()) "ACTIVE" else "未登录"
         return ProfileUiState(
+            badge = "",
             metrics = listOf(
-                FeatureMetric("当前套餐", me?.subscription?.planName ?: me?.subscription?.planCode ?: "未订阅"),
-                FeatureMetric("设备数量", me?.subscription?.maxActiveSessions?.toString() ?: "0"),
-                FeatureMetric("安全评分", if (paymentRepository.isTokenValid()) "A" else "C"),
+                FeatureMetric("当前套餐", planLabel),
+                FeatureMetric("订单数", orders.size.toString()),
+                FeatureMetric("账户状态", accountStatus),
             ),
             highlights = listOf(
-                FeatureListItem("账户", user?.username ?: me?.email ?: "--", user?.userId ?: me?.accountId ?: "--", "LIVE"),
-                FeatureListItem("订单数", orders.size.toString(), orders.firstOrNull()?.orderNo ?: "", "ORDER"),
-                FeatureListItem("订阅到期", me?.subscription?.expireAt ?: "--", me?.status ?: "--", "SUB"),
+                FeatureListItem("安全中心", "助记词、设备、会话与清除本地钱包", "进入", "SECURITY"),
+                FeatureListItem("钱包管理", lifecycle?.walletName ?: lifecycle?.displayName ?: "管理当前钱包与新增钱包", "进入", "WALLET"),
+                FeatureListItem("订单与订阅", orders.size.toString(), orders.firstOrNull()?.orderNo ?: "", "ORDER"),
+                FeatureListItem("邀请中心", "推广链接与佣金收入", "进入", "INVITE"),
+                FeatureListItem("法务文档", "服务协议、隐私与免责声明", "进入", "LEGAL"),
+                FeatureListItem("关于应用", me?.subscription?.expireAt ?: "--", me?.status ?: "--", "ABOUT"),
+            ),
+            checklist = listOf(
+                FeatureBullet("账户信息", accountLabel),
             ),
             summary = "",
-            note = "",
+            note = accountStatus,
         )
     }
 
@@ -1440,28 +1477,41 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getCreateWalletState(args: CreateWalletRouteArgs): CreateWalletUiState {
         val user = paymentRepository.getCachedCurrentUser()
+        val currentAccountId = paymentRepository.getCurrentUserId()
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        val conflictingWallet = currentAccountId?.let { walletSecretStore.getConflictingMnemonicRecord(it) }
         val defaultName = user?.username?.let { "$it Wallet" } ?: "Primary Wallet"
 
+        if (conflictingWallet != null) {
+            return CreateWalletUiState(
+                metrics = listOf(
+                    FeatureMetric("模式", args.mode),
+                    FeatureMetric("账户状态", "冲突"),
+                    FeatureMetric("本地钱包归属", conflictingWallet.accountId),
+                ),
+                fields = emptyList(),
+                summary = "当前设备钱包已绑定其他账号。",
+                note = "请使用原账号登录，或先手动清除本地钱包后再创建新钱包。",
+                primaryActionLabel = "当前无法创建",
+                secondaryActionLabel = null,
+            )
+        }
+
         return CreateWalletUiState(
-            metrics = listOf(
-                FeatureMetric("模式", args.mode),
-                FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
-                FeatureMetric("数据源", "wallet/lifecycle"),
-            ),
+            badge = "",
+            summary = "",
+            metrics = emptyList(),
             fields = listOf(
                 FeatureField(
                     key = "name",
-                    label = "钱包名称",
-                    value = lifecycle?.displayName ?: defaultName,
-                    supportingText = "创建动作会把钱包存在态写入服务端生命周期状态。",
+                    label = "",
+                    value = "",
+                    supportingText = "请输入本地展示名称，支持中文。",
+                    placeholder = "钱包代号",
                 ),
             ),
-            highlights = listOf(
-                FeatureListItem("创建模式", args.mode, lifecycle?.lifecycleStatus ?: "NOT_CREATED", "LIVE"),
-                FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据源", "wallet/lifecycle", "", "REAL"),
-            ),
+            highlights = emptyList(),
+            checklist = emptyList(),
             note = "",
         )
     }
@@ -1472,13 +1522,26 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 success = false,
                 errorMessage = "未登录",
             )
+        val normalizedDisplayName = displayName.trim()
+        if (normalizedDisplayName.isBlank()) {
+            return WalletLifecycleMutationResult(
+                success = false,
+                errorMessage = "请输入钱包代号",
+            )
+        }
+        if (walletSecretStore.getConflictingMnemonicRecord(accountId) != null) {
+            return WalletLifecycleMutationResult(
+                success = false,
+                errorMessage = "当前设备钱包已绑定其他账号；请使用原账号登录或先手动清除本地钱包。",
+            )
+        }
         val mnemonic = WalletMnemonicGenerator.generate12WordMnemonic()
         val normalizedMnemonic = mnemonic.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
         val normalizedMnemonicText = normalizedMnemonic.joinToString(" ")
         val mnemonicHash = createMnemonicHash(normalizedMnemonicText)
         val result = paymentRepository.upsertWalletLifecycle(
             action = "CREATE",
-            displayName = displayName,
+            displayName = normalizedDisplayName,
             mnemonicHash = mnemonicHash,
             mnemonicWordCount = normalizedMnemonic.size,
         )
@@ -1500,7 +1563,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 mnemonic = normalizedMnemonicText,
                 mnemonicHash = mnemonicHash,
                 mnemonicWordCount = normalizedMnemonic.size,
-                walletName = lifecycle.displayName ?: displayName,
+                walletName = lifecycle.displayName ?: normalizedDisplayName,
                 sourceType = "CREATE",
                 publicAddresses = publicAddresses,
             )
@@ -1640,7 +1703,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getBackupMnemonicState(args: BackupMnemonicRouteArgs): BackupMnemonicUiState {
         val user = paymentRepository.getCachedCurrentUser()
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
-        val localSecret = paymentRepository.getCurrentUserId()?.let { walletSecretStore.getMnemonicRecord(it) }
+        val localSecret = paymentRepository.getCurrentUserId()
+            ?.let { walletSecretStore.getMnemonicRecord(it) }
+            ?: walletSecretStore.getMnemonicRecordByWalletId(args.walletId)
+            ?: walletSecretStore.getAnyMnemonicRecord()
         val mnemonicWords = localSecret?.mnemonic?.split(Regex("\\s+"))?.filter { it.isNotBlank() }.orEmpty()
         return BackupMnemonicUiState(
             metrics = listOf(
@@ -1653,7 +1719,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                     key = "mnemonic_row_$index",
                     label = "助记词 ${index + 1}",
                     value = chunk.joinToString("  "),
-                    supportingText = "请线下抄写并妥善保存",
+                    supportingText = "",
                 )
             },
             highlights = listOf(
@@ -1683,20 +1749,111 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getSecurityCenterState(): SecurityCenterUiState {
         val user = paymentRepository.getCachedCurrentUser()
-        val orders = loadCachedOrders()
+        val currentAccountId = paymentRepository.getCurrentUserId()
+        val localWallet = walletSecretStore.getAnyMnemonicRecord()
+        val conflictingWallet = currentAccountId?.let { walletSecretStore.getConflictingMnemonicRecord(it) }
+        val backupMetadata = paymentRepository.getWalletSecretBackupMetadata().getOrNull()
+        val localWalletState = when {
+            localWallet == null -> "未导入"
+            conflictingWallet != null -> "其他账号"
+            else -> "当前账号"
+        }
+        val backupState = when {
+            conflictingWallet != null -> "请登录原账号导出"
+            backupMetadata?.exists == true -> "已同步"
+            else -> "未同步"
+        }
         return SecurityCenterUiState(
+            primaryActionLabel = if (localWallet != null) "导出加密备份" else null,
+            destructiveActionLabel = if (localWallet != null) "清除本地钱包" else null,
+            localWalletId = localWallet?.walletId,
+            localWalletPresent = localWallet != null,
             metrics = listOf(
-                FeatureMetric("会话状态", if (paymentRepository.isTokenValid()) "有效" else "失效"),
-                FeatureMetric("账户", user?.username ?: "--"),
-                FeatureMetric("订单记录", orders.size.toString()),
+                FeatureMetric("账户", user?.email ?: user?.username ?: "--"),
+                FeatureMetric("本地钱包", localWalletState),
+                FeatureMetric("加密备份", backupState),
             ),
             highlights = listOf(
-                FeatureListItem("助记词备份", "本地安全流程已启用", "检查", "SAFE"),
-                FeatureListItem("设备会话", if (paymentRepository.isTokenValid()) "当前登录有效" else "需要重登", "", "SESSION"),
-                FeatureListItem("数据来源", "真实账户 + 本地状态", "", "REAL"),
+                FeatureListItem(
+                    "本地钱包状态",
+                    when {
+                        localWallet == null -> "当前设备未检测到本地钱包。"
+                        conflictingWallet != null -> "检测到其他账号的钱包；可清除本地钱包后再切换。"
+                        else -> "当前账号的钱包已导入本机。"
+                    },
+                    "",
+                    "SAFE",
+                ),
             ),
-            note = "",
+            checklist = listOf(
+                FeatureBullet("本地钱包", localWalletState),
+                FeatureBullet("加密备份", backupState),
+            ),
+            summary = when {
+                localWallet == null -> "当前未检测到本地钱包。"
+                conflictingWallet != null -> "检测到其他账号的钱包；可导出原账号的加密备份或清除本地钱包后切换账号。"
+                else -> "可在此导出加密备份或清除本地钱包后切换账号。"
+            },
+            note = if (localWallet != null) "清除仅删除本机加密钱包材料，不会删除服务端钱包生命周期或备份记录。" else "",
         )
+    }
+
+    override suspend fun exportLocalWallet(): LocalWalletActionResult = withContext(Dispatchers.IO) {
+        val localWallet = walletSecretStore.getAnyMnemonicRecord()
+            ?: return@withContext LocalWalletActionResult(
+                success = false,
+                errorMessage = "当前设备没有可导出的本地钱包",
+            )
+        val currentAccountId = paymentRepository.getCurrentUserId()
+        if (!currentAccountId.isNullOrBlank() && localWallet.accountId != currentAccountId) {
+            return@withContext LocalWalletActionResult(
+                success = false,
+                errorMessage = "当前登录账号与本地钱包归属不一致；请登录原账号后导出加密备份",
+            )
+        }
+        val exportData = paymentRepository.getWalletSecretBackupExport().getOrElse { error ->
+            return@withContext LocalWalletActionResult(
+                success = false,
+                errorMessage = error.message ?: "导出加密备份失败",
+            )
+        }
+        val payload = exportData.payload
+            ?: return@withContext LocalWalletActionResult(
+                success = false,
+                errorMessage = "当前没有可导出的加密备份",
+            )
+        LocalWalletActionResult(
+            success = true,
+            walletId = localWallet.walletId,
+            exportFileName = exportData.fileName ?: "cryptovpn-wallet-backup-${localWallet.walletId}.json",
+            exportContent = Gson().toJson(payload),
+        )
+    }
+
+    override suspend fun clearLocalWallet(): LocalWalletActionResult = withContext(Dispatchers.IO) {
+        val localWallet = walletSecretStore.getAnyMnemonicRecord()
+            ?: return@withContext LocalWalletActionResult(
+                success = false,
+                errorMessage = "当前设备没有可清除的本地钱包",
+            )
+        return@withContext try {
+            walletSecretStore.clear(localWallet.accountId)
+            LocalWalletActionResult(success = true)
+        } catch (e: Exception) {
+            LocalWalletActionResult(
+                success = false,
+                errorMessage = e.message ?: "清除本地钱包失败",
+            )
+        }
+    }
+
+    override suspend fun logoutSession(): LogoutResult = withContext(Dispatchers.IO) {
+        return@withContext try {
+            paymentRepository.logout()
+            LogoutResult(success = true)
+        } catch (e: Exception) {
+            LogoutResult(success = false, errorMessage = e.message ?: "退出登录失败")
+        }
     }
 
     override suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState =
@@ -1733,19 +1890,35 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        val currentAccountId = paymentRepository.getCurrentUserId()
+        val conflictingWallet = currentAccountId?.let { walletSecretStore.getConflictingMnemonicRecord(it) }
+        val walletExists = lifecycle?.walletExists == true &&
+            !lifecycle.sourceType.equals("LEGACY", ignoreCase = true)
+        val walletDisplayName = when {
+            walletExists -> lifecycle?.walletName ?: lifecycle?.displayName ?: "当前钱包"
+            conflictingWallet != null -> "当前账号未创建钱包"
+            else -> "未创建"
+        }
 
         return WalletManagerUiState(
+            badge = "",
             metrics = listOf(
-                FeatureMetric("钱包数量", if (lifecycle?.walletExists == true) "1" else "0"),
-                FeatureMetric("默认钱包", lifecycle?.walletName ?: lifecycle?.displayName ?: args.walletId),
+                FeatureMetric("钱包数量", if (walletExists) "1" else "0"),
+                FeatureMetric("当前钱包", walletDisplayName),
                 FeatureMetric("关联订单", orders.size.toString()),
             ),
             highlights = listOf(
-                FeatureListItem("默认钱包", lifecycle?.walletName ?: lifecycle?.displayName ?: args.walletId, lifecycle?.lifecycleStatus ?: "NOT_CREATED", "REAL"),
-                FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据源", "wallet/lifecycle", lifecycle?.sourceType ?: lifecycle?.origin ?: "--", "REAL"),
+                FeatureListItem("当前钱包", walletDisplayName, lifecycle?.lifecycleStatus ?: "NOT_CREATED", "REAL"),
+                FeatureListItem("新增钱包", "为当前账号新增一个独立钱包地址入口。", "创建", "CREATE"),
+                FeatureListItem(
+                    "账户标签",
+                    user?.email ?: user?.username ?: "--",
+                    if (conflictingWallet != null) "检测到其他账号本地钱包" else "",
+                    "ACCOUNT",
+                ),
             ),
-            summary = if (lifecycle?.walletExists == true) "" else "暂无数据",
+            summary = if (walletExists) "当前账号已存在钱包；后续新增钱包请从这里进入。" else "当前账号还没有钱包。",
+            checklist = emptyList(),
             note = "",
         )
     }

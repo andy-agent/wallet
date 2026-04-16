@@ -50,18 +50,16 @@ fun OptionalUpdateScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     P01PhoneScaffold(
-        statusTime = "18:16",
         currentRoute = CryptoVpnRouteSpec.vpnHome.name,
         onBottomNav = onBottomNav,
     ) {
         P01Card(centered = true) {
             P01SuccessBadge(symbol = "v", tint = Color(0xFF49D89B))
-            P01CardHeader(title = "发现新版本")
-            P01CardCopy("新版本带来更稳定的节点选择、更流畅的钱包图表和更清晰的底部导航。")
+            P01CardHeader(title = uiState.title.ifBlank { "发现新版本" })
             P01ButtonRow(
-                primaryLabel = "立即更新",
+                primaryLabel = uiState.primaryActionLabel.ifBlank { "立即更新" },
                 onPrimaryClick = onPrimaryAction,
-                secondaryLabel = "稍后提醒我",
+                secondaryLabel = uiState.secondaryActionLabel ?: "稍后提醒",
                 onSecondaryClick = onSecondaryAction,
             )
         }

@@ -15,14 +15,6 @@ class PlansViewModel(
 
     fun onEvent(event: PlansEvent) {
         when (event) {
-            is PlansEvent.FieldChanged -> {
-                _uiState.value = _uiState.value.copy(
-                    fields = _uiState.value.fields.map { field ->
-                        if (field.key == event.key) field.copy(value = event.value) else field
-                    },
-                )
-            }
-
             PlansEvent.PrimaryActionClicked -> Unit
             PlansEvent.SecondaryActionClicked -> Unit
             PlansEvent.Refresh -> refresh()

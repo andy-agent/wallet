@@ -2,6 +2,8 @@ package com.v2ray.ang.composeui.p0.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.BuildConfig
+import com.v2ray.ang.composeui.p0.model.P0LoadState
 import com.v2ray.ang.composeui.p0.model.SplashEvent
 import com.v2ray.ang.composeui.p0.model.SplashUiState
 import com.v2ray.ang.composeui.p0.repository.P0Repository
@@ -40,58 +42,51 @@ class SplashViewModel(
     }
 
     private suspend fun runBootSequence() {
-        _uiState.value = SplashUiState()
-
+        _uiState.value = initialSplashState()
         val snapshotDeferred = viewModelScope.async { repository.getSplashState() }
-        var snapshot = SplashUiState()
-        val minVisibleMs = 2200L
+        val minVisibleMs = 700L
 
         val elapsed = measureTimeMillis {
             updateStage(
                 progress = 0.12f,
-                headline = "连接钱包与网络",
-                detail = "初始化加密模块、节点探测与资产索引…",
+                headline = "检查登录状态",
+                detail = "正在确认账号会话和本地缓存是否可用。",
             )
-            delay(260)
+            delay(140)
 
             updateStage(
                 progress = 0.34f,
-                headline = "装载本地安全环境",
-                detail = "读取加密存储、配置项与会话凭据…",
+                headline = "读取本地数据",
+                detail = "正在加载订单、钱包、节点和配置状态。",
             )
-            delay(260)
+            delay(140)
 
-            snapshot = snapshotDeferred.await()
+            val snapshot = snapshotDeferred.await()
             _uiState.value = snapshot.copy(
-                progress = 0.58f,
-                progressHeadline = "同步账户与缓存",
-                progressDetail = "解析钱包账户、订单索引与节点缓存…",
-                authResolved = false,
-                readyToNavigate = false,
+                progress = when (snapshot.loadState) {
+                    P0LoadState.READY -> 1f
+                    P0LoadState.EMPTY -> 0.82f
+                    P0LoadState.ERROR, P0LoadState.UNAVAILABLE -> 0.58f
+                    P0LoadState.LOADING -> 0.42f
+                },
+                progressHeadline = snapshot.progressHeadline.ifBlank {
+                    when (snapshot.loadState) {
+                        P0LoadState.READY -> "准备完成"
+                        P0LoadState.EMPTY -> "需要处理空态"
+                        P0LoadState.ERROR -> "启动校验失败"
+                        P0LoadState.UNAVAILABLE -> "服务暂不可用"
+                        P0LoadState.LOADING -> "启动中"
+                    }
+                },
+                progressDetail = snapshot.progressDetail.ifBlank {
+                    snapshot.errorMessage ?: snapshot.unavailableMessage ?: "启动检查中"
+                },
             )
-            delay(280)
-
-            _uiState.value = snapshot.copy(
-                progress = 0.82f,
-                progressHeadline = "校验安全状态",
-                progressDetail = snapshot.buildStatus.ifBlank { "准备主界面与安全通道…" },
-                authResolved = false,
-                readyToNavigate = false,
-            )
-            delay(260)
         }
 
         if (elapsed < minVisibleMs) {
             delay(minVisibleMs - elapsed)
         }
-
-        _uiState.value = snapshot.copy(
-            progress = 1f,
-            progressHeadline = "准备完成",
-            progressDetail = "安全通道与钱包环境已就绪，正在进入主界面…",
-            authResolved = true,
-            readyToNavigate = true,
-        )
     }
 
     private fun updateStage(
@@ -103,8 +98,21 @@ class SplashViewModel(
             progress = progress,
             progressHeadline = headline,
             progressDetail = detail,
+            buildStatus = "启动中",
             authResolved = false,
             readyToNavigate = false,
+            loadState = P0LoadState.LOADING,
+            errorMessage = null,
+            unavailableMessage = null,
+        )
+    }
+
+    private fun initialSplashState(): SplashUiState {
+        return SplashUiState(
+            versionLabel = "v${BuildConfig.VERSION_NAME}",
+            buildStatus = "正在检查登录状态",
+            progressHeadline = "系统正在准备",
+            progressDetail = "正在读取账号、订单、节点和钱包状态。",
         )
     }
 }

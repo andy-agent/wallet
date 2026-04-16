@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CryptoVPN 邀请页</title>
+    <style>
+      :root {
+        --bg-top: #f6f8fb;
+        --bg-bottom: #eef3ff;
+        --card: #ffffff;
+        --card-border: #e4eaf7;
+        --text: #152749;
+        --subtle: #6d7e9d;
+        --primary: #1677ff;
+        --primary-hover: #0958d9;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: var(--text);
+        background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 48%, #ffffff 100%);
+      }
+
+      .shell {
+        min-height: 100vh;
+        padding: 32px 16px;
+      }
+
+      .container {
+        max-width: 1080px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 24px;
+        align-items: center;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-radius: 24px;
+        box-shadow: 0 16px 48px rgba(31, 56, 120, 0.12);
+        padding: 24px;
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #e6f4ff;
+        color: var(--primary);
+        font-size: 13px;
+        margin-bottom: 16px;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: 42px;
+        line-height: 1.15;
+      }
+
+      p {
+        margin: 0;
+        color: var(--subtle);
+        line-height: 1.7;
+        font-size: 16px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .button {
+        appearance: none;
+        border: 0;
+        border-radius: 12px;
+        padding: 14px 18px;
+        font-size: 15px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .button-primary {
+        background: var(--primary);
+        color: #fff;
+      }
+
+      .button-primary:hover {
+        background: var(--primary-hover);
+      }
+
+      .button-secondary {
+        background: #fff;
+        color: var(--text);
+        border: 1px solid var(--card-border);
+      }
+
+      .button-secondary:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .muted {
+        margin-top: 14px;
+        font-size: 14px;
+      }
+
+      .section-label {
+        font-size: 13px;
+        color: var(--subtle);
+      }
+
+      .invite-code {
+        margin-top: 8px;
+        font-size: 32px;
+        font-weight: 700;
+        word-break: break-all;
+      }
+
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .alert {
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: #fff7e6;
+        border: 1px solid #ffe7ba;
+        color: #ad6800;
+        font-size: 14px;
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--card-border);
+      }
+
+      .helper {
+        color: var(--subtle);
+        font-size: 14px;
+      }
+
+      @media (max-width: 900px) {
+        .container {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 32px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="container">
+        <section class="stack">
+          <span class="tag">CryptoVPN 邀请页</span>
+          <h1>接受邀请，下载并打开 CryptoVPN</h1>
+          <p>
+            通过邀请链接进入后，先下载 Android APK。安装完成后返回本页，点击“打开 App”，邀请码会随 deep link 带进 App。
+          </p>
+          <div class="actions">
+            <a id="download-app" class="button button-primary" href="/downloads/cryptovpn-android.apk">
+              下载 App
+            </a>
+            <a id="open-app" class="button button-secondary" href="#" aria-disabled="true">
+              打开 App
+            </a>
+          </div>
+          <p class="muted">如果设备还未安装 App，请先下载并安装，再返回本页点击“打开 App”。</p>
+        </section>
+
+        <section class="card stack">
+          <div id="missing-code" class="alert" hidden>
+            当前链接没有携带邀请码，请重新获取有效邀请链接。
+          </div>
+
+          <div>
+            <div class="section-label">邀请码</div>
+            <div id="invite-code" class="invite-code">未提供</div>
+          </div>
+
+          <div>
+            <div class="section-label">下载后锁定推广关系</div>
+            <p id="binding-copy">
+              安装完成后，返回本页点击“打开 App”，然后登录或注册账号，系统会继续尝试绑定当前邀请码。
+            </p>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="actions">
+            <button id="copy-code" class="button button-secondary" type="button">复制邀请码</button>
+            <button id="copy-link" class="button button-secondary" type="button">复制邀请链接</button>
+          </div>
+
+          <div id="copy-feedback" class="helper" aria-live="polite"></div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const code = (params.get('code') || '').trim().toUpperCase();
+      const inviteCode = document.getElementById('invite-code');
+      const openApp = document.getElementById('open-app');
+      const missingCode = document.getElementById('missing-code');
+      const copyFeedback = document.getElementById('copy-feedback');
+      const inviteLink = window.location.href;
+
+      if (code) {
+        inviteCode.textContent = code;
+        openApp.href = `v2rayng://invite?code=${encodeURIComponent(code)}`;
+        openApp.removeAttribute('aria-disabled');
+      } else {
+        missingCode.hidden = false;
+        openApp.setAttribute('aria-disabled', 'true');
+        openApp.addEventListener('click', (event) => event.preventDefault());
+      }
+
+      async function copyText(value, successText) {
+        try {
+          await navigator.clipboard.writeText(value);
+          copyFeedback.textContent = successText;
+        } catch (_) {
+          copyFeedback.textContent = '复制失败，请手动复制';
+        }
+      }
+
+      document.getElementById('copy-code').addEventListener('click', () => {
+        if (code) {
+          copyText(code, '邀请码已复制');
+        } else {
+          copyFeedback.textContent = '当前没有可复制的邀请码';
+        }
+      });
+
+      document.getElementById('copy-link').addEventListener('click', () => {
+        copyText(inviteLink, '邀请链接已复制');
+      });
+    </script>
+  </body>
+</html>

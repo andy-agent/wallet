@@ -31,6 +31,8 @@ data class AboutAppUiState(
         FeatureBullet(title = "信息", detail = "关于应用"),
     ),
     val note: String = "版本、更新记录、支持入口与产品信息。",
+    val banner: P2SurfaceBanner = p2ReadyBanner(),
+    val feedbackMessage: String? = null,
 )
 
 sealed interface AboutAppEvent {

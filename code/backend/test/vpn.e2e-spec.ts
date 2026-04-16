@@ -194,7 +194,7 @@ describe('PlansSubscriptionVpn (e2e)', () => {
     expect(status.body.data.selectedNodeName).toBe('NODE_JP_01');
   });
 
-  it('backfills marzban access for an active legacy subscription missing subscription fields', async () => {
+  it('returns active subscriptions even when legacy marzban fields are missing', async () => {
     const runtimePath = join(runtimeDir, 'runtime-state.json')
     const snapshot = JSON.parse(require('fs').readFileSync(runtimePath, 'utf8'))
     snapshot.subscriptions = snapshot.subscriptions.map((item: Record<string, unknown>) => ({
@@ -204,16 +204,19 @@ describe('PlansSubscriptionVpn (e2e)', () => {
     }))
     require('fs').writeFileSync(runtimePath, JSON.stringify(snapshot, null, 2))
 
+    await app.close();
+    delete process.env.MARZBAN_MOCK_MODE;
+    delete process.env.MARZBAN_BASE_URL;
+    app = await bootstrapApp();
+
     const subscription = await request(app.getHttpServer())
       .get('/api/client/v1/subscriptions/current')
       .set('authorization', `Bearer ${accessToken}`)
       .expect(200)
 
     expect(subscription.body.data.status).toBe('ACTIVE')
-    expect(subscription.body.data.subscriptionUrl).toMatch(
-      /^https:\/\/vpn\.residential-agent\.com\/sub\//,
-    )
-    expect(subscription.body.data.marzbanUsername).toMatch(/^cvpn_/)
+    expect(subscription.body.data.subscriptionUrl).toBeNull()
+    expect(subscription.body.data.marzbanUsername).toBeNull()
   })
 
   it('normalizes a persisted relative subscription URL for active subscriptions', async () => {

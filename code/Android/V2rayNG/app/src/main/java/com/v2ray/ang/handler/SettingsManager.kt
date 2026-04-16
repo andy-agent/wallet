@@ -452,6 +452,7 @@ object SettingsManager {
         ensureDefaultValue(AppConfig.PREF_MUX_XUDP_CONCURRENCY, "8")
         ensureDefaultValue(AppConfig.PREF_FRAGMENT_LENGTH, "50-100")
         ensureDefaultValue(AppConfig.PREF_FRAGMENT_INTERVAL, "10-20")
+        migrateDnsDefaults()
     }
 
     private fun ensureDefaultValue(key: String, default: String) {
@@ -553,6 +554,22 @@ object SettingsManager {
                 swapSubscriptions(0, subsList.count() - 1)
             }
         }
+    }
+
+    private fun migrateDnsDefaults() {
+        val migrationKey = "dns_defaults_migrated_v2"
+        if (MmkvManager.decodeSettingsBool(migrationKey, false)) {
+            return
+        }
+
+        if (MmkvManager.decodeSettingsString(AppConfig.PREF_REMOTE_DNS) == "1.1.1.1") {
+            MmkvManager.encodeSettings(AppConfig.PREF_REMOTE_DNS, AppConfig.DNS_PROXY)
+        }
+        if (MmkvManager.decodeSettingsString(AppConfig.PREF_VPN_DNS) == "1.1.1.1") {
+            MmkvManager.encodeSettings(AppConfig.PREF_VPN_DNS, AppConfig.DNS_VPN)
+        }
+
+        MmkvManager.encodeSettings(migrationKey, true)
     }
 
 }

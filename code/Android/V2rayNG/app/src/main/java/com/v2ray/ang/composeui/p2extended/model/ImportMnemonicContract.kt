@@ -13,32 +13,32 @@ data class ImportMnemonicUiState(
         val isLoading: Boolean = false,
         val title: String = "输入助记词",
         val subtitle: String = "IMPORT MNEMONIC",
-        val badge: String = "MNEMONIC IMPORT",
-        val summary: String = "助记词导入页提供文本输入、词数校验与恢复后的链列表预估。",
+        val badge: String = "待校验",
+        val summary: String = "等待助记词校验服务返回结果。",
         val primaryActionLabel: String = "解析并导入钱包",
         val secondaryActionLabel: String? = "回到导入方式",
         val heroAccent: String = "import_mnemonic",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "支持词数", value = "12 / 24"),
-    FeatureMetric(label = "恢复链数", value = "6"),
-    FeatureMetric(label = "预计耗时", value = "4 分钟"),
+    FeatureMetric(label = "支持词数", value = "待返回"),
+    FeatureMetric(label = "恢复链数", value = "待返回"),
+    FeatureMetric(label = "导入状态", value = "未校验"),
 ),
         val fields: List<FeatureField> = listOf(
     FeatureField(key = "mnemonic", label = "助记词", value = "", supportingText = "使用空格分隔的标准助记词"),
     FeatureField(key = "walletName", label = "恢复后钱包名", value = "", supportingText = "导入后展示名称"),
 ),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "助记词导入页提供文本输入、词数校验与恢复后的链列表预估。", trailing = "import_mnemonic", badge = "P2 扩展页"),
+    FeatureListItem(title = "导入状态", subtitle = "等待助记词校验与链信息返回。", trailing = "未校验", badge = "State"),
     FeatureListItem(title = "导航参数", subtitle = "source", trailing = "1 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "助记词、恢复后钱包名", trailing = "2 项", badge = "Form"),
-    FeatureListItem(title = "数据源", subtitle = "运行时由真实仓储覆盖，预览仅保留结构默认值。", trailing = "Runtime", badge = "Source"),
+    FeatureListItem(title = "表单状态", subtitle = "助记词与钱包名称待输入", trailing = "2 项", badge = "Form"),
+    FeatureListItem(title = "数据来源", subtitle = "由助记词校验与导入接口返回。", trailing = "Runtime", badge = "Source"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "运行时导入", detail = "主按钮会提交真实钱包导入状态。"),
-    FeatureBullet(title = "预览默认值", detail = "仅用于 Android Studio 预览，不参与运行时分支。"),
-    FeatureBullet(title = "导航参数", detail = "createRoute builder 与 NavGraph 参数解析已补齐。"),
+    FeatureBullet(title = "助记词校验", detail = "未通过校验前，不展示伪造恢复结果。"),
+    FeatureBullet(title = "钱包导入", detail = "导入成功后再返回真实链与账户信息。"),
+    FeatureBullet(title = "导航参数", detail = "根据 source 区分来源入口。"),
 ),
-        val note: String = "输入助记词运行时走真实仓储，默认值只保留预览结构。",
+        val note: String = "当前未返回助记词校验结果。",
     )
 
     sealed interface ImportMnemonicEvent {
@@ -62,29 +62,9 @@ data class ImportMnemonicUiState(
         fields = emptyList(),
         highlights = emptyList(),
         checklist = emptyList(),
-        note = "当前页面会在拿到真实账户与导入来源后再展示输入表单。",
+        note = "正在获取导入上下文。",
     )
 
     fun importMnemonicPreviewState(): ImportMnemonicUiState = ImportMnemonicUiState(
-        metrics = listOf(
-            FeatureMetric(label = "支持词数", value = "12 / 24"),
-            FeatureMetric(label = "恢复链数", value = "6"),
-            FeatureMetric(label = "预计耗时", value = "4 分钟"),
-        ),
-        fields = listOf(
-            FeatureField(key = "mnemonic", label = "助记词", value = "", supportingText = "使用空格分隔的标准助记词"),
-            FeatureField(key = "walletName", label = "恢复后钱包名", value = "", supportingText = "导入后展示名称"),
-        ),
-        highlights = listOf(
-            FeatureListItem(title = "路由标识", subtitle = "助记词导入页提供文本输入、词数校验与恢复后的链列表预估。", trailing = "import_mnemonic", badge = "P2 扩展页"),
-            FeatureListItem(title = "导航参数", subtitle = "source", trailing = "1 个", badge = "Nav"),
-            FeatureListItem(title = "表单占位", subtitle = "助记词、恢复后钱包名", trailing = "2 项", badge = "Form"),
-            FeatureListItem(title = "数据源", subtitle = "运行时由真实仓储覆盖，预览仅保留结构默认值。", trailing = "Runtime", badge = "Source"),
-        ),
-        checklist = listOf(
-            FeatureBullet(title = "运行时导入", detail = "主按钮会提交真实钱包导入状态。"),
-            FeatureBullet(title = "预览默认值", detail = "仅用于 Android Studio 预览，不参与运行时分支。"),
-            FeatureBullet(title = "导航参数", detail = "createRoute builder 与 NavGraph 参数解析已补齐。"),
-        ),
-        note = "输入助记词运行时走真实仓储，默认值只保留预览结构。",
+        note = "当前未返回助记词校验结果。",
     )

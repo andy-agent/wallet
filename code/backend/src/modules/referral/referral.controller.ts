@@ -16,6 +16,11 @@ export class ReferralController {
     return this.referralService.getShareContext(this.extractBearer(authorization));
   }
 
+  @Get('referral/resolve-public')
+  resolvePublic(@Query('code') referralCode?: string) {
+    return this.referralService.resolvePublic(referralCode);
+  }
+
   @Post('referral/bind')
   bind(
     @Headers('authorization') authorization: string | undefined,

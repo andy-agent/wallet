@@ -4,8 +4,9 @@ export class RegisterEmailRequestDto {
   @IsEmail()
   email!: string;
 
+  @IsOptional()
   @IsString()
-  code!: string;
+  code?: string;
 
   @IsString()
   @MinLength(8)

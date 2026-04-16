@@ -156,14 +156,26 @@ data class GetOrderResponse(
     val data: Order?
 )
 
+data class OrderPageResponse(
+    val code: String,
+    val message: String,
+    val data: OrderPageData?
+)
+
+data class OrderPageData(
+    val items: List<Order>,
+    val page: com.v2ray.ang.payment.data.api.PageMeta
+)
+
 data class LoginRequest(
     val email: String,
-    val password: String
+    val password: String,
+    val installationId: String? = null,
 )
 
 data class RegisterRequest(
     val email: String,
-    val code: String,
+    val code: String? = null,
     val password: String,
     val installationId: String? = null
 )

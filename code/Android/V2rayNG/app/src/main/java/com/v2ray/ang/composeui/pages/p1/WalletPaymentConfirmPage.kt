@@ -69,7 +69,6 @@ fun WalletPaymentConfirmScreen(
     )
 
     P01PhoneScaffold(
-        statusTime = "18:14",
         currentRoute = CryptoVpnRouteSpec.walletPaymentConfirm.name,
         onBottomNav = onBottomNav,
     ) {
@@ -92,7 +91,7 @@ fun WalletPaymentConfirmScreen(
                 uiState.screenState.unavailableMessage
                     ?: uiState.screenState.errorMessage
                     ?: uiState.screenState.emptyMessage
-                    ?: uiState.note.ifBlank { "钱包支付确认已绑定真实订单。" },
+                    ?: uiState.note,
             )
             P01List {
                 rows.forEach { (title, value) ->
@@ -119,9 +118,9 @@ fun WalletPaymentConfirmScreen(
             P01CardHeader(title = "扫码支付")
             P01CardCopy(
                 if (qrText.isBlank()) {
-                    "当前订单没有可用的二维码载荷。"
+                    ""
                 } else {
-                    "支付确认页使用真实订单信息生成二维码，与你在结算页看到的目标保持一致。"
+                    ""
                 },
             )
             if (qrText.isNotBlank()) {
@@ -129,6 +128,8 @@ fun WalletPaymentConfirmScreen(
                 if (uiState.collectionAddress.isNotBlank()) {
                     P01CardCopy(uiState.collectionAddress)
                 }
+            } else if (uiState.collectionAddress.isNotBlank()) {
+                P01CardCopy(uiState.collectionAddress)
             }
         }
 

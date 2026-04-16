@@ -35,7 +35,6 @@ class EmailRegisterViewModel(
                 )
             }
 
-            EmailRegisterEvent.RequestCodeClicked -> requestCode()
             EmailRegisterEvent.PrimaryActionClicked -> submit()
             EmailRegisterEvent.SecondaryActionClicked -> Unit
             EmailRegisterEvent.Refresh -> refresh()
@@ -48,30 +47,8 @@ class EmailRegisterViewModel(
         }
     }
 
-    private fun requestCode() {
-        val email = fieldValue("email")
-        _uiState.value = _uiState.value.copy(
-            isRequestingCode = true,
-            errorMessage = null,
-            successMessage = null,
-            unavailableMessage = null,
-            completed = false,
-        )
-        viewModelScope.launch {
-            val result = repository.requestEmailRegisterCode(email)
-            _uiState.value = _uiState.value.copy(
-                isRequestingCode = false,
-                errorMessage = result.errorMessage,
-                successMessage = result.successMessage,
-                unavailableMessage = if (result.unavailable) result.errorMessage else null,
-                completed = false,
-            )
-        }
-    }
-
     private fun submit() {
         val email = fieldValue("email")
-        val code = fieldValue("code")
         val password = fieldValue("password")
         val invite = fieldValue("invite")
 
@@ -86,7 +63,6 @@ class EmailRegisterViewModel(
             val result = repository.registerEmail(
                 email = email,
                 password = password,
-                code = code,
                 inviteCode = invite,
             )
             nextRoute = result.nextRoute

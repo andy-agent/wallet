@@ -9,6 +9,7 @@ import androidx.room.util.SQLiteStatementUtil;
 import androidx.sqlite.SQLiteStatement;
 import com.v2ray.ang.payment.data.local.entity.UserEntity;
 import java.lang.Class;
+import java.lang.Long;
 import java.lang.NullPointerException;
 import java.lang.Object;
 import java.lang.Override;
@@ -37,7 +38,7 @@ public final class UserDao_Impl implements UserDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `users` (`userId`,`username`,`email`,`accessToken`,`refreshToken`,`loginAt`) VALUES (?,?,?,?,?,?)";
+        return "INSERT OR IGNORE INTO `users` (`userId`,`username`,`email`,`accessToken`,`refreshToken`,`loginAt`) VALUES (?,?,?,?,?,?)";
       }
 
       @Override
@@ -134,11 +135,10 @@ public final class UserDao_Impl implements UserDao {
   }
 
   @Override
-  public Object insert(final UserEntity user, final Continuation<? super Unit> $completion) {
+  public Object insert(final UserEntity user, final Continuation<? super Long> $completion) {
     if (user == null) throw new NullPointerException();
     return DBUtil.performSuspending(__db, false, true, (_connection) -> {
-      __insertAdapterOfUserEntity.insert(_connection, user);
-      return Unit.INSTANCE;
+      return __insertAdapterOfUserEntity.insertAndReturnId(_connection, user);
     }, $completion);
   }
 

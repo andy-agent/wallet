@@ -47,6 +47,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -140,6 +141,8 @@ internal fun P2CorePageScaffold(
     onSecondaryAction: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val hasKicker = kicker.isNotBlank()
+    val hasSubtitle = subtitle.isNotBlank()
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color.Transparent,
@@ -174,11 +177,15 @@ internal fun P2CorePageScaffold(
                         Column(
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text(kicker, style = MaterialTheme.typography.labelLarge, color = Color(0xFF7381AD))
-                            Spacer(modifier = Modifier.height(8.dp))
+                            if (hasKicker) {
+                                Text(kicker, style = MaterialTheme.typography.labelLarge, color = Color(0xFF7381AD))
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                             Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = CoreText)
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = CoreSubtleText)
+                            if (hasSubtitle) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = CoreSubtleText)
+                            }
                             if (!badge.isNullOrBlank()) {
                                 Spacer(modifier = Modifier.height(12.dp))
                                 StatusChip(text = badge)
@@ -487,8 +494,10 @@ internal fun P2CoreMetricGrid(
     items: List<Pair<String, String>>,
     accentIndexes: Set<Int> = emptySet(),
 ) {
+    val visibleItems = items.filter { it.first.isNotBlank() || it.second.isNotBlank() }
+    if (visibleItems.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        items.chunked(2).forEachIndexed { rowIndex, row ->
+        visibleItems.chunked(2).forEachIndexed { rowIndex, row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -520,6 +529,8 @@ internal fun P2CoreHeroValueCard(
     highlightColor: Color = Color(0x26FFFFFF),
     stats: List<Pair<String, String>> = emptyList(),
 ) {
+    val hasSupportingText = supportingText.isNotBlank()
+    val visibleStats = stats.filter { it.first.isNotBlank() || it.second.isNotBlank() }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -539,18 +550,20 @@ internal fun P2CoreHeroValueCard(
             ) {
                 Text(label, style = MaterialTheme.typography.labelLarge, color = Color(0xFFAEC4FF))
                 Text(value, style = MaterialTheme.typography.headlineMedium, color = Color.White, fontWeight = FontWeight.Bold)
-                Text(supportingText, style = MaterialTheme.typography.bodyMedium, color = Color(0xFFE3EAFF))
+                if (hasSupportingText) {
+                    Text(supportingText, style = MaterialTheme.typography.bodyMedium, color = Color(0xFFE3EAFF))
+                }
             }
             if (!highlight.isNullOrBlank()) {
                 StatusChip(text = highlight, color = highlightColor)
             }
         }
-        if (stats.isNotEmpty()) {
+        if (visibleStats.isNotEmpty()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                stats.take(2).forEach { (title, statValue) ->
+                visibleStats.take(2).forEach { (title, statValue) ->
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -882,18 +895,33 @@ private fun P2CoreQrContent(
         normalized?.let { QRCodeDecoder.createQRCode(it, size = 720) }
     }
     if (qrBitmap != null) {
-        Image(
-            bitmap = qrBitmap.asImageBitmap(),
-            contentDescription = "二维码",
-            modifier = Modifier.size(188.dp),
-            contentScale = ContentScale.Fit,
-        )
+        Box(
+            modifier = Modifier
+                .size(212.dp)
+                .background(Color.White, RoundedCornerShape(20.dp))
+                .border(1.dp, Color(0xFFE0E8F8), RoundedCornerShape(20.dp))
+                .padding(12.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                bitmap = qrBitmap.asImageBitmap(),
+                contentDescription = "二维码",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+                filterQuality = FilterQuality.None,
+            )
+        }
         return
     }
 
     Column(
+        modifier = Modifier
+            .size(212.dp)
+            .background(Color.White, RoundedCornerShape(20.dp))
+            .border(1.dp, Color(0xFFE0E8F8), RoundedCornerShape(20.dp))
+            .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
     ) {
         Text(
             text = emptyLabel,

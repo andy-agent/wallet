@@ -10,16 +10,15 @@ import com.v2ray.ang.composeui.common.model.FeatureMetric
 data class ProfileUiState(
         val title: String = "我的",
         val subtitle: String = "PROFILE",
-        val badge: String = "•4台设备在线。",
+        val badge: String = "",
         val summary: String = "个人中心聚合账户信息、设备、安全、法务与钱包管理入口。",
         val primaryActionLabel: String = "进入安全中心",
         val secondaryActionLabel: String? = "进入法务文档",
         val heroAccent: String = "profile",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "当前套餐", value = "年费 Pro"),
-    FeatureMetric(label = "剩余天数", value = "23天"),
-    FeatureMetric(label = "钱包数量", value = "4个"),
-    FeatureMetric(label = "安全级别", value = "A级"),
+    FeatureMetric(label = "当前套餐", value = "--"),
+    FeatureMetric(label = "订单数", value = "0"),
+    FeatureMetric(label = "账户状态", value = "--"),
 ),
         val fields: List<FeatureField> = emptyList(),
         val highlights: List<FeatureListItem> = listOf(
@@ -30,12 +29,11 @@ data class ProfileUiState(
     FeatureListItem(title = "关于应用", subtitle = "版本、更新与帮助", trailing = "进入"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "账户信息", detail = "hello@cryptovpn.app · GLOW OPS"),
-    FeatureBullet(title = "在线设备", detail = "4台设备在线。"),
-    FeatureBullet(title = "套餐", detail = "年费 Pro"),
-    FeatureBullet(title = "安全级别", detail = "A级"),
+    FeatureBullet(title = "账户信息", detail = ""),
 ),
-        val note: String = "账户、设备安全、订阅与法务入口在这里统一管理。",
+        val note: String = "",
+        val banner: P2SurfaceBanner = p2ReadyBanner(),
+        val feedbackMessage: String? = null,
     )
 
     sealed interface ProfileEvent {

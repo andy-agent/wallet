@@ -134,6 +134,21 @@ describe('ReferralWithdrawal (e2e)', () => {
     expect(ledger.body.data.items[0].status).toBe('FROZEN');
   });
 
+  it('bind referral accepts manual input with lowercase and spaces', async () => {
+    await request(app.getHttpServer())
+      .post('/api/client/v1/referral/bind')
+      .set('authorization', `Bearer ${inviteeToken}`)
+      .send({ referralCode: `  ${inviterCode.toLowerCase()}  ` })
+      .expect(201);
+
+    const overview = await request(app.getHttpServer())
+      .get('/api/client/v1/referral/overview')
+      .set('authorization', `Bearer ${inviteeToken}`)
+      .expect(200);
+
+    expect(overview.body.data.hasBinding).toBe(true);
+  });
+
   it('create withdrawal returns insufficient when no available balance', async () => {
     await request(app.getHttpServer())
       .post('/api/client/v1/withdrawals')

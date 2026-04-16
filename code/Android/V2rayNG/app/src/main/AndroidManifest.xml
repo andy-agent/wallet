@@ -149,7 +149,7 @@
         <activity
             android:name=".plans.PlansActivity"
             android:label="@string/title_plans"
-            android:parentActivityName=".ui.compose.ComposeContainerActivity"
+            android:parentActivityName=".ui.MainActivity"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
         <activity
             android:name=".plans.PaymentActivity"
@@ -159,7 +159,7 @@
         <activity
             android:name=".payment.ui.activity.UserProfileActivity"
             android:label="@string/user_profile"
-            android:parentActivityName=".ui.compose.ComposeContainerActivity"
+            android:parentActivityName=".ui.MainActivity"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
         <activity
             android:name=".payment.ui.activity.LoginActivity"
@@ -168,17 +168,17 @@
         <activity
             android:name=".payment.ui.activity.InvitationCenterActivity"
             android:label="@string/title_invitation_center"
-            android:parentActivityName=".ui.compose.ComposeContainerActivity"
+            android:parentActivityName=".ui.MainActivity"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
         <activity
             android:name=".payment.ui.activity.CommissionLedgerActivity"
             android:label="@string/title_commission_ledger"
-            android:parentActivityName=".ui.compose.ComposeContainerActivity"
+            android:parentActivityName=".ui.MainActivity"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
         <activity
             android:name=".payment.ui.activity.WithdrawalActivity"
             android:label="@string/title_withdrawal"
-            android:parentActivityName=".ui.compose.ComposeContainerActivity"
+            android:parentActivityName=".ui.MainActivity"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
         <activity
             android:name=".ui.compose.LaunchSplashActivity"
@@ -189,6 +189,7 @@
             android:name=".ui.compose.ComposeContainerActivity"
             android:exported="false"
             android:label="Compose Container"
+            android:parentActivityName=".ui.MainActivity"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
         <activity-alias
             android:name=".ui.ComposeLauncherAlias"

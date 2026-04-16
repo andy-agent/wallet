@@ -12,29 +12,30 @@ data class AssetDetailRouteArgs(val assetId: String = "USDT", val chainId: Strin
 data class AssetDetailUiState(
         val title: String = "资产详情",
         val subtitle: String = "ASSET DETAIL",
-        val badge: String = "稳定币",
-        val summary: String = "稳定币资产详情与最近交易，支持直接衔接到发送、收款和订单链路。",
+        val summary: String = "",
         val primaryActionLabel: String = "发送资产",
         val secondaryActionLabel: String? = "收款",
         val heroAccent: String = "asset_detail",
         val metrics: List<FeatureMetric> = listOf(
     FeatureMetric(label = "资产", value = "USDT"),
-    FeatureMetric(label = "余额", value = "12,840 USDT"),
-    FeatureMetric(label = "今日", value = "+0.12%"),
+    FeatureMetric(label = "余额", value = "--"),
+    FeatureMetric(label = "今日", value = "--"),
 ),
         val fields: List<FeatureField> = emptyList(),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "支付年度 Pro 套餐", subtitle = "TRON · 58.00 USDT", trailing = "成功"),
-    FeatureListItem(title = "佣金返还", subtitle = "Solana · 18.50 USDT", trailing = "确认中"),
-    FeatureListItem(title = "发送到冷钱包", subtitle = "TRON · 500 USDT", trailing = "已签名"),
+    FeatureListItem(title = "链路状态", subtitle = "当前未接入该资产的服务端明细", trailing = "", badge = "EMPTY"),
+    FeatureListItem(title = "最近订单", subtitle = "暂无记录", trailing = "--", badge = "REAL"),
+    FeatureListItem(title = "地址状态", subtitle = "暂无公开地址", trailing = "", badge = "ADDR"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "分布", detail = "TRON · 8,420 USDT"),
-    FeatureBullet(title = "分布", detail = "Solana · 4,420 USDT"),
-    FeatureBullet(title = "可支付", detail = "VPN 年付 · 支持一键扣款"),
-    FeatureBullet(title = "区间", detail = "24H / 7D / 30D / 入账出账"),
+    FeatureBullet(title = "网络", detail = "--"),
+    FeatureBullet(title = "支付订单数", detail = "0"),
+    FeatureBullet(title = "公开地址数", detail = "0"),
+    FeatureBullet(title = "数据源", detail = "wallet/overview"),
 ),
-        val note: String = "用于续费最多",
+        val note: String = "",
+        val banner: P2SurfaceBanner = p2ReadyBanner(),
+        val feedbackMessage: String? = null,
     )
 
     sealed interface AssetDetailEvent {

@@ -35,6 +35,8 @@ data class WithdrawUiState(
     FeatureBullet(title = "地址校验", detail = "SAFE"),
 ),
         val note: String = "把已结算收益提到你的 TRON / Solana 自托管钱包。",
+        val banner: P2SurfaceBanner = p2ReadyBanner(),
+        val feedbackMessage: String? = null,
     )
 
     sealed interface WithdrawEvent {

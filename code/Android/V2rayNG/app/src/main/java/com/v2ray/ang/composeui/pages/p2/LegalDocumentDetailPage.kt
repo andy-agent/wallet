@@ -45,13 +45,11 @@ fun LegalDocumentDetailScreen(
     onEvent: (LegalDocumentDetailEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    val version = uiState.metrics.firstOrNull()?.value ?: "v2025.04"
-    val effective = uiState.highlights.firstOrNull()?.trailing?.ifBlank { "2025-04-01" } ?: "2025-04-01"
     val sectionFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
-        kicker = uiState.subtitle,
+        kicker = "",
         title = uiState.title,
-        subtitle = uiState.summary,
+        subtitle = "",
         badge = null,
         activeSection = CoreNavSection.Profile,
         onBottomNav = onBottomNav,
@@ -62,7 +60,6 @@ fun LegalDocumentDetailScreen(
         onSecondaryAction = { onEvent(LegalDocumentDetailEvent.SecondaryActionClicked) },
     ) {
         P2CoreCard {
-            P2CoreChipRow(items = listOf("• $version", "生效日期：$effective"), activeIndex = 0)
             uiState.highlights.forEachIndexed { index, item ->
                 Text(item.title, style = MaterialTheme.typography.titleSmall, color = Color(0xFF182345))
                 Text(

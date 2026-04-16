@@ -48,11 +48,24 @@ fun DappBrowserScreen(
     val sessionFocus = rememberLoopingIndex(itemCount = 4, durationMillis = 5600)
     val browserMetrics = uiState.metrics.take(3).map { it.label to it.value }
     val metricFocus = if (browserMetrics.isNotEmpty()) categoryFocus % browserMetrics.size else -1
-    val entryHint = uiState.fields.firstOrNull()?.value ?: "jup.ag"
+    val entryHint = uiState.fields.firstOrNull()?.value ?: "待接入入口"
+    val sessionCards = uiState.highlights
+        .mapNotNull { item ->
+            val title = item.title.takeUnless { it.isBlank() }
+            val subtitle = item.subtitle.takeUnless { it.isBlank() }
+            val network = item.badge.takeUnless { it.isBlank() }
+            if (title == null || subtitle == null || network == null) null else Triple(title, subtitle, network)
+        }
+        .take(4)
+    val displayCards = sessionCards.ifEmpty {
+        listOf(Triple("站点列表待接入", "当前未返回可访问站点。", "待接入"))
+    }
     P2ExtendedPageScaffold(
-        kicker = "DApp Browser",
+        kicker = "",
         title = "DApp 浏览器",
-        subtitle = "补齐链上应用入口，并统一签名与风险提示体验。",
+        subtitle = "",
+        currentRoute = "dapp_browser",
+        onBottomNav = onBottomNav,
         hubLabel = "内置浏览器",
         onHubClick = { onEvent(DappBrowserEvent.Refresh) },
         primaryActionLabel = "访问",
@@ -62,7 +75,7 @@ fun DappBrowserScreen(
     ) {
         P2SearchShell(
             placeholder = "打开 $entryHint / 搜索 DApp / 输入 ENS",
-            quickHint = "支持历史记录、收藏与风险域名标记。",
+            quickHint = "",
             animated = true,
             statusLabel = if (sessionFocus == 3) "谨慎域名" else "可访问",
             statusHealthy = sessionFocus != 3,
@@ -77,35 +90,17 @@ fun DappBrowserScreen(
         )
         Spacer(modifier = Modifier.height(14.dp))
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            P2SessionAppCard(
-                title = "Jupiter",
-                subtitle = "Solana 聚合兑换",
-                network = "Solana",
-                actionLabel = "访问",
-                emphasized = sessionFocus == 0,
-            )
-            P2SessionAppCard(
-                title = "Sunswap",
-                subtitle = "TRON 稳定币兑换",
-                network = "TRON",
-                actionLabel = "访问",
-                emphasized = sessionFocus == 1,
-            )
-            P2SessionAppCard(
-                title = "Aave",
-                subtitle = "借贷与收益",
-                network = "Ethereum",
-                actionLabel = "访问",
-                emphasized = sessionFocus == 2,
-            )
-            P2SessionAppCard(
-                title = "Unknown DEX",
-                subtitle = "未验证来源",
-                network = "Polygon",
-                riskFlag = true,
-                actionLabel = "谨慎访问",
-                emphasized = sessionFocus == 3,
-            )
+            displayCards.forEachIndexed { index, (title, subtitle, network) ->
+                val riskFlag = subtitle.contains("未验证") || subtitle.contains("待接入") || subtitle.contains("阻塞")
+                P2SessionAppCard(
+                    title = title,
+                    subtitle = subtitle,
+                    network = network,
+                    riskFlag = riskFlag,
+                    actionLabel = if (riskFlag) "谨慎查看" else "查看",
+                    emphasized = sessionFocus % displayCards.size == index,
+                )
+            }
         }
     }
 }

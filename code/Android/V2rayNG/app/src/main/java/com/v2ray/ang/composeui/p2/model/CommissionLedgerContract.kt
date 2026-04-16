@@ -33,6 +33,8 @@ data class CommissionLedgerUiState(
     FeatureBullet(title = "提现联动", detail = "佣金可直接进入提现申请。"),
 ),
         val note: String = "收入走势",
+        val banner: P2SurfaceBanner = p2ReadyBanner(),
+        val feedbackMessage: String? = null,
     )
 
     sealed interface CommissionLedgerEvent {

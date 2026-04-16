@@ -33,6 +33,9 @@ class WalletHomeViewModel(
 
     private fun refresh() {
         viewModelScope.launch {
+            repository.getCachedWalletHomeState()?.let { cached ->
+                _uiState.value = cached
+            }
             _uiState.value = repository.getWalletHomeState()
         }
     }

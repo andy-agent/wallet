@@ -33,6 +33,8 @@ data class LegalDocumentsUiState(
     FeatureBullet(title = "风险提示", detail = "链上支付免责声明在文档中统一维护。"),
 ),
         val note: String = "所有协议、隐私、风险说明与链上支付免责声明。",
+        val banner: P2SurfaceBanner = p2ReadyBanner(),
+        val feedbackMessage: String? = null,
     )
 
     sealed interface LegalDocumentsEvent {

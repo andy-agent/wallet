@@ -17,14 +17,6 @@ class OrderDetailViewModel(
 
     fun onEvent(event: OrderDetailEvent) {
         when (event) {
-            is OrderDetailEvent.FieldChanged -> {
-                _uiState.value = _uiState.value.copy(
-                    fields = _uiState.value.fields.map { field ->
-                        if (field.key == event.key) field.copy(value = event.value) else field
-                    },
-                )
-            }
-
             OrderDetailEvent.PrimaryActionClicked -> Unit
             OrderDetailEvent.SecondaryActionClicked -> Unit
             OrderDetailEvent.Refresh -> refresh()

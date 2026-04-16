@@ -1,0 +1,58 @@
+task_id: AUTO-claude-minimax-quality
+worker: claude-minimax
+worker_config: .parallel/workers/claude-minimax.conf
+ownership_file: .parallel/ownership/claude-minimax.conf
+branch: claude-minimax/auto-quality
+worktree: ../wt-claude-minimax-auto-quality
+codex_branch: codex/auto-integration
+codex_worktree: ../wt-codex-auto-integration
+base_branch: main
+
+goal: >
+  Auto-generated Claude(MiniMax) quality lane for tests/lint/types.
+
+allow:
+  - tests/**
+  - e2e/**
+  - package.json
+  - package-lock.json
+  - pnpm-lock.yaml
+  - yarn.lock
+  - tsconfig.json
+  - eslint.config.*
+  - .eslintrc*
+  - vitest.config.*
+  - jest.config.*
+  - playwright.config.*
+  - .parallel/artifacts/**
+
+deny:
+  - app/api/**
+  - scripts/**
+  - .github/**
+  - .beads/**
+  - CONTINUITY.md
+  - specs/**
+  - prisma/migrations/**
+  - db/**
+  - lib/providers/**
+  - **/node_modules/**
+  - **/__pycache__/**
+  - **/*.pyc
+  - **/.vite/**
+  - **/*.tsbuildinfo
+  - **/test-results/**
+  - **/.playwright-artifacts-*/**
+  - **/junit.xml
+
+commands:
+  - git status --short
+
+deliverables:
+  - .parallel/artifacts/AUTO-claude-minimax-quality/changed-files.txt
+  - .parallel/artifacts/AUTO-claude-minimax-quality/commands-run.txt
+  - .parallel/artifacts/AUTO-claude-minimax-quality/test-report.txt
+  - .parallel/artifacts/AUTO-claude-minimax-quality/handoff.md
+  - .parallel/artifacts/AUTO-claude-minimax-quality/session-export.md
+
+commit_message: "test(auto-claude): AUTO-claude-minimax-quality"

@@ -32,6 +32,11 @@ export class WalletController {
     return this.walletService.getOverview(this.extractBearer(authorization));
   }
 
+  @Get('balances')
+  getBalances(@Headers('authorization') authorization?: string) {
+    return this.walletService.getBalances(this.extractBearer(authorization));
+  }
+
   @Get('lifecycle')
   getLifecycle(@Headers('authorization') authorization?: string) {
     return this.walletService.getWalletLifecycle(this.extractBearer(authorization));
@@ -93,6 +98,13 @@ export class WalletController {
     @Headers('authorization') authorization: string | undefined,
   ) {
     return this.walletService.getSecretBackupMetadata(this.extractBearer(authorization));
+  }
+
+  @Get('secret-backups/export')
+  getSecretBackupExport(
+    @Headers('authorization') authorization: string | undefined,
+  ) {
+    return this.walletService.getSecretBackupExport(this.extractBearer(authorization));
   }
 
   @Post('transfer/build')

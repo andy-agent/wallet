@@ -55,3 +55,8 @@
 
 - `liaojiang-rcb.17` 的 backend follow-up 已完成，本轮没有新的 `bd ready` 工程任务
 - 当前剩余主阻塞回到 Android `liaojiang-4j0.2`，仍需要真实回归账号或可取验证码邮箱
+
+## [20260412-083427-6bd3480d-426c] Session Start | 2026-04-12T08:34:29+08:00
+- CWD: /Users/cnyirui/git/projects/liaojiang
+- Branch: codex/android-demock-live-data-v2
+- Status:      195 files modified

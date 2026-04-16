@@ -63,7 +63,7 @@ fun SendResultScreen(
         P2CoreAddressModule(
             title = "交易哈希",
             value = txHash,
-            supportingText = "可复制哈希到链上浏览器追踪确认进度",
+            supportingText = "",
             status = uiState.badge,
         )
         P2CoreActionValueRow(

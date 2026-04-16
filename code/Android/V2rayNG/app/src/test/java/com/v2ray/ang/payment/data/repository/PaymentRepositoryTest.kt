@@ -88,63 +88,59 @@ class PaymentRepositoryTest {
     }
 
     @Test
-    fun `isTokenExpired logic with buffer should be correct`() {
-        // 这个测试验证过期判定的 buffer 语义
-        // 使用当前时间 + 10 分钟作为过期时间
+    fun `isTokenExpired should stay false when access token exists`() {
         val now = System.currentTimeMillis()
-        val buffer = PaymentConfig.TokenConfig.TOKEN_REFRESH_BUFFER_MS // 5 分钟
-
-        // 情况 1: 过期时间在 buffer 之后 -> 未过期
-        val futureExpireTime = now + buffer + 60000 // buffer + 1 分钟
-        val isExpired1 = isTokenExpiredInternal(futureExpireTime, now)
-        assertFalse("Token should not be expired when expire time is after buffer", isExpired1)
-
-        // 情况 2: 过期时间在 buffer 内 -> 视为过期（需要刷新）
-        val nearExpireTime = now + buffer - 60000 // buffer - 1 分钟
-        val isExpired2 = isTokenExpiredInternal(nearExpireTime, now)
-        assertTrue("Token should be expired when expire time is within buffer", isExpired2)
-
-        // 情况 3: 已过期 -> 过期
-        val pastExpireTime = now - 60000 // 1 分钟前
-        val isExpired3 = isTokenExpiredInternal(pastExpireTime, now)
-        assertTrue("Token should be expired when expire time is in the past", isExpired3)
-
-        // 情况 4: 刚好在 buffer 边界 -> 视为过期
-        val exactBufferTime = now + buffer
-        val isExpired4 = isTokenExpiredInternal(exactBufferTime, now)
-        assertTrue("Token should be expired when expire time is exactly at buffer boundary", isExpired4)
+        val expireTime = now - PaymentConfig.TokenConfig.TOKEN_REFRESH_BUFFER_MS - 60000
+        val isExpired = isTokenExpiredInternal(
+            hasAccessToken = true,
+            expiresAt = expireTime,
+            currentTime = now,
+        )
+        assertFalse("Token should remain valid locally when access token exists", isExpired)
     }
 
     @Test
-    fun `isTokenExpired logic with real API response format`() {
-        // 模拟真实场景：API 返回带毫秒的过期时间
-        val now = 1743799931788L // 2026-04-04T22:12:11.788Z
-        val expireTimeStr = "2026-04-04T22:20:00.000Z" // 约 8 分钟后过期
+    fun `isTokenExpired should be true when access token missing`() {
+        val now = System.currentTimeMillis()
+        val isExpired = isTokenExpiredInternal(
+            hasAccessToken = false,
+            expiresAt = now + 3600_000,
+            currentTime = now,
+        )
+        assertTrue("Token should be expired when access token is missing", isExpired)
+    }
+
+    @Test
+    fun `parseIsoDate still supports real API response format`() {
+        val now = 1743799931788L
+        val expireTimeStr = "2026-04-04T22:20:00.000Z"
         val expireTime = PaymentRepository.parseIsoDateInternal(expireTimeStr)!!
-
-        // 当前时间早于过期时间 -> 未过期
-        val isExpired = isTokenExpiredInternal(expireTime, now)
-        assertFalse("Token parsed from API should not be expired", isExpired)
+        val isExpired = isTokenExpiredInternal(
+            hasAccessToken = true,
+            expiresAt = expireTime,
+            currentTime = now,
+        )
+        assertFalse("Parsed date should not force local token expiry while access token exists", isExpired)
     }
 
     @Test
-    fun `isTokenExpired logic when parse fails should treat as expired`() {
-        // 当解析失败时，应该视为过期
+    fun `parseIsoDate returns null when format invalid`() {
         val parsed = PaymentRepository.parseIsoDateInternal("invalid")
         assertNull("Invalid date should parse to null", parsed)
-
-        // 模拟 isTokenExpired 中解析失败返回 true 的逻辑
-        val isExpired = parsed?.let { expireTime ->
-            val now = System.currentTimeMillis()
-            now + PaymentConfig.TokenConfig.TOKEN_REFRESH_BUFFER_MS >= expireTime
-        } ?: true
-        assertTrue("When parse fails, token should be considered expired", isExpired)
     }
 
     /**
      * 模拟 isTokenExpired 的内部逻辑，便于测试
      */
-    private fun isTokenExpiredInternal(expiresAt: Long, currentTime: Long): Boolean {
-        return currentTime + PaymentConfig.TokenConfig.TOKEN_REFRESH_BUFFER_MS >= expiresAt
+    private fun isTokenExpiredInternal(
+        hasAccessToken: Boolean,
+        expiresAt: Long,
+        currentTime: Long,
+    ): Boolean {
+        return if (hasAccessToken) {
+            false
+        } else {
+            true
+        }
     }
 }

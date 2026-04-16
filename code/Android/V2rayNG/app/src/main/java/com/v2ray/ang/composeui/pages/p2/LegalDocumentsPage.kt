@@ -42,10 +42,10 @@ fun LegalDocumentsScreen(
 ) {
     val documentFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
-        kicker = uiState.subtitle,
+        kicker = "",
         title = uiState.title,
-        subtitle = uiState.note,
-        badge = uiState.badge,
+        subtitle = "",
+        badge = "",
         activeSection = CoreNavSection.Profile,
         onBottomNav = onBottomNav,
         primaryActionLabel = uiState.primaryActionLabel,

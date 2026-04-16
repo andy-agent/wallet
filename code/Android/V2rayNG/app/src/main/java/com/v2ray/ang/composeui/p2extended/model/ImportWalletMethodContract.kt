@@ -11,29 +11,29 @@ data class ImportWalletMethodUiState(
         val isLoading: Boolean = false,
         val title: String = "导入钱包方式",
         val subtitle: String = "IMPORT WALLET METHOD",
-        val badge: String = "WALLET IMPORT",
-        val summary: String = "导入钱包方式页提供助记词、私钥等入口，并标记风险提示。",
+        val badge: String = "待选择",
+        val summary: String = "等待账户状态返回可用的导入方式。",
         val primaryActionLabel: String = "使用助记词导入",
         val secondaryActionLabel: String? = "返回钱包引导",
         val heroAccent: String = "import_wallet_method",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "导入方式", value = "3 种"),
-    FeatureMetric(label = "支持链", value = "7 条"),
-    FeatureMetric(label = "恢复速度", value = "1 分钟"),
+    FeatureMetric(label = "导入方式", value = "待返回"),
+    FeatureMetric(label = "支持链", value = "待返回"),
+    FeatureMetric(label = "能力状态", value = "未选择"),
 ),
         val fields: List<FeatureField> = emptyList(),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "导入钱包方式页提供助记词、私钥等入口，并标记风险提示。", trailing = "import_wallet_method", badge = "P2 扩展页"),
+    FeatureListItem(title = "导入状态", subtitle = "等待后端返回当前账户支持的导入方式。", trailing = "未选择", badge = "State"),
     FeatureListItem(title = "导航参数", subtitle = "当前页面无必填导航参数", trailing = "0 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "当前页面以信息展示与确认动作为主", trailing = "0 项", badge = "Info"),
-    FeatureListItem(title = "数据源", subtitle = "运行时由真实仓储覆盖，预览仅保留结构默认值。", trailing = "Runtime", badge = "Source"),
+    FeatureListItem(title = "表单状态", subtitle = "当前页面仅展示导入入口", trailing = "0 项", badge = "Info"),
+    FeatureListItem(title = "数据来源", subtitle = "由钱包导入能力实时返回。", trailing = "Runtime", badge = "Source"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "运行时导入", detail = "主按钮会继续进入真实助记词导入流程。"),
-    FeatureBullet(title = "预览默认值", detail = "仅用于 Android Studio 预览，不参与运行时分支。"),
-    FeatureBullet(title = "导航参数", detail = "当前页面无必填参数，但已纳入统一 RouteSpec 台账。"),
+    FeatureBullet(title = "导入能力", detail = "未返回导入能力前，不展示伪造入口数量。"),
+    FeatureBullet(title = "助记词流程", detail = "选择助记词导入后再进入输入页。"),
+    FeatureBullet(title = "导航参数", detail = "当前页面无需额外参数。"),
 ),
-        val note: String = "导入钱包方式运行时走真实仓储，默认值只保留预览结构。",
+        val note: String = "当前未返回可用导入方式。",
     )
 
     sealed interface ImportWalletMethodEvent {
@@ -56,25 +56,9 @@ data class ImportWalletMethodUiState(
         metrics = emptyList(),
         highlights = emptyList(),
         checklist = emptyList(),
-        note = "当前页面会在拿到真实账户与钱包生命周期后再展示导入信息。",
+        note = "正在获取导入方式。",
     )
 
     fun importWalletMethodPreviewState(): ImportWalletMethodUiState = ImportWalletMethodUiState(
-        metrics = listOf(
-            FeatureMetric(label = "导入方式", value = "3 种"),
-            FeatureMetric(label = "支持链", value = "7 条"),
-            FeatureMetric(label = "恢复速度", value = "1 分钟"),
-        ),
-        highlights = listOf(
-            FeatureListItem(title = "路由标识", subtitle = "导入钱包方式页提供助记词、私钥等入口，并标记风险提示。", trailing = "import_wallet_method", badge = "P2 扩展页"),
-            FeatureListItem(title = "导航参数", subtitle = "当前页面无必填导航参数", trailing = "0 个", badge = "Nav"),
-            FeatureListItem(title = "表单占位", subtitle = "当前页面以信息展示与确认动作为主", trailing = "0 项", badge = "Info"),
-            FeatureListItem(title = "数据源", subtitle = "运行时由真实仓储覆盖，预览仅保留结构默认值。", trailing = "Runtime", badge = "Source"),
-        ),
-        checklist = listOf(
-            FeatureBullet(title = "运行时导入", detail = "主按钮会继续进入真实助记词导入流程。"),
-            FeatureBullet(title = "预览默认值", detail = "仅用于 Android Studio 预览，不参与运行时分支。"),
-            FeatureBullet(title = "导航参数", detail = "当前页面无必填参数，但已纳入统一 RouteSpec 台账。"),
-        ),
-        note = "导入钱包方式运行时走真实仓储，默认值只保留预览结构。",
+        note = "当前未返回可用导入方式。",
     )

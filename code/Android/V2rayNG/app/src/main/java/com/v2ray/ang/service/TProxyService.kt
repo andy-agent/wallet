@@ -19,6 +19,14 @@ class TProxyService(
     private val restartCallback: () -> Unit
 ) : Tun2SocksControl {
     companion object {
+        private val nativeAvailable: Boolean = runCatching {
+            System.loadLibrary("hev-socks5-tunnel")
+            true
+        }.getOrElse { error ->
+            Log.e(AppConfig.TAG, "HEV tunnel native library unavailable", error)
+            false
+        }
+
         @JvmStatic
         @Suppress("FunctionName")
         private external fun TProxyStartService(configPath: String, fd: Int)
@@ -29,8 +37,8 @@ class TProxyService(
         @Suppress("FunctionName")
         private external fun TProxyGetStats(): LongArray?
 
-        init {
-            System.loadLibrary("hev-socks5-tunnel")
+        fun isNativeAvailable(): Boolean {
+            return nativeAvailable
         }
     }
 
@@ -38,6 +46,10 @@ class TProxyService(
      * Starts the tun2socks process with the appropriate parameters.
      */
     override fun startTun2Socks() {
+        if (!nativeAvailable) {
+            Log.w(AppConfig.TAG, "HEV tunnel disabled because native library is missing")
+            return
+        }
 //        Log.i(AppConfig.TAG, "Starting HevSocks5Tunnel via JNI")
 
         val configContent = buildConfig()

@@ -121,20 +121,15 @@ class UserProfileActivity : BaseActivity() {
             val orders = paymentRepository.getCachedOrders(userId)
             orderAdapter.submitList(orders)
 
-            // 显示最新订单的到期时间
-            val activeOrders = orders.filter { it.expiredAt != null && it.expiredAt > System.currentTimeMillis() }
-                .sortedBy { it.expiredAt }
+            val subscription = paymentRepository.getSubscription().getOrNull()
+            val subscriptionExpiry = PaymentRepository.parseIsoDateInternal(subscription?.expireAt)
 
-            if (activeOrders.isNotEmpty()) {
-                val nearestExpiry = activeOrders.first().expiredAt!!
-                binding.textExpiryTime.text = dateFormat.format(Date(nearestExpiry))
-
-                // 计算剩余天数
-                val daysRemaining = (nearestExpiry - System.currentTimeMillis()) / (1000 * 60 * 60 * 24)
+            if (subscriptionExpiry != null && subscription?.status == "ACTIVE") {
+                binding.textExpiryTime.text = dateFormat.format(Date(subscriptionExpiry))
+                val daysRemaining = subscription.daysRemaining?.toLong()
+                    ?: ((subscriptionExpiry - System.currentTimeMillis()) / (1000 * 60 * 60 * 24))
                 binding.textDaysRemaining.text = getString(R.string.days_remaining, daysRemaining)
                 binding.textDaysRemaining.visibility = View.VISIBLE
-
-                // 根据剩余天数设置颜色
                 when {
                     daysRemaining <= 1 -> binding.textDaysRemaining.setTextColor(getColor(R.color.md_theme_error))
                     daysRemaining <= 3 -> binding.textDaysRemaining.setTextColor(getColor(R.color.md_theme_tertiary))
@@ -233,7 +228,7 @@ class UserProfileActivity : BaseActivity() {
         val message = StringBuilder().apply {
             appendLine("${getString(R.string.order_number)}: ${order.orderNo}")
             appendLine("${getString(R.string.plan_name)}: ${order.planName}")
-            appendLine("${getString(R.string.amount)}: ${order.amount} ${order.assetCode}")
+            appendLine("${getString(R.string.amount)}: ${order.amount} ${order.assetCode} · ${order.networkCode}")
             appendLine("${getString(R.string.status)}: ${getStatusText(order.status)}")
             appendLine("${getString(R.string.created_at)}: ${dateFormat.format(Date(order.createdAt))}")
             order.paidAt?.let {

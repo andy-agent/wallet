@@ -45,9 +45,11 @@ fun ChainManagerScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     P2ExtendedPageScaffold(
-        kicker = "Chain Manager",
+        kicker = "",
         title = "链管理",
-        subtitle = "为完整多链钱包补齐网络启用、排序与默认链切换。",
+        subtitle = "",
+        currentRoute = "chain_manager",
+        onBottomNav = onBottomNav,
         hubLabel = "多链扩展",
         onHubClick = { onEvent(ChainManagerEvent.Refresh) },
         primaryActionLabel = "添加自定义代币",

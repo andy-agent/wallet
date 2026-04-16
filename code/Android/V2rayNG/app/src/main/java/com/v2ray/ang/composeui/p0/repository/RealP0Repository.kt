@@ -29,6 +29,7 @@ import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
 import com.v2ray.ang.payment.data.model.LoginRequest
 import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.repository.PaymentRepository
+import com.v2ray.ang.payment.wallet.WalletSecretStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -40,6 +41,7 @@ import java.util.Locale
 class RealP0Repository(context: Context) : P0Repository {
     private val appContext = context.applicationContext
     private val paymentRepository = PaymentRepository(appContext)
+    private val walletSecretStore = WalletSecretStore(appContext)
 
     override suspend fun getCachedVpnHomeState(): VpnHomeUiState? = withContext(Dispatchers.IO) {
         val cachedUser = paymentRepository.getCachedCurrentUser() ?: return@withContext null
@@ -349,6 +351,13 @@ class RealP0Repository(context: Context) : P0Repository {
                 )
                 val auth = response.body()?.data
                 if (response.isSuccessful && response.body()?.code == "OK" && auth != null) {
+                    val localWallet = walletSecretStore.getConflictingMnemonicRecord(auth.userId)
+                    if (localWallet != null) {
+                        return@withContext LoginResult(
+                            success = false,
+                            errorMessage = "当前设备钱包已绑定其他账号；请使用原账号登录或先手动清除本地钱包。",
+                        )
+                    }
                     paymentRepository.saveAuthResponse(auth)
                     paymentRepository.saveCurrentUserId(auth.userId)
                     paymentRepository.getLocalRepository().saveUser(

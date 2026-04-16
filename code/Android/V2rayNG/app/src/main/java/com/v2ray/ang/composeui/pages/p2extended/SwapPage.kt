@@ -42,56 +42,106 @@ fun SwapScreen(
     onEvent: (SwapEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    val routeFocus = rememberLoopingIndex(itemCount = 3, durationMillis = 4200)
-    val headlineMetrics = uiState.metrics.take(3).map { it.label to it.value }
+    val routeStates = uiState.checklist
+        .mapNotNull { it.title.takeMeaningfulSwapText() }
+        .ifEmpty { listOf("未接入") }
+    val routeDetails = uiState.checklist
+        .mapNotNull { it.detail.takeMeaningfulSwapText() }
+        .ifEmpty { listOf(routeStates.firstOrNull() ?: "未接入") }
+    val routeFocus = rememberLoopingIndex(itemCount = maxOf(routeStates.size, 1), durationMillis = 4200)
+    val headlineMetrics = uiState.metrics.take(3).map { it.label to it.value }.ifEmpty {
+        listOf("状态" to "未接入")
+    }
     val metricFocus = if (headlineMetrics.isNotEmpty()) routeFocus % headlineMetrics.size else -1
-    val routeStates = listOf("询价中", "聚合路由确认", "模拟成交校验")
-    val routeDetails = listOf(
-        "Jupiter -> Orca 两跳聚合，正在刷新报价与池深。",
-        "Jupiter -> Orca 两跳聚合，预计成交价偏差 0.42%。",
-        "已完成最小到账模拟，当前滑点保护可覆盖路由波动。",
-    )
+    val sourceMetric = uiState.metrics.getOrNull(0)?.value.orEmpty()
+    val targetMetric = uiState.metrics.getOrNull(1)?.value.orEmpty()
+    val sourceParts = sourceMetric.split(" ").filter { it.isNotBlank() }
+    val targetParts = targetMetric.split(" ").filter { it.isNotBlank() }
+    val payToken = sourceParts.firstOrNull() ?: "--"
+    val payAmount = sourceParts.drop(1).joinToString(" ").ifBlank { "--" }
+    val receiveToken = targetParts.firstOrNull() ?: "--"
+    val receiveAmount = targetParts.drop(1).joinToString(" ").ifBlank { "--" }
+    val slippage = uiState.fields.firstOrNull { it.key == "slippage" }?.value?.let { "$it%" } ?: "--"
+    val routeState = uiState.badge.takeMeaningfulSwapText() ?: "未接入"
+    val chipItems = uiState.fields
+        .mapNotNull { it.label.takeMeaningfulSwapText() }
+        .take(3)
+        .ifEmpty { listOf("未接入") }
+    val controlItems = uiState.checklist
+        .mapNotNull { bullet ->
+            val title = bullet.title.takeMeaningfulSwapText()
+            val detail = bullet.detail.takeMeaningfulSwapText()
+            if (title == null || detail == null) null else title to detail
+        }
+        .take(3)
+        .ifEmpty {
+            listOf(
+                headlineMetrics.getOrElse(2) { "状态" to routeState },
+                uiState.fields.firstOrNull { it.key == "amount" }?.let { it.label to it.value } ?: ("兑换数量" to "--"),
+                uiState.fields.firstOrNull { it.key == "slippage" }?.let { it.label to slippage } ?: ("滑点" to slippage),
+            )
+        }
     P2ExtendedPageScaffold(
-        kicker = "Swap",
-        title = "币币兑换",
-        subtitle = "补齐钱包内兑换能力，支持同链资产快速换币。",
-        hubLabel = "低滑点",
+        kicker = uiState.subtitle,
+        title = uiState.title,
+        subtitle = "",
+        currentRoute = "swap",
+        onBottomNav = onBottomNav,
+        hubLabel = routeState,
         onHubClick = { onEvent(SwapEvent.Refresh) },
-        primaryActionLabel = "预览兑换并签名",
+        primaryActionLabel = uiState.primaryActionLabel,
         onPrimaryAction = { onEvent(SwapEvent.PrimaryActionClicked) },
-        secondaryActionLabel = "预览兑换并继续",
+        secondaryActionLabel = uiState.secondaryActionLabel ?: "返回",
         onSecondaryAction = { onEvent(SwapEvent.SecondaryActionClicked) },
     ) {
         KpiRow(items = headlineMetrics, activeIndex = metricFocus)
         Spacer(modifier = Modifier.height(12.dp))
         P2SwapPairCard(
-            payToken = "USDT",
-            payChain = "TRON",
-            payAmount = "580.00",
-            receiveToken = "SOL",
-            receiveChain = "Solana",
-            receiveAmount = "82.60",
-            routeDetail = routeDetails[routeFocus],
-            routeStateLabel = routeStates[routeFocus],
+            payToken = payToken,
+            payChain = "",
+            payAmount = payAmount,
+            receiveToken = receiveToken,
+            receiveChain = "",
+            receiveAmount = receiveAmount,
+            routeDetail = routeDetails[routeFocus % routeDetails.size],
+            routeStateLabel = routeStates[routeFocus % routeStates.size],
         )
         Spacer(modifier = Modifier.height(12.dp))
-        P2Card(title = "兑换控制", subtitle = "确认滑点与路由后再发起签名。") {
+        P2Card(title = "兑换控制") {
             ChipRow(
-                items = listOf("0.3%", "0.5%", "1.0%"),
-                activeIndex = routeFocus,
+                items = chipItems,
+                activeIndex = routeFocus % chipItems.size,
                 animated = true,
             )
             Spacer(modifier = Modifier.height(10.dp))
             KpiRow(
-                listOf(
-                    "价格影响" to "0.19%",
-                    "最小到账" to "82.10 SOL",
-                    "网络费" to "0.0012 SOL",
-                ),
-                activeIndex = routeFocus,
+                items = controlItems,
+                activeIndex = metricFocus.takeIf { it >= 0 } ?: 0,
             )
         }
     }
+}
+
+private fun String?.takeMeaningfulSwapText(): String? {
+    val normalized = this?.trim().orEmpty()
+    return normalized.takeUnless { it.isBlank() || it.isSwapPlaceholderText() }
+}
+
+private fun String.isSwapPlaceholderText(): Boolean {
+    val lower = lowercase()
+    val markers = listOf(
+        "mock",
+        "preview",
+        "stub",
+        "drop-in",
+        "repository",
+        "navigation",
+        "route",
+        "viewmodel",
+        "占位",
+        "默认演示",
+    )
+    return markers.any(lower::contains)
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

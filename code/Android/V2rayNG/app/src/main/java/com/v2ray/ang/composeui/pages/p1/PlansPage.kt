@@ -138,11 +138,11 @@ fun PlansScreen(
 
             item {
                 CurrentStatusCard(
-                    currentPlanName = selectedPlan?.title ?: "未开通",
-                    accessDescription = selectedPlan?.description ?: (uiState.note.ifBlank { "等待选择套餐" }),
+                    currentPlanName = uiState.currentPlanName,
+                    accessDescription = uiState.currentPlanDescription,
                     payMethodName = selectedPlan?.paymentMethods?.firstOrNull()?.substringBefore('-') ?: "--",
                     payMethodDescription = selectedPlan?.paymentMethods?.joinToString("/") ?: "等待可用支付网络",
-                    remainingDaysText = selectedPlan?.durationText ?: "实时状态",
+                    remainingDaysText = uiState.currentPlanStatusText,
                     typeScale = typeScale,
                 )
             }
@@ -229,11 +229,6 @@ private fun SubscriptionHeader(
             )
         }
 
-        Text(
-            text = "VPN 是核心服务，钱包是支付与资产层。这里把它们真正融合。",
-            color = SubscriptionSubtle,
-            style = typeScale.body,
-        )
     }
 }
 

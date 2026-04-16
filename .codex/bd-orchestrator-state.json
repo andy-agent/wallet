@@ -1,32 +1,24 @@
 {
-  "generated_at": "2026-04-12T06:35:00+0800",
+  "generated_at": "2026-04-12T09:40:00+0800",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
   "active_task_id": "liaojiang-0jp",
-  "accepted_task_id": "liaojiang-0jp.5",
+  "accepted_task_id": "liaojiang-92u",
   "next_task_id": "liaojiang-0jp",
   "active_worker_task_ids": [
-    "liaojiang-0jp.8"
+    "liaojiang-q39",
+    "liaojiang-y21"
   ],
   "blockers": [
     {
       "task_id": "liaojiang-0jp",
-      "type": "verification",
-      "blocked_by": "Remaining work is no longer implementation decomposition; it is finishing residual de-template cleanup on a last set of P2Extended pages and extending route-by-route runtime evidence to all audited pages. Launcher-driven verification is working, but coverage is still incomplete."
+      "type": "delivery",
+      "blocked_by": "Phase 3 and Phase 4 acceptance artifacts are complete, but no page has reached A. The current delivery focus is q39 for real auth/bootstrap Compose functionality and y21 for real P1 plans/regions/order state machines. Wallet-domain foundation remains queued in liaojiang-5ne."
     }
   ],
-  "workers": [
-    {
-      "task_id": "liaojiang-0jp.8",
-      "role": "worker",
-      "agent_id": "019d7eb8-fceb-70a3-9f78-cff714c1154a",
-      "branch": "codex/liaojiang-0jp-p2ext-cleanup",
-      "worktree": "/Users/cnyirui/.config/superpowers/worktrees/liaojiang/codex-liaojiang-0jp-p2ext-cleanup",
-      "status": "running"
-    }
-  ],
+  "workers": [],
   "mainline": {
     "feature_id": "liaojiang-0jp",
     "phase_id": "liaojiang-0jp",
-    "policy": "Use the strict A/B/C/D page reality standard. Audit is complete: 46 pages audited, A=0, B=11, C=17, D=18. Implementation batches liaojiang-0jp.4, .5, .6, and .7 have been accepted and closed by the main orchestrator after compile and runtime evidence. Main remaining work is under liaojiang-0jp.8: scale launcher-driven runtime verification across all routes, surface any remaining runtime/template defects, and finish the last P2Extended cleanup slice."
+    "policy": "Use the strict A/B/C/D page reality standard. Current accepted documentation baseline covers 53 Compose pages: A=0, B=12, C=17, D=24. Runtime evidence is stable and the four final deliverables are written. Remaining work has shifted back to feature delivery: q39 for Splash/EmailRegister/ResetPassword real functionality, y21 for Plans/RegionSelection/Order* real state machines, and 5ne as the next wallet-domain foundation track."
   }
 }

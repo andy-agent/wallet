@@ -14,6 +14,9 @@ data class InviteCenterUiState(
         val summary: String = "邀请中心聚合邀请码、邀请人数、转化率与佣金入口。",
         val primaryActionLabel: String = "复制邀请码",
         val secondaryActionLabel: String? = "分享推广链接",
+        val inviteCode: String = "--",
+        val shareLink: String = "",
+        val shareMessage: String = "",
         val heroAccent: String = "invite_center",
         val metrics: List<FeatureMetric> = listOf(
     FeatureMetric(label = "累计佣金", value = "$0.00"),

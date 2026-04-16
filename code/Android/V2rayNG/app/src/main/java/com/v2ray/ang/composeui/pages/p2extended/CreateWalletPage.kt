@@ -54,7 +54,7 @@ fun CreateWalletScreen(
 ) {
     FeaturePageTemplate(
         title = uiState.title,
-        subtitle = uiState.subtitle,
+        subtitle = "",
         badge = uiState.badge,
         summary = uiState.summary,
         heroAccent = uiState.heroAccent,

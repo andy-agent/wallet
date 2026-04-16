@@ -1,0 +1,46 @@
+task_id: TEMPLATE-kimi
+branch: kimi/template-task
+codex_branch: codex/template-integration
+worktree: ../wt-kimi-template
+codex_worktree: ../wt-codex-template
+base_branch: main
+ownership_file: .parallel/ownership.conf
+
+goal: >
+  Describe target change for Kimi worker.
+
+allow:
+  - app/**
+  - src/**
+  - components/**
+  - lib/hooks/**
+  - lib/ui/**
+  - public/**
+  - handoff/**
+  - .parallel/artifacts/**
+
+deny:
+  - app/api/**
+  - scripts/**
+  - .github/**
+  - .beads/**
+  - CONTINUITY.md
+  - specs/**
+  - db/**
+  - prisma/migrations/**
+  - migrations/**
+  - lib/providers/**
+
+commands:
+  - npm run build
+
+deliverables:
+  - .parallel/artifacts/TEMPLATE-kimi/changed-files.txt
+  - .parallel/artifacts/TEMPLATE-kimi/commands-run.txt
+  - .parallel/artifacts/TEMPLATE-kimi/test-report.txt
+  - .parallel/artifacts/TEMPLATE-kimi/handoff.md
+
+integration_commands:
+  - npm run build
+
+commit_message: "feat(kimi): template task"

@@ -31,7 +31,6 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
     override suspend fun registerEmail(
         email: String,
         password: String,
-        code: String,
         inviteCode: String,
     ): EmailRegisterActionResult {
         return EmailRegisterActionResult(
@@ -304,6 +303,23 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
 
     override suspend fun getSecurityCenterState(): SecurityCenterUiState {
         return securityCenterPreviewState()
+    }
+
+    override suspend fun exportLocalWallet(): LocalWalletActionResult {
+        return LocalWalletActionResult(
+            success = true,
+            walletId = "preview_wallet",
+            exportFileName = "cryptovpn-wallet-backup-preview.json",
+            exportContent = """{"version":"cryptovpn-wallet-backup-v1","ciphertext":"preview"}""",
+        )
+    }
+
+    override suspend fun clearLocalWallet(): LocalWalletActionResult {
+        return LocalWalletActionResult(success = true)
+    }
+
+    override suspend fun logoutSession(): LogoutResult {
+        return LogoutResult(success = true)
     }
 
     override suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState {

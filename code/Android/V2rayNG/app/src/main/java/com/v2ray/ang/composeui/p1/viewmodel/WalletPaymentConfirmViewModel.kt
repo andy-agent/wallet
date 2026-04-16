@@ -17,15 +17,7 @@ class WalletPaymentConfirmViewModel(
 
     fun onEvent(event: WalletPaymentConfirmEvent) {
         when (event) {
-            is WalletPaymentConfirmEvent.FieldChanged -> {
-                _uiState.value = _uiState.value.copy(
-                    fields = _uiState.value.fields.map { field ->
-                        if (field.key == event.key) field.copy(value = event.value) else field
-                    },
-                )
-            }
-
-            WalletPaymentConfirmEvent.PrimaryActionClicked -> Unit
+            WalletPaymentConfirmEvent.PrimaryActionClicked -> refresh()
             WalletPaymentConfirmEvent.SecondaryActionClicked -> Unit
             WalletPaymentConfirmEvent.Refresh -> refresh()
         }

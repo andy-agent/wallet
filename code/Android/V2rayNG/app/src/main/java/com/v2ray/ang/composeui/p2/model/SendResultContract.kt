@@ -7,36 +7,38 @@ import com.v2ray.ang.composeui.common.model.FeatureField
 import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.common.model.FeatureMetric
 
-data class SendResultRouteArgs(val txId: String = "TX-9F32")
+data class SendResultRouteArgs(val txId: String = "")
 
 data class SendResultUiState(
         val title: String = "发送完成",
         val subtitle: String = "TRANSFER RESULT",
-        val badge: String = "• 广播成功",
-        val summary: String = "交易已广播到链上，可在资产详情中继续追踪确认状态。",
+        val badge: String = "• 待同步",
+        val summary: String = "等待真实发送结果同步。",
         val primaryActionLabel: String = "返回钱包首页",
         val secondaryActionLabel: String? = "查看交易哈希",
         val heroAccent: String = "send_result",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "转账", value = "12,500 USDT"),
-    FeatureMetric(label = "网络", value = "TRON 网络 · 预计 1 个确认"),
-    FeatureMetric(label = "收款地址", value = "TOX...kJ8V"),
-    FeatureMetric(label = "矿工费", value = "1.24 USDT"),
-    FeatureMetric(label = "手续费", value = "1.24 USDT"),
+    FeatureMetric(label = "转账", value = "待接口返回"),
+    FeatureMetric(label = "网络", value = "待接口返回"),
+    FeatureMetric(label = "收款地址", value = "待接口返回"),
+    FeatureMetric(label = "矿工费", value = "待链上返回"),
+    FeatureMetric(label = "手续费", value = "待链上返回"),
 ),
         val fields: List<FeatureField> = emptyList(),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "状态", subtitle = "等待区块确认", trailing = "1 block"),
-    FeatureListItem(title = "交易哈希", subtitle = "9A2F...C912", trailing = "链上"),
-    FeatureListItem(title = "说明", subtitle = "手续费与到账地址已经锁定", trailing = "已锁定"),
+    FeatureListItem(title = "状态", subtitle = "等待真实广播结果", trailing = "待同步"),
+    FeatureListItem(title = "交易哈希", subtitle = "待接口返回", trailing = "链上"),
+    FeatureListItem(title = "说明", subtitle = "真实手续费与到账地址以链上结果为准", trailing = "待同步"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "状态", detail = "广播成功"),
-    FeatureBullet(title = "确认", detail = "等待区块确认"),
-    FeatureBullet(title = "追踪", detail = "可在资产详情持续查看"),
-    FeatureBullet(title = "费用", detail = "1.24 USDT"),
+    FeatureBullet(title = "状态", detail = "等待真实发送状态返回。"),
+    FeatureBullet(title = "确认", detail = "确认数由链上返回后再展示。"),
+    FeatureBullet(title = "追踪", detail = "可在资产详情持续查看真实交易状态。"),
+    FeatureBullet(title = "费用", detail = "网络费与手续费未返回时不得展示演示值。"),
 ),
-        val note: String = "链上确认完成后余额会自动同步。",
+        val note: String = "未同步到真实交易结果前，仅显示空态或阻塞态。",
+        val banner: P2SurfaceBanner = p2ReadyBanner(),
+        val feedbackMessage: String? = null,
     )
 
     sealed interface SendResultEvent {

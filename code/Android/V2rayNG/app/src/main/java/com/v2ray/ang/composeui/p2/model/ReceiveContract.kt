@@ -14,6 +14,12 @@ data class ReceiveVariantUi(
     val chainId: String,
     val label: String,
     val selected: Boolean = false,
+    val address: String = "",
+    val qrContent: String = "",
+    val shareText: String = "",
+    val status: String = "同步中",
+    val note: String = "",
+    val canShare: Boolean = false,
 )
 
 data class ReceiveUiState(
@@ -40,7 +46,7 @@ data class ReceiveUiState(
         val walletExists: Boolean = true,
         val receiveState: String? = null,
         val checklist: List<FeatureBullet> = emptyList(),
-        val note: String = "正在从真实收款服务同步数据。",
+        val note: String = "正在同步数据。",
         val banner: P2SurfaceBanner = p2LoadingBanner(),
         val feedbackMessage: String? = null,
         val redirectRoute: String? = null,
@@ -50,6 +56,10 @@ data class ReceiveUiState(
         data object Refresh : ReceiveEvent
         data object PrimaryActionClicked : ReceiveEvent
         data object SecondaryActionClicked : ReceiveEvent
+        data class VariantSelected(
+            val assetId: String,
+            val chainId: String,
+        ) : ReceiveEvent
         data class FieldChanged(
             val key: String,
             val value: String,

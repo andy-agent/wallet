@@ -48,6 +48,13 @@ object PaymentConfig {
         const val LAST_ORDERS_SYNC_AT = "payment_last_orders_sync_at"
         const val LAST_VPN_NODES_SYNC_AT = "payment_last_vpn_nodes_sync_at"
         const val LAST_VPN_REGION_CODE = "payment_last_vpn_region_code"
+        const val LAST_VPN_LINE_NAME = "payment_last_vpn_line_name"
+        const val LAST_VPN_NODE_ID = "payment_last_vpn_node_id"
+        const val LAST_VPN_NODE_NAME = "payment_last_vpn_node_name"
+        const val LAST_VPN_SESSION_STATUS = "payment_last_vpn_session_status"
+        const val LAST_SUBSCRIPTION_PLAN_CODE = "payment_last_subscription_plan_code"
+        const val LAST_SUBSCRIPTION_STATUS = "payment_last_subscription_status"
+        const val LAST_SUBSCRIPTION_DAYS_REMAINING = "payment_last_subscription_days_remaining"
         const val LAST_VPN_CONFIG_EXPIRE_AT = "payment_last_vpn_config_expire_at"
         
         // Token 相关存储键

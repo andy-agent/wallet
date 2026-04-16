@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -14,13 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.ui.P01Header
 import com.v2ray.ang.composeui.p0.ui.P01Card
+import com.v2ray.ang.composeui.p0.ui.P01CardCopy
 import com.v2ray.ang.composeui.p0.ui.P01List
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.ui.P01Tab
+import com.v2ray.ang.composeui.p1.model.OrderListEvent
 import com.v2ray.ang.composeui.p1.model.OrderListUiState
 import com.v2ray.ang.composeui.p1.model.orderListPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.OrderListViewModel
@@ -29,14 +30,22 @@ import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 @Composable
 fun OrderListRoute(
     viewModel: OrderListViewModel,
-    onPrimaryAction: () -> Unit = {},
+    onPrimaryAction: ((String) -> Unit)? = null,
     onSecondaryAction: (() -> Unit)? = null,
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     OrderListScreen(
         uiState = uiState,
-        onOpenOrder = { orderId -> onBottomNav(CryptoVpnRouteSpec.orderDetailRoute(orderId)) },
+        onRefresh = { viewModel.onEvent(OrderListEvent.Refresh) },
+        onOpenOrder = { orderNo ->
+            viewModel.onEvent(OrderListEvent.PrimaryActionClicked)
+            onPrimaryAction?.invoke(orderNo)
+        },
+        onBack = {
+            viewModel.onEvent(OrderListEvent.SecondaryActionClicked)
+            onSecondaryAction?.invoke()
+        },
         onBottomNav = onBottomNav,
     )
 }
@@ -44,30 +53,30 @@ fun OrderListRoute(
 @Composable
 fun OrderListScreen(
     uiState: OrderListUiState,
+    onRefresh: () -> Unit,
     onOpenOrder: (String) -> Unit,
+    onBack: () -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    val orders = orderListItems(uiState)
-    var selectedOrderId by rememberSaveable { mutableStateOf(orders.firstOrNull()?.orderId.orEmpty()) }
-    val filteredOrders = orders.filter { order ->
+    var selectedOrderNo by rememberSaveable { mutableStateOf(uiState.orders.firstOrNull()?.orderNo.orEmpty()) }
+    val filteredOrders = uiState.orders.filter { order ->
         when (selectedTab) {
-            1 -> order.status == "已完成"
-            2 -> order.status == "已退款"
+            1 -> order.statusText == "已完成"
+            2 -> order.statusText.contains("退款")
             else -> true
         }
     }
 
     P01PhoneScaffold(
-        statusTime = "18:24",
-        currentRoute = CryptoVpnRouteSpec.plans.name,
+        currentRoute = CryptoVpnRouteSpec.orderList.name,
         onBottomNav = onBottomNav,
     ) {
         P01Header(
             eyebrow = "ORDERS",
             title = "订单中心",
             backLabel = "<",
-            onBack = { onBottomNav(CryptoVpnRouteSpec.vpnHome.pattern) },
+            onBack = onBack,
             trailing = { P1SecureHub(label = orderListHubLabel(selectedTab)) },
         )
 
@@ -88,25 +97,26 @@ fun OrderListScreen(
                 }
             }
             P01List {
-                filteredOrders.forEach { order ->
-                    P1FeedbackRow(
-                        title = order.title,
-                        copy = order.copy,
-                        value = order.status,
-                        selected = order.orderId == selectedOrderId,
-                        accentColor = order.accentColor,
-                        valueColor = order.accentColor,
-                        onClick = {
-                            selectedOrderId = order.orderId
-                            onOpenOrder(order.orderId)
-                        },
+                if (uiState.screenState.hasError || uiState.screenState.isUnavailable || uiState.screenState.isEmpty) {
+                    P01CardCopy(
+                        uiState.screenState.unavailableMessage
+                            ?: uiState.screenState.errorMessage
+                            ?: uiState.screenState.emptyMessage
+                            ?: uiState.note,
                     )
                 }
-                if (filteredOrders.isEmpty()) {
+                filteredOrders.forEach { order ->
                     P1FeedbackRow(
-                        title = "当前筛选下暂无订单",
-                        copy = "切换标签后可查看其他状态的订阅订单。",
-                        accentColor = Color(0xFF7B8DB0),
+                        title = order.planTitle,
+                        copy = "${order.amountText} · ${order.createdAt}",
+                        value = order.statusText,
+                        selected = order.orderNo == selectedOrderNo,
+                        accentColor = orderStatusColor(order.status),
+                        valueColor = orderStatusColor(order.status),
+                        onClick = {
+                            selectedOrderNo = order.orderNo
+                            onOpenOrder(order.orderNo)
+                        },
                     )
                 }
             }
@@ -114,53 +124,12 @@ fun OrderListScreen(
     }
 }
 
-private data class OrderListItemUi(
-    val title: String,
-    val copy: String,
-    val status: String,
-    val orderId: String,
-    val accentColor: Color,
-)
-
-private fun orderListItems(uiState: OrderListUiState): List<OrderListItemUi> {
-    val contentItems = uiState.highlights.p1ContentItems()
-    if (contentItems.isNotEmpty()) {
-        return contentItems.mapIndexed { index, item ->
-            val status = item.trailing.ifBlank { if (index == 0) "已完成" else "待支付" }
-            OrderListItemUi(
-                title = item.title,
-                copy = item.subtitle,
-                status = status,
-                orderId = item.badge.ifBlank { "ORD-2025-000${index + 1}" },
-                accentColor = orderStatusColor(status),
-            )
-        }
-    }
-    return listOf(
-        OrderListItemUi(
-            title = "年费 Pro",
-            copy = "TRON / 149 USDT",
-            status = "已完成",
-            orderId = "ORD-2025-0001",
-            accentColor = orderStatusColor("已完成"),
-        ),
-        OrderListItemUi(
-            title = "月费 Pro",
-            copy = "SOL / 8.90",
-            status = "待支付",
-            orderId = "ORD-2025-0002",
-            accentColor = orderStatusColor("待支付"),
-        ),
-    )
+private fun orderStatusColor(status: String): Color = when (status.uppercase()) {
+    "COMPLETED", "PAID", "PROVISIONING" -> Color(0xFF49D89B)
+    "AWAITING_PAYMENT", "PAYMENT_DETECTED", "CONFIRMING" -> Color(0xFFF6B155)
+    "FAILED", "EXPIRED", "CANCELED" -> Color(0xFFE55D67)
+    else -> Color(0xFF4276FF)
 }
-
-private fun orderStatusColor(status: String): Color =
-    when (status) {
-        "已完成" -> Color(0xFF49D89B)
-        "待支付" -> Color(0xFFF6B155)
-        "已退款" -> Color(0xFF7B8DB0)
-        else -> Color(0xFF4276FF)
-    }
 
 private fun orderListHubLabel(selectedTab: Int): String = when (selectedTab) {
     1 -> "DONE"
@@ -174,7 +143,9 @@ private fun OrderListPreview() {
     CryptoVpnTheme {
         OrderListScreen(
             uiState = orderListPreviewState(),
+            onRefresh = {},
             onOpenOrder = {},
+            onBack = {},
         )
     }
 }

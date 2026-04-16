@@ -10,6 +10,7 @@ data class FeatureField(
     val label: String,
     val value: String,
     val supportingText: String = "",
+    val placeholder: String = "",
 )
 
 data class FeatureListItem(

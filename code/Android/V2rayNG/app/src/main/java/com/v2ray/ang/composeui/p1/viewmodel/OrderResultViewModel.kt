@@ -17,15 +17,7 @@ class OrderResultViewModel(
 
     fun onEvent(event: OrderResultEvent) {
         when (event) {
-            is OrderResultEvent.FieldChanged -> {
-                _uiState.value = _uiState.value.copy(
-                    fields = _uiState.value.fields.map { field ->
-                        if (field.key == event.key) field.copy(value = event.value) else field
-                    },
-                )
-            }
-
-            OrderResultEvent.PrimaryActionClicked -> Unit
+            OrderResultEvent.PrimaryActionClicked -> refresh()
             OrderResultEvent.SecondaryActionClicked -> Unit
             OrderResultEvent.Refresh -> refresh()
         }

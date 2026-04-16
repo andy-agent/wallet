@@ -56,16 +56,16 @@ sealed interface OrderCheckoutEvent {
 val orderCheckoutNavigation: RouteDefinition = CryptoVpnRouteSpec.orderCheckout
 
 fun orderCheckoutPreviewState(): OrderCheckoutUiState = OrderCheckoutUiState(
-    summary = "预览态：展示订单结算布局。",
+    summary = "",
     screenState = P1ScreenState(),
-    planCode = "PLAN_CODE",
-    planTitle = "套餐名称",
-    selectedRegionCode = "JP_BASIC",
-    selectedRegionLabel = "日本基础线路 / NODE_A",
-    orderNo = "ORDER_NO",
+    planCode = "",
+    planTitle = "",
+    selectedRegionCode = "",
+    selectedRegionLabel = "",
+    orderNo = "",
     orderStatus = "PENDING",
-    assetCode = "ASSET",
-    networkCode = "NETWORK",
+    assetCode = "",
+    networkCode = "",
     payableAmount = "待接口返回",
     baseAmount = null,
     uniqueAmountDelta = null,
@@ -75,10 +75,10 @@ fun orderCheckoutPreviewState(): OrderCheckoutUiState = OrderCheckoutUiState(
     invoiceEmail = null,
     serviceEnabled = false,
     paymentOptions = listOf(
-        CheckoutPaymentOptionUi("ASSET_A", "NETWORK_A", "待接口返回"),
-        CheckoutPaymentOptionUi("ASSET_B", "NETWORK_B", "待接口返回", selected = true),
+        CheckoutPaymentOptionUi("", "", "待接口返回"),
+        CheckoutPaymentOptionUi("", "", "待接口返回", selected = true),
     ),
-    note = "仅用于本地预览，不代表真实订单或支付参数。",
+    note = "",
 )
 
 fun checkoutPaymentLabel(assetCode: String, networkCode: String): String {

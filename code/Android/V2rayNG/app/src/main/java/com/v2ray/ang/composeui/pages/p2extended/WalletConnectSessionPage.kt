@@ -44,11 +44,24 @@ fun WalletConnectSessionScreen(
     onEvent: (WalletConnectSessionEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val sessionCards = uiState.highlights
+        .mapNotNull { item ->
+            val title = item.title.takeUnless { it.isBlank() }
+            val subtitle = item.subtitle.takeUnless { it.isBlank() }
+            val network = item.badge.takeUnless { it.isBlank() }
+            if (title == null || subtitle == null || network == null) null else Triple(title, subtitle, network)
+        }
+        .take(4)
+    val displayCards = sessionCards.ifEmpty {
+        listOf(Triple("会话列表待接入", "当前未返回 WalletConnect 会话。", "待接入"))
+    }
     P2ExtendedPageScaffold(
-        kicker = "WALLETCONNECT",
+        kicker = "",
         title = "连接会话",
-        subtitle = "管理与 DApp的已连接会话、权限范围与自动断开。",
-        hubLabel = "6 会话",
+        subtitle = "",
+        currentRoute = "wallet_connect_session",
+        onBottomNav = onBottomNav,
+        hubLabel = "",
         onHubClick = { onEvent(WalletConnectSessionEvent.Refresh) },
         primaryActionLabel = "批量审计会话",
         onPrimaryAction = { onEvent(WalletConnectSessionEvent.PrimaryActionClicked) },
@@ -57,37 +70,20 @@ fun WalletConnectSessionScreen(
     ) {
         P2SearchShell(
             placeholder = "搜索 DApp / 会话地址",
-            quickHint = "按链与风险等级筛选，避免过期授权长期保留。",
+            quickHint = "",
         )
         Spacer(modifier = Modifier.height(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            P2SessionAppCard(
-                title = "Jupiter",
-                subtitle = "读取余额 / 发起兑换",
-                network = "Solana",
-            )
-            P2SessionAppCard(
-                title = "Sunswap",
-                subtitle = "读取地址 / 发起授权",
-                network = "TRON",
-            )
-            P2SessionAppCard(
-                title = "Aave",
-                subtitle = "读取资产 / 发起存款",
-                network = "Ethereum",
-            )
-            P2SessionAppCard(
-                title = "Unknown DEX",
-                subtitle = "合约写入 / 签名请求",
-                network = "Polygon",
-                riskFlag = true,
-            )
+            displayCards.forEach { (title, subtitle, network) ->
+                val riskFlag = subtitle.contains("高风险") || subtitle.contains("待接入") || subtitle.contains("阻塞")
+                P2SessionAppCard(
+                    title = title,
+                    subtitle = subtitle,
+                    network = network,
+                    riskFlag = riskFlag,
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(14.dp))
-        P2InlineWarningCard(
-            title = "会话安全",
-            text = "高风险域名会自动标红并在签名前再次确认。",
-        )
     }
 }
 

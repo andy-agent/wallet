@@ -53,7 +53,7 @@ export class ReferralService {
     const overview = this.getOverview(accessToken);
     const shareBaseUrl =
       this.configService.get<string>('REFERRAL_SHARE_BASE_URL')?.trim() ||
-      'https://vpn.residential-agent.com/invite?code=';
+      'https://api.residential-agent.com/invite?code=';
     const shareLink = this.buildShareLink(shareBaseUrl, overview.referralCode);
     return {
       referralCode: overview.referralCode,
@@ -68,8 +68,39 @@ export class ReferralService {
     };
   }
 
+  resolvePublic(referralCode?: string) {
+    const normalizedCode = referralCode?.trim().toUpperCase() ?? '';
+    if (!normalizedCode) {
+      throw new BadRequestException({
+        code: 'REFERRAL_CODE_REQUIRED',
+        message: 'Referral code is required',
+      });
+    }
+
+    const inviter = this.authService.findAccountByReferralCode(normalizedCode);
+    if (!inviter) {
+      throw new BadRequestException({
+        code: 'REFERRAL_CODE_INVALID',
+        message: 'Referral code invalid',
+      });
+    }
+
+    return {
+      referralCode: normalizedCode,
+      inviterLabel: this.authService.maskEmail(inviter.accountId),
+      shareTitle: 'CryptoVPN 邀请',
+      headline: '接受邀请，下载并打开 CryptoVPN',
+      description: '安装 App 后使用当前邀请码注册或登录，即可建立推广关系。',
+      downloadUrl:
+        this.configService.get<string>('APP_DOWNLOAD_URL')?.trim() || null,
+      openAppUrl:
+        this.configService.get<string>('APP_OPEN_URL')?.trim() || null,
+    };
+  }
+
   bind(accessToken: string, referralCode: string) {
     const account = this.authService.getMe(accessToken);
+    const normalizedCode = referralCode.trim().toUpperCase();
     if (this.bindings.has(account.accountId)) {
       throw new ConflictException({
         code: 'REFERRAL_BINDING_LOCKED',
@@ -77,7 +108,7 @@ export class ReferralService {
       });
     }
 
-    const inviter = this.authService.findAccountByReferralCode(referralCode);
+    const inviter = this.authService.findAccountByReferralCode(normalizedCode);
     if (!inviter) {
       throw new BadRequestException({
         code: 'REFERRAL_CODE_INVALID',
@@ -97,7 +128,7 @@ export class ReferralService {
       inviteeAccountId: account.accountId,
       inviterLevel1AccountId: inviter.accountId,
       inviterLevel2AccountId: inviterBinding?.inviterLevel1AccountId ?? null,
-      codeUsed: referralCode,
+      codeUsed: normalizedCode,
       status: 'BOUND',
       boundAt: new Date().toISOString(),
       lockedAt: null,

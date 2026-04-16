@@ -15,6 +15,7 @@ import com.v2ray.ang.dto.ProfileItem
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.service.V2RayProxyOnlyService
+import com.v2ray.ang.service.SessionKeepAliveService
 import com.v2ray.ang.service.V2RayVpnService
 import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.Utils
@@ -137,6 +138,7 @@ object V2RayServiceManager {
         }
 
         try {
+            SessionKeepAliveService.stop(context)
             ContextCompat.startForegroundService(context, intent)
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "StartCore-Manager: Failed to start service", e)

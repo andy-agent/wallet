@@ -27,6 +27,7 @@ import com.v2ray.ang.handler.SettingsManager
 import com.v2ray.ang.handler.V2RayServiceManager
 import com.v2ray.ang.util.MyContextWrapper
 import com.v2ray.ang.util.Utils
+import java.io.File
 import java.lang.ref.SoftReference
 
 @SuppressLint("VpnServicePolicy")
@@ -94,6 +95,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
         super.onDestroy()
         Log.i(AppConfig.TAG, "StartCore-VPN: Service destroyed")
         NotificationManager.cancelNotification()
+        SessionKeepAliveService.restartIfLoggedIn(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -315,7 +317,12 @@ class V2RayVpnService : VpnService(), ServiceControl {
      * Starts the tun2socks process with the appropriate parameters.
      */
     private fun runTun2socks() {
-        if (SettingsManager.isUsingHevTun()) {
+        val hevSoExists = File(
+            applicationInfo.nativeLibraryDir ?: "",
+            "libhev-socks5-tunnel.so",
+        ).exists()
+
+        if (SettingsManager.isUsingHevTun() && hevSoExists) {
             tun2SocksService = TProxyService(
                 context = applicationContext,
                 vpnInterface = mInterface,
@@ -323,6 +330,10 @@ class V2RayVpnService : VpnService(), ServiceControl {
                 restartCallback = { runTun2socks() }
             )
         } else {
+            if (SettingsManager.isUsingHevTun() && !hevSoExists) {
+                MmkvManager.encodeSettings(AppConfig.PREF_USE_HEV_TUNNEL, false)
+                Log.w(AppConfig.TAG, "StartCore-VPN: HEV tunnel unavailable, fallback to standard TUN mode")
+            }
             tun2SocksService = null
         }
 
@@ -366,4 +377,3 @@ class V2RayVpnService : VpnService(), ServiceControl {
         }
     }
 }
-

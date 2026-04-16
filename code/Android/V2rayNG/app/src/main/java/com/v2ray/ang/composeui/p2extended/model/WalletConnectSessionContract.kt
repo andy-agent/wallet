@@ -7,35 +7,35 @@ import com.v2ray.ang.composeui.common.model.FeatureField
 import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.common.model.FeatureMetric
 
-data class WalletConnectSessionRouteArgs(val sessionId: String = "session_jupiter")
+data class WalletConnectSessionRouteArgs(val sessionId: String = "")
 
 data class WalletConnectSessionUiState(
         val title: String = "连接会话",
         val subtitle: String = "WALLET CONNECT SESSION",
         val badge: String = "P2 · EXTENDED",
-        val summary: String = "WalletConnect 会话页展示活跃连接、权限范围与失效时间。",
+        val summary: String = "WalletConnect 会话页仅展示真实连接状态与权限范围，不再预置固定会话。",
         val primaryActionLabel: String = "查看签名确认",
         val secondaryActionLabel: String? = "断开后返回钱包",
         val heroAccent: String = "wallet_connect_session",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "活跃会话", value = "4"),
-    FeatureMetric(label = "过期时间", value = "24h"),
-    FeatureMetric(label = "权限项", value = "3"),
+    FeatureMetric(label = "活跃会话", value = "待同步"),
+    FeatureMetric(label = "过期时间", value = "待同步"),
+    FeatureMetric(label = "权限项", value = "待同步"),
 ),
-        val fields: List<FeatureField> = emptyList(),
+        val fields: List<FeatureField> = listOf(
+    FeatureField(key = "session_id", label = "会话 ID", value = "", supportingText = "由真实 WalletConnect 会话返回"),
+),
         val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "WalletConnect 会话页展示活跃连接、权限范围与失效时间。", trailing = "wallet_connect_session", badge = "P2 扩展页"),
-    FeatureListItem(title = "导航参数", subtitle = "sessionId", trailing = "1 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "当前页面以信息展示与确认动作为主", trailing = "0 项", badge = "Info"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
+    FeatureListItem(title = "已连接会话", subtitle = "真实会话名称与权限范围待同步。", trailing = "待同步", badge = "状态"),
+    FeatureListItem(title = "高风险会话", subtitle = "未知域名或高权限连接需显式标记。", trailing = "待审计", badge = "风控"),
+    FeatureListItem(title = "断开能力", subtitle = "批量断开未接入前保持阻塞态。", trailing = "阻塞", badge = "操作"),
 ),
         val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "连接会话 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 WalletConnectSessionPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "createRoute builder 与 NavGraph 参数解析已补齐。"),
+    FeatureBullet(title = "会话同步", detail = "仅展示真实连接，不再预置默认 DApp。"),
+    FeatureBullet(title = "权限审计", detail = "授权范围需以后端会话详情为准。"),
+    FeatureBullet(title = "断开会话", detail = "未接入前不展示成功态或数量。"),
 ),
-        val note: String = "连接会话 已按 P2 扩展页 页面补齐，可继续替换为真实业务逻辑与接口数据。",
+        val note: String = "当前不再预置 WalletConnect 固定会话；仅展示真实连接或阻塞态。",
     )
 
     sealed interface WalletConnectSessionEvent {

@@ -1,7 +1,6 @@
 package com.v2ray.ang.composeui.pages.p0
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
@@ -45,16 +44,14 @@ fun ForceUpdateScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     P01PhoneScaffold(
-        statusTime = "18:15",
         currentRoute = CryptoVpnRouteSpec.vpnHome.name,
         onBottomNav = onBottomNav,
     ) {
         P01Card(centered = true) {
             P01SuccessBadge(symbol = "!", tint = androidx.compose.ui.graphics.Color(0xFFF6B155))
-            P01CardHeader(title = "必须升级到最新版本")
-            P01CardCopy("检测到当前版本已停止服务支持，请升级后继续访问VPN 与钱包资产。")
+            P01CardHeader(title = uiState.title.ifBlank { "需要更新应用" })
             P01PrimaryButton(
-                text = "立即更新到最新版",
+                text = uiState.primaryActionLabel.ifBlank { "立即更新" },
                 onClick = onPrimaryAction,
                 modifier = Modifier.fillMaxWidth(),
             )

@@ -7,6 +7,9 @@ import com.v2ray.ang.payment.data.local.entity.PaymentHistoryEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeCacheEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
+import com.v2ray.ang.payment.data.local.entity.WalletOverviewCacheEntity
+import com.v2ray.ang.payment.data.local.entity.WalletPublicAddressCacheEntity
+import com.v2ray.ang.payment.data.local.entity.WalletReceiveContextCacheEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -22,6 +25,9 @@ class LocalPaymentRepository(context: Context) {
     private val paymentHistoryDao = database.paymentHistoryDao()
     private val vpnNodeCacheDao = database.vpnNodeCacheDao()
     private val vpnNodeRuntimeDao = database.vpnNodeRuntimeDao()
+    private val walletPublicAddressCacheDao = database.walletPublicAddressCacheDao()
+    private val walletReceiveContextCacheDao = database.walletReceiveContextCacheDao()
+    private val walletOverviewCacheDao = database.walletOverviewCacheDao()
 
     // ==================== 用户相关操作 ====================
 
@@ -126,6 +132,9 @@ class LocalPaymentRepository(context: Context) {
         paymentHistoryDao.deleteAll()
         vpnNodeCacheDao.deleteAll()
         vpnNodeRuntimeDao.deleteAll()
+        walletPublicAddressCacheDao.deleteAll()
+        walletReceiveContextCacheDao.deleteAll()
+        walletOverviewCacheDao.deleteAll()
         // 订单可以选择保留或删除，这里选择保留以便用户重新登录后仍能看到历史
     }
 
@@ -179,5 +188,53 @@ class LocalPaymentRepository(context: Context) {
 
     suspend fun markSelectedVpnNode(userId: String, nodeId: String) = withContext(Dispatchers.IO) {
         vpnNodeRuntimeDao.markSelected(userId, nodeId)
+    }
+
+    suspend fun getWalletOverviewCache(userId: String): WalletOverviewCacheEntity? = withContext(Dispatchers.IO) {
+        walletOverviewCacheDao.getByUserId(userId)
+    }
+
+    suspend fun saveWalletOverviewCache(item: WalletOverviewCacheEntity) = withContext(Dispatchers.IO) {
+        walletOverviewCacheDao.upsert(item)
+    }
+
+    suspend fun getWalletReceiveContextCache(
+        userId: String,
+        requestNetworkCode: String,
+        requestAssetCode: String,
+    ): WalletReceiveContextCacheEntity? = withContext(Dispatchers.IO) {
+        walletReceiveContextCacheDao.get(userId, requestNetworkCode, requestAssetCode)
+    }
+
+    suspend fun saveWalletReceiveContextCache(item: WalletReceiveContextCacheEntity) = withContext(Dispatchers.IO) {
+        walletReceiveContextCacheDao.upsert(item)
+    }
+
+    suspend fun getWalletPublicAddresses(
+        userId: String,
+        networkCode: String? = null,
+        assetCode: String? = null,
+    ): List<WalletPublicAddressCacheEntity> = withContext(Dispatchers.IO) {
+        walletPublicAddressCacheDao.getByUserId(userId, networkCode, assetCode)
+    }
+
+    suspend fun syncWalletPublicAddresses(
+        userId: String,
+        networkCode: String,
+        assetCode: String,
+        items: List<WalletPublicAddressCacheEntity>,
+    ) = withContext(Dispatchers.IO) {
+        if (items.isEmpty()) {
+            walletPublicAddressCacheDao.deleteByScope(userId, networkCode, assetCode)
+            return@withContext
+        }
+
+        walletPublicAddressCacheDao.insertAll(items)
+        walletPublicAddressCacheDao.deleteMissingByScope(
+            userId = userId,
+            networkCode = networkCode,
+            assetCode = assetCode,
+            addressIds = items.map { it.addressId },
+        )
     }
 }

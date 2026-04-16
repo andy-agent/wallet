@@ -42,41 +42,95 @@ fun BridgeScreen(
     onEvent: (BridgeEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    P2ExtendedPageScaffold(
-        kicker = "BRIDGE",
-        title = "跨链桥接",
-        subtitle = "补齐多链钱包核心能力：资产跨链迁移与到账追踪。",
-        hubLabel = "BRIDGE",
-        onHubClick = { onEvent(BridgeEvent.Refresh) },
-        primaryActionLabel = "预览桥接并继续",
-        onPrimaryAction = { onEvent(BridgeEvent.PrimaryActionClicked) },
-        secondaryActionLabel = "返回 Swap",
-        onSecondaryAction = { onEvent(BridgeEvent.SecondaryActionClicked) },
-    ) {
-        P2BridgeFlowCard(
-            sourceChain = "TRON",
-            targetChain = "Solana",
-            asset = "USDT",
-            amount = "580.00",
-            eta = "3 min",
-            fee = "$1.90",
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        P2Card(title = "桥接参数", subtitle = "执行前确认到账链与最小到账数量。") {
-            KpiRow(
-                listOf(
-                    "最小到账" to "578.10",
-                    "桥接路由" to "Stargate",
-                    "状态" to "可执行",
-                ),
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            P2InlineWarningCard(
-                title = "跨链提醒",
-                text = "桥接提交后不可撤销，请确认目标地址网络一致。",
+    val sourceChain = uiState.metrics.getOrNull(0)?.value.takeMeaningfulBridgeText() ?: "未接入"
+    val targetChain = uiState.metrics.getOrNull(1)?.value.takeMeaningfulBridgeText() ?: "未接入"
+    val eta = uiState.metrics.getOrNull(2)?.value.takeMeaningfulBridgeText() ?: "--"
+    val amountField = uiState.fields.firstOrNull { it.key == "amount" }
+    val amount = amountField?.value.takeMeaningfulBridgeText() ?: "--"
+    val targetAddress = uiState.fields.firstOrNull { it.key == "to" }?.value.takeMeaningfulBridgeText()
+        ?: "未接入"
+    val parameterItems = uiState.checklist
+        .mapNotNull { bullet ->
+            val title = bullet.title.takeMeaningfulBridgeText()
+            val detail = bullet.detail.takeMeaningfulBridgeText()
+            if (title == null || detail == null) null else title to detail
+        }
+        .take(3)
+        .ifEmpty {
+            listOf(
+                amountField?.let { it.label to amount } ?: ("桥接数量" to amount),
+                "目标地址" to targetAddress,
+                "状态" to (uiState.badge.takeMeaningfulBridgeText() ?: "未接入"),
             )
         }
+    P2ExtendedPageScaffold(
+        kicker = uiState.subtitle,
+        title = uiState.title,
+        subtitle = "",
+        currentRoute = "bridge",
+        onBottomNav = onBottomNav,
+        hubLabel = uiState.badge.takeMeaningfulBridgeText() ?: "未接入",
+        onHubClick = { onEvent(BridgeEvent.Refresh) },
+        primaryActionLabel = uiState.primaryActionLabel,
+        onPrimaryAction = { onEvent(BridgeEvent.PrimaryActionClicked) },
+        secondaryActionLabel = uiState.secondaryActionLabel ?: "返回",
+        onSecondaryAction = { onEvent(BridgeEvent.SecondaryActionClicked) },
+    ) {
+        P2Card(title = "桥接流程") {
+            P2FlowStepCard(
+                step = "01",
+                title = "来源链",
+                detail = sourceChain,
+                emphasized = true,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            P2FlowStepCard(
+                step = "02",
+                title = "目标链",
+                detail = targetChain,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            P2FlowStepCard(
+                step = "03",
+                title = "桥接数量",
+                detail = amount,
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            KpiRow(
+                items = listOf(
+                    "预计耗时" to eta,
+                    "目标地址" to targetAddress,
+                    "状态" to (uiState.badge.takeMeaningfulBridgeText() ?: "未接入"),
+                ),
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        P2Card(title = "桥接参数") {
+            KpiRow(items = parameterItems)
+        }
     }
+}
+
+private fun String?.takeMeaningfulBridgeText(): String? {
+    val normalized = this?.trim().orEmpty()
+    return normalized.takeUnless { it.isBlank() || it.isBridgePlaceholderText() }
+}
+
+private fun String.isBridgePlaceholderText(): Boolean {
+    val lower = lowercase()
+    val markers = listOf(
+        "mock",
+        "preview",
+        "stub",
+        "drop-in",
+        "repository",
+        "navigation",
+        "route",
+        "viewmodel",
+        "占位",
+        "默认演示",
+    )
+    return markers.any(lower::contains)
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

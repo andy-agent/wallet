@@ -35,6 +35,8 @@ data class LegalDocumentDetailUiState(
     FeatureBullet(title = "生效", detail = "2025-04-01"),
 ),
         val note: String = "生效日期：2025-04-01",
+        val banner: P2SurfaceBanner = p2ReadyBanner(),
+        val feedbackMessage: String? = null,
     )
 
     sealed interface LegalDocumentDetailEvent {

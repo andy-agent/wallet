@@ -41,10 +41,10 @@ fun WithdrawScreen(
 ) {
     val riskFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
-        kicker = uiState.subtitle,
+        kicker = "",
         title = uiState.title,
-        subtitle = uiState.note,
-        badge = uiState.badge,
+        subtitle = "",
+        badge = "",
         activeSection = CoreNavSection.Growth,
         onBottomNav = onBottomNav,
         primaryActionLabel = uiState.primaryActionLabel,
@@ -68,20 +68,21 @@ fun WithdrawScreen(
                 P2CoreField(label = metric.label, value = metric.value)
             }
         }
-        P2CoreCard {
-            P2CoreCardHeader(title = "Risk Review")
-            uiState.highlights.forEachIndexed { index, item ->
-                P2CoreListRow(
-                    title = item.title,
-                    subtitle = item.subtitle,
-                    trailing = item.trailing,
-                    emphasis = if (index == riskFocus % maxOf(uiState.highlights.size, 1)) {
-                        P2CoreRowEmphasis.Warning
-                    } else {
-                        P2CoreRowEmphasis.Neutral
-                    },
-                    trailingColor = Color(0xFF18B68B),
-                )
+        if (uiState.highlights.isNotEmpty()) {
+            P2CoreCard {
+                uiState.highlights.forEachIndexed { index, item ->
+                    P2CoreListRow(
+                        title = item.title,
+                        subtitle = item.subtitle,
+                        trailing = item.trailing,
+                        emphasis = if (index == riskFocus % maxOf(uiState.highlights.size, 1)) {
+                            P2CoreRowEmphasis.Warning
+                        } else {
+                            P2CoreRowEmphasis.Neutral
+                        },
+                        trailingColor = Color(0xFF18B68B),
+                    )
+                }
             }
         }
     }

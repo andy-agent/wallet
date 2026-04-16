@@ -19,6 +19,20 @@ data class SendSubmissionResult(
     val errorMessage: String? = null,
 )
 
+data class LogoutResult(
+    val success: Boolean,
+    val errorMessage: String? = null,
+)
+
+data class LocalWalletActionResult(
+    val success: Boolean,
+    val walletId: String? = null,
+    val exportContent: String? = null,
+    val exportFileName: String? = null,
+    val exportMimeType: String = "application/json",
+    val errorMessage: String? = null,
+)
+
 interface CryptoVpnRepository {
     suspend fun getForceUpdateState(): ForceUpdateUiState
     suspend fun getOptionalUpdateState(): OptionalUpdateUiState
@@ -27,7 +41,6 @@ interface CryptoVpnRepository {
     suspend fun registerEmail(
         email: String,
         password: String,
-        code: String,
         inviteCode: String,
     ): EmailRegisterActionResult
     suspend fun getResetPasswordState(): ResetPasswordUiState
@@ -90,6 +103,11 @@ interface CryptoVpnRepository {
     suspend fun getBackupMnemonicState(args: BackupMnemonicRouteArgs): BackupMnemonicUiState
     suspend fun getConfirmMnemonicState(args: ConfirmMnemonicRouteArgs): ConfirmMnemonicUiState
     suspend fun getSecurityCenterState(): SecurityCenterUiState
+    suspend fun exportLocalWallet(): LocalWalletActionResult =
+        LocalWalletActionResult(success = false, errorMessage = "Wallet export unavailable")
+    suspend fun clearLocalWallet(): LocalWalletActionResult =
+        LocalWalletActionResult(success = false, errorMessage = "Wallet clear unavailable")
+    suspend fun logoutSession(): LogoutResult = LogoutResult(success = false, errorMessage = "Logout unavailable")
     suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState
     suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState
     suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState

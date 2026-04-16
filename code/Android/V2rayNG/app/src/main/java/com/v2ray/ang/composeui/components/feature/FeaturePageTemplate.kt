@@ -32,9 +32,10 @@ import com.v2ray.ang.composeui.components.cards.GradientHeroCard
 import com.v2ray.ang.composeui.components.cards.MiniMetricPill
 import com.v2ray.ang.composeui.components.cards.TechCard
 import com.v2ray.ang.composeui.components.inputs.GlassTextField
-import com.v2ray.ang.composeui.components.navigation.CryptoVpnBottomBar
 import com.v2ray.ang.composeui.components.navigation.CryptoVpnTopBar
 import com.v2ray.ang.composeui.effects.MotionProfile
+import com.v2ray.ang.composeui.p0.ui.P01BottomNav
+import com.v2ray.ang.composeui.p0.ui.defaultP01Destinations
 import com.v2ray.ang.composeui.theme.DividerLight
 import com.v2ray.ang.composeui.theme.LayerWhite
 import com.v2ray.ang.composeui.theme.TextMuted
@@ -53,7 +54,7 @@ fun FeaturePageTemplate(
     note: String,
     primaryActionLabel: String,
     secondaryActionLabel: String? = null,
-    showBottomBar: Boolean = false,
+    showBottomBar: Boolean = true,
     currentRoute: String = "",
     motionProfile: MotionProfile = MotionProfile.L1,
     onBottomNav: (String) -> Unit = {},
@@ -61,6 +62,17 @@ fun FeaturePageTemplate(
     onPrimaryAction: () -> Unit = {},
     onSecondaryAction: (() -> Unit)? = null,
 ) {
+    val renderBottomBar = showBottomBar
+    val hasHeroCopy = badge.isNotBlank() || summary.isNotBlank()
+    val visibleMetrics = metrics.filter { it.label.isNotBlank() || it.value.isNotBlank() }
+    val visibleFields = fields.filter {
+        it.label.isNotBlank() || it.value.isNotBlank() || it.supportingText.isNotBlank()
+    }
+    val visibleHighlights = highlights.filter {
+        it.title.isNotBlank() || it.subtitle.isNotBlank() || it.trailing.isNotBlank() || it.badge.isNotBlank()
+    }
+    val visibleChecklist = checklist.filter { it.title.isNotBlank() || it.detail.isNotBlank() }
+    val hasNote = note.isNotBlank()
     TechScaffold(
         motionProfile = motionProfile,
         showNetwork = true,
@@ -71,10 +83,11 @@ fun FeaturePageTemplate(
             )
         },
         bottomBar = {
-            if (showBottomBar) {
-                CryptoVpnBottomBar(
+            if (renderBottomBar) {
+                P01BottomNav(
                     currentRoute = currentRoute,
-                    onRouteSelected = onBottomNav,
+                    destinations = defaultP01Destinations(),
+                    onNavigate = onBottomNav,
                 )
             }
         },
@@ -86,23 +99,25 @@ fun FeaturePageTemplate(
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                GradientHeroCard(
-                    title = badge,
-                    value = title,
-                    subtitle = summary,
-                    accent = heroAccent,
-                )
+            if (hasHeroCopy) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    GradientHeroCard(
+                        title = badge,
+                        value = title,
+                        subtitle = summary,
+                        accent = heroAccent,
+                    )
+                }
             }
 
-            if (metrics.isNotEmpty()) {
+            if (visibleMetrics.isNotEmpty()) {
                 item {
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = 0.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        items(metrics) { metric ->
+                        items(visibleMetrics) { metric ->
                             MiniMetricPill(
                                 label = metric.label,
                                 value = metric.value,
@@ -112,17 +127,18 @@ fun FeaturePageTemplate(
                 }
             }
 
-            if (fields.isNotEmpty()) {
+            if (visibleFields.isNotEmpty()) {
                 item {
                     TechCard {
-                        Text("表单占位", style = MaterialTheme.typography.titleMedium)
+                        Text("输入信息", style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(12.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            fields.forEach { field ->
+                            visibleFields.forEach { field ->
                                 GlassTextField(
                                     value = field.value,
                                     label = field.label,
                                     onValueChange = { onFieldChanged(field.key, it) },
+                                    placeholder = field.placeholder,
                                 )
                                 if (field.supportingText.isNotBlank()) {
                                     Text(
@@ -137,22 +153,22 @@ fun FeaturePageTemplate(
                 }
             }
 
-            if (highlights.isNotEmpty()) {
+            if (visibleHighlights.isNotEmpty()) {
                 item {
-                    Text("关键模块", style = MaterialTheme.typography.titleLarge)
+                    Text("关键信息", style = MaterialTheme.typography.titleLarge)
                 }
-                items(highlights) { item ->
+                items(visibleHighlights) { item ->
                     FeatureListItemRow(item = item)
                 }
             }
 
-            if (checklist.isNotEmpty()) {
+            if (visibleChecklist.isNotEmpty()) {
                 item {
                     TechCard {
-                        Text("交付检查", style = MaterialTheme.typography.titleMedium)
+                        Text("状态说明", style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(12.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            checklist.forEach { bullet ->
+                            visibleChecklist.forEach { bullet ->
                                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Text(
                                         text = bullet.title,
@@ -172,15 +188,17 @@ fun FeaturePageTemplate(
                 }
             }
 
-            item {
-                TechCard {
-                    Text("交付备注", style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = note,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextMuted,
-                    )
+            if (hasNote) {
+                item {
+                    TechCard {
+                        Text("补充说明", style = MaterialTheme.typography.titleMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = note,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted,
+                        )
+                    }
                 }
             }
 
@@ -205,7 +223,7 @@ fun FeaturePageTemplate(
             }
 
             item {
-                Spacer(modifier = Modifier.height(if (showBottomBar) 110.dp else 24.dp))
+                Spacer(modifier = Modifier.height(if (renderBottomBar) 110.dp else 24.dp))
             }
         }
     }

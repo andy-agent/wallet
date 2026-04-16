@@ -109,6 +109,29 @@ describe('Wallet Postgres persistence (e2e)', () => {
     expect(lifecycle.body.data.configuredAddressCount).toBe(1);
   });
 
+  it('wallet balances return no-address state when account has no configured addresses', async () => {
+    const balances = await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/balances')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(balances.body.data.accountEmail).toBe(email);
+    expect(balances.body.data.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          networkCode: 'SOLANA',
+          assetCode: 'SOL',
+          availableBalanceStatus: 'NO_ADDRESS',
+        }),
+        expect.objectContaining({
+          networkCode: 'TRON',
+          assetCode: 'USDT',
+          availableBalanceStatus: 'NO_ADDRESS',
+        }),
+      ]),
+    );
+  });
+
   it('stores encrypted wallet secret backup metadata without returning plaintext mnemonic', async () => {
     const lifecycle = await request(app.getHttpServer())
       .post('/api/client/v1/wallet/lifecycle')
@@ -148,6 +171,17 @@ describe('Wallet Postgres persistence (e2e)', () => {
     expect(metadata.body.data.backupId).toBe(backupResponse.body.data.backupId);
     expect(metadata.body.data.encryptionScheme).toBe('AGE');
     expect(metadata.body.data).not.toHaveProperty('ciphertext');
+
+    const exportResponse = await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/secret-backups/export')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(exportResponse.body.data.exists).toBe(true);
+    expect(exportResponse.body.data.fileName).toContain(lifecycle.body.data.walletId);
+    expect(exportResponse.body.data.payload.encryptionScheme).toBe('AGE');
+    expect(exportResponse.body.data.payload.ciphertext).toBeTruthy();
+    expect(JSON.stringify(exportResponse.body.data)).not.toContain('abandon abandon');
   });
 });
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.v2ray.ang.fdroid"
-    android:versionCode="5071700"
-    android:versionName="2.0.17" >
+    android:versionCode="5072300"
+    android:versionName="2.0.17.06" >
 
     <uses-sdk
         android:minSdkVersion="24"
@@ -161,6 +161,7 @@
                 <data android:scheme="v2rayng" />
                 <data android:host="install-config" />
                 <data android:host="install-sub" />
+                <data android:host="invite" />
             </intent-filter>
         </activity>
         <activity
@@ -236,6 +237,14 @@
             android:parentActivityName="com.v2ray.ang.ui.MainActivity"
             android:theme="@style/AppThemeDayNight.NoActionBar" />
 
+        <service
+            android:name="com.v2ray.ang.service.SessionKeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" >
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="session_keepalive" />
+        </service>
         <service
             android:name="com.v2ray.ang.service.V2RayVpnService"
             android:enabled="true"

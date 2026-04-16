@@ -38,17 +38,11 @@ describe('Auth Postgres persistence (e2e)', () => {
   });
 
   it('persists registered accounts, refresh sessions, and logout state across restart', async () => {
-    await request(app.getHttpServer())
-      .post('/api/client/v1/auth/register/email/request-code')
-      .send({ email: 'auth-pg@example.com' })
-      .expect(200);
-
     const registerResponse = await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email')
       .set('x-idempotency-key', 'auth-pg-register')
       .send({
         email: 'auth-pg@example.com',
-        code: '123456',
         password: 'Passw0rd!',
       })
       .expect(200);
@@ -142,6 +136,78 @@ describe('Auth Postgres persistence (e2e)', () => {
     expect(secondLogin.body.data.accountId).toBe(firstLogin.body.data.accountId);
     expect(meResponse.body.data.email).toBe('system@cnyirui.cn');
     expect(meResponse.body.data.status).toBe('ACTIVE');
+  });
+
+  it('keeps sessions valid across different installations for the same account', async () => {
+    await request(app.getHttpServer())
+      .post('/api/client/v1/auth/register/email/request-code')
+      .send({ email: 'multi-install@example.com' })
+      .expect(200);
+
+    const deviceARegister = await request(app.getHttpServer())
+      .post('/api/client/v1/auth/register/email')
+      .set('x-idempotency-key', 'multi-install-register')
+      .send({
+        email: 'multi-install@example.com',
+        code: '123456',
+        password: 'Passw0rd!',
+        installationId: 'device-a',
+      })
+      .expect(200);
+
+    const deviceBLogin = await request(app.getHttpServer())
+      .post('/api/client/v1/auth/login/password')
+      .send({
+        email: 'multi-install@example.com',
+        password: 'Passw0rd!',
+        installationId: 'device-b',
+      })
+      .expect(200);
+
+    const deviceARefresh = await request(app.getHttpServer())
+      .post('/api/client/v1/auth/refresh')
+      .send({
+        refreshToken: deviceARegister.body.data.refreshToken,
+        installationId: 'device-a',
+      })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/api/client/v1/me')
+      .set('authorization', `Bearer ${deviceARefresh.body.data.accessToken}`)
+      .expect(200);
+  });
+
+  it('reuses the same session for the same installation during refresh', async () => {
+    const login = await request(app.getHttpServer())
+      .post('/api/client/v1/auth/login/password')
+      .send({
+        email: 'system@cnyirui.cn',
+        password: 'SystemPassw0rd!',
+        installationId: 'android-device-1',
+      })
+      .expect(200);
+
+    const firstSession = await request(app.getHttpServer())
+      .get('/api/client/v1/me/session')
+      .set('authorization', `Bearer ${login.body.data.accessToken}`)
+      .expect(200);
+
+    const refreshed = await request(app.getHttpServer())
+      .post('/api/client/v1/auth/refresh')
+      .send({
+        refreshToken: login.body.data.refreshToken,
+        installationId: 'android-device-1',
+      })
+      .expect(200);
+
+    const secondSession = await request(app.getHttpServer())
+      .get('/api/client/v1/me/session')
+      .set('authorization', `Bearer ${refreshed.body.data.accessToken}`)
+      .expect(200);
+
+    expect(secondSession.body.data.sessionId).toBe(firstSession.body.data.sessionId);
+    expect(secondSession.body.data.installationId).toBe('android-device-1');
   });
 });
 

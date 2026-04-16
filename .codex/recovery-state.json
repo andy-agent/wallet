@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-04-11T22:35:00Z",
+  "generated_at": "2026-04-12T00:34:30Z",
   "repo_root": "/Users/cnyirui/git/projects/liaojiang",
-  "next_task_id": "liaojiang-0jp",
-  "next_task_title": "Android app：移除运行时剩余 mock 数据并接入真实落地数据",
-  "in_progress_count": 4,
+  "next_task_id": "liaojiang-30x",
+  "next_task_title": "Implement confirmed P0 orb visual language in Compose",
+  "in_progress_count": 8,
   "ready_count": 1,
-  "open_count": 1,
-  "closed_count": 401,
-  "dirty_count": 0,
+  "open_count": 12,
+  "closed_count": 410,
+  "dirty_count": 195,
   "milestone_reached": true,
   "write_human_docs": false,
   "docs": {
@@ -20,13 +20,9 @@
   },
   "auto_created_task_id": null,
   "dispatch": {
-    "requested": true,
-    "mode": "simulate",
+    "requested": false,
+    "mode": "disabled",
     "dispatched_count": 0,
     "max_workers": 3
-  },
-  "last_orchestrator_update": "2026-04-12T06:35:00+0800",
-  "active_bd_task": "liaojiang-0jp",
-  "active_worker_tasks": [],
-  "note": "Compose realification is now past the implementation-batch phase. The main orchestrator has accepted and closed liaojiang-0jp.4, .5, .6, and .7 after independent compile checks, integration, and device evidence. The current branch still in play is codex/liaojiang-0jp-integrate, with launcher-driven route verification producing screenshots across P0/P1/P2/P2Extended plus action-level evidence for about_app external links. Current remaining work is: finish the last residual P2Extended de-template slice in worker branch codex/liaojiang-0jp-p2ext-cleanup, continue route-by-route runtime verification under liaojiang-0jp.8, and then produce the final page realification totals and blocker table."
+  }
 }

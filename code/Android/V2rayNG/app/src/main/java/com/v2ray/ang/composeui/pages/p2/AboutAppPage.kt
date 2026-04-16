@@ -42,9 +42,9 @@ fun AboutAppScreen(
 ) {
     val aboutFocus = rememberCoreLoopingIndex(itemCount = maxOf(uiState.highlights.size, 1), durationMillis = 4200)
     P2CorePageScaffold(
-        kicker = uiState.subtitle,
+        kicker = "",
         title = uiState.title,
-        subtitle = uiState.summary,
+        subtitle = "",
         badge = null,
         activeSection = CoreNavSection.Profile,
         onBottomNav = onBottomNav,

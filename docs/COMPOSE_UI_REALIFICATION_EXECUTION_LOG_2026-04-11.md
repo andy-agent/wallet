@@ -355,3 +355,38 @@
   - 证据：
     - `/tmp/compose-realify-20260412-action/about.after_tap.top.txt`
     - `/tmp/compose-realify-20260412-action/about.after_tap.png`
+- `legal_document_detail/privacy_policy`
+  - 动作：点击 `打开原文`
+  - 结果：
+    - 前台切到 `com.heytap.browser/com.android.browser.BrowserActivity`
+    - `Intent` 为 `android.intent.action.VIEW`
+    - 目标 URL 为 `https://github.com/2dust/v2rayNG`
+  - 证据：
+    - `/tmp/compose-realify-20260412-actions3/legal.after_tap.top.txt`
+    - `/tmp/compose-realify-20260412-actions3/legal.after_tap.png`
+
+### 批量运行级证据补充
+- 新增截图：
+  - `email_login` `/tmp/compose-realify-20260412-batch/email_login.png`
+  - `reset_password` `/tmp/compose-realify-20260412-batch/reset_password.png`
+  - `import_wallet_method` `/tmp/compose-realify-20260412-batch/import_wallet_method.png`
+  - `import_mnemonic/onboarding` `/tmp/compose-realify-20260412-batch/import_mnemonic_onboarding.png`
+  - `backup_mnemonic/primary_wallet` `/tmp/compose-realify-20260412-batch/backup_mnemonic_primary_wallet.png`
+  - `security_center` `/tmp/compose-realify-20260412-batch/security_center.png`
+  - `create_wallet/create` `/tmp/compose-realify-20260412-batch/create_wallet_create.png`
+  - `import_private_key/ethereum` `/tmp/compose-realify-20260412-batch/import_private_key_ethereum.png`
+  - `gas_settings/ethereum` `/tmp/compose-realify-20260412-batch/gas_settings_ethereum.png`
+  - `swap/USDT/SOL` `/tmp/compose-realify-20260412-batch/swap_USDT_SOL.png`
+  - `bridge/tron/solana` `/tmp/compose-realify-20260412-batch/bridge_tron_solana.png`
+  - `dapp_browser/jup.ag` `/tmp/compose-realify-20260412-batch/dapp_browser_jup.ag.png`
+  - `wallet_connect_session/session_default` `/tmp/compose-realify-20260412-batch/wallet_connect_session_session_default.png`
+  - `sign_message_confirm/request_default` `/tmp/compose-realify-20260412-batch/sign_message_confirm_request_default.png`
+  - `node_speed_test/default_group` `/tmp/compose-realify-20260412-batch/node_speed_test_default_group.png`
+  - `expiry_reminder/30` `/tmp/compose-realify-20260412-batch/expiry_reminder_30.png`
+  - `risk_authorizations` `/tmp/compose-realify-20260412-batch/risk_authorizations.png`
+  - `nft_gallery` `/tmp/compose-realify-20260412-batch/nft_gallery.png`
+  - `staking_earn` `/tmp/compose-realify-20260412-batch/staking_earn.png`
+- 这轮结果说明：
+  - 路由级回归入口已经能批量拉起这组页面
+  - 但其中多页仍在屏幕上暴露 `路由标识 / Nav / ViewModel Stub / 表单占位` 一类模板残留
+  - 这正是当前正在进行的 `P2Extended` 最后一批 cleanup 的输入

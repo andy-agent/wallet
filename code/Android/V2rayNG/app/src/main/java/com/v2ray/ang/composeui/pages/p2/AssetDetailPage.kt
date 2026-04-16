@@ -40,17 +40,26 @@ fun AssetDetailScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     val metricMap = uiState.metrics.associate { it.label to it.value }
-    val walletTitle = metricMap["资产"] ?: uiState.title
-    val balance = metricMap["余额"] ?: "12,840 USDT"
-    val change = metricMap["今日"] ?: "+0.12%"
+    val walletTitle = metricMap["资产"] ?: uiState.metrics.firstOrNull()?.value ?: uiState.title
+    val balance = metricMap["余额"] ?: metricMap["持仓"] ?: uiState.metrics.getOrNull(1)?.value ?: "--"
+    val change = metricMap["今日"] ?: metricMap["24H"] ?: metricMap["订单数"] ?: ""
     val distribution = uiState.checklist.take(3).map { it.title to it.detail }
+    val infoItems = if (distribution.isNotEmpty()) {
+        distribution
+    } else {
+        uiState.metrics.take(3).map { it.label to it.value }
+    }
     val changeColor = if (change.startsWith("-")) Color(0xFFFFEEE9) else Color(0xFFE6FFF6)
     val chartAccent = if (change.startsWith("-")) Color(0xFFE86767) else Color(0xFF23C8A8)
+    val supportingText = ""
+    val chartTitle = if (distribution.isNotEmpty()) "资产分布" else "资产概览"
+    val chartSubtitle = uiState.note.takeUnless { it.isBlank() } ?: ""
+    val recentTrailing = if (uiState.highlights.isEmpty()) "待接入" else "${uiState.highlights.size} 条记录"
     P2CorePageScaffold(
         kicker = uiState.subtitle,
         title = walletTitle,
         subtitle = uiState.summary,
-        badge = uiState.badge,
+        badge = null,
         activeSection = CoreNavSection.Wallet,
         onBottomNav = onBottomNav,
         primaryActionLabel = uiState.primaryActionLabel,
@@ -61,40 +70,44 @@ fun AssetDetailScreen(
         P2CoreHeroValueCard(
             label = walletTitle,
             value = balance,
-            supportingText = "今日 $change · ${uiState.summary}",
-            highlight = uiState.badge,
-            stats = listOf(
-                "24H" to change,
-                "常用场景" to uiState.note,
-            ),
+            supportingText = supportingText,
+            highlight = null,
+            stats = emptyList(),
         )
         P2CoreChartInfoBlock(
-            title = "资产走势",
-            subtitle = "24H 余额与入账趋势",
-            chips = listOf("24H", "7D", "30D", "入账/出账"),
-            infoItems = distribution,
-            highlight = change,
+            title = chartTitle,
+            subtitle = chartSubtitle,
+            chips = infoItems.map { it.first }.take(4),
+            infoItems = infoItems,
+            highlight = change.takeUnless { it.isBlank() },
             highlightColor = changeColor,
             accent = chartAccent,
         )
         P2CoreCard {
-            P2CoreCardHeader(title = "最近交易", trailing = "3 笔待确认", trailingColor = Color(0xFFEAF6FF))
-            uiState.highlights.forEach { item ->
+            P2CoreCardHeader(title = "最近记录", trailing = recentTrailing, trailingColor = Color(0xFFEAF6FF))
+            if (uiState.highlights.isEmpty()) {
                 P2CoreListRow(
-                    title = item.title,
-                    subtitle = item.subtitle,
-                    trailing = item.trailing,
-                    emphasis = when {
-                        item.trailing.contains("成功") -> P2CoreRowEmphasis.Success
-                        item.trailing.contains("确认") -> P2CoreRowEmphasis.Warning
-                        else -> P2CoreRowEmphasis.Brand
-                    },
-                    trailingColor = when {
-                        item.trailing.contains("成功") -> Color(0xFF17B48A)
-                        item.trailing.contains("确认") -> Color(0xFFE39B22)
-                        else -> Color(0xFF66739D)
-                    },
+                    title = "暂无资产记录",
+                    subtitle = "",
                 )
+            } else {
+                uiState.highlights.forEach { item ->
+                    P2CoreListRow(
+                        title = item.title,
+                        subtitle = item.subtitle,
+                        trailing = item.trailing,
+                        emphasis = when {
+                            item.trailing.contains("成功") -> P2CoreRowEmphasis.Success
+                            item.trailing.contains("确认") -> P2CoreRowEmphasis.Warning
+                            else -> P2CoreRowEmphasis.Brand
+                        },
+                        trailingColor = when {
+                            item.trailing.contains("成功") -> Color(0xFF17B48A)
+                            item.trailing.contains("确认") -> Color(0xFFE39B22)
+                            else -> Color(0xFF66739D)
+                        },
+                    )
+                }
             }
         }
     }

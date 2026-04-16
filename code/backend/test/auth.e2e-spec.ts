@@ -47,17 +47,11 @@ describe('AuthAndAccount (e2e)', () => {
   });
 
   it('register -> me -> session -> logout flow', async () => {
-    await request(app.getHttpServer())
-      .post('/api/client/v1/auth/register/email/request-code')
-      .send({ email: 'user@example.com' })
-      .expect(200);
-
     const registerResponse = await request(app.getHttpServer())
       .post('/api/client/v1/auth/register/email')
       .set('x-idempotency-key', 'register-1')
       .send({
         email: 'user@example.com',
-        code: '123456',
         password: 'Passw0rd!',
       })
       .expect(200);

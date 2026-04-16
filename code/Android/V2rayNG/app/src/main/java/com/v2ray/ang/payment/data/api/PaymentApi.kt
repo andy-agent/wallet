@@ -138,6 +138,11 @@ interface PaymentApi {
         @Header("Authorization") authorization: String
     ): Response<WalletOverviewResponse>
 
+    @GET("${PaymentConfig.API_VERSION}/wallet/balances")
+    suspend fun getWalletBalances(
+        @Header("Authorization") authorization: String
+    ): Response<WalletBalancesResponse>
+
     @GET("${PaymentConfig.API_VERSION}/wallet/lifecycle")
     suspend fun getWalletLifecycle(
         @Header("Authorization") authorization: String
@@ -166,6 +171,11 @@ interface PaymentApi {
     suspend fun getWalletSecretBackupMetadata(
         @Header("Authorization") authorization: String
     ): Response<WalletSecretBackupMetadataResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallet/secret-backups/export")
+    suspend fun getWalletSecretBackupExport(
+        @Header("Authorization") authorization: String
+    ): Response<WalletSecretBackupExportResponse>
 
     @POST("${PaymentConfig.API_VERSION}/wallet/transfer/build")
     suspend fun buildWalletTransfer(
@@ -524,6 +534,40 @@ data class WalletChainItemData(
     val selected: Boolean? = null,
 )
 
+data class WalletBalancesResponse(
+    val code: String,
+    val message: String,
+    val data: WalletBalancesData?,
+)
+
+data class WalletBalancesData(
+    @SerializedName("accountId")
+    val accountId: String,
+    @SerializedName("accountEmail")
+    val accountEmail: String,
+    val items: List<WalletBalanceItemData>,
+)
+
+data class WalletBalanceItemData(
+    @SerializedName("assetId")
+    val assetId: String,
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("assetCode")
+    val assetCode: String,
+    @SerializedName("displayName")
+    val displayName: String,
+    val symbol: String,
+    val decimals: Int,
+    val address: String? = null,
+    @SerializedName("availableBalanceMinor")
+    val availableBalanceMinor: String? = null,
+    @SerializedName("availableBalanceUiAmount")
+    val availableBalanceUiAmount: String? = null,
+    @SerializedName("availableBalanceStatus")
+    val availableBalanceStatus: String? = null,
+)
+
 data class WalletAssetCatalogResponse(
     val code: String,
     val message: String,
@@ -559,6 +603,14 @@ data class WalletAssetItemData(
     val orderCount: Int? = null,
     @SerializedName("totalPayableAmount")
     val totalPayableAmount: String? = null,
+    @SerializedName("availableBalanceMinor")
+    val availableBalanceMinor: String? = null,
+    @SerializedName("availableBalanceUiAmount")
+    val availableBalanceUiAmount: String? = null,
+    @SerializedName("availableBalanceStatus")
+    val availableBalanceStatus: String? = null,
+    @SerializedName("balanceAddress")
+    val balanceAddress: String? = null,
     @SerializedName("lastOrderAt")
     val lastOrderAt: String? = null,
     @SerializedName("lastOrderStatus")
@@ -724,6 +776,12 @@ data class WalletSecretBackupMetadataResponse(
     val data: WalletSecretBackupMetadataData?,
 )
 
+data class WalletSecretBackupExportResponse(
+    val code: String,
+    val message: String,
+    val data: WalletSecretBackupExportData?,
+)
+
 data class WalletSecretBackupData(
     @SerializedName("backupId")
     val backupId: String,
@@ -774,6 +832,40 @@ data class WalletSecretBackupMetadataData(
     val lastReplicationError: String? = null,
     @SerializedName("updatedAt")
     val updatedAt: String? = null,
+)
+
+data class WalletSecretBackupExportData(
+    @SerializedName("exists")
+    val exists: Boolean,
+    @SerializedName("fileName")
+    val fileName: String? = null,
+    @SerializedName("payload")
+    val payload: WalletSecretBackupExportPayloadData? = null,
+)
+
+data class WalletSecretBackupExportPayloadData(
+    @SerializedName("version")
+    val version: String,
+    @SerializedName("backupId")
+    val backupId: String,
+    @SerializedName("accountId")
+    val accountId: String,
+    @SerializedName("walletId")
+    val walletId: String,
+    @SerializedName("secretType")
+    val secretType: String,
+    @SerializedName("encryptionScheme")
+    val encryptionScheme: String,
+    @SerializedName("recoveryKeyVersion")
+    val recoveryKeyVersion: String,
+    @SerializedName("recipientFingerprint")
+    val recipientFingerprint: String,
+    @SerializedName("ciphertext")
+    val ciphertext: String,
+    @SerializedName("createdAt")
+    val createdAt: String,
+    @SerializedName("updatedAt")
+    val updatedAt: String,
 )
 
 data class WalletTransferBuildRequest(

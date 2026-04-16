@@ -76,6 +76,29 @@ class WalletSecretStore(context: Context) {
         return loadRecord(accountId)?.toLocalRecord()
     }
 
+    fun getAnyMnemonicRecord(): LocalWalletSecretRecord? {
+        return storage.allKeys()
+            ?.firstOrNull()
+            ?.let { accountId -> loadRecord(accountId)?.toLocalRecord() }
+    }
+
+    fun getMnemonicRecordByWalletId(walletId: String): LocalWalletSecretRecord? {
+        return storage.allKeys()
+            ?.firstNotNullOfOrNull { accountId ->
+                loadRecord(accountId)
+                    ?.takeIf { it.walletId == walletId }
+                    ?.toLocalRecord()
+            }
+    }
+
+    fun getConflictingMnemonicRecord(accountId: String): LocalWalletSecretRecord? {
+        return storage.allKeys()
+            ?.firstOrNull { storedAccountId ->
+                storedAccountId != accountId && loadRecord(storedAccountId) != null
+            }
+            ?.let { storedAccountId -> loadRecord(storedAccountId)?.toLocalRecord() }
+    }
+
     fun clear(accountId: String) {
         storage.remove(accountId)
     }

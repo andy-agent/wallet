@@ -12,30 +12,20 @@ data class ExpiryReminderRouteArgs(val daysLeft: String = "5")
 data class ExpiryReminderUiState(
         val title: String = "到期提醒",
         val subtitle: String = "EXPIRY REMINDER",
-        val badge: String = "P2 · EXTENDED",
-        val summary: String = "到期提醒页用于在续费前提示用户剩余时长、价格与自动续费状态。",
-        val primaryActionLabel: String = "查看当前订阅",
-        val secondaryActionLabel: String? = "返回套餐页",
+        val badge: String = "",
+        val summary: String = "",
+        val primaryActionLabel: String = "查看订阅",
+        val secondaryActionLabel: String? = "查看套餐",
         val heroAccent: String = "expiry_reminder",
         val metrics: List<FeatureMetric> = listOf(
-    FeatureMetric(label = "剩余天数", value = "5"),
-    FeatureMetric(label = "续费金额", value = "US$8.90"),
-    FeatureMetric(label = "自动续费", value = "关闭"),
+    FeatureMetric(label = "剩余天数", value = "待接口返回"),
+    FeatureMetric(label = "续费金额", value = "待接口返回"),
+    FeatureMetric(label = "自动续费", value = "待接口返回"),
 ),
         val fields: List<FeatureField> = emptyList(),
-        val highlights: List<FeatureListItem> = listOf(
-    FeatureListItem(title = "路由标识", subtitle = "到期提醒页用于在续费前提示用户剩余时长、价格与自动续费状态。", trailing = "expiry_reminder", badge = "P2 扩展页"),
-    FeatureListItem(title = "导航参数", subtitle = "daysLeft", trailing = "1 个", badge = "Nav"),
-    FeatureListItem(title = "表单占位", subtitle = "当前页面以信息展示与确认动作为主", trailing = "0 项", badge = "Info"),
-    FeatureListItem(title = "交付内容", subtitle = "Composable + UiState + Event + ViewModel + Mock Repository 已补齐", trailing = "Ready", badge = "Drop-in"),
-),
-        val checklist: List<FeatureBullet> = listOf(
-    FeatureBullet(title = "ViewModel Stub", detail = "到期提醒 已预留事件分发与 refresh 占位。"),
-    FeatureBullet(title = "Mock Repository", detail = "可通过 ExpiryReminderPreviewState / Repository 种子替换真实接口。"),
-    FeatureBullet(title = "Preview", detail = "页面已内置 @Preview，可直接在 Android Studio 查看。"),
-    FeatureBullet(title = "Navigation Args", detail = "createRoute builder 与 NavGraph 参数解析已补齐。"),
-),
-        val note: String = "到期提醒 已按 P2 扩展页 页面补齐，可继续替换为真实业务逻辑与接口数据。",
+        val highlights: List<FeatureListItem> = emptyList(),
+        val checklist: List<FeatureBullet> = emptyList(),
+        val note: String = "",
     )
 
     sealed interface ExpiryReminderEvent {

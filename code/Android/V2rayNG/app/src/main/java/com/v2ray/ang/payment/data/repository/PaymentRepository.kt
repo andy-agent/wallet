@@ -38,8 +38,10 @@ import com.v2ray.ang.payment.data.api.WalletPublicAddressData
 import com.v2ray.ang.payment.data.api.WalletPublicAddressUpsertRequest
 import com.v2ray.ang.payment.data.api.WalletLifecycleData
 import com.v2ray.ang.payment.data.api.WalletLifecycleUpsertRequest
+import com.v2ray.ang.payment.data.api.WalletBalancesData
 import com.v2ray.ang.payment.data.api.WalletSecretBackupData
 import com.v2ray.ang.payment.data.api.WalletSecretBackupMetadataData
+import com.v2ray.ang.payment.data.api.WalletSecretBackupExportData
 import com.v2ray.ang.payment.data.api.WalletSecretBackupUpsertRequest
 import com.v2ray.ang.payment.data.api.WalletTransferBuildData
 import com.v2ray.ang.payment.data.api.WalletTransferBuildRequest
@@ -335,20 +337,7 @@ class PaymentRepository(context: Context) {
      * 清除所有本地数据（退出登录）
      */
     suspend fun logout() = withContext(Dispatchers.IO) {
-        SessionKeepAliveService.stop(appContext)
-        localRepository.clearAllData()
-        prefs.edit()
-            .remove(KEY_CURRENT_USER_ID)
-            .remove(PaymentConfig.Prefs.CLIENT_TOKEN)
-            .remove(PaymentConfig.Prefs.TOKEN_EXPIRES_AT)
-            .remove(PaymentConfig.Prefs.SUBSCRIPTION_URL)
-            .remove(PaymentConfig.Prefs.MARZBAN_USERNAME)
-            .remove(PaymentConfig.Prefs.CURRENT_ORDER_ID)
-            .remove(PaymentConfig.Prefs.LAST_ORDERS_SYNC_AT)
-            .remove(PaymentConfig.Prefs.LAST_VPN_NODES_SYNC_AT)
-            .remove(PaymentConfig.Prefs.LAST_VPN_REGION_CODE)
-            .remove(PaymentConfig.Prefs.LAST_VPN_CONFIG_EXPIRE_AT)
-            .apply()
+        clearAuth()
     }
 
     private fun parseDate(dateString: String?): Long? {
@@ -747,6 +736,14 @@ class PaymentRepository(context: Context) {
             .remove(PaymentConfig.Prefs.MARZBAN_USERNAME)
             .remove(PaymentConfig.Prefs.CURRENT_ORDER_ID)
             .remove(PaymentConfig.Prefs.LAST_ORDERS_SYNC_AT)
+            .remove(PaymentConfig.Prefs.LAST_VPN_NODES_SYNC_AT)
+            .remove(PaymentConfig.Prefs.LAST_VPN_LINE_NAME)
+            .remove(PaymentConfig.Prefs.LAST_VPN_NODE_ID)
+            .remove(PaymentConfig.Prefs.LAST_VPN_NODE_NAME)
+            .remove(PaymentConfig.Prefs.LAST_VPN_SESSION_STATUS)
+            .remove(PaymentConfig.Prefs.LAST_SUBSCRIPTION_PLAN_CODE)
+            .remove(PaymentConfig.Prefs.LAST_SUBSCRIPTION_STATUS)
+            .remove(PaymentConfig.Prefs.LAST_SUBSCRIPTION_DAYS_REMAINING)
             .remove(PaymentConfig.Prefs.LAST_VPN_REGION_CODE)
             .remove(PaymentConfig.Prefs.LAST_VPN_CONFIG_EXPIRE_AT)
             .apply()
@@ -784,14 +781,12 @@ class PaymentRepository(context: Context) {
     suspend fun register(
         email: String,
         password: String,
-        code: String,
     ): Result<AuthData> = withContext(Dispatchers.IO) {
         try {
             val response = api.register(
                 UUID.randomUUID().toString(),
                 RegisterRequest(
                     email = email,
-                    code = code,
                     password = password,
                     installationId = getDeviceId(),
                 ),
@@ -813,7 +808,7 @@ class PaymentRepository(context: Context) {
                     Result.success(authData)
                 } ?: Result.failure(Exception("注册响应为空"))
             } else {
-                Result.failure(Exception(response.body()?.message ?: "注册失败"))
+                Result.failure(Exception(extractApiErrorMessage(response, "注册失败")))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -1287,19 +1282,38 @@ class PaymentRepository(context: Context) {
 
     suspend fun bindReferralCode(referralCode: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            val normalizedReferralCode = normalizeReferralCodeInternal(referralCode)
+            if (normalizedReferralCode.isBlank()) {
+                return@withContext Result.failure(Exception("邀请码不能为空"))
+            }
             if (!refreshTokenIfNeeded()) {
                 return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
             }
             val token = getAccessToken()
                 ?: return@withContext Result.failure(Exception("未登录"))
-            val response = api.bindReferralCode("Bearer $token", ReferralBindRequest(referralCode))
+            val response = api.bindReferralCode("Bearer $token", ReferralBindRequest(normalizedReferralCode))
             if (response.isSuccessful && response.body()?.code == "OK") {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(response.body()?.message ?: "绑定邀请码失败"))
+                val message = extractApiErrorMessage(response, "绑定邀请码失败")
+                Result.failure(Exception(mapReferralBindErrorMessage(message)))
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    private fun mapReferralBindErrorMessage(message: String?): String {
+        val normalized = message.orEmpty().uppercase(Locale.ROOT)
+        return when {
+            "REFERRAL_BINDING_LOCKED" in normalized || "ALREADY EXISTS" in normalized ->
+                "当前账号已绑定邀请码，不能重复绑定"
+            "REFERRAL_CODE_INVALID" in normalized || "INVALID" in normalized ->
+                "邀请码无效，请检查大小写和空格"
+            "REFERRAL_SELF_BIND_FORBIDDEN" in normalized || "SELF BIND" in normalized ->
+                "不能绑定自己的邀请码"
+            message.isNullOrBlank() -> "绑定邀请码失败"
+            else -> message
         }
     }
 
@@ -1310,6 +1324,9 @@ class PaymentRepository(context: Context) {
         if (bindResult.isSuccess) {
             clearPendingReferralCode()
             Result.success(true)
+        } else if (shouldSkipReferralBindFailure(bindResult.exceptionOrNull()?.message)) {
+            clearPendingReferralCode()
+            Result.success(false)
         } else {
             Result.failure(bindResult.exceptionOrNull() ?: Exception("邀请码绑定失败"))
         }
@@ -1398,6 +1415,25 @@ class PaymentRepository(context: Context) {
             return@withContext Result.success(cached)
         }
         syncWalletOverviewFromServer(force = true, userId = resolvedUserId)
+    }
+
+    suspend fun getWalletBalances(): Result<WalletBalancesData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getWalletBalances("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("钱包余额结果为空"))
+            } else {
+                Result.failure(Exception(extractApiErrorMessage(response, "获取钱包余额失败")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     suspend fun getWalletLifecycle(): Result<WalletLifecycleData> = withContext(Dispatchers.IO) {
@@ -1490,6 +1526,25 @@ class PaymentRepository(context: Context) {
                     ?: Result.failure(Exception("钱包备份状态为空"))
             } else {
                 Result.failure(Exception(response.body()?.message ?: "获取钱包备份状态失败"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getWalletSecretBackupExport(): Result<WalletSecretBackupExportData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.getWalletSecretBackupExport("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("钱包加密备份为空"))
+            } else {
+                Result.failure(Exception(extractApiErrorMessage(response, "导出加密备份失败")))
             }
         } catch (e: Exception) {
             Result.failure(e)

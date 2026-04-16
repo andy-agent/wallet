@@ -52,14 +52,14 @@ fun ProfileScreen(
         P2CoreCard {
             P2CoreCardHeader(
                 title = "账户信息",
-                subtitle = uiState.checklist.firstOrNull()?.detail ?: "hello@cryptovpn.app · GLOW OPS",
+                subtitle = uiState.checklist.firstOrNull()?.detail,
                 trailing = uiState.badge,
                 trailingColor = Color(0xFFEAF6FF),
             )
             P2CoreHeroValueCard(
                 label = "当前套餐",
                 value = uiState.metrics.firstOrNull()?.value ?: "--",
-                supportingText = "设备在线: ${uiState.checklist.getOrNull(1)?.detail ?: "--"}",
+                supportingText = "",
                 highlight = uiState.badge,
                 stats = uiState.metrics.drop(1).take(2).map { it.label to it.value },
             )
@@ -75,10 +75,11 @@ fun ProfileScreen(
             uiState.highlights.forEachIndexed { index, item ->
                 val route = when (index) {
                     0 -> CryptoVpnRouteSpec.securityCenter.pattern
-                    1 -> CryptoVpnRouteSpec.orderList.pattern
-                    2 -> CryptoVpnRouteSpec.inviteCenter.pattern
-                    3 -> CryptoVpnRouteSpec.legalDocuments.pattern
-                    4 -> "about_app"
+                    1 -> CryptoVpnRouteSpec.walletManagerRoute("primary_wallet")
+                    2 -> CryptoVpnRouteSpec.orderList.pattern
+                    3 -> CryptoVpnRouteSpec.inviteCenter.pattern
+                    4 -> CryptoVpnRouteSpec.legalDocuments.pattern
+                    5 -> "about_app"
                     else -> null
                 }
                 P2CoreListRow(

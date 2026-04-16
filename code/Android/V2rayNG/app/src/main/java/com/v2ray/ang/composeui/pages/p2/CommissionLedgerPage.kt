@@ -56,13 +56,13 @@ fun CommissionLedgerScreen(
         P2CoreHeroValueCard(
             label = uiState.note,
             value = total,
-            supportingText = uiState.checklist.firstOrNull()?.detail ?: uiState.summary,
+            supportingText = "",
             highlight = uiState.badge,
             stats = uiState.metrics.drop(1).take(2).map { it.label to it.value },
         )
         P2CoreChartInfoBlock(
             title = "佣金趋势",
-            subtitle = "按来源拆分统计",
+            subtitle = "",
             chips = listOf("今日", "本周", "本月"),
             infoItems = uiState.metrics.take(3).map { it.label to it.value },
             highlight = "更新中",
