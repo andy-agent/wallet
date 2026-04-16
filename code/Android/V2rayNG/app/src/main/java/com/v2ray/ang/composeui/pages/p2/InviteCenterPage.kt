@@ -15,10 +15,9 @@ import com.v2ray.ang.composeui.components.actions.AppCopyShareActions
 import com.v2ray.ang.composeui.components.growth.AppGrowthPageScaffold
 import com.v2ray.ang.composeui.components.growth.AppHeroStat
 import com.v2ray.ang.composeui.components.growth.AppHeroValueCard
+import com.v2ray.ang.composeui.components.growth.AppInviteInfoCard
 import com.v2ray.ang.composeui.components.growth.AppMetricGrid
 import com.v2ray.ang.composeui.components.growth.AppMetricGridItem
-import com.v2ray.ang.composeui.components.rows.AppLabelValueRow
-import com.v2ray.ang.composeui.components.sections.AppInfoSection
 import com.v2ray.ang.composeui.p2.model.InviteCenterEvent
 import com.v2ray.ang.composeui.p2.model.InviteCenterUiState
 import com.v2ray.ang.composeui.p2.model.inviteCenterPreviewState
@@ -102,26 +101,11 @@ fun InviteCenterScreen(
             emphasizedIndexes = setOf(0),
         )
 
-        AppInfoSection(
-            title = "邀请信息",
-            subtitle = "邀请码、推广链接与实时状态",
-        ) {
-            AppLabelValueRow(label = "邀请码", value = inviteCode)
-            if (sharePayload.isNotBlank()) {
-                AppLabelValueRow(
-                    label = "推广链接",
-                    value = sharePayload,
-                    supportingText = "可直接复制或系统分享",
-                )
-            }
-            if (uiState.note.isNotBlank()) {
-                AppLabelValueRow(
-                    label = "状态说明",
-                    value = "已就绪",
-                    supportingText = uiState.note,
-                )
-            }
-        }
+        AppInviteInfoCard(
+            inviteCode = inviteCode,
+            shareLink = sharePayload,
+            note = uiState.note,
+        )
 
         AppCopyShareActions(
             primaryLabel = uiState.primaryActionLabel,
