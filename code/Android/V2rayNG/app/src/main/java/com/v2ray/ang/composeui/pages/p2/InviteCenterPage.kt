@@ -47,6 +47,7 @@ fun InviteCenterScreen(
     val context = LocalContext.current
     val inviteCode = uiState.inviteCode.ifBlank { "--" }
     val sharePayload = uiState.shareMessage.takeIf { it.isNotBlank() } ?: uiState.shareLink
+    val inviteInfoLink = uiState.shareLink.takeIf { it.isNotBlank() } ?: extractFirstHttpUrl(sharePayload)
     val copyInviteCode = {
         onEvent(InviteCenterEvent.PrimaryActionClicked)
         if (inviteCode.isNotBlank() && inviteCode != "--") {
@@ -96,7 +97,7 @@ fun InviteCenterScreen(
 
         AppInviteInfoCard(
             inviteCode = inviteCode,
-            shareLink = sharePayload,
+            shareLink = inviteInfoLink,
             note = uiState.note,
         )
 
@@ -107,6 +108,14 @@ fun InviteCenterScreen(
             onSecondaryClick = shareLink,
         )
     }
+}
+
+private fun extractFirstHttpUrl(text: String): String {
+    return Regex("""https?://\S+""")
+        .find(text)
+        ?.value
+        ?.trimEnd('.', '。', ',', ';')
+        .orEmpty()
 }
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)

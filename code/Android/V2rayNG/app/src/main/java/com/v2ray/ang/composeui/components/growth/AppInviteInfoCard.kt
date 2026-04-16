@@ -24,7 +24,7 @@ fun AppInviteInfoCard(
     shareLink: String,
     modifier: Modifier = Modifier,
     title: String = "邀请信息",
-    subtitle: String = "邀请码、推广链接与实时状态",
+    subtitle: String = "",
     statusLabel: String? = "实时同步",
     note: String = "",
 ) {
@@ -51,11 +51,13 @@ fun AppInviteInfoCard(
                         style = AppTheme.typography.titleL,
                         color = AppTheme.colors.textPrimary,
                     )
-                    Text(
-                        text = subtitle,
-                        style = AppTheme.typography.bodyS,
-                        color = AppTheme.colors.textSecondary,
-                    )
+                    if (subtitle.isNotBlank()) {
+                        Text(
+                            text = subtitle,
+                            style = AppTheme.typography.bodyS,
+                            color = AppTheme.colors.textSecondary,
+                        )
+                    }
                 }
                 if (!statusLabel.isNullOrBlank()) {
                     AppChip(
