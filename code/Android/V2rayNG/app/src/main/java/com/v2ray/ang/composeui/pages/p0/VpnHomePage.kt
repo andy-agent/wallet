@@ -326,7 +326,7 @@ fun VpnHomeScreen(
             onWalletHome()
         },
         OverviewAction("选区", OverviewGlyph.REGION, OverviewBlue) {
-            onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern)
+            onBottomNav(CryptoVpnRouteSpec.regionSelectionRoute())
         },
         OverviewAction("买套餐", OverviewGlyph.PLAN, OverviewBlue) {
             onPlans()
@@ -348,7 +348,7 @@ fun VpnHomeScreen(
             uiState = uiState,
             onSwitchNode = {
                 onSelectRegion(uiState.selectedRegion)
-                onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern)
+                onBottomNav(CryptoVpnRouteSpec.regionSelectionRoute())
             },
             onReconnect = onToggleConnection,
         )
@@ -1109,7 +1109,7 @@ private fun buildOverviewAlerts(
             positive = signal.isPositive,
             onClick = {
                 when (signal.symbol) {
-                    "NODE", "VPN" -> onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern)
+                    "NODE", "VPN" -> onBottomNav(CryptoVpnRouteSpec.regionSelectionRoute())
                     "ORDER", "SOL", "USDT", "SUB" -> onBottomNav(CryptoVpnRouteSpec.orderList.pattern)
                     else -> onWalletHome()
                 }
@@ -1128,7 +1128,7 @@ private fun buildOverviewAlerts(
             badge = if (uiState.canConnect) "已就绪" else "待导入",
             glyph = OverviewGlyph.STATUS,
             positive = uiState.canConnect,
-            onClick = { onBottomNav(CryptoVpnRouteSpec.regionSelection.pattern) },
+            onClick = { onBottomNav(CryptoVpnRouteSpec.regionSelectionRoute()) },
         ),
         OverviewAlert(
             title = "订单同步状态",

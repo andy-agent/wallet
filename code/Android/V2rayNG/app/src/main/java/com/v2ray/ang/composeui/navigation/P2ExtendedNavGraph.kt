@@ -133,7 +133,7 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
         NodeSpeedTestRoute(
             viewModel = vm,
             onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.vpnHome.pattern) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.regionSelection.pattern) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.regionSelectionRoute()) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
