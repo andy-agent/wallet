@@ -1,20 +1,49 @@
 package com.v2ray.ang.composeui.pages.p2extended
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import androidx.compose.ui.unit.dp
+import com.v2ray.ang.composeui.common.model.FeatureListItem
+import com.v2ray.ang.composeui.components.actions.ActionCluster
+import com.v2ray.ang.composeui.components.actions.ActionClusterAction
+import com.v2ray.ang.composeui.components.app.AppPageBackgroundStyle
+import com.v2ray.ang.composeui.components.app.AppPageScaffold
+import com.v2ray.ang.composeui.components.buttons.AppButtonVariant
+import com.v2ray.ang.composeui.components.cards.MetricCard
+import com.v2ray.ang.composeui.components.chips.AppChip
+import com.v2ray.ang.composeui.components.chips.AppChipTone
+import com.v2ray.ang.composeui.components.feedback.EmptyStateCard
+import com.v2ray.ang.composeui.components.listitems.AppListCardItem
+import com.v2ray.ang.composeui.components.navigation.AppTopBar
+import com.v2ray.ang.composeui.components.navigation.AppTopBarMode
+import com.v2ray.ang.composeui.components.navigation.CryptoVpnBottomBar
 import com.v2ray.ang.composeui.p2extended.model.ChainManagerEvent
 import com.v2ray.ang.composeui.p2extended.model.ChainManagerUiState
 import com.v2ray.ang.composeui.p2extended.model.chainManagerPreviewState
 import com.v2ray.ang.composeui.p2extended.viewmodel.ChainManagerViewModel
+import com.v2ray.ang.composeui.theme.AppTheme
+import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.composeui.theme.tokens.OverviewBaselineTokens
+
+private val ChainGlowBlue = Color(0x224F7CFF)
+private val ChainGlowMint = Color(0x162ED8A3)
 
 @Composable
 fun ChainManagerRoute(
@@ -44,28 +73,146 @@ fun ChainManagerScreen(
     onEvent: (ChainManagerEvent) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
-    P2ExtendedPageScaffold(
-        kicker = "",
-        title = "链管理",
-        subtitle = "",
-        currentRoute = "chain_manager",
-        onBottomNav = onBottomNav,
-        hubLabel = "多链扩展",
-        onHubClick = { onEvent(ChainManagerEvent.Refresh) },
-        primaryActionLabel = "添加自定义代币",
-        onPrimaryAction = { onEvent(ChainManagerEvent.PrimaryActionClicked) },
-        secondaryActionLabel = "返回钱包首页",
-        onSecondaryAction = { onEvent(ChainManagerEvent.SecondaryActionClicked) },
-    ) {
-        ChipRow(items = listOf("已启用", "可添加", "测试网"), activeIndex = 0)
-        Spacer(modifier = Modifier.height(14.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ListRow("Solana", "已启用 · 主链", "Healthy")
-            ListRow("TRON", "已启用 · 主链", "Healthy")
-            ListRow("Ethereum", "已启用 · EVM", "Healthy")
-            ListRow("Base", "已启用 · EVM L2", "Healthy")
-            ListRow("BNB Chain", "可添加", "Optional")
+    val baseline = OverviewBaselineTokens.primary
+
+    AppPageScaffold(
+        backgroundStyle = AppPageBackgroundStyle.Hero,
+        background = { ChainManagerBackgroundGlow() },
+        bottomBar = {
+            CryptoVpnBottomBar(
+                currentRoute = "wallet_home",
+                onRouteSelected = onBottomNav,
+            )
+        },
+        contentPadding = PaddingValues(
+            horizontal = baseline.pageHorizontal,
+            vertical = baseline.pageTopSpacing,
+        ),
+    ) { _ ->
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 680.dp),
+            verticalArrangement = Arrangement.spacedBy(baseline.sectionGap),
+        ) {
+            AppTopBar(
+                title = uiState.title,
+                subtitle = uiState.subtitle,
+                mode = AppTopBarMode.Hero,
+                actions = {
+                    uiState.badge.takeIf { it.isNotBlank() }?.let {
+                        AppChip(text = it, tone = AppChipTone.Info)
+                    }
+                },
+            )
+
+            MetricGridRow(
+                metrics = uiState.metrics.map { it.label to it.value },
+            )
+
+            if (uiState.highlights.isEmpty()) {
+                EmptyStateCard(
+                    title = "暂无链配置",
+                    message = uiState.note.ifBlank { "当前钱包还没有可展示的链配置。" },
+                    actionLabel = uiState.primaryActionLabel,
+                    onAction = { onEvent(ChainManagerEvent.PrimaryActionClicked) },
+                )
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
+                ) {
+                    uiState.highlights.forEachIndexed { index, item ->
+                        AppListCardItem(
+                            title = item.title,
+                            subtitle = item.subtitle,
+                            value = item.trailing,
+                            emphasized = index == 0,
+                            trailing = {
+                                if (item.badge.isNotBlank()) {
+                                    AppChip(
+                                        text = item.badge,
+                                        tone = chainBadgeTone(item),
+                                    )
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+
+            ActionCluster(
+                actions = listOfNotNull(
+                    ActionClusterAction(
+                        label = uiState.primaryActionLabel,
+                        onClick = { onEvent(ChainManagerEvent.PrimaryActionClicked) },
+                        variant = AppButtonVariant.Primary,
+                    ),
+                    uiState.secondaryActionLabel?.takeIf { it.isNotBlank() }?.let {
+                        ActionClusterAction(
+                            label = it,
+                            onClick = { onEvent(ChainManagerEvent.SecondaryActionClicked) },
+                            variant = AppButtonVariant.Secondary,
+                        )
+                    },
+                ),
+            )
         }
+    }
+}
+
+@Composable
+private fun MetricGridRow(
+    metrics: List<Pair<String, String>>,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12)) {
+        metrics.chunked(2).forEach { row ->
+            androidx.compose.foundation.layout.Row(
+                horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
+            ) {
+                row.forEach { (label, value) ->
+                    MetricCard(
+                        title = label,
+                        value = value,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                if (row.size == 1) {
+                    Box(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+private fun chainBadgeTone(item: FeatureListItem): AppChipTone = when {
+    item.trailing.contains("已配置", ignoreCase = true) -> AppChipTone.Success
+    item.trailing.contains("待配置", ignoreCase = true) -> AppChipTone.Warning
+    item.badge.equals("REAL", ignoreCase = true) -> AppChipTone.Info
+    else -> AppChipTone.Neutral
+}
+
+@Composable
+private fun ChainManagerBackgroundGlow() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 36.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(220.dp)
+                .background(ChainGlowBlue, RoundedCornerShape(999.dp))
+                .blur(48.dp),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(top = 320.dp)
+                .size(260.dp)
+                .background(ChainGlowMint, RoundedCornerShape(999.dp))
+                .blur(60.dp),
+        )
     }
 }
 
@@ -73,9 +220,11 @@ fun ChainManagerScreen(
 @Composable
 private fun ChainManagerPreview() {
     CryptoVpnTheme {
-        ChainManagerScreen(
-            uiState = chainManagerPreviewState(),
-            onEvent = {},
-        )
+        Surface {
+            ChainManagerScreen(
+                uiState = chainManagerPreviewState(),
+                onEvent = {},
+            )
+        }
     }
 }
