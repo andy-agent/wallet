@@ -33,6 +33,7 @@ import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
 import com.v2ray.ang.payment.data.model.LoginRequest
 import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.repository.PaymentRepository
+import com.v2ray.ang.payment.wallet.WalletKeyManager
 import com.v2ray.ang.payment.wallet.WalletSecretStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -46,6 +47,7 @@ class RealP0Repository(context: Context) : P0Repository {
     private val appContext = context.applicationContext
     private val paymentRepository = PaymentRepository(appContext)
     private val walletSecretStore = WalletSecretStore(appContext)
+    private val walletKeyManager = WalletKeyManager(walletSecretStore)
 
     override suspend fun getCachedVpnHomeState(): VpnHomeUiState? = withContext(Dispatchers.IO) {
         val cachedUser = paymentRepository.getCachedCurrentUser() ?: return@withContext null
@@ -464,6 +466,7 @@ class RealP0Repository(context: Context) : P0Repository {
     override suspend fun getVpnHomeState(): VpnHomeUiState {
         val cachedUser = paymentRepository.getCachedCurrentUser()
         val currentUserId = paymentRepository.getCurrentUserId()
+        val syncedWalletAddresses = syncDerivedWalletAddressesIfAvailable(currentUserId)
         var cachedNodeSnapshots = currentUserId?.let { userId ->
             buildCachedNodeSnapshots(
                 cachedNodes = paymentRepository.getCachedVpnNodes(userId = userId),
@@ -476,7 +479,11 @@ class RealP0Repository(context: Context) : P0Repository {
         val currentOrderNo = paymentRepository.getCurrentOrderId()
         val orderSnapshot = loadOrdersSnapshot()
         val orders = orderSnapshot.orders
-        var walletOverview = paymentRepository.getCachedWalletOverview(currentUserId)
+        var walletOverview = when {
+            syncedWalletAddresses && !currentUserId.isNullOrBlank() ->
+                paymentRepository.syncWalletOverviewFromServer(force = true, userId = currentUserId).getOrNull()
+            else -> paymentRepository.getCachedWalletOverview(currentUserId)
+        }
         val latestOrder = orders.maxByOrNull { it.createdAt }
         val activeOrder = currentOrderNo?.let { orderNo ->
             orders.firstOrNull { it.orderNo == orderNo }
@@ -592,7 +599,10 @@ class RealP0Repository(context: Context) : P0Repository {
         }
 
         val me = meResult.getOrThrow()
-        walletOverview = paymentRepository.getWalletOverview().getOrNull() ?: walletOverview
+        walletOverview = when {
+            syncedWalletAddresses && !currentUserId.isNullOrBlank() -> walletOverview
+            else -> paymentRepository.getWalletOverview().getOrNull() ?: walletOverview
+        }
         val subscription = paymentRepository.getSubscription().getOrNull() ?: me.subscription
         val hasActiveSubscription = subscription?.status.equals("ACTIVE", ignoreCase = true)
         val vpnStatus = if (hasActiveSubscription) {
@@ -716,7 +726,14 @@ class RealP0Repository(context: Context) : P0Repository {
     }
 
     override suspend fun getWalletHomeState(): WalletHomeUiState {
-        val walletOverview = paymentRepository.getWalletOverview().getOrNull()
+        val currentUserId = paymentRepository.getCurrentUserId()
+        val syncedWalletAddresses = syncDerivedWalletAddressesIfAvailable(currentUserId)
+        val walletOverview = when {
+            syncedWalletAddresses && !currentUserId.isNullOrBlank() ->
+                paymentRepository.syncWalletOverviewFromServer(force = true, userId = currentUserId).getOrNull()
+                    ?: paymentRepository.getWalletOverview().getOrNull()
+            else -> paymentRepository.getWalletOverview().getOrNull()
+        }
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         val hasUsableWallet = lifecycle.hasUsableWallet()
         if (walletOverview != null) {
@@ -1016,6 +1033,30 @@ class RealP0Repository(context: Context) : P0Repository {
 
     private fun formatEpoch(epoch: Long): String =
         Instant.ofEpochMilli(epoch).toString()
+
+    private suspend fun syncDerivedWalletAddressesIfAvailable(accountId: String?): Boolean {
+        val resolvedAccountId = accountId?.takeIf { it.isNotBlank() } ?: return false
+        if (walletSecretStore.getConflictingMnemonicRecord(resolvedAccountId) != null) {
+            return false
+        }
+        walletSecretStore.getMnemonicRecord(resolvedAccountId) ?: return false
+        val addresses = runCatching { walletKeyManager.deriveAddresses(resolvedAccountId) }
+            .getOrElse { return false }
+        val payload = listOf(
+            arrayOf("SOLANA", "SOL", addresses.solanaAddress),
+            arrayOf("SOLANA", "USDT", addresses.solanaAddress),
+            arrayOf("TRON", "TRX", addresses.tronAddress),
+            arrayOf("TRON", "USDT", addresses.tronAddress),
+        )
+        return payload.all { (networkCode, assetCode, address) ->
+            paymentRepository.upsertWalletPublicAddress(
+                networkCode = networkCode,
+                assetCode = assetCode,
+                address = address,
+                isDefault = true,
+            ).isSuccess
+        }
+    }
 
     private suspend fun readLocalOrders(userId: String): List<Order> {
         return paymentRepository.getLocalRepository().getOrdersByUserId(userId).map {
