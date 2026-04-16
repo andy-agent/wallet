@@ -13,6 +13,8 @@ fun AppLabelValueRow(
     supportingText: String = "",
     badgeText: String? = null,
     badgeTone: AppChipTone = AppChipTone.Neutral,
+    layoutMode: LabelValueRowLayoutMode = LabelValueRowLayoutMode.Inline,
+    valueDisplayMode: LabelValueDisplayMode = LabelValueDisplayMode.Full,
 ) {
     LabelValueRow(
         label = label,
@@ -21,5 +23,7 @@ fun AppLabelValueRow(
         supportingText = supportingText,
         badgeText = badgeText,
         badgeTone = badgeTone,
+        layoutMode = layoutMode,
+        valueDisplayMode = valueDisplayMode,
     )
 }

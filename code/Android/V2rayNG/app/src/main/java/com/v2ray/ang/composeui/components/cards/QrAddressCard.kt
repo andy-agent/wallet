@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.components.chips.AppChip
 import com.v2ray.ang.composeui.components.chips.AppChipTone
 import com.v2ray.ang.composeui.components.rows.LabelValueRow
+import com.v2ray.ang.composeui.components.rows.LabelValueDisplayMode
+import com.v2ray.ang.composeui.components.rows.LabelValueRowLayoutMode
 import com.v2ray.ang.composeui.theme.AppTheme
 import com.v2ray.ang.util.QRCodeDecoder
 
@@ -116,6 +118,8 @@ fun QrAddressCard(
                     label = addressLabel,
                     value = address,
                     supportingText = supportingText,
+                    layoutMode = LabelValueRowLayoutMode.Stacked,
+                    valueDisplayMode = LabelValueDisplayMode.LongCompact,
                 )
             }
 
