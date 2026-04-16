@@ -1,5 +1,9 @@
 # Android UI 第一阶段视觉组件规范与执行清单
 
+> 本文是第一阶段执行清单，不再承担“目标视觉系统”定义本体。
+> 目标视觉系统以 [CRYPTO_VPN_ANDROID_TARGET_UI_VISUAL_SYSTEM_2026-04-16.md](/Users/cnyirui/git/projects/liaojiang/docs/CRYPTO_VPN_ANDROID_TARGET_UI_VISUAL_SYSTEM_2026-04-16.md) 为准。
+> Android 组件命名与 Compose/XML 映射以 [ANDROID_UI_COMPONENT_MAPPING_2026-04-16.md](/Users/cnyirui/git/projects/liaojiang/docs/ANDROID_UI_COMPONENT_MAPPING_2026-04-16.md) 为准。
+
 > 范围限定：仅针对 `code/Android/V2rayNG/app` 当前主 Android 工程的 UI 视觉收敛。
 > 本文只记录第一阶段低风险工作，不扩扫描范围，不改业务逻辑、导航逻辑、表单逻辑。
 

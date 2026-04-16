@@ -35,6 +35,16 @@
     - 不改导航逻辑
     - 不改表单逻辑
     - 高风险页面保持冻结
+- 完成目标 UI 视觉系统与组件映射落盘
+  - 已新增目标视觉系统文档：
+    - [CRYPTO_VPN_ANDROID_TARGET_UI_VISUAL_SYSTEM_2026-04-16.md](/Users/cnyirui/git/projects/liaojiang/docs/CRYPTO_VPN_ANDROID_TARGET_UI_VISUAL_SYSTEM_2026-04-16.md)
+  - 已新增 Android 组件映射文档：
+    - [ANDROID_UI_COMPONENT_MAPPING_2026-04-16.md](/Users/cnyirui/git/projects/liaojiang/docs/ANDROID_UI_COMPONENT_MAPPING_2026-04-16.md)
+  - 当前文档分层已明确：
+    - 目标视觉系统
+    - 组件映射与命名
+    - 第一阶段执行清单
+  - 后续新页面默认应向该目标视觉系统收敛
 
 - 完成 钱包托管 / 恢复 / 发送基础能力第一阶段
   - Android 已新增本地可签名材料托管：
