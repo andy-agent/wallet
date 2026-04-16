@@ -149,6 +149,25 @@ class PaymentRepository(context: Context) {
                 .create()
         }
 
+        internal fun normalizeReferralCodeInternal(code: String?): String {
+            return code.orEmpty().trim().uppercase(Locale.ROOT)
+        }
+
+        internal fun shouldSkipReferralBindFailure(message: String?): Boolean {
+            val normalized = message.orEmpty().uppercase(Locale.ROOT)
+            return when {
+                normalized.isBlank() -> false
+                "已绑定邀请码" in normalized -> true
+                "REFERRAL_BINDING_LOCKED" in normalized || "ALREADY EXISTS" in normalized -> true
+                "邀请码无效" in normalized -> true
+                "REFERRAL_CODE_INVALID" in normalized || "INVALID" in normalized -> true
+                "不能绑定自己的邀请码" in normalized -> true
+                "REFERRAL_SELF_BIND_FORBIDDEN" in normalized || "SELF BIND" in normalized -> true
+                "EMPTY" in normalized || "不能为空" in normalized -> true
+                else -> false
+            }
+        }
+
         /**
          * 解析 ISO 8601 日期字符串（支持带毫秒和不带毫秒格式）
          * 用于单元测试，internal visibility
@@ -191,7 +210,7 @@ class PaymentRepository(context: Context) {
     }
 
     fun savePendingReferralCode(code: String) {
-        val normalizedCode = code.trim()
+        val normalizedCode = normalizeReferralCodeInternal(code)
         if (normalizedCode.isBlank()) return
         prefs.edit().putString(KEY_PENDING_REFERRAL_CODE, normalizedCode).apply()
     }

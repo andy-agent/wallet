@@ -368,19 +368,11 @@ class RealP0Repository(context: Context) : P0Repository {
                     )
                     warmSyncResult.fold(
                         onSuccess = {
-                            val bindPendingResult = paymentRepository.tryBindPendingReferralCode()
-                            if (bindPendingResult.isFailure) {
-                                LoginResult(
-                                    success = false,
-                                    errorMessage = bindPendingResult.exceptionOrNull()?.message ?: "邀请码绑定失败",
-                                    unavailable = true,
-                                )
-                            } else {
-                                LoginResult(
-                                    success = true,
-                                    nextRoute = resolvePostAuthRoute(),
-                                )
-                            }
+                            paymentRepository.tryBindPendingReferralCode()
+                            LoginResult(
+                                success = true,
+                                nextRoute = resolvePostAuthRoute(),
+                            )
                         },
                         onFailure = { error ->
                             LoginResult(
