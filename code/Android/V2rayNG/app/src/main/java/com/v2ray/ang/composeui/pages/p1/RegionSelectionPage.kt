@@ -1,7 +1,6 @@
 package com.v2ray.ang.composeui.pages.p1
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,14 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -41,16 +37,17 @@ import com.v2ray.ang.composeui.components.actions.ActionClusterAction
 import com.v2ray.ang.composeui.components.app.AppPageBackgroundStyle
 import com.v2ray.ang.composeui.components.app.AppPageScaffold
 import com.v2ray.ang.composeui.components.buttons.AppButtonVariant
-import com.v2ray.ang.composeui.components.cards.AppCard
-import com.v2ray.ang.composeui.components.cards.AppCardVariant
+import com.v2ray.ang.composeui.components.cards.MetricCard
 import com.v2ray.ang.composeui.components.chips.AppChip
 import com.v2ray.ang.composeui.components.chips.AppChipTone
 import com.v2ray.ang.composeui.components.feedback.EmptyStateCard
 import com.v2ray.ang.composeui.components.inputs.AppTextField
 import com.v2ray.ang.composeui.components.listitems.AppListCardItem
+import com.v2ray.ang.composeui.components.listitems.AppListRow
 import com.v2ray.ang.composeui.components.navigation.AppTopBar
 import com.v2ray.ang.composeui.components.navigation.AppTopBarMode
 import com.v2ray.ang.composeui.components.navigation.CryptoVpnBottomBar
+import com.v2ray.ang.composeui.components.sections.InfoSection
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p1.model.RegionOptionUi
 import com.v2ray.ang.composeui.p1.model.RegionSelectionEvent
@@ -80,6 +77,13 @@ private data class NodeUiModel(
 private data class NodeFilter(
     val key: String,
     val label: String,
+)
+
+private data class NodeMetric(
+    val title: String,
+    val value: String,
+    val supportingText: String,
+    val emphasized: Boolean = false,
 )
 
 @Composable
@@ -176,9 +180,13 @@ fun RegionSelectionScreen(
                 subtitle = uiState.subtitle,
                 mode = AppTopBarMode.Hero,
                 actions = {
+                    uiState.badge.takeIf { it.isNotBlank() }?.let {
+                        AppChip(text = it, tone = AppChipTone.Info)
+                    }
                     AppChip(
-                        text = "${filteredNodes.count { it.isAllowed }} 可用",
-                        tone = AppChipTone.Info,
+                        text = "刷新",
+                        tone = AppChipTone.Neutral,
+                        onClick = onRefresh,
                     )
                 },
             )
@@ -212,55 +220,92 @@ fun RegionSelectionScreen(
                 }
             }
 
-            selectedNode?.let { node ->
-                BestNodeCard(
-                    node = node,
-                    onUseNode = {
-                        selectedNodeId = node.id
-                        onPrimaryAction(node.lineCode, node.id)
-                    },
-                )
-            }
-
-            Text(
-                text = "可用节点",
-                style = MaterialTheme.typography.titleLarge,
-                color = AppTheme.colors.textPrimary,
+            NodeMetricGrid(
+                nodes = filteredNodes,
+                selectedNode = selectedNode,
             )
 
-            if (uiState.screenState.hasError || filteredNodes.isEmpty()) {
-                EmptyStateCard(
-                    title = if (uiState.screenState.hasError) "节点暂不可用" else "当前没有匹配节点",
-                    message = uiState.screenState.unavailableMessage
-                        ?: uiState.screenState.errorMessage
-                        ?: uiState.screenState.emptyMessage
-                        ?: uiState.note.ifBlank { "节点数据同步中" },
-                    actionLabel = emptyActionLabel,
-                    onAction = onEmptyAction,
-                )
-            } else {
-                filteredNodes.forEach { node ->
-                    AppListCardItem(
+            selectedNode?.let { node ->
+                InfoSection(
+                    title = if (node.recommended) "推荐节点" else "当前节点",
+                    subtitle = uiState.summary.ifBlank { "根据当前筛选结果展示优先节点。" },
+                    trailing = {
+                        AppChip(
+                            text = if (node.isAllowed) "可连接" else "受限",
+                            tone = if (node.isAllowed) AppChipTone.Success else AppChipTone.Warning,
+                        )
+                    },
+                ) {
+                    AppListRow(
                         title = "${node.city} · ${node.code}",
                         subtitle = node.description,
                         supportingText = "延迟 ${node.latencyLabel} · 风险 ${node.riskLabel}",
                         value = node.speedLabel,
-                        emphasized = node.id == selectedNodeId || node.recommended,
-                        trailing = {
-                            AppChip(
-                                text = if (node.isAllowed) "可用" else "受限",
-                                tone = if (node.isAllowed) AppChipTone.Success else AppChipTone.Warning,
-                            )
-                        },
-                        onClick = {
-                            selectedNodeId = node.id
-                            onPrimaryAction(node.lineCode, node.id)
-                        },
+                        centerAligned = false,
+                    )
+                    ActionCluster(
+                        actions = listOf(
+                            ActionClusterAction(
+                                label = "使用该节点",
+                                onClick = {
+                                    selectedNodeId = node.id
+                                    onPrimaryAction(node.lineCode, node.id)
+                                },
+                                variant = AppButtonVariant.Primary,
+                            ),
+                        ),
                     )
                 }
             }
 
-            if (uiState.secondaryActionLabel != null) {
+            InfoSection(
+                title = "可用节点",
+                subtitle = uiState.note.ifBlank { "按地区和线路状态筛选后展示可用节点。" },
+                trailing = {
+                    AppChip(
+                        text = "${filteredNodes.size} 个结果",
+                        tone = AppChipTone.Info,
+                    )
+                },
+            ) {
+                if (uiState.screenState.hasError || filteredNodes.isEmpty()) {
+                    EmptyStateCard(
+                        title = if (uiState.screenState.hasError) "节点暂不可用" else "当前没有匹配节点",
+                        message = uiState.screenState.unavailableMessage
+                            ?: uiState.screenState.errorMessage
+                            ?: uiState.screenState.emptyMessage
+                            ?: uiState.note.ifBlank { "节点数据同步中" },
+                        actionLabel = emptyActionLabel,
+                        onAction = onEmptyAction,
+                    )
+                } else {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
+                    ) {
+                        filteredNodes.forEach { node ->
+                            AppListCardItem(
+                                title = "${node.city} · ${node.code}",
+                                subtitle = node.description,
+                                supportingText = "延迟 ${node.latencyLabel} · 风险 ${node.riskLabel}",
+                                value = node.speedLabel,
+                                emphasized = node.id == selectedNodeId || node.recommended,
+                                trailing = {
+                                    AppChip(
+                                        text = if (node.isAllowed) "可用" else "受限",
+                                        tone = if (node.isAllowed) AppChipTone.Success else AppChipTone.Warning,
+                                    )
+                                },
+                                onClick = {
+                                    selectedNodeId = node.id
+                                    onPrimaryAction(node.lineCode, node.id)
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (!uiState.secondaryActionLabel.isNullOrBlank()) {
                 ActionCluster(
                     actions = listOf(
                         ActionClusterAction(
@@ -276,65 +321,55 @@ fun RegionSelectionScreen(
 }
 
 @Composable
-private fun BestNodeCard(
-    node: NodeUiModel,
-    onUseNode: () -> Unit,
+private fun NodeMetricGrid(
+    nodes: List<NodeUiModel>,
+    selectedNode: NodeUiModel?,
 ) {
-    AppCard(
-        variant = AppCardVariant.Highlight,
-        modifier = Modifier.fillMaxWidth(),
+    val metrics = listOf(
+        NodeMetric(
+            title = "筛选结果",
+            value = nodes.size.toString(),
+            supportingText = "当前筛出的节点数",
+        ),
+        NodeMetric(
+            title = "可连接",
+            value = nodes.count { it.isAllowed }.toString(),
+            supportingText = "可直接应用的节点",
+        ),
+        NodeMetric(
+            title = "推荐节点",
+            value = nodes.count { it.recommended }.toString(),
+            supportingText = "服务端标记为优先",
+        ),
+        NodeMetric(
+            title = "当前地区",
+            value = selectedNode?.city ?: "未选择",
+            supportingText = selectedNode?.code ?: "等待选择节点",
+            emphasized = selectedNode != null,
+        ),
+    )
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
-        ) {
+        metrics.chunked(2).forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space4),
-                ) {
-                    Text(
-                        text = "推荐节点",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = AppTheme.colors.textSecondary,
-                    )
-                    Text(
-                        text = "${node.city} · ${node.code}",
-                        style = AppTheme.typography.headlineM,
-                        color = AppTheme.colors.textPrimary,
-                    )
-                    Text(
-                        text = node.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AppTheme.colors.textSecondary,
+                row.forEach { metric ->
+                    MetricCard(
+                        title = metric.title,
+                        value = metric.value,
+                        supportingText = metric.supportingText,
+                        emphasized = metric.emphasized,
+                        modifier = Modifier.weight(1f),
                     )
                 }
-                AppChip(
-                    text = if (node.isAllowed) "可连接" else "受限",
-                    tone = if (node.isAllowed) AppChipTone.Success else AppChipTone.Warning,
-                )
+                if (row.size == 1) {
+                    Box(modifier = Modifier.weight(1f))
+                }
             }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.space8),
-            ) {
-                AppChip(text = "延迟 ${node.latencyLabel}", tone = AppChipTone.Info)
-                AppChip(text = node.speedLabel, tone = AppChipTone.Neutral)
-                AppChip(text = node.riskLabel, tone = AppChipTone.Neutral)
-            }
-
-            ActionCluster(
-                actions = listOf(
-                    ActionClusterAction(
-                        label = "使用该节点",
-                        onClick = onUseNode,
-                        variant = AppButtonVariant.Primary,
-                    ),
-                ),
-            )
         }
     }
 }
