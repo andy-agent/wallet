@@ -554,7 +554,7 @@ private fun SecureTunnelCard(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "总资产",
+                            text = "链上余额",
                             color = OverviewBody,
                             style = MaterialTheme.typography.bodyLarge,
                         )

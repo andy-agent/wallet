@@ -8,6 +8,7 @@ import com.v2ray.ang.composeui.p0.model.LoginResult
 import com.v2ray.ang.composeui.p0.model.LoginUiState
 import com.v2ray.ang.composeui.p0.model.P0LoadState
 import com.v2ray.ang.composeui.p0.model.RegionSpeed
+import com.v2ray.ang.composeui.p0.model.resolveVpnOverviewValueText
 import com.v2ray.ang.composeui.p0.model.SplashUiState
 import com.v2ray.ang.composeui.p0.model.SubscriptionSummary
 import com.v2ray.ang.composeui.p0.model.VpnConnectionStatus
@@ -60,6 +61,7 @@ class RealP0Repository(context: Context) : P0Repository {
         val cachedPlanCode = paymentRepository.getCachedSubscriptionPlanCode()
         val cachedDaysRemaining = paymentRepository.getCachedSubscriptionDaysRemaining()
         val cachedLineName = paymentRepository.getCachedVpnLineName()
+        val cachedWalletOverview = paymentRepository.getCachedWalletOverview(currentUserId)
         val selectedNode = selectedCachedNode(cachedNodeSnapshots, paymentRepository.getCachedVpnNodeId())
         val hasLocalConfig = !MmkvManager.getSelectServer().isNullOrEmpty()
         val localSubscriptionUrl = latestOrder?.subscriptionUrl ?: paymentRepository.getSavedSubscriptionUrl()
@@ -117,7 +119,10 @@ class RealP0Repository(context: Context) : P0Repository {
             oneTapLabel = if (hasLocalConfig) "启动已导入配置" else "导入配置后连接",
             speedNodes = cachedNodeSnapshots.map { it.toRegionSpeed() },
             watchSignals = signals,
-            overviewValueText = resolveOverviewValueText(cachedOrders, ordersSyncUnavailable = false),
+            overviewValueText = resolveVpnOverviewValueText(
+                walletOverview = cachedWalletOverview,
+                ordersSyncUnavailable = false,
+            ),
             overviewSummaryText = buildOverviewSummary(
                 orders = cachedOrders,
                 subscription = cachedSubscriptionData,
@@ -471,6 +476,7 @@ class RealP0Repository(context: Context) : P0Repository {
         val currentOrderNo = paymentRepository.getCurrentOrderId()
         val orderSnapshot = loadOrdersSnapshot()
         val orders = orderSnapshot.orders
+        var walletOverview = paymentRepository.getCachedWalletOverview(currentUserId)
         val latestOrder = orders.maxByOrNull { it.createdAt }
         val activeOrder = currentOrderNo?.let { orderNo ->
             orders.firstOrNull { it.orderNo == orderNo }
@@ -541,7 +547,10 @@ class RealP0Repository(context: Context) : P0Repository {
                 oneTapLabel = if (hasLocalConfig) "启动已导入配置" else "导入已购配置后连接",
                 speedNodes = cachedNodeSnapshots.map { it.toRegionSpeed() },
                 watchSignals = localSignals,
-                overviewValueText = resolveOverviewValueText(orders, orderSnapshot.syncUnavailable),
+                overviewValueText = resolveVpnOverviewValueText(
+                    walletOverview = walletOverview,
+                    ordersSyncUnavailable = orderSnapshot.syncUnavailable,
+                ),
                 overviewSummaryText = buildOverviewSummary(
                     orders = orders,
                     subscription = null,
@@ -583,6 +592,7 @@ class RealP0Repository(context: Context) : P0Repository {
         }
 
         val me = meResult.getOrThrow()
+        walletOverview = paymentRepository.getWalletOverview().getOrNull() ?: walletOverview
         val subscription = paymentRepository.getSubscription().getOrNull() ?: me.subscription
         val hasActiveSubscription = subscription?.status.equals("ACTIVE", ignoreCase = true)
         val vpnStatus = if (hasActiveSubscription) {
@@ -659,7 +669,10 @@ class RealP0Repository(context: Context) : P0Repository {
                 allowedRegions.map { it.toRegionSpeed() }
             },
             watchSignals = watchSignals,
-            overviewValueText = resolveOverviewValueText(orders, orderSnapshot.syncUnavailable),
+            overviewValueText = resolveVpnOverviewValueText(
+                walletOverview = walletOverview,
+                ordersSyncUnavailable = orderSnapshot.syncUnavailable,
+            ),
             overviewSummaryText = buildOverviewSummary(
                 orders = orders,
                 subscription = subscription,
@@ -1176,17 +1189,6 @@ class RealP0Repository(context: Context) : P0Repository {
         val subscriptionText = subscription?.status ?: "订阅待同步"
         val expiryText = resolveVlessExpiryLabel(subscription, fallbackExpireAt)
         return "$orderText · $subscriptionText · VLESS 至 $expiryText"
-    }
-
-    private fun resolveOverviewValueText(
-        orders: List<Order>,
-        ordersSyncUnavailable: Boolean,
-    ): String {
-        return if (orders.isEmpty() && ordersSyncUnavailable) {
-            "--"
-        } else {
-            formatUsdAmount(orders.sumOf { it.quoteUsdAmount.toDoubleOrNull() ?: 0.0 })
-        }
     }
 
     private fun resolveOrdersFallbackLabel(ordersSyncUnavailable: Boolean): String {
