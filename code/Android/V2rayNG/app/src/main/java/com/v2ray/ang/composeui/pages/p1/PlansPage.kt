@@ -1,33 +1,23 @@
 package com.v2ray.ang.composeui.pages.p1
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -43,41 +33,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
+import com.v2ray.ang.composeui.components.app.AppPageBackgroundStyle
+import com.v2ray.ang.composeui.components.app.AppPageScaffold
+import com.v2ray.ang.composeui.components.buttons.AppButtonSize
+import com.v2ray.ang.composeui.components.buttons.AppPrimaryButton
+import com.v2ray.ang.composeui.components.cards.AppCard
+import com.v2ray.ang.composeui.components.cards.AppCardVariant
+import com.v2ray.ang.composeui.components.chips.AppChip
+import com.v2ray.ang.composeui.components.chips.AppChipTone
+import com.v2ray.ang.composeui.components.feedback.EmptyStateCard
+import com.v2ray.ang.composeui.components.navigation.AppTopBar
+import com.v2ray.ang.composeui.components.navigation.AppTopBarMode
+import com.v2ray.ang.composeui.components.rows.LabelValueRow
+import com.v2ray.ang.composeui.components.sections.InfoSection
 import com.v2ray.ang.composeui.p1.model.PlanOptionUi
 import com.v2ray.ang.composeui.p1.model.PlansEvent
 import com.v2ray.ang.composeui.p1.model.PlansUiState
 import com.v2ray.ang.composeui.p1.model.plansPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.PlansViewModel
+import com.v2ray.ang.composeui.theme.AppTheme
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
-private val SubscriptionBgTop = Color(0xFFF5F6FF)
-private val SubscriptionBgBottom = Color(0xFFEFF8FF)
-private val SubscriptionTitle = Color(0xFF101828)
-private val SubscriptionSubtle = Color(0xFF98A2B3)
-private val TagTextColor = Color(0xFF5A78FF)
-private val GradientStart = Color(0xFF4C74FF)
-private val GradientEnd = Color(0xFF21C7E8)
-
-private data class PlansTypeScale(
-    val hero: TextStyle,
-    val section: TextStyle,
-    val cardTitle: TextStyle,
-    val itemTitle: TextStyle,
-    val body: TextStyle,
-    val caption: TextStyle,
-)
+private val PlansGlowBlue = Color(0x224F7CFF)
+private val PlansGlowCyan = Color(0x1825D7FF)
 
 @Composable
 fun PlansRoute(
@@ -111,7 +93,6 @@ fun PlansScreen(
     onBottomNav: (String) -> Unit = {},
 ) {
     var selectedPlanCode by rememberSaveable { mutableStateOf<String?>(null) }
-    val typeScale = rememberPlansTypeScale()
     LaunchedEffect(uiState.selectedPlanCode, uiState.plans) {
         val availableCodes = uiState.plans.map { it.planCode }
         if (selectedPlanCode == null || selectedPlanCode !in availableCodes) {
@@ -121,233 +102,124 @@ fun PlansScreen(
     val selectedPlan = remember(uiState.plans, selectedPlanCode) {
         uiState.plans.firstOrNull { it.planCode == selectedPlanCode } ?: uiState.plans.firstOrNull()
     }
+    val payEnabledText = selectedPlan?.paymentMethods?.firstOrNull()?.substringBefore('-')
+        ?.takeIf { it.isNotBlank() }
+        ?: "支持钱包直付"
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        SubscriptionBackground()
-
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .widthIn(max = 680.dp),
-            contentPadding = PaddingValues(start = 16.dp, top = 22.dp, end = 16.dp, bottom = 108.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            item {
-                SubscriptionHeader(payEnabledText = "支持钱包直付", typeScale = typeScale)
-            }
-
-            item {
-                CurrentStatusCard(
-                    currentPlanName = uiState.currentPlanName,
-                    accessDescription = uiState.currentPlanDescription,
-                    payMethodName = selectedPlan?.paymentMethods?.firstOrNull()?.substringBefore('-') ?: "--",
-                    payMethodDescription = selectedPlan?.paymentMethods?.joinToString("/") ?: "等待可用支付网络",
-                    remainingDaysText = uiState.currentPlanStatusText,
-                    typeScale = typeScale,
-                )
-            }
-
-            if (uiState.screenState.hasError) {
-                item {
-                    FrostCard {
-                        Text(
-                            text = uiState.screenState.unavailableMessage
-                                ?: uiState.screenState.errorMessage
-                                ?: uiState.screenState.emptyMessage
-                                ?: "套餐服务异常",
-                            modifier = Modifier.padding(18.dp),
-                            color = SubscriptionSubtle,
-                            style = typeScale.body,
-                        )
-                    }
-                }
-            }
-
-            items(items = uiState.plans, key = { it.planCode }) { plan ->
-                SubscriptionPlanCard(
-                    plan = plan,
-                    selected = plan.planCode == selectedPlan?.planCode,
-                    onClick = { selectedPlanCode = plan.planCode },
-                    typeScale = typeScale,
-                )
-            }
-
-            if (uiState.plans.isEmpty()) {
-                item {
-                    FrostCard {
-                        Text(
-                            text = uiState.screenState.emptyMessage ?: "当前没有可售套餐。",
-                            modifier = Modifier.padding(18.dp),
-                            color = SubscriptionSubtle,
-                            style = typeScale.body,
-                        )
-                    }
-                }
-            }
-        }
-
-        BottomPayBar(
-            onPayClick = {
-                selectedPlan?.let { onPrimaryAction(it.planCode) } ?: onRefresh()
-            },
-            modifier = Modifier.align(Alignment.BottomCenter),
-            enabled = selectedPlan != null || uiState.screenState.hasError,
-            typeScale = typeScale,
-        )
-    }
-}
-
-@Composable
-private fun SubscriptionHeader(
-    payEnabledText: String,
-    typeScale: PlansTypeScale,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "SUBSCRIPTION",
-                    letterSpacing = 1.4.sp,
-                    color = Color(0xFF7D8FB3),
-                    style = typeScale.caption,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "购买你的套餐",
-                    color = SubscriptionTitle,
-                    style = typeScale.hero,
-                )
-            }
-
-            StatusPill(
-                text = payEnabledText,
-                icon = Icons.Outlined.CheckCircle,
+    AppPageScaffold(
+        backgroundStyle = AppPageBackgroundStyle.Hero,
+        contentPadding = PaddingValues(
+            horizontal = AppTheme.spacing.pageHorizontal,
+            vertical = AppTheme.spacing.space20,
+        ),
+        background = {
+            PlansBackgroundGlow()
+        },
+        bottomBar = {
+            PlansBottomBar(
+                selectedPlan = selectedPlan,
+                buttonLabel = uiState.primaryActionLabel.ifBlank { "继续结算" },
+                enabled = selectedPlan != null || uiState.screenState.hasError,
+                onPayClick = {
+                    selectedPlan?.let { onPrimaryAction(it.planCode) } ?: onRefresh()
+                },
             )
-        }
-
-    }
-}
-
-@Composable
-private fun StatusPill(
-    text: String,
-    icon: ImageVector,
-) {
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(Color(0xFFEFFBF5))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color(0xFF22A06B),
-            modifier = Modifier.size(14.dp),
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = text,
-            color = Color(0xFF22A06B),
-            style = MaterialTheme.typography.labelMedium,
-        )
-    }
-}
-
-@Composable
-private fun CurrentStatusCard(
-    currentPlanName: String,
-    accessDescription: String,
-    payMethodName: String,
-    payMethodDescription: String,
-    remainingDaysText: String,
-    typeScale: PlansTypeScale,
-) {
-    FrostCard {
+        },
+    ) { _ ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .widthIn(max = 680.dp),
+            verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.sectionGap),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "当前状态",
-                    color = SubscriptionTitle,
-                    style = typeScale.section,
-                )
-                Text(
-                    text = remainingDaysText,
-                    color = SubscriptionSubtle,
-                    style = typeScale.caption,
-                )
-            }
+            AppTopBar(
+                title = uiState.title,
+                subtitle = uiState.subtitle,
+                mode = AppTopBarMode.Hero,
+                actions = {
+                    AppChip(
+                        text = payEnabledText,
+                        tone = AppChipTone.Success,
+                    )
+                },
+            )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                StatusInfoBlock(
-                    title = "当前计划",
-                    value = currentPlanName,
-                    subtitle = accessDescription,
-                    modifier = Modifier.weight(1f),
-                    typeScale = typeScale,
+            PlansStatusSection(
+                currentPlanName = uiState.currentPlanName,
+                accessDescription = uiState.currentPlanDescription,
+                paymentMethods = selectedPlan?.paymentMethods.orEmpty(),
+                statusText = uiState.currentPlanStatusText,
+            )
+
+            if (uiState.screenState.hasError) {
+                EmptyStateCard(
+                    title = "套餐服务不可用",
+                    message = uiState.screenState.unavailableMessage
+                        ?: uiState.screenState.errorMessage
+                        ?: "当前套餐服务异常，请稍后重试。",
+                    actionLabel = "重新加载",
+                    onAction = onRefresh,
                 )
-                StatusInfoBlock(
-                    title = "支付资产",
-                    value = payMethodName,
-                    subtitle = payMethodDescription,
-                    modifier = Modifier.weight(1f),
-                    typeScale = typeScale,
+            } else if (uiState.plans.isEmpty()) {
+                EmptyStateCard(
+                    title = "当前没有可售套餐",
+                    message = uiState.screenState.emptyMessage ?: "稍后再试，或切换到其他页面继续浏览。",
+                    actionLabel = uiState.secondaryActionLabel,
+                    onAction = onSecondaryAction,
                 )
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
+                ) {
+                    Text(
+                        text = "可选套餐",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = AppTheme.colors.textPrimary,
+                    )
+                    uiState.plans.forEach { plan ->
+                        SubscriptionPlanCard(
+                            plan = plan,
+                            selected = plan.planCode == selectedPlan?.planCode,
+                            onClick = { selectedPlanCode = plan.planCode },
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun StatusInfoBlock(
-    title: String,
-    value: String,
-    subtitle: String,
-    modifier: Modifier = Modifier,
-    typeScale: PlansTypeScale,
+private fun PlansStatusSection(
+    currentPlanName: String,
+    accessDescription: String,
+    paymentMethods: List<String>,
+    statusText: String,
 ) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color.White.copy(alpha = 0.72f))
-            .padding(horizontal = 14.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+    InfoSection(
+        title = "当前状态",
+        subtitle = accessDescription,
+        trailing = {
+            AppChip(
+                text = statusText,
+                tone = planStatusTone(statusText),
+            )
+        },
     ) {
-        Text(
-            text = title,
-            color = SubscriptionSubtle,
-            style = typeScale.caption,
+        LabelValueRow(
+            label = "当前计划",
+            value = currentPlanName,
         )
-        Text(
-            text = value,
-            color = SubscriptionTitle,
-            style = typeScale.cardTitle,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+        androidx.compose.material3.HorizontalDivider(color = AppTheme.colors.dividerSubtle)
+        LabelValueRow(
+            label = "支付网络",
+            value = paymentMethods.firstOrNull()?.substringBefore('-') ?: "--",
+            supportingText = paymentMethods.joinToString("/").takeIf { it.isNotBlank() } ?: "等待可用支付网络",
         )
-        Text(
-            text = subtitle,
-            color = TagTextColor,
-            style = typeScale.caption,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
+        androidx.compose.material3.HorizontalDivider(color = AppTheme.colors.dividerSubtle)
+        LabelValueRow(
+            label = "状态",
+            value = statusText,
         )
     }
 }
@@ -357,73 +229,69 @@ private fun SubscriptionPlanCard(
     plan: PlanOptionUi,
     selected: Boolean,
     onClick: () -> Unit,
-    typeScale: PlansTypeScale,
 ) {
-    val cardBrush = if (selected) {
-        Brush.linearGradient(
-            listOf(Color(0xFFF2F8FF), Color(0xFFEFFBFF)),
-        )
-    } else {
-        Brush.linearGradient(
-            listOf(Color.White.copy(alpha = 0.84f), Color.White.copy(alpha = 0.80f)),
-        )
-    }
-
-    Card(
+    val variant = if (selected) AppCardVariant.Highlight else AppCardVariant.Default
+    AppCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.78f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        variant = variant,
     ) {
         Column(
-            modifier = Modifier
-                .background(cardBrush)
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top,
             ) {
-                Text(
-                    text = plan.title,
-                    color = SubscriptionTitle,
-                    style = typeScale.cardTitle,
-                )
-                if (plan.badge != null) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space4),
+                ) {
                     Text(
-                        text = plan.badge,
-                        color = TagTextColor,
-                        style = typeScale.caption,
+                        text = plan.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = AppTheme.colors.textPrimary,
                     )
+                    if (plan.description.isNotBlank()) {
+                        Text(
+                            text = plan.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AppTheme.colors.textSecondary,
+                        )
+                    }
                 }
+                AppChip(
+                    text = when {
+                        selected -> "已选择"
+                        !plan.badge.isNullOrBlank() -> plan.badge
+                        else -> "可购买"
+                    },
+                    tone = if (selected) AppChipTone.Brand else AppChipTone.Neutral,
+                )
             }
 
             Text(
                 text = plan.priceText,
-                color = SubscriptionTitle,
-                style = typeScale.hero,
-            )
-
-            Text(
-                text = plan.description,
-                color = SubscriptionSubtle,
-                style = typeScale.body,
+                style = AppTheme.typography.metricL,
+                color = AppTheme.colors.textPrimary,
             )
 
             Row(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.space8),
             ) {
                 buildList {
                     add(plan.durationText)
                     add(plan.maxSessionsText)
                     addAll(plan.paymentMethods)
-                }.forEach { tag ->
-                    SmallTag(text = tag)
+                }.filter { it.isNotBlank() }.forEach { tag ->
+                    AppChip(
+                        text = tag,
+                        tone = if (selected) AppChipTone.Brand else AppChipTone.Neutral,
+                        selected = selected,
+                    )
                 }
             }
         }
@@ -431,165 +299,84 @@ private fun SubscriptionPlanCard(
 }
 
 @Composable
-private fun SmallTag(text: String) {
-    Text(
-        text = text,
-        modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(Color(0xFFF2F6FF))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        color = TagTextColor,
-        style = MaterialTheme.typography.labelMedium,
-    )
-}
-
-@Composable
-private fun BottomPayBar(
-    onPayClick: () -> Unit,
-    modifier: Modifier = Modifier,
+private fun PlansBottomBar(
+    selectedPlan: PlanOptionUi?,
+    buttonLabel: String,
     enabled: Boolean,
-    typeScale: PlansTypeScale,
+    onPayClick: () -> Unit,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Color.White.copy(alpha = 0.22f))
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+    Surface(
+        color = AppTheme.colors.surfaceCard.copy(alpha = 0.96f),
+        shadowElevation = AppTheme.elevation.card,
     ) {
-        Button(
-            onClick = onPayClick,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(54.dp),
-            enabled = enabled,
-            shape = RoundedCornerShape(18.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-            contentPadding = PaddingValues(),
+                .navigationBarsPadding()
+                .padding(horizontal = AppTheme.spacing.pageHorizontal, vertical = AppTheme.spacing.space12),
+            verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space8),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Brush.horizontalGradient(listOf(GradientStart, GradientEnd))),
-                contentAlignment = Alignment.Center,
-            ) {
+            selectedPlan?.let { plan ->
                 Text(
-                    text = "使用钱包支付并开通",
-                    color = Color.White,
-                    style = typeScale.itemTitle,
+                    text = "已选 ${plan.title} · ${plan.priceText}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppTheme.colors.textSecondary,
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun FrostCard(content: @Composable () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.82f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-    ) {
-        Box(
-            modifier = Modifier.background(
-                brush = Brush.linearGradient(
-                    listOf(
-                        Color.White.copy(alpha = 0.60f),
-                        Color(0xFFF3FBFF).copy(alpha = 0.56f),
-                    ),
-                ),
-            ),
-        ) {
-            content()
-        }
-    }
-}
-
-@Composable
-private fun SubscriptionBackground() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(colors = listOf(SubscriptionBgTop, SubscriptionBgBottom))),
-    ) {
-        SoftGlow(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .size(220.dp),
-            color = Color(0xFF9B8CFF).copy(alpha = 0.18f),
-        )
-        SoftGlow(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 90.dp)
-                .size(260.dp),
-            color = Color(0xFF61DFFF).copy(alpha = 0.16f),
-        )
-        SubscriptionDots()
-    }
-}
-
-@Composable
-private fun SoftGlow(
-    modifier: Modifier,
-    color: Color,
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(color)
-            .blur(42.dp),
-    )
-}
-
-@Composable
-private fun SubscriptionDots() {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val points = listOf(
-            Offset(size.width * 0.06f, size.height * 0.12f),
-            Offset(size.width * 0.18f, size.height * 0.54f),
-            Offset(size.width * 0.30f, size.height * 0.86f),
-            Offset(size.width * 0.52f, size.height * 0.42f),
-            Offset(size.width * 0.78f, size.height * 0.62f),
-            Offset(size.width * 0.90f, size.height * 0.20f),
-        )
-        points.forEachIndexed { index, point ->
-            drawCircle(
-                color = if (index % 2 == 0) Color(0xFF5ED8F8).copy(alpha = 0.22f) else Color(0xFF9A90FF).copy(alpha = 0.20f),
-                radius = if (index % 2 == 0) 4f else 3f,
-                center = point,
+            AppPrimaryButton(
+                text = buttonLabel,
+                onClick = onPayClick,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = enabled,
             )
         }
     }
+}
+
+@Composable
+private fun PlansBackgroundGlow() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 48.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(220.dp)
+                .background(PlansGlowBlue, RoundedCornerShape(999.dp))
+                .blur(48.dp),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(top = 360.dp)
+                .size(260.dp)
+                .background(PlansGlowCyan, RoundedCornerShape(999.dp))
+                .blur(60.dp),
+        )
+    }
+}
+
+private fun planStatusTone(statusText: String): AppChipTone = when {
+    statusText.contains("尚未", ignoreCase = true) -> AppChipTone.Warning
+    statusText.contains("未", ignoreCase = true) -> AppChipTone.Warning
+    statusText.contains("待", ignoreCase = true) -> AppChipTone.Warning
+    statusText.contains("可用", ignoreCase = true) -> AppChipTone.Success
+    statusText.contains("有效", ignoreCase = true) -> AppChipTone.Success
+    statusText.contains("ACTIVE", ignoreCase = true) -> AppChipTone.Success
+    else -> AppChipTone.Info
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFFF5F7FF)
 @Composable
 private fun PlansPreview() {
     CryptoVpnTheme {
-        Surface {
-            PlansScreen(
-                uiState = plansPreviewState(),
-                onRefresh = {},
-                onPrimaryAction = {},
-                onSecondaryAction = {},
-            )
-        }
-    }
-}
-
-@Composable
-private fun rememberPlansTypeScale(): PlansTypeScale {
-    val typography = MaterialTheme.typography
-    return remember(typography) {
-        PlansTypeScale(
-            hero = typography.headlineLarge,
-            section = typography.headlineMedium,
-            cardTitle = typography.titleLarge,
-            itemTitle = typography.titleMedium,
-            body = typography.bodyMedium,
-            caption = typography.labelMedium,
+        PlansScreen(
+            uiState = plansPreviewState(),
+            onRefresh = {},
+            onPrimaryAction = {},
+            onSecondaryAction = {},
         )
     }
 }
