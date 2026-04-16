@@ -16,6 +16,7 @@ import com.v2ray.ang.composeui.p0.ui.P01BottomNav
 import com.v2ray.ang.composeui.p0.ui.P01HeaderHeroRing
 import com.v2ray.ang.composeui.p0.ui.defaultP01Destinations
 import com.v2ray.ang.composeui.theme.AppTheme
+import com.v2ray.ang.composeui.theme.tokens.OverviewBaselineTokens
 import androidx.compose.material3.Text
 
 @Deprecated("Growth-specific shell; do not expand as a common foundation scaffold.")
@@ -30,6 +31,7 @@ fun AppGrowthPageScaffold(
     badge: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val baseline = OverviewBaselineTokens.primary
     AppPageScaffold(
         modifier = modifier,
         backgroundStyle = AppPageBackgroundStyle.Tech,
@@ -41,13 +43,13 @@ fun AppGrowthPageScaffold(
             )
         },
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
-            horizontal = AppTheme.spacing.pageHorizontal,
-            vertical = AppTheme.spacing.space8,
+            horizontal = baseline.pageHorizontal,
+            vertical = baseline.pageTopSpacing,
         ),
     ) { _ ->
         Column(
             modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(baseline.sectionGap),
         ) {
             AppTopBar(
                 title = title,

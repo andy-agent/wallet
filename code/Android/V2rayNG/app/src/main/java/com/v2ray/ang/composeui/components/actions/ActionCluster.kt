@@ -33,6 +33,7 @@ fun ActionCluster(
     modifier: Modifier = Modifier,
     layoutMode: ActionClusterLayoutMode = ActionClusterLayoutMode.Auto,
     buttonSize: AppButtonSize = AppButtonSize.Md,
+    buttonMinHeight: Dp? = null,
     spacing: Dp = AppTheme.spacing.space12,
     buttonShape: Shape? = null,
 ) {
@@ -54,6 +55,7 @@ fun ActionCluster(
                     modifier = Modifier.weight(1f),
                     variant = action.variant,
                     size = buttonSize,
+                    minHeight = buttonMinHeight,
                     shape = resolvedShape,
                     leadingIcon = action.leadingIcon,
                 )
@@ -71,6 +73,7 @@ fun ActionCluster(
                     modifier = Modifier.fillMaxWidth(),
                     variant = action.variant,
                     size = buttonSize,
+                    minHeight = buttonMinHeight,
                     shape = resolvedShape,
                     leadingIcon = action.leadingIcon,
                 )

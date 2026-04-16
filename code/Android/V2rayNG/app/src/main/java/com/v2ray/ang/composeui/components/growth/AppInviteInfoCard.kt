@@ -16,6 +16,7 @@ import com.v2ray.ang.composeui.components.cards.AppCard
 import com.v2ray.ang.composeui.components.chips.AppChip
 import com.v2ray.ang.composeui.components.chips.AppChipTone
 import com.v2ray.ang.composeui.theme.AppTheme
+import com.v2ray.ang.composeui.theme.tokens.OverviewBaselineTokens
 
 @Composable
 fun AppInviteInfoCard(
@@ -27,14 +28,15 @@ fun AppInviteInfoCard(
     statusLabel: String? = "实时同步",
     note: String = "",
 ) {
+    val baseline = OverviewBaselineTokens.primary
     AppCard(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        contentPadding = 14.dp,
-        shadowElevation = 4.dp,
+        shape = RoundedCornerShape(baseline.infoCardRadius),
+        contentPadding = baseline.infoCardPadding,
+        shadowElevation = baseline.infoCardShadow,
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(baseline.sectionGap),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -96,7 +98,7 @@ private fun InvitePrimaryValueBlock(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(OverviewBaselineTokens.primary.contentTightGap),
     ) {
         Text(
             text = label,
@@ -120,7 +122,7 @@ private fun InviteSupportingValueBlock(
     supportingText: String,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(OverviewBaselineTokens.primary.contentTightGap),
     ) {
         Text(
             text = label,
@@ -129,7 +131,7 @@ private fun InviteSupportingValueBlock(
         )
         androidx.compose.material3.Surface(
             color = AppTheme.colors.bgSubtle,
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(OverviewBaselineTokens.primary.metricSurfaceRadius),
             border = BorderStroke(1.dp, AppTheme.colors.dividerSubtle),
         ) {
             Column(

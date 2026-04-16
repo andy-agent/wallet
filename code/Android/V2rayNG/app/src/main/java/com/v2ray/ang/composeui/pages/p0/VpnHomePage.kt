@@ -76,6 +76,7 @@ import com.v2ray.ang.composeui.p0.model.vpnHomePreviewState
 import com.v2ray.ang.composeui.p0.ui.P01BottomIcon
 import com.v2ray.ang.composeui.p0.ui.P01BottomIconKind
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.composeui.theme.tokens.OverviewBaselineTokens
 import com.v2ray.ang.composeui.p0.viewmodel.VpnHomeViewModel
 import com.v2ray.ang.dto.SubscriptionItem
 import com.v2ray.ang.fmt.VlessFmt
@@ -105,16 +106,25 @@ private val OverviewCyan = Color(0xFF25CFF0)
 private val OverviewGreen = Color(0xFF38D69F)
 private val OverviewOrange = Color(0xFFFF9551)
 private val OverviewGradient = Brush.horizontalGradient(listOf(OverviewBlue, OverviewCyan))
-private val OverviewPageHorizontal = 20.dp
-private val OverviewTopSpacing = 10.dp
-private val OverviewCardRadius = 28.dp
-private val OverviewInputRadius = 28.dp
+private val OverviewPageHorizontal = OverviewBaselineTokens.primary.pageHorizontal
+private val OverviewTopSpacing = OverviewBaselineTokens.primary.pageTopSpacing
+private val OverviewSectionGap = OverviewBaselineTokens.primary.sectionGap
+private val OverviewCardRadius = OverviewBaselineTokens.primary.heroRadius
+private val OverviewInputRadius = OverviewBaselineTokens.primary.heroRadius
 private val OverviewSearchHeight = 58.dp
-private val OverviewHeroCardHeight = 322.dp
+private val OverviewHeroCardHeight = OverviewBaselineTokens.primary.heroCardHeight
+private val OverviewHeroPadding = OverviewBaselineTokens.primary.heroPadding
+private val OverviewHeroShadow = OverviewBaselineTokens.primary.heroShadow
 private val OverviewOrbSize = 152.dp
 private val OverviewStatCardHeight = 74.dp
 private val OverviewActionCardHeight = 98.dp
-private val OverviewButtonHeight = 54.dp
+private val OverviewButtonHeight = OverviewBaselineTokens.primary.actionButtonHeight
+private val OverviewButtonRadius = OverviewBaselineTokens.primary.actionButtonRadius
+private val OverviewActionGap = OverviewBaselineTokens.primary.actionButtonGap
+private val OverviewMetricRadius = OverviewBaselineTokens.primary.metricSurfaceRadius
+private val OverviewMetricMinHeight = OverviewBaselineTokens.primary.metricSurfaceMinHeight
+private val OverviewInfoCardRadius = OverviewBaselineTokens.primary.infoCardRadius
+private val OverviewInfoCardPadding = OverviewBaselineTokens.primary.infoCardPadding
 private val OverviewAlertMinHeight = 84.dp
 private val SearchHeight = OverviewSearchHeight
 
@@ -380,14 +390,14 @@ private fun OverviewPageScaffold(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(horizontal = OverviewPageHorizontal, vertical = 10.dp),
+                .padding(horizontal = OverviewPageHorizontal, vertical = OverviewTopSpacing),
         ) {
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(OverviewSectionGap),
                 content = content,
             )
             Spacer(modifier = Modifier.height(10.dp))
@@ -502,17 +512,17 @@ private fun SecureTunnelCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(OverviewHeroCardHeight)
-            .shadow(12.dp, RoundedCornerShape(OverviewCardRadius), ambientColor = Color(0x12000000), spotColor = Color(0x12000000))
+            .shadow(OverviewHeroShadow, RoundedCornerShape(OverviewCardRadius), ambientColor = Color(0x12000000), spotColor = Color(0x12000000))
             .clip(RoundedCornerShape(OverviewCardRadius))
             .background(OverviewCard)
             .border(1.dp, OverviewBorder, RoundedCornerShape(OverviewCardRadius))
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .padding(horizontal = OverviewHeroPadding, vertical = OverviewHeroPadding),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = OverviewButtonHeight + 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .padding(bottom = OverviewButtonHeight + OverviewHeroPadding),
+            verticalArrangement = Arrangement.spacedBy(OverviewSectionGap),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -573,7 +583,7 @@ private fun SecureTunnelCard(
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(OverviewActionGap),
                     ) {
                         CompactStatCard(
                             modifier = Modifier.weight(1f),
@@ -594,7 +604,7 @@ private fun SecureTunnelCard(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(OverviewActionGap),
         ) {
             SecondaryTunnelButton(
                 modifier = Modifier.weight(1f),
@@ -688,10 +698,10 @@ private fun CompactStatCard(
 ) {
     Column(
         modifier = modifier
-            .height(58.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .height(OverviewMetricMinHeight)
+            .clip(RoundedCornerShape(OverviewMetricRadius))
             .background(Color(0xFFFDFEFF))
-            .border(1.dp, OverviewBorder, RoundedCornerShape(20.dp))
+            .border(1.dp, OverviewBorder, RoundedCornerShape(OverviewMetricRadius))
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -721,10 +731,10 @@ private fun SecondaryTunnelButton(
     Box(
         modifier = modifier
             .height(OverviewButtonHeight)
-            .shadow(4.dp, RoundedCornerShape(18.dp), ambientColor = Color(0x0A000000), spotColor = Color(0x0A000000))
-            .clip(RoundedCornerShape(18.dp))
+            .shadow(4.dp, RoundedCornerShape(OverviewButtonRadius), ambientColor = Color(0x0A000000), spotColor = Color(0x0A000000))
+            .clip(RoundedCornerShape(OverviewButtonRadius))
             .background(Color(0xFFFDFEFF))
-            .border(1.dp, Color(0xFFE7EDF7), RoundedCornerShape(18.dp))
+            .border(1.dp, Color(0xFFE7EDF7), RoundedCornerShape(OverviewButtonRadius))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -747,8 +757,8 @@ private fun PrimaryTunnelButton(
     Box(
         modifier = modifier
             .height(OverviewButtonHeight)
-            .shadow(6.dp, RoundedCornerShape(18.dp), ambientColor = Color(0x12000000), spotColor = Color(0x12000000))
-            .clip(RoundedCornerShape(18.dp))
+            .shadow(6.dp, RoundedCornerShape(OverviewButtonRadius), ambientColor = Color(0x12000000), spotColor = Color(0x12000000))
+            .clip(RoundedCornerShape(OverviewButtonRadius))
             .background(OverviewGradient)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -789,12 +799,12 @@ private fun OverviewQuickActions(actions: List<OverviewAction>) {
                 modifier = Modifier
                     .weight(1f)
                     .height(OverviewActionCardHeight)
-                    .shadow(6.dp, RoundedCornerShape(22.dp), ambientColor = Color(0x0F000000), spotColor = Color(0x0F000000))
-                    .clip(RoundedCornerShape(22.dp))
+                    .shadow(6.dp, RoundedCornerShape(OverviewInfoCardRadius), ambientColor = Color(0x0F000000), spotColor = Color(0x0F000000))
+                    .clip(RoundedCornerShape(OverviewInfoCardRadius))
                     .background(Color.White.copy(alpha = 0.96f))
-                    .border(1.dp, OverviewBorder, RoundedCornerShape(22.dp))
+                    .border(1.dp, OverviewBorder, RoundedCornerShape(OverviewInfoCardRadius))
                     .clickable(onClick = action.onClick)
-                    .padding(vertical = 14.dp, horizontal = 8.dp),
+                    .padding(vertical = OverviewInfoCardPadding, horizontal = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -831,12 +841,12 @@ private fun OverviewAlerts(alerts: List<OverviewAlert>) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = OverviewAlertMinHeight)
-                    .shadow(4.dp, RoundedCornerShape(22.dp), ambientColor = Color(0x0E000000), spotColor = Color(0x0E000000))
-                    .clip(RoundedCornerShape(22.dp))
+                    .shadow(4.dp, RoundedCornerShape(OverviewInfoCardRadius), ambientColor = Color(0x0E000000), spotColor = Color(0x0E000000))
+                    .clip(RoundedCornerShape(OverviewInfoCardRadius))
                     .background(Color.White.copy(alpha = 0.96f))
-                    .border(1.dp, OverviewBorder, RoundedCornerShape(22.dp))
+                    .border(1.dp, OverviewBorder, RoundedCornerShape(OverviewInfoCardRadius))
                     .clickable(onClick = alert.onClick)
-                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                    .padding(horizontal = OverviewInfoCardPadding, vertical = OverviewInfoCardPadding),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

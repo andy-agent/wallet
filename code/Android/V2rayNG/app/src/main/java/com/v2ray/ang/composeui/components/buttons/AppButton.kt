@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.theme.AppTheme
 
@@ -44,14 +45,15 @@ fun AppButton(
     loading: Boolean = false,
     contentPadding: PaddingValues = defaultAppButtonPadding(size),
     shape: Shape? = null,
+    minHeight: Dp? = null,
     leadingIcon: (@Composable () -> Unit)? = null,
     label: (@Composable () -> Unit)? = null,
 ) {
     val resolvedShape = shape ?: RoundedCornerShape(AppTheme.shapes.radiusPill)
-    val minHeight = when (size) {
+    val resolvedMinHeight = minHeight ?: when (size) {
         AppButtonSize.Sm -> 40.dp
         AppButtonSize.Md -> 48.dp
-        AppButtonSize.Lg -> 54.dp
+        AppButtonSize.Lg -> 52.dp
     }
     val textStyle = AppTheme.typography.labelL
     val indicator: @Composable (() -> Unit)? = if (loading) {
@@ -71,7 +73,7 @@ fun AppButton(
                 onClick = onClick,
                 enabled = enabled && !loading,
                 modifier = modifier
-                    .defaultMinSize(minHeight = minHeight)
+                    .defaultMinSize(minHeight = resolvedMinHeight)
                     .background(
                         brush = AppTheme.gradients.primaryGradient,
                         shape = resolvedShape,
@@ -99,7 +101,7 @@ fun AppButton(
             OutlinedButton(
                 onClick = onClick,
                 enabled = enabled && !loading,
-                modifier = modifier.defaultMinSize(minHeight = minHeight),
+                modifier = modifier.defaultMinSize(minHeight = resolvedMinHeight),
                 shape = resolvedShape,
                 border = androidx.compose.foundation.BorderStroke(
                     width = 1.dp,
@@ -126,7 +128,7 @@ fun AppButton(
             TextButton(
                 onClick = onClick,
                 enabled = enabled && !loading,
-                modifier = modifier.defaultMinSize(minHeight = minHeight),
+                modifier = modifier.defaultMinSize(minHeight = resolvedMinHeight),
                 shape = resolvedShape,
                 contentPadding = contentPadding,
                 colors = ButtonDefaults.textButtonColors(

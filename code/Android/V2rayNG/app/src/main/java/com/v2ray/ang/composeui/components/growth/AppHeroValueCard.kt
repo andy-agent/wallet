@@ -12,6 +12,7 @@ import com.v2ray.ang.composeui.components.chips.AppChipTone
 import com.v2ray.ang.composeui.components.cards.AppCard
 import com.v2ray.ang.composeui.components.cards.AppCardVariant
 import com.v2ray.ang.composeui.theme.AppTheme
+import com.v2ray.ang.composeui.theme.tokens.OverviewBaselineTokens
 
 data class AppHeroStat(
     val label: String,
@@ -27,87 +28,93 @@ fun AppHeroValueCard(
     highlight: String? = null,
     stats: List<AppHeroStat> = emptyList(),
 ) {
-    val heroShape = RoundedCornerShape(28.dp)
+    val baseline = OverviewBaselineTokens.primary
+    val heroShape = RoundedCornerShape(baseline.heroRadius)
     AppCard(
         modifier = modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 252.dp),
+            .defaultMinSize(minHeight = baseline.heroSummaryMinHeight),
         variant = AppCardVariant.Highlight,
         shape = heroShape,
         contentPadding = 0.dp,
-        shadowElevation = 12.dp,
+        shadowElevation = baseline.heroShadow,
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .defaultMinSize(minHeight = baseline.heroSummaryMinHeight)
                 .background(
                     brush = AppTheme.gradients.heroGlowGradient,
                     shape = heroShape,
                 )
-                .padding(horizontal = AppTheme.spacing.space16, vertical = AppTheme.spacing.space16),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .padding(horizontal = baseline.heroPadding, vertical = baseline.heroPadding),
         ) {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(baseline.sectionGap),
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space8),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(
-                        text = title,
-                        style = AppTheme.typography.titleL,
-                        color = AppTheme.colors.textOnPrimary.copy(alpha = 0.82f),
-                    )
-                    Text(
-                        text = value,
-                        style = AppTheme.typography.metricL,
-                        color = AppTheme.colors.textOnPrimary,
-                    )
-                    if (supportingText.isNotBlank()) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space8),
+                    ) {
                         Text(
-                            text = supportingText,
-                            style = AppTheme.typography.bodyM,
-                            color = AppTheme.colors.textOnPrimary.copy(alpha = 0.88f),
+                            text = title,
+                            style = AppTheme.typography.titleL,
+                            color = AppTheme.colors.textOnPrimary.copy(alpha = 0.82f),
+                        )
+                        Text(
+                            text = value,
+                            style = AppTheme.typography.metricL,
+                            color = AppTheme.colors.textOnPrimary,
+                        )
+                        if (supportingText.isNotBlank()) {
+                            Text(
+                                text = supportingText,
+                                style = AppTheme.typography.bodyM,
+                                color = AppTheme.colors.textOnPrimary.copy(alpha = 0.88f),
+                            )
+                        }
+                    }
+                    if (!highlight.isNullOrBlank()) {
+                        AppChip(
+                            text = highlight,
+                            tone = AppChipTone.Info,
                         )
                     }
                 }
-                if (!highlight.isNullOrBlank()) {
-                    AppChip(
-                        text = highlight,
-                        tone = AppChipTone.Info,
-                    )
-                }
-            }
-            val visibleStats = stats.filter { it.label.isNotBlank() || it.value.isNotBlank() }
-            if (visibleStats.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    visibleStats.take(2).forEach { stat ->
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .defaultMinSize(minHeight = 58.dp)
-                                .background(
-                                    color = AppTheme.colors.surfaceGlowWeak,
-                                    shape = RoundedCornerShape(20.dp),
+                val visibleStats = stats.filter { it.label.isNotBlank() || it.value.isNotBlank() }
+                if (visibleStats.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(baseline.actionButtonGap),
+                    ) {
+                        visibleStats.take(2).forEach { stat ->
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .defaultMinSize(minHeight = baseline.metricSurfaceMinHeight)
+                                    .background(
+                                        color = AppTheme.colors.surfaceGlowWeak,
+                                        shape = RoundedCornerShape(baseline.metricSurfaceRadius),
+                                    )
+                                    .padding(horizontal = AppTheme.spacing.space12, vertical = AppTheme.spacing.space8),
+                                verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space4),
+                            ) {
+                                Text(
+                                    text = stat.label,
+                                    style = AppTheme.typography.labelS,
+                                    color = AppTheme.colors.textOnPrimary.copy(alpha = 0.78f),
                                 )
-                                .padding(horizontal = AppTheme.spacing.space12, vertical = AppTheme.spacing.space8),
-                            verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space4),
-                        ) {
-                            Text(
-                                text = stat.label,
-                                style = AppTheme.typography.labelS,
-                                color = AppTheme.colors.textOnPrimary.copy(alpha = 0.78f),
-                            )
-                            Text(
-                                text = stat.value,
-                                style = AppTheme.typography.titleM,
-                                color = AppTheme.colors.textOnPrimary,
-                            )
+                                Text(
+                                    text = stat.value,
+                                    style = AppTheme.typography.titleM,
+                                    color = AppTheme.colors.textOnPrimary,
+                                )
+                            }
                         }
                     }
                 }
