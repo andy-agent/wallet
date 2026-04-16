@@ -1,35 +1,82 @@
 package com.v2ray.ang.composeui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.v2ray.ang.composeui.theme.tokens.ColorTokens
 
-val AppWhite = Color(0xFFF7FBFF)
-val LayerWhite = Color(0xFFFFFFFF)
-val SurfaceCloud = Color(0xFFF3F8FF)
-val SurfaceGlaze = Color(0xFFEAF3FF)
-val StrokeSoft = Color(0xFFDDE8F6)
+val AppWhite: Color
+    get() = ColorTokens.BackgroundBase
 
-val ElectricBlue = Color(0xFF4268FF)
-val ElectricCyan = Color(0xFF20C4F4)
-val AuroraPurple = Color(0xFFB58DFF)
-val SignalGreen = Color(0xFF22C783)
-val WarningAmber = Color(0xFFFFA94D)
-val DangerRed = Color(0xFFFF6175)
+val LayerWhite: Color
+    get() = ColorTokens.CardBase
 
-val TextStrong = Color(0xFF162B54)
-val TextBody = Color(0xFF7185AC)
-val TextMuted = Color(0xFF6D7FA4)
-val TextSoft = Color(0xFF8A9CBF)
+val SurfaceCloud: Color
+    get() = ColorTokens.BackgroundSoftTint
 
-val ShadowBlue = Color(0x22315093)
-val GlowBlue = Color(0x334268FF)
-val GlowCyan = Color(0x3320C4F4)
-val GlowPurple = Color(0x33B58DFF)
+val SurfaceGlaze: Color
+    get() = ColorTokens.StatusInfoBg
 
-val SuccessTint = Color(0xFFE8FFF4)
-val WarningTint = Color(0xFFFFF6E5)
-val DangerTint = Color(0xFFFFEEF1)
-val InfoTint = Color(0xFFEEF5FF)
+val StrokeSoft: Color
+    get() = ColorTokens.BorderLight
 
-val DividerLight = Color(0x1A728AD6)
-val NavInactive = Color(0xFF7B8EB4)
-val ScreenStroke = Color(0x29788FDA)
+val ElectricBlue: Color
+    get() = ColorTokens.BrandPrimary
+
+val ElectricCyan: Color
+    get() = ColorTokens.BrandSecondary
+
+val AuroraPurple: Color
+    get() = ColorTokens.AccentPurple
+
+val SignalGreen: Color
+    get() = ColorTokens.StatusSuccess
+
+val WarningAmber: Color
+    get() = ColorTokens.StatusWarning
+
+val DangerRed: Color
+    get() = ColorTokens.StatusError
+
+val TextStrong: Color
+    get() = ColorTokens.TextPrimary
+
+val TextBody: Color
+    get() = ColorTokens.TextSecondary
+
+val TextMuted: Color
+    get() = ColorTokens.TextSecondary
+
+val TextSoft: Color
+    get() = ColorTokens.TextTertiary
+
+val ShadowBlue: Color
+    get() = ColorTokens.ShadowColor
+
+val GlowBlue: Color
+    get() = ColorTokens.GlowPrimary
+
+val GlowCyan: Color
+    get() = ColorTokens.GlowSecondary
+
+val GlowPurple: Color
+    get() = ColorTokens.GlowPurple
+
+val SuccessTint: Color
+    get() = ColorTokens.StatusSuccessBg
+
+val WarningTint: Color
+    get() = ColorTokens.StatusWarningBg
+
+val DangerTint: Color
+    get() = ColorTokens.StatusErrorBg
+
+val InfoTint: Color
+    get() = ColorTokens.StatusInfoBg
+
+val DividerLight: Color
+    get() = ColorTokens.BorderSubtle
+
+val NavInactive: Color
+    get() = ColorTokens.NavInactive
+
+val ScreenStroke: Color
+    get() = ColorTokens.ScreenStroke

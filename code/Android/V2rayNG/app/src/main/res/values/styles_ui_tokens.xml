@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="TextAppearance.CryptoVpn.PageTitle" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:textSize">@dimen/ui_text_page_title</item>
+        <item name="android:textColor">@color/ui_color_text_primary</item>
+    </style>
+
+    <style name="TextAppearance.CryptoVpn.SectionTitle" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textSize">@dimen/ui_text_section_title</item>
+        <item name="android:textColor">@color/ui_color_text_primary</item>
+    </style>
+
+    <style name="TextAppearance.CryptoVpn.Body" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textSize">@dimen/ui_text_body</item>
+        <item name="android:textColor">@color/ui_color_text_primary</item>
+    </style>
+
+    <style name="TextAppearance.CryptoVpn.Caption" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textSize">@dimen/ui_text_caption</item>
+        <item name="android:textColor">@color/ui_color_text_secondary</item>
+    </style>
+</resources>

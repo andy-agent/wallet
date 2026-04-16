@@ -2,12 +2,14 @@ package com.v2ray.ang.composeui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
-import androidx.compose.ui.unit.dp
+import com.v2ray.ang.composeui.theme.tokens.ShapeTokens
 
 val CryptoVpnShapes = Shapes(
-    extraSmall = RoundedCornerShape(10.dp),
-    small = RoundedCornerShape(14.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(28.dp),
-    extraLarge = RoundedCornerShape(34.dp),
+    extraSmall = RoundedCornerShape(ShapeTokens.RadiusXs),
+    small = RoundedCornerShape(ShapeTokens.RadiusS),
+    medium = RoundedCornerShape(ShapeTokens.RadiusM),
+    large = RoundedCornerShape(ShapeTokens.RadiusL),
+    extraLarge = RoundedCornerShape(ShapeTokens.RadiusXl),
 )
+
+val CryptoVpnPillShape = ShapeTokens.Pill

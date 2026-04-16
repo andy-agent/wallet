@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ui_color_brand_primary">#4F7CFF</color>
+    <color name="ui_color_brand_secondary">#25D7FF</color>
+    <color name="ui_color_accent_purple">#8C7CFF</color>
+    <color name="ui_color_accent_mint">#2ED8A3</color>
+    <color name="ui_color_accent_sky">#A9E8FF</color>
+
+    <color name="ui_color_background_base">#F7FAFF</color>
+    <color name="ui_color_background_elevated">#FBFDFF</color>
+    <color name="ui_color_background_soft_tint">#F2F8FF</color>
+
+    <color name="ui_color_card_base">#FFFFFF</color>
+    <color name="ui_color_card_soft">#FCFEFF</color>
+
+    <color name="ui_color_text_primary">#16233B</color>
+    <color name="ui_color_text_secondary">#5E6C84</color>
+    <color name="ui_color_text_tertiary">#8C97AB</color>
+    <color name="ui_color_text_disabled">#B8C1D1</color>
+    <color name="ui_color_text_on_primary">#FFFFFF</color>
+
+    <color name="ui_color_status_success">#2ED8A3</color>
+    <color name="ui_color_status_success_bg">#E8FFF6</color>
+    <color name="ui_color_status_warning">#FFB84D</color>
+    <color name="ui_color_status_warning_bg">#FFF6E8</color>
+    <color name="ui_color_status_error">#FF6B7A</color>
+    <color name="ui_color_status_error_bg">#FFF0F3</color>
+    <color name="ui_color_status_info">#4F7CFF</color>
+    <color name="ui_color_status_info_bg">#EEF4FF</color>
+</resources>
