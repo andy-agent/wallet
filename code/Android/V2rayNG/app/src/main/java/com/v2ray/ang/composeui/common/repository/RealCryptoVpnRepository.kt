@@ -412,7 +412,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getPlansState(): PlansUiState {
-        val plansResult = paymentRepository.getPlans()
+        val plansResult = paymentRepository.syncPlansFromServer(force = true)
         val plans = plansResult.getOrNull()
         if (plansResult.isFailure) {
             val failureMessage = plansResult.exceptionOrNull()?.message ?: "套餐服务不可用"
@@ -467,6 +467,44 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             currentPlanDescription = currentPlanStatus.planDescription,
             currentPlanStatusText = currentPlanStatus.statusText,
             note = "套餐数据来自 PaymentRepository.getPlans()。",
+        )
+    }
+
+    override suspend fun getCachedPlansState(): PlansUiState? {
+        val cachedPlans = paymentRepository.getCachedPlans().orEmpty()
+        if (cachedPlans.isEmpty()) {
+            return null
+        }
+        val sortedPlans = cachedPlans.sortedBy { it.displayOrder }
+        val currentPlanStatus = resolveCurrentPlanStatus(
+            subscription = cachedSubscription(),
+            plans = sortedPlans,
+            cachedOrders = loadCachedOrders(),
+        )
+        return PlansUiState(
+            summary = "已从本地缓存加载 ${sortedPlans.size} 个计划。",
+            screenState = P1ScreenState(),
+            plans = sortedPlans.map {
+                PlanOptionUi(
+                    planCode = it.planCode,
+                    title = normalizePlanDisplayName(it.name),
+                    description = it.description ?: it.regionAccessPolicy,
+                    priceText = "$${it.priceUsd}",
+                    durationText = it.getDurationDisplay(),
+                    maxSessionsText = "${it.maxActiveSessions} 台设备",
+                    badge = it.badge,
+                    paymentMethods = buildList {
+                        if (it.supportsUsdtTrc20()) add("USDT-TRON")
+                        add("USDT-SOL")
+                        if (it.supportsSol()) add("SOL")
+                    },
+                )
+            },
+            selectedPlanCode = sortedPlans.firstOrNull()?.planCode,
+            currentPlanName = currentPlanStatus.planName,
+            currentPlanDescription = currentPlanStatus.planDescription,
+            currentPlanStatusText = currentPlanStatus.statusText,
+            note = "套餐页使用本地缓存预热。",
         )
     }
 
@@ -552,6 +590,21 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun prepareOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState {
+        return buildOrderCheckoutState(args, createOrder = false)
+    }
+
+    override suspend fun getCachedOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState? {
+        val hasCachedPlans = !paymentRepository.getCachedPlans().isNullOrEmpty()
+        val hasCachedCatalog = !paymentRepository.getCachedWalletAssetCatalog().isNullOrEmpty()
+        if (!hasCachedPlans && !hasCachedCatalog) {
+            return null
+        }
+        return buildOrderCheckoutState(args, createOrder = false)
+    }
+
+    override suspend fun refreshOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState {
+        paymentRepository.syncPlansFromServer(force = true)
+        paymentRepository.syncWalletAssetCatalogFromServer(force = true)
         return buildOrderCheckoutState(args, createOrder = false)
     }
 
@@ -2116,6 +2169,21 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     private suspend fun currentSubscription(): CurrentSubscriptionData? {
         return paymentRepository.getSubscription().getOrNull()
             ?: paymentRepository.getMe().getOrNull()?.subscription
+    }
+
+    private fun cachedSubscription(): CurrentSubscriptionData? {
+        val status = paymentRepository.getCachedSubscriptionStatus() ?: return null
+        return CurrentSubscriptionData(
+            planCode = paymentRepository.getCachedSubscriptionPlanCode(),
+            planName = null,
+            status = status,
+            daysRemaining = paymentRepository.getCachedSubscriptionDaysRemaining(),
+            isUnlimitedTraffic = true,
+            maxActiveSessions = 1,
+            expireAt = paymentRepository.getLastIssuedVpnConfigExpireAt(),
+            subscriptionUrl = paymentRepository.getSavedSubscriptionUrl(),
+            marzbanUsername = paymentRepository.getSavedMarzbanUsername(),
+        )
     }
 
     private suspend fun findPlanByCode(planCode: String): Plan? {

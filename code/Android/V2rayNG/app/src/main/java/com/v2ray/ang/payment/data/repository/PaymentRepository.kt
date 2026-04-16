@@ -1246,12 +1246,27 @@ class PaymentRepository(context: Context) {
         cacheSubscriptionMetadata(subscription)
 
         if (!subscription.status.equals("ACTIVE", ignoreCase = true)) {
+            cacheSyncScope.launch {
+                syncPlansFromServer(force = true)
+            }
+            cacheSyncScope.launch {
+                syncWalletAssetCatalogFromServer(force = true)
+            }
             SessionKeepAliveService.start(appContext)
             return@withContext Result.success(Unit)
         }
 
         getVpnStatus().getOrNull()?.let { cacheVpnStatusMetadata(it) }
         getVpnRegions().getOrNull()
+        cacheSyncScope.launch {
+            syncPlansFromServer(force = true)
+        }
+        cacheSyncScope.launch {
+            syncWalletAssetCatalogFromServer(force = true)
+        }
+        cacheSyncScope.launch {
+            syncVpnNodesFromServer(force = true, userId = resolvedUserId)
+        }
 
         val shouldBootstrapConfig = MmkvManager.getSelectServer().isNullOrEmpty()
         if (shouldBootstrapConfig) {

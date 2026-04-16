@@ -50,11 +50,15 @@ interface CryptoVpnRepository {
         code: String,
         password: String,
     ): ResetPasswordActionResult
+    suspend fun getCachedPlansState(): PlansUiState? = null
     suspend fun getPlansState(): PlansUiState
     suspend fun getRegionSelectionState(): RegionSelectionUiState
     suspend fun getCachedRegionSelectionState(): RegionSelectionUiState? = null
     suspend fun selectVpnNode(lineCode: String, nodeId: String): RegionSelectionUiState
+    suspend fun getCachedOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState? = null
     suspend fun prepareOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState
+    suspend fun refreshOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState =
+        prepareOrderCheckoutState(args)
     suspend fun getOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState
     suspend fun getWalletPaymentConfirmState(args: WalletPaymentConfirmRouteArgs): WalletPaymentConfirmUiState
     suspend fun getOrderResultState(args: OrderResultRouteArgs): OrderResultUiState

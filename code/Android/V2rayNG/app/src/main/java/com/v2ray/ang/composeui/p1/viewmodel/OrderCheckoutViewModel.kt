@@ -1,10 +1,12 @@
 package com.v2ray.ang.composeui.p1.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutEvent
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutUiState
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutRouteArgs
+import kotlinx.coroutines.launch
 
 class OrderCheckoutViewModel(
     private val repository: CryptoVpnRepository,
@@ -25,8 +27,11 @@ class OrderCheckoutViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.prepareOrderCheckoutState(currentRouteArgs())
+        viewModelScope.launch {
+            repository.getCachedOrderCheckoutState(currentRouteArgs())?.let { cached ->
+                _uiState.value = cached
+            }
+            _uiState.value = repository.refreshOrderCheckoutState(currentRouteArgs())
         }
     }
 
