@@ -28,18 +28,16 @@ import com.v2ray.ang.composeui.components.actions.ActionClusterAction
 import com.v2ray.ang.composeui.components.app.AppPageBackgroundStyle
 import com.v2ray.ang.composeui.components.app.AppPageScaffold
 import com.v2ray.ang.composeui.components.buttons.AppButtonVariant
-import com.v2ray.ang.composeui.components.cards.AppCard
 import com.v2ray.ang.composeui.components.cards.PaymentSummaryCard
 import com.v2ray.ang.composeui.components.cards.PaymentSummaryField
+import com.v2ray.ang.composeui.components.cards.QrAddressCard
 import com.v2ray.ang.composeui.components.chips.AppChip
 import com.v2ray.ang.composeui.components.chips.AppChipTone
 import com.v2ray.ang.composeui.components.feedback.EmptyStateCard
 import com.v2ray.ang.composeui.components.navigation.AppTopBar
 import com.v2ray.ang.composeui.components.navigation.AppTopBarMode
 import com.v2ray.ang.composeui.components.navigation.CryptoVpnBottomBar
-import com.v2ray.ang.composeui.components.rows.LabelValueRow
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
-import com.v2ray.ang.composeui.p0.ui.P01RealQr
 import com.v2ray.ang.composeui.p1.model.WalletPaymentConfirmEvent
 import com.v2ray.ang.composeui.p1.model.WalletPaymentConfirmUiState
 import com.v2ray.ang.composeui.p1.model.resolvedPaymentQrText
@@ -148,49 +146,16 @@ fun WalletPaymentConfirmScreen(
                 )
             }
 
-            AppCard(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top,
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space4)) {
-                            Text(
-                                text = "扫码支付",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = AppTheme.colors.textPrimary,
-                            )
-                            if (statusMessage.isNotBlank()) {
-                                Text(
-                                    text = statusMessage,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = AppTheme.colors.textSecondary,
-                                )
-                            }
-                        }
-                        if (!orderLabel.isNullOrBlank()) {
-                            AppChip(text = orderLabel, tone = AppChipTone.Neutral)
-                        }
-                    }
-
-                    if (qrText.isNotBlank()) {
-                        Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                            P01RealQr(content = qrText)
-                        }
-                    }
-
-                    if (uiState.collectionAddress.isNotBlank()) {
-                        LabelValueRow(
-                            label = "收款地址",
-                            value = uiState.collectionAddress,
-                            supportingText = "使用钱包扫码或复制地址完成支付",
-                        )
-                    }
-                }
-            }
+            QrAddressCard(
+                title = "扫码支付",
+                subtitle = statusMessage,
+                qrContent = qrText,
+                address = uiState.collectionAddress,
+                addressLabel = "收款地址",
+                supportingText = "使用钱包扫码或复制地址完成支付",
+                status = orderLabel,
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             ActionCluster(
                 actions = listOf(
