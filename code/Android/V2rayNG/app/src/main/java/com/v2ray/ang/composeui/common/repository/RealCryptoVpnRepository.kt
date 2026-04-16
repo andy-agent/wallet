@@ -570,25 +570,14 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         args: OrderCheckoutRouteArgs,
         createOrder: Boolean,
     ): OrderCheckoutUiState {
-        val paymentOptions = paymentRepository.getWalletAssetCatalog().getOrNull()
-            .orEmpty()
-            .filter { it.orderPayable }
-            .map {
-                CheckoutPaymentOptionUi(
-                    assetCode = it.assetCode,
-                    networkCode = it.networkCode,
-                    label = checkoutPaymentLabel(it.assetCode, it.networkCode),
-                    selected = false,
-                )
-            }
-            .distinctBy { "${it.assetCode}:${it.networkCode}" }
+        val plan = findPlanByCode(args.planId)
+        val paymentOptions = buildCheckoutPaymentOptions(plan)
         val selectedOption = paymentOptions.firstOrNull {
             it.assetCode == args.assetCode && it.networkCode == args.networkCode
         } ?: paymentOptions.firstOrNull()
         val normalizedOptions = paymentOptions.map {
             it.copy(selected = selectedOption?.assetCode == it.assetCode && selectedOption.networkCode == it.networkCode)
         }
-        val plan = findPlanByCode(args.planId)
         val selectedRegionCode = paymentRepository.getLastIssuedVpnRegionCode().orEmpty()
         val selectedRegionLabel = resolveCheckoutRegionLabel(selectedRegionCode)
         val cachedEmail = paymentRepository.getCachedCurrentUser()?.email
@@ -683,6 +672,15 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         networkCode: String,
     ): Order? {
         val currentOrderNo = paymentRepository.getCurrentOrderId() ?: return null
+        val cachedCurrentOrder = loadCachedOrders().firstOrNull { it.orderNo == currentOrderNo }
+        if (cachedCurrentOrder != null &&
+            (cachedCurrentOrder.planId != planId ||
+                cachedCurrentOrder.status != PaymentConfig.OrderStatus.PENDING_PAYMENT ||
+                cachedCurrentOrder.assetCode != assetCode ||
+                cachedCurrentOrder.networkCode != networkCode)
+        ) {
+            return null
+        }
         val currentOrder = paymentRepository.getOrder(currentOrderNo).getOrNull() ?: return null
         return currentOrder.takeIf {
             it.planCode == planId &&
@@ -2121,9 +2119,68 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     private suspend fun findPlanByCode(planCode: String): Plan? {
+        paymentRepository.getCachedPlans()
+            ?.firstOrNull { it.planCode == planCode }
+            ?.let { return it }
         return paymentRepository.getPlans().getOrNull()?.firstOrNull {
             it.planCode == planCode
         }
+    }
+
+    private suspend fun buildCheckoutPaymentOptions(plan: Plan?): List<CheckoutPaymentOptionUi> {
+        val cachedCatalog = paymentRepository.getCachedWalletAssetCatalog()
+            .orEmpty()
+            .filter { it.orderPayable }
+            .map {
+                CheckoutPaymentOptionUi(
+                    assetCode = it.assetCode,
+                    networkCode = it.networkCode,
+                    label = checkoutPaymentLabel(it.assetCode, it.networkCode),
+                    selected = false,
+                )
+            }
+            .distinctBy { "${it.assetCode}:${it.networkCode}" }
+        if (cachedCatalog.isNotEmpty()) {
+            return cachedCatalog
+        }
+
+        val fallback = buildList {
+            if (plan?.supportsUsdtTrc20() != false) {
+                add(
+                    CheckoutPaymentOptionUi(
+                        assetCode = PaymentConfig.AssetCode.USDT,
+                        networkCode = PaymentConfig.NetworkCode.TRON,
+                        label = checkoutPaymentLabel(
+                            PaymentConfig.AssetCode.USDT,
+                            PaymentConfig.NetworkCode.TRON,
+                        ),
+                    ),
+                )
+            }
+            add(
+                CheckoutPaymentOptionUi(
+                    assetCode = PaymentConfig.AssetCode.USDT,
+                    networkCode = PaymentConfig.NetworkCode.SOLANA,
+                    label = checkoutPaymentLabel(
+                        PaymentConfig.AssetCode.USDT,
+                        PaymentConfig.NetworkCode.SOLANA,
+                    ),
+                ),
+            )
+            if (plan?.supportsSol() != false) {
+                add(
+                    CheckoutPaymentOptionUi(
+                        assetCode = PaymentConfig.AssetCode.SOL,
+                        networkCode = PaymentConfig.NetworkCode.SOLANA,
+                        label = checkoutPaymentLabel(
+                            PaymentConfig.AssetCode.SOL,
+                            PaymentConfig.NetworkCode.SOLANA,
+                        ),
+                    ),
+                )
+            }
+        }
+        return fallback.distinctBy { "${it.assetCode}:${it.networkCode}" }
     }
 
     private fun ledgerMetrics(summary: CommissionSummaryData): List<FeatureMetric> = listOf(

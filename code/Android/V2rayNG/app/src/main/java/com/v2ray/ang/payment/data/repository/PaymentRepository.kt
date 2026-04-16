@@ -133,6 +133,8 @@ class PaymentRepository(context: Context) {
         private const val PREFS_NAME = "payment_prefs"
         private const val KEY_CURRENT_USER_ID = "current_user_id"
         private const val KEY_PENDING_REFERRAL_CODE = "pending_referral_code"
+        private const val PLAN_CACHE_SYNC_THROTTLE_MS = 5 * 60_000L
+        private const val WALLET_ASSET_CATALOG_CACHE_SYNC_THROTTLE_MS = 5 * 60_000L
         private const val ORDER_SYNC_THROTTLE_MS = 60_000L
         private const val VPN_NODE_SYNC_THROTTLE_MS = 60_000L
         private const val WALLET_CACHE_SYNC_THROTTLE_MS = 60_000L
@@ -491,18 +493,48 @@ class PaymentRepository(context: Context) {
      * 获取套餐列表
      */
     suspend fun getPlans(): Result<List<Plan>> = withContext(Dispatchers.IO) {
+        val cached = readCachedPlans()
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncPlansFromServer(force = true)
+            }
+            cacheSyncScope.launch {
+                syncWalletAssetCatalogFromServer(force = false)
+            }
+            return@withContext Result.success(cached)
+        }
+        syncPlansFromServer(force = true)
+    }
+
+    suspend fun getCachedPlans(): List<Plan>? = withContext(Dispatchers.IO) {
+        readCachedPlans()
+    }
+
+    suspend fun syncPlansFromServer(force: Boolean = false): Result<List<Plan>> = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        val cached = readCachedPlans()
+        val lastSyncAt = prefs.getLong(PaymentConfig.Prefs.PLANS_CACHE_UPDATED_AT, 0L)
+        if (!force && cached != null && now - lastSyncAt < PLAN_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached)
+        }
         try {
             val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
+                ?: return@withContext cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception("未登录"))
             val response = api.getPlans("Bearer $token")
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val plans = response.body()?.data?.items ?: emptyList()
+                savePlansCache(plans, now)
+                cacheSyncScope.launch {
+                    syncWalletAssetCatalogFromServer(force = false)
+                }
                 Result.success(plans)
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取套餐失败"))
+                cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取套餐失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(it) } ?: Result.failure(e)
         }
     }
 
@@ -1680,20 +1712,52 @@ class PaymentRepository(context: Context) {
     suspend fun getWalletAssetCatalog(
         networkCode: String? = null,
     ): Result<List<WalletAssetItemData>> = withContext(Dispatchers.IO) {
+        val cached = readCachedWalletAssetCatalog()
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncWalletAssetCatalogFromServer(force = true)
+            }
+            return@withContext Result.success(filterWalletAssetCatalogByNetwork(cached, networkCode))
+        }
+        syncWalletAssetCatalogFromServer(force = true, networkCode = networkCode)
+    }
+
+    suspend fun getCachedWalletAssetCatalog(
+        networkCode: String? = null,
+    ): List<WalletAssetItemData>? = withContext(Dispatchers.IO) {
+        readCachedWalletAssetCatalog()?.let { filterWalletAssetCatalogByNetwork(it, networkCode) }
+    }
+
+    suspend fun syncWalletAssetCatalogFromServer(
+        force: Boolean = false,
+        networkCode: String? = null,
+    ): Result<List<WalletAssetItemData>> = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        val cached = readCachedWalletAssetCatalog()
+        val lastSyncAt = prefs.getLong(PaymentConfig.Prefs.WALLET_ASSET_CATALOG_CACHE_UPDATED_AT, 0L)
+        if (!force && cached != null && now - lastSyncAt < WALLET_ASSET_CATALOG_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(filterWalletAssetCatalogByNetwork(cached, networkCode))
+        }
         try {
             val (response, _) = executeAuthenticatedRequest { token ->
                 api.getWalletAssetCatalog(
                     authorization = "Bearer $token",
-                    networkCode = networkCode,
+                    networkCode = null,
                 )
-            } ?: return@withContext Result.failure(Exception("未登录"))
+            } ?: return@withContext cached?.let {
+                Result.success(filterWalletAssetCatalogByNetwork(it, networkCode))
+            } ?: Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
-                Result.success(response.body()?.data?.items.orEmpty())
+                val items = response.body()?.data?.items.orEmpty()
+                saveWalletAssetCatalogCache(items, now)
+                Result.success(filterWalletAssetCatalogByNetwork(items, networkCode))
             } else {
-                Result.failure(Exception(extractApiErrorMessage(response, "获取钱包资产目录失败")))
+                cached?.let { Result.success(filterWalletAssetCatalogByNetwork(it, networkCode)) }
+                    ?: Result.failure(Exception(extractApiErrorMessage(response, "获取钱包资产目录失败")))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(filterWalletAssetCatalogByNetwork(it, networkCode)) }
+                ?: Result.failure(e)
         }
     }
 
@@ -2027,6 +2091,52 @@ class PaymentRepository(context: Context) {
     private fun parseIsoDate(dateString: String): Long? = parseIsoDateInternal(dateString)
 
     private fun normalizeWalletCacheKey(value: String?): String = value?.trim().orEmpty()
+
+    private fun readCachedPlans(): List<Plan>? {
+        val payload = prefs.getString(PaymentConfig.Prefs.PLANS_CACHE_JSON, null)
+            ?: return null
+        return runCatching {
+            paymentApiGson.fromJson<List<Plan>>(
+                payload,
+                object : TypeToken<List<Plan>>() {}.type,
+            )
+        }.getOrNull()
+    }
+
+    private fun savePlansCache(plans: List<Plan>, updatedAt: Long) {
+        prefs.edit()
+            .putString(PaymentConfig.Prefs.PLANS_CACHE_JSON, paymentApiGson.toJson(plans))
+            .putLong(PaymentConfig.Prefs.PLANS_CACHE_UPDATED_AT, updatedAt)
+            .apply()
+    }
+
+    private fun readCachedWalletAssetCatalog(): List<WalletAssetItemData>? {
+        val payload = prefs.getString(PaymentConfig.Prefs.WALLET_ASSET_CATALOG_CACHE_JSON, null)
+            ?: return null
+        return runCatching {
+            paymentApiGson.fromJson<List<WalletAssetItemData>>(
+                payload,
+                object : TypeToken<List<WalletAssetItemData>>() {}.type,
+            )
+        }.getOrNull()
+    }
+
+    private fun saveWalletAssetCatalogCache(items: List<WalletAssetItemData>, updatedAt: Long) {
+        prefs.edit()
+            .putString(PaymentConfig.Prefs.WALLET_ASSET_CATALOG_CACHE_JSON, paymentApiGson.toJson(items))
+            .putLong(PaymentConfig.Prefs.WALLET_ASSET_CATALOG_CACHE_UPDATED_AT, updatedAt)
+            .apply()
+    }
+
+    private fun filterWalletAssetCatalogByNetwork(
+        items: List<WalletAssetItemData>,
+        networkCode: String?,
+    ): List<WalletAssetItemData> {
+        if (networkCode.isNullOrBlank()) {
+            return items
+        }
+        return items.filter { it.networkCode.equals(networkCode, ignoreCase = true) }
+    }
 
     private fun WalletOverviewCacheEntity.toWalletOverviewData(): WalletOverviewData {
         return WalletOverviewData(

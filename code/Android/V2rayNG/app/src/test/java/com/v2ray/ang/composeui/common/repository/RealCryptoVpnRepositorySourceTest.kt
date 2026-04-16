@@ -25,4 +25,13 @@ class RealCryptoVpnRepositorySourceTest {
             source.contains("fallback.get"),
         )
     }
+
+    @Test
+    fun `checkout flow should prefer cached plan and asset catalog data`() {
+        val source = sourceFile.readText()
+
+        assertTrue(source.contains("paymentRepository.getCachedWalletAssetCatalog()"))
+        assertTrue(source.contains("paymentRepository.getCachedPlans()"))
+        assertTrue(source.contains("loadCachedOrders()"))
+    }
 }

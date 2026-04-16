@@ -56,6 +56,10 @@ object PaymentConfig {
         const val LAST_SUBSCRIPTION_STATUS = "payment_last_subscription_status"
         const val LAST_SUBSCRIPTION_DAYS_REMAINING = "payment_last_subscription_days_remaining"
         const val LAST_VPN_CONFIG_EXPIRE_AT = "payment_last_vpn_config_expire_at"
+        const val PLANS_CACHE_JSON = "payment_plans_cache_json"
+        const val PLANS_CACHE_UPDATED_AT = "payment_plans_cache_updated_at"
+        const val WALLET_ASSET_CATALOG_CACHE_JSON = "payment_wallet_asset_catalog_cache_json"
+        const val WALLET_ASSET_CATALOG_CACHE_UPDATED_AT = "payment_wallet_asset_catalog_cache_updated_at"
         
         // Token 相关存储键
         const val ACCESS_TOKEN = "payment_access_token"
