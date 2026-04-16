@@ -1,6 +1,5 @@
 package com.v2ray.ang.composeui.components.cards
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,40 +7,23 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
-import com.v2ray.ang.composeui.theme.AuroraPurple
-import com.v2ray.ang.composeui.theme.DividerLight
-import com.v2ray.ang.composeui.theme.ElectricBlue
-import com.v2ray.ang.composeui.theme.ElectricCyan
-import com.v2ray.ang.composeui.theme.LayerWhite
-import com.v2ray.ang.composeui.theme.SignalGreen
-import com.v2ray.ang.composeui.theme.SurfaceCloud
-import com.v2ray.ang.composeui.theme.TextMuted
+import com.v2ray.ang.composeui.components.chips.AppChip
+import com.v2ray.ang.composeui.components.chips.AppChipTone
+import com.v2ray.ang.composeui.theme.AppTheme
 
 @Composable
 fun TechCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    Surface(
-        modifier = modifier,
-        color = LayerWhite.copy(alpha = 0.86f),
-        shape = RoundedCornerShape(26.dp),
-        border = BorderStroke(1.dp, DividerLight),
-        tonalElevation = 0.dp,
-        shadowElevation = 10.dp,
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            content()
-        }
+    AppCard(modifier = modifier, variant = AppCardVariant.Default) {
+        content()
     }
 }
 
@@ -53,35 +35,22 @@ fun GradientHeroCard(
     modifier: Modifier = Modifier,
     accent: String? = null,
 ) {
-    Surface(
+    AppCard(
         modifier = modifier.fillMaxWidth(),
-        color = LayerWhite.copy(alpha = 0.90f),
-        shape = RoundedCornerShape(30.dp),
-        tonalElevation = 0.dp,
-        shadowElevation = 14.dp,
+        variant = AppCardVariant.Highlight,
     ) {
         Column(
             modifier = Modifier
                 .background(
-                    Brush.linearGradient(
-                        listOf(
-                            ElectricBlue.copy(alpha = 0.10f),
-                            ElectricCyan.copy(alpha = 0.08f),
-                            AuroraPurple.copy(alpha = 0.10f),
-                        ),
-                    ),
+                    brush = AppTheme.gradients.cardGlowGradient,
                 )
-                .padding(22.dp),
+                .padding(AppTheme.spacing.space4),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
                 if (!accent.isNullOrEmpty()) {
-                    Text(
-                        text = accent,
-                        color = SignalGreen,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
+                    AppChip(text = accent, tone = AppChipTone.Success)
                 }
             }
             Text(
@@ -90,7 +59,7 @@ fun GradientHeroCard(
             )
             Text(
                 subtitle,
-                color = TextMuted,
+                color = AppTheme.colors.textSecondary,
                 style = MaterialTheme.typography.bodySmall,
             )
         }
@@ -112,7 +81,7 @@ fun SettingTileCard(
                 Text(
                     summary,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted,
+                    color = AppTheme.colors.textSecondary,
                 )
             }
             Spacer(modifier = Modifier.padding(horizontal = 4.dp))
@@ -126,13 +95,12 @@ fun MiniMetricPill(
     label: String,
     value: String,
 ) {
-    Surface(
-        color = SurfaceCloud.copy(alpha = 0.85f),
-        shape = RoundedCornerShape(18.dp),
-        border = BorderStroke(1.dp, DividerLight),
+    AppCard(
+        variant = AppCardVariant.Elevated,
+        contentPadding = AppTheme.spacing.space12,
     ) {
-        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-            Text(label, style = MaterialTheme.typography.bodySmall, color = TextMuted)
+        Column {
+            Text(label, style = MaterialTheme.typography.bodySmall, color = AppTheme.colors.textSecondary)
             Text(value, style = MaterialTheme.typography.titleMedium)
         }
     }

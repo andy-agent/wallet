@@ -1,59 +1,34 @@
 package com.v2ray.ang.composeui.components.listitems
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.p0.model.AssetHolding
 import com.v2ray.ang.composeui.p0.model.RegionSpeed
 import com.v2ray.ang.composeui.p0.model.WatchSignal
-import com.v2ray.ang.composeui.theme.DangerRed
-import com.v2ray.ang.composeui.theme.DividerLight
-import com.v2ray.ang.composeui.theme.LayerWhite
-import com.v2ray.ang.composeui.theme.SignalGreen
-import com.v2ray.ang.composeui.theme.SurfaceCloud
-import com.v2ray.ang.composeui.theme.TextMuted
+import com.v2ray.ang.composeui.components.chips.AppChip
+import com.v2ray.ang.composeui.components.chips.AppChipTone
+import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import com.v2ray.ang.composeui.theme.AppTheme
 
 @Composable
 fun AssetRow(
     asset: AssetHolding,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = LayerWhite.copy(alpha = 0.86f),
-        shape = RoundedCornerShape(22.dp),
-        border = BorderStroke(1.dp, DividerLight),
-        tonalElevation = 0.dp,
-        shadowElevation = 2.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("${asset.symbol} · ${asset.chainLabel}", style = MaterialTheme.typography.titleMedium)
-                Text(asset.balanceText, style = MaterialTheme.typography.bodySmall, color = TextMuted)
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(asset.valueText, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = asset.changeText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (asset.changePositive) SignalGreen else DangerRed,
-                )
-            }
-        }
-    }
+    AppListItem(
+        title = "${asset.symbol} · ${asset.chainLabel}",
+        subtitle = asset.balanceText,
+        value = asset.valueText,
+        supportingText = asset.detailText,
+        modifier = modifier,
+        trailing = {
+            AppChip(
+                text = asset.changeText,
+                tone = if (asset.changePositive) AppChipTone.Success else AppChipTone.Error,
+            )
+        },
+    )
 }
 
 @Composable
@@ -61,23 +36,29 @@ fun RegionSpeedRow(
     item: RegionSpeed,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = SurfaceCloud.copy(alpha = 0.64f),
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, DividerLight),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column {
-                Text(item.regionName, style = MaterialTheme.typography.titleMedium)
-                Text("${item.protocol} · ${item.load}", color = TextMuted, style = MaterialTheme.typography.bodySmall)
+    NodeRow(item = item, modifier = modifier)
+}
+
+@Composable
+fun NodeRow(
+    item: RegionSpeed,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+) {
+    AppListItem(
+        title = item.regionName,
+        subtitle = "${item.protocol} · ${item.load}",
+        value = "${item.latencyMs} ms",
+        supportingText = item.regionCode,
+        emphasized = item.isAllowed,
+        modifier = modifier,
+        onClick = onClick,
+        trailing = {
+            if (!item.isAllowed) {
+                AppChip(text = "不可用", tone = AppChipTone.Warning)
             }
-            Text("${item.latencyMs} ms", style = MaterialTheme.typography.titleMedium)
-        }
-    }
+        },
+    )
 }
 
 @Composable
@@ -85,28 +66,17 @@ fun WatchSignalRow(
     signal: WatchSignal,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = LayerWhite.copy(alpha = 0.86f),
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, DividerLight),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(signal.symbol, style = MaterialTheme.typography.titleMedium)
-                Text(signal.reason, style = MaterialTheme.typography.bodySmall, color = TextMuted)
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    signal.changeText,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (signal.isPositive) SignalGreen else DangerRed,
-                )
-                Text(signal.volumeText, style = MaterialTheme.typography.bodySmall, color = TextMuted)
-            }
-        }
-    }
+    AppListItem(
+        title = signal.symbol,
+        subtitle = signal.reason,
+        value = signal.changeText,
+        supportingText = signal.volumeText,
+        modifier = modifier,
+        trailing = {
+            AppChip(
+                text = if (signal.isPositive) "上涨" else "下跌",
+                tone = if (signal.isPositive) AppChipTone.Success else AppChipTone.Error,
+            )
+        },
+    )
 }
