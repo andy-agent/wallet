@@ -1,0 +1,10 @@
+package com.app.domain.wallet
+
+import com.app.AppGraph
+import com.app.data.repository.WalletRepository
+
+class GetWalletOverviewUseCase(
+    private val repository: WalletRepository = AppGraph.walletRepository,
+) {
+    operator fun invoke() = repository.profile
+}
