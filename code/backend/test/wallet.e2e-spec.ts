@@ -10,6 +10,9 @@ describe('Wallet (e2e)', () => {
   let app: INestApplication;
   let accessToken: string;
   let email: string;
+  const validSolanaAddress = '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV';
+  const validTronAddress = 'TLa2f6VPqDgRE67v1736s7bJ8Ray5wYjU7';
+  const placeholderSolanaAddress = 'So11111111111111111111111111111111111111112';
   const originalTronServiceEnabled = process.env.TRON_SERVICE_ENABLED;
   const originalSolanaOrderCollectionAddress =
     process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
@@ -159,7 +162,7 @@ describe('Wallet (e2e)', () => {
       .send({
         networkCode: 'SOLANA',
         assetCode: 'USDT',
-        address: 'So11111111111111111111111111111111111111112',
+        address: validSolanaAddress,
         isDefault: true,
       })
       .expect(201);
@@ -213,7 +216,7 @@ describe('Wallet (e2e)', () => {
   });
 
   it('wallet public addresses survive app restart and keep READY receive state', async () => {
-    const address = 'So11111111111111111111111111111111111111112';
+    const address = validSolanaAddress;
 
     await request(app.getHttpServer())
       .post('/api/client/v1/wallet/lifecycle')
@@ -387,7 +390,7 @@ describe('Wallet (e2e)', () => {
       .send({
         networkCode: 'SOLANA',
         assetCode: 'USDT',
-        address: 'So11111111111111111111111111111111111111112',
+        address: validSolanaAddress,
         isDefault: true,
       })
       .expect(201);
@@ -427,7 +430,7 @@ describe('Wallet (e2e)', () => {
         expect(res.body.data.receiveState).toBe('READY');
         expect(res.body.data.status).toBe('已配置收款地址');
         expect(res.body.data.defaultAddress).toBe(
-          'So11111111111111111111111111111111111111112',
+          validSolanaAddress,
         );
       });
 
@@ -472,7 +475,7 @@ describe('Wallet (e2e)', () => {
             expect.objectContaining({
               networkCode: 'SOLANA',
               assetCode: 'USDT',
-              address: 'So11111111111111111111111111111111111111112',
+              address: validSolanaAddress,
               isDefault: true,
             }),
           ]),
@@ -485,7 +488,7 @@ describe('Wallet (e2e)', () => {
       .expect(200)
       .expect((res) => {
         expect(res.body.data.defaultAddress).toBe(
-          'So11111111111111111111111111111111111111112',
+          validSolanaAddress,
         );
         expect(res.body.data.receiveState).toBe('READY');
       });
@@ -496,7 +499,7 @@ describe('Wallet (e2e)', () => {
       .send({
         networkCode: 'SOLANA',
         assetCode: 'USDT',
-        toAddress: 'So11111111111111111111111111111111111111112',
+        toAddress: validSolanaAddress,
         amount: '10.5',
       })
       .expect(201);
@@ -513,9 +516,35 @@ describe('Wallet (e2e)', () => {
       .expect(201);
   });
 
+  it('rejects known placeholder wallet public addresses', async () => {
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallet/lifecycle')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        action: 'CREATE',
+        displayName: 'Reject Placeholder Wallet',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallet/public-addresses')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        networkCode: 'SOLANA',
+        assetCode: 'USDT',
+        address: placeholderSolanaAddress,
+        isDefault: true,
+      })
+      .expect(400)
+      .expect((res) => {
+        const errorCode = res.body.error?.code ?? res.body.code;
+        expect(errorCode).toBe('WALLET_PLACEHOLDER_ADDRESS_FORBIDDEN');
+      });
+  });
+
   it('wallet overview and receive-context stay consistent for persisted addresses and alias queries', async () => {
-    const solanaAddress = 'So11111111111111111111111111111111111111112';
-    const tronAddress = 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE';
+    const solanaAddress = validSolanaAddress;
+    const tronAddress = validTronAddress;
 
     await request(app.getHttpServer())
       .post('/api/client/v1/wallet/lifecycle')

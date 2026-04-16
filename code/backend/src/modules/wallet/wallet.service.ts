@@ -36,6 +36,12 @@ import { UpsertWalletSecretBackupRequestDto } from './dto/upsert-wallet-secret-b
 import { WalletBackupCryptoService } from './wallet-backup-crypto.service';
 import { WalletBackupRelayService } from './wallet-backup-relay.service';
 import {
+  isKnownPlaceholderWalletPublicAddress,
+  isUsableWalletPublicAddress,
+  isValidWalletPublicAddress,
+  normalizeWalletPublicAddress,
+} from './wallet-public-address-policy';
+import {
   PersistedWalletLifecycleRecord,
   PersistedWalletPublicAddressRecord,
   PersistedWalletSecretBackupRecord,
@@ -413,7 +419,7 @@ export class WalletService {
       await this.runtimeStateRepository.listWalletPublicAddressesByAccountId({
         accountId: account.accountId,
       });
-    const configuredAddressCount = publicAddresses.length;
+    const configuredAddressCount = publicAddresses.filter(isUsableWalletPublicAddress).length;
     const walletExists = lifecycle !== null || configuredAddressCount > 0;
     const receiveState: WalletReceiveState = !walletExists
       ? 'NO_WALLET'
@@ -587,6 +593,19 @@ export class WalletService {
   async upsertPublicAddress(accessToken: string, dto: UpsertWalletPublicAddressRequestDto) {
     const account = this.authService.getMe(accessToken);
     const lifecycle = await this.ensureWalletLifecycle(account.accountId);
+    const normalizedAddress = normalizeWalletPublicAddress(dto.address);
+    if (!isValidWalletPublicAddress(dto.networkCode, normalizedAddress)) {
+      throw new BadRequestException({
+        code: 'WALLET_INVALID_PUBLIC_ADDRESS',
+        message: 'Wallet public address is invalid for the selected network',
+      });
+    }
+    if (isKnownPlaceholderWalletPublicAddress(dto.networkCode, normalizedAddress)) {
+      throw new BadRequestException({
+        code: 'WALLET_PLACEHOLDER_ADDRESS_FORBIDDEN',
+        message: 'Placeholder wallet addresses cannot be saved',
+      });
+    }
     const existing =
       await this.runtimeStateRepository.listWalletPublicAddressesByAccountId({
         accountId: account.accountId,
@@ -596,7 +615,7 @@ export class WalletService {
       (item) =>
         item.networkCode === dto.networkCode &&
         item.assetCode === dto.assetCode &&
-        item.address === dto.address,
+        item.address === normalizedAddress,
     );
 
     const now = new Date().toISOString();
@@ -635,7 +654,7 @@ export class WalletService {
       walletId: lifecycle.walletId,
       networkCode: dto.networkCode,
       assetCode: dto.assetCode,
-      address: dto.address,
+      address: normalizedAddress,
       isDefault: dto.isDefault,
       createdAt: now,
       updatedAt: now,
@@ -667,7 +686,7 @@ export class WalletService {
     publicAddresses: WalletPublicAddressItem[];
   }) {
     const alerts: string[] = [];
-    if (input.publicAddresses.length === 0) {
+    if (input.publicAddresses.filter(isUsableWalletPublicAddress).length === 0) {
       alerts.push('当前账号尚未配置收款地址');
     }
     const missingReceivableChains = input.chainItems
@@ -695,25 +714,26 @@ export class WalletService {
     assets: Array<ReturnType<WalletService['getAssetCatalog']>['items'][number]>,
     publicAddresses: WalletPublicAddressItem[],
   ) {
+    const usablePublicAddresses = publicAddresses.filter(isUsableWalletPublicAddress);
     const entries = await Promise.all(
       assets.map(async (asset) => {
         const assetKey = `${asset.networkCode}:${asset.assetCode}`;
         const assetAddress =
-          publicAddresses.find(
+          usablePublicAddresses.find(
             (item) =>
               item.networkCode === asset.networkCode &&
               item.assetCode === asset.assetCode &&
               item.isDefault,
           )?.address ??
-          publicAddresses.find(
+          usablePublicAddresses.find(
             (item) =>
               item.networkCode === asset.networkCode &&
               item.assetCode === asset.assetCode,
           )?.address ??
-          publicAddresses.find(
+          usablePublicAddresses.find(
             (item) => item.networkCode === asset.networkCode && item.isDefault,
           )?.address ??
-          publicAddresses.find((item) => item.networkCode === asset.networkCode)
+          usablePublicAddresses.find((item) => item.networkCode === asset.networkCode)
             ?.address ??
           null;
 
@@ -857,7 +877,7 @@ export class WalletService {
         networkCode,
         assetCode,
       });
-    return { items };
+    return { items: items.filter(isUsableWalletPublicAddress) };
   }
 
   async upsertSecretBackup(
