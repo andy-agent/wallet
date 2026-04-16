@@ -1,0 +1,61 @@
+package com.v2ray.ang.composeui.components.growth
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.Composable
+import com.v2ray.ang.composeui.components.app.AppPageScaffold
+import com.v2ray.ang.composeui.components.chips.AppChip
+import com.v2ray.ang.composeui.components.chips.AppChipTone
+import com.v2ray.ang.composeui.components.navigation.AppTopBar
+import com.v2ray.ang.composeui.p0.ui.P01BottomNav
+import com.v2ray.ang.composeui.p0.ui.P01HeaderHeroRing
+import com.v2ray.ang.composeui.p0.ui.defaultP01Destinations
+import com.v2ray.ang.composeui.theme.AppTheme
+import androidx.compose.material3.Text
+
+@Composable
+fun AppGrowthPageScaffold(
+    title: String,
+    subtitle: String,
+    currentRoute: String,
+    onBottomNav: (String) -> Unit,
+    modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier,
+    note: String = "",
+    badge: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    AppPageScaffold(
+        modifier = modifier,
+        topBar = {
+            Column(
+                modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(AppTheme.spacing.space8),
+            ) {
+                AppTopBar(
+                    title = title,
+                    subtitle = subtitle,
+                    trailing = { P01HeaderHeroRing() },
+                )
+                if (!badge.isNullOrBlank()) {
+                    AppChip(text = badge, tone = AppChipTone.Brand)
+                }
+                if (note.isNotBlank()) {
+                    Text(
+                        text = note,
+                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                        color = AppTheme.colors.textSecondary,
+                    )
+                }
+            }
+        },
+        bottomBar = {
+            P01BottomNav(
+                currentRoute = currentRoute,
+                destinations = defaultP01Destinations(),
+                onNavigate = onBottomNav,
+            )
+        },
+        content = content,
+    )
+}

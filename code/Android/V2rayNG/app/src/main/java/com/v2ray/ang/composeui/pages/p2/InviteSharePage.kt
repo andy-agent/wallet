@@ -1,34 +1,26 @@
 package com.v2ray.ang.composeui.pages.p2
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
-import com.v2ray.ang.composeui.components.actions.ActionCluster
-import com.v2ray.ang.composeui.components.actions.ActionClusterAction
-import com.v2ray.ang.composeui.components.app.AppPageScaffold
-import com.v2ray.ang.composeui.components.buttons.AppButtonVariant
-import com.v2ray.ang.composeui.components.cards.MetricCard
-import com.v2ray.ang.composeui.components.chips.AppChip
-import com.v2ray.ang.composeui.components.chips.AppChipTone
-import com.v2ray.ang.composeui.components.navigation.AppTopBar
-import com.v2ray.ang.composeui.components.rows.LabelValueRow
-import com.v2ray.ang.composeui.components.sections.InfoSection
+import com.v2ray.ang.composeui.components.actions.AppCopyShareActions
+import com.v2ray.ang.composeui.components.growth.AppGrowthPageScaffold
+import com.v2ray.ang.composeui.components.growth.AppHeroStat
+import com.v2ray.ang.composeui.components.growth.AppHeroValueCard
+import com.v2ray.ang.composeui.components.growth.AppMetricGrid
+import com.v2ray.ang.composeui.components.growth.AppMetricGridItem
+import com.v2ray.ang.composeui.components.growth.AppQrAddressCard
+import com.v2ray.ang.composeui.components.rows.AppLabelValueRow
 import com.v2ray.ang.composeui.p2.model.InviteShareEvent
 import com.v2ray.ang.composeui.p2.model.InviteShareUiState
 import com.v2ray.ang.composeui.p2.model.inviteSharePreviewState
 import com.v2ray.ang.composeui.p2.viewmodel.InviteShareViewModel
-import com.v2ray.ang.composeui.p0.ui.P01BottomNav
-import com.v2ray.ang.composeui.p0.ui.P01HeaderHeroRing
-import com.v2ray.ang.composeui.p0.ui.defaultP01Destinations
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
-import com.v2ray.ang.composeui.theme.AppTheme
 
 @Composable
 fun InviteShareRoute(
@@ -75,78 +67,45 @@ fun InviteShareScreen(
         }
     }
 
-    AppPageScaffold(
-        topBar = {
-            AppTopBar(
-                title = uiState.title,
-                subtitle = uiState.subtitle,
-                trailing = { P01HeaderHeroRing() },
-            )
-        },
-        bottomBar = {
-            P01BottomNav(
-                currentRoute = "invite_center",
-                destinations = defaultP01Destinations(),
-                onNavigate = onBottomNav,
-            )
-        },
+    AppGrowthPageScaffold(
+        title = uiState.title,
+        subtitle = uiState.subtitle,
+        note = uiState.summary,
+        badge = uiState.badge,
+        currentRoute = "invite_center",
+        onBottomNav = onBottomNav,
     ) {
-        MetricCard(
+        AppHeroValueCard(
             title = "推广邀请码",
             value = inviteCode.ifBlank { "CVPN-2025-GLOW" },
-            badgeText = uiState.badge.takeIf { it.isNotBlank() },
-            badgeTone = AppChipTone.Brand,
-            emphasized = true,
+            supportingText = uiState.summary,
+            highlight = uiState.badge.takeIf { it.isNotBlank() },
+            stats = uiState.metrics.drop(1).take(2).map { AppHeroStat(it.label, it.value) },
         )
 
-        val extraMetrics = uiState.metrics.drop(1).take(2)
-        if (extraMetrics.isNotEmpty()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.itemGap),
-            ) {
-                extraMetrics.forEach { metric ->
-                    MetricCard(
-                        title = metric.label,
-                        value = metric.value,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-        }
+        AppMetricGrid(
+            items = uiState.metrics.map { AppMetricGridItem(it.label, it.value) },
+            emphasizedIndexes = setOf(0),
+        )
 
-        InfoSection(
-            title = "推广信息",
+        AppQrAddressCard(
+            title = "推广二维码",
             subtitle = "复制链接或邀请码进行分享",
-            trailing = { AppChip(text = "推广", tone = AppChipTone.Info) },
+            address = link.ifBlank { "--" },
+            addressLabel = primaryMetric?.label ?: "推广链接",
+            supportingText = uiState.note,
+            status = uiState.badge.takeIf { it.isNotBlank() },
         ) {
-            LabelValueRow(
-                label = primaryMetric?.label ?: "推广链接",
-                value = link.ifBlank { "--" },
-                supportingText = uiState.note,
-            )
             if (inviteCode.isNotBlank()) {
-                LabelValueRow(label = "邀请码", value = inviteCode)
+                AppLabelValueRow(label = "邀请码", value = inviteCode)
             }
         }
 
-        ActionCluster(
-            actions = listOfNotNull(
-                uiState.primaryActionLabel.takeIf { it.isNotBlank() }?.let {
-                    ActionClusterAction(
-                        label = it,
-                        onClick = copyLink,
-                        variant = AppButtonVariant.Primary,
-                    )
-                },
-                uiState.secondaryActionLabel?.takeIf { it.isNotBlank() }?.let {
-                    ActionClusterAction(
-                        label = it,
-                        onClick = copyInviteCode,
-                        variant = AppButtonVariant.Secondary,
-                    )
-                },
-            ),
+        AppCopyShareActions(
+            primaryLabel = uiState.primaryActionLabel,
+            onPrimaryClick = copyLink,
+            secondaryLabel = uiState.secondaryActionLabel,
+            onSecondaryClick = copyInviteCode,
         )
     }
 }
