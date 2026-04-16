@@ -21,6 +21,21 @@
 
 ## 本轮完成
 
+- 完成第一阶段 UI 视觉组件规范落盘
+  - 已新增规范文档：
+    - [UI_PHASE1_VISUAL_COMPONENT_STANDARD_2026-04-16.md](/Users/cnyirui/git/projects/liaojiang/docs/UI_PHASE1_VISUAL_COMPONENT_STANDARD_2026-04-16.md)
+  - 文档已收敛：
+    - 第一阶段目标与边界
+    - 第一批 token 命名
+    - 第一批公共组件
+    - 三套 Compose 骨架处理策略
+    - 试点页面与验收标准
+  - 当前约束保持不变：
+    - 不改业务逻辑
+    - 不改导航逻辑
+    - 不改表单逻辑
+    - 高风险页面保持冻结
+
 - 完成 钱包托管 / 恢复 / 发送基础能力第一阶段
   - Android 已新增本地可签名材料托管：
     - 12 词助记词生成
