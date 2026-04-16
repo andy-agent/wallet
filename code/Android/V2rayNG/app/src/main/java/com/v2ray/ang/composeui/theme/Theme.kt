@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.graphics.Color
 import com.v2ray.ang.composeui.theme.tokens.ColorTokens
 import com.v2ray.ang.composeui.theme.tokens.AppColorTokens
@@ -114,14 +115,19 @@ fun CryptoVpnTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
+    val width = LocalConfiguration.current.screenWidthDp
     val colors = if (darkTheme) ColorTokens.dark else ColorTokens.light
     val typography = when {
-        androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp < 360 -> TypographyTokens.compact()
-        androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp < 412 -> TypographyTokens.medium()
+        width < 360 -> TypographyTokens.compact()
+        width < 412 -> TypographyTokens.medium()
         else -> TypographyTokens.expanded()
     }
+    val spacing = when {
+        width < 360 -> SpacingTokens.compact()
+        width < 412 -> SpacingTokens.medium()
+        else -> SpacingTokens.expanded()
+    }
     val shapes = ShapeTokens.default
-    val spacing = SpacingTokens.default
     val elevation = ElevationTokens.default
     val gradients = GradientTokens.from(colors)
 

@@ -6,7 +6,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.v2ray.ang.composeui.theme.tokens.ColorTokens
 import com.v2ray.ang.composeui.theme.tokens.ShapeTokens
+import com.v2ray.ang.composeui.theme.tokens.SpacingTokens
 import com.v2ray.ang.composeui.theme.tokens.TypographyTokens
+import com.v2ray.ang.composeui.theme.tokens.toMaterialTypography
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -42,8 +44,13 @@ class ControlPlaneDesignSystemTest {
     @Test
     fun `typography tokens keep page title above section title and body`() {
         val scale = TypographyTokens.medium()
+        val material = scale.toMaterialTypography()
+        assertEquals(scale.metricL.fontSize, material.displayLarge.fontSize)
+        assertEquals(scale.headlineL.fontSize, material.displayMedium.fontSize)
+        assertEquals(scale.headlineM.fontSize, material.displaySmall.fontSize)
         assertEquals(28.sp, scale.headlineL.fontSize)
         assertEquals(18.sp, scale.titleL.fontSize)
+        assertEquals(14.sp, scale.labelL.fontSize)
         assertEquals(14.sp, scale.bodyM.fontSize)
         assertEquals(11.sp, scale.navLabel.fontSize)
         assertTrue(
@@ -55,5 +62,20 @@ class ControlPlaneDesignSystemTest {
         assertTrue(
             scale.bodyM.fontSize > scale.navLabel.fontSize,
         )
+    }
+
+    @Test
+    fun `spacing tokens adapt page horizontal and section gap by breakpoint`() {
+        val compact = SpacingTokens.compact()
+        val medium = SpacingTokens.medium()
+        val expanded = SpacingTokens.expanded()
+
+        assertEquals(16.dp, compact.pageHorizontal)
+        assertEquals(20.dp, medium.pageHorizontal)
+        assertEquals(24.dp, expanded.pageHorizontal)
+
+        assertEquals(12.dp, compact.sectionGap)
+        assertEquals(16.dp, medium.sectionGap)
+        assertEquals(20.dp, expanded.sectionGap)
     }
 }
