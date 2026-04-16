@@ -53,6 +53,22 @@ export class SolanaClientConfig {
     return timeout ? parseInt(timeout, 10) : 30000;
   }
 
+  getRpcUrl(network: 'mainnet' | 'devnet'): string {
+    if (network === 'devnet') {
+      return (
+        this.configService.get<string>('SOLANA_RPC_URL_DEVNET') ??
+        this.configService.get<string>('SOLANA_RPC_URL') ??
+        'https://api.devnet.solana.com'
+      );
+    }
+
+    return (
+      this.configService.get<string>('SOLANA_RPC_URL_MAINNET') ??
+      this.configService.get<string>('SOLANA_RPC_URL') ??
+      'https://api.mainnet-beta.solana.com'
+    );
+  }
+
   /**
    * Whether real chain calls are enabled
    * When false, client operates in mock/simulation mode
@@ -65,11 +81,19 @@ export class SolanaClientConfig {
 
   /**
    * Whether to use devnet instead of mainnet
-   * Default: true (safety first - devnet by default)
+   * Default: false in production, true otherwise
    */
   useDevnet(): boolean {
     const devnet = this.configService.get<string>('SOLANA_SERVICE_USE_DEVNET');
-    return devnet !== 'false'; // default true
+    if (devnet !== undefined) {
+      return devnet === 'true';
+    }
+    const nodeEnv = (
+      this.configService.get<string>('NODE_ENV') ??
+      process.env.NODE_ENV ??
+      'development'
+    ).toLowerCase();
+    return nodeEnv !== 'production';
   }
 
   /**

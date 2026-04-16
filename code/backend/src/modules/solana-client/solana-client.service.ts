@@ -17,6 +17,7 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { firstValueFrom } from 'rxjs';
 import { SolanaClientConfig } from './solana-client.config';
 import type {
@@ -40,6 +41,10 @@ import type { AxiosResponse } from 'axios';
 interface EnvelopeResponse<T> {
   data?: T;
 }
+
+const SPL_TOKEN_PROGRAM_ID = new PublicKey(
+  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+);
 
 interface LegacyPaymentDetectResponse {
   address?: string;
@@ -407,10 +412,19 @@ export class SolanaClientService {
       );
     } catch (error) {
       this.logger.error('Get balance failed', error);
-      throw new ServiceUnavailableException({
-        code: 'SOLANA_BALANCE_CHECK_FAILED',
-        message: 'Failed to get balance',
-      });
+      try {
+        this.logger.warn(
+          'Falling back to direct Solana RPC balance query',
+          error instanceof Error ? error.message : String(error),
+        );
+        return await this.getBalanceViaRpc(request);
+      } catch (rpcError) {
+        this.logger.error('Direct Solana RPC balance fallback failed', rpcError);
+        throw new ServiceUnavailableException({
+          code: 'SOLANA_BALANCE_CHECK_FAILED',
+          message: 'Failed to get balance',
+        });
+      }
     }
   }
 
@@ -539,6 +553,72 @@ export class SolanaClientService {
 
   private toNetworkCode(network: 'mainnet' | 'devnet') {
     return network === 'devnet' ? 'solana-devnet' : 'solana-mainnet';
+  }
+
+  private async getBalanceViaRpc(
+    request: GetBalanceRequest,
+  ): Promise<GetBalanceResponse> {
+    const network = this.getEffectiveNetwork(request.network);
+    const connection = new Connection(this.config.getRpcUrl(network), 'confirmed');
+    const owner = new PublicKey(request.address);
+
+    if (!request.mint) {
+      const lamports = await connection.getBalance(owner, 'confirmed');
+      return {
+        address: request.address,
+        mint: null,
+        balance: lamports.toString(),
+        decimals: 9,
+        uiAmount: (lamports / 1_000_000_000).toString(),
+      };
+    }
+
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+      owner,
+      { programId: SPL_TOKEN_PROGRAM_ID },
+      'confirmed',
+    );
+
+    const matchingAccount = tokenAccounts.value.find((item) => {
+      const parsed = item.account.data.parsed as
+        | {
+            info?: {
+              mint?: string;
+            };
+          }
+        | undefined;
+      return parsed?.info?.mint === request.mint;
+    });
+
+    if (!matchingAccount) {
+      return {
+        address: request.address,
+        mint: request.mint,
+        balance: '0',
+        decimals: 6,
+        uiAmount: '0',
+      };
+    }
+
+    const tokenAmount = (
+      matchingAccount.account.data.parsed as {
+        info: {
+          tokenAmount: {
+            amount: string;
+            decimals: number;
+            uiAmountString?: string;
+          };
+        };
+      }
+    ).info.tokenAmount;
+
+    return {
+      address: request.address,
+      mint: request.mint,
+      balance: tokenAmount.amount,
+      decimals: tokenAmount.decimals,
+      uiAmount: tokenAmount.uiAmountString ?? '0',
+    };
   }
 
   private buildApiUrl(path: string) {

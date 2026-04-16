@@ -289,4 +289,48 @@ describe('SolanaClientService', () => {
       minSlotExclusive: 2000,
     });
   });
+
+  it('falls back to direct RPC balance query when chain-side balance endpoint fails', async () => {
+    const httpService = {
+      post: jest.fn(),
+      get: jest.fn(() => {
+        throw new Error('404');
+      }),
+    };
+
+    const config = {
+      isEnabled: () => true,
+      getTimeoutMs: () => 1000,
+      getApiKey: () => undefined,
+      useDevnet: () => false,
+      getBaseUrl: () => 'https://sol.residential-agent.com',
+      getMaxRetries: () => 3,
+      getRpcUrl: () => 'https://api.mainnet-beta.solana.com',
+    };
+
+    const service = new SolanaClientService(
+      httpService as never,
+      config as never,
+    );
+
+    (service as any).getBalanceViaRpc = jest.fn().mockResolvedValue({
+      address: 'Wallet111',
+      mint: null,
+      balance: '0',
+      decimals: 9,
+      uiAmount: '0',
+    });
+
+    const result = await service.getBalance({
+      address: 'Wallet111',
+    });
+
+    expect(result).toEqual({
+      address: 'Wallet111',
+      mint: null,
+      balance: '0',
+      decimals: 9,
+      uiAmount: '0',
+    });
+  });
 });
