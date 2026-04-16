@@ -16,6 +16,9 @@ import com.v2ray.ang.composeui.p0.model.WalletChainSummary
 import com.v2ray.ang.composeui.p0.model.WalletHomeUiState
 import com.v2ray.ang.composeui.p0.model.WalletOnboardingUiState
 import com.v2ray.ang.composeui.p0.model.WatchSignal
+import com.v2ray.ang.composeui.p0.model.hasUsableWallet
+import com.v2ray.ang.composeui.p0.model.toWalletHomeUiState
+import com.v2ray.ang.composeui.p0.model.walletHomeChainLabel
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.V2RayServiceManager
 import com.v2ray.ang.payment.PaymentConfig
@@ -702,49 +705,9 @@ class RealP0Repository(context: Context) : P0Repository {
     override suspend fun getWalletHomeState(): WalletHomeUiState {
         val walletOverview = paymentRepository.getWalletOverview().getOrNull()
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
-        val hasUsableWallet = lifecycle?.walletExists == true &&
-            !lifecycle.sourceType.equals("LEGACY", ignoreCase = true)
+        val hasUsableWallet = lifecycle.hasUsableWallet()
         if (walletOverview != null) {
-            val chains = walletOverview.chainItems.map { chain ->
-                WalletChainSummary(
-                    chainId = chain.networkCode.lowercase(Locale.ROOT),
-                    label = chainLabel(chain.networkCode),
-                    balanceText = "${chain.orderCount ?: 0} 笔订单",
-                    accent = if (chain.hasConfiguredAddress == true) "已配置地址" else "待配置地址",
-                    itemCount = chain.assetCount ?: 0,
-                )
-            }
-            val assets = walletOverview.assetItems
-                .filter { it.walletVisible }
-                .map { asset ->
-                    AssetHolding(
-                        symbol = asset.assetCode,
-                        chainLabel = chainLabel(asset.networkCode),
-                        balanceText = "${asset.orderCount ?: 0} 笔订单",
-                        valueText = "累计 ${formatAssetAmount(asset.totalPayableAmount?.toDoubleOrNull() ?: 0.0, asset.assetCode)}",
-                        changeText = asset.lastOrderStatus ?: if ((asset.publicAddressCount ?: 0) > 0) "已配置地址" else "未配置地址",
-                        changePositive = asset.lastOrderStatus !in setOf("FAILED", "EXPIRED", "CANCELED"),
-                        detailText = asset.displayName,
-                    )
-                }
-
-            return WalletHomeUiState(
-                isLoading = false,
-                loadState = if (assets.isEmpty()) P0LoadState.EMPTY else P0LoadState.READY,
-                accountLabel = walletOverview.accountEmail,
-                totalBalanceText = "${assets.sumOf { it.balanceText.substringBefore(" ").toIntOrNull() ?: 0 }} 笔交易",
-                summaryLabel = walletOverview.alerts.firstOrNull() ?: "交易记录",
-                selectedChainId = walletOverview.selectedNetworkCode.lowercase(Locale.ROOT),
-                chains = chains,
-                assets = assets,
-                alertBanner = walletOverview.alerts.joinToString(" · "),
-                emptyMessage = if (assets.isEmpty()) "当前没有链上资产或订单记录。" else null,
-                walletExists = hasUsableWallet,
-                walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
-                walletId = lifecycle?.walletId,
-                walletDisplayName = lifecycle?.displayName,
-                walletNextAction = lifecycle?.nextAction ?: "CREATE_OR_IMPORT",
-            )
+            return walletOverview.toWalletHomeUiState(lifecycle)
         }
 
         val cachedUser = paymentRepository.getCachedCurrentUser()
@@ -795,7 +758,7 @@ class RealP0Repository(context: Context) : P0Repository {
             .map { (chainId, items) ->
                 WalletChainSummary(
                     chainId = chainId,
-                    label = chainLabel(chainId),
+                    label = walletHomeChainLabel(chainId),
                     balanceText = "${items.size} 笔订单",
                     accent = "区块支付网络",
                     itemCount = items.size,
@@ -1031,14 +994,6 @@ class RealP0Repository(context: Context) : P0Repository {
         } else {
             PaymentConfig.NetworkCode.TRON
         }
-    }
-
-    private fun chainLabel(chainId: String): String = when (chainId.lowercase(Locale.ROOT)) {
-        "tron" -> "TRON"
-        "solana" -> "Solana"
-        "ethereum" -> "Ethereum"
-        "base" -> "Base"
-        else -> chainId.uppercase(Locale.ROOT)
     }
 
     private fun formatAssetAmount(value: Double, assetCode: String): String {

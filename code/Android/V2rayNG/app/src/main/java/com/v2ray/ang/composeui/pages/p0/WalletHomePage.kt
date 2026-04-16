@@ -43,6 +43,8 @@ import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.model.AssetHolding
 import com.v2ray.ang.composeui.p0.model.WalletHomeEvent
 import com.v2ray.ang.composeui.p0.model.WalletHomeUiState
+import com.v2ray.ang.composeui.p0.model.buildWalletPortfolioValue
+import com.v2ray.ang.composeui.p0.model.formatWalletAssetValueDisplay
 import com.v2ray.ang.composeui.p0.model.walletHomePreviewState
 import com.v2ray.ang.composeui.p0.ui.P01Card
 import com.v2ray.ang.composeui.p0.ui.P01CardHeader
@@ -213,7 +215,7 @@ fun WalletHomeScreen(
                 Spacer(modifier = Modifier.height(18.dp))
 
                 WalletSectionHeader(
-                    title = "代币 $0.00",
+                    title = "代币",
                     onManage = { onBottomNav(tokenManagerRoute) },
                 )
 
@@ -621,9 +623,7 @@ private fun buildWalletTokenRows(assets: List<AssetHolding>): List<WalletTokenRo
 }
 
 private fun buildPortfolioValue(assets: List<AssetHolding>): String {
-    val totals = assets.mapNotNull { extractUsdAmount(it.valueText) }
-    if (totals.isEmpty()) return "$0.00"
-    return "$" + "%.2f".format(totals.sum())
+    return buildWalletPortfolioValue(assets)
 }
 
 private fun buildDailyPnl(assets: List<AssetHolding>): WalletDailyPnlUi {
@@ -640,13 +640,7 @@ private fun extractDisplayNumber(raw: String?): String {
 }
 
 private fun extractDisplayUsd(raw: String?): String {
-    return extractUsdAmount(raw)?.let { "$" + "%.2f".format(it) } ?: "$0.00"
-}
-
-private fun extractUsdAmount(raw: String?): Double? {
-    val normalized = raw.orEmpty().replace(",", "")
-    val match = Regex("""\$?\s*(-?\d+(?:\.\d+)?)""").find(normalized) ?: return null
-    return match.groupValues.getOrNull(1)?.toDoubleOrNull()
+    return formatWalletAssetValueDisplay(raw)
 }
 
 private fun maskAccountLabel(accountLabel: String, walletDisplayName: String?): String {
