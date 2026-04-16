@@ -1,10 +1,7 @@
 package com.v2ray.ang.composeui.pages.p2
 
-import android.app.Activity
-import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -28,7 +25,10 @@ import com.v2ray.ang.composeui.p2.model.SendUiState
 import com.v2ray.ang.composeui.p2.model.sendPreviewState
 import com.v2ray.ang.composeui.p2.viewmodel.SendViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
-import com.v2ray.ang.ui.ScannerActivity
+import io.github.g00fy2.quickie.QRResult
+import io.github.g00fy2.quickie.ScanCustomCode
+import io.github.g00fy2.quickie.config.BarcodeFormat
+import io.github.g00fy2.quickie.config.ScannerConfig
 
 @Composable
 fun SendRoute(
@@ -56,12 +56,12 @@ fun SendScreen(
 ) {
     val context = LocalContext.current
     val scanLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult(),
+        contract = ScanCustomCode(),
     ) { result ->
-        if (result.resultCode != Activity.RESULT_OK) {
+        if (result !is QRResult.QRSuccess) {
             return@rememberLauncherForActivityResult
         }
-        val scannedText = result.data?.getStringExtra("SCAN_RESULT").orEmpty().trim()
+        val scannedText = result.content.rawValue.orEmpty().trim()
         if (scannedText.isBlank()) {
             Toast.makeText(context, "未识别到可用地址", Toast.LENGTH_SHORT).show()
             return@rememberLauncherForActivityResult
@@ -124,7 +124,14 @@ fun SendScreen(
                     title = field.label,
                     actionLabel = "扫码",
                     onActionClick = {
-                        scanLauncher.launch(Intent(context, ScannerActivity::class.java))
+                        scanLauncher.launch(
+                            ScannerConfig.build {
+                                setHapticSuccessFeedback(true)
+                                setShowTorchToggle(true)
+                                setShowCloseButton(true)
+                                setBarcodeFormats(listOf(BarcodeFormat.QR_CODE))
+                            },
+                        )
                     },
                 )
                 GlassTextField(
