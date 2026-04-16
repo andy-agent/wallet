@@ -31,9 +31,7 @@ fun AppHeroValueCard(
     val baseline = OverviewBaselineTokens.primary
     val heroShape = RoundedCornerShape(baseline.heroRadius)
     AppCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .defaultMinSize(minHeight = baseline.heroSummaryMinHeight),
+        modifier = modifier.fillMaxWidth(),
         variant = AppCardVariant.Highlight,
         shape = heroShape,
         contentPadding = 0.dp,
@@ -42,7 +40,6 @@ fun AppHeroValueCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .defaultMinSize(minHeight = baseline.heroSummaryMinHeight)
                 .background(
                     brush = AppTheme.gradients.heroGlowGradient,
                     shape = heroShape,
