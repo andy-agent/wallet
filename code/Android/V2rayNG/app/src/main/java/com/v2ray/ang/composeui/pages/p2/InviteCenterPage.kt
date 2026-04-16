@@ -16,8 +16,6 @@ import com.v2ray.ang.composeui.components.growth.AppGrowthPageScaffold
 import com.v2ray.ang.composeui.components.growth.AppHeroStat
 import com.v2ray.ang.composeui.components.growth.AppHeroValueCard
 import com.v2ray.ang.composeui.components.growth.AppInviteInfoCard
-import com.v2ray.ang.composeui.components.growth.AppMetricGrid
-import com.v2ray.ang.composeui.components.growth.AppMetricGridItem
 import com.v2ray.ang.composeui.p2.model.InviteCenterEvent
 import com.v2ray.ang.composeui.p2.model.InviteCenterUiState
 import com.v2ray.ang.composeui.p2.model.inviteCenterPreviewState
@@ -94,11 +92,6 @@ fun InviteCenterScreen(
             supportingText = uiState.summary,
             highlight = uiState.badge,
             stats = uiState.metrics.drop(1).take(2).map { AppHeroStat(it.label, it.value) },
-        )
-
-        AppMetricGrid(
-            items = uiState.metrics.map { AppMetricGridItem(it.label, it.value) },
-            emphasizedIndexes = setOf(0),
         )
 
         AppInviteInfoCard(

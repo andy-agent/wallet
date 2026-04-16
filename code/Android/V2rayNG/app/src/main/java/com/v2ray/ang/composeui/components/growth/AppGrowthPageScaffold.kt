@@ -2,9 +2,12 @@ package com.v2ray.ang.composeui.components.growth
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.components.app.AppPageScaffold
 import com.v2ray.ang.composeui.components.app.AppPageBackgroundStyle
 import com.v2ray.ang.composeui.components.chips.AppChip
@@ -32,29 +35,6 @@ fun AppGrowthPageScaffold(
     AppPageScaffold(
         modifier = modifier,
         backgroundStyle = AppPageBackgroundStyle.Tech,
-        topBar = {
-            Column(
-                modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space8),
-            ) {
-                AppTopBar(
-                    title = title,
-                    subtitle = subtitle,
-                    mode = AppTopBarMode.Hero,
-                    actions = { P01HeaderHeroRing() },
-                )
-                if (!badge.isNullOrBlank()) {
-                    AppChip(text = badge, tone = AppChipTone.Brand)
-                }
-                if (note.isNotBlank()) {
-                    Text(
-                        text = note,
-                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                        color = AppTheme.colors.textSecondary,
-                    )
-                }
-            }
-        },
         bottomBar = {
             P01BottomNav(
                 currentRoute = currentRoute,
@@ -62,11 +42,33 @@ fun AppGrowthPageScaffold(
                 onNavigate = onBottomNav,
             )
         },
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            horizontal = AppTheme.spacing.pageHorizontal,
+            vertical = AppTheme.spacing.space8,
+        ),
     ) { _ ->
         Column(
             modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.sectionGap),
-            content = content,
-        )
+        ) {
+            AppTopBar(
+                title = title,
+                subtitle = subtitle,
+                mode = AppTopBarMode.Hero,
+                actions = { P01HeaderHeroRing() },
+            )
+            if (!badge.isNullOrBlank()) {
+                AppChip(text = badge, tone = AppChipTone.Brand)
+            }
+            if (note.isNotBlank()) {
+                Text(
+                    text = note,
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                    color = AppTheme.colors.textSecondary,
+                )
+            }
+            Spacer(modifier = androidx.compose.ui.Modifier.height(4.dp))
+            content()
+        }
     }
 }
