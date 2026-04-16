@@ -81,8 +81,8 @@ fun InviteCenterScreen(
     AppGrowthPageScaffold(
         title = uiState.title,
         subtitle = uiState.subtitle,
-        note = uiState.note,
-        badge = uiState.badge,
+        note = "",
+        badge = null,
         currentRoute = "invite_center",
         onBottomNav = onBottomNav,
     ) {
@@ -90,7 +90,7 @@ fun InviteCenterScreen(
             title = "邀请收益总览",
             value = uiState.metrics.firstOrNull()?.value ?: "--",
             supportingText = uiState.summary,
-            highlight = uiState.badge,
+            highlight = null,
             stats = uiState.metrics.drop(1).take(2).map { AppHeroStat(it.label, it.value) },
         )
 

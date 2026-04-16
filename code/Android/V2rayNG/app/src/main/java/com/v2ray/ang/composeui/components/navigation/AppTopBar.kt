@@ -33,12 +33,18 @@ fun AppTopBar(
         AppTopBarMode.Compact -> androidx.compose.material3.MaterialTheme.typography.titleLarge
     }.copy(fontWeight = FontWeight.SemiBold)
     val subtitleStyle = when (mode) {
-        AppTopBarMode.Compact -> androidx.compose.material3.MaterialTheme.typography.labelSmall
-        else -> androidx.compose.material3.MaterialTheme.typography.labelMedium
+        AppTopBarMode.Hero -> AppTheme.typography.labelL
+        AppTopBarMode.Compact -> AppTheme.typography.labelS
+        AppTopBarMode.Standard -> AppTheme.typography.labelM
     }
     val verticalSpacing = when (mode) {
+        AppTopBarMode.Hero -> AppTheme.spacing.space4
         AppTopBarMode.Compact -> AppTheme.spacing.space4
         else -> AppTheme.spacing.space8
+    }
+    val subtitleColor = when (mode) {
+        AppTopBarMode.Hero -> AppTheme.colors.brandPrimary.copy(alpha = 0.88f)
+        else -> AppTheme.colors.textTertiary
     }
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -55,7 +61,7 @@ fun AppTopBar(
                     Text(
                         text = subtitle,
                         style = subtitleStyle,
-                        color = AppTheme.colors.textTertiary,
+                        color = subtitleColor,
                     )
                 }
                 Text(

@@ -2,10 +2,8 @@ package com.v2ray.ang.composeui.components.growth
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.components.app.AppPageScaffold
@@ -49,7 +47,7 @@ fun AppGrowthPageScaffold(
     ) { _ ->
         Column(
             modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.sectionGap),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             AppTopBar(
                 title = title,
@@ -67,7 +65,6 @@ fun AppGrowthPageScaffold(
                     color = AppTheme.colors.textSecondary,
                 )
             }
-            Spacer(modifier = androidx.compose.ui.Modifier.height(4.dp))
             content()
         }
     }

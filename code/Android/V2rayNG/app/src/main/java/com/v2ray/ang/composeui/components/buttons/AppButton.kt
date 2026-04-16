@@ -17,6 +17,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.theme.AppTheme
 
@@ -42,14 +43,15 @@ fun AppButton(
     enabled: Boolean = true,
     loading: Boolean = false,
     contentPadding: PaddingValues = defaultAppButtonPadding(size),
+    shape: Shape? = null,
     leadingIcon: (@Composable () -> Unit)? = null,
     label: (@Composable () -> Unit)? = null,
 ) {
-    val shape = RoundedCornerShape(AppTheme.shapes.radiusPill)
+    val resolvedShape = shape ?: RoundedCornerShape(AppTheme.shapes.radiusPill)
     val minHeight = when (size) {
         AppButtonSize.Sm -> 40.dp
         AppButtonSize.Md -> 48.dp
-        AppButtonSize.Lg -> 52.dp
+        AppButtonSize.Lg -> 54.dp
     }
     val textStyle = AppTheme.typography.labelL
     val indicator: @Composable (() -> Unit)? = if (loading) {
@@ -72,9 +74,9 @@ fun AppButton(
                     .defaultMinSize(minHeight = minHeight)
                     .background(
                         brush = AppTheme.gradients.primaryGradient,
-                        shape = shape,
+                        shape = resolvedShape,
                     ),
-                shape = shape,
+                shape = resolvedShape,
                 contentPadding = contentPadding,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent,
@@ -98,7 +100,7 @@ fun AppButton(
                 onClick = onClick,
                 enabled = enabled && !loading,
                 modifier = modifier.defaultMinSize(minHeight = minHeight),
-                shape = shape,
+                shape = resolvedShape,
                 border = androidx.compose.foundation.BorderStroke(
                     width = 1.dp,
                     color = AppTheme.colors.dividerSubtle,
@@ -125,7 +127,7 @@ fun AppButton(
                 onClick = onClick,
                 enabled = enabled && !loading,
                 modifier = modifier.defaultMinSize(minHeight = minHeight),
-                shape = shape,
+                shape = resolvedShape,
                 contentPadding = contentPadding,
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = AppTheme.colors.brandPrimary,

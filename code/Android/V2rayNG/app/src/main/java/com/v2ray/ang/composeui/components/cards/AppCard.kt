@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.theme.AppTheme
 
@@ -28,6 +29,7 @@ fun AppCard(
     variant: AppCardVariant = AppCardVariant.Default,
     contentPadding: androidx.compose.ui.unit.Dp = AppTheme.spacing.cardPadding,
     shape: Shape = RoundedCornerShape(AppTheme.shapes.radiusLg),
+    shadowElevation: Dp? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val containerColor = when (variant) {
@@ -35,7 +37,7 @@ fun AppCard(
         AppCardVariant.Elevated -> AppTheme.colors.surfaceElevated
         AppCardVariant.Highlight -> AppTheme.colors.surfaceCard
     }
-    val shadowElevation = when (variant) {
+    val resolvedShadowElevation = shadowElevation ?: when (variant) {
         AppCardVariant.Default -> AppTheme.elevation.card
         AppCardVariant.Elevated -> AppTheme.elevation.floating
         AppCardVariant.Highlight -> AppTheme.elevation.hero
@@ -50,7 +52,7 @@ fun AppCard(
         shape = shape,
         border = BorderStroke(1.dp, AppTheme.colors.dividerSubtle),
         tonalElevation = 0.dp,
-        shadowElevation = shadowElevation,
+        shadowElevation = resolvedShadowElevation,
     ) {
         Box(
             modifier = Modifier

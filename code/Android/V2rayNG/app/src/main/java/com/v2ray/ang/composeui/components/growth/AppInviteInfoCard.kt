@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.components.cards.AppCard
-import com.v2ray.ang.composeui.components.cards.AppCardVariant
 import com.v2ray.ang.composeui.components.chips.AppChip
 import com.v2ray.ang.composeui.components.chips.AppChipTone
 import com.v2ray.ang.composeui.theme.AppTheme
@@ -30,10 +29,12 @@ fun AppInviteInfoCard(
 ) {
     AppCard(
         modifier = modifier.fillMaxWidth(),
-        variant = AppCardVariant.Elevated,
+        shape = RoundedCornerShape(22.dp),
+        contentPadding = 14.dp,
+        shadowElevation = 4.dp,
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.sectionGap),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -45,12 +46,12 @@ fun AppInviteInfoCard(
                 ) {
                     Text(
                         text = title,
-                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                        style = AppTheme.typography.titleL,
                         color = AppTheme.colors.textPrimary,
                     )
                     Text(
                         text = subtitle,
-                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                        style = AppTheme.typography.bodyS,
                         color = AppTheme.colors.textSecondary,
                     )
                 }
@@ -63,9 +64,7 @@ fun AppInviteInfoCard(
             }
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = AppTheme.spacing.space4),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
             ) {
                 InvitePrimaryValueBlock(
@@ -96,19 +95,17 @@ private fun InvitePrimaryValueBlock(
     value: String,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = AppTheme.spacing.space4),
-        verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space4),
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
             text = label,
-            style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+            style = AppTheme.typography.labelM,
             color = AppTheme.colors.textSecondary,
         )
         Text(
             text = value,
-            style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
+            style = AppTheme.typography.headlineM,
             color = AppTheme.colors.textPrimary,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -123,16 +120,16 @@ private fun InviteSupportingValueBlock(
     supportingText: String,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space8),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
             text = label,
-            style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+            style = AppTheme.typography.labelM,
             color = AppTheme.colors.textSecondary,
         )
         androidx.compose.material3.Surface(
             color = AppTheme.colors.bgSubtle,
-            shape = RoundedCornerShape(AppTheme.shapes.radiusMd),
+            shape = RoundedCornerShape(20.dp),
             border = BorderStroke(1.dp, AppTheme.colors.dividerSubtle),
         ) {
             Column(
@@ -144,12 +141,12 @@ private fun InviteSupportingValueBlock(
             ) {
                 Text(
                     text = value,
-                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                    style = AppTheme.typography.bodyM,
                     color = AppTheme.colors.textPrimary,
                 )
                 Text(
                     text = supportingText,
-                    style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                    style = AppTheme.typography.labelS,
                     color = AppTheme.colors.textTertiary,
                 )
             }
