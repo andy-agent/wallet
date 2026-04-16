@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import com.v2ray.ang.composeui.effects.MotionProfile
 import com.v2ray.ang.composeui.effects.TechParticleBackground
 
+@Deprecated("Use AppPageScaffold with backgroundStyle or an explicit background layer.")
 @Composable
 fun TechScaffold(
     modifier: Modifier = Modifier,

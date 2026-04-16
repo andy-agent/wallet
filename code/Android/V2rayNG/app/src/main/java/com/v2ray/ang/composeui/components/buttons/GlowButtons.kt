@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+@Deprecated("Use AppPrimaryButton or AppButton directly.")
 @Composable
 fun PrimaryGlowButton(
     text: String,
@@ -22,6 +23,7 @@ fun PrimaryGlowButton(
     )
 }
 
+@Deprecated("Use AppPrimaryButton or AppButton directly.")
 @Composable
 fun GradientCTAButton(
     text: String,
@@ -35,6 +37,7 @@ fun GradientCTAButton(
     )
 }
 
+@Deprecated("Use AppButton directly.")
 @Composable
 fun SecondaryOutlineButton(
     onClick: () -> Unit,

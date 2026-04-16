@@ -6,6 +6,7 @@ import com.v2ray.ang.composeui.components.buttons.AppButtonVariant
 
 typealias AppActionClusterAction = ActionClusterAction
 
+@Deprecated("Use ActionCluster directly.")
 @Composable
 fun AppActionCluster(
     actions: List<AppActionClusterAction>,

@@ -3,6 +3,7 @@ package com.v2ray.ang.composeui.components.inputs
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
+@Deprecated("Use AppTextField directly.")
 @Composable
 fun GlassTextField(
     value: String,

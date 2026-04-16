@@ -1,13 +1,14 @@
 package com.v2ray.ang.composeui.components.buttons
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ProvideTextStyle
@@ -25,24 +26,48 @@ enum class AppButtonVariant {
     Ghost,
 }
 
+enum class AppButtonSize {
+    Sm,
+    Md,
+    Lg,
+}
+
 @Composable
 fun AppButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     variant: AppButtonVariant = AppButtonVariant.Primary,
+    size: AppButtonSize = AppButtonSize.Md,
     enabled: Boolean = true,
+    loading: Boolean = false,
+    contentPadding: PaddingValues = defaultAppButtonPadding(size),
     leadingIcon: (@Composable () -> Unit)? = null,
     label: (@Composable () -> Unit)? = null,
 ) {
     val shape = RoundedCornerShape(AppTheme.shapes.radiusPill)
-    val minHeight = 50.dp
+    val minHeight = when (size) {
+        AppButtonSize.Sm -> 40.dp
+        AppButtonSize.Md -> 48.dp
+        AppButtonSize.Lg -> 52.dp
+    }
     val textStyle = AppTheme.typography.labelL
+    val indicator: @Composable (() -> Unit)? = if (loading) {
+        {
+            CircularProgressIndicator(
+                modifier = Modifier.defaultMinSize(minWidth = 16.dp, minHeight = 16.dp),
+                strokeWidth = 2.dp,
+                color = if (variant == AppButtonVariant.Primary) AppTheme.colors.textOnPrimary else AppTheme.colors.brandPrimary,
+            )
+        }
+    } else {
+        null
+    }
     when (variant) {
         AppButtonVariant.Primary -> {
             Button(
                 onClick = onClick,
-                enabled = enabled,
+                enabled = enabled && !loading,
                 modifier = modifier
                     .defaultMinSize(minHeight = minHeight)
                     .background(
@@ -50,6 +75,7 @@ fun AppButton(
                         shape = shape,
                     ),
                 shape = shape,
+                contentPadding = contentPadding,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent,
                     contentColor = AppTheme.colors.textOnPrimary,
@@ -60,8 +86,8 @@ fun AppButton(
             ) {
                 ProvideTextStyle(textStyle) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        leadingIcon?.invoke()
-                        label?.invoke() ?: Text(text = text, modifier = Modifier.padding(vertical = 6.dp))
+                        indicator?.invoke() ?: leadingIcon?.invoke()
+                        label?.invoke() ?: Text(text = text)
                     }
                 }
             }
@@ -70,13 +96,14 @@ fun AppButton(
         AppButtonVariant.Secondary -> {
             OutlinedButton(
                 onClick = onClick,
-                enabled = enabled,
+                enabled = enabled && !loading,
                 modifier = modifier.defaultMinSize(minHeight = minHeight),
                 shape = shape,
                 border = androidx.compose.foundation.BorderStroke(
                     width = 1.dp,
                     color = AppTheme.colors.dividerSubtle,
                 ),
+                contentPadding = contentPadding,
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = AppTheme.colors.surfaceElevated,
                     contentColor = AppTheme.colors.brandPrimary,
@@ -86,8 +113,8 @@ fun AppButton(
             ) {
                 ProvideTextStyle(textStyle) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        leadingIcon?.invoke()
-                        label?.invoke() ?: Text(text = text, modifier = Modifier.padding(vertical = 6.dp))
+                        indicator?.invoke() ?: leadingIcon?.invoke()
+                        label?.invoke() ?: Text(text = text)
                     }
                 }
             }
@@ -96,9 +123,10 @@ fun AppButton(
         AppButtonVariant.Ghost -> {
             TextButton(
                 onClick = onClick,
-                enabled = enabled,
+                enabled = enabled && !loading,
                 modifier = modifier.defaultMinSize(minHeight = minHeight),
                 shape = shape,
+                contentPadding = contentPadding,
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = AppTheme.colors.brandPrimary,
                     disabledContentColor = AppTheme.colors.textDisabled,
@@ -106,13 +134,20 @@ fun AppButton(
             ) {
                 ProvideTextStyle(MaterialTheme.typography.labelLarge) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        leadingIcon?.invoke()
-                        label?.invoke() ?: Text(text = text, modifier = Modifier.padding(vertical = 6.dp))
+                        indicator?.invoke() ?: leadingIcon?.invoke()
+                        label?.invoke() ?: Text(text = text)
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun defaultAppButtonPadding(size: AppButtonSize): PaddingValues = when (size) {
+    AppButtonSize.Sm -> PaddingValues(horizontal = AppTheme.spacing.space12, vertical = AppTheme.spacing.space8)
+    AppButtonSize.Md -> PaddingValues(horizontal = AppTheme.spacing.space16, vertical = AppTheme.spacing.space12)
+    AppButtonSize.Lg -> PaddingValues(horizontal = AppTheme.spacing.space20, vertical = AppTheme.spacing.space12)
 }
 
 @Composable

@@ -29,6 +29,7 @@ import com.v2ray.ang.composeui.theme.ElectricCyan
 import com.v2ray.ang.composeui.theme.SignalGreen
 import com.v2ray.ang.composeui.theme.StrokeSoft
 
+@Deprecated("Keep as a VPN-specific visual effect; do not treat as a common component.")
 @Composable
 fun ConnectionHero(
     status: VpnConnectionStatus,

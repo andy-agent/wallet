@@ -28,6 +28,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 
+@Deprecated("Use only as an optional branded background effect, not as a foundation default.")
 private data class ParticleSeed(
     val xRatio: Float,
     val yRatio: Float,
@@ -35,6 +36,7 @@ private data class ParticleSeed(
     val drift: Float,
 )
 
+@Deprecated("Use only as an optional branded background effect, not as a foundation default.")
 @Composable
 fun TechParticleBackground(
     motionProfile: MotionProfile,

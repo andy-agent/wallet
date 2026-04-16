@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.v2ray.ang.composeui.components.chips.AppChipTone
 
+@Deprecated("Use LabelValueRow directly.")
 @Composable
 fun AppLabelValueRow(
     label: String,

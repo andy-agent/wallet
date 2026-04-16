@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import com.v2ray.ang.composeui.theme.AppTheme
 
+@Deprecated("Freeze legacy business adapter file. Prefer dedicated feature row files.")
 @Composable
 fun AssetRow(
     asset: AssetHolding,
@@ -31,6 +32,7 @@ fun AssetRow(
     )
 }
 
+@Deprecated("Freeze legacy business adapter file. Prefer dedicated feature row files.")
 @Composable
 fun RegionSpeedRow(
     item: RegionSpeed,
@@ -39,6 +41,7 @@ fun RegionSpeedRow(
     NodeRow(item = item, modifier = modifier)
 }
 
+@Deprecated("Freeze legacy business adapter file. Prefer dedicated feature row files.")
 @Composable
 fun NodeRow(
     item: RegionSpeed,
@@ -61,6 +64,7 @@ fun NodeRow(
     )
 }
 
+@Deprecated("Freeze legacy business adapter file. Prefer dedicated feature row files.")
 @Composable
 fun WatchSignalRow(
     signal: WatchSignal,

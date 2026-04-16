@@ -17,13 +17,24 @@ data class ActionClusterAction(
     val leadingIcon: (@Composable () -> Unit)? = null,
 )
 
+enum class ActionClusterLayoutMode {
+    Auto,
+    Row,
+    Stack,
+}
+
 @Composable
 fun ActionCluster(
     actions: List<ActionClusterAction>,
     modifier: Modifier = Modifier,
+    layoutMode: ActionClusterLayoutMode = ActionClusterLayoutMode.Auto,
 ) {
     if (actions.isEmpty()) return
-    if (actions.size <= 2) {
+    val resolvedMode = when (layoutMode) {
+        ActionClusterLayoutMode.Auto -> if (actions.size <= 2) ActionClusterLayoutMode.Row else ActionClusterLayoutMode.Stack
+        else -> layoutMode
+    }
+    if (resolvedMode == ActionClusterLayoutMode.Row) {
         Row(
             modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),

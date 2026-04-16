@@ -17,6 +17,7 @@ import com.v2ray.ang.composeui.components.chips.AppChip
 import com.v2ray.ang.composeui.components.chips.AppChipTone
 import com.v2ray.ang.composeui.theme.AppTheme
 
+@Deprecated("Use AppCard directly.")
 @Composable
 fun TechCard(
     modifier: Modifier = Modifier,
@@ -27,6 +28,7 @@ fun TechCard(
     }
 }
 
+@Deprecated("Use feature-level cards instead of this legacy wrapper.")
 @Composable
 fun GradientHeroCard(
     title: String,
@@ -66,6 +68,7 @@ fun GradientHeroCard(
     }
 }
 
+@Deprecated("Use AppCard plus a dedicated setting row component.")
 @Composable
 fun SettingTileCard(
     title: String,
@@ -90,6 +93,7 @@ fun SettingTileCard(
     }
 }
 
+@Deprecated("Use MetricCard or AppMetricGrid.")
 @Composable
 fun MiniMetricPill(
     label: String,

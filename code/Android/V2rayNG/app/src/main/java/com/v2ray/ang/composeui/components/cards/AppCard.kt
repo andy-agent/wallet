@@ -5,13 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.theme.AppTheme
 
@@ -26,9 +27,9 @@ fun AppCard(
     modifier: Modifier = Modifier,
     variant: AppCardVariant = AppCardVariant.Default,
     contentPadding: androidx.compose.ui.unit.Dp = AppTheme.spacing.cardPadding,
+    shape: Shape = RoundedCornerShape(AppTheme.shapes.radiusLg),
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(AppTheme.shapes.radiusLg)
     val containerColor = when (variant) {
         AppCardVariant.Default -> AppTheme.colors.surfaceCard
         AppCardVariant.Elevated -> AppTheme.colors.surfaceElevated
@@ -39,8 +40,12 @@ fun AppCard(
         AppCardVariant.Elevated -> AppTheme.elevation.floating
         AppCardVariant.Highlight -> AppTheme.elevation.hero
     }
+    val overlay = when (variant) {
+        AppCardVariant.Highlight -> AppTheme.gradients.cardGlowGradient
+        else -> Brush.verticalGradient(listOf(containerColor, containerColor))
+    }
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         color = containerColor,
         shape = shape,
         border = BorderStroke(1.dp, AppTheme.colors.dividerSubtle),
@@ -50,15 +55,7 @@ fun AppCard(
         Box(
             modifier = Modifier
                 .clip(shape)
-                .background(
-                    brush = if (variant == AppCardVariant.Highlight) {
-                        AppTheme.gradients.cardGlowGradient
-                    } else {
-                        androidx.compose.ui.graphics.Brush.verticalGradient(
-                            listOf(containerColor, containerColor),
-                        )
-                    },
-                ),
+                .background(overlay),
         ) {
             Column(
                 modifier = Modifier.padding(contentPadding),

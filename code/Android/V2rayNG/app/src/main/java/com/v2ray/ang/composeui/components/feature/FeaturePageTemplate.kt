@@ -40,6 +40,7 @@ import com.v2ray.ang.composeui.theme.DividerLight
 import com.v2ray.ang.composeui.theme.LayerWhite
 import com.v2ray.ang.composeui.theme.TextMuted
 
+@Deprecated("Freeze legacy template; avoid new dependencies.")
 @Composable
 fun FeaturePageTemplate(
     title: String,

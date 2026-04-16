@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
+@Deprecated("Use InfoSection directly.")
 @Composable
 fun AppInfoSection(
     title: String,

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.v2ray.ang.composeui.components.buttons.AppButtonVariant
 
+@Deprecated("Keep this helper in growth/feature flows only; avoid expanding common usage.")
 @Composable
 fun AppCopyShareActions(
     primaryLabel: String,

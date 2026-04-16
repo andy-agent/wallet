@@ -29,11 +29,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.v2ray.ang.composeui.theme.ElectricBlue
-import com.v2ray.ang.composeui.theme.LayerWhite
-import com.v2ray.ang.composeui.theme.NavInactive
-import com.v2ray.ang.composeui.theme.TextSoft
-import com.v2ray.ang.composeui.theme.TextStrong
+import com.v2ray.ang.composeui.theme.AppTheme
 
 @Immutable
 data class BottomTab(
@@ -56,26 +52,29 @@ fun CryptoVpnBottomBar(
     onRouteSelected: (String) -> Unit,
     tabs: List<BottomTab> = defaultTabs,
 ) {
+    val colors = AppTheme.colors
+    val spacing = AppTheme.spacing
+    val shapes = AppTheme.shapes
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .drawBehind {
                 drawLine(
-                    color = LayerWhite.copy(alpha = 0.0f).copy(alpha = 0f), // no-op keeps shape simple
+                    color = colors.surfaceCard.copy(alpha = 0f),
                     start = Offset.Zero,
                     end = Offset.Zero,
                     strokeWidth = 0f,
                 )
                 drawLine(
-                    color = NavInactive.copy(alpha = 0.30f),
+                    color = colors.dividerSubtle,
                     start = Offset(0f, 0f),
                     end = Offset(size.width, 0f),
                     strokeWidth = 1.dp.toPx(),
                 )
             }
-            .background(LayerWhite.copy(alpha = 0.98f))
-            .padding(horizontal = 6.dp, vertical = 3.dp),
+            .background(colors.surfaceCard.copy(alpha = 0.98f))
+            .padding(horizontal = spacing.space8, vertical = spacing.space4),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         tabs.forEach { item ->
@@ -85,7 +84,7 @@ fun CryptoVpnBottomBar(
                     .weight(1f)
                     .defaultMinSize(minHeight = 44.dp)
                     .clickable { onRouteSelected(item.route) }
-                    .padding(horizontal = 4.dp, vertical = 3.dp),
+                    .padding(horizontal = spacing.space4, vertical = spacing.space4),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
@@ -93,21 +92,21 @@ fun CryptoVpnBottomBar(
                     modifier = Modifier
                         .size(22.dp)
                         .background(
-                            color = if (selected) ElectricBlue.copy(alpha = 0.10f) else LayerWhite.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(10.dp),
+                            color = if (selected) colors.infoBg else colors.surfaceElevated,
+                            shape = RoundedCornerShape(shapes.radiusXs),
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = item.icon,
                         contentDescription = item.label,
-                        tint = if (selected) ElectricBlue else NavInactive,
+                        tint = if (selected) colors.brandPrimary else colors.navInactive,
                         modifier = Modifier.size(16.dp),
                     )
                 }
                 Text(
                     text = item.label,
-                    color = if (selected) TextStrong else TextSoft,
+                    color = if (selected) colors.textPrimary else colors.textTertiary,
                     style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
                     textAlign = TextAlign.Center,
                 )

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.v2ray.ang.composeui.p0.ui.P01HeaderHeroRing
 
+@Deprecated("Use AppTopBar directly.")
 @Composable
 fun CryptoVpnTopBar(
     title: String,
@@ -15,6 +16,6 @@ fun CryptoVpnTopBar(
         title = title,
         subtitle = subtitle,
         modifier = modifier,
-        trailing = actions,
+        actions = { actions() },
     )
 }
