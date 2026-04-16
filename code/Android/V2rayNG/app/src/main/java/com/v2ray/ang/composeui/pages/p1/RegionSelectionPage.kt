@@ -1,40 +1,26 @@
 package com.v2ray.ang.composeui.pages.p1
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,43 +33,36 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.v2ray.ang.composeui.components.actions.ActionCluster
+import com.v2ray.ang.composeui.components.actions.ActionClusterAction
+import com.v2ray.ang.composeui.components.app.AppPageBackgroundStyle
+import com.v2ray.ang.composeui.components.app.AppPageScaffold
+import com.v2ray.ang.composeui.components.buttons.AppButtonVariant
+import com.v2ray.ang.composeui.components.cards.AppCard
+import com.v2ray.ang.composeui.components.cards.AppCardVariant
+import com.v2ray.ang.composeui.components.chips.AppChip
+import com.v2ray.ang.composeui.components.chips.AppChipTone
+import com.v2ray.ang.composeui.components.feedback.EmptyStateCard
+import com.v2ray.ang.composeui.components.inputs.AppTextField
+import com.v2ray.ang.composeui.components.listitems.AppListCardItem
+import com.v2ray.ang.composeui.components.navigation.AppTopBar
+import com.v2ray.ang.composeui.components.navigation.AppTopBarMode
+import com.v2ray.ang.composeui.components.navigation.CryptoVpnBottomBar
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p1.model.RegionOptionUi
 import com.v2ray.ang.composeui.p1.model.RegionSelectionEvent
 import com.v2ray.ang.composeui.p1.model.RegionSelectionUiState
 import com.v2ray.ang.composeui.p1.model.regionSelectionPreviewState
 import com.v2ray.ang.composeui.p1.viewmodel.RegionSelectionViewModel
+import com.v2ray.ang.composeui.theme.AppTheme
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.composeui.theme.tokens.OverviewBaselineTokens
 
-private val PageBgTop = Color(0xFFF5F7FF)
-private val PageBgBottom = Color(0xFFEFF8FF)
-private val TitleColor = Color(0xFF111827)
-private val SubtleTextColor = Color(0xFF7B8794)
-private val AccentBlue = Color(0xFF4C74FF)
-private val AccentCyan = Color(0xFF28C7E8)
-private val AccentPurple = Color(0xFF8A7CFF)
-
-private data class NodeSelectTypeScale(
-    val hero: TextStyle,
-    val section: TextStyle,
-    val cardTitle: TextStyle,
-    val itemTitle: TextStyle,
-    val body: TextStyle,
-    val caption: TextStyle,
-)
+private val RegionGlowBlue = Color(0x204F7CFF)
+private val RegionGlowPurple = Color(0x188C7CFF)
 
 private data class NodeUiModel(
     val id: String,
@@ -146,204 +125,152 @@ fun RegionSelectionScreen(
     onSecondaryAction: () -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val baseline = OverviewBaselineTokens.primary
     val nodes = uiState.regions.map { it.toNodeUi() }
-    val typeScale = rememberNodeSelectTypeScale()
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
+    var selectedFilterIndex by rememberSaveable { mutableIntStateOf(0) }
     var selectedNodeId by rememberSaveable { mutableStateOf(uiState.selectedNodeId ?: nodes.firstOrNull()?.id.orEmpty()) }
-    val filters = listOf(
-        NodeFilter("recommend", "推荐"),
-        NodeFilter("asia", "亚洲"),
-        NodeFilter("europe", "欧洲"),
-        NodeFilter("america", "美洲"),
-        NodeFilter("lowdelay", "低延迟"),
-    )
-
-    val filteredNodes = remember(nodes, selectedTabIndex, uiState.searchQuery) {
-        filterRegionNodes(nodes, selectedTabIndex, uiState.searchQuery)
+    val filters = remember {
+        listOf(
+            NodeFilter("recommend", "推荐"),
+            NodeFilter("asia", "亚洲"),
+            NodeFilter("europe", "欧洲"),
+            NodeFilter("america", "美洲"),
+            NodeFilter("lowdelay", "低延迟"),
+        )
     }
+    val filteredNodes = remember(nodes, selectedFilterIndex, uiState.searchQuery) {
+        filterRegionNodes(nodes, selectedFilterIndex, uiState.searchQuery)
+    }
+    val selectedNode = filteredNodes.firstOrNull { it.id == selectedNodeId } ?: filteredNodes.firstOrNull()
+
     LaunchedEffect(filteredNodes) {
         if (filteredNodes.none { it.id == selectedNodeId }) {
             selectedNodeId = filteredNodes.firstOrNull()?.id.orEmpty()
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        TechPageBackground()
-
-        LazyColumn(
+    AppPageScaffold(
+        backgroundStyle = AppPageBackgroundStyle.Hero,
+        background = {
+            RegionSelectionBackground()
+        },
+        bottomBar = {
+            CryptoVpnBottomBar(
+                currentRoute = CryptoVpnRouteSpec.plans.name,
+                onRouteSelected = onBottomNav,
+            )
+        },
+        contentPadding = PaddingValues(
+            horizontal = baseline.pageHorizontal,
+            vertical = baseline.pageTopSpacing,
+        ),
+    ) { _ ->
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .widthIn(max = 420.dp),
-            contentPadding = PaddingValues(start = 16.dp, top = 18.dp, end = 16.dp, bottom = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .fillMaxWidth()
+                .widthIn(max = 640.dp),
+            verticalArrangement = Arrangement.spacedBy(baseline.sectionGap),
         ) {
-            item {
-                HeaderSection(
-                    eyebrow = "SMART ROUTING",
-                    title = "选择节点",
-                    subtitle = "",
-                    typeScale = typeScale,
-                )
-            }
+            AppTopBar(
+                title = "选择节点",
+                subtitle = uiState.subtitle,
+                mode = AppTopBarMode.Hero,
+                actions = {
+                    AppChip(
+                        text = "${filteredNodes.count { it.isAllowed }} 可用",
+                        tone = AppChipTone.Info,
+                    )
+                },
+            )
 
-            item {
-                SearchBarSection(
-                    keyword = uiState.searchQuery,
-                    onKeywordChange = onSearchChange,
-                    onAiSortClick = onRefresh,
-                    typeScale = typeScale,
-                )
-            }
+            AppTextField(
+                value = uiState.searchQuery,
+                label = "",
+                placeholder = "搜索国家 / 城市 / 用途",
+                onValueChange = onSearchChange,
+                modifier = Modifier.fillMaxWidth(),
+                leading = {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = null,
+                        tint = AppTheme.colors.textTertiary,
+                    )
+                },
+            )
 
-            item {
-                FilterSection(
-                    filters = filters,
-                    selectedFilterKey = filters.getOrNull(selectedTabIndex)?.key ?: "recommend",
-                    onFilterSelected = { key ->
-                        selectedTabIndex = filters.indexOfFirst { it.key == key }.coerceAtLeast(0)
-                    },
-                    typeScale = typeScale,
-                )
-            }
-
-            item {
-                SectionHeader(
-                    title = "可用节点",
-                    trailing = "${filteredNodes.count { it.isAllowed }} 可用",
-                    typeScale = typeScale,
-                )
-            }
-
-            item {
-                if (uiState.screenState.hasError || filteredNodes.isEmpty()) {
-                    GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            Text(
-                                text = uiState.screenState.unavailableMessage
-                                    ?: uiState.screenState.errorMessage
-                                    ?: uiState.screenState.emptyMessage
-                                    ?: uiState.note.ifBlank { "节点数据同步中" },
-                                color = SubtleTextColor,
-                                style = typeScale.body,
-                            )
-                            TextButton(onClick = onEmptyAction) {
-                                Text(text = emptyActionLabel)
-                            }
-                        }
-                    }
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.space8),
+            ) {
+                filters.forEachIndexed { index, filter ->
+                    AppChip(
+                        text = filter.label,
+                        tone = AppChipTone.Brand,
+                        selected = index == selectedFilterIndex,
+                        onClick = { selectedFilterIndex = index },
+                    )
                 }
             }
 
-            items(items = filteredNodes, key = { it.id }) { node ->
-                NodeListItem(
+            selectedNode?.let { node ->
+                BestNodeCard(
                     node = node,
-                    selected = node.id == selectedNodeId,
-                    onClick = {
+                    onUseNode = {
                         selectedNodeId = node.id
                         onPrimaryAction(node.lineCode, node.id)
                     },
-                    typeScale = typeScale,
                 )
             }
-        }
-    }
-}
 
-@Composable
-private fun HeaderSection(
-    eyebrow: String,
-    title: String,
-    subtitle: String,
-    typeScale: NodeSelectTypeScale,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = eyebrow,
-            letterSpacing = 1.4.sp,
-            color = Color(0xFF7D8FB3),
-            style = typeScale.caption,
-        )
-        Text(
-            text = title,
-            color = TitleColor,
-            style = typeScale.hero,
-        )
-        if (subtitle.isNotBlank()) {
             Text(
-                text = subtitle,
-                color = SubtleTextColor,
-                style = typeScale.body,
+                text = "可用节点",
+                style = MaterialTheme.typography.titleLarge,
+                color = AppTheme.colors.textPrimary,
             )
-        }
-    }
-}
 
-@Composable
-private fun SearchBarSection(
-    keyword: String,
-    onKeywordChange: (String) -> Unit,
-    onAiSortClick: () -> Unit,
-    typeScale: NodeSelectTypeScale,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        OutlinedTextField(
-            value = keyword,
-            onValueChange = onKeywordChange,
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(20.dp),
-            singleLine = true,
-            placeholder = {
-                Text(text = "搜索国家 / 城市 / 用途", color = SubtleTextColor)
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Outlined.Search,
-                    contentDescription = null,
-                    tint = SubtleTextColor,
+            if (uiState.screenState.hasError || filteredNodes.isEmpty()) {
+                EmptyStateCard(
+                    title = if (uiState.screenState.hasError) "节点暂不可用" else "当前没有匹配节点",
+                    message = uiState.screenState.unavailableMessage
+                        ?: uiState.screenState.errorMessage
+                        ?: uiState.screenState.emptyMessage
+                        ?: uiState.note.ifBlank { "节点数据同步中" },
+                    actionLabel = emptyActionLabel,
+                    onAction = onEmptyAction,
                 )
-            },
-        )
+            } else {
+                filteredNodes.forEach { node ->
+                    AppListCardItem(
+                        title = "${node.city} · ${node.code}",
+                        subtitle = node.description,
+                        supportingText = "延迟 ${node.latencyLabel} · 风险 ${node.riskLabel}",
+                        value = node.speedLabel,
+                        emphasized = node.id == selectedNodeId || node.recommended,
+                        trailing = {
+                            AppChip(
+                                text = if (node.isAllowed) "可用" else "受限",
+                                tone = if (node.isAllowed) AppChipTone.Success else AppChipTone.Warning,
+                            )
+                        },
+                        onClick = {
+                            selectedNodeId = node.id
+                            onPrimaryAction(node.lineCode, node.id)
+                        },
+                    )
+                }
+            }
 
-        Spacer(modifier = Modifier.width(10.dp))
-
-        TextButton(
-            onClick = onAiSortClick,
-            modifier = Modifier
-                .height(52.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(Color.White.copy(alpha = 0.72f)),
-        ) {
-            Text(
-                text = "AI排序",
-                color = AccentBlue,
-                style = typeScale.caption,
-            )
-        }
-    }
-}
-
-@Composable
-private fun FilterSection(
-    filters: List<NodeFilter>,
-    selectedFilterKey: String,
-    onFilterSelected: (String) -> Unit,
-    typeScale: NodeSelectTypeScale,
-) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(filters, key = { it.key }) { filter ->
-            FilterChip(
-                selected = filter.key == selectedFilterKey,
-                onClick = { onFilterSelected(filter.key) },
-                label = { Text(text = filter.label, style = typeScale.caption) },
-            )
+            if (uiState.secondaryActionLabel != null) {
+                ActionCluster(
+                    actions = listOf(
+                        ActionClusterAction(
+                            label = uiState.secondaryActionLabel,
+                            onClick = onSecondaryAction,
+                            variant = AppButtonVariant.Secondary,
+                        ),
+                    ),
+                )
+            }
         }
     }
 }
@@ -351,315 +278,88 @@ private fun FilterSection(
 @Composable
 private fun BestNodeCard(
     node: NodeUiModel,
-    onClick: () -> Unit,
-    typeScale: NodeSelectTypeScale,
+    onUseNode: () -> Unit,
 ) {
-    BoxWithConstraints {
-        val compactScreen = maxWidth < 360.dp
-        val ringSize = if (compactScreen) 72.dp else 92.dp
-
-        GlassCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick),
+    AppCard(
+        variant = AppCardVariant.Highlight,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(18.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
             ) {
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space4),
                 ) {
                     Text(
-                        text = "当前节点",
-                        color = Color(0xFF94A3B8),
-                        style = typeScale.caption,
+                        text = "推荐节点",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = AppTheme.colors.textSecondary,
                     )
                     Text(
-                        text = "${node.city} ・ ${node.code}",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = TitleColor,
-                        style = if (compactScreen) typeScale.section else typeScale.hero,
+                        text = "${node.city} · ${node.code}",
+                        style = AppTheme.typography.headlineM,
+                        color = AppTheme.colors.textPrimary,
                     )
                     Text(
                         text = node.description,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        color = SubtleTextColor,
-                        style = typeScale.body,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = AppTheme.colors.textSecondary,
                     )
-
-                    Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        MetricBox(label = "LATENCY", value = node.latencyLabel)
-                        MetricBox(label = "HOST", value = node.speedLabel)
-                        MetricBox(label = "RISK", value = node.riskLabel)
-                    }
                 }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Box(
-                    modifier = Modifier.size(ringSize),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    DefaultBestNodeVisual()
-                }
+                AppChip(
+                    text = if (node.isAllowed) "可连接" else "受限",
+                    tone = if (node.isAllowed) AppChipTone.Success else AppChipTone.Warning,
+                )
             }
-        }
-    }
-}
 
-@Composable
-private fun MetricBox(
-    label: String,
-    value: String,
-) {
-    Column(
-        modifier = Modifier
-            .defaultMinSize(minWidth = 84.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color.White.copy(alpha = 0.75f))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-    ) {
-        Text(
-            text = label,
-            color = Color(0xFF94A3B8),
-            style = MaterialTheme.typography.labelSmall,
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = value,
-            color = TitleColor,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
-}
-
-@Composable
-private fun SectionHeader(
-    title: String,
-    trailing: String,
-    typeScale: NodeSelectTypeScale,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        Text(
-            text = title,
-            color = TitleColor,
-            style = typeScale.section,
-        )
-        Text(
-            text = trailing,
-            color = Color(0xFF94A3B8),
-            style = typeScale.caption,
-        )
-    }
-}
-
-@Composable
-private fun NodeListItem(
-    node: NodeUiModel,
-    selected: Boolean,
-    onClick: () -> Unit,
-    typeScale: NodeSelectTypeScale,
-) {
-    GlassCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        cornerRadius = 20.dp,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 15.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.space8),
             ) {
-                Text(
-                    text = "${node.city} ・ ${node.code}",
-                    color = TitleColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = typeScale.cardTitle,
-                )
-                Text(
-                    text = node.description,
-                    color = SubtleTextColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = typeScale.body,
-                )
+                AppChip(text = "延迟 ${node.latencyLabel}", tone = AppChipTone.Info)
+                AppChip(text = node.speedLabel, tone = AppChipTone.Neutral)
+                AppChip(text = node.riskLabel, tone = AppChipTone.Neutral)
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text(
-                    text = node.latencyLabel,
-                    color = Color(0xFF6B7280),
-                    style = typeScale.caption,
-                )
-                SpeedBar(progress = if (selected) 1f else 0.72f)
-                Text(
-                    text = node.speedLabel,
-                    color = Color(0xFF94A3B8),
-                    style = typeScale.caption,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SpeedBar(progress: Float) {
-    Canvas(
-        modifier = Modifier
-            .width(96.dp)
-            .height(8.dp),
-    ) {
-        drawRoundRect(
-            color = Color(0xFFE5EDF8),
-            size = size,
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(100f, 100f),
-        )
-        drawRoundRect(
-            brush = Brush.horizontalGradient(listOf(AccentBlue, AccentCyan)),
-            size = Size(width = size.width * progress.coerceIn(0f, 1f), height = size.height),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(100f, 100f),
-        )
-    }
-}
-
-@Composable
-private fun GlassCard(
-    modifier: Modifier = Modifier,
-    cornerRadius: androidx.compose.ui.unit.Dp = 24.dp,
-    content: @Composable () -> Unit,
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(cornerRadius),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.82f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.65f),
-                            Color(0xFFF2FAFF).copy(alpha = 0.6f),
-                        ),
+            ActionCluster(
+                actions = listOf(
+                    ActionClusterAction(
+                        label = "使用该节点",
+                        onClick = onUseNode,
+                        variant = AppButtonVariant.Primary,
                     ),
                 ),
-        ) {
-            content()
-        }
-    }
-}
-
-@Composable
-private fun TechPageBackground() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(colors = listOf(PageBgTop, PageBgBottom))),
-    ) {
-        BackgroundGlow(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 8.dp)
-                .size(220.dp),
-            color = AccentPurple.copy(alpha = 0.18f),
-        )
-        BackgroundGlow(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 120.dp)
-                .size(260.dp),
-            color = AccentCyan.copy(alpha = 0.14f),
-        )
-        TechDots()
-    }
-}
-
-@Composable
-private fun BackgroundGlow(
-    modifier: Modifier,
-    color: Color,
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(color)
-            .blur(36.dp),
-    )
-}
-
-@Composable
-private fun TechDots() {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val points = listOf(
-            Offset(size.width * 0.08f, size.height * 0.18f),
-            Offset(size.width * 0.22f, size.height * 0.82f),
-            Offset(size.width * 0.48f, size.height * 0.40f),
-            Offset(size.width * 0.66f, size.height * 0.62f),
-            Offset(size.width * 0.84f, size.height * 0.14f),
-            Offset(size.width * 0.90f, size.height * 0.88f),
-        )
-        points.forEachIndexed { index, point ->
-            drawCircle(
-                color = if (index % 2 == 0) AccentCyan.copy(alpha = 0.24f) else AccentPurple.copy(alpha = 0.22f),
-                radius = if (index % 2 == 0) 4f else 3f,
-                center = point,
             )
         }
     }
 }
 
 @Composable
-private fun DefaultBestNodeVisual() {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val stroke = size.minDimension * 0.09f
-        val outerRadius = size.minDimension / 2.2f
-        val center = Offset(size.width / 2f, size.height / 2f)
-
-        drawCircle(color = AccentCyan.copy(alpha = 0.10f), radius = outerRadius * 1.06f, center = center)
-        drawCircle(color = Color.White.copy(alpha = 0.95f), radius = outerRadius * 0.54f, center = center)
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(AccentBlue.copy(alpha = 0.10f), Color.Transparent),
-                center = center,
-                radius = outerRadius * 1.25f,
-            ),
-            radius = outerRadius * 1.25f,
-            center = center,
+private fun RegionSelectionBackground() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 36.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(220.dp)
+                .background(RegionGlowPurple, RoundedCornerShape(999.dp))
+                .blur(48.dp),
         )
-        drawArc(
-            brush = Brush.sweepGradient(listOf(AccentBlue, AccentCyan, AccentPurple, AccentBlue)),
-            startAngle = -80f,
-            sweepAngle = 300f,
-            useCenter = false,
-            topLeft = Offset(center.x - outerRadius, center.y - outerRadius),
-            size = Size(outerRadius * 2, outerRadius * 2),
-            style = Stroke(width = stroke, cap = StrokeCap.Round),
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(top = 280.dp)
+                .size(260.dp)
+                .background(RegionGlowBlue, RoundedCornerShape(999.dp))
+                .blur(60.dp),
         )
     }
 }
@@ -712,20 +412,5 @@ private fun RegionSelectionPreview() {
                 onSecondaryAction = {},
             )
         }
-    }
-}
-
-@Composable
-private fun rememberNodeSelectTypeScale(): NodeSelectTypeScale {
-    val typography = MaterialTheme.typography
-    return remember(typography) {
-        NodeSelectTypeScale(
-            hero = typography.headlineLarge,
-            section = typography.headlineMedium,
-            cardTitle = typography.titleLarge,
-            itemTitle = typography.titleMedium,
-            body = typography.bodyMedium,
-            caption = typography.labelMedium,
-        )
     }
 }

@@ -1,34 +1,62 @@
 package com.v2ray.ang.composeui.pages.p1
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.v2ray.ang.composeui.components.actions.ActionCluster
+import com.v2ray.ang.composeui.components.actions.ActionClusterAction
+import com.v2ray.ang.composeui.components.app.AppPageBackgroundStyle
+import com.v2ray.ang.composeui.components.app.AppPageScaffold
+import com.v2ray.ang.composeui.components.buttons.AppButtonVariant
+import com.v2ray.ang.composeui.components.cards.AppCard
+import com.v2ray.ang.composeui.components.cards.PaymentSummaryCard
+import com.v2ray.ang.composeui.components.cards.PaymentSummaryField
+import com.v2ray.ang.composeui.components.chips.AppChip
+import com.v2ray.ang.composeui.components.chips.AppChipTone
+import com.v2ray.ang.composeui.components.feedback.EmptyStateCard
+import com.v2ray.ang.composeui.components.navigation.AppTopBar
+import com.v2ray.ang.composeui.components.navigation.AppTopBarMode
+import com.v2ray.ang.composeui.components.navigation.CryptoVpnBottomBar
+import com.v2ray.ang.composeui.components.rows.LabelValueRow
+import com.v2ray.ang.composeui.components.sections.InfoSection
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
-import com.v2ray.ang.composeui.p0.ui.P01Card
-import com.v2ray.ang.composeui.p0.ui.P01CardCopy
-import com.v2ray.ang.composeui.p0.ui.P01CardHeader
-import com.v2ray.ang.composeui.p0.ui.P01Chip
-import com.v2ray.ang.composeui.p0.ui.P01Header
-import com.v2ray.ang.composeui.p0.ui.P01List
-import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.ui.P01RealQr
-import com.v2ray.ang.composeui.p0.ui.P01SecondaryButton
-import com.v2ray.ang.composeui.p0.ui.P01Tab
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutEvent
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutUiState
 import com.v2ray.ang.composeui.p1.model.checkoutPaymentLabel
 import com.v2ray.ang.composeui.p1.model.orderCheckoutPreviewState
 import com.v2ray.ang.composeui.p1.model.resolvedPaymentQrText
 import com.v2ray.ang.composeui.p1.viewmodel.OrderCheckoutViewModel
+import com.v2ray.ang.composeui.theme.AppTheme
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.composeui.theme.tokens.OverviewBaselineTokens
+
+private val CheckoutGlowBlue = Color(0x224F7CFF)
+private val CheckoutGlowCyan = Color(0x1625D7FF)
 
 @Composable
 fun OrderCheckoutRoute(
@@ -66,15 +94,10 @@ fun OrderCheckoutScreen(
     onPaymentOptionRoute: (String) -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
+    val baseline = OverviewBaselineTokens.primary
     val clipboardManager = LocalClipboardManager.current
     val qrText = uiState.resolvedPaymentQrText()
     val paymentLabel = checkoutPaymentLabel(uiState.assetCode, uiState.networkCode)
-    val rows = listOfNotNull(
-        "套餐" to uiState.planTitle.ifBlank { uiState.planCode.orEmpty() }.ifBlank { null },
-        "节点区域" to uiState.selectedRegionLabel.ifBlank { "支付后补选" },
-        "支付网络" to paymentLabel.ifBlank { null },
-        "订单金额" to uiState.payableAmount.takeIf { it.isNotBlank() }?.let { "$it ${uiState.assetCode}" },
-    )
     val orderLabel = uiState.orderNo?.let { "ORD-${it.takeLast(8)}" }
     val statusMessage = uiState.screenState.unavailableMessage
         ?: uiState.screenState.errorMessage
@@ -83,163 +106,219 @@ fun OrderCheckoutScreen(
     val secondaryButtonText = when {
         uiState.collectionAddress.isNotBlank() -> "复制地址"
         uiState.orderNo != null -> "刷新订单"
-        else -> "重选区域"
+        else -> uiState.secondaryActionLabel ?: "重选区域"
     }
     val primaryButtonText = when {
         uiState.orderNo != null -> "我已完成支付"
         uiState.screenState.isLoading -> "正在创建订单"
         else -> "创建订单"
     }
-
-    P01PhoneScaffold(
-        currentRoute = CryptoVpnRouteSpec.orderCheckout.name,
-        onBottomNav = onBottomNav,
-    ) {
-        P01Header(
-            eyebrow = "CHECKOUT",
-            title = "订单收银台",
-            subtitle = "",
-            chips = listOf(uiState.expiresAt?.substringBefore('.')?.replace('T', ' ') ?: "待创建订单"),
-            backLabel = "<",
-            onBack = onSecondaryAction,
-            trailing = { P1SecureHub(label = paymentLabel.ifBlank { "PAY" }) },
-        )
-
-        P01Card {
-            P01CardHeader(title = "订单信息")
-            P01CardCopy(statusMessage)
-            P01List {
-                rows.forEach { (title, value) ->
-                    value?.let {
-                        P1FeedbackRow(
-                            title = title,
-                            value = it,
-                            selected = title == "订单金额" || title == "支付网络",
-                        )
-                    }
-                }
-            }
+    val summaryFields = buildList {
+        add(PaymentSummaryField("套餐", uiState.planTitle.ifBlank { uiState.planCode.orEmpty() }.ifBlank { "--" }))
+        add(PaymentSummaryField("节点区域", uiState.selectedRegionLabel.ifBlank { "支付后补选" }))
+        if (paymentLabel.isNotBlank()) {
+            add(PaymentSummaryField("支付网络", paymentLabel))
         }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (paymentLabel.isNotBlank()) {
-                P01Chip(text = paymentLabel)
-            }
+        if (uiState.payableAmount.isNotBlank()) {
+            add(PaymentSummaryField("订单金额", "${uiState.payableAmount} ${uiState.assetCode}"))
         }
+    }
 
-        if (uiState.paymentOptions.isNotEmpty()) {
-            P01Card {
-                P01CardHeader(title = "选择支付网络")
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    uiState.paymentOptions.forEach { option ->
-                        P01Tab(
-                            text = option.label,
-                            selected = option.selected,
-                            onClick = {
-                                val planCode = uiState.planCode ?: return@P01Tab
-                                onPaymentOptionRoute(
-                                    CryptoVpnRouteSpec.orderCheckoutRoute(
-                                        planId = planCode,
-                                        assetCode = option.assetCode,
-                                        networkCode = option.networkCode,
-                                    ),
-                                )
-                            },
-                        )
-                    }
-                }
-            }
-        }
-
-        if (uiState.orderNo != null || qrText.isNotBlank() || uiState.collectionAddress.isNotBlank()) {
-            P1SelectableCard(
-                selected = qrText.isNotBlank(),
-            ) {
-                P01CardHeader(
-                    title = "扫码支付",
-                    trailing = {
-                        if (!orderLabel.isNullOrBlank()) {
-                            P01Chip(text = orderLabel)
-                        }
-                    },
-                )
-                P01CardCopy(
-                    if (uiState.screenState.isUnavailable) {
-                        statusMessage
-                    } else {
-                        ""
-                    }
-                )
-                if (qrText.isNotBlank()) {
-                    P01RealQr(content = qrText)
-                    P01CardCopy(uiState.collectionAddress)
-                } else {
-                    P01CardCopy(
-                        if (uiState.screenState.isUnavailable) {
-                            statusMessage
-                        } else {
-                            uiState.collectionAddress
-                        },
-                    )
-                }
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            P01SecondaryButton(
-                text = secondaryButtonText,
-                onClick = {
-                    when {
-                        uiState.collectionAddress.isNotBlank() -> {
-                            clipboardManager.setText(AnnotatedString(uiState.collectionAddress))
-                        }
-                        uiState.orderNo != null -> {
-                            onRefresh()
-                        }
-                        else -> {
-                            onSecondaryAction()
-                        }
-                    }
-                },
-                modifier = Modifier.weight(1f),
+    AppPageScaffold(
+        backgroundStyle = AppPageBackgroundStyle.Hero,
+        background = { CheckoutBackgroundGlow() },
+        bottomBar = {
+            CryptoVpnBottomBar(
+                currentRoute = CryptoVpnRouteSpec.plans.name,
+                onRouteSelected = onBottomNav,
             )
-            P1PrimaryCta(
-                text = primaryButtonText,
-                onClick = {
-                    if (uiState.orderNo == null) {
-                        onCreateOrder()
-                    } else {
-                        onPrimaryAction()
+        },
+        contentPadding = PaddingValues(
+            horizontal = baseline.pageHorizontal,
+            vertical = baseline.pageTopSpacing,
+        ),
+    ) { _ ->
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 680.dp),
+            verticalArrangement = Arrangement.spacedBy(baseline.sectionGap),
+        ) {
+            AppTopBar(
+                title = "订单收银台",
+                subtitle = uiState.subtitle,
+                mode = AppTopBarMode.Hero,
+                actions = {
+                    if (!orderLabel.isNullOrBlank()) {
+                        AppChip(text = orderLabel, tone = AppChipTone.Info)
+                    } else if (paymentLabel.isNotBlank()) {
+                        AppChip(text = paymentLabel, tone = AppChipTone.Brand)
                     }
                 },
-                modifier = Modifier.weight(1f),
-                active = if (uiState.orderNo == null) {
-                    uiState.paymentOptions.isNotEmpty() && !uiState.screenState.isLoading
-                } else {
-                    true
-                },
+            )
+
+            PaymentSummaryCard(
+                title = "订单信息",
+                subtitle = statusMessage,
+                fields = summaryFields,
+            )
+
+            if (uiState.paymentOptions.isNotEmpty()) {
+                InfoSection(
+                    title = "选择支付网络",
+                    subtitle = "切换支付资产与网络，不改当前业务流程",
+                ) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.space8),
+                    ) {
+                        uiState.paymentOptions.forEach { option ->
+                            AppChip(
+                                text = option.label,
+                                tone = AppChipTone.Brand,
+                                selected = option.selected,
+                                onClick = {
+                                    val planCode = uiState.planCode ?: return@AppChip
+                                    onPaymentOptionRoute(
+                                        CryptoVpnRouteSpec.orderCheckoutRoute(
+                                            planId = planCode,
+                                            assetCode = option.assetCode,
+                                            networkCode = option.networkCode,
+                                        ),
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (uiState.screenState.hasError && uiState.orderNo == null && uiState.paymentOptions.isEmpty()) {
+                EmptyStateCard(
+                    title = "当前无法创建订单",
+                    message = statusMessage,
+                    actionLabel = "重新加载",
+                    onAction = onRefresh,
+                )
+            }
+
+            if (uiState.orderNo != null || qrText.isNotBlank() || uiState.collectionAddress.isNotBlank()) {
+                AppCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space12),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top,
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.space4)) {
+                                Text(
+                                    text = "扫码支付",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = AppTheme.colors.textPrimary,
+                                )
+                                if (statusMessage.isNotBlank()) {
+                                    Text(
+                                        text = statusMessage,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = AppTheme.colors.textSecondary,
+                                    )
+                                }
+                            }
+                            if (!orderLabel.isNullOrBlank()) {
+                                AppChip(text = orderLabel, tone = AppChipTone.Neutral)
+                            }
+                        }
+
+                        if (qrText.isNotBlank()) {
+                            Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                                P01RealQr(content = qrText)
+                            }
+                        }
+
+                        if (uiState.collectionAddress.isNotBlank()) {
+                            LabelValueRow(
+                                label = "收款地址",
+                                value = uiState.collectionAddress,
+                                supportingText = "使用钱包扫码或复制地址完成支付",
+                            )
+                        }
+                    }
+                }
+            }
+
+            ActionCluster(
+                actions = listOf(
+                    ActionClusterAction(
+                        label = secondaryButtonText,
+                        onClick = {
+                            when {
+                                uiState.collectionAddress.isNotBlank() -> {
+                                    clipboardManager.setText(AnnotatedString(uiState.collectionAddress))
+                                }
+
+                                uiState.orderNo != null -> onRefresh()
+                                else -> onSecondaryAction()
+                            }
+                        },
+                        variant = AppButtonVariant.Secondary,
+                    ),
+                    ActionClusterAction(
+                        label = primaryButtonText,
+                        onClick = {
+                            if (uiState.orderNo == null) {
+                                onCreateOrder()
+                            } else {
+                                onPrimaryAction()
+                            }
+                        },
+                        variant = AppButtonVariant.Primary,
+                    ),
+                ),
             )
         }
     }
 }
 
-@Preview(showBackground = true, widthDp = 393, heightDp = 852)
+@Composable
+private fun CheckoutBackgroundGlow() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 40.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(220.dp)
+                .background(CheckoutGlowBlue, RoundedCornerShape(999.dp))
+                .blur(48.dp),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(top = 320.dp)
+                .size(260.dp)
+                .background(CheckoutGlowCyan, RoundedCornerShape(999.dp))
+                .blur(60.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFF5F7FF)
 @Composable
 private fun OrderCheckoutPreview() {
     CryptoVpnTheme {
-        OrderCheckoutScreen(
-            uiState = orderCheckoutPreviewState(),
-            onRefresh = {},
-            onCreateOrder = {},
-            onPrimaryAction = {},
-            onSecondaryAction = {},
-            onPaymentOptionRoute = {},
-        )
+        Surface {
+            OrderCheckoutScreen(
+                uiState = orderCheckoutPreviewState(),
+                onRefresh = {},
+                onCreateOrder = {},
+                onPrimaryAction = {},
+                onSecondaryAction = {},
+                onPaymentOptionRoute = {},
+            )
+        }
     }
 }
