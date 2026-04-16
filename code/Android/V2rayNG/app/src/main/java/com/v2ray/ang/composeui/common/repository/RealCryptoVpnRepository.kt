@@ -1003,26 +1003,22 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         }
         val networkLabel = displayChainLabel(routeChainIdToNetworkCode(args.chainId))
         return SendUiState(
-            summary = "未加载到钱包总览，无法提供真实发送目录。",
-            fields = listOf(
-                FeatureField("asset", "选择资产", "${args.assetId} · $networkLabel", "当前仅保留路由上下文"),
-                FeatureField("to", "收款地址", "", "请输入 $networkLabel 地址"),
-                FeatureField("amount", "发送数量", "", "当前未接入真实链上余额"),
-                FeatureField("memo", "备注", currentOrderId.orEmpty(), if (currentOrderId.isNullOrBlank()) "选填" else "订单号 / 对账"),
-            ),
-            highlights = listOf(
-                FeatureListItem("Android 状态", "未接入 transfer/precheck/proxy-broadcast 调用", "", "BLOCKED"),
-                FeatureListItem("后端能力", "未加载到钱包总览", "", "EMPTY"),
-                FeatureListItem("资产目录", "暂无目录数据", "", "EMPTY"),
-            ),
-            checklist = listOf(
-                FeatureBullet("余额状态", "当前未接入真实链上余额"),
-                FeatureBullet("预检查接口", "Android 未调用"),
-                FeatureBullet("广播能力", "待加载"),
-                FeatureBullet("数据源", "wallet/overview"),
-            ),
+            badge = "",
+            subtitle = "",
+            summary = "",
+            availableBalance = "--",
+            balanceSupportingText = "",
+            fields = buildList {
+                add(FeatureField("to", "收款地址", "", "粘贴或扫码 $networkLabel 地址"))
+                add(FeatureField("amount", "发送数量", "", "输入数量"))
+                currentOrderId
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { add(FeatureField("memo", "备注", it, "订单号 / 对账")) }
+            },
+            highlights = emptyList(),
+            checklist = emptyList(),
             currentRoute = args,
-            note = "发送页不再把订单缓存映射为可发送余额。",
+            note = "",
         )
     }
 
