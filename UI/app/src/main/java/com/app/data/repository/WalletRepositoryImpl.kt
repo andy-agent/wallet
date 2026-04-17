@@ -76,7 +76,68 @@ class WalletRepositoryImpl(
 
     override suspend fun sendToken(symbol: String, address: String, amount: Double): String {
         val txId = "send-${System.currentTimeMillis()}"
-        val tx = Transaction(txId, symbol.uppercase(), symbol.uppercase(), amount, amount, TransactionDirection.Send, TransactionStatus.Pending, System.currentTimeMillis(), address, "0x$txId")
+        val asset = assetState.value.firstOrNull { it.symbol.equals(symbol, true) }
+        val fee = estimateSendFee(asset?.chainId)
+        val normalizedAmount = amount.coerceAtLeast(0.0)
+        val canSend = asset != null && address.isNotBlank() && normalizedAmount > 0.0 && normalizedAmount + fee <= asset.balance
+        if (canSend) {
+            val updatedAssets = assetState.value.map { item ->
+                if (item.id == asset!!.id) {
+                    item.copy(balance = (item.balance - normalizedAmount - fee).coerceAtLeast(0.0))
+                } else {
+                    item
+                }
+            }
+            assetState.value = updatedAssets
+            assetDao.replaceAll(updatedAssets.map { it.toEntity() })
+        }
+        val tx = Transaction(
+            id = txId,
+            symbol = symbol.uppercase(),
+            chainName = asset?.chainId?.uppercase() ?: symbol.uppercase(),
+            amount = normalizedAmount,
+            fiatValue = normalizedAmount * (asset?.priceUsd ?: 1.0),
+            direction = TransactionDirection.Send,
+            status = if (canSend) TransactionStatus.Pending else TransactionStatus.Failed,
+            timestamp = System.currentTimeMillis(),
+            address = address,
+            hash = "0x$txId",
+        )
+        transactionState.value = listOf(tx) + transactionState.value
+        transactionDao.prepend(tx.toEntity())
+        return txId
+    }
+
+    override suspend fun payOrder(orderId: String, paySymbol: String, amountUsd: Double, merchantAddress: String): String {
+        val asset = assetState.value.firstOrNull { it.symbol.equals(paySymbol, true) } ?: error("支付资产不存在")
+        val fee = estimateSendFee(asset.chainId)
+        val tokenAmount = (amountUsd / asset.priceUsd).coerceAtLeast(0.0)
+        val totalDeduction = tokenAmount + fee
+        require(totalDeduction <= asset.balance) { "余额不足，无法完成订单支付" }
+
+        val updatedAssets = assetState.value.map { item ->
+            if (item.id == asset.id) {
+                item.copy(balance = (item.balance - totalDeduction).coerceAtLeast(0.0))
+            } else {
+                item
+            }
+        }
+        assetState.value = updatedAssets
+        assetDao.replaceAll(updatedAssets.map { it.toEntity() })
+
+        val txId = "payment-${System.currentTimeMillis()}"
+        val tx = Transaction(
+            id = txId,
+            symbol = asset.symbol,
+            chainName = asset.chainId.uppercase(),
+            amount = tokenAmount,
+            fiatValue = amountUsd,
+            direction = TransactionDirection.Payment,
+            status = TransactionStatus.Pending,
+            timestamp = System.currentTimeMillis(),
+            address = merchantAddress,
+            hash = "0x$orderId-${txId.takeLast(6)}",
+        )
         transactionState.value = listOf(tx) + transactionState.value
         transactionDao.prepend(tx.toEntity())
         return txId
@@ -108,5 +169,13 @@ class WalletRepositoryImpl(
         val next = !(chainFlags[chainId] ?: false)
         chainFlags[chainId] = next
         return next
+    }
+
+    private fun estimateSendFee(chainId: String?): Double = when (chainId?.lowercase()) {
+        "ethereum" -> 0.0042
+        "tron" -> 1.15
+        "solana" -> 0.0005
+        "bitcoin" -> 0.00018
+        else -> 0.0015
     }
 }

@@ -24,6 +24,7 @@ interface WalletRepository {
     suspend fun importWallet(mnemonic: String): Boolean
     suspend fun addCustomToken(symbol: String, name: String, chainId: String): Boolean
     suspend fun sendToken(symbol: String, address: String, amount: Double): String
+    suspend fun payOrder(orderId: String, paySymbol: String, amountUsd: Double, merchantAddress: String): String
     suspend fun swapToken(fromSymbol: String, toSymbol: String, amount: Double): String
     suspend fun bridgeToken(symbol: String, targetChain: String, amount: Double): String
     suspend fun toggleSecurity(itemId: String): Boolean
