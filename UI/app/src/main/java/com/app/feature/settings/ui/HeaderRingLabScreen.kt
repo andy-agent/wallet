@@ -40,14 +40,15 @@ import com.app.core.ui.effects.HeaderRingGlyph
 import com.app.core.ui.effects.HeaderRingLayer
 import com.app.core.ui.effects.HeaderRingPreset
 import com.app.core.ui.effects.HeaderTechRing
+import com.app.core.ui.effects.ProductionHeaderRingProfile
 
 @Composable
 fun HeaderRingLabScreen(
     onBack: () -> Unit = {},
 ) {
-    var preset by remember { mutableStateOf(HeaderRingPreset.R3) }
-    var glyph by remember { mutableStateOf(preset.glyph) }
-    var enabledLayers by remember { mutableStateOf(preset.layers.map { it.name }.toSet()) }
+    var preset by remember { mutableStateOf(ProductionHeaderRingProfile.preset) }
+    var glyph by remember { mutableStateOf(ProductionHeaderRingProfile.glyph) }
+    var enabledLayers by remember { mutableStateOf(ProductionHeaderRingProfile.enabledLayers.map { it.name }.toSet()) }
 
     val layers = enabledLayers.mapNotNull { name -> HeaderRingLayer.entries.find { it.name == name } }.toSet()
 
@@ -65,6 +66,12 @@ fun HeaderRingLabScreen(
                         "这里专门预览标题栏右上角的科技圆环。先挑整体风格，再切中心图标，最后按层开关微调。",
                         style = MaterialTheme.typography.bodyLarge,
                         color = TextSecondary,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        "当前正式配置：R3，去掉内圈和轨道弧。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }

@@ -21,13 +21,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.app.core.theme.BluePrimary
+import com.app.core.ui.effects.HeaderTechRing
+import com.app.core.ui.effects.ProductionHeaderRingProfile
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppTopBar(
     title: String,
     onBack: (() -> Unit)? = null,
-    actions: @Composable RowScope.() -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {
+        HeaderTechRing(
+            modifier = Modifier.size(42.dp),
+            preset = ProductionHeaderRingProfile.preset,
+            enabledLayers = ProductionHeaderRingProfile.enabledLayers,
+            glyph = ProductionHeaderRingProfile.glyph,
+        )
+    },
 ) {
     CenterAlignedTopAppBar(
         title = { Text(title, style = MaterialTheme.typography.titleMedium) },
