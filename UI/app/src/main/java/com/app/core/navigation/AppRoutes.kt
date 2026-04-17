@@ -27,6 +27,7 @@ object AppRoutes {
     const val CommissionLedger = "commission_ledger"
     const val WithdrawCommission = "withdraw_commission"
     const val Profile = "profile"
+    const val EffectLab = "effect_lab"
     const val LegalDocuments = "legal_documents"
     const val LegalDetailPattern = "legal_detail/{docId}"
 

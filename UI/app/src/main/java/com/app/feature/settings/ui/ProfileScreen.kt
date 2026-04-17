@@ -20,6 +20,7 @@ fun ProfileScreen(
     viewModel: SettingsViewModel = viewModel(),
     onOpenLegalDocs: () -> Unit = {},
     onLogout: () -> Unit = {},
+    onOpenEffectLab: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
     val profile = state.profile ?: return
@@ -27,6 +28,7 @@ fun ProfileScreen(
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item { BalanceHeader(profile) }
             item { GradientCard(title = "账户中心", subtitle = profile.levelLabel) { InfoRow("邮箱", profile.email); InfoRow("邀请码", profile.inviteCode) } }
+            item { PrimaryButton(text = "动效实验室", onClick = onOpenEffectLab) }
             item { PrimaryButton(text = "法务文档", onClick = onOpenLegalDocs) }
             item { SecondaryButton(text = "退出登录", onClick = { viewModel.logout(); onLogout() }) }
         }

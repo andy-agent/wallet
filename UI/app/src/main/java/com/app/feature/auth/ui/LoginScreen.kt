@@ -33,6 +33,7 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
     onRegister: () -> Unit = {},
     onResetPassword: () -> Unit = {},
+    onOpenEffectLab: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
     LaunchedEffect(state.isLoggedIn) { if (state.isLoggedIn) onLoginSuccess() }
@@ -82,6 +83,8 @@ fun LoginScreen(
                     SecondaryButton(text = "创建账户", onClick = onRegister, modifier = Modifier.weight(1f))
                     SecondaryButton(text = "忘记密码", onClick = onResetPassword, modifier = Modifier.weight(1f))
                 }
+                Spacer(Modifier.height(8.dp))
+                SecondaryButton(text = "动效实验室", onClick = onOpenEffectLab)
                 if (state.lastMessage.isNotBlank()) Text(state.lastMessage, style = MaterialTheme.typography.bodyMedium)
             }
             GradientCard(title = "账户说明", subtitle = "当前为原生 Compose 高保真重建中") {

@@ -19,6 +19,7 @@ import com.app.feature.auth.ui.SplashScreen
 import com.app.feature.auth.ui.VersionUpdateScreen
 import com.app.feature.market.ui.MarketOverviewScreen
 import com.app.feature.market.ui.MarketTickerDetailScreen
+import com.app.feature.settings.ui.EffectLabScreen
 import com.app.feature.settings.ui.LegalDetailScreen
 import com.app.feature.settings.ui.LegalDocumentsScreen
 import com.app.feature.settings.ui.ProfileScreen
@@ -93,6 +94,7 @@ fun AppNavGraph() {
                     onLoginSuccess = { navController.navigate(AppRoutes.WalletHome) { popUpTo(AppRoutes.Login) { inclusive = true } } },
                     onRegister = { navController.navigate(AppRoutes.Register) },
                     onResetPassword = { navController.navigate(AppRoutes.ResetPassword) },
+                    onOpenEffectLab = { navController.navigate(AppRoutes.EffectLab) },
                 )
             }
             composable(AppRoutes.Register) {
@@ -198,7 +200,14 @@ fun AppNavGraph() {
             composable(AppRoutes.MarketTickerDetailPattern, arguments = listOf(navArgument(RouteArguments.SYMBOL) { type = NavType.StringType })) { entry ->
                 MarketTickerDetailScreen(symbol = entry.arguments?.getString(RouteArguments.SYMBOL).orEmpty(), onBack = { navController.popBackStack() })
             }
-            composable(AppRoutes.Profile) { ProfileScreen(onOpenLegalDocs = { navController.navigate(AppRoutes.LegalDocuments) }, onLogout = { navController.navigate(AppRoutes.Login) { popUpTo(AppRoutes.Profile) { inclusive = true } } }) }
+            composable(AppRoutes.Profile) {
+                ProfileScreen(
+                    onOpenLegalDocs = { navController.navigate(AppRoutes.LegalDocuments) },
+                    onLogout = { navController.navigate(AppRoutes.Login) { popUpTo(AppRoutes.Profile) { inclusive = true } } },
+                    onOpenEffectLab = { navController.navigate(AppRoutes.EffectLab) },
+                )
+            }
+            composable(AppRoutes.EffectLab) { EffectLabScreen(onBack = { navController.popBackStack() }) }
             composable(AppRoutes.LegalDocuments) { LegalDocumentsScreen(onBack = { navController.popBackStack() }, onOpenDoc = { navController.navigate(AppRoutes.legalDetail(it)) }) }
             composable(AppRoutes.LegalDetailPattern, arguments = listOf(navArgument(RouteArguments.DOC_ID) { type = NavType.StringType })) { entry ->
                 LegalDetailScreen(docId = entry.arguments?.getString(RouteArguments.DOC_ID).orEmpty(), onBack = { navController.popBackStack() })
