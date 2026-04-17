@@ -12,14 +12,16 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.app.core.theme.AppDimens
 import com.app.core.theme.AppWhite
 import com.app.core.theme.CloudBackground
 import com.app.core.theme.GlowBlue
@@ -40,6 +42,14 @@ fun AppScaffold(
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
+    val density = LocalDensity.current
+    val topInset = with(density) { WindowInsets.safeDrawing.getTop(this).toDp() }
+    val topPadding = if (showTopBar) {
+        topInset + AppDimens.topBarHeight + 18.dp
+    } else {
+        topInset + 12.dp
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -53,16 +63,26 @@ fun AppScaffold(
         } else {
             StaticBackdrop()
         }
-        Scaffold(
-            containerColor = Color.Transparent,
-            contentWindowInsets = WindowInsets.safeDrawing,
-            topBar = {
-                if (showTopBar) {
-                    AppTopBar(title = title, onBack = onBack, actions = actions)
-                }
-            },
-            content = { padding -> content(padding) },
-        )
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            content(PaddingValues(top = topPadding))
+        }
+
+        if (showTopBar) {
+            AppTopBar(
+                title = title,
+                onBack = onBack,
+                actions = actions,
+            )
+        } else if (useProductionMotion) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .align(Alignment.TopEnd),
+            ) {
+                FloatingHeaderRing(modifier = Modifier.align(Alignment.TopEnd))
+            }
+        }
     }
 }
 
@@ -155,7 +175,7 @@ private fun StaticBackdrop() {
                     ),
                     shape = CircleShape,
                 )
-                .align(androidx.compose.ui.Alignment.TopEnd),
+                .align(Alignment.TopEnd),
         )
     }
 }
