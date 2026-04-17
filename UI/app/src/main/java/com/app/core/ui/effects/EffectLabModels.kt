@@ -61,7 +61,7 @@ enum class EffectLabPreset(
     ),
     P3(
         label = "P3 强科技",
-        summary = "密度更高，更偏赛博科技风。",
+        summary = "密度更高的正式版科技风，不使用浮动标签。",
         particleCount = 40,
         orbitDurationMs = 8500,
         enabled = setOf(
@@ -75,7 +75,6 @@ enum class EffectLabPreset(
             EffectToggle.CornerBeacons,
             EffectToggle.CardEntrance,
             EffectToggle.GlassShimmer,
-            EffectToggle.FloatingBadges,
             EffectToggle.CounterTicker,
             EffectToggle.ButtonPulse,
             EffectToggle.BottomBarMotion,

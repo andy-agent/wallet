@@ -58,7 +58,6 @@ fun WalletHomeScreen(
         ) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StatusChip("P0 总览")
                     Text("资产总览", style = MaterialTheme.typography.headlineLarge)
                     Text("多链钱包资产、VPN 订阅和快捷操作统一汇总", style = MaterialTheme.typography.bodyLarge, color = TextSecondary)
                 }

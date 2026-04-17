@@ -39,9 +39,6 @@ fun VpnHomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                StatusChip("P1 VPN 首页")
-            }
-            item {
                 Text("安全连接", style = MaterialTheme.typography.headlineLarge)
             }
             item {
@@ -52,7 +49,7 @@ fun VpnHomeScreen(
                     is VpnState.Error -> s.message
                     else -> "未连接"
                 }) {
-                    Text("基于 v2rayNG 架构思路的 mock core 控制层", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                    Text("连接层已保持节点、订阅与状态切换的一致性反馈。", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
                     Box(modifier = Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 18.dp), contentAlignment = Alignment.Center) {
                         VpnPowerButton(active = state.vpnState is VpnState.Connected, onClick = viewModel::connectOrDisconnect)
                     }

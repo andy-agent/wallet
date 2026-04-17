@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,12 +27,16 @@ import com.app.core.theme.GlowCyan
 import com.app.core.theme.GlowMint
 import com.app.core.theme.GridLine
 import com.app.core.theme.SkyBackground
+import com.app.core.ui.effects.EffectToggle
+import com.app.core.ui.effects.ProductionMotionProfile
+import com.app.core.ui.effects.TechMotionBackground
 
 @Composable
 fun AppScaffold(
     title: String,
     onBack: (() -> Unit)? = null,
     showTopBar: Boolean = true,
+    useProductionMotion: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
@@ -44,7 +48,11 @@ fun AppScaffold(
                 shape = RoundedCornerShape(0.dp),
             ),
     ) {
-        AppBackdrop()
+        if (useProductionMotion) {
+            ProductionMotionBackdrop()
+        } else {
+            StaticBackdrop()
+        }
         Scaffold(
             containerColor = Color.Transparent,
             contentWindowInsets = WindowInsets.safeDrawing,
@@ -59,7 +67,23 @@ fun AppScaffold(
 }
 
 @Composable
-private fun AppBackdrop() {
+private fun ProductionMotionBackdrop() {
+    TechMotionBackground(
+        particleCount = ProductionMotionProfile.particleCount,
+        orbitDurationMs = ProductionMotionProfile.orbitDurationMs,
+        showParticles = ProductionMotionProfile.isEnabled(EffectToggle.ParticleDrift),
+        showNetwork = ProductionMotionProfile.isEnabled(EffectToggle.ParticleLinks),
+        showGridScan = ProductionMotionProfile.isEnabled(EffectToggle.GridScan),
+        showOrb = ProductionMotionProfile.isEnabled(EffectToggle.EnergyOrb),
+        showOrbitalRings = ProductionMotionProfile.isEnabled(EffectToggle.OrbitalRings),
+        showScanBeam = ProductionMotionProfile.isEnabled(EffectToggle.ScanBeam),
+        showDataRain = ProductionMotionProfile.isEnabled(EffectToggle.DataRain),
+        showCornerBeacons = ProductionMotionProfile.isEnabled(EffectToggle.CornerBeacons),
+    )
+}
+
+@Composable
+private fun StaticBackdrop() {
     Box(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier

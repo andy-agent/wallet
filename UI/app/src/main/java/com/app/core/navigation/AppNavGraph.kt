@@ -20,6 +20,7 @@ import com.app.feature.auth.ui.VersionUpdateScreen
 import com.app.feature.market.ui.MarketOverviewScreen
 import com.app.feature.market.ui.MarketTickerDetailScreen
 import com.app.feature.settings.ui.EffectLabScreen
+import com.app.feature.settings.ui.HeaderRingLabScreen
 import com.app.feature.settings.ui.LegalDetailScreen
 import com.app.feature.settings.ui.LegalDocumentsScreen
 import com.app.feature.settings.ui.ProfileScreen
@@ -205,9 +206,16 @@ fun AppNavGraph() {
                     onOpenLegalDocs = { navController.navigate(AppRoutes.LegalDocuments) },
                     onLogout = { navController.navigate(AppRoutes.Login) { popUpTo(AppRoutes.Profile) { inclusive = true } } },
                     onOpenEffectLab = { navController.navigate(AppRoutes.EffectLab) },
+                    onOpenHeaderRingLab = { navController.navigate(AppRoutes.HeaderRingLab) },
                 )
             }
-            composable(AppRoutes.EffectLab) { EffectLabScreen(onBack = { navController.popBackStack() }) }
+            composable(AppRoutes.EffectLab) {
+                EffectLabScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenHeaderRingLab = { navController.navigate(AppRoutes.HeaderRingLab) },
+                )
+            }
+            composable(AppRoutes.HeaderRingLab) { HeaderRingLabScreen(onBack = { navController.popBackStack() }) }
             composable(AppRoutes.LegalDocuments) { LegalDocumentsScreen(onBack = { navController.popBackStack() }, onOpenDoc = { navController.navigate(AppRoutes.legalDetail(it)) }) }
             composable(AppRoutes.LegalDetailPattern, arguments = listOf(navArgument(RouteArguments.DOC_ID) { type = NavType.StringType })) { entry ->
                 LegalDetailScreen(docId = entry.arguments?.getString(RouteArguments.DOC_ID).orEmpty(), onBack = { navController.popBackStack() })

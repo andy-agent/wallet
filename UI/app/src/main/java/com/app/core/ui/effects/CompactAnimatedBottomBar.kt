@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.app.core.theme.BorderSubtle
@@ -68,33 +69,38 @@ fun CompactAnimatedBottomBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(CardGlassStrong.copy(alpha = 0.98f))
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = 10.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             tabs.forEach { tab ->
                 val selected = currentRoute == tab.route
                 val scale = animateFloatAsState(
-                    targetValue = if (selected && animated) 1.08f else 1f,
+                    targetValue = if (selected && animated) 1.1f else 1f,
                     animationSpec = spring(stiffness = 520f, dampingRatio = 0.72f),
                     label = "tab-scale",
                 )
                 val background = animateColorAsState(
-                    targetValue = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
+                    targetValue = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color.Transparent,
                     animationSpec = spring(stiffness = 420f),
                     label = "tab-bg",
+                )
+                val iconTint = animateColorAsState(
+                    targetValue = if (selected) MaterialTheme.colorScheme.primary else TextTertiary,
+                    animationSpec = spring(stiffness = 420f),
+                    label = "tab-tint",
                 )
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .defaultMinSize(minHeight = 44.dp)
+                        .defaultMinSize(minHeight = 40.dp)
                         .clickable { onRouteSelected(tab.route) }
-                        .padding(horizontal = 4.dp, vertical = 4.dp),
+                        .padding(horizontal = 3.dp, vertical = 3.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(22.dp)
+                            .size(24.dp)
                             .scale(scale.value)
                             .background(background.value, RoundedCornerShape(7.dp)),
                         contentAlignment = Alignment.Center,
@@ -102,14 +108,15 @@ fun CompactAnimatedBottomBar(
                         Icon(
                             imageVector = tab.icon,
                             contentDescription = tab.label,
-                            tint = if (selected) MaterialTheme.colorScheme.primary else TextTertiary,
-                            modifier = Modifier.size(16.dp),
+                            tint = iconTint.value,
+                            modifier = Modifier.size(17.dp),
                         )
                     }
                     Text(
                         text = tab.label,
                         color = if (selected) TextPrimary else TextTertiary,
                         style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
                         textAlign = TextAlign.Center,
                     )
                 }

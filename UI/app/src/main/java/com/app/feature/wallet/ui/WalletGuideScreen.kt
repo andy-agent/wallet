@@ -43,9 +43,8 @@ fun WalletGuideScreen(
         ) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StatusChip("P0 钱包引导")
                     Text("建立你的多链钱包", style = MaterialTheme.typography.headlineLarge)
-                    Text("按 UI 原稿，这里承接创建、导入和观察模式，并且需要保持轻玻璃感。", style = MaterialTheme.typography.bodyLarge, color = TextSecondary)
+                    Text("在同一入口里完成创建、导入与只读观察，保持轻玻璃卡片和清晰路径。", style = MaterialTheme.typography.bodyLarge, color = TextSecondary)
                 }
             }
             items(state.setupOptions) { option ->

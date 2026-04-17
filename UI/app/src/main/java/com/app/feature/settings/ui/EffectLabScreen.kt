@@ -66,6 +66,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun EffectLabScreen(
     onBack: () -> Unit = {},
+    onOpenHeaderRingLab: () -> Unit = {},
 ) {
     var preset by remember { mutableStateOf(EffectLabPreset.P2) }
     var enabledNames by remember { mutableStateOf(preset.enabled.map { it.name }.toSet()) }
@@ -82,7 +83,7 @@ fun EffectLabScreen(
 
     val enabled = enabledNames.mapNotNull { name -> EffectToggle.entries.find { it.name == name } }.toSet()
 
-    AppScaffold(title = "Effect Lab", onBack = onBack) { padding ->
+    AppScaffold(title = "Effect Lab", onBack = onBack, useProductionMotion = false) { padding ->
         androidx.compose.foundation.lazy.LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -97,6 +98,8 @@ fun EffectLabScreen(
                         style = MaterialTheme.typography.bodyLarge,
                         color = TextSecondary,
                     )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    PrimaryButton(text = "进入头部圆环实验室", onClick = onOpenHeaderRingLab)
                 }
             }
             item {

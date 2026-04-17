@@ -1,7 +1,6 @@
 package com.app.feature.auth.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +20,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.common.components.GradientCard
 import com.app.common.components.PrimaryButton
 import com.app.common.components.SecondaryButton
-import com.app.common.components.StatusChip
 import com.app.core.theme.CardGlassStrong
 import com.app.core.theme.TextSecondary
 import com.app.core.ui.AppScaffold
@@ -45,10 +43,6 @@ fun LoginScreen(
                 .padding(horizontal = 20.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                StatusChip(text = "P0 登录")
-                StatusChip(text = "CryptoVPN")
-            }
             Spacer(Modifier.height(12.dp))
             Text("欢迎回来", style = MaterialTheme.typography.headlineLarge)
             Text("登录你的多链钱包与 VPN 控制台", style = MaterialTheme.typography.bodyLarge, color = TextSecondary)
@@ -87,8 +81,8 @@ fun LoginScreen(
                 SecondaryButton(text = "动效实验室", onClick = onOpenEffectLab)
                 if (state.lastMessage.isNotBlank()) Text(state.lastMessage, style = MaterialTheme.typography.bodyMedium)
             }
-            GradientCard(title = "账户说明", subtitle = "当前为原生 Compose 高保真重建中") {
-                Text("下一阶段会继续把旧 composeui 的顶部结构、按钮、卡片和输入风格迁到全部 P0 页面。", style = MaterialTheme.typography.bodyMedium)
+            GradientCard(title = "同步说明", subtitle = "登录后统一加载账户、资产与节点状态") {
+                Text("你会在同一套会话中看到钱包资产、套餐订单和 VPN 连接偏好的同步结果。", style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
