@@ -16,6 +16,5 @@ object AppDimens {
     val itemGap = 12.dp
     val cardPadding = 18.dp
     val compactCardPadding = 14.dp
-    val bottomBarHeight = 58.dp
     val buttonHeight = 54.dp
 }
