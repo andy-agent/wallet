@@ -5,13 +5,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -51,30 +51,25 @@ fun GlassOutlinePanel(
                     ),
                 )
                 .border(1.dp, BorderSubtle.copy(alpha = 0.9f), shape)
+                .drawWithCache {
+                    val cyanGlow = Brush.radialGradient(
+                        colors = listOf(GlowCyan.copy(alpha = 0.42f), Color.Transparent),
+                        center = Offset(size.width * 0.82f, size.height * 0.16f),
+                        radius = size.maxDimension * 0.92f,
+                    )
+                    val blueGlow = Brush.radialGradient(
+                        colors = listOf(GlowBlue.copy(alpha = 0.34f), Color.Transparent),
+                        center = Offset(size.width * 0.08f, size.height * 0.08f),
+                        radius = size.maxDimension * 0.76f,
+                    )
+                    onDrawWithContent {
+                        drawRect(brush = cyanGlow)
+                        drawRect(brush = blueGlow)
+                        drawContent()
+                    }
+                }
                 .padding(contentPadding),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(GlowCyan.copy(alpha = 0.42f), Color.Transparent),
-                            center = Offset(820f, 80f),
-                            radius = 460f,
-                        ),
-                    ),
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(GlowBlue.copy(alpha = 0.34f), Color.Transparent),
-                            center = Offset(60f, 36f),
-                            radius = 380f,
-                        ),
-                    ),
-            )
             content()
         }
     }
