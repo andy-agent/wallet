@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.app.common.components.GradientCard
@@ -139,6 +141,10 @@ fun EffectLabScreen(
                             showNetwork = EffectToggle.ParticleLinks in enabled,
                             showGridScan = EffectToggle.GridScan in enabled,
                             showOrb = EffectToggle.EnergyOrb in enabled,
+                            showOrbitalRings = EffectToggle.OrbitalRings in enabled,
+                            showScanBeam = EffectToggle.ScanBeam in enabled,
+                            showDataRain = EffectToggle.DataRain in enabled,
+                            showCornerBeacons = EffectToggle.CornerBeacons in enabled,
                         )
                         androidx.compose.animation.AnimatedVisibility(
                             visible = previewArmed,
@@ -153,17 +159,23 @@ fun EffectLabScreen(
                                     .padding(18.dp),
                                 verticalArrangement = Arrangement.SpaceBetween,
                             ) {
+                                if (EffectToggle.FloatingBadges in enabled) {
+                                    FloatingBadgeCluster()
+                                }
                                 Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                                     StatusChip("预览态")
                                     StatusChip(if (EffectToggle.GridScan in enabled) "Grid On" else "Grid Off")
                                 }
-                                GradientCard(title = "CryptoVPN", subtitle = "Effect Lab Hero") {
+                                ShimmeringHeroCard(enabled = EffectToggle.GlassShimmer in enabled) {
                                     Text("这里用来帮你确认最终是否保留粒子、能量球、图表动效和紧凑底栏。")
                                     Spacer(modifier = Modifier.height(12.dp))
                                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                         MetricPill("Preset", preset.label.removePrefix("P"))
                                         MetricPill("Effects", enabled.size.toString())
                                     }
+                                }
+                                if (EffectToggle.CounterTicker in enabled) {
+                                    CounterTickerRow()
                                 }
                                 PreviewActionRow(pulsing = EffectToggle.ButtonPulse in enabled)
                                 PreviewChartCard(animated = EffectToggle.ChartDraw in enabled)
@@ -205,7 +217,7 @@ fun EffectLabScreen(
             item {
                 GradientCard(title = "推荐起点", subtitle = "如果你不想一个个挑") {
                     Text(
-                        "先看 P2。它会同时启用粒子漂浮、粒子连线、右上角能量球、底栏动效和图表绘制，最适合做主方案基线。",
+                        "先看 P2；如果你要更强的科技感，再看 P3 和 P5。P5 更偏扫描控制台，P6 更偏发光展示页。",
                         style = MaterialTheme.typography.bodyLarge,
                         color = TextSecondary,
                     )
@@ -214,6 +226,100 @@ fun EffectLabScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ShimmeringHeroCard(
+    enabled: Boolean,
+    content: @Composable () -> Unit,
+) {
+    val transition = rememberInfiniteTransition(label = "glass-shimmer")
+    val shift = transition.animateFloat(
+        initialValue = -0.6f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2400, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "shimmer-shift",
+    )
+    Box {
+        GradientCard(title = "CryptoVPN", subtitle = "Effect Lab Hero") {
+            content()
+        }
+        if (enabled) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(30.dp))
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.White.copy(alpha = 0.18f),
+                                Color.Transparent,
+                            ),
+                            start = Offset(shift.value * 1200f, 0f),
+                            end = Offset((shift.value + 0.25f) * 1200f, 900f),
+                        ),
+                    ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun FloatingBadgeCluster() {
+    val transition = rememberInfiniteTransition(label = "floating-badges")
+    val offsetA = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "badge-a",
+    )
+    val offsetB = transition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "badge-b",
+    )
+    Box(modifier = Modifier.fillMaxWidth().height(28.dp)) {
+        StatusChip(
+            text = "AI +18%",
+            positive = true,
+        )
+        Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = (offsetA.value * 10).dp)) {
+            StatusChip(text = "Scan 24", positive = null)
+        }
+        Box(modifier = Modifier.align(Alignment.TopEnd).padding(top = (offsetB.value * 10).dp)) {
+            StatusChip(text = "Risk -2", positive = false)
+        }
+    }
+}
+
+@Composable
+private fun CounterTickerRow() {
+    val transition = rememberInfiniteTransition(label = "counter-row")
+    val glow = transition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.12f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "counter-glow",
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+        MetricPill("异常", "12")
+        Box(modifier = Modifier.scale(glow.value)) { MetricPill("活跃", "248") }
+        MetricPill("延迟", "48ms")
     }
 }
 

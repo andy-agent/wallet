@@ -44,6 +44,10 @@ fun TechMotionBackground(
     showNetwork: Boolean,
     showGridScan: Boolean,
     showOrb: Boolean,
+    showOrbitalRings: Boolean,
+    showScanBeam: Boolean,
+    showDataRain: Boolean,
+    showCornerBeacons: Boolean,
 ) {
     val transition = rememberInfiniteTransition(label = "effect-lab-bg")
     val particleShift = transition.animateFloat(
@@ -172,6 +176,75 @@ fun TechMotionBackground(
                         )
                     }
                 }
+            }
+
+            if (showDataRain) {
+                val columns = 18
+                repeat(columns) { index ->
+                    val x = (width / columns) * index + (gridShift.value * 14f)
+                    val head = ((particleShift.value * height * 1.4f) + index * 42f) % (height + 120f)
+                    drawLine(
+                        color = Color(0xFF25D7FF).copy(alpha = 0.28f),
+                        start = Offset(x, head),
+                        end = Offset(x, head - 46f),
+                        strokeWidth = 2f,
+                    )
+                    drawLine(
+                        color = Color(0xFF8B78FF).copy(alpha = 0.18f),
+                        start = Offset(x + 8f, (head + 120f) % (height + 120f)),
+                        end = Offset(x + 8f, ((head + 120f) % (height + 120f)) - 28f),
+                        strokeWidth = 1.4f,
+                    )
+                }
+            }
+
+            if (showScanBeam) {
+                val beamY = (gridShift.value * (height + 220f)) - 110f
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, Color(0x3325D7FF), Color.Transparent),
+                    ),
+                    topLeft = Offset(0f, beamY),
+                    size = Size(width, 110f),
+                )
+            }
+
+            if (showCornerBeacons) {
+                val beaconAlpha = 0.18f + (sin(particleShift.value * 6.2831f) * 0.08f).toFloat()
+                val corners = listOf(
+                    Offset(28f, 28f),
+                    Offset(width - 28f, 28f),
+                    Offset(28f, height - 28f),
+                    Offset(width - 28f, height - 28f),
+                )
+                corners.forEach { corner ->
+                    drawCircle(
+                        color = GlowBlue.copy(alpha = beaconAlpha.coerceIn(0.1f, 0.32f)),
+                        radius = 14f,
+                        center = corner,
+                    )
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.8f),
+                        radius = 3.6f,
+                        center = corner,
+                    )
+                }
+            }
+
+            if (showOrbitalRings) {
+                val center = Offset(width * 0.82f, 86f)
+                drawCircle(
+                    color = GlowCyan.copy(alpha = 0.26f),
+                    radius = 42f + particleShift.value * 4f,
+                    center = center,
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.4f),
+                )
+                drawCircle(
+                    color = GlowPurple.copy(alpha = 0.18f),
+                    radius = 56f + gridShift.value * 6f,
+                    center = center,
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.8f),
+                )
             }
 
             drawRect(
