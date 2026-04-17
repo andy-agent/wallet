@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import com.app.common.components.GradientCard
 import com.app.common.components.PrimaryButton
 import com.app.common.components.SearchBar
+import com.app.common.components.SecondaryButton
 import com.app.common.components.SectionHeader
 import com.app.common.components.StatusChip
 import com.app.common.widgets.MetricPill
@@ -66,6 +67,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun EffectLabScreen(
     onBack: () -> Unit = {},
+    onOpenPaletteLab: () -> Unit = {},
     onOpenHeaderRingLab: () -> Unit = {},
 ) {
     var preset by remember { mutableStateOf(EffectLabPreset.P2) }
@@ -99,7 +101,14 @@ fun EffectLabScreen(
                         color = TextSecondary,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    PrimaryButton(text = "进入头部圆环实验室", onClick = onOpenHeaderRingLab)
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            PrimaryButton(text = "进入配色实验室", onClick = onOpenPaletteLab)
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            SecondaryButton(text = "进入头部圆环实验室", onClick = onOpenHeaderRingLab)
+                        }
+                    }
                 }
             }
             item {

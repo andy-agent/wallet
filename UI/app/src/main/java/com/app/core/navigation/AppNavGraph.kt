@@ -23,6 +23,7 @@ import com.app.feature.settings.ui.EffectLabScreen
 import com.app.feature.settings.ui.HeaderRingLabScreen
 import com.app.feature.settings.ui.LegalDetailScreen
 import com.app.feature.settings.ui.LegalDocumentsScreen
+import com.app.feature.settings.ui.PaletteLabScreen
 import com.app.feature.settings.ui.ProfileScreen
 import com.app.feature.vpn.ui.CommissionLedgerScreen
 import com.app.feature.vpn.ui.InviteCenterScreen
@@ -206,13 +207,21 @@ fun AppNavGraph() {
                     onOpenLegalDocs = { navController.navigate(AppRoutes.LegalDocuments) },
                     onLogout = { navController.navigate(AppRoutes.Login) { popUpTo(AppRoutes.Profile) { inclusive = true } } },
                     onOpenEffectLab = { navController.navigate(AppRoutes.EffectLab) },
+                    onOpenPaletteLab = { navController.navigate(AppRoutes.PaletteLab) },
                     onOpenHeaderRingLab = { navController.navigate(AppRoutes.HeaderRingLab) },
                 )
             }
             composable(AppRoutes.EffectLab) {
                 EffectLabScreen(
                     onBack = { navController.popBackStack() },
+                    onOpenPaletteLab = { navController.navigate(AppRoutes.PaletteLab) },
                     onOpenHeaderRingLab = { navController.navigate(AppRoutes.HeaderRingLab) },
+                )
+            }
+            composable(AppRoutes.PaletteLab) {
+                PaletteLabScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenEffectLab = { navController.navigate(AppRoutes.EffectLab) },
                 )
             }
             composable(AppRoutes.HeaderRingLab) { HeaderRingLabScreen(onBack = { navController.popBackStack() }) }

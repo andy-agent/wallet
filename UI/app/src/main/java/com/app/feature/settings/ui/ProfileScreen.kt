@@ -21,6 +21,7 @@ fun ProfileScreen(
     onOpenLegalDocs: () -> Unit = {},
     onLogout: () -> Unit = {},
     onOpenEffectLab: () -> Unit = {},
+    onOpenPaletteLab: () -> Unit = {},
     onOpenHeaderRingLab: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -30,6 +31,7 @@ fun ProfileScreen(
             item { BalanceHeader(profile) }
             item { GradientCard(title = "账户中心", subtitle = profile.levelLabel) { InfoRow("邮箱", profile.email); InfoRow("邀请码", profile.inviteCode) } }
             item { PrimaryButton(text = "动效实验室", onClick = onOpenEffectLab) }
+            item { PrimaryButton(text = "配色实验室", onClick = onOpenPaletteLab) }
             item { PrimaryButton(text = "头部圆环实验室", onClick = onOpenHeaderRingLab) }
             item { PrimaryButton(text = "法务文档", onClick = onOpenLegalDocs) }
             item { SecondaryButton(text = "退出登录", onClick = { viewModel.logout(); onLogout() }) }
