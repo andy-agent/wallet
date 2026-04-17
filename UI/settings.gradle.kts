@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "vpn01"
+rootProject.name = "UI"
 include(":app")
