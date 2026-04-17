@@ -1,5 +1,6 @@
 package com.app.feature.wallet.ui
 
+import android.content.Intent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,12 +29,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.common.components.GradientCard
+import com.app.common.components.InfoRow
 import com.app.common.components.SecondaryButton
 import com.app.common.components.StatusChip
+import com.app.common.widgets.ChainPill
 import com.app.common.widgets.MetricPill
+import com.app.common.widgets.TokenIcon
 import com.app.core.theme.BluePrimary
 import com.app.core.theme.CardGlassStrong
 import com.app.core.theme.TextSecondary
@@ -50,6 +57,8 @@ fun ReceiveScreen(
     val asset = state.assets.firstOrNull { it.symbol.equals(symbol, true) }
     var address by rememberSaveable(symbol) { mutableStateOf("") }
     var actionFeedback by rememberSaveable(symbol) { mutableStateOf<String?>(null) }
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
     val receiveDetails = if (address.isBlank()) null else viewModel.receiveDetails(symbol, address)
 
     LaunchedEffect(symbol) {
@@ -67,6 +76,21 @@ fun ReceiveScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             GradientCard(title = "接收 ${asset?.symbol ?: symbol}", subtitle = asset?.name ?: "链上收款") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TokenIcon(symbol = asset?.symbol ?: symbol, chainId = asset?.chainId, size = 48.dp)
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = asset?.name ?: symbol.uppercase(),
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                        asset?.chainId?.let { ChainPill(chainId = it) }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     MetricPill("网络", receiveDetails?.network?.chainName ?: "--")
                     MetricPill("地址类型", address.takeLast(6).ifBlank { "--" })
@@ -100,14 +124,28 @@ fun ReceiveScreen(
                         text = "复制地址",
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            actionFeedback = if (address.isBlank()) "地址尚未生成，暂时无法复制。" else "地址已复制到剪贴板（mock）。"
+                            if (address.isBlank()) {
+                                actionFeedback = "地址尚未生成，暂时无法复制。"
+                            } else {
+                                clipboardManager.setText(AnnotatedString(address))
+                                actionFeedback = "地址已复制到剪贴板。"
+                            }
                         },
                     )
                     SecondaryButton(
                         text = "分享收款",
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            actionFeedback = receiveDetails?.shareText ?: "地址尚未生成，暂时无法分享。"
+                            if (receiveDetails == null) {
+                                actionFeedback = "地址尚未生成，暂时无法分享。"
+                            } else {
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, receiveDetails.shareText)
+                                }
+                                context.startActivity(Intent.createChooser(intent, "分享收款地址"))
+                                actionFeedback = "已调起系统分享。"
+                            }
                         },
                     )
                 }
@@ -118,6 +156,10 @@ fun ReceiveScreen(
             }
 
             GradientCard(title = "到账说明", subtitle = "Memo/Tag 与网络风险提示") {
+                receiveDetails?.network?.memoTagLabel?.let { label ->
+                    InfoRow(label, receiveDetails.network.memoTagHint.orEmpty())
+                    Spacer(Modifier.height(10.dp))
+                }
                 Text(
                     receiveDetails?.memoGuidance ?: "正在加载到账说明。",
                     style = MaterialTheme.typography.bodyMedium,

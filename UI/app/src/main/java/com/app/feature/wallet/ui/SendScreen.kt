@@ -31,7 +31,9 @@ import com.app.common.components.InfoRow
 import com.app.common.components.PrimaryButton
 import com.app.common.components.SecondaryButton
 import com.app.common.components.StatusChip
+import com.app.common.widgets.ChainPill
 import com.app.common.widgets.MetricPill
+import com.app.common.widgets.TokenIcon
 import com.app.core.theme.CardGlassStrong
 import com.app.core.theme.TextSecondary
 import com.app.core.ui.AppScaffold
@@ -68,9 +70,24 @@ fun SendScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             GradientCard(title = "发送 ${asset?.symbol ?: symbol}", subtitle = asset?.name ?: "链上转账") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    TokenIcon(symbol = asset?.symbol ?: symbol, chainId = asset?.chainId, size = 48.dp)
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            asset?.let { Formatters.money(it.balance * it.priceUsd) } ?: "--",
+                            style = MaterialTheme.typography.headlineMedium,
+                        )
+                        asset?.chainId?.let { ChainPill(chainId = it) }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
                 Text(
-                    asset?.let { Formatters.money(it.balance * it.priceUsd) } ?: "--",
-                    style = MaterialTheme.typography.headlineMedium,
+                    text = "当前页面会先走本地校验，再进入确认广播。后续接真链时，地址簿、扫码、Gas 估算和风险提示可以直接挂到这套结构上。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
                 )
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

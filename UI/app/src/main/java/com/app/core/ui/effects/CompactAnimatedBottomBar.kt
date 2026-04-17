@@ -4,10 +4,12 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,8 +34,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.app.common.components.GlassOutlinePanel
+import com.app.core.theme.AppDimens
 import com.app.core.theme.BorderSubtle
-import com.app.core.theme.CardGlassStrong
 import com.app.core.theme.TextPrimary
 import com.app.core.theme.TextTertiary
 
@@ -46,7 +49,7 @@ data class CompactBottomTab(
 val compactPreviewTabs = listOf(
     CompactBottomTab("wallet_home", "总览", Icons.Rounded.GridView),
     CompactBottomTab("vpn_home", "VPN", Icons.Rounded.Language),
-    CompactBottomTab("market_overview", "钱包", Icons.Rounded.Wallet),
+    CompactBottomTab("market_overview", "市场", Icons.Rounded.Wallet),
     CompactBottomTab("invite_center", "增长", Icons.Rounded.Toll),
     CompactBottomTab("profile", "我的", Icons.Rounded.AccountCircle),
 )
@@ -58,51 +61,63 @@ fun CompactAnimatedBottomBar(
     animated: Boolean,
     tabs: List<CompactBottomTab> = compactPreviewTabs,
 ) {
-    Column {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(BorderSubtle.copy(alpha = 0.72f))
-                .size(height = 1.dp, width = 0.dp),
-        )
+    GlassOutlinePanel(
+        modifier = Modifier.fillMaxWidth(),
+        radius = 28.dp,
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+    ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(CardGlassStrong.copy(alpha = 0.98f))
-                .padding(horizontal = 10.dp, vertical = 2.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             tabs.forEach { tab ->
                 val selected = currentRoute == tab.route
                 val scale = animateFloatAsState(
-                    targetValue = if (selected && animated) 1.1f else 1f,
+                    targetValue = if (selected && animated) 1.08f else 1f,
                     animationSpec = spring(stiffness = 520f, dampingRatio = 0.72f),
                     label = "tab-scale",
                 )
-                val background = animateColorAsState(
-                    targetValue = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color.Transparent,
+                val tabBackground = animateColorAsState(
+                    targetValue = if (selected) Color.White.copy(alpha = 0.52f) else Color.Transparent,
                     animationSpec = spring(stiffness = 420f),
-                    label = "tab-bg",
+                    label = "tab-surface",
+                )
+                val tabBorder = animateColorAsState(
+                    targetValue = if (selected) BorderSubtle.copy(alpha = 0.92f) else Color.Transparent,
+                    animationSpec = spring(stiffness = 420f),
+                    label = "tab-border",
+                )
+                val iconBackground = animateColorAsState(
+                    targetValue = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else Color.White.copy(alpha = 0.34f),
+                    animationSpec = spring(stiffness = 420f),
+                    label = "tab-icon-bg",
                 )
                 val iconTint = animateColorAsState(
                     targetValue = if (selected) MaterialTheme.colorScheme.primary else TextTertiary,
                     animationSpec = spring(stiffness = 420f),
                     label = "tab-tint",
                 )
+                val labelTint = animateColorAsState(
+                    targetValue = if (selected) TextPrimary else TextTertiary,
+                    animationSpec = spring(stiffness = 420f),
+                    label = "tab-label",
+                )
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .defaultMinSize(minHeight = 40.dp)
+                        .defaultMinSize(minHeight = AppDimens.bottomBarHeight - 10.dp)
+                        .border(1.dp, tabBorder.value, RoundedCornerShape(20.dp))
+                        .background(tabBackground.value, RoundedCornerShape(20.dp))
                         .clickable { onRouteSelected(tab.route) }
-                        .padding(horizontal = 3.dp, vertical = 3.dp),
+                        .padding(horizontal = 4.dp, vertical = 7.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(24.dp)
+                            .size(30.dp)
                             .scale(scale.value)
-                            .background(background.value, RoundedCornerShape(7.dp)),
+                            .background(iconBackground.value, RoundedCornerShape(10.dp)),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -114,7 +129,7 @@ fun CompactAnimatedBottomBar(
                     }
                     Text(
                         text = tab.label,
-                        color = if (selected) TextPrimary else TextTertiary,
+                        color = labelTint.value,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
                         textAlign = TextAlign.Center,

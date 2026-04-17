@@ -25,7 +25,9 @@ import com.app.common.components.GradientCard
 import com.app.common.components.InfoRow
 import com.app.common.components.PrimaryButton
 import com.app.common.components.StatusChip
+import com.app.common.widgets.ChainPill
 import com.app.common.widgets.MetricPill
+import com.app.common.widgets.TokenIcon
 import com.app.core.ui.AppScaffold
 import com.app.core.utils.Formatters
 import com.app.data.model.OrderStatus
@@ -76,6 +78,20 @@ fun WalletPaymentConfirmScreen(
 
             if (paymentDraft != null) {
                 GradientCard(title = "支付资产", subtitle = "确认支付网络、可用余额与商户收款地址") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        TokenIcon(symbol = paymentDraft.asset.symbol, chainId = paymentDraft.asset.chainId, size = 48.dp)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "${paymentDraft.asset.symbol} / ${paymentDraft.asset.name}",
+                                style = MaterialTheme.typography.titleLarge,
+                            )
+                            ChainPill(chainId = paymentDraft.asset.chainId)
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         MetricPill("付款币种", paymentDraft.asset.symbol)
                         MetricPill("支付网络", paymentDraft.network.chainName)
@@ -88,6 +104,11 @@ fun WalletPaymentConfirmScreen(
                 }
 
                 GradientCard(title = "扣款明细", subtitle = "模拟确认前先核对资产与手续费") {
+                    StatusChip(
+                        text = if (paymentDraft.balanceError == null) "余额可覆盖订单与网络费" else "余额不足，需切换支付资产",
+                        positive = paymentDraft.balanceError == null,
+                    )
+                    Spacer(Modifier.height(12.dp))
                     InfoRow("订单折算", formatWalletAmount(paymentDraft.tokenAmount, paymentDraft.asset.symbol))
                     InfoRow("预估网络费", formatWalletAmount(paymentDraft.feeAmount, paymentDraft.asset.symbol))
                     InfoRow("总扣除", formatWalletAmount(paymentDraft.totalDeduction, paymentDraft.asset.symbol))
@@ -149,6 +170,13 @@ fun WalletPaymentConfirmScreen(
                         },
                     )
                 }
+            } else {
+                GradientCard(title = "支付资产不可用", subtitle = "当前订单缺少可支付的本地钱包资产") {
+                    Text(
+                        text = "没有找到可用的支付币种。后续接真实钱包后，这里会按照链路返回的支付币种、网络和余额状态自动渲染。",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
         }
     }
@@ -161,4 +189,3 @@ private fun orderStatusLabel(status: OrderStatus): String = when (status) {
     OrderStatus.Expired -> "已过期"
     OrderStatus.Failed -> "支付失败"
 }
-
