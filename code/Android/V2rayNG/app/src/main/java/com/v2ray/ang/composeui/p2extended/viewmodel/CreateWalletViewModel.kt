@@ -47,6 +47,7 @@ class CreateWalletViewModel(
     ) {
         viewModelScope.launch {
             val walletName = _uiState.value.fields.firstOrNull { it.key == "name" }?.value.orEmpty()
+                .ifBlank { "Primary Wallet" }
             val result = repository.createWallet(walletName)
             if (result.success) {
                 refresh()

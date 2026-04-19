@@ -1659,13 +1659,17 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             fields = listOf(
                 FeatureField(
                     key = "name",
-                    label = "",
-                    value = "",
-                    supportingText = "请输入本地展示名称，支持中文。",
+                    label = "钱包名称",
+                    value = defaultName,
+                    supportingText = "可直接使用默认名称，也可手动修改。",
                     placeholder = "钱包代号",
                 ),
             ),
-            highlights = emptyList(),
+            highlights = listOf(
+                FeatureListItem("创建模式", args.mode, "助记词", "LIVE"),
+                FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
+                FeatureListItem("默认名称", defaultName, "可直接提交", "READY"),
+            ),
             checklist = emptyList(),
             note = "",
         )
