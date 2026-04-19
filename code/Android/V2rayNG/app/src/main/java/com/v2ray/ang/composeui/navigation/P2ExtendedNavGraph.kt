@@ -21,6 +21,7 @@ import com.v2ray.ang.composeui.p2extended.model.NodeSpeedTestRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.SignMessageConfirmRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.SubscriptionDetailRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.SwapRouteArgs
+import com.v2ray.ang.composeui.p2extended.model.TokenManagerRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.WalletConnectSessionRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.WalletManagerRouteArgs
 import com.v2ray.ang.composeui.p2extended.viewmodel.AddCustomTokenViewModel
@@ -40,6 +41,7 @@ import com.v2ray.ang.composeui.p2extended.viewmodel.SecurityCenterViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.SignMessageConfirmViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.SubscriptionDetailViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.SwapViewModel
+import com.v2ray.ang.composeui.p2extended.viewmodel.TokenManagerViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.WalletManagerViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.WalletConnectSessionViewModel
 import com.v2ray.ang.composeui.pages.p2extended.AddCustomTokenRoute
@@ -59,6 +61,7 @@ import com.v2ray.ang.composeui.pages.p2extended.SecurityCenterRoute
 import com.v2ray.ang.composeui.pages.p2extended.SignMessageConfirmRoute
 import com.v2ray.ang.composeui.pages.p2extended.SubscriptionDetailRoute
 import com.v2ray.ang.composeui.pages.p2extended.SwapRoute
+import com.v2ray.ang.composeui.pages.p2extended.TokenManagerRoute
 import com.v2ray.ang.composeui.pages.p2extended.WalletManagerRoute
 import com.v2ray.ang.composeui.pages.p2extended.WalletConnectSessionRoute
 
@@ -319,14 +322,14 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
             },
         ),
     ) { backStackEntry ->
-        val args = ChainManagerRouteArgs(
+        val args = TokenManagerRouteArgs(
             walletId = backStackEntry.arguments?.getString("walletId") ?: "primary_wallet",
             chainId = backStackEntry.arguments?.getString("chainId") ?: "solana",
         )
-        val vm: ChainManagerViewModel = viewModel(
-            factory = cryptoVpnViewModelFactory { ChainManagerViewModel(repository, args) },
+        val vm: TokenManagerViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { TokenManagerViewModel(repository, args) },
         )
-        ChainManagerRoute(
+        TokenManagerRoute(
             viewModel = vm,
             onPrimaryAction = {
                 navController.navigateSingleTop(

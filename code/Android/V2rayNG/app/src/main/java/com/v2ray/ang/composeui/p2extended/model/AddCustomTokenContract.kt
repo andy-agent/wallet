@@ -7,7 +7,10 @@ import com.v2ray.ang.composeui.common.model.FeatureField
 import com.v2ray.ang.composeui.common.model.FeatureListItem
 import com.v2ray.ang.composeui.common.model.FeatureMetric
 
-data class AddCustomTokenRouteArgs(val chainId: String = "base")
+data class AddCustomTokenRouteArgs(
+    val walletId: String = "primary_wallet",
+    val chainId: String = "base",
+)
 
 data class AddCustomTokenUiState(
         val title: String = "添加自定义代币",

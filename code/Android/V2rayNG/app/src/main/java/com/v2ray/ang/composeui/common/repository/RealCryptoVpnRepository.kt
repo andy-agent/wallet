@@ -114,6 +114,8 @@ import com.v2ray.ang.composeui.p2extended.model.SubscriptionDetailRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.SubscriptionDetailUiState
 import com.v2ray.ang.composeui.p2extended.model.SwapRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.SwapUiState
+import com.v2ray.ang.composeui.p2extended.model.TokenManagerRouteArgs
+import com.v2ray.ang.composeui.p2extended.model.TokenManagerUiState
 import com.v2ray.ang.composeui.p2extended.model.WalletConnectSessionRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.WalletConnectSessionUiState
 import com.v2ray.ang.composeui.p2extended.model.WalletManagerRouteArgs
@@ -2123,13 +2125,42 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             )
         }
 
+    override suspend fun getTokenManagerState(args: TokenManagerRouteArgs): TokenManagerUiState =
+        paymentRepository.getWalletOverview(args.walletId).getOrNull().let { overview ->
+            val normalizedChainId = args.chainId.lowercase(Locale.ROOT)
+            val assetItems = overview?.assetItems.orEmpty().filter { asset ->
+                asset.networkCode.lowercase(Locale.ROOT) == normalizedChainId && asset.walletVisible
+            }
+            TokenManagerUiState(
+                metrics = listOf(
+                    FeatureMetric("当前链", walletHomeChainLabel(args.chainId)),
+                    FeatureMetric("代币数量", assetItems.size.toString()),
+                    FeatureMetric(
+                        "可见资产",
+                        assetItems.count { !it.availableBalanceUiAmount.isNullOrBlank() }.toString(),
+                    ),
+                ),
+                highlights = assetItems.map {
+                    FeatureListItem(
+                        title = it.symbol,
+                        subtitle = it.displayName,
+                        trailing = (it.availableBalanceUiAmount ?: "0.00") + " / " + walletHomeChainLabel(it.networkCode),
+                        badge = "REAL",
+                    )
+                },
+                note = if (overview != null) "" else "暂无数据",
+            )
+        }
+
     override suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState =
         AddCustomTokenUiState(
             metrics = listOf(
+                FeatureMetric("钱包标识", args.walletId),
                 FeatureMetric("目标链", args.chainId),
                 FeatureMetric("录入模式", "手动"),
                 FeatureMetric("校验", "BLOCKED"),
             ),
+            secondaryActionLabel = "返回代币管理",
             note = "未接入",
         )
 

@@ -366,6 +366,13 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         )
     }
 
+    override suspend fun getTokenManagerState(args: TokenManagerRouteArgs): TokenManagerUiState {
+        return tokenManagerPreviewState().copy(
+            summary = "Preview: 导航参数 ${args.walletId} / ${args.chainId}",
+            note = "Preview only",
+        )
+    }
+
     override suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState {
         return addCustomTokenPreviewState().copy(
             summary = "Preview: 导航参数 ${args.chainId}",
