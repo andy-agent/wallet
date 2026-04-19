@@ -311,8 +311,9 @@ object CryptoVpnRouteSpec {
 
     val addCustomToken = RouteDefinition(
         name = "add_custom_token",
-        pattern = "add_custom_token/{chainId}",
+        pattern = "add_custom_token/{walletId}/{chainId}",
         params = listOf(
+        RouteParamInfo(key = "walletId", sample = "primary_wallet", description = "当前钱包标识"),
         RouteParamInfo(key = "chainId", sample = "base", description = "将要添加代币的目标链"),
     ),
     )
@@ -448,7 +449,7 @@ object CryptoVpnRouteSpec {
     fun backupMnemonicRoute(walletId: String): String = "backup_mnemonic" + "/" + walletId
     fun confirmMnemonicRoute(walletId: String): String = "confirm_mnemonic" + "/" + walletId
     fun chainManagerRoute(walletId: String): String = "chain_manager" + "/" + walletId
-    fun addCustomTokenRoute(chainId: String): String = "add_custom_token" + "/" + chainId
+    fun addCustomTokenRoute(walletId: String, chainId: String): String = "add_custom_token/$walletId/$chainId"
     fun tokenManagerRoute(walletId: String, chainId: String): String = "token_manager/$walletId/$chainId"
     fun walletManagerRoute(walletId: String): String = "wallet_manager" + "/" + walletId
     fun addressBookRoute(mode: String): String = "address_book" + "/" + mode

@@ -792,19 +792,25 @@ private fun WalletSectionHeader(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
         )
-        Box(
+        Row(
             modifier = Modifier
-                .size(34.dp)
-                .background(WalletSoftBackground, RoundedCornerShape(12.dp))
-                .border(1.dp, WalletCardBorder, RoundedCornerShape(12.dp))
-                .clickable(onClick = onManage),
-            contentAlignment = Alignment.Center,
+                .background(WalletSoftBackground, RoundedCornerShape(999.dp))
+                .border(1.dp, WalletCardBorder, RoundedCornerShape(999.dp))
+                .clickable(onClick = onManage)
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Rounded.Tune,
                 contentDescription = "代币管理",
                 tint = WalletTextStrong,
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(14.dp),
+            )
+            Text(
+                text = "管理",
+                color = WalletTextStrong,
+                style = MaterialTheme.typography.labelMedium,
             )
         }
     }
