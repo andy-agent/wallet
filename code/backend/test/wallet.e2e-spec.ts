@@ -557,6 +557,46 @@ describe('Wallet (e2e)', () => {
       })
       .expect(201);
 
+    const secondWallet = await request(app.getHttpServer())
+      .post('/api/client/v1/wallets/create-mnemonic')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        walletName: 'Second Wallet',
+        keySlots: [
+          {
+            slotCode: 'SOLANA_0',
+            chainFamily: 'SOLANA',
+            derivationType: 'MNEMONIC',
+            derivationPath: "m/44'/501'/1'/0'",
+          },
+          {
+            slotCode: 'TRON_0',
+            chainFamily: 'TRON',
+            derivationType: 'MNEMONIC',
+            derivationPath: "m/44'/195'/1'/0/0",
+          },
+        ],
+        chainAccounts: [
+          {
+            slotCode: 'SOLANA_0',
+            chainFamily: 'SOLANA',
+            networkCode: 'SOLANA',
+            address: '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qW',
+            isEnabled: true,
+            isDefaultReceive: true,
+          },
+          {
+            slotCode: 'TRON_0',
+            chainFamily: 'TRON',
+            networkCode: 'TRON',
+            address: 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE',
+            isEnabled: true,
+            isDefaultReceive: false,
+          },
+        ],
+      })
+      .expect(201);
+
     const watchWallet = await request(app.getHttpServer())
       .post('/api/client/v1/wallets/import/watch-only')
       .set('authorization', `Bearer ${accessToken}`)
@@ -581,12 +621,22 @@ describe('Wallet (e2e)', () => {
           isDefault: true,
         }),
         expect.objectContaining({
+          walletId: secondWallet.body.data.wallet.walletId,
+          walletKind: 'SELF_CUSTODY',
+          isDefault: false,
+        }),
+        expect.objectContaining({
           walletId: watchWallet.body.data.wallet.walletId,
           walletKind: 'WATCH_ONLY',
           isDefault: false,
         }),
       ]),
     );
+    expect(
+      listResponse.body.data.items.filter(
+        (item: { walletKind: string }) => item.walletKind === 'SELF_CUSTODY',
+      ),
+    ).toHaveLength(2);
 
     const watchDetail = await request(app.getHttpServer())
       .get(`/api/client/v1/wallets/${watchWallet.body.data.wallet.walletId}/chain-accounts`)

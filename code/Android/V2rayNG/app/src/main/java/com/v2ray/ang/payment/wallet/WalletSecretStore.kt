@@ -99,7 +99,10 @@ class WalletSecretStore(context: Context) {
     }
 
     fun getMnemonicRecord(accountId: String): LocalWalletSecretRecord? {
-        return loadRecord(accountId)?.toLocalRecord()
+        loadRecordByStorageKey(accountId)?.toLocalRecord()?.let { return it }
+        return allStoredRecords()
+            .firstOrNull { it.accountId == accountId }
+            ?.toLocalRecord()
     }
 
     fun getMnemonicRecord(walletId: String, keySlotId: String?): LocalWalletSecretRecord? {
@@ -107,30 +110,37 @@ class WalletSecretStore(context: Context) {
     }
 
     fun getAnyMnemonicRecord(): LocalWalletSecretRecord? {
-        return storage.allKeys()
-            ?.firstOrNull()
-            ?.let { accountId -> loadRecord(accountId)?.toLocalRecord() }
+        return allStoredRecords()
+            .sortedByDescending { it.updatedAt }
+            .firstOrNull()
+            ?.toLocalRecord()
     }
 
     fun getMnemonicRecordByWalletId(walletId: String): LocalWalletSecretRecord? {
-        return storage.allKeys()
-            ?.firstNotNullOfOrNull { accountId ->
-                loadRecord(accountId)
-                    ?.takeIf { it.walletId == walletId }
-                    ?.toLocalRecord()
-            }
+        return allStoredRecords()
+            .firstOrNull { it.walletId == walletId }
+            ?.toLocalRecord()
     }
 
     fun getConflictingMnemonicRecord(accountId: String): LocalWalletSecretRecord? {
-        return storage.allKeys()
-            ?.firstOrNull { storedAccountId ->
-                storedAccountId != accountId && loadRecord(storedAccountId) != null
-            }
-            ?.let { storedAccountId -> loadRecord(storedAccountId)?.toLocalRecord() }
+        return allStoredRecords()
+            .firstOrNull { it.accountId != accountId }
+            ?.toLocalRecord()
     }
 
     fun clear(accountId: String) {
-        storage.remove(accountId)
+        val keysToRemove = mutableListOf<String>()
+        if (storage.containsKey(accountId)) {
+            keysToRemove += accountId
+        }
+        storage.allKeys()
+            ?.forEach { storageKey ->
+                val record = loadRecordByStorageKey(storageKey) ?: return@forEach
+                if (record.accountId == accountId) {
+                    keysToRemove += storageKey
+                }
+            }
+        keysToRemove.distinct().forEach { storage.remove(it) }
     }
 
     fun clearWallet(walletId: String, keySlotId: String?) {
@@ -145,6 +155,12 @@ class WalletSecretStore(context: Context) {
     private fun loadRecordByStorageKey(storageKey: String): StoredWalletSecretRecord? {
         val json = storage.decodeString(storageKey) ?: return null
         return gson.fromJson(json, StoredWalletSecretRecord::class.java)
+    }
+
+    private fun allStoredRecords(): List<StoredWalletSecretRecord> {
+        return storage.allKeys()
+            ?.mapNotNull { storageKey -> loadRecordByStorageKey(storageKey) }
+            .orEmpty()
     }
 
     private fun StoredWalletSecretRecord.toLocalRecord(): LocalWalletSecretRecord {
