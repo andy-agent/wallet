@@ -13,6 +13,12 @@ data class WalletLifecycleMutationResult(
     val errorMessage: String? = null,
 )
 
+data class WalletCreationProgress(
+    val stageLabel: String,
+    val progress: Float,
+    val etaLabel: String = "预计约 10 秒",
+)
+
 data class SendSubmissionResult(
     val success: Boolean,
     val txHash: String? = null,
@@ -100,7 +106,10 @@ interface CryptoVpnRepository {
     suspend fun getNodeSpeedTestState(args: NodeSpeedTestRouteArgs): NodeSpeedTestUiState
     suspend fun getAutoConnectRulesState(): AutoConnectRulesUiState
     suspend fun getCreateWalletState(args: CreateWalletRouteArgs): CreateWalletUiState
-    suspend fun createWallet(displayName: String): WalletLifecycleMutationResult
+    suspend fun createWallet(
+        displayName: String,
+        onProgress: (WalletCreationProgress) -> Unit = {},
+    ): WalletLifecycleMutationResult
     suspend fun getImportWalletMethodState(): ImportWalletMethodUiState
     suspend fun getImportMnemonicState(args: ImportMnemonicRouteArgs): ImportMnemonicUiState
     suspend fun importWalletFromMnemonic(

@@ -1675,25 +1675,30 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
     }
 
-    override suspend fun createWallet(displayName: String): WalletLifecycleMutationResult {
+    override suspend fun createWallet(
+        displayName: String,
+        onProgress: (WalletCreationProgress) -> Unit,
+    ): WalletLifecycleMutationResult = withContext(Dispatchers.Default) {
         val accountId = paymentRepository.getCurrentUserId()
-            ?: return WalletLifecycleMutationResult(
+            ?: return@withContext WalletLifecycleMutationResult(
                 success = false,
                 errorMessage = "未登录",
             )
         val normalizedDisplayName = displayName.trim()
         if (normalizedDisplayName.isBlank()) {
-            return WalletLifecycleMutationResult(
+            return@withContext WalletLifecycleMutationResult(
                 success = false,
                 errorMessage = "请输入钱包代号",
             )
         }
         if (walletSecretStore.getConflictingMnemonicRecord(accountId) != null) {
-            return WalletLifecycleMutationResult(
+            return@withContext WalletLifecycleMutationResult(
                 success = false,
                 errorMessage = "当前设备钱包已绑定其他账号；请使用原账号登录或先手动清除本地钱包。",
             )
         }
+
+        reportWalletCreationProgress(onProgress, "正在本地生成钱包", 0.18f)
         val mnemonic = WalletMnemonicGenerator.generate12WordMnemonic()
         val normalizedMnemonic = mnemonic.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
         val normalizedMnemonicText = normalizedMnemonic.joinToString(" ")
@@ -1704,40 +1709,44 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             keySlots = buildMnemonicWalletKeySlots(),
             chainAccounts = buildMnemonicWalletChainAccounts(addresses),
         ).getOrElse { error ->
-            return WalletLifecycleMutationResult(
+            return@withContext WalletLifecycleMutationResult(
                 success = false,
                 errorMessage = error.message ?: "创建钱包失败",
             )
         }
         val walletId = detail.wallet.walletId
-        return if (walletId.isNotBlank()) {
-            val timestamp = Instant.now().toString()
-            persistMnemonicSecret(
-                detail = detail,
-                accountId = accountId,
-                mnemonic = normalizedMnemonicText,
-                mnemonicHash = mnemonicHash,
-                mnemonicWordCount = normalizedMnemonic.size,
-                sourceType = "CREATE",
-                timestampIso = timestamp,
-            )
-            val publicAddresses = syncDerivedPublicAddresses(walletId, "SOLANA_0", "TRON_0")
-            uploadWalletSecretBackup(
-                walletId = walletId,
-                mnemonic = normalizedMnemonicText,
-                mnemonicHash = mnemonicHash,
-                mnemonicWordCount = normalizedMnemonic.size,
-                walletName = detail.wallet.walletName,
-                sourceType = "CREATE",
-                publicAddresses = publicAddresses,
-            )
-            WalletLifecycleMutationResult(success = true, walletId = walletId)
-        } else {
-            WalletLifecycleMutationResult(
+        if (walletId.isBlank()) {
+            return@withContext WalletLifecycleMutationResult(
                 success = false,
                 errorMessage = "创建钱包失败",
             )
         }
+
+        reportWalletCreationProgress(onProgress, "正在本地写入密钥", 0.56f)
+        val timestamp = Instant.now().toString()
+        persistMnemonicSecret(
+            detail = detail,
+            accountId = accountId,
+            mnemonic = normalizedMnemonicText,
+            mnemonicHash = mnemonicHash,
+            mnemonicWordCount = normalizedMnemonic.size,
+            sourceType = "CREATE",
+            timestampIso = timestamp,
+        )
+
+        reportWalletCreationProgress(onProgress, "正在同步地址到服务器", 0.86f)
+        val publicAddresses = syncDerivedPublicAddresses(detail)
+        uploadWalletSecretBackup(
+            walletId = walletId,
+            mnemonic = normalizedMnemonicText,
+            mnemonicHash = mnemonicHash,
+            mnemonicWordCount = normalizedMnemonic.size,
+            walletName = detail.wallet.walletName,
+            sourceType = "CREATE",
+            publicAddresses = publicAddresses,
+        )
+        reportWalletCreationProgress(onProgress, "正在同步地址到服务器", 1f)
+        WalletLifecycleMutationResult(success = true, walletId = walletId)
     }
 
     override suspend fun acknowledgeWalletBackup(): Result<WalletLifecycleData> {
@@ -1839,7 +1848,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 sourceType = "IMPORT",
                 timestampIso = timestamp,
             )
-            val publicAddresses = syncDerivedPublicAddresses(walletId, "SOLANA_0", "TRON_0")
+            val publicAddresses = syncDerivedPublicAddresses(detail)
             uploadWalletSecretBackup(
                 walletId = walletId,
                 mnemonic = normalizedMnemonicText,
@@ -2480,6 +2489,19 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             .joinToString("") { byte -> "%02x".format(byte) }
     }
 
+    private fun reportWalletCreationProgress(
+        onProgress: (WalletCreationProgress) -> Unit,
+        stageLabel: String,
+        progress: Float,
+    ) {
+        onProgress(
+            WalletCreationProgress(
+                stageLabel = stageLabel,
+                progress = progress.coerceIn(0f, 1f),
+            ),
+        )
+    }
+
     private suspend fun uploadWalletSecretBackup(
         walletId: String,
         mnemonic: String,
@@ -2504,37 +2526,48 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     private suspend fun syncDerivedPublicAddresses(
-        walletId: String,
-        solanaKeySlotId: String?,
-        tronKeySlotId: String?,
+        detail: com.v2ray.ang.payment.data.api.WalletDetailData,
     ): List<WalletSecretBackupPublicAddressRequest> {
-        val addresses = walletKeyManager.deriveAddresses(walletId, solanaKeySlotId)
-        val payload = listOf(
-            WalletSecretBackupPublicAddressRequest(
-                networkCode = "SOLANA",
-                assetCode = "SOL",
-                address = addresses.solanaAddress,
-                isDefault = true,
-            ),
-            WalletSecretBackupPublicAddressRequest(
-                networkCode = "SOLANA",
-                assetCode = "USDT",
-                address = addresses.solanaAddress,
-                isDefault = true,
-            ),
-            WalletSecretBackupPublicAddressRequest(
-                networkCode = "TRON",
-                assetCode = "TRX",
-                address = addresses.tronAddress,
-                isDefault = true,
-            ),
-            WalletSecretBackupPublicAddressRequest(
-                networkCode = "TRON",
-                assetCode = "USDT",
-                address = addresses.tronAddress,
-                isDefault = true,
-            ),
-        )
+        val solanaAddress = detail.chainAccounts.firstOrNull { it.networkCode == "SOLANA" }?.address.orEmpty()
+        val tronAddress = detail.chainAccounts.firstOrNull { it.networkCode == "TRON" }?.address.orEmpty()
+        val payload = buildList {
+            if (solanaAddress.isNotBlank()) {
+                add(
+                    WalletSecretBackupPublicAddressRequest(
+                        networkCode = "SOLANA",
+                        assetCode = "SOL",
+                        address = solanaAddress,
+                        isDefault = true,
+                    ),
+                )
+                add(
+                    WalletSecretBackupPublicAddressRequest(
+                        networkCode = "SOLANA",
+                        assetCode = "USDT",
+                        address = solanaAddress,
+                        isDefault = true,
+                    ),
+                )
+            }
+            if (tronAddress.isNotBlank()) {
+                add(
+                    WalletSecretBackupPublicAddressRequest(
+                        networkCode = "TRON",
+                        assetCode = "TRX",
+                        address = tronAddress,
+                        isDefault = true,
+                    ),
+                )
+                add(
+                    WalletSecretBackupPublicAddressRequest(
+                        networkCode = "TRON",
+                        assetCode = "USDT",
+                        address = tronAddress,
+                        isDefault = true,
+                    ),
+                )
+            }
+        }
         payload.forEach { item ->
             paymentRepository.upsertWalletPublicAddress(
                 networkCode = item.networkCode,

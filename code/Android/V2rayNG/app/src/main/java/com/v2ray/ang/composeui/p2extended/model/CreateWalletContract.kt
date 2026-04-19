@@ -25,6 +25,10 @@ data class CreateWalletUiState(
         val highlights: List<FeatureListItem> = emptyList(),
         val checklist: List<FeatureBullet> = emptyList(),
         val note: String = "",
+        val progressVisible: Boolean = false,
+        val progressValue: Float = 0f,
+        val progressStageLabel: String = "",
+        val progressEtaLabel: String = "预计约 10 秒",
     )
 
     sealed interface CreateWalletEvent {

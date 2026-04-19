@@ -231,7 +231,13 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         )
     }
 
-    override suspend fun createWallet(displayName: String): WalletLifecycleMutationResult {
+    override suspend fun createWallet(
+        displayName: String,
+        onProgress: (WalletCreationProgress) -> Unit,
+    ): WalletLifecycleMutationResult {
+        onProgress(WalletCreationProgress(stageLabel = "正在本地生成钱包", progress = 0.24f))
+        onProgress(WalletCreationProgress(stageLabel = "正在本地写入密钥", progress = 0.58f))
+        onProgress(WalletCreationProgress(stageLabel = "正在同步地址到服务器", progress = 0.9f))
         return WalletLifecycleMutationResult(
             success = displayName.isNotBlank(),
             walletId = "mock-wallet",
