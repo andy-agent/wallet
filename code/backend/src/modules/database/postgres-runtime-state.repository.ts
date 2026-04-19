@@ -885,6 +885,23 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     return this.mapOrder(result.rows[0]);
   }
 
+  async purgeExpiredOrders(accountId: string, expiredBefore: number): Promise<number> {
+    await this.ensureReady();
+    const result = await this.pool.query<CountRow>(
+      `
+        DELETE FROM ${ORDERS_TABLE}
+        WHERE account_id = $1
+          AND (
+            status = 'EXPIRED'
+            OR (status = 'AWAITING_PAYMENT' AND expires_at <= to_timestamp($2 / 1000.0))
+          )
+        RETURNING 1
+      `,
+      [accountId, expiredBefore],
+    );
+    return result.rowCount ?? 0;
+  }
+
   async listActiveOrdersForPaymentContext(params: {
     collectionAddress: string;
     quoteAssetCode: StoredOrderRecord['quoteAssetCode'];

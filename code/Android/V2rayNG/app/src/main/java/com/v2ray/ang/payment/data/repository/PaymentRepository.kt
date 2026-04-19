@@ -1427,6 +1427,7 @@ class PaymentRepository(context: Context) {
     suspend fun syncWalletOverviewFromServer(
         force: Boolean = false,
         userId: String? = getCurrentUserId(),
+        walletId: String? = null,
     ): Result<WalletOverviewData> = withContext(Dispatchers.IO) {
         val resolvedUserId = userId
         val cached = resolvedUserId?.let { localRepository.getWalletOverviewCache(it) }
@@ -1443,7 +1444,7 @@ class PaymentRepository(context: Context) {
             val token = getAccessToken()
                 ?: return@withContext cached?.let { Result.success(it.toWalletOverviewData()) }
                     ?: Result.failure(Exception("未登录"))
-            val response = api.getWalletOverview("Bearer $token")
+            val response = api.getWalletOverview("Bearer $token", walletId)
             if (response.isSuccessful && response.body()?.code == "OK") {
                 response.body()?.data?.let { data ->
                     val cacheUserId = resolvedUserId ?: getCurrentUserId()
@@ -1473,16 +1474,16 @@ class PaymentRepository(context: Context) {
         }
     }
 
-    suspend fun getWalletOverview(): Result<WalletOverviewData> = withContext(Dispatchers.IO) {
+    suspend fun getWalletOverview(walletId: String? = null): Result<WalletOverviewData> = withContext(Dispatchers.IO) {
         val resolvedUserId = getCurrentUserId()
-        val cached = getCachedWalletOverview(resolvedUserId)
+        val cached = if (walletId.isNullOrBlank()) getCachedWalletOverview(resolvedUserId) else null
         if (cached != null) {
             cacheSyncScope.launch {
-                syncWalletOverviewFromServer(force = true, userId = resolvedUserId)
+                syncWalletOverviewFromServer(force = true, userId = resolvedUserId, walletId = walletId)
             }
             return@withContext Result.success(cached)
         }
-        syncWalletOverviewFromServer(force = true, userId = resolvedUserId)
+        syncWalletOverviewFromServer(force = true, userId = resolvedUserId, walletId = walletId)
     }
 
     suspend fun getWalletBalances(): Result<WalletBalancesData> = withContext(Dispatchers.IO) {
@@ -1546,6 +1547,10 @@ class PaymentRepository(context: Context) {
     suspend fun getCachedWallets(): List<WalletSummaryData> = withContext(Dispatchers.IO) {
         val userId = getCurrentUserId() ?: return@withContext emptyList()
         localRepository.getLocalWallets(userId).map { it.toSummaryData() }
+    }
+
+    suspend fun getCachedWalletChainAccounts(walletId: String): List<WalletChainAccountData> = withContext(Dispatchers.IO) {
+        localRepository.getLocalWalletChainAccounts(walletId).map { it.toData() }
     }
 
     suspend fun getWallet(walletId: String): Result<WalletDetailData> = withContext(Dispatchers.IO) {
@@ -2499,6 +2504,20 @@ class PaymentRepository(context: Context) {
         isDefault = isDefault,
         isArchived = isArchived,
         deviceCapabilitySummary = null,
+        createdAt = isoDateFormatWithMs.format(Date(updatedAt)),
+        updatedAt = isoDateFormatWithMs.format(Date(updatedAt)),
+    )
+
+    private fun LocalWalletChainAccountEntity.toData() = WalletChainAccountData(
+        chainAccountId = chainAccountId,
+        walletId = walletId,
+        keySlotId = keySlotId,
+        chainFamily = chainFamily,
+        networkCode = networkCode,
+        address = address,
+        capability = capability,
+        isEnabled = isEnabled,
+        isDefaultReceive = isDefaultReceive,
         createdAt = isoDateFormatWithMs.format(Date(updatedAt)),
         updatedAt = isoDateFormatWithMs.format(Date(updatedAt)),
     )

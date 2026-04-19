@@ -28,13 +28,19 @@ export class WalletController {
   }
 
   @Get('overview')
-  getOverview(@Headers('authorization') authorization?: string) {
-    return this.walletService.getOverview(this.extractBearer(authorization));
+  getOverview(
+    @Headers('authorization') authorization?: string,
+    @Query('walletId') walletId?: string,
+  ) {
+    return this.walletService.getOverview(this.extractBearer(authorization), walletId);
   }
 
   @Get('balances')
-  getBalances(@Headers('authorization') authorization?: string) {
-    return this.walletService.getBalances(this.extractBearer(authorization));
+  getBalances(
+    @Headers('authorization') authorization?: string,
+    @Query('walletId') walletId?: string,
+  ) {
+    return this.walletService.getBalances(this.extractBearer(authorization), walletId);
   }
 
   @Get('lifecycle')

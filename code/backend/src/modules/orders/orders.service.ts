@@ -312,6 +312,7 @@ export class OrdersService {
     },
   ) {
     const account = this.authService.getMe(accessToken);
+    await this.runtimeStateRepository.purgeExpiredOrders(account.accountId, Date.now());
     const result = await this.runtimeStateRepository.listOrders({
       ...params,
       accountId: account.accountId,

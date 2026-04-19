@@ -136,12 +136,14 @@ interface PaymentApi {
 
     @GET("${PaymentConfig.API_VERSION}/wallet/overview")
     suspend fun getWalletOverview(
-        @Header("Authorization") authorization: String
+        @Header("Authorization") authorization: String,
+        @Query("walletId") walletId: String? = null
     ): Response<WalletOverviewResponse>
 
     @GET("${PaymentConfig.API_VERSION}/wallet/balances")
     suspend fun getWalletBalances(
-        @Header("Authorization") authorization: String
+        @Header("Authorization") authorization: String,
+        @Query("walletId") walletId: String? = null
     ): Response<WalletBalancesResponse>
 
     @GET("${PaymentConfig.API_VERSION}/wallet/lifecycle")

@@ -13,8 +13,10 @@ import com.v2ray.ang.composeui.p0.model.SplashUiState
 import com.v2ray.ang.composeui.p0.model.SubscriptionSummary
 import com.v2ray.ang.composeui.p0.model.VpnConnectionStatus
 import com.v2ray.ang.composeui.p0.model.VpnHomeUiState
+import com.v2ray.ang.composeui.p0.model.WalletHomeChainOption
 import com.v2ray.ang.composeui.p0.model.WalletChainSummary
 import com.v2ray.ang.composeui.p0.model.WalletHomeUiState
+import com.v2ray.ang.composeui.p0.model.WalletHomeWalletOption
 import com.v2ray.ang.composeui.p0.model.WalletOnboardingUiState
 import com.v2ray.ang.composeui.p0.model.WatchSignal
 import com.v2ray.ang.composeui.p0.model.hasUsableWallet
@@ -46,6 +48,45 @@ class RealP0Repository(context: Context) : P0Repository {
     private val appContext = context.applicationContext
     private val paymentRepository = PaymentRepository(appContext)
     private val walletSecretStore = WalletSecretStore(appContext)
+
+    override suspend fun getCachedWalletHomeState(selectedWalletId: String?): WalletHomeUiState? = withContext(Dispatchers.IO) {
+        val currentUserId = paymentRepository.getCurrentUserId() ?: return@withContext null
+        val cachedOverview = paymentRepository.getCachedWalletOverview(currentUserId)
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        val cachedUser = paymentRepository.getCachedCurrentUser()
+        val walletOptions = buildWalletHomeWalletOptions(
+            wallets = paymentRepository.getCachedWallets(),
+            fetchRemoteIfMissing = false,
+        )
+        val successfulOrders = readLocalOrders(currentUserId).filter { it.status == "COMPLETED" }
+
+        val baseState = when {
+            cachedOverview != null -> cachedOverview.toWalletHomeUiState(lifecycle)
+            cachedUser != null -> WalletHomeUiState(
+                isLoading = false,
+                loadState = P0LoadState.READY,
+                accountLabel = cachedUser.email ?: cachedUser.username,
+                accountSecondaryLabel = cachedUser.email ?: cachedUser.username,
+                totalBalanceText = "${successfulOrders.size} 笔交易",
+                summaryLabel = if (successfulOrders.isNotEmpty()) "成功交易" else "暂无成功交易",
+                walletExists = lifecycle.hasUsableWallet(),
+                walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
+                walletId = lifecycle?.walletId,
+                walletDisplayName = lifecycle?.displayName,
+                walletNextAction = lifecycle?.nextAction ?: "CREATE_OR_IMPORT",
+                walletOptions = walletOptions,
+            )
+            else -> return@withContext null
+        }
+
+        enrichWalletHomeState(
+            baseState = baseState,
+            walletOptions = walletOptions,
+            successfulOrders = successfulOrders,
+            accountSecondaryLabel = cachedOverview?.accountEmail ?: cachedUser?.email ?: cachedUser?.username ?: "",
+            preferredWalletId = selectedWalletId,
+        )
+    }
 
     override suspend fun getCachedVpnHomeState(): VpnHomeUiState? = withContext(Dispatchers.IO) {
         val cachedUser = paymentRepository.getCachedCurrentUser() ?: return@withContext null
@@ -715,12 +756,24 @@ class RealP0Repository(context: Context) : P0Repository {
         )
     }
 
-    override suspend fun getWalletHomeState(): WalletHomeUiState {
-        val walletOverview = paymentRepository.getWalletOverview().getOrNull()
+    override suspend fun getWalletHomeState(selectedWalletId: String?): WalletHomeUiState {
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         val hasUsableWallet = lifecycle.hasUsableWallet()
+        val wallets = paymentRepository.listWallets().getOrElse { paymentRepository.getCachedWallets() }
+        val walletOptions = buildWalletHomeWalletOptions(wallets, fetchRemoteIfMissing = true)
+        val resolvedWalletId = selectedWalletId
+            ?: walletOptions.firstOrNull { it.isDefault }?.walletId
+            ?: walletOptions.firstOrNull()?.walletId
+        val walletOverview = paymentRepository.getWalletOverview(resolvedWalletId).getOrNull()
+        val successfulOrders = loadOrdersSnapshot().orders.filter { it.status == "COMPLETED" }
         if (walletOverview != null) {
-            return walletOverview.toWalletHomeUiState(lifecycle)
+            return enrichWalletHomeState(
+                baseState = walletOverview.toWalletHomeUiState(lifecycle),
+                walletOptions = walletOptions,
+                successfulOrders = successfulOrders,
+                accountSecondaryLabel = walletOverview.accountEmail,
+                preferredWalletId = resolvedWalletId,
+            )
         }
 
         val cachedUser = paymentRepository.getCachedCurrentUser()
@@ -731,6 +784,7 @@ class RealP0Repository(context: Context) : P0Repository {
                 isLoading = false,
                 loadState = if (cachedUser == null) P0LoadState.UNAVAILABLE else P0LoadState.ERROR,
                 accountLabel = cachedUser?.email ?: cachedUser?.username ?: "未登录",
+                accountSecondaryLabel = cachedUser?.email ?: cachedUser?.username ?: "",
                 errorMessage = failureMessage,
                 unavailableMessage = if (cachedUser == null) "请先登录后再查看支付记录。" else null,
                 totalBalanceText = "--",
@@ -741,31 +795,33 @@ class RealP0Repository(context: Context) : P0Repository {
                 walletId = lifecycle?.walletId,
                 walletDisplayName = lifecycle?.displayName,
                 walletNextAction = lifecycle?.nextAction ?: "CREATE_OR_IMPORT",
+                walletOptions = walletOptions,
             )
         }
 
         val me = meResult.getOrThrow()
         val subscription = paymentRepository.getSubscription().getOrNull() ?: me.subscription
-        val orders = loadOrders()
-        val latestOrder = orders.maxByOrNull { it.createdAt }
-        if (orders.isEmpty()) {
+        val latestSuccessfulOrder = successfulOrders.maxByOrNull { it.createdAt }
+        if (successfulOrders.isEmpty()) {
             return WalletHomeUiState(
                 isLoading = false,
                 loadState = P0LoadState.EMPTY,
                 accountLabel = me.email,
-                totalBalanceText = "0 笔订单",
-                summaryLabel = subscription?.planName ?: subscription?.planCode ?: "暂无支付记录",
-                emptyMessage = "当前账号还没有同步支付记录。",
-                alertBanner = " 支付与订单 ",
+                accountSecondaryLabel = me.email,
+                totalBalanceText = "0 笔交易",
+                summaryLabel = subscription?.planName ?: subscription?.planCode ?: "暂无成功交易",
+                emptyMessage = "当前账号还没有成功交易记录。",
+                alertBanner = "成功交易",
                 walletExists = hasUsableWallet,
                 walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
                 walletId = lifecycle?.walletId,
                 walletDisplayName = lifecycle?.displayName,
                 walletNextAction = lifecycle?.nextAction ?: "CREATE_OR_IMPORT",
+                walletOptions = walletOptions,
             )
         }
 
-        val chainGroups = orders.groupBy { it.quoteNetworkCode.lowercase(Locale.ROOT) }
+        val chainGroups = successfulOrders.groupBy { it.quoteNetworkCode.lowercase(Locale.ROOT) }
         val chains = chainGroups.entries
             .sortedByDescending { it.value.size }
             .map { (chainId, items) ->
@@ -778,7 +834,7 @@ class RealP0Repository(context: Context) : P0Repository {
                 )
             }
 
-        val assets = orders
+        val assets = successfulOrders
             .groupBy { "${it.quoteAssetCode}:${it.quoteNetworkCode}" }
             .entries
             .sortedByDescending { (_, items) -> items.size }
@@ -800,19 +856,49 @@ class RealP0Repository(context: Context) : P0Repository {
             isLoading = false,
             loadState = P0LoadState.READY,
             accountLabel = me.email,
-            totalBalanceText = "${orders.size} 笔支付记录",
+            accountSecondaryLabel = me.email,
+            totalBalanceText = "${successfulOrders.size} 笔交易",
             summaryLabel = subscription?.let { "${it.planName ?: it.planCode ?: "订阅"} · ${it.status}" } ?: "暂无有效订阅",
             selectedChainId = chains.firstOrNull()?.chainId ?: "all",
             chains = chains,
             assets = assets,
-            alertBanner = latestOrder?.let { "最新订单：${it.planName} · ${it.statusText}" }
-                ?: "订单与区块记录",
+            alertBanner = latestSuccessfulOrder?.let { "最新成功交易：${it.planName} · ${it.statusText}" }
+                ?: "成功交易",
             walletExists = hasUsableWallet,
             walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
             walletId = lifecycle?.walletId,
             walletDisplayName = lifecycle?.displayName,
             walletNextAction = lifecycle?.nextAction ?: "CREATE_OR_IMPORT",
-        )
+            walletOptions = walletOptions,
+        ).let {
+            enrichWalletHomeState(
+                baseState = it,
+                walletOptions = walletOptions,
+                successfulOrders = successfulOrders,
+                accountSecondaryLabel = me.email,
+                preferredWalletId = resolvedWalletId,
+            )
+        }
+    }
+
+    override suspend fun clearLocalWallet(): Result<String> = withContext(Dispatchers.IO) {
+        val localWallet = walletSecretStore.getAnyMnemonicRecord()
+            ?: return@withContext Result.failure(IllegalStateException("当前设备没有可清除的本地钱包"))
+        return@withContext try {
+            val currentAccountId = paymentRepository.getCurrentUserId()
+            if (!currentAccountId.isNullOrBlank() && currentAccountId == localWallet.accountId) {
+                paymentRepository.resetWalletDomain().getOrElse { error ->
+                    return@withContext Result.failure(
+                        IllegalStateException(error.message ?: "清除服务端钱包记录失败"),
+                    )
+                }
+            }
+            paymentRepository.clearWalletDomainCache(localWallet.accountId)
+            walletSecretStore.clear(localWallet.accountId)
+            Result.success("本地钱包已清除，服务端钱包记录已同步删除，加密备份已保留")
+        } catch (error: Exception) {
+            Result.failure(error)
+        }
     }
 
     private suspend fun resolvePostAuthRoute(): String {
@@ -1016,6 +1102,74 @@ class RealP0Repository(context: Context) : P0Repository {
 
     private fun formatEpoch(epoch: Long): String =
         Instant.ofEpochMilli(epoch).toString()
+
+    private suspend fun buildWalletHomeWalletOptions(
+        wallets: List<com.v2ray.ang.payment.data.api.WalletSummaryData>,
+        fetchRemoteIfMissing: Boolean,
+    ): List<WalletHomeWalletOption> {
+        return wallets.map { wallet ->
+            val chainAccounts = paymentRepository.getCachedWalletChainAccounts(wallet.walletId)
+                .ifEmpty {
+                    if (fetchRemoteIfMissing) {
+                        paymentRepository.getWalletChainAccounts(wallet.walletId).getOrNull().orEmpty()
+                    } else {
+                        emptyList()
+                    }
+                }
+            WalletHomeWalletOption(
+                walletId = wallet.walletId,
+                walletName = wallet.walletName,
+                walletKind = wallet.walletKind,
+                isDefault = wallet.isDefault,
+                chainOptions = chainAccounts
+                    .filter { it.isEnabled && it.address.isNotBlank() }
+                    .distinctBy { it.networkCode.uppercase(Locale.ROOT) }
+                    .map { chain ->
+                        val chainId = normalizeWalletHomeChainId(chain.networkCode)
+                        WalletHomeChainOption(
+                            chainId = chainId,
+                            label = walletHomeChainLabel(chain.networkCode),
+                            address = chain.address,
+                            addressSuffix = chain.address.takeLast(4),
+                        )
+                    },
+            )
+        }
+    }
+
+    private fun enrichWalletHomeState(
+        baseState: WalletHomeUiState,
+        walletOptions: List<WalletHomeWalletOption>,
+        successfulOrders: List<Order>,
+        accountSecondaryLabel: String,
+        preferredWalletId: String?,
+    ): WalletHomeUiState {
+        val selectedWallet = walletOptions.firstOrNull { it.walletId == preferredWalletId }
+            ?: walletOptions.firstOrNull { it.walletId == baseState.selectedWalletId }
+            ?: walletOptions.firstOrNull { it.walletId == baseState.walletId }
+            ?: walletOptions.firstOrNull { it.isDefault }
+            ?: walletOptions.firstOrNull()
+        val selectedChain = selectedWallet?.chainOptions?.firstOrNull { it.chainId == baseState.selectedChainId }
+            ?: selectedWallet?.chainOptions?.firstOrNull()
+
+        return baseState.copy(
+            selectedWalletId = selectedWallet?.walletId,
+            selectedChainId = selectedChain?.chainId ?: baseState.selectedChainId,
+            walletOptions = walletOptions,
+            accountSecondaryLabel = accountSecondaryLabel,
+            currentWalletLabel = selectedWallet?.walletName ?: (baseState.walletDisplayName ?: "未选择钱包"),
+            currentWalletAddress = selectedChain?.address.orEmpty(),
+            currentWalletAddressSuffix = selectedChain?.addressSuffix.orEmpty(),
+            currentWalletChainLabel = selectedChain?.label.orEmpty(),
+            totalBalanceText = "${successfulOrders.size} 笔交易",
+        )
+    }
+
+    private fun normalizeWalletHomeChainId(networkCode: String): String = when (networkCode.uppercase(Locale.ROOT)) {
+        "AVALANCHE_C" -> "avalanche"
+        "BSC", "SMARTCHAIN" -> "bsc"
+        else -> networkCode.lowercase(Locale.ROOT)
+    }
 
     private suspend fun readLocalOrders(userId: String): List<Order> {
         return paymentRepository.getLocalRepository().getOrdersByUserId(userId).map {

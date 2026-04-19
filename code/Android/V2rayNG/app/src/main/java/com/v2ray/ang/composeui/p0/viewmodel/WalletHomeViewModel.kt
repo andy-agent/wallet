@@ -27,6 +27,22 @@ class WalletHomeViewModel(
                 _uiState.value = _uiState.value.copy(selectedChainId = event.chainId)
             }
 
+            is WalletHomeEvent.WalletContextSelected -> {
+                val selectedWallet = _uiState.value.walletOptions.firstOrNull { it.walletId == event.walletId }
+                    ?: return
+                val selectedChain = selectedWallet.chainOptions.firstOrNull { it.chainId == event.chainId }
+                    ?: selectedWallet.chainOptions.firstOrNull()
+                    ?: return
+                _uiState.value = _uiState.value.copy(
+                    selectedWalletId = selectedWallet.walletId,
+                    selectedChainId = selectedChain.chainId,
+                    currentWalletLabel = selectedWallet.walletName,
+                    currentWalletChainLabel = selectedChain.label,
+                    currentWalletAddress = selectedChain.address,
+                    currentWalletAddressSuffix = selectedChain.addressSuffix,
+                )
+            }
+
             WalletHomeEvent.Refresh -> refresh()
         }
     }
@@ -37,6 +53,21 @@ class WalletHomeViewModel(
                 _uiState.value = cached
             }
             _uiState.value = repository.getWalletHomeState()
+        }
+    }
+
+    fun clearLocalWallet(
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val result = repository.clearLocalWallet()
+            if (result.isSuccess) {
+                refresh()
+                onSuccess(result.getOrNull().orEmpty())
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "清除本地钱包失败")
+            }
         }
     }
 }

@@ -159,6 +159,32 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
     return order;
   }
 
+  async purgeExpiredOrders(accountId: string, expiredBefore: number): Promise<number> {
+    const snapshot = this.readSnapshot();
+    const beforeCount = snapshot.orders.length;
+    snapshot.orders = snapshot.orders.filter((order) => {
+      if (order.accountId !== accountId) {
+        return true;
+      }
+      const expiredAt = new Date(order.expiresAt).getTime();
+      if (order.status === 'EXPIRED') {
+        return false;
+      }
+      if (order.status === 'AWAITING_PAYMENT' && expiredAt <= expiredBefore) {
+        return false;
+      }
+      return true;
+    });
+    const remainingOrderNos = snapshot.orders.map((order) => order.orderNo);
+    snapshot.idempotencyIndex = Object.fromEntries(
+      Object.entries(snapshot.idempotencyIndex).filter(([, orderNo]) =>
+        remainingOrderNos.includes(orderNo),
+      ),
+    );
+    this.writeSnapshot(snapshot);
+    return beforeCount - snapshot.orders.length;
+  }
+
   async listActiveOrdersForPaymentContext(params: {
     collectionAddress: string;
     quoteAssetCode: StoredOrderRecord['quoteAssetCode'];

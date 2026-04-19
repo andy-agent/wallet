@@ -307,6 +307,38 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
     }
 
     composable(
+        route = CryptoVpnRouteSpec.tokenManager.pattern,
+        arguments = listOf(
+            navArgument("walletId") {
+                type = NavType.StringType
+                defaultValue = "primary_wallet"
+            },
+            navArgument("chainId") {
+                type = NavType.StringType
+                defaultValue = "solana"
+            },
+        ),
+    ) { backStackEntry ->
+        val args = ChainManagerRouteArgs(
+            walletId = backStackEntry.arguments?.getString("walletId") ?: "primary_wallet",
+            chainId = backStackEntry.arguments?.getString("chainId") ?: "solana",
+        )
+        val vm: ChainManagerViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { ChainManagerViewModel(repository, args) },
+        )
+        ChainManagerRoute(
+            viewModel = vm,
+            onPrimaryAction = {
+                navController.navigateSingleTop(
+                    CryptoVpnRouteSpec.addCustomTokenRoute(args.chainId),
+                )
+            },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern) },
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
+    }
+
+    composable(
         route = CryptoVpnRouteSpec.chainManager.pattern,
         arguments = listOf(
             navArgument("walletId") {
@@ -323,7 +355,11 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
         )
         ChainManagerRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.addCustomTokenRoute("tron")) },
+            onPrimaryAction = {
+                navController.navigateSingleTop(
+                    CryptoVpnRouteSpec.addCustomTokenRoute(args.chainId),
+                )
+            },
             onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
@@ -346,7 +382,11 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
         )
         AddCustomTokenRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.chainManagerRoute("primary_wallet")) },
+            onPrimaryAction = {
+                navController.navigateSingleTop(
+                    CryptoVpnRouteSpec.tokenManagerRoute("primary_wallet", args.chainId),
+                )
+            },
             onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )

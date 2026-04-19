@@ -492,13 +492,14 @@ export class WalletService {
     };
   }
 
-  async getOverview(accessToken: string) {
+  async getOverview(accessToken: string, walletId?: string) {
     const account = this.authService.getMe(accessToken);
     const lifecycle = await this.getWalletLifecycle(accessToken);
     const chains = this.getChains(accessToken).items;
     const assets = this.getAssetCatalog(accessToken).items;
-    const publicAddresses = (await this.listPublicAddresses(accessToken)).items;
-    const receiveSelection = await this.resolveReceiveSelection(accessToken);
+    const publicAddresses = (await this.listPublicAddresses(accessToken)).items
+      .filter((item) => !walletId || item.walletId === walletId);
+    const receiveSelection = await this.resolveReceiveSelection(accessToken, undefined, undefined, walletId);
     const orders = await this.listOwnedOrders(accessToken);
 
     const orderStatsByNetwork = new Map<
@@ -643,15 +644,16 @@ export class WalletService {
     };
   }
 
-  async getBalances(accessToken: string) {
+  async getBalances(accessToken: string, walletId?: string) {
     const account = this.authService.getMe(accessToken);
     const assets = this.getAssetCatalog(accessToken).items.filter(
       (item) => item.walletVisible,
     );
-    const publicAddresses =
+    const publicAddresses = (
       await this.runtimeStateRepository.listWalletPublicAddressesByAccountId({
         accountId: account.accountId,
-      });
+      })
+    ).filter((item) => !walletId || item.walletId === walletId);
     const assetBalanceViews = await this.resolveAssetBalanceViews(
       assets,
       publicAddresses,
@@ -683,6 +685,7 @@ export class WalletService {
     accessToken: string,
     requestedNetworkCode?: string,
     requestedAssetCode?: string,
+    walletId?: string,
   ) {
     const chains = this.getChains(accessToken).items;
     const {
@@ -695,6 +698,7 @@ export class WalletService {
       accessToken,
       requestedNetworkCode,
       requestedAssetCode,
+      walletId,
     );
     const lifecycle = await this.getWalletLifecycle(accessToken);
 
@@ -1385,6 +1389,7 @@ export class WalletService {
     accessToken: string,
     requestedNetworkCode?: string,
     requestedAssetCode?: string,
+    walletId?: string,
   ): Promise<WalletResolvedReceiveSelection> {
     const chains = this.getChains(accessToken).items;
     const assets = this.getAssetCatalog(accessToken).items.filter((item) => item.walletVisible);
@@ -1410,7 +1415,7 @@ export class WalletService {
           | PersistedWalletPublicAddressRecord['assetCode']
           | undefined,
       )
-    ).items;
+    ).items.filter((item) => !walletId || item.walletId === walletId);
     const defaultAddress =
       publicAddresses.find((item) => item.isDefault)?.address ??
       publicAddresses[0]?.address ??

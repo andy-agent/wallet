@@ -20,6 +20,7 @@ import com.v2ray.ang.composeui.p0.model.ResetPasswordUiState
 import com.v2ray.ang.composeui.p0.model.emailRegisterPreviewState
 import com.v2ray.ang.composeui.p0.model.optionalUpdatePreviewState
 import com.v2ray.ang.composeui.p0.model.resetPasswordPreviewState
+import com.v2ray.ang.composeui.p0.model.walletHomeChainLabel
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutRouteArgs
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutUiState
 import com.v2ray.ang.composeui.p1.model.OrderDetailRowUi
@@ -988,16 +989,16 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getOrderListState(): OrderListUiState {
-        val orders = loadCachedOrders()
+        val orders = loadCachedOrders().filter { it.status == "COMPLETED" }
         if (orders.isEmpty()) {
             return OrderListUiState(
-                summary = "当前账号暂无订单。",
-                screenState = P1ScreenState(emptyMessage = "当前账号没有真实订单缓存。"),
-                note = "当前未查询到订单",
+                summary = "当前账号暂无成功交易。",
+                screenState = P1ScreenState(emptyMessage = "当前账号没有成功交易记录。"),
+                note = "当前未查询到成功交易",
             )
         }
         return OrderListUiState(
-            summary = "订单列表。",
+            summary = "成功交易列表。",
             screenState = P1ScreenState(),
             orders = orders.sortedByDescending { it.createdAt }.map {
                 OrderListItemUi(
@@ -1009,7 +1010,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                     createdAt = formatEpoch(it.createdAt),
                 )
             },
-            note = "使用 LocalPaymentRepository 中的订单缓存。",
+            note = "仅显示成功交易缓存。",
         )
     }
 
@@ -2096,18 +2097,25 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState =
-        paymentRepository.getWalletOverview().getOrNull().let { overview ->
+        paymentRepository.getWalletOverview(args.walletId).getOrNull().let { overview ->
+            val normalizedChainId = args.chainId.lowercase(Locale.ROOT)
+            val assetItems = overview?.assetItems.orEmpty().filter { asset ->
+                asset.networkCode.lowercase(Locale.ROOT) == normalizedChainId && asset.walletVisible
+            }
             ChainManagerUiState(
                 metrics = listOf(
-                    FeatureMetric("钱包标识", args.walletId),
-                    FeatureMetric("启用链", overview?.chainItems?.size?.toString() ?: "0"),
-                    FeatureMetric("默认链", overview?.selectedNetworkCode ?: "--"),
+                    FeatureMetric("当前链", walletHomeChainLabel(args.chainId)),
+                    FeatureMetric("代币数量", assetItems.size.toString()),
+                    FeatureMetric(
+                        "可见资产",
+                        assetItems.count { !it.availableBalanceUiAmount.isNullOrBlank() }.toString(),
+                    ),
                 ),
-                highlights = overview?.chainItems.orEmpty().map {
+                highlights = assetItems.map {
                     FeatureListItem(
-                        title = it.displayName,
-                        subtitle = it.networkCode,
-                        trailing = if (it.hasConfiguredAddress == true) "已配置地址" else "待配置地址",
+                        title = it.symbol,
+                        subtitle = it.displayName,
+                        trailing = (it.availableBalanceUiAmount ?: "0.00") + " / " + walletHomeChainLabel(it.networkCode),
                         badge = "REAL",
                     )
                 },

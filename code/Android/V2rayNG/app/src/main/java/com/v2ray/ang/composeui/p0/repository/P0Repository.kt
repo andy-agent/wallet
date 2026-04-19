@@ -12,8 +12,10 @@ interface P0Repository {
     suspend fun getLoginSeed(): LoginUiState
     suspend fun login(email: String, password: String): LoginResult
     suspend fun getWalletOnboardingState(): WalletOnboardingUiState
-    suspend fun getCachedWalletHomeState(): WalletHomeUiState? = null
+    suspend fun getCachedWalletHomeState(selectedWalletId: String? = null): WalletHomeUiState? = null
     suspend fun getCachedVpnHomeState(): VpnHomeUiState? = null
     suspend fun getVpnHomeState(): VpnHomeUiState
-    suspend fun getWalletHomeState(): WalletHomeUiState
+    suspend fun getWalletHomeState(selectedWalletId: String? = null): WalletHomeUiState
+    suspend fun clearLocalWallet(): Result<String> =
+        Result.failure(IllegalStateException("Wallet clear unavailable"))
 }

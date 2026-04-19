@@ -47,6 +47,11 @@ export abstract class RuntimeStateRepository {
 
   abstract saveOrder(order: StoredOrderRecord): Promise<StoredOrderRecord>;
 
+  abstract purgeExpiredOrders(
+    accountId: string,
+    expiredBefore: number,
+  ): Promise<number>;
+
   abstract listActiveOrdersForPaymentContext(params: {
     collectionAddress: string;
     quoteAssetCode: StoredOrderRecord['quoteAssetCode'];

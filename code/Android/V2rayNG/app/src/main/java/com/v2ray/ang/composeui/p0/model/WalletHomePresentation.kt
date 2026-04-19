@@ -4,6 +4,7 @@ import com.v2ray.ang.payment.data.api.WalletAssetItemData
 import com.v2ray.ang.payment.data.api.WalletChainItemData
 import com.v2ray.ang.payment.data.api.WalletLifecycleData
 import com.v2ray.ang.payment.data.api.WalletOverviewData
+import java.math.BigDecimal
 import java.util.Locale
 
 private val terminalWalletOrderStatuses = setOf("FAILED", "EXPIRED", "CANCELED")
@@ -17,7 +18,7 @@ internal fun WalletOverviewData.toWalletHomeUiState(
     lifecycle: WalletLifecycleData?,
 ): WalletHomeUiState {
     val assets = assetItems
-        .filter { it.walletVisible }
+        .filter { it.walletVisible && it.hasPositiveBalance() }
         .map { it.toWalletAssetHolding() }
 
     return WalletHomeUiState(
@@ -42,7 +43,7 @@ internal fun WalletOverviewData.toWalletHomeUiState(
 internal fun buildWalletPortfolioValue(assets: List<AssetHolding>): String {
     val totals = assets.mapNotNull { extractWalletUsdAmount(it.valueText) }
     if (totals.isEmpty()) {
-        return "估值待同步"
+        return "$0.00"
     }
     return "$" + "%.2f".format(Locale.US, totals.sum())
 }
@@ -52,7 +53,7 @@ internal fun formatWalletAssetValueDisplay(raw: String?): String {
     if (usdAmount != null) {
         return "$" + "%.2f".format(Locale.US, usdAmount)
     }
-    return raw?.trim().takeUnless { it.isNullOrBlank() } ?: "估值待同步"
+    return raw?.trim().takeUnless { it.isNullOrBlank() } ?: "$0.00"
 }
 
 internal fun walletHomeChainLabel(chainId: String): String = when (chainId.lowercase(Locale.ROOT)) {
@@ -78,11 +79,18 @@ private fun WalletAssetItemData.toWalletAssetHolding(): AssetHolding {
         symbol = assetCode,
         chainLabel = walletHomeChainLabel(networkCode),
         balanceText = formatWalletAvailableBalance(availableBalanceUiAmount, assetCode),
-        valueText = displayName.ifBlank { balanceStatusLabel(availableBalanceStatus) },
-        changeText = lastOrderStatus ?: if ((publicAddressCount ?: 0) > 0) "已配置地址" else "未配置地址",
-        changePositive = lastOrderStatus !in terminalWalletOrderStatuses,
+        valueText = balanceStatusLabel(availableBalanceStatus),
+        changeText = walletHomeChainLabel(networkCode),
+        changePositive = true,
         detailText = displayName,
     )
+}
+
+private fun WalletAssetItemData.hasPositiveBalance(): Boolean {
+    val raw = availableBalanceUiAmount?.trim()
+        ?.takeUnless { it.isNullOrBlank() || it.equals("null", ignoreCase = true) }
+        ?: return false
+    return raw.toBigDecimalOrNull()?.compareTo(BigDecimal.ZERO) == 1
 }
 
 private fun formatWalletAvailableBalance(

@@ -1,5 +1,7 @@
 package com.v2ray.ang.composeui.pages.p0
 
+import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +18,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
@@ -28,20 +32,28 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.v2ray.ang.R
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.model.AssetHolding
 import com.v2ray.ang.composeui.p0.model.WalletHomeEvent
+import com.v2ray.ang.composeui.p0.model.WalletHomeWalletOption
+import com.v2ray.ang.composeui.p0.model.WalletHomeChainOption
 import com.v2ray.ang.composeui.p0.model.WalletHomeUiState
 import com.v2ray.ang.composeui.p0.model.buildWalletPortfolioValue
 import com.v2ray.ang.composeui.p0.model.formatWalletAssetValueDisplay
@@ -76,8 +88,14 @@ fun WalletHomeRoute(
     onSend: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     val selectedChainId = uiState.selectedChainId
         .takeIf { it.isNotBlank() && it != "all" }
+        ?: uiState.walletOptions
+            .firstOrNull { it.walletId == uiState.selectedWalletId }
+            ?.chainOptions
+            ?.firstOrNull()
+            ?.chainId
         ?: uiState.chains.firstOrNull()?.chainId
         ?: "tron"
     val selectedAssets = uiState.assets.filter { inferChain(it.chainLabel) == selectedChainId }
@@ -94,6 +112,26 @@ fun WalletHomeRoute(
         currentRoute = currentRoute,
         uiState = uiState,
         onBottomNav = onBottomNav,
+        onWalletContextSelected = { walletId, chainId ->
+            viewModel.onEvent(WalletHomeEvent.WalletContextSelected(walletId, chainId))
+        },
+        onCopyAddress = {
+            if (uiState.currentWalletAddress.isNotBlank()) {
+                Toast.makeText(context, "钱包地址已复制", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "当前链暂无可复制地址", Toast.LENGTH_SHORT).show()
+            }
+        },
+        onCreateWallet = { onBottomNav(CryptoVpnRouteSpec.createWalletRoute("create")) },
+        onOpenProfile = { onBottomNav(CryptoVpnRouteSpec.profile.pattern) },
+        onOpenSecurityCenter = { onBottomNav(CryptoVpnRouteSpec.securityCenter.pattern) },
+        onOpenInviteCenter = { onBottomNav(CryptoVpnRouteSpec.inviteCenter.pattern) },
+        onClearLocalWallet = {
+            viewModel.clearLocalWallet(
+                onSuccess = { message -> Toast.makeText(context, message, Toast.LENGTH_SHORT).show() },
+                onError = { message -> Toast.makeText(context, message, Toast.LENGTH_SHORT).show() },
+            )
+        },
         onReceive = {
             onReceive?.invoke(activeAssetId, selectedChainId) ?: onBottomNav(receiveEntryRoute)
         },
@@ -106,22 +144,41 @@ fun WalletHomeScreen(
     currentRoute: String,
     uiState: WalletHomeUiState,
     onBottomNav: (String) -> Unit,
+    onWalletContextSelected: (String, String) -> Unit,
+    onCopyAddress: () -> Unit,
+    onCreateWallet: () -> Unit,
+    onOpenProfile: () -> Unit,
+    onOpenSecurityCenter: () -> Unit,
+    onOpenInviteCenter: () -> Unit,
+    onClearLocalWallet: () -> Unit,
     onReceive: () -> Unit,
     onSend: () -> Unit,
 ) {
     val clipboardManager = LocalClipboardManager.current
     val searchQuery = remember { mutableStateOf("") }
-    val maskedAccount = remember(uiState.accountLabel, uiState.walletDisplayName) {
-        maskAccountLabel(uiState.accountLabel, uiState.walletDisplayName)
-    }
-    val tokenRows = remember(uiState.assets) { buildWalletTokenRows(uiState.assets) }
+    var walletMenuExpanded by remember { mutableStateOf(false) }
+    var showWalletSelector by remember { mutableStateOf(false) }
+    var pendingChainWallet by remember { mutableStateOf<WalletHomeWalletOption?>(null) }
+    val selectedChainId = uiState.selectedChainId
+        .takeIf { it.isNotBlank() && it != "all" }
+        ?: uiState.walletOptions
+            .firstOrNull { it.walletId == uiState.selectedWalletId }
+            ?.chainOptions
+            ?.firstOrNull()
+            ?.chainId
+        ?: uiState.chains.firstOrNull()?.chainId
+        ?: "tron"
+    val selectedAssets = uiState.assets.filter { inferChain(it.chainLabel) == selectedChainId }
+    val tokenRows = remember(selectedAssets) { buildWalletTokenRows(selectedAssets) }
     val totalValue = remember(uiState.assets) { buildPortfolioValue(uiState.assets) }
     val dailyPnl = remember(uiState.assets) { buildDailyPnl(uiState.assets) }
-    val walletManagerRoute = CryptoVpnRouteSpec.walletManagerRoute(uiState.walletId ?: "primary_wallet")
     val securityCenterRoute = CryptoVpnRouteSpec.securityCenter.pattern
     val historyRoute = CryptoVpnRouteSpec.orderList.pattern
     val tokenManagerRoute = if (uiState.walletExists) {
-        CryptoVpnRouteSpec.chainManagerRoute(uiState.walletId ?: "primary_wallet")
+        CryptoVpnRouteSpec.tokenManagerRoute(
+            uiState.selectedWalletId ?: (uiState.walletId ?: "primary_wallet"),
+            selectedChainId,
+        )
     } else {
         CryptoVpnRouteSpec.walletOnboarding.pattern
     }
@@ -143,16 +200,49 @@ fun WalletHomeScreen(
                 WalletTopBar(
                     searchQuery = searchQuery.value,
                     onSearchQueryChange = { searchQuery.value = it },
-                    onWalletClick = { onBottomNav(walletManagerRoute) },
-                    onToolsClick = { onBottomNav(securityCenterRoute) },
+                    avatarLabel = uiState.currentWalletLabel.firstOrNull()?.uppercase() ?: "W",
+                    onWalletClick = { showWalletSelector = true },
+                    menuExpanded = walletMenuExpanded,
+                    onMenuExpandedChange = { walletMenuExpanded = it },
+                    onCreateWallet = {
+                        walletMenuExpanded = false
+                        onCreateWallet()
+                    },
+                    onClearLocalWallet = {
+                        walletMenuExpanded = false
+                        onClearLocalWallet()
+                    },
+                    onOpenProfile = {
+                        walletMenuExpanded = false
+                        onOpenProfile()
+                    },
+                    onOpenSecurityCenter = {
+                        walletMenuExpanded = false
+                        onOpenSecurityCenter()
+                    },
+                    onOpenInviteCenter = {
+                        walletMenuExpanded = false
+                        onOpenInviteCenter()
+                    },
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
 
                 WalletAccountRow(
-                    maskedAccount = maskedAccount,
-                    onCopy = { clipboardManager.setText(AnnotatedString(uiState.accountLabel)) },
-                    onSelect = { onBottomNav(walletManagerRoute) },
+                    walletLabel = uiState.currentWalletLabel,
+                    chainLabel = uiState.currentWalletChainLabel,
+                    chainId = uiState.selectedChainId,
+                    addressSuffix = uiState.currentWalletAddressSuffix,
+                    secondaryLabel = uiState.accountSecondaryLabel,
+                    onCopy = {
+                        if (uiState.currentWalletAddress.isNotBlank()) {
+                            clipboardManager.setText(AnnotatedString(uiState.currentWalletAddress))
+                            onCopyAddress()
+                        } else {
+                            onCopyAddress()
+                        }
+                    },
+                    onSelect = { showWalletSelector = true },
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -182,7 +272,7 @@ fun WalletHomeScreen(
                     )
                     WalletQuickActionPill(
                         modifier = Modifier.weight(1f),
-                        label = "交易历史",
+                        label = "交易",
                         iconText = "L",
                         onClick = { onBottomNav(historyRoute) },
                     )
@@ -196,9 +286,9 @@ fun WalletHomeScreen(
                 ) {
                     WalletFeatureCard(
                         modifier = Modifier.weight(1f),
-                        title = "订单记录",
+                        title = "交易",
                         value = uiState.totalBalanceText.ifBlank { "0 笔" },
-                        subtitle = "查看最近交易与支付状态",
+                        subtitle = "只显示成功交易",
                         accent = Color(0xFFF4C38E),
                         onClick = { onBottomNav(historyRoute) },
                     )
@@ -256,14 +346,50 @@ fun WalletHomeScreen(
             }
         }
     }
+
+    if (showWalletSelector) {
+        WalletSelectionDialog(
+            walletOptions = uiState.walletOptions,
+            onDismiss = { showWalletSelector = false },
+            onWalletSelected = { wallet ->
+                if (wallet.chainOptions.size <= 1) {
+                    wallet.chainOptions.firstOrNull()?.let { chain ->
+                        onWalletContextSelected(wallet.walletId, chain.chainId)
+                    }
+                    showWalletSelector = false
+                } else {
+                    pendingChainWallet = wallet
+                    showWalletSelector = false
+                }
+            },
+        )
+    }
+
+    pendingChainWallet?.let { wallet ->
+        ChainSelectionDialog(
+            wallet = wallet,
+            onDismiss = { pendingChainWallet = null },
+            onChainSelected = { chain ->
+                onWalletContextSelected(wallet.walletId, chain.chainId)
+                pendingChainWallet = null
+            },
+        )
+    }
 }
 
 @Composable
 private fun WalletTopBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
+    avatarLabel: String,
     onWalletClick: () -> Unit,
-    onToolsClick: () -> Unit,
+    menuExpanded: Boolean,
+    onMenuExpandedChange: (Boolean) -> Unit,
+    onCreateWallet: () -> Unit,
+    onClearLocalWallet: () -> Unit,
+    onOpenProfile: () -> Unit,
+    onOpenSecurityCenter: () -> Unit,
+    onOpenInviteCenter: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -282,7 +408,7 @@ private fun WalletTopBar(
                 .clickable(onClick = onWalletClick),
             contentAlignment = Alignment.Center,
         ) {
-            Text("W", color = WalletAccentDark, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(avatarLabel, color = WalletAccentDark, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -300,62 +426,250 @@ private fun WalletTopBar(
             )
         }
 
-        Box(
-            modifier = Modifier
-                .size(38.dp)
-                .background(WalletAccentDark, CircleShape)
-                .clickable(onClick = onToolsClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Tune,
-                contentDescription = "功能",
-                tint = Color.White,
-                modifier = Modifier.size(18.dp),
-            )
+        Box {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .background(WalletAccentDark, CircleShape)
+                    .clickable(onClick = { onMenuExpandedChange(true) }),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Tune,
+                    contentDescription = "钱包菜单",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { onMenuExpandedChange(false) },
+            ) {
+                DropdownMenuItem(
+                    text = { Text("创建钱包") },
+                    onClick = onCreateWallet,
+                )
+                DropdownMenuItem(
+                    text = { Text("清除本地钱包") },
+                    onClick = onClearLocalWallet,
+                )
+                DropdownMenuItem(
+                    text = { Text("个人中心") },
+                    onClick = onOpenProfile,
+                )
+                DropdownMenuItem(
+                    text = { Text("安全中心") },
+                    onClick = onOpenSecurityCenter,
+                )
+                DropdownMenuItem(
+                    text = { Text("邀请中心") },
+                    onClick = onOpenInviteCenter,
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun WalletAccountRow(
-    maskedAccount: String,
+    walletLabel: String,
+    chainLabel: String,
+    chainId: String,
+    addressSuffix: String,
+    secondaryLabel: String,
     onCopy: () -> Unit,
     onSelect: () -> Unit,
 ) {
-    Row(
+    val displayLabel = buildString {
+        append(walletLabel.ifBlank { "未选择钱包" })
+        if (chainLabel.isNotBlank()) {
+            append(" · ")
+            append(chainLabel)
+        }
+        if (addressSuffix.isNotBlank()) {
+            append(" · ...")
+            append(addressSuffix)
+        }
+    }
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Row(
-            modifier = Modifier
-                .weight(1f)
-                .clickable(onClick = onSelect),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onSelect),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ChainBadgeIcon(chainId = chainId, size = 20.dp)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = displayLabel,
+                    color = WalletTextBody,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(modifier = Modifier.width(2.dp))
+                Icon(
+                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                    contentDescription = "切换钱包",
+                    tint = WalletTextSoft,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            Icon(
+                imageVector = Icons.Rounded.ContentCopy,
+                contentDescription = "复制钱包地址",
+                tint = WalletTextSoft,
+                modifier = Modifier
+                    .size(18.dp)
+                    .clickable(onClick = onCopy),
+            )
+        }
+        if (secondaryLabel.isNotBlank()) {
             Text(
-                text = maskedAccount,
-                color = WalletTextBody,
-                style = MaterialTheme.typography.bodyMedium,
+                text = secondaryLabel,
+                color = WalletTextSoft,
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.width(2.dp))
-            Icon(
-                imageVector = Icons.Rounded.KeyboardArrowDown,
-                contentDescription = "切换钱包",
-                tint = WalletTextSoft,
-                modifier = Modifier.size(18.dp),
+        }
+    }
+}
+
+@Composable
+private fun WalletSelectionDialog(
+    walletOptions: List<WalletHomeWalletOption>,
+    onDismiss: () -> Unit,
+    onWalletSelected: (WalletHomeWalletOption) -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+        ),
+    ) {
+        P01Card {
+            Text(
+                text = "选择钱包",
+                color = WalletTextStrong,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                walletOptions.forEach { wallet ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onWalletSelected(wallet) }
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            Text(wallet.walletName, color = WalletTextStrong, style = MaterialTheme.typography.titleMedium)
+                            Text(wallet.walletKind, color = WalletTextSoft, style = MaterialTheme.typography.bodySmall)
+                        }
+                        if (wallet.isDefault) {
+                            Text("默认", color = WalletAccentBlue, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChainSelectionDialog(
+    wallet: WalletHomeWalletOption,
+    onDismiss: () -> Unit,
+    onChainSelected: (WalletHomeChainOption) -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+        ),
+    ) {
+        P01Card {
+            Text(
+                text = "选择链",
+                color = WalletTextStrong,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = wallet.walletName,
+                color = WalletTextSoft,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                wallet.chainOptions.forEach { chain ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onChainSelected(chain) }
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            ChainBadgeIcon(chainId = chain.chainId, size = 24.dp)
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(chain.label, color = WalletTextStrong, style = MaterialTheme.typography.titleMedium)
+                                Text("...${chain.addressSuffix}", color = WalletTextSoft, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChainBadgeIcon(
+    chainId: String,
+    size: androidx.compose.ui.unit.Dp,
+) {
+    val iconRes = chainIconRes(chainId)
+    if (iconRes != null) {
+        Image(
+            painter = painterResource(id = iconRes),
+            contentDescription = chainId,
+            modifier = Modifier.size(size),
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .background(WalletSoftBackground, CircleShape)
+                .border(1.dp, WalletCardBorder, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = chainId.take(1).uppercase(),
+                color = WalletTextStrong,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
             )
         }
-        Icon(
-            imageVector = Icons.Rounded.ContentCopy,
-            contentDescription = "复制账户",
-            tint = WalletTextSoft,
-            modifier = Modifier
-                .size(18.dp)
-                .clickable(onClick = onCopy),
-        )
     }
 }
 
@@ -509,20 +823,10 @@ private fun WalletTokenRow(
             .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .background(token.iconBackground, CircleShape)
-                .border(1.dp, token.iconBorder, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = token.iconText,
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-        }
+        ChainBadgeIcon(
+            chainId = token.iconChainId,
+            size = 42.dp,
+        )
         Spacer(modifier = Modifier.width(12.dp))
         Column(
             modifier = Modifier.weight(1f),
@@ -534,21 +838,13 @@ private fun WalletTokenRow(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = token.marketText,
-                    color = WalletTextBody,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                Text(
-                    text = token.changeText,
-                    color = if (token.positive) WalletGain else WalletLoss,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
+            Text(
+                text = token.tokenName,
+                color = WalletTextBody,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
         Column(
             horizontalAlignment = Alignment.End,
@@ -569,28 +865,13 @@ private fun WalletTokenRow(
     }
 }
 
-private data class WalletTokenMeta(
-    val symbol: String,
-    val chainLabel: String,
-    val marketText: String,
-    val changeText: String,
-    val positive: Boolean,
-    val iconText: String,
-    val iconBackground: Color,
-    val iconBorder: Color,
-)
-
 private data class WalletTokenRowUi(
     val symbol: String,
     val chainLabel: String,
-    val marketText: String,
-    val changeText: String,
-    val positive: Boolean,
+    val tokenName: String,
     val balanceText: String,
     val valueText: String,
-    val iconText: String,
-    val iconBackground: Color,
-    val iconBorder: Color,
+    val iconChainId: String,
 )
 
 private data class WalletDailyPnlUi(
@@ -599,25 +880,14 @@ private data class WalletDailyPnlUi(
 )
 
 private fun buildWalletTokenRows(assets: List<AssetHolding>): List<WalletTokenRowUi> {
-    val defaults = listOf(
-        WalletTokenMeta("SOL", "Solana", "$85.49", "+2.72%", true, "S", Color(0xFF111827), Color(0xFF2C3C5B)),
-        WalletTokenMeta("USDC", "USDC", "$1", "0.00%", true, "$", Color(0xFF2A7BE4), Color(0xFF7FB1F7)),
-        WalletTokenMeta("USDT", "USDT", "$1", "-0.02%", false, "T", Color(0xFF14A38B), Color(0xFF80D4C7)),
-    )
-
-    return defaults.map { meta ->
-        val asset = assets.firstOrNull { it.symbol.equals(meta.symbol, ignoreCase = true) }
+    return assets.map { asset ->
         WalletTokenRowUi(
-            symbol = meta.symbol,
-            chainLabel = asset?.chainLabel ?: meta.chainLabel,
-            marketText = meta.marketText,
-            changeText = meta.changeText,
-            positive = meta.positive,
-            balanceText = extractDisplayNumber(asset?.balanceText),
-            valueText = extractDisplayUsd(asset?.valueText),
-            iconText = meta.iconText,
-            iconBackground = meta.iconBackground,
-            iconBorder = meta.iconBorder,
+            symbol = asset.symbol,
+            chainLabel = asset.chainLabel,
+            tokenName = asset.detailText.ifBlank { asset.symbol },
+            balanceText = asset.balanceText,
+            valueText = asset.chainLabel,
+            iconChainId = inferChain(asset.chainLabel),
         )
     }
 }
@@ -626,50 +896,34 @@ private fun buildPortfolioValue(assets: List<AssetHolding>): String {
     return buildWalletPortfolioValue(assets)
 }
 
-private fun buildDailyPnl(assets: List<AssetHolding>): WalletDailyPnlUi {
-    val positive = assets.count { it.changePositive } >= (assets.size / 2)
-    return WalletDailyPnlUi(
-        percentText = if (positive) "(+0.00%)" else "(-0.00%)",
-        positive = positive,
-    )
-}
-
-private fun extractDisplayNumber(raw: String?): String {
-    val match = Regex("""-?\d+(?:[.,]\d+)?""").find(raw.orEmpty())?.value ?: return "0.00"
-    return match.replace(",", "")
-}
-
-private fun extractDisplayUsd(raw: String?): String {
-    return formatWalletAssetValueDisplay(raw)
-}
-
-private fun maskAccountLabel(accountLabel: String, walletDisplayName: String?): String {
-    val trimmed = accountLabel.trim().ifBlank { "当前账户" }
-    val masked = if (trimmed.contains("@")) {
-        val parts = trimmed.split("@", limit = 2)
-        val local = parts[0]
-        val domain = parts[1]
-        val localPrefix = local.take(3)
-        val localSuffix = local.takeLast(2).takeIf { local.length > 5 }.orEmpty()
-        val maskedLocal = if (local.length <= 3) {
-            "$localPrefix***"
-        } else {
-            "$localPrefix***$localSuffix"
-        }
-        val domainHead = domain.take(4)
-        "$maskedLocal@$domainHead..."
-    } else {
-        trimmed.take(4) + "***"
-    }
-    val suffix = walletDisplayName?.take(4)?.takeIf { it.isNotBlank() } ?: "主钱包"
-    return "$masked（$suffix）"
-}
+private fun buildDailyPnl(assets: List<AssetHolding>): WalletDailyPnlUi = WalletDailyPnlUi(
+    percentText = "(+0.00%)",
+    positive = true,
+)
 
 private fun inferChain(chainLabel: String): String = when {
     chainLabel.contains("sol", ignoreCase = true) -> "solana"
     chainLabel.contains("eth", ignoreCase = true) -> "ethereum"
+    chainLabel.contains("bsc", ignoreCase = true) -> "bsc"
+    chainLabel.contains("polygon", ignoreCase = true) -> "polygon"
+    chainLabel.contains("arbitrum", ignoreCase = true) -> "arbitrum"
+    chainLabel.contains("optimism", ignoreCase = true) -> "optimism"
+    chainLabel.contains("avalanche", ignoreCase = true) -> "avalanche"
     chainLabel.contains("base", ignoreCase = true) -> "base"
     else -> "tron"
+}
+
+private fun chainIconRes(chainId: String): Int? = when (chainId.lowercase()) {
+    "solana" -> R.drawable.chain_solana
+    "tron" -> R.drawable.chain_tron
+    "ethereum" -> R.drawable.chain_ethereum
+    "bsc", "smartchain" -> R.drawable.chain_bsc
+    "polygon" -> R.drawable.chain_polygon
+    "arbitrum" -> R.drawable.chain_arbitrum
+    "optimism" -> R.drawable.chain_optimism
+    "avalanche", "avalanche_c" -> R.drawable.chain_avalanche
+    "base" -> R.drawable.chain_base
+    else -> null
 }
 
 private fun resolveWalletReceiveRoute(
@@ -697,6 +951,13 @@ private fun WalletHomePreview() {
             currentRoute = CryptoVpnRouteSpec.walletHome.name,
             uiState = walletHomePreviewState(),
             onBottomNav = {},
+            onWalletContextSelected = { _, _ -> },
+            onCopyAddress = {},
+            onCreateWallet = {},
+            onOpenProfile = {},
+            onOpenSecurityCenter = {},
+            onOpenInviteCenter = {},
+            onClearLocalWallet = {},
             onReceive = {},
             onSend = {},
         )

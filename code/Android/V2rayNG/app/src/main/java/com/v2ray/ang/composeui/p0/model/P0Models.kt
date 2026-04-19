@@ -147,6 +147,21 @@ data class WalletChainSummary(
     val itemCount: Int = 0,
 )
 
+data class WalletHomeChainOption(
+    val chainId: String,
+    val label: String,
+    val address: String,
+    val addressSuffix: String,
+)
+
+data class WalletHomeWalletOption(
+    val walletId: String,
+    val walletName: String,
+    val walletKind: String,
+    val isDefault: Boolean,
+    val chainOptions: List<WalletHomeChainOption>,
+)
+
 data class AssetHolding(
     val symbol: String,
     val chainLabel: String,
@@ -166,10 +181,17 @@ data class WalletHomeUiState(
     val totalBalanceText: String = "--",
     val summaryLabel: String = "支付与账户摘要",
     val selectedChainId: String = "all",
+    val selectedWalletId: String? = null,
     val chains: List<WalletChainSummary> = emptyList(),
+    val walletOptions: List<WalletHomeWalletOption> = emptyList(),
     val assets: List<AssetHolding> = emptyList(),
     val alertBanner: String = "",
     val accountLabel: String = "未登录",
+    val accountSecondaryLabel: String = "",
+    val currentWalletLabel: String = "未选择钱包",
+    val currentWalletAddress: String = "",
+    val currentWalletAddressSuffix: String = "",
+    val currentWalletChainLabel: String = "",
     val walletExists: Boolean = false,
     val walletLifecycleStatus: String = "NOT_CREATED",
     val walletId: String? = null,
@@ -179,6 +201,10 @@ data class WalletHomeUiState(
 
 sealed interface WalletHomeEvent {
     data class ChainSelected(val chainId: String) : WalletHomeEvent
+    data class WalletContextSelected(
+        val walletId: String,
+        val chainId: String,
+    ) : WalletHomeEvent
     data object Refresh : WalletHomeEvent
 }
 
@@ -225,6 +251,7 @@ fun vpnHomePreviewState(): VpnHomeUiState = VpnHomeUiState(
 fun walletHomePreviewState(): WalletHomeUiState = WalletHomeUiState(
     isLoading = false,
     loadState = P0LoadState.READY,
+    selectedWalletId = "wallet-main",
     chains = listOf(
         WalletChainSummary("ethereum", "ETH", "$8,920.22", "Main execution layer"),
         WalletChainSummary("bsc", "BSC", "$2,218.10", "Gas-efficient trading"),
@@ -234,6 +261,27 @@ fun walletHomePreviewState(): WalletHomeUiState = WalletHomeUiState(
         WalletChainSummary("solana", "Solana", "$3,905.11", "Fast payment rail"),
         WalletChainSummary("tron", "TRON", "$813.09", "USDT transfer lane"),
     ),
+    walletOptions = listOf(
+        WalletHomeWalletOption(
+            walletId = "wallet-main",
+            walletName = "Main Wallet",
+            walletKind = "SELF_CUSTODY",
+            isDefault = true,
+            chainOptions = listOf(
+                WalletHomeChainOption("solana", "Solana", "7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV", "7qvV"),
+                WalletHomeChainOption("tron", "TRON", "TLa2f6VPqDgRE67v1736s7bJ8Ray5wYjU7", "YjU7"),
+            ),
+        ),
+        WalletHomeWalletOption(
+            walletId = "wallet-watch",
+            walletName = "Watch Wallet",
+            walletKind = "WATCH_ONLY",
+            isDefault = false,
+            chainOptions = listOf(
+                WalletHomeChainOption("tron", "TRON", "TLa2f6VPqDgRE67v1736s7bJ8Ray5wYjU7", "YjU7"),
+            ),
+        ),
+    ),
     assets = listOf(
         AssetHolding("ETH", "Ethereum", "2.84 ETH", "$9,214.80", "+2.4%", true),
         AssetHolding("USDT", "TRON", "12,450 USDT", "$12,450.00", "0.0%", true),
@@ -242,4 +290,9 @@ fun walletHomePreviewState(): WalletHomeUiState = WalletHomeUiState(
         AssetHolding("SOL", "Solana", "9.8 SOL", "$1,860.44", "+4.7%", true),
         AssetHolding("BNB", "BSC", "1.2 BNB", "$685.10", "+1.3%", true),
     ),
+    currentWalletLabel = "Main Wallet",
+    currentWalletAddress = "7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV",
+    currentWalletAddressSuffix = "7qvV",
+    currentWalletChainLabel = "Solana",
+    accountSecondaryLabel = "system@cnyirui.cn",
 )
