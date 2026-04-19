@@ -102,6 +102,18 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         )
     }
 
+    override suspend fun submitWalletOrderPayment(
+        orderNo: String,
+        walletId: String,
+        chainAccountId: String,
+    ): SendSubmissionResult {
+        return SendSubmissionResult(
+            success = orderNo.isNotBlank() && walletId.isNotBlank() && chainAccountId.isNotBlank(),
+            txHash = "preview-tx-hash",
+            errorMessage = null,
+        )
+    }
+
     override suspend fun getOrderResultState(args: OrderResultRouteArgs): OrderResultUiState {
         return orderResultPreviewState().copy(
             summary = "Preview: 导航参数 ${args.orderId}",
@@ -280,6 +292,22 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         )
     }
 
+    override suspend fun getImportWatchWalletState(): ImportWatchWalletUiState {
+        return importWatchWalletPreviewState()
+    }
+
+    override suspend fun importWatchOnlyWallet(
+        walletName: String,
+        networkCode: String,
+        address: String,
+    ): WalletLifecycleMutationResult {
+        return WalletLifecycleMutationResult(
+            success = walletName.isNotBlank() && networkCode.isNotBlank() && address.isNotBlank(),
+            walletId = "mock-watch-wallet",
+            errorMessage = if (walletName.isBlank() || networkCode.isBlank() || address.isBlank()) "请填写钱包名称、网络和地址" else null,
+        )
+    }
+
     override suspend fun getImportPrivateKeyState(args: ImportPrivateKeyRouteArgs): ImportPrivateKeyUiState {
         return importPrivateKeyPreviewState().copy(
             summary = "Preview: 导航参数 ${args.chainId}",
@@ -341,6 +369,10 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
             summary = "Preview: 导航参数 ${args.walletId}",
             note = "Preview only",
         )
+    }
+
+    override suspend fun setDefaultWallet(walletId: String): WalletLifecycleMutationResult {
+        return WalletLifecycleMutationResult(success = walletId.isNotBlank(), walletId = walletId)
     }
 
     override suspend fun getAddressBookState(args: AddressBookRouteArgs): AddressBookUiState {

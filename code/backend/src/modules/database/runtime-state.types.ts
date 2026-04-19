@@ -5,9 +5,13 @@ import {
 } from '../auth/auth.types';
 import { OrderRecord } from '../orders/orders.types';
 import {
+  PersistedWalletChainAccountRecord,
+  PersistedWalletKeySlotRecord,
   PersistedWalletLifecycleRecord,
   PersistedWalletPublicAddressRecord,
   PersistedWalletSecretBackupRecord,
+  PersistedWalletSecretBackupV2Record,
+  PersistedWalletRecord,
 } from '../wallet/wallet.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 
@@ -64,13 +68,17 @@ export interface PaymentScanCursorRecord extends RuntimeStatePaymentContext {
 }
 
 export interface RuntimeStateSnapshot {
-  version: 1 | 2 | 3 | 4 | 5;
+  version: 1 | 2 | 3 | 4 | 5 | 6;
   orders: StoredOrderRecord[];
   idempotencyIndex: Record<string, string>;
   subscriptions: PersistedSubscriptionRecord[];
   walletLifecycles: PersistedWalletLifecycleRecord[];
   walletPublicAddresses: PersistedWalletPublicAddressRecord[];
   walletSecretBackups: PersistedWalletSecretBackupRecord[];
+  wallets: PersistedWalletRecord[];
+  walletKeySlots: PersistedWalletKeySlotRecord[];
+  walletChainAccounts: PersistedWalletChainAccountRecord[];
+  walletSecretBackupsV2: PersistedWalletSecretBackupV2Record[];
   accounts: AuthAccount[];
   sessions: AuthSession[];
   verificationCodes: VerificationCodeRecord[];

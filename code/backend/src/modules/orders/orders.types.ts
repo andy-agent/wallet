@@ -15,6 +15,9 @@ export interface OrderRecord {
   orderId: string;
   orderNo: string;
   accountId: string;
+  payerWalletId: string | null;
+  payerChainAccountId: string | null;
+  submittedFromAddress: string | null;
   planCode: string;
   planName: string;
   orderType: 'NEW' | 'RENEWAL';

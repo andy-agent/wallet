@@ -5,6 +5,8 @@ import com.v2ray.ang.payment.data.local.database.PaymentDatabase
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
 import com.v2ray.ang.payment.data.local.entity.PaymentHistoryEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
+import com.v2ray.ang.payment.data.local.entity.LocalWalletChainAccountEntity
+import com.v2ray.ang.payment.data.local.entity.LocalWalletEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeCacheEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
 import com.v2ray.ang.payment.data.local.entity.WalletOverviewCacheEntity
@@ -23,6 +25,8 @@ class LocalPaymentRepository(context: Context) {
     private val userDao = database.userDao()
     private val orderDao = database.orderDao()
     private val paymentHistoryDao = database.paymentHistoryDao()
+    private val localWalletDao = database.localWalletDao()
+    private val localWalletChainAccountDao = database.localWalletChainAccountDao()
     private val vpnNodeCacheDao = database.vpnNodeCacheDao()
     private val vpnNodeRuntimeDao = database.vpnNodeRuntimeDao()
     private val walletPublicAddressCacheDao = database.walletPublicAddressCacheDao()
@@ -130,6 +134,8 @@ class LocalPaymentRepository(context: Context) {
     suspend fun clearAllData() = withContext(Dispatchers.IO) {
         userDao.deleteAll()
         paymentHistoryDao.deleteAll()
+        localWalletDao.deleteAll()
+        localWalletChainAccountDao.deleteAll()
         vpnNodeCacheDao.deleteAll()
         vpnNodeRuntimeDao.deleteAll()
         walletPublicAddressCacheDao.deleteAll()
@@ -154,6 +160,33 @@ class LocalPaymentRepository(context: Context) {
         paymentHistories.forEach { history ->
             paymentHistoryDao.insert(history)
         }
+    }
+
+    suspend fun getLocalWallets(userId: String): List<LocalWalletEntity> = withContext(Dispatchers.IO) {
+        localWalletDao.getByUserId(userId)
+    }
+
+    suspend fun getLocalWallet(walletId: String): LocalWalletEntity? = withContext(Dispatchers.IO) {
+        localWalletDao.getByWalletId(walletId)
+    }
+
+    suspend fun syncLocalWallets(
+        userId: String,
+        wallets: List<LocalWalletEntity>,
+        chainAccounts: List<LocalWalletChainAccountEntity>,
+    ) = withContext(Dispatchers.IO) {
+        localWalletDao.deleteByUserId(userId)
+        localWalletChainAccountDao.deleteByUserId(userId)
+        if (wallets.isNotEmpty()) {
+            localWalletDao.insertAll(wallets)
+        }
+        if (chainAccounts.isNotEmpty()) {
+            localWalletChainAccountDao.insertAll(chainAccounts)
+        }
+    }
+
+    suspend fun getLocalWalletChainAccounts(walletId: String): List<LocalWalletChainAccountEntity> = withContext(Dispatchers.IO) {
+        localWalletChainAccountDao.getByWalletId(walletId)
     }
 
     suspend fun getVpnNodeCache(userId: String, lineCode: String? = null): List<VpnNodeCacheEntity> = withContext(Dispatchers.IO) {

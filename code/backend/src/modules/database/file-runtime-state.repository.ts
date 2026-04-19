@@ -13,9 +13,13 @@ import {
 } from '../auth/auth.types';
 import { OrderStatus } from '../orders/orders.types';
 import {
+  PersistedWalletChainAccountRecord,
+  PersistedWalletKeySlotRecord,
   PersistedWalletLifecycleRecord,
   PersistedWalletPublicAddressRecord,
   PersistedWalletSecretBackupRecord,
+  PersistedWalletSecretBackupV2Record,
+  PersistedWalletRecord,
 } from '../wallet/wallet.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 import { RuntimeStateRepository } from './runtime-state.repository';
@@ -30,13 +34,17 @@ import {
 } from './runtime-state.types';
 
 const EMPTY_RUNTIME_STATE: RuntimeStateSnapshot = {
-  version: 5,
+  version: 6,
   orders: [],
   idempotencyIndex: {},
   subscriptions: [],
   walletLifecycles: [],
   walletPublicAddresses: [],
   walletSecretBackups: [],
+  wallets: [],
+  walletKeySlots: [],
+  walletChainAccounts: [],
+  walletSecretBackupsV2: [],
   accounts: [],
   sessions: [],
   verificationCodes: [],
@@ -428,6 +436,134 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
     return record;
   }
 
+  async listWalletsByAccountId(
+    accountId: string,
+  ): Promise<PersistedWalletRecord[]> {
+    return this.readSnapshot().wallets
+      .filter((item) => item.accountId === accountId)
+      .slice()
+      .sort((left, right) => {
+        const defaultDelta = Number(right.isDefault) - Number(left.isDefault);
+        if (defaultDelta != 0) {
+          return defaultDelta;
+        }
+        return left.createdAt.localeCompare(right.createdAt);
+      });
+  }
+
+  async findWalletById(walletId: string): Promise<PersistedWalletRecord | null> {
+    return this.readSnapshot().wallets.find((item) => item.walletId === walletId) ?? null;
+  }
+
+  async insertWallet(wallet: PersistedWalletRecord): Promise<PersistedWalletRecord> {
+    const snapshot = this.readSnapshot();
+    snapshot.wallets = snapshot.wallets.filter((item) => item.walletId !== wallet.walletId);
+    snapshot.wallets.push(wallet);
+    this.writeSnapshot(snapshot);
+    return wallet;
+  }
+
+  async updateWallet(wallet: PersistedWalletRecord): Promise<PersistedWalletRecord> {
+    return this.insertWallet(wallet);
+  }
+
+  async setDefaultWallet(
+    accountId: string,
+    walletId: string,
+  ): Promise<PersistedWalletRecord> {
+    const snapshot = this.readSnapshot();
+    let updated: PersistedWalletRecord | null = null;
+    snapshot.wallets = snapshot.wallets.map((item) => {
+      if (item.accountId !== accountId) {
+        return item;
+      }
+      const next = {
+        ...item,
+        isDefault: item.walletId === walletId,
+        updatedAt: item.walletId === walletId ? new Date().toISOString() : item.updatedAt,
+      };
+      if (next.walletId === walletId) {
+        updated = next;
+      }
+      return next;
+    });
+    if (!updated) {
+      throw new Error(`Wallet ${walletId} not found for account ${accountId}`);
+    }
+    this.writeSnapshot(snapshot);
+    return updated;
+  }
+
+  async listWalletKeySlotsByWalletId(
+    walletId: string,
+  ): Promise<PersistedWalletKeySlotRecord[]> {
+    return this.readSnapshot().walletKeySlots
+      .filter((item) => item.walletId === walletId)
+      .slice()
+      .sort((left, right) => left.slotCode.localeCompare(right.slotCode));
+  }
+
+  async insertWalletKeySlot(
+    keySlot: PersistedWalletKeySlotRecord,
+  ): Promise<PersistedWalletKeySlotRecord> {
+    const snapshot = this.readSnapshot();
+    snapshot.walletKeySlots = snapshot.walletKeySlots.filter(
+      (item) => item.keySlotId !== keySlot.keySlotId,
+    );
+    snapshot.walletKeySlots.push(keySlot);
+    this.writeSnapshot(snapshot);
+    return keySlot;
+  }
+
+  async listWalletChainAccountsByWalletId(
+    walletId: string,
+  ): Promise<PersistedWalletChainAccountRecord[]> {
+    return this.readSnapshot().walletChainAccounts
+      .filter((item) => item.walletId === walletId)
+      .slice()
+      .sort((left, right) => left.networkCode.localeCompare(right.networkCode));
+  }
+
+  async findWalletChainAccountById(
+    chainAccountId: string,
+  ): Promise<PersistedWalletChainAccountRecord | null> {
+    return this.readSnapshot().walletChainAccounts.find(
+      (item) => item.chainAccountId === chainAccountId,
+    ) ?? null;
+  }
+
+  async insertWalletChainAccount(
+    chainAccount: PersistedWalletChainAccountRecord,
+  ): Promise<PersistedWalletChainAccountRecord> {
+    const snapshot = this.readSnapshot();
+    snapshot.walletChainAccounts = snapshot.walletChainAccounts.filter(
+      (item) => item.chainAccountId !== chainAccount.chainAccountId,
+    );
+    snapshot.walletChainAccounts.push(chainAccount);
+    this.writeSnapshot(snapshot);
+    return chainAccount;
+  }
+
+  async findWalletSecretBackupByWalletId(
+    walletId: string,
+  ): Promise<PersistedWalletSecretBackupV2Record | null> {
+    return this.readSnapshot().walletSecretBackupsV2
+      .filter((item) => item.walletId === walletId)
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))[0] ?? null;
+  }
+
+  async upsertWalletSecretBackupV2(
+    record: PersistedWalletSecretBackupV2Record,
+  ): Promise<PersistedWalletSecretBackupV2Record> {
+    const snapshot = this.readSnapshot();
+    snapshot.walletSecretBackupsV2 = snapshot.walletSecretBackupsV2.filter(
+      (item) => item.walletId !== record.walletId,
+    );
+    snapshot.walletSecretBackupsV2.push(record);
+    this.writeSnapshot(snapshot);
+    return record;
+  }
+
   private ensureStateFile() {
     const directory = dirname(this.stateFilePath);
     if (!existsSync(directory)) {
@@ -461,13 +597,17 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
 
   private normalizeSnapshot(raw: Partial<RuntimeStateSnapshot>) {
     return {
-      version: 5,
+      version: 6,
       orders: raw.orders ?? [],
       idempotencyIndex: raw.idempotencyIndex ?? {},
       subscriptions: raw.subscriptions ?? [],
       walletLifecycles: raw.walletLifecycles ?? [],
       walletPublicAddresses: raw.walletPublicAddresses ?? [],
       walletSecretBackups: raw.walletSecretBackups ?? [],
+      wallets: raw.wallets ?? [],
+      walletKeySlots: raw.walletKeySlots ?? [],
+      walletChainAccounts: raw.walletChainAccounts ?? [],
+      walletSecretBackupsV2: raw.walletSecretBackupsV2 ?? [],
       accounts: raw.accounts ?? [],
       sessions: raw.sessions ?? [],
       verificationCodes: raw.verificationCodes ?? [],

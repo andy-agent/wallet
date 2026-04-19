@@ -7,6 +7,14 @@ data class Order(
     val orderId: String,
     @SerializedName("orderNo")
     val orderNo: String,
+    @SerializedName("accountId")
+    val accountId: String? = null,
+    @SerializedName("payerWalletId")
+    val payerWalletId: String? = null,
+    @SerializedName("payerChainAccountId")
+    val payerChainAccountId: String? = null,
+    @SerializedName("submittedFromAddress")
+    val submittedFromAddress: String? = null,
     @SerializedName("planCode")
     val planCode: String,
     @SerializedName("planName")
@@ -141,7 +149,11 @@ data class CreateOrderRequest(
     @SerializedName("quoteAssetCode")
     val quoteAssetCode: String,
     @SerializedName("quoteNetworkCode")
-    val quoteNetworkCode: String
+    val quoteNetworkCode: String,
+    @SerializedName("payerWalletId")
+    val payerWalletId: String? = null,
+    @SerializedName("payerChainAccountId")
+    val payerChainAccountId: String? = null,
 )
 
 data class CreateOrderResponse(

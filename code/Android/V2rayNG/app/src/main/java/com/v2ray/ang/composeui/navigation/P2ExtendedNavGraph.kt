@@ -33,6 +33,7 @@ import com.v2ray.ang.composeui.p2extended.viewmodel.CreateWalletViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.DappBrowserViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.ExpiryReminderViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.ImportMnemonicViewModel
+import com.v2ray.ang.composeui.p2extended.viewmodel.ImportWatchWalletViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.ImportWalletMethodViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.NodeSpeedTestViewModel
 import com.v2ray.ang.composeui.p2extended.viewmodel.SecurityCenterViewModel
@@ -51,6 +52,7 @@ import com.v2ray.ang.composeui.pages.p2extended.CreateWalletRoute
 import com.v2ray.ang.composeui.pages.p2extended.DappBrowserRoute
 import com.v2ray.ang.composeui.pages.p2extended.ExpiryReminderRoute
 import com.v2ray.ang.composeui.pages.p2extended.ImportMnemonicRoute
+import com.v2ray.ang.composeui.pages.p2extended.ImportWatchWalletRoute
 import com.v2ray.ang.composeui.pages.p2extended.ImportWalletMethodRoute
 import com.v2ray.ang.composeui.pages.p2extended.NodeSpeedTestRoute
 import com.v2ray.ang.composeui.pages.p2extended.SecurityCenterRoute
@@ -184,7 +186,19 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
         ImportWalletMethodRoute(
             viewModel = vm,
             onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.importMnemonicRoute("onboarding")) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletOnboarding.pattern) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.importWatchWalletRoute()) },
+            onBottomNav = { navController.navigateSingleTop(it) },
+        )
+    }
+
+    composable(CryptoVpnRouteSpec.importWatchWallet.pattern) {
+        val vm: ImportWatchWalletViewModel = viewModel(
+            factory = cryptoVpnViewModelFactory { ImportWatchWalletViewModel(repository) },
+        )
+        ImportWatchWalletRoute(
+            viewModel = vm,
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletManagerRoute(it ?: "primary_wallet")) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.importWalletMethod.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }
@@ -287,7 +301,7 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
         WalletManagerRoute(
             viewModel = vm,
             onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.createWalletRoute("create")) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.profile.pattern) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.importWatchWalletRoute()) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }

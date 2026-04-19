@@ -8,12 +8,24 @@ data class OrderCheckoutRouteArgs(
     val planId: String = "",
     val assetCode: String = "",
     val networkCode: String = "",
+    val payerWalletId: String = "",
+    val payerChainAccountId: String = "",
 )
 
 data class CheckoutPaymentOptionUi(
     val assetCode: String,
     val networkCode: String,
     val label: String,
+    val selected: Boolean = false,
+)
+
+data class PayerWalletOptionUi(
+    val walletId: String,
+    val chainAccountId: String,
+    val label: String,
+    val subtitle: String,
+    val networkCode: String,
+    val capability: String,
     val selected: Boolean = false,
 )
 
@@ -43,12 +55,19 @@ data class OrderCheckoutUiState(
     val invoiceEmail: String? = null,
     val serviceEnabled: Boolean = false,
     val paymentOptions: List<CheckoutPaymentOptionUi> = emptyList(),
+    val payerWalletOptions: List<PayerWalletOptionUi> = emptyList(),
+    val selectedPayerWalletId: String? = null,
+    val selectedPayerChainAccountId: String? = null,
     val note: String = "",
 )
 
 sealed interface OrderCheckoutEvent {
     data object Refresh : OrderCheckoutEvent
     data object CreateOrderClicked : OrderCheckoutEvent
+    data class PayerWalletSelected(
+        val walletId: String,
+        val chainAccountId: String,
+    ) : OrderCheckoutEvent
     data object PrimaryActionClicked : OrderCheckoutEvent
     data object SecondaryActionClicked : OrderCheckoutEvent
 }

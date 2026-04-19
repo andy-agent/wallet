@@ -46,6 +46,7 @@ import com.v2ray.ang.composeui.components.sections.InfoSection
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutEvent
 import com.v2ray.ang.composeui.p1.model.OrderCheckoutUiState
+import com.v2ray.ang.composeui.p1.model.PayerWalletOptionUi
 import com.v2ray.ang.composeui.p1.model.checkoutPaymentLabel
 import com.v2ray.ang.composeui.p1.model.orderCheckoutPreviewState
 import com.v2ray.ang.composeui.p1.model.resolvedPaymentQrText
@@ -74,6 +75,9 @@ fun OrderCheckoutRoute(
             viewModel.onEvent(OrderCheckoutEvent.PrimaryActionClicked)
             uiState.orderNo?.let(onPrimaryAction)
         },
+        onSelectPayerWallet = { walletId, chainAccountId ->
+            viewModel.onEvent(OrderCheckoutEvent.PayerWalletSelected(walletId, chainAccountId))
+        },
         onSecondaryAction = {
             viewModel.onEvent(OrderCheckoutEvent.SecondaryActionClicked)
             onSecondaryAction?.invoke()
@@ -89,6 +93,7 @@ fun OrderCheckoutScreen(
     onRefresh: () -> Unit,
     onCreateOrder: () -> Unit,
     onPrimaryAction: () -> Unit,
+    onSelectPayerWallet: (String, String) -> Unit,
     onSecondaryAction: () -> Unit,
     onPaymentOptionRoute: (String) -> Unit,
     onBottomNav: (String) -> Unit = {},
@@ -192,6 +197,31 @@ fun OrderCheckoutScreen(
                 }
             }
 
+            if (uiState.payerWalletOptions.isNotEmpty()) {
+                InfoSection(
+                    title = "选择付款钱包",
+                    subtitle = "显式绑定付款钱包与链账户",
+                ) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.space8),
+                    ) {
+                        uiState.payerWalletOptions.forEach { option ->
+                            AppChip(
+                                text = option.label,
+                                tone = if (option.capability == "SIGN_AND_PAY") AppChipTone.Brand else AppChipTone.Info,
+                                selected = option.selected,
+                                onClick = {
+                                    if (option.capability == "SIGN_AND_PAY") {
+                                        onSelectPayerWallet(option.walletId, option.chainAccountId)
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+
             if (uiState.screenState.hasError && uiState.orderNo == null && uiState.paymentOptions.isEmpty()) {
                 EmptyStateCard(
                     title = "当前无法创建订单",
@@ -282,6 +312,7 @@ private fun OrderCheckoutPreview() {
                 onRefresh = {},
                 onCreateOrder = {},
                 onPrimaryAction = {},
+                onSelectPayerWallet = { _, _ -> },
                 onSecondaryAction = {},
                 onPaymentOptionRoute = {},
             )

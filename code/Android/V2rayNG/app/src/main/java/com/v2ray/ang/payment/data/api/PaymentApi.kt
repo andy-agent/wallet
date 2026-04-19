@@ -18,6 +18,7 @@ import com.v2ray.ang.payment.data.model.RegisterResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -177,6 +178,67 @@ interface PaymentApi {
         @Header("Authorization") authorization: String
     ): Response<WalletSecretBackupExportResponse>
 
+    @GET("${PaymentConfig.API_VERSION}/wallets")
+    suspend fun listWallets(
+        @Header("Authorization") authorization: String
+    ): Response<WalletsResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallets/{walletId}")
+    suspend fun getWallet(
+        @Header("Authorization") authorization: String,
+        @Path("walletId") walletId: String
+    ): Response<WalletDetailResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallets/{walletId}/chain-accounts")
+    suspend fun getWalletChainAccounts(
+        @Header("Authorization") authorization: String,
+        @Path("walletId") walletId: String
+    ): Response<WalletChainAccountsResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/wallets/create-mnemonic")
+    suspend fun createMnemonicWallet(
+        @Header("Authorization") authorization: String,
+        @Body request: CreateMnemonicWalletRequest
+    ): Response<WalletDetailResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/wallets/import/mnemonic")
+    suspend fun importMnemonicWallet(
+        @Header("Authorization") authorization: String,
+        @Body request: CreateMnemonicWalletRequest
+    ): Response<WalletDetailResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/wallets/import/watch-only")
+    suspend fun importWatchOnlyWallet(
+        @Header("Authorization") authorization: String,
+        @Body request: ImportWatchWalletRequest
+    ): Response<WalletDetailResponse>
+
+    @PATCH("${PaymentConfig.API_VERSION}/wallets/{walletId}")
+    suspend fun updateWallet(
+        @Header("Authorization") authorization: String,
+        @Path("walletId") walletId: String,
+        @Body request: UpdateWalletRequest
+    ): Response<WalletDetailResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/wallets/{walletId}/set-default")
+    suspend fun setDefaultWallet(
+        @Header("Authorization") authorization: String,
+        @Path("walletId") walletId: String
+    ): Response<WalletDetailResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/wallets/{walletId}/secret-backup")
+    suspend fun upsertWalletSecretBackupV2(
+        @Header("Authorization") authorization: String,
+        @Path("walletId") walletId: String,
+        @Body request: WalletSecretBackupUpsertRequest
+    ): Response<WalletSecretBackupResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallets/{walletId}/secret-backup")
+    suspend fun getWalletSecretBackupMetadataV2(
+        @Header("Authorization") authorization: String,
+        @Path("walletId") walletId: String
+    ): Response<WalletSecretBackupMetadataResponse>
+
     @POST("${PaymentConfig.API_VERSION}/wallet/transfer/build")
     suspend fun buildWalletTransfer(
         @Header("Authorization") authorization: String,
@@ -321,7 +383,13 @@ data class SubmitClientTxRequest(
     @SerializedName("networkCode")
     val networkCode: String,
     @SerializedName("signedAt")
-    val signedAt: String? = null
+    val signedAt: String? = null,
+    @SerializedName("payerWalletId")
+    val payerWalletId: String? = null,
+    @SerializedName("payerChainAccountId")
+    val payerChainAccountId: String? = null,
+    @SerializedName("submittedFromAddress")
+    val submittedFromAddress: String? = null,
 )
 
 data class RefreshOrderStatusRequest(
@@ -866,6 +934,157 @@ data class WalletSecretBackupExportPayloadData(
     val createdAt: String,
     @SerializedName("updatedAt")
     val updatedAt: String,
+)
+
+data class WalletsResponse(
+    val code: String,
+    val message: String,
+    val data: WalletsData?
+)
+
+data class WalletsData(
+    val items: List<WalletSummaryData>
+)
+
+data class WalletDetailResponse(
+    val code: String,
+    val message: String,
+    val data: WalletDetailData?
+)
+
+data class WalletChainAccountsResponse(
+    val code: String,
+    val message: String,
+    val data: WalletChainAccountsData?
+)
+
+data class WalletChainAccountsData(
+    val items: List<WalletChainAccountData>
+)
+
+data class WalletSummaryData(
+    @SerializedName("walletId")
+    val walletId: String,
+    @SerializedName("walletName")
+    val walletName: String,
+    @SerializedName("walletKind")
+    val walletKind: String,
+    @SerializedName("sourceType")
+    val sourceType: String,
+    @SerializedName("isDefault")
+    val isDefault: Boolean,
+    @SerializedName("isArchived")
+    val isArchived: Boolean,
+    @SerializedName("deviceCapabilitySummary")
+    val deviceCapabilitySummary: String? = null,
+    @SerializedName("createdAt")
+    val createdAt: String,
+    @SerializedName("updatedAt")
+    val updatedAt: String,
+)
+
+data class WalletKeySlotData(
+    @SerializedName("keySlotId")
+    val keySlotId: String,
+    @SerializedName("walletId")
+    val walletId: String,
+    @SerializedName("slotCode")
+    val slotCode: String,
+    @SerializedName("chainFamily")
+    val chainFamily: String,
+    @SerializedName("derivationType")
+    val derivationType: String,
+    @SerializedName("derivationPath")
+    val derivationPath: String? = null,
+)
+
+data class WalletChainAccountData(
+    @SerializedName("chainAccountId")
+    val chainAccountId: String,
+    @SerializedName("walletId")
+    val walletId: String,
+    @SerializedName("keySlotId")
+    val keySlotId: String? = null,
+    @SerializedName("chainFamily")
+    val chainFamily: String,
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("address")
+    val address: String,
+    @SerializedName("capability")
+    val capability: String,
+    @SerializedName("isEnabled")
+    val isEnabled: Boolean,
+    @SerializedName("isDefaultReceive")
+    val isDefaultReceive: Boolean,
+    @SerializedName("createdAt")
+    val createdAt: String,
+    @SerializedName("updatedAt")
+    val updatedAt: String,
+)
+
+data class WalletDetailData(
+    @SerializedName("wallet")
+    val wallet: WalletSummaryData,
+    @SerializedName("keySlots")
+    val keySlots: List<WalletKeySlotData>,
+    @SerializedName("chainAccounts")
+    val chainAccounts: List<WalletChainAccountData>,
+    @SerializedName("backup")
+    val backup: WalletSecretBackupMetadataData? = null,
+)
+
+data class CreateMnemonicWalletKeySlotRequest(
+    @SerializedName("slotCode")
+    val slotCode: String,
+    @SerializedName("chainFamily")
+    val chainFamily: String,
+    @SerializedName("derivationType")
+    val derivationType: String,
+    @SerializedName("derivationPath")
+    val derivationPath: String? = null,
+)
+
+data class CreateMnemonicWalletChainAccountRequest(
+    @SerializedName("slotCode")
+    val slotCode: String,
+    @SerializedName("chainFamily")
+    val chainFamily: String,
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("address")
+    val address: String,
+    @SerializedName("isEnabled")
+    val isEnabled: Boolean = true,
+    @SerializedName("isDefaultReceive")
+    val isDefaultReceive: Boolean = false,
+)
+
+data class CreateMnemonicWalletRequest(
+    @SerializedName("walletName")
+    val walletName: String,
+    @SerializedName("keySlots")
+    val keySlots: List<CreateMnemonicWalletKeySlotRequest>,
+    @SerializedName("chainAccounts")
+    val chainAccounts: List<CreateMnemonicWalletChainAccountRequest>,
+)
+
+data class ImportWatchWalletRequest(
+    @SerializedName("walletName")
+    val walletName: String,
+    @SerializedName("chainFamily")
+    val chainFamily: String,
+    @SerializedName("networkCode")
+    val networkCode: String,
+    @SerializedName("address")
+    val address: String,
+)
+
+data class UpdateWalletRequest(
+    @SerializedName("walletName")
+    val walletName: String? = null,
+    @SerializedName("isArchived")
+    val isArchived: Boolean? = null,
 )
 
 data class WalletTransferBuildRequest(

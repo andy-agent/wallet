@@ -28,6 +28,9 @@ data class WalletPaymentConfirmUiState(
     val qrText: String = "",
     val expiresAt: String? = null,
     val txHash: String? = null,
+    val payerWalletOptions: List<PayerWalletOptionUi> = emptyList(),
+    val selectedPayerWalletId: String? = null,
+    val selectedPayerChainAccountId: String? = null,
     val note: String = "",
 )
 
@@ -35,6 +38,10 @@ sealed interface WalletPaymentConfirmEvent {
     data object Refresh : WalletPaymentConfirmEvent
     data object PrimaryActionClicked : WalletPaymentConfirmEvent
     data object SecondaryActionClicked : WalletPaymentConfirmEvent
+    data class PayerWalletSelected(
+        val walletId: String,
+        val chainAccountId: String,
+    ) : WalletPaymentConfirmEvent
 }
 
 val walletPaymentConfirmNavigation: RouteDefinition = CryptoVpnRouteSpec.walletPaymentConfirm

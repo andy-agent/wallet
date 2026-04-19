@@ -4,6 +4,31 @@ export type WalletLifecycleStatus =
   | 'BACKUP_PENDING_CONFIRMATION'
   | 'ACTIVE';
 
+export type WalletKind = 'SELF_CUSTODY' | 'WATCH_ONLY';
+
+export type WalletSourceType =
+  | 'CREATED'
+  | 'IMPORTED_MNEMONIC'
+  | 'IMPORTED_PRIVATE_KEY'
+  | 'WATCH_IMPORTED';
+
+export type WalletChainFamily = 'EVM' | 'SOLANA' | 'TRON';
+
+export type WalletNetworkCode =
+  | 'ETHEREUM'
+  | 'BSC'
+  | 'POLYGON'
+  | 'ARBITRUM'
+  | 'BASE'
+  | 'OPTIMISM'
+  | 'AVALANCHE_C'
+  | 'SOLANA'
+  | 'TRON';
+
+export type WalletChainCapability = 'SIGN_AND_PAY' | 'WATCH_ONLY';
+
+export type WalletDerivationType = 'MNEMONIC' | 'PRIVATE_KEY';
+
 export type WalletLifecycleOrigin = 'CREATED' | 'IMPORTED' | 'LEGACY';
 
 export type WalletLifecycleNextAction =
@@ -26,6 +51,43 @@ export interface PersistedWalletLifecycleRecord {
   updatedAt: string;
 }
 
+export interface PersistedWalletRecord {
+  walletId: string;
+  accountId: string;
+  walletName: string;
+  walletKind: WalletKind;
+  sourceType: WalletSourceType;
+  isDefault: boolean;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PersistedWalletKeySlotRecord {
+  keySlotId: string;
+  walletId: string;
+  slotCode: string;
+  chainFamily: WalletChainFamily;
+  derivationType: WalletDerivationType;
+  derivationPath: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PersistedWalletChainAccountRecord {
+  chainAccountId: string;
+  walletId: string;
+  keySlotId: string | null;
+  chainFamily: WalletChainFamily;
+  networkCode: WalletNetworkCode;
+  address: string;
+  capability: WalletChainCapability;
+  isEnabled: boolean;
+  isDefaultReceive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PersistedWalletPublicAddressRecord {
   addressId: string;
   accountId: string;
@@ -39,6 +101,22 @@ export interface PersistedWalletPublicAddressRecord {
 }
 
 export interface PersistedWalletSecretBackupRecord {
+  backupId: string;
+  accountId: string;
+  walletId: string;
+  secretType: 'MNEMONIC';
+  encryptionScheme: 'AGE';
+  recoveryKeyVersion: string;
+  recipientFingerprint: string;
+  ciphertext: string;
+  replicatedToBackupServer: boolean;
+  backupServerReference: string | null;
+  lastReplicationError: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PersistedWalletSecretBackupV2Record {
   backupId: string;
   accountId: string;
   walletId: string;
@@ -74,4 +152,16 @@ export interface WalletLifecycleView {
   updatedAt: string | null;
   backupAcknowledgedAt: string | null;
   activatedAt: string | null;
+}
+
+export interface WalletSummaryView {
+  walletId: string;
+  walletName: string;
+  walletKind: WalletKind;
+  sourceType: WalletSourceType;
+  isDefault: boolean;
+  isArchived: boolean;
+  deviceCapabilitySummary?: 'SIGNABLE' | 'VIEW_ONLY' | 'UNKNOWN';
+  createdAt: string;
+  updatedAt: string;
 }

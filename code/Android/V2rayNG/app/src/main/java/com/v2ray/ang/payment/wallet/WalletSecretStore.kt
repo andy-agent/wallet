@@ -16,6 +16,7 @@ import javax.crypto.spec.GCMParameterSpec
 data class LocalWalletSecretRecord(
     val accountId: String,
     val walletId: String,
+    val keySlotId: String? = null,
     val secretType: String,
     val mnemonic: String,
     val mnemonicHash: String,
@@ -28,6 +29,7 @@ data class LocalWalletSecretRecord(
 private data class StoredWalletSecretRecord(
     val accountId: String,
     val walletId: String,
+    val keySlotId: String? = null,
     val secretType: String,
     val mnemonicCiphertext: String,
     val mnemonicIv: String,
@@ -54,11 +56,35 @@ class WalletSecretStore(context: Context) {
         sourceType: String,
         timestampIso: String,
     ): LocalWalletSecretRecord {
+        return upsertMnemonicForWallet(
+            accountId = accountId,
+            walletId = walletId,
+            keySlotId = null,
+            mnemonic = mnemonic,
+            mnemonicHash = mnemonicHash,
+            mnemonicWordCount = mnemonicWordCount,
+            sourceType = sourceType,
+            timestampIso = timestampIso,
+        )
+    }
+
+    fun upsertMnemonicForWallet(
+        accountId: String,
+        walletId: String,
+        keySlotId: String?,
+        mnemonic: String,
+        mnemonicHash: String,
+        mnemonicWordCount: Int,
+        sourceType: String,
+        timestampIso: String,
+    ): LocalWalletSecretRecord {
         val encrypted = encrypt(mnemonic)
-        val existing = loadRecord(accountId)
+        val storageKey = walletStorageKey(walletId, keySlotId)
+        val existing = loadRecordByStorageKey(storageKey)
         val stored = StoredWalletSecretRecord(
             accountId = accountId,
             walletId = walletId,
+            keySlotId = keySlotId,
             secretType = SECRET_TYPE_MNEMONIC,
             mnemonicCiphertext = encrypted.ciphertext,
             mnemonicIv = encrypted.iv,
@@ -68,12 +94,16 @@ class WalletSecretStore(context: Context) {
             createdAt = existing?.createdAt ?: timestampIso,
             updatedAt = timestampIso,
         )
-        storage.encode(accountId, gson.toJson(stored))
+        storage.encode(storageKey, gson.toJson(stored))
         return stored.toLocalRecord()
     }
 
     fun getMnemonicRecord(accountId: String): LocalWalletSecretRecord? {
         return loadRecord(accountId)?.toLocalRecord()
+    }
+
+    fun getMnemonicRecord(walletId: String, keySlotId: String?): LocalWalletSecretRecord? {
+        return loadRecordByStorageKey(walletStorageKey(walletId, keySlotId))?.toLocalRecord()
     }
 
     fun getAnyMnemonicRecord(): LocalWalletSecretRecord? {
@@ -103,8 +133,17 @@ class WalletSecretStore(context: Context) {
         storage.remove(accountId)
     }
 
+    fun clearWallet(walletId: String, keySlotId: String?) {
+        storage.remove(walletStorageKey(walletId, keySlotId))
+    }
+
     private fun loadRecord(accountId: String): StoredWalletSecretRecord? {
         val json = storage.decodeString(accountId) ?: return null
+        return gson.fromJson(json, StoredWalletSecretRecord::class.java)
+    }
+
+    private fun loadRecordByStorageKey(storageKey: String): StoredWalletSecretRecord? {
+        val json = storage.decodeString(storageKey) ?: return null
         return gson.fromJson(json, StoredWalletSecretRecord::class.java)
     }
 
@@ -112,6 +151,7 @@ class WalletSecretStore(context: Context) {
         return LocalWalletSecretRecord(
             accountId = accountId,
             walletId = walletId,
+            keySlotId = keySlotId,
             secretType = secretType,
             mnemonic = decrypt(mnemonicCiphertext, mnemonicIv),
             mnemonicHash = mnemonicHash,
@@ -170,6 +210,9 @@ class WalletSecretStore(context: Context) {
         val ciphertext: String,
         val iv: String,
     )
+
+    private fun walletStorageKey(walletId: String, keySlotId: String?) =
+        "wallet:$walletId:${keySlotId ?: "default"}"
 
     companion object {
         private const val STORAGE_ID = "WALLET_SECRET"

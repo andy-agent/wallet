@@ -17,6 +17,7 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 data class DerivedWalletAddresses(
+    val evmAddress: String,
     val solanaAddress: String,
     val tronAddress: String,
 )
@@ -24,14 +25,24 @@ data class DerivedWalletAddresses(
 class WalletKeyManager(
     private val walletSecretStore: WalletSecretStore,
 ) {
-    fun deriveAddresses(accountId: String): DerivedWalletAddresses {
-        val record = walletSecretStore.getMnemonicRecord(accountId)
-            ?: throw IllegalStateException("本地未找到钱包助记词")
-        val mnemonic = record.mnemonic
+    fun deriveAddressesFromMnemonic(mnemonic: String): DerivedWalletAddresses {
         return DerivedWalletAddresses(
+            evmAddress = deriveEvmAddress(mnemonic),
             solanaAddress = deriveSolanaAddress(mnemonic),
             tronAddress = deriveTronAddress(mnemonic),
         )
+    }
+
+    fun deriveAddresses(accountId: String): DerivedWalletAddresses {
+        val record = walletSecretStore.getMnemonicRecord(accountId)
+            ?: throw IllegalStateException("本地未找到钱包助记词")
+        return deriveAddressesFromMnemonic(record.mnemonic)
+    }
+
+    fun deriveAddresses(walletId: String, keySlotId: String? = null): DerivedWalletAddresses {
+        val record = walletSecretStore.getMnemonicRecord(walletId, keySlotId)
+            ?: throw IllegalStateException("本地未找到钱包助记词")
+        return deriveAddressesFromMnemonic(record.mnemonic)
     }
 
     fun signSolanaMessage(accountId: String, signingPayloadBase64: String): String {
@@ -46,8 +57,35 @@ class WalletKeyManager(
         return Base64.encodeToString(signature, Base64.NO_WRAP)
     }
 
+    fun signSolanaMessage(walletId: String, keySlotId: String?, signingPayloadBase64: String): String {
+        val record = walletSecretStore.getMnemonicRecord(walletId, keySlotId)
+            ?: throw IllegalStateException("本地未找到钱包助记词")
+        val privateSeed = deriveSolanaPrivateSeed(record.mnemonic)
+        val signer = Ed25519Signer()
+        signer.init(true, Ed25519PrivateKeyParameters(privateSeed, 0))
+        val message = Base64.decode(signingPayloadBase64, Base64.DEFAULT)
+        signer.update(message, 0, message.size)
+        val signature = signer.generateSignature()
+        return Base64.encodeToString(signature, Base64.NO_WRAP)
+    }
+
     fun signTronTransactionId(accountId: String, txIdHex: String): String {
         val record = walletSecretStore.getMnemonicRecord(accountId)
+            ?: throw IllegalStateException("本地未找到钱包助记词")
+        val privateKey = deriveTronPrivateKey(record.mnemonic)
+        val ecKey = ECKey.fromPrivate(privateKey, false)
+        val txHashBytes = txIdHex.hexToByteArray()
+        val txHash = Sha256Hash.wrap(txHashBytes)
+        val signature = ecKey.sign(txHash).toCanonicalised()
+        val recId = (0..3).firstOrNull { candidate ->
+            ECKey.recoverFromSignature(candidate, signature, txHash, false)?.pubKey?.contentEquals(ecKey.pubKey) == true
+        } ?: throw IllegalStateException("无法恢复 TRON 签名恢复位")
+        val payload = signature.r.toFixed32Bytes() + signature.s.toFixed32Bytes() + byteArrayOf(recId.toByte())
+        return payload.toHex()
+    }
+
+    fun signTronTransactionId(walletId: String, keySlotId: String?, txIdHex: String): String {
+        val record = walletSecretStore.getMnemonicRecord(walletId, keySlotId)
             ?: throw IllegalStateException("本地未找到钱包助记词")
         val privateKey = deriveTronPrivateKey(record.mnemonic)
         val ecKey = ECKey.fromPrivate(privateKey, false)
@@ -96,6 +134,32 @@ class WalletKeyManager(
         val path = listOf(
             ChildNumber(44, true),
             ChildNumber(195, true),
+            ChildNumber.ZERO_HARDENED,
+            ChildNumber.ZERO,
+            ChildNumber.ZERO,
+        )
+        path.forEach { child ->
+            key = HDKeyDerivation.deriveChildKey(key, child)
+        }
+        return key.privKeyBytes
+    }
+
+    private fun deriveEvmAddress(mnemonic: String): String {
+        val privateKey = deriveEvmPrivateKey(mnemonic)
+        val ecKey = ECKey.fromPrivate(privateKey, false)
+        val uncompressed = ecKey.pubKeyPoint.getEncoded(false).copyOfRange(1, 65)
+        val digest = Keccak.Digest256()
+        digest.update(uncompressed, 0, uncompressed.size)
+        val hash = digest.digest()
+        return "0x" + hash.copyOfRange(hash.size - 20, hash.size).toHex()
+    }
+
+    private fun deriveEvmPrivateKey(mnemonic: String): ByteArray {
+        val seed = MnemonicCode.toSeed(mnemonic.trim().split(Regex("\\s+")), "")
+        var key: DeterministicKey = HDKeyDerivation.createMasterPrivateKey(seed)
+        val path = listOf(
+            ChildNumber(44, true),
+            ChildNumber(60, true),
             ChildNumber.ZERO_HARDENED,
             ChildNumber.ZERO,
             ChildNumber.ZERO,

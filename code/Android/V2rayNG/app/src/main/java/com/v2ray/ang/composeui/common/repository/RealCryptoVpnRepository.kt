@@ -31,6 +31,7 @@ import com.v2ray.ang.composeui.p1.model.OrderListUiState
 import com.v2ray.ang.composeui.p1.model.OrderResultRouteArgs
 import com.v2ray.ang.composeui.p1.model.OrderResultUiState
 import com.v2ray.ang.composeui.p1.model.P1ScreenState
+import com.v2ray.ang.composeui.p1.model.PayerWalletOptionUi
 import com.v2ray.ang.composeui.p1.model.PlanOptionUi
 import com.v2ray.ang.composeui.p1.model.PlansUiState
 import com.v2ray.ang.composeui.p1.model.RegionOptionUi
@@ -98,6 +99,7 @@ import com.v2ray.ang.composeui.p2extended.model.ImportMnemonicRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.ImportMnemonicUiState
 import com.v2ray.ang.composeui.p2extended.model.ImportPrivateKeyRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.ImportPrivateKeyUiState
+import com.v2ray.ang.composeui.p2extended.model.ImportWatchWalletUiState
 import com.v2ray.ang.composeui.p2extended.model.ImportWalletMethodUiState
 import com.v2ray.ang.composeui.p2extended.model.NftGalleryUiState
 import com.v2ray.ang.composeui.p2extended.model.NodeSpeedTestRouteArgs
@@ -114,6 +116,7 @@ import com.v2ray.ang.composeui.p2extended.model.SwapUiState
 import com.v2ray.ang.composeui.p2extended.model.WalletConnectSessionRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.WalletConnectSessionUiState
 import com.v2ray.ang.composeui.p2extended.model.WalletManagerRouteArgs
+import com.v2ray.ang.composeui.p2extended.model.WalletManagerWalletItemUi
 import com.v2ray.ang.composeui.p2extended.model.WalletManagerUiState
 import com.v2ray.ang.composeui.p2extended.model.addCustomTokenPreviewState
 import com.v2ray.ang.composeui.p2extended.model.addressBookPreviewState
@@ -634,6 +637,12 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val selectedRegionCode = paymentRepository.getLastIssuedVpnRegionCode().orEmpty()
         val selectedRegionLabel = resolveCheckoutRegionLabel(selectedRegionCode)
         val cachedEmail = paymentRepository.getCachedCurrentUser()?.email
+        val payerWalletOptions = buildPayerWalletOptions(
+            networkCode = selectedOption?.networkCode.orEmpty(),
+            selectedWalletId = args.payerWalletId,
+            selectedChainAccountId = args.payerChainAccountId,
+        )
+        val selectedPayer = payerWalletOptions.firstOrNull { it.selected } ?: payerWalletOptions.firstOrNull()
 
         val reusableOrder = selectedOption?.let {
             findReusableCheckoutOrder(
@@ -645,6 +654,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         if (reusableOrder != null) {
             return reusableOrder.toCheckoutUiState(
                 paymentOptions = normalizedOptions,
+                payerWalletOptions = payerWalletOptions,
                 selectedRegionCode = selectedRegionCode,
                 selectedRegionLabel = selectedRegionLabel,
                 invoiceEmail = cachedEmail,
@@ -671,6 +681,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 networkCode = selectedOption?.networkCode.orEmpty(),
                 invoiceEmail = cachedEmail,
                 paymentOptions = normalizedOptions,
+                payerWalletOptions = payerWalletOptions,
+                selectedPayerWalletId = selectedPayer?.walletId,
+                selectedPayerChainAccountId = selectedPayer?.chainAccountId,
                 note = if (selectedRegionLabel.isBlank()) {
                     "未发现已选节点区域，允许先支付再补选节点。"
                 } else {
@@ -683,11 +696,14 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             planId = args.planId,
             assetCode = selectedOption.assetCode,
             networkCode = selectedOption.networkCode,
+            payerWalletId = selectedPayer?.walletId,
+            payerChainAccountId = selectedPayer?.chainAccountId,
         )
         val order = orderResult.getOrNull()
         if (order != null) {
             return order.toCheckoutUiState(
                 paymentOptions = normalizedOptions,
+                payerWalletOptions = payerWalletOptions,
                 selectedRegionCode = selectedRegionCode,
                 selectedRegionLabel = selectedRegionLabel,
                 invoiceEmail = cachedEmail,
@@ -715,6 +731,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             networkCode = selectedOption.networkCode,
             invoiceEmail = cachedEmail,
             paymentOptions = normalizedOptions,
+            payerWalletOptions = payerWalletOptions,
+            selectedPayerWalletId = selectedPayer?.walletId,
+            selectedPayerChainAccountId = selectedPayer?.chainAccountId,
             note = sessionUnavailableMessage ?: capabilityUnavailableMessage ?: errorMessage,
         )
     }
@@ -757,6 +776,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     private fun Order.toCheckoutUiState(
         paymentOptions: List<CheckoutPaymentOptionUi>,
+        payerWalletOptions: List<PayerWalletOptionUi>,
         selectedRegionCode: String,
         selectedRegionLabel: String,
         invoiceEmail: String?,
@@ -781,6 +801,14 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             invoiceEmail = invoiceEmail,
             serviceEnabled = paymentTarget?.serviceEnabled == true,
             paymentOptions = paymentOptions,
+            payerWalletOptions = payerWalletOptions.map { option ->
+                option.copy(
+                    selected = option.walletId == payerWalletId &&
+                        option.chainAccountId == payerChainAccountId,
+                )
+            },
+            selectedPayerWalletId = payerWalletId,
+            selectedPayerChainAccountId = payerChainAccountId,
             note = "订单数据来自 PaymentRepository.createOrder()/getOrder()。",
         )
     }
@@ -810,6 +838,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             tier = lineCode.substringAfter('_', "STANDARD"),
             status = status,
             healthStatus = runtime?.healthStatus ?: "UNKNOWN",
+            pingMs = runtime?.pingMs,
             host = host,
             port = port,
             isAllowed = true,
@@ -821,6 +850,12 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getWalletPaymentConfirmState(args: WalletPaymentConfirmRouteArgs): WalletPaymentConfirmUiState {
         val order = paymentRepository.getOrder(args.orderId).getOrNull()
         return if (order != null) {
+            val payerWalletOptions = buildPayerWalletOptions(
+                networkCode = order.paymentTarget?.networkCode ?: order.quoteNetworkCode,
+                selectedWalletId = order.payerWalletId.orEmpty(),
+                selectedChainAccountId = order.payerChainAccountId.orEmpty(),
+            )
+            val selectedPayer = payerWalletOptions.firstOrNull { it.selected } ?: payerWalletOptions.firstOrNull()
             WalletPaymentConfirmUiState(
                 summary = "支付确认页已绑定订单对象。",
                 screenState = P1ScreenState(),
@@ -838,6 +873,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 qrText = order.payment.qrText,
                 expiresAt = order.paymentTarget?.expiresAt ?: order.expiresAt,
                 txHash = order.payment.txHash,
+                payerWalletOptions = payerWalletOptions,
+                selectedPayerWalletId = selectedPayer?.walletId,
+                selectedPayerChainAccountId = selectedPayer?.chainAccountId,
                 note = "订单",
             )
         } else {
@@ -848,6 +886,72 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 note = "未查询到支付确认单",
             )
         }
+    }
+
+    override suspend fun submitWalletOrderPayment(
+        orderNo: String,
+        walletId: String,
+        chainAccountId: String,
+    ): SendSubmissionResult {
+        val order = paymentRepository.getOrder(orderNo).getOrNull()
+            ?: return SendSubmissionResult(success = false, errorMessage = "未查询到订单")
+        val chainAccounts = paymentRepository.getWalletChainAccounts(walletId).getOrNull().orEmpty()
+        val payerChainAccount = chainAccounts.firstOrNull { it.chainAccountId == chainAccountId }
+            ?: return SendSubmissionResult(success = false, errorMessage = "未找到付款链账户")
+        if (payerChainAccount.capability != "SIGN_AND_PAY") {
+            return SendSubmissionResult(success = false, errorMessage = "观察钱包不可支付")
+        }
+
+        val precheck = paymentRepository.precheckWalletTransfer(
+            networkCode = payerChainAccount.networkCode,
+            assetCode = order.paymentTarget?.assetCode ?: order.quoteAssetCode,
+            toAddress = order.payment.receiveAddress,
+            amount = order.payment.amountCrypto,
+            orderNo = order.orderNo,
+        ).getOrElse { error ->
+            return SendSubmissionResult(success = false, errorMessage = error.message ?: "预检查失败")
+        }
+        val build = paymentRepository.buildWalletTransfer(
+            networkCode = payerChainAccount.networkCode,
+            assetCode = order.paymentTarget?.assetCode ?: order.quoteAssetCode,
+            fromAddress = payerChainAccount.address,
+            toAddress = precheck.toAddressNormalized,
+            amount = order.payment.amountCrypto,
+            orderNo = order.orderNo,
+        ).getOrElse { error ->
+            return SendSubmissionResult(success = false, errorMessage = error.message ?: "构建支付交易失败")
+        }
+
+        val signature = when (build.networkCode) {
+            "SOLANA" -> walletKeyManager.signSolanaMessage(walletId, payerChainAccount.keySlotId, build.signingPayload)
+            "TRON" -> walletKeyManager.signTronTransactionId(walletId, payerChainAccount.keySlotId, build.signingPayload)
+            else -> return SendSubmissionResult(success = false, errorMessage = "暂不支持该链钱包支付")
+        }
+        val broadcast = paymentRepository.proxyBroadcastWalletTransfer(
+            com.v2ray.ang.payment.data.api.WalletTransferProxyBroadcastRequest(
+                networkCode = build.networkCode,
+                assetCode = build.assetCode,
+                toAddress = build.toAddress,
+                unsignedPayload = build.unsignedPayload,
+                signature = signature,
+            ),
+        ).getOrElse { error ->
+            return SendSubmissionResult(success = false, errorMessage = error.message ?: "广播失败")
+        }
+        if (!broadcast.broadcasted) {
+            return SendSubmissionResult(success = false, errorMessage = broadcast.note ?: "广播失败")
+        }
+        val submitResult = paymentRepository.submitClientTx(
+            orderNo = order.orderNo,
+            txHash = broadcast.txHash,
+            networkCode = build.networkCode,
+            payerWalletId = walletId,
+            payerChainAccountId = chainAccountId,
+            submittedFromAddress = payerChainAccount.address,
+        ).getOrElse { error ->
+            return SendSubmissionResult(success = false, errorMessage = error.message ?: "提交交易哈希失败")
+        }
+        return SendSubmissionResult(success = true, txHash = broadcast.txHash, errorMessage = null)
     }
 
     override suspend fun getOrderResultState(args: OrderResultRouteArgs): OrderResultUiState {
@@ -1590,39 +1694,44 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val normalizedMnemonic = mnemonic.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
         val normalizedMnemonicText = normalizedMnemonic.joinToString(" ")
         val mnemonicHash = createMnemonicHash(normalizedMnemonicText)
-        val result = paymentRepository.upsertWalletLifecycle(
-            action = "CREATE",
-            displayName = normalizedDisplayName,
-            mnemonicHash = mnemonicHash,
-            mnemonicWordCount = normalizedMnemonic.size,
-        )
-        val lifecycle = result.getOrNull()
-        return if (lifecycle?.walletExists == true) {
+        val addresses = walletKeyManager.deriveAddressesFromMnemonic(normalizedMnemonicText)
+        val detail = paymentRepository.createMnemonicWallet(
+            walletName = normalizedDisplayName,
+            keySlots = buildMnemonicWalletKeySlots(),
+            chainAccounts = buildMnemonicWalletChainAccounts(addresses),
+        ).getOrElse { error ->
+            return WalletLifecycleMutationResult(
+                success = false,
+                errorMessage = error.message ?: "创建钱包失败",
+            )
+        }
+        val walletId = detail.wallet.walletId
+        return if (walletId.isNotBlank()) {
             val timestamp = Instant.now().toString()
-            walletSecretStore.upsertMnemonic(
+            persistMnemonicSecret(
+                detail = detail,
                 accountId = accountId,
-                walletId = lifecycle.walletId.orEmpty(),
                 mnemonic = normalizedMnemonicText,
                 mnemonicHash = mnemonicHash,
                 mnemonicWordCount = normalizedMnemonic.size,
                 sourceType = "CREATE",
                 timestampIso = timestamp,
             )
-            val publicAddresses = syncDerivedPublicAddresses(accountId)
+            val publicAddresses = syncDerivedPublicAddresses(walletId, "SOLANA_0", "TRON_0")
             uploadWalletSecretBackup(
-                walletId = lifecycle.walletId.orEmpty(),
+                walletId = walletId,
                 mnemonic = normalizedMnemonicText,
                 mnemonicHash = mnemonicHash,
                 mnemonicWordCount = normalizedMnemonic.size,
-                walletName = lifecycle.displayName ?: normalizedDisplayName,
+                walletName = detail.wallet.walletName,
                 sourceType = "CREATE",
                 publicAddresses = publicAddresses,
             )
-            WalletLifecycleMutationResult(success = true, walletId = lifecycle.walletId)
+            WalletLifecycleMutationResult(success = true, walletId = walletId)
         } else {
             WalletLifecycleMutationResult(
                 success = false,
-                errorMessage = result.exceptionOrNull()?.message ?: "创建钱包失败",
+                errorMessage = "创建钱包失败",
             )
         }
     }
@@ -1637,18 +1746,17 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getImportWalletMethodState(): ImportWalletMethodUiState {
         val user = paymentRepository.getCachedCurrentUser()
-        val orders = loadCachedOrders()
-        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        val wallets = paymentRepository.listWallets().getOrNull().orEmpty()
         return ImportWalletMethodUiState(
             metrics = listOf(
                 FeatureMetric("当前账户", if (user != null) "已登录" else "未登录"),
-                FeatureMetric("订单记录", orders.size.toString()),
-                FeatureMetric("恢复入口", "助记词"),
+                FeatureMetric("钱包数量", wallets.size.toString()),
+                FeatureMetric("恢复入口", "助记词 / 观察钱包"),
             ),
             highlights = listOf(
                 FeatureListItem("默认方式", "优先使用助记词恢复多链钱包", "助记词", "LIVE"),
+                FeatureListItem("观察钱包", "导入只读地址用于查看资产。", "WATCH_ONLY", "SAFE"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("当前钱包", lifecycle?.displayName ?: "未创建", lifecycle?.lifecycleStatus ?: "NOT_CREATED", "REAL"),
             ),
             note = "",
         )
@@ -1660,7 +1768,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             metrics = listOf(
                 FeatureMetric("导入来源", args.source),
                 FeatureMetric("账户状态", if (user != null) "已登录" else "未登录"),
-                FeatureMetric("恢复能力", "wallet/lifecycle"),
+                FeatureMetric("恢复能力", "wallets/import/mnemonic"),
             ),
             fields = listOf(
                 FeatureField(
@@ -1679,7 +1787,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             highlights = listOf(
                 FeatureListItem("恢复来源", args.source, "服务状态", "REAL"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
-                FeatureListItem("数据来源", "wallet/lifecycle", "", "REAL"),
+                FeatureListItem("数据来源", "wallets/import/mnemonic", "", "REAL"),
             ),
             note = "",
         )
@@ -1704,41 +1812,85 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             )
         val normalizedMnemonicText = normalizedMnemonic.joinToString(" ")
         val mnemonicHash = createMnemonicHash(normalizedMnemonicText)
-        val result = paymentRepository.upsertWalletLifecycle(
-            action = "IMPORT",
-            displayName = walletName.ifBlank { "Imported Wallet" },
-            mnemonicHash = mnemonicHash,
-            mnemonicWordCount = normalizedMnemonic.size,
-        )
-        val lifecycle = result.getOrNull()
-        return if (lifecycle?.walletExists == true) {
+        val addresses = walletKeyManager.deriveAddressesFromMnemonic(normalizedMnemonicText)
+        val detail = paymentRepository.importMnemonicWallet(
+            walletName = walletName.ifBlank { "Imported Wallet" },
+            keySlots = buildMnemonicWalletKeySlots(),
+            chainAccounts = buildMnemonicWalletChainAccounts(addresses),
+        ).getOrElse { error ->
+            return WalletLifecycleMutationResult(
+                success = false,
+                errorMessage = error.message ?: "导入钱包失败",
+            )
+        }
+        val walletId = detail.wallet.walletId
+        return if (walletId.isNotBlank()) {
             val timestamp = Instant.now().toString()
-            walletSecretStore.upsertMnemonic(
+            persistMnemonicSecret(
+                detail = detail,
                 accountId = accountId,
-                walletId = lifecycle.walletId.orEmpty(),
                 mnemonic = normalizedMnemonicText,
                 mnemonicHash = mnemonicHash,
                 mnemonicWordCount = normalizedMnemonic.size,
                 sourceType = "IMPORT",
                 timestampIso = timestamp,
             )
-            val publicAddresses = syncDerivedPublicAddresses(accountId)
+            val publicAddresses = syncDerivedPublicAddresses(walletId, "SOLANA_0", "TRON_0")
             uploadWalletSecretBackup(
-                walletId = lifecycle.walletId.orEmpty(),
+                walletId = walletId,
                 mnemonic = normalizedMnemonicText,
                 mnemonicHash = mnemonicHash,
                 mnemonicWordCount = normalizedMnemonic.size,
-                walletName = lifecycle.displayName ?: walletName,
+                walletName = detail.wallet.walletName,
                 sourceType = source.ifBlank { "IMPORT" },
                 publicAddresses = publicAddresses,
             )
-            WalletLifecycleMutationResult(success = true, walletId = lifecycle.walletId)
+            WalletLifecycleMutationResult(success = true, walletId = walletId)
         } else {
             WalletLifecycleMutationResult(
                 success = false,
-                errorMessage = result.exceptionOrNull()?.message ?: "导入钱包失败",
+                errorMessage = "导入钱包失败",
             )
         }
+    }
+
+    override suspend fun getImportWatchWalletState(): ImportWatchWalletUiState {
+        return ImportWatchWalletUiState()
+    }
+
+    override suspend fun importWatchOnlyWallet(
+        walletName: String,
+        networkCode: String,
+        address: String,
+    ): WalletLifecycleMutationResult {
+        val normalizedNetwork = networkCode.trim().uppercase(Locale.ROOT)
+        val chainFamily = when (normalizedNetwork) {
+            "SOLANA" -> "SOLANA"
+            "TRON" -> "TRON"
+            else -> "EVM"
+        }
+        val detail = paymentRepository.importWatchOnlyWallet(
+            walletName = walletName.ifBlank { "Watch Wallet" },
+            chainFamily = chainFamily,
+            networkCode = normalizedNetwork,
+            address = address.trim(),
+        ).getOrElse { error ->
+            return WalletLifecycleMutationResult(
+                success = false,
+                errorMessage = error.message ?: "导入观察钱包失败",
+            )
+        }
+        return WalletLifecycleMutationResult(success = true, walletId = detail.wallet.walletId)
+    }
+
+    override suspend fun setDefaultWallet(walletId: String): WalletLifecycleMutationResult {
+        val detail = paymentRepository.setDefaultWallet(walletId).getOrElse { error ->
+            return WalletLifecycleMutationResult(
+                success = false,
+                errorMessage = error.message ?: "设置默认钱包失败",
+            )
+        }
+        return WalletLifecycleMutationResult(success = true, walletId = detail.wallet.walletId)
     }
 
     override suspend fun getImportPrivateKeyState(args: ImportPrivateKeyRouteArgs): ImportPrivateKeyUiState =
@@ -1940,27 +2092,41 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState {
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
-        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         val currentAccountId = paymentRepository.getCurrentUserId()
         val conflictingWallet = currentAccountId?.let { walletSecretStore.getConflictingMnemonicRecord(it) }
-        val walletExists = lifecycle?.walletExists == true &&
-            !lifecycle.sourceType.equals("LEGACY", ignoreCase = true)
-        val walletDisplayName = when {
-            walletExists -> lifecycle?.walletName ?: lifecycle?.displayName ?: "当前钱包"
-            conflictingWallet != null -> "当前账号未创建钱包"
-            else -> "未创建"
-        }
+        val wallets = paymentRepository.listWallets().getOrNull().orEmpty()
+        val selectedWallet = wallets.firstOrNull { it.walletId == args.walletId }
+            ?: wallets.firstOrNull { it.isDefault }
+            ?: wallets.firstOrNull()
+        val walletDisplayName = selectedWallet?.walletName ?: if (conflictingWallet != null) "当前账号未创建钱包" else "未创建"
 
         return WalletManagerUiState(
             badge = "",
             metrics = listOf(
-                FeatureMetric("钱包数量", if (walletExists) "1" else "0"),
+                FeatureMetric("钱包数量", wallets.size.toString()),
                 FeatureMetric("当前钱包", walletDisplayName),
                 FeatureMetric("关联订单", orders.size.toString()),
             ),
+            wallets = wallets.map { wallet ->
+                WalletManagerWalletItemUi(
+                    walletId = wallet.walletId,
+                    walletName = wallet.walletName,
+                    walletKind = wallet.walletKind,
+                    isDefault = wallet.isDefault,
+                    isArchived = wallet.isArchived,
+                    subtitle = buildString {
+                        append(wallet.sourceType)
+                        if (!wallet.deviceCapabilitySummary.isNullOrBlank()) {
+                            append(" · ")
+                            append(wallet.deviceCapabilitySummary)
+                        }
+                    },
+                )
+            },
             highlights = listOf(
-                FeatureListItem("当前钱包", walletDisplayName, lifecycle?.lifecycleStatus ?: "NOT_CREATED", "REAL"),
-                FeatureListItem("新增钱包", "为当前账号新增一个独立钱包地址入口。", "创建", "CREATE"),
+                FeatureListItem("当前钱包", walletDisplayName, selectedWallet?.walletKind ?: "NOT_CREATED", "REAL"),
+                FeatureListItem("新增钱包", "创建新的多链自托管钱包。", "创建", "CREATE"),
+                FeatureListItem("导入观察钱包", "导入只读地址用于查看资产。", "WATCH_ONLY", "SAFE"),
                 FeatureListItem(
                     "账户标签",
                     user?.email ?: user?.username ?: "--",
@@ -1968,7 +2134,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                     "ACCOUNT",
                 ),
             ),
-            summary = if (walletExists) "当前账号已存在钱包；后续新增钱包请从这里进入。" else "当前账号还没有钱包。",
+            summary = if (wallets.isNotEmpty()) "当前账号已配置多个钱包入口，可切换默认钱包。" else "当前账号还没有钱包。",
             checklist = emptyList(),
             note = "",
         )
@@ -2142,6 +2308,8 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         planId: String,
         assetCode: String,
         networkCode: String,
+        payerWalletId: String?,
+        payerChainAccountId: String?,
     ): Result<Order> {
         val currentOrderNo = paymentRepository.getCurrentOrderId()
         val currentOrderResult = currentOrderNo?.let { paymentRepository.getOrder(it) }
@@ -2158,7 +2326,50 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             planId = planId,
             assetCode = assetCode,
             networkCode = networkCode,
+            payerWalletId = payerWalletId,
+            payerChainAccountId = payerChainAccountId,
         )
+    }
+
+    private suspend fun buildPayerWalletOptions(
+        networkCode: String,
+        selectedWalletId: String,
+        selectedChainAccountId: String,
+    ): List<PayerWalletOptionUi> {
+        if (networkCode.isBlank()) {
+            return emptyList()
+        }
+        val wallets = paymentRepository.listWallets().getOrNull().orEmpty()
+        val options = mutableListOf<PayerWalletOptionUi>()
+        wallets.forEach { wallet ->
+            if (wallet.isArchived) return@forEach
+            val chainAccounts = paymentRepository.getWalletChainAccounts(wallet.walletId).getOrNull().orEmpty()
+            chainAccounts
+                .filter { it.networkCode.equals(networkCode, ignoreCase = true) }
+                .forEach { chainAccount ->
+                    val signable = chainAccount.capability == "SIGN_AND_PAY" &&
+                        walletSecretStore.getMnemonicRecord(wallet.walletId, chainAccount.keySlotId) != null
+                    options += PayerWalletOptionUi(
+                        walletId = wallet.walletId,
+                        chainAccountId = chainAccount.chainAccountId,
+                        label = wallet.walletName,
+                        subtitle = if (signable) chainAccount.address else "当前设备无本地签名材料",
+                        networkCode = chainAccount.networkCode,
+                        capability = if (signable) "SIGN_AND_PAY" else "VIEW_ONLY",
+                        selected = false,
+                    )
+                }
+        }
+        val selected = options.firstOrNull {
+            it.walletId == selectedWalletId && it.chainAccountId == selectedChainAccountId
+        } ?: options.firstOrNull()
+        return options.map { option ->
+            option.copy(
+                selected = selected != null &&
+                    selected.walletId == option.walletId &&
+                    selected.chainAccountId == option.chainAccountId,
+            )
+        }
     }
 
     private suspend fun loadCachedOrders(): List<OrderEntity> {
@@ -2274,8 +2485,9 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         sourceType: String,
         publicAddresses: List<WalletSecretBackupPublicAddressRequest>,
     ) {
-        paymentRepository.upsertWalletSecretBackup(
-            WalletSecretBackupUpsertRequest(
+        paymentRepository.upsertWalletSecretBackupForWallet(
+            walletId = walletId,
+            request = WalletSecretBackupUpsertRequest(
                 walletId = walletId.takeIf { it.isNotBlank() },
                 mnemonic = mnemonic,
                 mnemonicHash = mnemonicHash,
@@ -2288,9 +2500,11 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     private suspend fun syncDerivedPublicAddresses(
-        accountId: String,
+        walletId: String,
+        solanaKeySlotId: String?,
+        tronKeySlotId: String?,
     ): List<WalletSecretBackupPublicAddressRequest> {
-        val addresses = walletKeyManager.deriveAddresses(accountId)
+        val addresses = walletKeyManager.deriveAddresses(walletId, solanaKeySlotId)
         val payload = listOf(
             WalletSecretBackupPublicAddressRequest(
                 networkCode = "SOLANA",
@@ -2326,6 +2540,127 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             )
         }
         return payload
+    }
+
+    private fun buildMnemonicWalletKeySlots() = listOf(
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletKeySlotRequest(
+            slotCode = "EVM_0",
+            chainFamily = "EVM",
+            derivationType = "MNEMONIC",
+            derivationPath = "m/44'/60'/0'/0/0",
+        ),
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletKeySlotRequest(
+            slotCode = "SOLANA_0",
+            chainFamily = "SOLANA",
+            derivationType = "MNEMONIC",
+            derivationPath = "m/44'/501'/0'/0'",
+        ),
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletKeySlotRequest(
+            slotCode = "TRON_0",
+            chainFamily = "TRON",
+            derivationType = "MNEMONIC",
+            derivationPath = "m/44'/195'/0'/0/0",
+        ),
+    )
+
+    private fun buildMnemonicWalletChainAccounts(
+        addresses: com.v2ray.ang.payment.wallet.DerivedWalletAddresses,
+    ) = listOf(
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletChainAccountRequest(
+            slotCode = "EVM_0",
+            chainFamily = "EVM",
+            networkCode = "ETHEREUM",
+            address = addresses.evmAddress,
+            isEnabled = true,
+            isDefaultReceive = true,
+        ),
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletChainAccountRequest(
+            slotCode = "EVM_0",
+            chainFamily = "EVM",
+            networkCode = "BSC",
+            address = addresses.evmAddress,
+            isEnabled = true,
+            isDefaultReceive = false,
+        ),
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletChainAccountRequest(
+            slotCode = "EVM_0",
+            chainFamily = "EVM",
+            networkCode = "POLYGON",
+            address = addresses.evmAddress,
+            isEnabled = true,
+            isDefaultReceive = false,
+        ),
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletChainAccountRequest(
+            slotCode = "EVM_0",
+            chainFamily = "EVM",
+            networkCode = "ARBITRUM",
+            address = addresses.evmAddress,
+            isEnabled = true,
+            isDefaultReceive = false,
+        ),
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletChainAccountRequest(
+            slotCode = "EVM_0",
+            chainFamily = "EVM",
+            networkCode = "BASE",
+            address = addresses.evmAddress,
+            isEnabled = true,
+            isDefaultReceive = false,
+        ),
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletChainAccountRequest(
+            slotCode = "EVM_0",
+            chainFamily = "EVM",
+            networkCode = "OPTIMISM",
+            address = addresses.evmAddress,
+            isEnabled = true,
+            isDefaultReceive = false,
+        ),
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletChainAccountRequest(
+            slotCode = "EVM_0",
+            chainFamily = "EVM",
+            networkCode = "AVALANCHE_C",
+            address = addresses.evmAddress,
+            isEnabled = true,
+            isDefaultReceive = false,
+        ),
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletChainAccountRequest(
+            slotCode = "SOLANA_0",
+            chainFamily = "SOLANA",
+            networkCode = "SOLANA",
+            address = addresses.solanaAddress,
+            isEnabled = true,
+            isDefaultReceive = true,
+        ),
+        com.v2ray.ang.payment.data.api.CreateMnemonicWalletChainAccountRequest(
+            slotCode = "TRON_0",
+            chainFamily = "TRON",
+            networkCode = "TRON",
+            address = addresses.tronAddress,
+            isEnabled = true,
+            isDefaultReceive = true,
+        ),
+    )
+
+    private fun persistMnemonicSecret(
+        detail: com.v2ray.ang.payment.data.api.WalletDetailData,
+        accountId: String,
+        mnemonic: String,
+        mnemonicHash: String,
+        mnemonicWordCount: Int,
+        sourceType: String,
+        timestampIso: String,
+    ) {
+        detail.keySlots.forEach { keySlot ->
+            walletSecretStore.upsertMnemonicForWallet(
+                accountId = accountId,
+                walletId = detail.wallet.walletId,
+                keySlotId = keySlot.keySlotId,
+                mnemonic = mnemonic,
+                mnemonicHash = mnemonicHash,
+                mnemonicWordCount = mnemonicWordCount,
+                sourceType = sourceType,
+                timestampIso = timestampIso,
+            )
+        }
     }
 
     private fun sessionUnavailableMessage(message: String?): String? {

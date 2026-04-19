@@ -22,6 +22,9 @@ describe('PostgresRuntimeStateRepository matcher persistence', () => {
         orderId: 'order-1',
         orderNo: 'ORD-1',
         accountId: 'acc-1',
+        payerWalletId: null,
+        payerChainAccountId: null,
+        submittedFromAddress: null,
         planCode: 'BASIC_1M',
         planName: 'Basic 1M',
         orderType: 'NEW',
@@ -109,6 +112,131 @@ describe('PostgresRuntimeStateRepository matcher persistence', () => {
       matchStatus: 'MATCHED',
       matcherRemark: 'auto-match',
     });
+
+    await repository.onModuleDestroy();
+  });
+
+  it('supports multiple wallets per account with chain accounts and wallet-scoped backups', async () => {
+    const db = newDb({
+      noAstCoverageCheck: true,
+    });
+    const { Pool } = db.adapters.createPg();
+    const repository = new PostgresRuntimeStateRepository(
+      {
+        connectionString: 'postgres://runtime:runtime@server2:5432/cryptovpn',
+      },
+      new Pool(),
+    );
+
+    await repository.initialize();
+
+    const primary = await repository.insertWallet({
+      walletId: 'wallet-1',
+      accountId: 'acc-1',
+      walletName: 'Primary',
+      walletKind: 'SELF_CUSTODY',
+      sourceType: 'CREATED',
+      isDefault: true,
+      isArchived: false,
+      createdAt: '2026-04-19T00:00:00.000Z',
+      updatedAt: '2026-04-19T00:00:00.000Z',
+    });
+    const watch = await repository.insertWallet({
+      walletId: 'wallet-2',
+      accountId: 'acc-1',
+      walletName: 'Watch',
+      walletKind: 'WATCH_ONLY',
+      sourceType: 'WATCH_IMPORTED',
+      isDefault: false,
+      isArchived: false,
+      createdAt: '2026-04-19T00:01:00.000Z',
+      updatedAt: '2026-04-19T00:01:00.000Z',
+    });
+
+    await repository.insertWalletKeySlot({
+      keySlotId: 'slot-evm',
+      walletId: primary.walletId,
+      slotCode: 'EVM_0',
+      chainFamily: 'EVM',
+      derivationType: 'MNEMONIC',
+      derivationPath: "m/44'/60'/0'/0/0",
+      createdAt: primary.createdAt,
+      updatedAt: primary.updatedAt,
+    });
+    const chainAccount = await repository.insertWalletChainAccount({
+      chainAccountId: 'chain-base',
+      walletId: primary.walletId,
+      keySlotId: 'slot-evm',
+      chainFamily: 'EVM',
+      networkCode: 'BASE',
+      address: '0x1111111111111111111111111111111111111111',
+      capability: 'SIGN_AND_PAY',
+      isEnabled: true,
+      isDefaultReceive: true,
+      createdAt: primary.createdAt,
+      updatedAt: primary.updatedAt,
+    });
+
+    await repository.insertWalletChainAccount({
+      chainAccountId: 'chain-sol-watch',
+      walletId: watch.walletId,
+      keySlotId: null,
+      chainFamily: 'SOLANA',
+      networkCode: 'SOLANA',
+      address: '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV',
+      capability: 'WATCH_ONLY',
+      isEnabled: true,
+      isDefaultReceive: true,
+      createdAt: watch.createdAt,
+      updatedAt: watch.updatedAt,
+    });
+
+    await repository.upsertWalletSecretBackupV2({
+      backupId: 'backup-1',
+      accountId: 'acc-1',
+      walletId: primary.walletId,
+      secretType: 'MNEMONIC',
+      encryptionScheme: 'AGE',
+      recoveryKeyVersion: 'v1',
+      recipientFingerprint: 'fingerprint',
+      ciphertext: 'ciphertext',
+      replicatedToBackupServer: false,
+      backupServerReference: null,
+      lastReplicationError: null,
+      createdAt: primary.createdAt,
+      updatedAt: primary.updatedAt,
+    });
+
+    expect(await repository.listWalletsByAccountId('acc-1')).toEqual([
+      expect.objectContaining({ walletId: 'wallet-1', isDefault: true }),
+      expect.objectContaining({ walletId: 'wallet-2', isDefault: false }),
+    ]);
+
+    expect(await repository.listWalletKeySlotsByWalletId('wallet-1')).toEqual([
+      expect.objectContaining({ keySlotId: 'slot-evm', slotCode: 'EVM_0' }),
+    ]);
+
+    expect(await repository.findWalletChainAccountById(chainAccount.chainAccountId)).toEqual(
+      expect.objectContaining({
+        walletId: 'wallet-1',
+        networkCode: 'BASE',
+        capability: 'SIGN_AND_PAY',
+      }),
+    );
+
+    expect(await repository.findWalletSecretBackupByWalletId('wallet-1')).toEqual(
+      expect.objectContaining({
+        walletId: 'wallet-1',
+        encryptionScheme: 'AGE',
+      }),
+    );
+
+    const nextDefault = await repository.setDefaultWallet('acc-1', 'wallet-2');
+    expect(nextDefault.walletId).toBe('wallet-2');
+    expect(nextDefault.isDefault).toBe(true);
+    expect(
+      (await repository.listWalletsByAccountId('acc-1')).filter((item) => item.isDefault),
+    ).toHaveLength(1);
 
     await repository.onModuleDestroy();
   });

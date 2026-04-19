@@ -7,9 +7,13 @@ import {
 } from '../auth/auth.types';
 import { OrderStatus } from '../orders/orders.types';
 import {
+  PersistedWalletChainAccountRecord,
+  PersistedWalletKeySlotRecord,
   PersistedWalletLifecycleRecord,
   PersistedWalletPublicAddressRecord,
   PersistedWalletSecretBackupRecord,
+  PersistedWalletSecretBackupV2Record,
+  PersistedWalletRecord,
 } from '../wallet/wallet.types';
 import { PersistedSubscriptionRecord } from '../vpn/vpn.types';
 import { RuntimeStateRepository } from './runtime-state.repository';
@@ -33,6 +37,10 @@ const SUBSCRIPTIONS_TABLE = 'runtime_state_subscriptions';
 const WALLET_LIFECYCLES_TABLE = 'runtime_state_wallet_lifecycles';
 const WALLET_PUBLIC_ADDRESSES_TABLE = 'runtime_state_wallet_public_addresses';
 const WALLET_SECRET_BACKUPS_TABLE = 'runtime_state_wallet_secret_backups';
+const WALLETS_TABLE = 'runtime_state_wallets';
+const WALLET_KEY_SLOTS_TABLE = 'runtime_state_wallet_key_slots';
+const WALLET_CHAIN_ACCOUNTS_TABLE = 'runtime_state_wallet_chain_accounts';
+const WALLET_SECRET_BACKUPS_V2_TABLE = 'runtime_state_wallet_secret_backups_v2';
 const ACCOUNT_COLUMNS = `
   id::text AS account_id,
   email::text AS email,
@@ -63,6 +71,9 @@ const ORDER_COLUMNS = `
   order_id,
   order_no,
   account_id,
+  payer_wallet_id,
+  payer_chain_account_id,
+  submitted_from_address,
   plan_code,
   plan_name,
   order_type,
@@ -142,6 +153,55 @@ const WALLET_SECRET_BACKUP_COLUMNS = `
   created_at,
   updated_at
 `;
+const WALLET_COLUMNS = `
+  wallet_id,
+  account_id,
+  wallet_name,
+  wallet_kind,
+  source_type,
+  is_default,
+  is_archived,
+  created_at,
+  updated_at
+`;
+const WALLET_KEY_SLOT_COLUMNS = `
+  key_slot_id,
+  wallet_id,
+  slot_code,
+  chain_family,
+  derivation_type,
+  derivation_path,
+  created_at,
+  updated_at
+`;
+const WALLET_CHAIN_ACCOUNT_COLUMNS = `
+  chain_account_id,
+  wallet_id,
+  key_slot_id,
+  chain_family,
+  network_code,
+  address,
+  capability,
+  is_enabled,
+  is_default_receive,
+  created_at,
+  updated_at
+`;
+const WALLET_SECRET_BACKUP_V2_COLUMNS = `
+  backup_id,
+  account_id,
+  wallet_id,
+  secret_type,
+  encryption_scheme,
+  recovery_key_version,
+  recipient_fingerprint,
+  ciphertext,
+  replicated_to_backup_server,
+  backup_server_reference,
+  last_replication_error,
+  created_at,
+  updated_at
+`;
 const ONCHAIN_RECEIPT_COLUMNS = `
   receipt_id,
   network_code,
@@ -178,6 +238,9 @@ interface RuntimeStateOrderRow {
   order_id: string;
   order_no: string;
   account_id: string;
+  payer_wallet_id: string | null;
+  payer_chain_account_id: string | null;
+  submitted_from_address: string | null;
   plan_code: string;
   plan_name: string;
   order_type: 'NEW' | 'RENEWAL';
@@ -252,6 +315,59 @@ interface RuntimeStateWalletSecretBackupRow {
   wallet_id: string;
   secret_type: PersistedWalletSecretBackupRecord['secretType'];
   encryption_scheme: PersistedWalletSecretBackupRecord['encryptionScheme'];
+  recovery_key_version: string;
+  recipient_fingerprint: string;
+  ciphertext: string;
+  replicated_to_backup_server: boolean;
+  backup_server_reference: string | null;
+  last_replication_error: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RuntimeStateWalletRow {
+  wallet_id: string;
+  account_id: string;
+  wallet_name: string;
+  wallet_kind: PersistedWalletRecord['walletKind'];
+  source_type: PersistedWalletRecord['sourceType'];
+  is_default: boolean;
+  is_archived: boolean;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RuntimeStateWalletKeySlotRow {
+  key_slot_id: string;
+  wallet_id: string;
+  slot_code: string;
+  chain_family: PersistedWalletKeySlotRecord['chainFamily'];
+  derivation_type: PersistedWalletKeySlotRecord['derivationType'];
+  derivation_path: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RuntimeStateWalletChainAccountRow {
+  chain_account_id: string;
+  wallet_id: string;
+  key_slot_id: string | null;
+  chain_family: PersistedWalletChainAccountRecord['chainFamily'];
+  network_code: PersistedWalletChainAccountRecord['networkCode'];
+  address: string;
+  capability: PersistedWalletChainAccountRecord['capability'];
+  is_enabled: boolean;
+  is_default_receive: boolean;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RuntimeStateWalletSecretBackupV2Row {
+  backup_id: string;
+  account_id: string;
+  wallet_id: string;
+  secret_type: PersistedWalletSecretBackupV2Record['secretType'];
+  encryption_scheme: PersistedWalletSecretBackupV2Record['encryptionScheme'];
   recovery_key_version: string;
   recipient_fingerprint: string;
   ciphertext: string;
@@ -569,6 +685,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           order_id,
           order_no,
           account_id,
+          payer_wallet_id,
+          payer_chain_account_id,
+          submitted_from_address,
           plan_code,
           plan_name,
           order_type,
@@ -617,7 +736,10 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           $22,
           $23,
           $24,
-          $25
+          $25,
+          $26,
+          $27,
+          $28
         )
         ON CONFLICT (idempotency_key) DO NOTHING
         RETURNING ${ORDER_COLUMNS}
@@ -670,6 +792,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           order_id,
           order_no,
           account_id,
+          payer_wallet_id,
+          payer_chain_account_id,
+          submitted_from_address,
           plan_code,
           plan_name,
           order_type,
@@ -718,12 +843,18 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           $22,
           $23,
           $24,
-          $25
+          $25,
+          $26,
+          $27,
+          $28
         )
         ON CONFLICT (order_no) DO UPDATE
         SET
           order_id = EXCLUDED.order_id,
           account_id = EXCLUDED.account_id,
+          payer_wallet_id = EXCLUDED.payer_wallet_id,
+          payer_chain_account_id = EXCLUDED.payer_chain_account_id,
+          submitted_from_address = EXCLUDED.submitted_from_address,
           plan_code = EXCLUDED.plan_code,
           plan_name = EXCLUDED.plan_name,
           order_type = EXCLUDED.order_type,
@@ -1414,6 +1545,325 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     return this.mapWalletSecretBackup(result.rows[0]);
   }
 
+  async listWalletsByAccountId(
+    accountId: string,
+  ): Promise<PersistedWalletRecord[]> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletRow>(
+      `
+        SELECT ${WALLET_COLUMNS}
+        FROM ${WALLETS_TABLE}
+        WHERE account_id = $1
+        ORDER BY is_default DESC, created_at ASC
+      `,
+      [accountId],
+    );
+    return result.rows.map((row) => this.mapWallet(row));
+  }
+
+  async findWalletById(walletId: string): Promise<PersistedWalletRecord | null> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletRow>(
+      `
+        SELECT ${WALLET_COLUMNS}
+        FROM ${WALLETS_TABLE}
+        WHERE wallet_id = $1
+        LIMIT 1
+      `,
+      [walletId],
+    );
+    return result.rows[0] ? this.mapWallet(result.rows[0]) : null;
+  }
+
+  async insertWallet(wallet: PersistedWalletRecord): Promise<PersistedWalletRecord> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletRow>(
+      `
+        INSERT INTO ${WALLETS_TABLE} (
+          wallet_id,
+          account_id,
+          wallet_name,
+          wallet_kind,
+          source_type,
+          is_default,
+          is_archived,
+          created_at,
+          updated_at
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        ON CONFLICT (wallet_id) DO UPDATE
+        SET
+          account_id = EXCLUDED.account_id,
+          wallet_name = EXCLUDED.wallet_name,
+          wallet_kind = EXCLUDED.wallet_kind,
+          source_type = EXCLUDED.source_type,
+          is_default = EXCLUDED.is_default,
+          is_archived = EXCLUDED.is_archived,
+          created_at = EXCLUDED.created_at,
+          updated_at = EXCLUDED.updated_at
+        RETURNING ${WALLET_COLUMNS}
+      `,
+      [
+        wallet.walletId,
+        wallet.accountId,
+        wallet.walletName,
+        wallet.walletKind,
+        wallet.sourceType,
+        wallet.isDefault,
+        wallet.isArchived,
+        wallet.createdAt,
+        wallet.updatedAt,
+      ],
+    );
+    return this.mapWallet(result.rows[0]);
+  }
+
+  async updateWallet(wallet: PersistedWalletRecord): Promise<PersistedWalletRecord> {
+    return this.insertWallet(wallet);
+  }
+
+  async setDefaultWallet(
+    accountId: string,
+    walletId: string,
+  ): Promise<PersistedWalletRecord> {
+    await this.ensureReady();
+    await this.pool.query(
+      `
+        UPDATE ${WALLETS_TABLE}
+        SET is_default = false
+        WHERE account_id = $1
+      `,
+      [accountId],
+    );
+    const result = await this.pool.query<RuntimeStateWalletRow>(
+      `
+        UPDATE ${WALLETS_TABLE}
+        SET is_default = true, updated_at = NOW()
+        WHERE account_id = $1 AND wallet_id = $2
+        RETURNING ${WALLET_COLUMNS}
+      `,
+      [accountId, walletId],
+    );
+    if (!result.rows[0]) {
+      throw new Error(`Wallet ${walletId} not found for account ${accountId}`);
+    }
+    return this.mapWallet(result.rows[0]);
+  }
+
+  async listWalletKeySlotsByWalletId(
+    walletId: string,
+  ): Promise<PersistedWalletKeySlotRecord[]> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletKeySlotRow>(
+      `
+        SELECT ${WALLET_KEY_SLOT_COLUMNS}
+        FROM ${WALLET_KEY_SLOTS_TABLE}
+        WHERE wallet_id = $1
+        ORDER BY slot_code ASC
+      `,
+      [walletId],
+    );
+    return result.rows.map((row) => this.mapWalletKeySlot(row));
+  }
+
+  async insertWalletKeySlot(
+    keySlot: PersistedWalletKeySlotRecord,
+  ): Promise<PersistedWalletKeySlotRecord> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletKeySlotRow>(
+      `
+        INSERT INTO ${WALLET_KEY_SLOTS_TABLE} (
+          key_slot_id,
+          wallet_id,
+          slot_code,
+          chain_family,
+          derivation_type,
+          derivation_path,
+          created_at,
+          updated_at
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        ON CONFLICT (key_slot_id) DO UPDATE
+        SET
+          wallet_id = EXCLUDED.wallet_id,
+          slot_code = EXCLUDED.slot_code,
+          chain_family = EXCLUDED.chain_family,
+          derivation_type = EXCLUDED.derivation_type,
+          derivation_path = EXCLUDED.derivation_path,
+          created_at = EXCLUDED.created_at,
+          updated_at = EXCLUDED.updated_at
+        RETURNING ${WALLET_KEY_SLOT_COLUMNS}
+      `,
+      [
+        keySlot.keySlotId,
+        keySlot.walletId,
+        keySlot.slotCode,
+        keySlot.chainFamily,
+        keySlot.derivationType,
+        keySlot.derivationPath,
+        keySlot.createdAt,
+        keySlot.updatedAt,
+      ],
+    );
+    return this.mapWalletKeySlot(result.rows[0]);
+  }
+
+  async listWalletChainAccountsByWalletId(
+    walletId: string,
+  ): Promise<PersistedWalletChainAccountRecord[]> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletChainAccountRow>(
+      `
+        SELECT ${WALLET_CHAIN_ACCOUNT_COLUMNS}
+        FROM ${WALLET_CHAIN_ACCOUNTS_TABLE}
+        WHERE wallet_id = $1
+        ORDER BY network_code ASC, created_at ASC
+      `,
+      [walletId],
+    );
+    return result.rows.map((row) => this.mapWalletChainAccount(row));
+  }
+
+  async findWalletChainAccountById(
+    chainAccountId: string,
+  ): Promise<PersistedWalletChainAccountRecord | null> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletChainAccountRow>(
+      `
+        SELECT ${WALLET_CHAIN_ACCOUNT_COLUMNS}
+        FROM ${WALLET_CHAIN_ACCOUNTS_TABLE}
+        WHERE chain_account_id = $1
+        LIMIT 1
+      `,
+      [chainAccountId],
+    );
+    return result.rows[0] ? this.mapWalletChainAccount(result.rows[0]) : null;
+  }
+
+  async insertWalletChainAccount(
+    chainAccount: PersistedWalletChainAccountRecord,
+  ): Promise<PersistedWalletChainAccountRecord> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletChainAccountRow>(
+      `
+        INSERT INTO ${WALLET_CHAIN_ACCOUNTS_TABLE} (
+          chain_account_id,
+          wallet_id,
+          key_slot_id,
+          chain_family,
+          network_code,
+          address,
+          capability,
+          is_enabled,
+          is_default_receive,
+          created_at,
+          updated_at
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        ON CONFLICT (chain_account_id) DO UPDATE
+        SET
+          wallet_id = EXCLUDED.wallet_id,
+          key_slot_id = EXCLUDED.key_slot_id,
+          chain_family = EXCLUDED.chain_family,
+          network_code = EXCLUDED.network_code,
+          address = EXCLUDED.address,
+          capability = EXCLUDED.capability,
+          is_enabled = EXCLUDED.is_enabled,
+          is_default_receive = EXCLUDED.is_default_receive,
+          created_at = EXCLUDED.created_at,
+          updated_at = EXCLUDED.updated_at
+        RETURNING ${WALLET_CHAIN_ACCOUNT_COLUMNS}
+      `,
+      [
+        chainAccount.chainAccountId,
+        chainAccount.walletId,
+        chainAccount.keySlotId,
+        chainAccount.chainFamily,
+        chainAccount.networkCode,
+        chainAccount.address,
+        chainAccount.capability,
+        chainAccount.isEnabled,
+        chainAccount.isDefaultReceive,
+        chainAccount.createdAt,
+        chainAccount.updatedAt,
+      ],
+    );
+    return this.mapWalletChainAccount(result.rows[0]);
+  }
+
+  async findWalletSecretBackupByWalletId(
+    walletId: string,
+  ): Promise<PersistedWalletSecretBackupV2Record | null> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletSecretBackupV2Row>(
+      `
+        SELECT ${WALLET_SECRET_BACKUP_V2_COLUMNS}
+        FROM ${WALLET_SECRET_BACKUPS_V2_TABLE}
+        WHERE wallet_id = $1
+        LIMIT 1
+      `,
+      [walletId],
+    );
+    return result.rows[0] ? this.mapWalletSecretBackupV2(result.rows[0]) : null;
+  }
+
+  async upsertWalletSecretBackupV2(
+    record: PersistedWalletSecretBackupV2Record,
+  ): Promise<PersistedWalletSecretBackupV2Record> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletSecretBackupV2Row>(
+      `
+        INSERT INTO ${WALLET_SECRET_BACKUPS_V2_TABLE} (
+          backup_id,
+          account_id,
+          wallet_id,
+          secret_type,
+          encryption_scheme,
+          recovery_key_version,
+          recipient_fingerprint,
+          ciphertext,
+          replicated_to_backup_server,
+          backup_server_reference,
+          last_replication_error,
+          created_at,
+          updated_at
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+        ON CONFLICT (wallet_id) DO UPDATE
+        SET
+          backup_id = EXCLUDED.backup_id,
+          account_id = EXCLUDED.account_id,
+          secret_type = EXCLUDED.secret_type,
+          encryption_scheme = EXCLUDED.encryption_scheme,
+          recovery_key_version = EXCLUDED.recovery_key_version,
+          recipient_fingerprint = EXCLUDED.recipient_fingerprint,
+          ciphertext = EXCLUDED.ciphertext,
+          replicated_to_backup_server = EXCLUDED.replicated_to_backup_server,
+          backup_server_reference = EXCLUDED.backup_server_reference,
+          last_replication_error = EXCLUDED.last_replication_error,
+          created_at = EXCLUDED.created_at,
+          updated_at = EXCLUDED.updated_at
+        RETURNING ${WALLET_SECRET_BACKUP_V2_COLUMNS}
+      `,
+      [
+        record.backupId,
+        record.accountId,
+        record.walletId,
+        record.secretType,
+        record.encryptionScheme,
+        record.recoveryKeyVersion,
+        record.recipientFingerprint,
+        record.ciphertext,
+        record.replicatedToBackupServer,
+        record.backupServerReference,
+        record.lastReplicationError,
+        record.createdAt,
+        record.updatedAt,
+      ],
+    );
+    return this.mapWalletSecretBackupV2(result.rows[0]);
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.pool.end();
   }
@@ -1522,6 +1972,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
         order_no text PRIMARY KEY,
         order_id text NOT NULL UNIQUE,
         account_id text NOT NULL,
+        payer_wallet_id text NULL,
+        payer_chain_account_id text NULL,
+        submitted_from_address text NULL,
         plan_code text NOT NULL,
         plan_name text NOT NULL,
         order_type text NOT NULL,
@@ -1545,6 +1998,18 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
         idempotency_key text NOT NULL UNIQUE,
         collection_address text NOT NULL
       )
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${ORDERS_TABLE}
+      ADD COLUMN IF NOT EXISTS payer_wallet_id text NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${ORDERS_TABLE}
+      ADD COLUMN IF NOT EXISTS payer_chain_account_id text NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE ${ORDERS_TABLE}
+      ADD COLUMN IF NOT EXISTS submitted_from_address text NULL
     `);
     await this.pool.query(`
       ALTER TABLE ${ORDERS_TABLE}
@@ -1735,6 +2200,89 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       CREATE INDEX IF NOT EXISTS idx_runtime_state_wallet_secret_backups_wallet
       ON ${WALLET_SECRET_BACKUPS_TABLE} (wallet_id)
     `);
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${WALLETS_TABLE} (
+        wallet_id text PRIMARY KEY,
+        account_id text NOT NULL,
+        wallet_name text NOT NULL,
+        wallet_kind text NOT NULL,
+        source_type text NOT NULL,
+        is_default boolean NOT NULL DEFAULT false,
+        is_archived boolean NOT NULL DEFAULT false,
+        created_at timestamptz NOT NULL,
+        updated_at timestamptz NOT NULL
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_wallets_account
+      ON ${WALLETS_TABLE} (account_id)
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_wallets_default
+      ON ${WALLETS_TABLE} (account_id, is_default)
+    `);
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${WALLET_KEY_SLOTS_TABLE} (
+        key_slot_id text PRIMARY KEY,
+        wallet_id text NOT NULL,
+        slot_code text NOT NULL,
+        chain_family text NOT NULL,
+        derivation_type text NOT NULL,
+        derivation_path text NULL,
+        created_at timestamptz NOT NULL,
+        updated_at timestamptz NOT NULL,
+        UNIQUE (wallet_id, slot_code)
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_wallet_key_slots_wallet
+      ON ${WALLET_KEY_SLOTS_TABLE} (wallet_id)
+    `);
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${WALLET_CHAIN_ACCOUNTS_TABLE} (
+        chain_account_id text PRIMARY KEY,
+        wallet_id text NOT NULL,
+        key_slot_id text NULL,
+        chain_family text NOT NULL,
+        network_code text NOT NULL,
+        address text NOT NULL,
+        capability text NOT NULL,
+        is_enabled boolean NOT NULL DEFAULT true,
+        is_default_receive boolean NOT NULL DEFAULT false,
+        created_at timestamptz NOT NULL,
+        updated_at timestamptz NOT NULL,
+        UNIQUE (wallet_id, network_code, address)
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_wallet_chain_accounts_wallet
+      ON ${WALLET_CHAIN_ACCOUNTS_TABLE} (wallet_id)
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_wallet_chain_accounts_network
+      ON ${WALLET_CHAIN_ACCOUNTS_TABLE} (network_code)
+    `);
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${WALLET_SECRET_BACKUPS_V2_TABLE} (
+        backup_id text PRIMARY KEY,
+        account_id text NOT NULL,
+        wallet_id text NOT NULL UNIQUE,
+        secret_type text NOT NULL,
+        encryption_scheme text NOT NULL,
+        recovery_key_version text NOT NULL,
+        recipient_fingerprint text NOT NULL,
+        ciphertext text NOT NULL,
+        replicated_to_backup_server boolean NOT NULL DEFAULT false,
+        backup_server_reference text NULL,
+        last_replication_error text NULL,
+        created_at timestamptz NOT NULL,
+        updated_at timestamptz NOT NULL
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_wallet_secret_backups_v2_wallet
+      ON ${WALLET_SECRET_BACKUPS_V2_TABLE} (wallet_id)
+    `);
   }
 
   private buildOrderFilters(params: RuntimeStateListOrdersParams) {
@@ -1864,6 +2412,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       order.orderId,
       order.orderNo,
       order.accountId,
+      order.payerWalletId,
+      order.payerChainAccountId,
+      order.submittedFromAddress,
       order.planCode,
       order.planName,
       order.orderType,
@@ -1894,6 +2445,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       orderId: row.order_id,
       orderNo: row.order_no,
       accountId: row.account_id,
+      payerWalletId: row.payer_wallet_id,
+      payerChainAccountId: row.payer_chain_account_id,
+      submittedFromAddress: row.submitted_from_address,
       planCode: row.plan_code,
       planName: row.plan_name,
       orderType: row.order_type,
@@ -2019,6 +2573,75 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
   private mapWalletSecretBackup(
     row: RuntimeStateWalletSecretBackupRow,
   ): PersistedWalletSecretBackupRecord {
+    return {
+      backupId: row.backup_id,
+      accountId: row.account_id,
+      walletId: row.wallet_id,
+      secretType: row.secret_type,
+      encryptionScheme: row.encryption_scheme,
+      recoveryKeyVersion: row.recovery_key_version,
+      recipientFingerprint: row.recipient_fingerprint,
+      ciphertext: row.ciphertext,
+      replicatedToBackupServer: row.replicated_to_backup_server,
+      backupServerReference: row.backup_server_reference,
+      lastReplicationError: row.last_replication_error,
+      createdAt: this.toIsoString(row.created_at)!,
+      updatedAt: this.toIsoString(row.updated_at)!,
+    };
+  }
+
+  private mapWallet(
+    row: RuntimeStateWalletRow,
+  ): PersistedWalletRecord {
+    return {
+      walletId: row.wallet_id,
+      accountId: row.account_id,
+      walletName: row.wallet_name,
+      walletKind: row.wallet_kind,
+      sourceType: row.source_type,
+      isDefault: row.is_default,
+      isArchived: row.is_archived,
+      createdAt: this.toIsoString(row.created_at)!,
+      updatedAt: this.toIsoString(row.updated_at)!,
+    };
+  }
+
+  private mapWalletKeySlot(
+    row: RuntimeStateWalletKeySlotRow,
+  ): PersistedWalletKeySlotRecord {
+    return {
+      keySlotId: row.key_slot_id,
+      walletId: row.wallet_id,
+      slotCode: row.slot_code,
+      chainFamily: row.chain_family,
+      derivationType: row.derivation_type,
+      derivationPath: row.derivation_path,
+      createdAt: this.toIsoString(row.created_at)!,
+      updatedAt: this.toIsoString(row.updated_at)!,
+    };
+  }
+
+  private mapWalletChainAccount(
+    row: RuntimeStateWalletChainAccountRow,
+  ): PersistedWalletChainAccountRecord {
+    return {
+      chainAccountId: row.chain_account_id,
+      walletId: row.wallet_id,
+      keySlotId: row.key_slot_id,
+      chainFamily: row.chain_family,
+      networkCode: row.network_code,
+      address: row.address,
+      capability: row.capability,
+      isEnabled: row.is_enabled,
+      isDefaultReceive: row.is_default_receive,
+      createdAt: this.toIsoString(row.created_at)!,
+      updatedAt: this.toIsoString(row.updated_at)!,
+    };
+  }
+
+  private mapWalletSecretBackupV2(
+    row: RuntimeStateWalletSecretBackupV2Row,
+  ): PersistedWalletSecretBackupV2Record {
     return {
       backupId: row.backup_id,
       accountId: row.account_id,

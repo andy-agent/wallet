@@ -1,5 +1,6 @@
 package com.v2ray.ang.composeui.pages.p1
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.composeui.components.actions.ActionCluster
@@ -58,12 +60,25 @@ fun WalletPaymentConfirmRoute(
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     WalletPaymentConfirmScreen(
         uiState = uiState,
         onRefresh = { viewModel.onEvent(WalletPaymentConfirmEvent.Refresh) },
         onPrimaryAction = {
-            viewModel.onEvent(WalletPaymentConfirmEvent.PrimaryActionClicked)
-            uiState.orderNo?.let(onPrimaryAction)
+            if (uiState.txHash.isNullOrBlank()) {
+                viewModel.submitPayment(
+                    onSuccess = {},
+                    onError = { message ->
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    },
+                )
+            } else {
+                viewModel.onEvent(WalletPaymentConfirmEvent.PrimaryActionClicked)
+                uiState.orderNo?.let(onPrimaryAction)
+            }
+        },
+        onSelectPayerWallet = { walletId, chainAccountId ->
+            viewModel.onEvent(WalletPaymentConfirmEvent.PayerWalletSelected(walletId, chainAccountId))
         },
         onSecondaryAction = {
             viewModel.onEvent(WalletPaymentConfirmEvent.SecondaryActionClicked)
@@ -78,6 +93,7 @@ fun WalletPaymentConfirmScreen(
     uiState: WalletPaymentConfirmUiState,
     onRefresh: () -> Unit,
     onPrimaryAction: () -> Unit,
+    onSelectPayerWallet: (String, String) -> Unit,
     onSecondaryAction: () -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
@@ -157,6 +173,25 @@ fun WalletPaymentConfirmScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            if (uiState.payerWalletOptions.isNotEmpty()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    uiState.payerWalletOptions.forEach { option ->
+                        AppChip(
+                            text = option.label,
+                            tone = if (option.capability == "SIGN_AND_PAY") AppChipTone.Brand else AppChipTone.Info,
+                            selected = option.selected,
+                            onClick = {
+                                if (option.capability == "SIGN_AND_PAY") {
+                                    onSelectPayerWallet(option.walletId, option.chainAccountId)
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+
             ActionCluster(
                 actions = listOf(
                     ActionClusterAction(
@@ -165,7 +200,11 @@ fun WalletPaymentConfirmScreen(
                         variant = AppButtonVariant.Secondary,
                     ),
                     ActionClusterAction(
-                        label = if (uiState.orderNo == null) "刷新订单" else uiState.primaryActionLabel,
+                        label = when {
+                            uiState.orderNo == null -> "刷新订单"
+                            uiState.txHash.isNullOrBlank() -> "使用钱包支付"
+                            else -> uiState.primaryActionLabel
+                        },
                         onClick = {
                             if (uiState.orderNo == null) {
                                 onRefresh()
@@ -224,6 +263,7 @@ private fun WalletPaymentConfirmPreview() {
                 uiState = walletPaymentConfirmPreviewState(),
                 onRefresh = {},
                 onPrimaryAction = {},
+                onSelectPayerWallet = { _, _ -> },
                 onSecondaryAction = {},
             )
         }

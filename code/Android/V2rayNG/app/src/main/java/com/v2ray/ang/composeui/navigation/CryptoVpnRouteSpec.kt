@@ -273,6 +273,12 @@ object CryptoVpnRouteSpec {
     ),
     )
 
+    val importWatchWallet = RouteDefinition(
+        name = "import_watch_wallet",
+        pattern = "import_watch_wallet",
+        params = emptyList(),
+    )
+
     val backupMnemonic = RouteDefinition(
         name = "backup_mnemonic",
         pattern = "backup_mnemonic/{walletId}",
@@ -429,6 +435,7 @@ object CryptoVpnRouteSpec {
     fun createWalletRoute(mode: String): String = "create_wallet" + "/" + mode
     fun importMnemonicRoute(source: String): String = "import_mnemonic" + "/" + source
     fun importPrivateKeyRoute(chainId: String): String = "import_private_key" + "/" + chainId
+    fun importWatchWalletRoute(): String = "import_watch_wallet"
     fun backupMnemonicRoute(walletId: String): String = "backup_mnemonic" + "/" + walletId
     fun confirmMnemonicRoute(walletId: String): String = "confirm_mnemonic" + "/" + walletId
     fun chainManagerRoute(walletId: String): String = "chain_manager" + "/" + walletId
@@ -480,6 +487,7 @@ object CryptoVpnRouteSpec {
         importWalletMethod,
         importMnemonic,
         importPrivateKey,
+        importWatchWallet,
         backupMnemonic,
         confirmMnemonic,
         securityCenter,

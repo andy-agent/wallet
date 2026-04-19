@@ -20,6 +20,18 @@ class OrderCheckoutViewModel(
     fun onEvent(event: OrderCheckoutEvent) {
         when (event) {
             OrderCheckoutEvent.CreateOrderClicked -> createOrder()
+            is OrderCheckoutEvent.PayerWalletSelected -> {
+                _uiState.value = _uiState.value.copy(
+                    selectedPayerWalletId = event.walletId,
+                    selectedPayerChainAccountId = event.chainAccountId,
+                    payerWalletOptions = _uiState.value.payerWalletOptions.map { option ->
+                        option.copy(
+                            selected = option.walletId == event.walletId &&
+                                option.chainAccountId == event.chainAccountId,
+                        )
+                    },
+                )
+            }
             OrderCheckoutEvent.PrimaryActionClicked -> Unit
             OrderCheckoutEvent.SecondaryActionClicked -> Unit
             OrderCheckoutEvent.Refresh -> refresh()
@@ -56,6 +68,8 @@ class OrderCheckoutViewModel(
         return routeArgs.copy(
             assetCode = current.assetCode.ifBlank { routeArgs.assetCode },
             networkCode = current.networkCode.ifBlank { routeArgs.networkCode },
+            payerWalletId = current.selectedPayerWalletId ?: routeArgs.payerWalletId,
+            payerChainAccountId = current.selectedPayerChainAccountId ?: routeArgs.payerChainAccountId,
         )
     }
 }

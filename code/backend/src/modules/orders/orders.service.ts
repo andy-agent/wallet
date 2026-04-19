@@ -68,6 +68,15 @@ export class OrdersService {
         message: 'Payment asset is unavailable for ordering',
       });
     }
+    if ((dto.payerWalletId && !dto.payerChainAccountId) || (!dto.payerWalletId && dto.payerChainAccountId)) {
+      throw new ConflictException({
+        code: 'ORDER_PAYER_WALLET_INVALID',
+        message: 'payerWalletId and payerChainAccountId must be provided together',
+      });
+    }
+    if (dto.payerWalletId && dto.payerChainAccountId) {
+      await this.assertPayerWallet(account.accountId, dto.payerWalletId, dto.payerChainAccountId);
+    }
 
     const orderId = randomUUID();
     const orderNo = `ORD-${Date.now()}-${orderId.slice(0, 8).toUpperCase()}`;
@@ -90,6 +99,9 @@ export class OrdersService {
       orderId,
       orderNo,
       accountId: account.accountId,
+      payerWalletId: dto.payerWalletId ?? null,
+      payerChainAccountId: dto.payerChainAccountId ?? null,
+      submittedFromAddress: null,
       planCode: dto.planCode,
       planName: plan.name,
       orderType: dto.orderType,
@@ -158,7 +170,39 @@ export class OrdersService {
         message: 'Submitted transaction network does not match order network',
       });
     }
+    if (!dto.payerWalletId || !dto.payerChainAccountId || !dto.submittedFromAddress) {
+      throw new ConflictException({
+        code: 'ORDER_PAYER_WALLET_REQUIRED',
+        message: 'Payer wallet binding is required for transaction submission',
+      });
+    }
+    const chainAccount = await this.assertPayerWallet(
+      order.accountId,
+      dto.payerWalletId,
+      dto.payerChainAccountId,
+    );
+    if (chainAccount.networkCode !== order.quoteNetworkCode) {
+      throw new ConflictException({
+        code: 'ORDER_PAYER_NETWORK_MISMATCH',
+        message: 'Selected payer wallet network does not match order network',
+      });
+    }
+    if (chainAccount.address !== dto.submittedFromAddress) {
+      throw new ConflictException({
+        code: 'ORDER_PAYER_ADDRESS_MISMATCH',
+        message: 'Submitted fromAddress does not match selected payer wallet',
+      });
+    }
+    if (chainAccount.capability !== 'SIGN_AND_PAY') {
+      throw new ConflictException({
+        code: 'ORDER_PAYER_WATCH_ONLY',
+        message: 'Watch-only wallet cannot submit payments',
+      });
+    }
     order.submittedClientTxHash = dto.txHash;
+    order.payerWalletId = dto.payerWalletId;
+    order.payerChainAccountId = dto.payerChainAccountId;
+    order.submittedFromAddress = dto.submittedFromAddress;
     if (!this.isTerminalStatus(order.status)) {
       order.status = 'PAYMENT_DETECTED';
       order.failureReason = null;
@@ -333,6 +377,31 @@ export class OrdersService {
       });
     }
     return order;
+  }
+
+  private async assertPayerWallet(
+    accountId: string,
+    payerWalletId: string,
+    payerChainAccountId: string,
+  ) {
+    const wallet = await this.runtimeStateRepository.findWalletById(payerWalletId);
+    if (!wallet || wallet.accountId !== accountId || wallet.isArchived) {
+      throw new ConflictException({
+        code: 'ORDER_PAYER_WALLET_INVALID',
+        message: 'Selected payer wallet is unavailable',
+      });
+    }
+    const chainAccount =
+      await this.runtimeStateRepository.findWalletChainAccountById(
+        payerChainAccountId,
+      );
+    if (!chainAccount || chainAccount.walletId !== payerWalletId) {
+      throw new ConflictException({
+        code: 'ORDER_PAYER_CHAIN_ACCOUNT_INVALID',
+        message: 'Selected payer chain account is unavailable',
+      });
+    }
+    return chainAccount;
   }
 
   private async markPaidAndProvision(

@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, randomUUID } from 'crypto';
@@ -26,10 +27,13 @@ import {
   type PaymentAssetDefinition,
 } from '../payments/payment-asset-catalog';
 import { BuildTransferRequestDto } from './dto/build-transfer.request';
+import { CreateMnemonicWalletRequestDto } from './dto/create-mnemonic-wallet.request';
+import { ImportWatchWalletRequestDto } from './dto/import-watch-wallet.request';
 import { SolanaClientService } from '../solana-client/solana-client.service';
 import { TronClientService } from '../tron-client/tron-client.service';
 import { ProxyBroadcastRequestDto } from './dto/proxy-broadcast.request';
 import { TransferPrecheckRequestDto } from './dto/transfer-precheck.request';
+import { UpdateWalletRequestDto } from './dto/update-wallet.request';
 import { UpsertWalletLifecycleRequestDto } from './dto/upsert-wallet-lifecycle.request';
 import { UpsertWalletPublicAddressRequestDto } from './dto/upsert-wallet-public-address.request';
 import { UpsertWalletSecretBackupRequestDto } from './dto/upsert-wallet-secret-backup.request';
@@ -42,9 +46,18 @@ import {
   normalizeWalletPublicAddress,
 } from './wallet-public-address-policy';
 import {
+  PersistedWalletChainAccountRecord,
+  PersistedWalletKeySlotRecord,
   PersistedWalletLifecycleRecord,
   PersistedWalletPublicAddressRecord,
   PersistedWalletSecretBackupRecord,
+  PersistedWalletSecretBackupV2Record,
+  PersistedWalletRecord,
+  WalletChainFamily,
+  WalletChainCapability,
+  WalletNetworkCode,
+  WalletSourceType,
+  WalletSummaryView,
   WalletLifecycleNextAction,
   WalletLifecycleOrigin,
   WalletLifecycleStatus,
@@ -85,6 +98,13 @@ interface WalletAssetBalanceView {
   balanceStatus: WalletAssetBalanceStatus;
 }
 
+export interface WalletAggregateView {
+  wallet: WalletSummaryView;
+  keySlots: PersistedWalletKeySlotRecord[];
+  chainAccounts: PersistedWalletChainAccountRecord[];
+  backup: PersistedWalletSecretBackupV2Record | null;
+}
+
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
@@ -99,6 +119,319 @@ export class WalletService {
     private readonly walletBackupCryptoService: WalletBackupCryptoService,
     private readonly walletBackupRelayService: WalletBackupRelayService,
   ) {}
+
+  async listWallets(accessToken: string) {
+    const account = this.authService.getMe(accessToken);
+    const wallets = await this.runtimeStateRepository.listWalletsByAccountId(
+      account.accountId,
+    );
+    return {
+      items: wallets.map((wallet) => this.toWalletSummaryView(wallet)),
+    };
+  }
+
+  async getWallet(accessToken: string, walletId: string): Promise<WalletAggregateView> {
+    const account = this.authService.getMe(accessToken);
+    const wallet = await this.requireOwnedWallet(account.accountId, walletId);
+    const [keySlots, chainAccounts, backup] = await Promise.all([
+      this.runtimeStateRepository.listWalletKeySlotsByWalletId(walletId),
+      this.runtimeStateRepository.listWalletChainAccountsByWalletId(walletId),
+      this.runtimeStateRepository.findWalletSecretBackupByWalletId(walletId),
+    ]);
+    return {
+      wallet: this.toWalletSummaryView(wallet),
+      keySlots,
+      chainAccounts,
+      backup,
+    };
+  }
+
+  async listWalletChainAccounts(accessToken: string, walletId: string) {
+    const account = this.authService.getMe(accessToken);
+    await this.requireOwnedWallet(account.accountId, walletId);
+    return {
+      items: await this.runtimeStateRepository.listWalletChainAccountsByWalletId(walletId),
+    };
+  }
+
+  async createMnemonicWallet(
+    accessToken: string,
+    dto: CreateMnemonicWalletRequestDto,
+  ): Promise<WalletAggregateView> {
+    return this.persistMnemonicWallet(accessToken, dto, 'CREATED');
+  }
+
+  async importMnemonicWallet(
+    accessToken: string,
+    dto: CreateMnemonicWalletRequestDto,
+  ): Promise<WalletAggregateView> {
+    return this.persistMnemonicWallet(accessToken, dto, 'IMPORTED_MNEMONIC');
+  }
+
+  private async persistMnemonicWallet(
+    accessToken: string,
+    dto: CreateMnemonicWalletRequestDto,
+    sourceType: WalletSourceType,
+  ): Promise<WalletAggregateView> {
+    const account = this.authService.getMe(accessToken);
+    this.assertMnemonicWalletRequest(dto);
+
+    const now = new Date().toISOString();
+    const existingWallets = await this.runtimeStateRepository.listWalletsByAccountId(
+      account.accountId,
+    );
+    const walletRecord: PersistedWalletRecord = {
+      walletId: randomUUID(),
+      accountId: account.accountId,
+      walletName: dto.walletName.trim(),
+      walletKind: 'SELF_CUSTODY',
+      sourceType,
+      isDefault: existingWallets.length === 0,
+      isArchived: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const wallet = await this.runtimeStateRepository.insertWallet(walletRecord);
+    const keySlotIds = new Map<string, string>();
+    const keySlots: PersistedWalletKeySlotRecord[] = [];
+    for (const slot of dto.keySlots) {
+      const keySlot: PersistedWalletKeySlotRecord = {
+        keySlotId: randomUUID(),
+        walletId: wallet.walletId,
+        slotCode: slot.slotCode,
+        chainFamily: slot.chainFamily,
+        derivationType: slot.derivationType,
+        derivationPath: slot.derivationPath?.trim() || null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      keySlotIds.set(slot.slotCode, keySlot.keySlotId);
+      keySlots.push(await this.runtimeStateRepository.insertWalletKeySlot(keySlot));
+    }
+
+    const chainAccounts = await Promise.all(
+      dto.chainAccounts.map((item) =>
+        this.runtimeStateRepository.insertWalletChainAccount({
+          chainAccountId: randomUUID(),
+          walletId: wallet.walletId,
+          keySlotId: keySlotIds.get(item.slotCode) ?? null,
+          chainFamily: item.chainFamily,
+          networkCode: item.networkCode,
+          address: item.address.trim(),
+          capability: 'SIGN_AND_PAY',
+          isEnabled: item.isEnabled ?? true,
+          isDefaultReceive: item.isDefaultReceive ?? false,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      ),
+    );
+
+    return {
+      wallet: this.toWalletSummaryView(wallet),
+      keySlots,
+      chainAccounts,
+      backup: null,
+    };
+  }
+
+  async importWatchOnlyWallet(
+    accessToken: string,
+    dto: ImportWatchWalletRequestDto,
+  ): Promise<WalletAggregateView> {
+    const account = this.authService.getMe(accessToken);
+    const normalizedAddress = dto.address.trim();
+    if (!this.isAddressValid(dto.networkCode, normalizedAddress)) {
+      throw new BadRequestException({
+        code: 'WALLET_INVALID_ADDRESS',
+        message: 'Wallet address invalid',
+      });
+    }
+    const now = new Date().toISOString();
+    const existingWallets = await this.runtimeStateRepository.listWalletsByAccountId(
+      account.accountId,
+    );
+    const wallet = await this.runtimeStateRepository.insertWallet({
+      walletId: randomUUID(),
+      accountId: account.accountId,
+      walletName: dto.walletName.trim(),
+      walletKind: 'WATCH_ONLY',
+      sourceType: 'WATCH_IMPORTED',
+      isDefault: existingWallets.length === 0,
+      isArchived: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+    const chainAccount =
+      await this.runtimeStateRepository.insertWalletChainAccount({
+        chainAccountId: randomUUID(),
+        walletId: wallet.walletId,
+        keySlotId: null,
+        chainFamily: dto.chainFamily,
+        networkCode: dto.networkCode,
+        address: normalizedAddress,
+        capability: 'WATCH_ONLY',
+        isEnabled: true,
+        isDefaultReceive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    return {
+      wallet: this.toWalletSummaryView(wallet),
+      keySlots: [],
+      chainAccounts: [chainAccount],
+      backup: null,
+    };
+  }
+
+  async updateWallet(
+    accessToken: string,
+    walletId: string,
+    dto: UpdateWalletRequestDto,
+  ): Promise<WalletAggregateView> {
+    const account = this.authService.getMe(accessToken);
+    const wallet = await this.requireOwnedWallet(account.accountId, walletId);
+    const nextName = dto.walletName?.trim();
+    const nextWallet = await this.runtimeStateRepository.updateWallet({
+      ...wallet,
+      walletName: nextName && nextName.length > 0 ? nextName : wallet.walletName,
+      isArchived: dto.isArchived ?? wallet.isArchived,
+      updatedAt: new Date().toISOString(),
+    });
+    return this.getWallet(accessToken, nextWallet.walletId);
+  }
+
+  async setDefaultWallet(accessToken: string, walletId: string): Promise<WalletAggregateView> {
+    const account = this.authService.getMe(accessToken);
+    await this.requireOwnedWallet(account.accountId, walletId);
+    await this.runtimeStateRepository.setDefaultWallet(account.accountId, walletId);
+    return this.getWallet(accessToken, walletId);
+  }
+
+  async upsertWalletSecretBackupV2(
+    accessToken: string,
+    walletId: string,
+    dto: UpsertWalletSecretBackupRequestDto,
+  ) {
+    const account = this.authService.getMe(accessToken);
+    const wallet = await this.requireOwnedWallet(account.accountId, walletId);
+    if (wallet.walletKind !== 'SELF_CUSTODY') {
+      throw new ConflictException({
+        code: 'WALLET_BACKUP_WATCH_ONLY',
+        message: 'Watch-only wallet cannot store mnemonic backup',
+      });
+    }
+
+    const normalizedMnemonic = dto.mnemonic
+      .trim()
+      .split(/\s+/)
+      .filter((item) => item.length > 0);
+    if (
+      ![12, 24].includes(dto.mnemonicWordCount) ||
+      normalizedMnemonic.length !== dto.mnemonicWordCount
+    ) {
+      throw new BadRequestException({
+        code: 'WALLET_INVALID_MNEMONIC',
+        message: 'Mnemonic word count must be 12 or 24 and match the submitted mnemonic',
+      });
+    }
+    const normalizedHash = createHash('sha256')
+      .update(normalizedMnemonic.join(' '))
+      .digest('hex');
+    if (dto.mnemonicHash !== normalizedHash) {
+      throw new BadRequestException({
+        code: 'WALLET_MNEMONIC_HASH_MISMATCH',
+        message: 'Mnemonic hash does not match payload',
+      });
+    }
+
+    const now = new Date().toISOString();
+    const ciphertext = await this.walletBackupCryptoService.encryptBackup({
+      accountId: account.accountId,
+      walletId: wallet.walletId,
+      walletName: dto.walletName?.trim() || wallet.walletName,
+      secretType: dto.secretType,
+      mnemonic: normalizedMnemonic.join(' '),
+      mnemonicHash: dto.mnemonicHash,
+      mnemonicWordCount: dto.mnemonicWordCount,
+      sourceType: dto.sourceType?.trim() || wallet.sourceType,
+      publicAddresses:
+        dto.publicAddresses?.map((item) => ({
+          networkCode: item.networkCode,
+          assetCode: item.assetCode,
+          address: item.address.trim(),
+          isDefault: item.isDefault,
+        })) ?? [],
+      exportedAt: now,
+    });
+    let record: PersistedWalletSecretBackupV2Record = {
+      backupId: randomUUID(),
+      accountId: account.accountId,
+      walletId: wallet.walletId,
+      secretType: dto.secretType,
+      encryptionScheme: 'AGE',
+      recoveryKeyVersion: this.walletBackupCryptoService.getRecoveryKeyVersion(),
+      recipientFingerprint: this.walletBackupCryptoService.getRecipientFingerprint(),
+      ciphertext,
+      replicatedToBackupServer: false,
+      backupServerReference: null,
+      lastReplicationError: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const relay = await this.walletBackupRelayService.replicate(record);
+    record = {
+      ...record,
+      replicatedToBackupServer: relay.replicatedToBackupServer,
+      backupServerReference: relay.backupServerReference,
+      lastReplicationError: relay.lastReplicationError,
+      updatedAt: new Date().toISOString(),
+    };
+    const saved = await this.runtimeStateRepository.upsertWalletSecretBackupV2(record);
+    return {
+      backupId: saved.backupId,
+      accountId: saved.accountId,
+      walletId: saved.walletId,
+      secretType: saved.secretType,
+      encryptionScheme: saved.encryptionScheme,
+      recoveryKeyVersion: saved.recoveryKeyVersion,
+      recipientFingerprint: saved.recipientFingerprint,
+      replicatedToBackupServer: saved.replicatedToBackupServer,
+      backupServerReference: saved.backupServerReference,
+      lastReplicationError: saved.lastReplicationError,
+      updatedAt: saved.updatedAt,
+    };
+  }
+
+  async getWalletSecretBackupMetadataByWalletId(
+    accessToken: string,
+    walletId: string,
+  ) {
+    const account = this.authService.getMe(accessToken);
+    await this.requireOwnedWallet(account.accountId, walletId);
+    const backup =
+      await this.runtimeStateRepository.findWalletSecretBackupByWalletId(walletId);
+    if (!backup) {
+      return {
+        exists: false,
+      };
+    }
+    return {
+      exists: true,
+      backupId: backup.backupId,
+      accountId: backup.accountId,
+      walletId: backup.walletId,
+      secretType: backup.secretType,
+      encryptionScheme: backup.encryptionScheme,
+      recoveryKeyVersion: backup.recoveryKeyVersion,
+      recipientFingerprint: backup.recipientFingerprint,
+      replicatedToBackupServer: backup.replicatedToBackupServer,
+      backupServerReference: backup.backupServerReference,
+      lastReplicationError: backup.lastReplicationError,
+      updatedAt: backup.updatedAt,
+    };
+  }
 
   getChains(accessToken: string) {
     this.authService.getMe(accessToken);
@@ -1632,13 +1965,103 @@ export class WalletService {
     return `${negative ? '-' : ''}${whole}.${fraction}`;
   }
 
-  private isAddressValid(networkCode: 'SOLANA' | 'TRON', address: string) {
+  private toWalletSummaryView(wallet: PersistedWalletRecord): WalletSummaryView {
+    return {
+      walletId: wallet.walletId,
+      walletName: wallet.walletName,
+      walletKind: wallet.walletKind,
+      sourceType: wallet.sourceType,
+      isDefault: wallet.isDefault,
+      isArchived: wallet.isArchived,
+      deviceCapabilitySummary: 'UNKNOWN',
+      createdAt: wallet.createdAt,
+      updatedAt: wallet.updatedAt,
+    };
+  }
+
+  private async requireOwnedWallet(accountId: string, walletId: string) {
+    const wallet = await this.runtimeStateRepository.findWalletById(walletId);
+    if (!wallet || wallet.accountId !== accountId) {
+      throw new NotFoundException({
+        code: 'WALLET_NOT_FOUND',
+        message: 'Wallet not found',
+      });
+    }
+    return wallet;
+  }
+
+  private assertMnemonicWalletRequest(dto: CreateMnemonicWalletRequestDto) {
+    if (dto.keySlots.length === 0 || dto.chainAccounts.length === 0) {
+      throw new BadRequestException({
+        code: 'WALLET_INVALID_TEMPLATE',
+        message: 'Mnemonic wallet requires key slots and chain accounts',
+      });
+    }
+
+    const slotCodes = new Set<string>();
+    for (const slot of dto.keySlots) {
+      if (slotCodes.has(slot.slotCode)) {
+        throw new BadRequestException({
+          code: 'WALLET_DUPLICATE_SLOT_CODE',
+          message: `Duplicate slot code ${slot.slotCode}`,
+        });
+      }
+      slotCodes.add(slot.slotCode);
+    }
+
+    for (const chainAccount of dto.chainAccounts) {
+      if (!slotCodes.has(chainAccount.slotCode)) {
+        throw new BadRequestException({
+          code: 'WALLET_CHAIN_ACCOUNT_SLOT_MISSING',
+          message: `Chain account references missing slot ${chainAccount.slotCode}`,
+        });
+      }
+      if (!this.chainFamilyMatchesNetwork(chainAccount.chainFamily, chainAccount.networkCode)) {
+        throw new BadRequestException({
+          code: 'WALLET_CHAIN_FAMILY_MISMATCH',
+          message: `Network ${chainAccount.networkCode} does not belong to ${chainAccount.chainFamily}`,
+        });
+      }
+      if (!this.isAddressValid(chainAccount.networkCode, chainAccount.address)) {
+        throw new BadRequestException({
+          code: 'WALLET_INVALID_ADDRESS',
+          message: `Wallet address invalid for ${chainAccount.networkCode}`,
+        });
+      }
+    }
+  }
+
+  private chainFamilyMatchesNetwork(
+    chainFamily: WalletChainFamily,
+    networkCode: WalletNetworkCode,
+  ) {
+    if (chainFamily === 'SOLANA') {
+      return networkCode === 'SOLANA';
+    }
+    if (chainFamily === 'TRON') {
+      return networkCode === 'TRON';
+    }
+    return [
+      'ETHEREUM',
+      'BSC',
+      'POLYGON',
+      'ARBITRUM',
+      'BASE',
+      'OPTIMISM',
+      'AVALANCHE_C',
+    ].includes(networkCode);
+  }
+
+  private isAddressValid(networkCode: WalletNetworkCode | 'SOLANA' | 'TRON', address: string) {
     const trimmed = address.trim();
     if (networkCode === 'SOLANA') {
       // Use SolanaClientService for validation if available
       return this.solanaClient.validateAddress(trimmed);
     }
-    return this.isTronAddressValid(trimmed);
+    if (networkCode === 'TRON') {
+      return this.isTronAddressValid(trimmed);
+    }
+    return /^0x[a-fA-F0-9]{40}$/.test(trimmed);
   }
 
   private isTronAddressValid(address: string) {

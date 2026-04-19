@@ -516,6 +516,146 @@ describe('Wallet (e2e)', () => {
       .expect(201);
   });
 
+  it('supports wallet list, watch-only wallets, and explicit payer-wallet binding', async () => {
+    const createWallet = await request(app.getHttpServer())
+      .post('/api/client/v1/wallets/create-mnemonic')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        walletName: 'Main Wallet',
+        keySlots: [
+          {
+            slotCode: 'SOLANA_0',
+            chainFamily: 'SOLANA',
+            derivationType: 'MNEMONIC',
+            derivationPath: "m/44'/501'/0'/0'",
+          },
+          {
+            slotCode: 'TRON_0',
+            chainFamily: 'TRON',
+            derivationType: 'MNEMONIC',
+            derivationPath: "m/44'/195'/0'/0/0",
+          },
+        ],
+        chainAccounts: [
+          {
+            slotCode: 'SOLANA_0',
+            chainFamily: 'SOLANA',
+            networkCode: 'SOLANA',
+            address: validSolanaAddress,
+            isEnabled: true,
+            isDefaultReceive: true,
+          },
+          {
+            slotCode: 'TRON_0',
+            chainFamily: 'TRON',
+            networkCode: 'TRON',
+            address: validTronAddress,
+            isEnabled: true,
+            isDefaultReceive: false,
+          },
+        ],
+      })
+      .expect(201);
+
+    const watchWallet = await request(app.getHttpServer())
+      .post('/api/client/v1/wallets/import/watch-only')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        walletName: 'Watch Wallet',
+        chainFamily: 'TRON',
+        networkCode: 'TRON',
+        address: validTronAddress,
+      })
+      .expect(201);
+
+    const listResponse = await request(app.getHttpServer())
+      .get('/api/client/v1/wallets')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(listResponse.body.data.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          walletId: createWallet.body.data.wallet.walletId,
+          walletKind: 'SELF_CUSTODY',
+          isDefault: true,
+        }),
+        expect.objectContaining({
+          walletId: watchWallet.body.data.wallet.walletId,
+          walletKind: 'WATCH_ONLY',
+          isDefault: false,
+        }),
+      ]),
+    );
+
+    const watchDetail = await request(app.getHttpServer())
+      .get(`/api/client/v1/wallets/${watchWallet.body.data.wallet.walletId}/chain-accounts`)
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(watchDetail.body.data.items).toEqual([
+      expect.objectContaining({
+        walletId: watchWallet.body.data.wallet.walletId,
+        capability: 'WATCH_ONLY',
+        networkCode: 'TRON',
+        address: validTronAddress,
+      }),
+    ]);
+
+    await request(app.getHttpServer())
+      .post(`/api/client/v1/wallets/${watchWallet.body.data.wallet.walletId}/set-default`)
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(201);
+
+    const orderResponse = await request(app.getHttpServer())
+      .post('/api/client/v1/orders')
+      .set('authorization', `Bearer ${accessToken}`)
+      .set('x-idempotency-key', `wallet-order-${Date.now()}`)
+      .send({
+        planCode: 'BASIC_1M',
+        orderType: 'NEW',
+        quoteAssetCode: 'USDT',
+        quoteNetworkCode: 'TRON',
+        payerWalletId: createWallet.body.data.wallet.walletId,
+        payerChainAccountId: createWallet.body.data.chainAccounts[1].chainAccountId,
+      });
+
+    expect(orderResponse.status).toBe(201);
+    expect(orderResponse.body.data.payerWalletId).toBe(
+      createWallet.body.data.wallet.walletId,
+    );
+    expect(orderResponse.body.data.payerChainAccountId).toBe(
+      createWallet.body.data.chainAccounts[1].chainAccountId,
+    );
+
+    await request(app.getHttpServer())
+      .post(`/api/client/v1/orders/${orderResponse.body.data.orderNo}/submit-client-tx`)
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        txHash: 'tron-tx-watch-only',
+        networkCode: 'TRON',
+        payerWalletId: watchWallet.body.data.wallet.walletId,
+        payerChainAccountId: watchDetail.body.data.items[0].chainAccountId,
+        submittedFromAddress: validTronAddress,
+      })
+      .expect(409)
+      .expect((res) => {
+        expect(res.body.code).toBe('ORDER_PAYER_WATCH_ONLY');
+      });
+
+    await request(app.getHttpServer())
+      .post(`/api/client/v1/orders/${orderResponse.body.data.orderNo}/submit-client-tx`)
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        txHash: 'tron-tx-2',
+        networkCode: 'TRON',
+        payerWalletId: createWallet.body.data.wallet.walletId,
+        payerChainAccountId: createWallet.body.data.chainAccounts[1].chainAccountId,
+        submittedFromAddress: validTronAddress,
+      })
+      .expect(201);
+  });
+
   it('rejects known placeholder wallet public addresses', async () => {
     await request(app.getHttpServer())
       .post('/api/client/v1/wallet/lifecycle')

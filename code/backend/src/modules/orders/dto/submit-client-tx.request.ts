@@ -11,4 +11,16 @@ export class SubmitClientTxRequestDto {
   @IsOptional()
   @IsString()
   signedAt?: string;
+
+  @IsOptional()
+  @IsString()
+  payerWalletId?: string;
+
+  @IsOptional()
+  @IsString()
+  payerChainAccountId?: string;
+
+  @IsOptional()
+  @IsString()
+  submittedFromAddress?: string;
 }

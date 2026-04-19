@@ -61,6 +61,11 @@ interface CryptoVpnRepository {
         prepareOrderCheckoutState(args)
     suspend fun getOrderCheckoutState(args: OrderCheckoutRouteArgs): OrderCheckoutUiState
     suspend fun getWalletPaymentConfirmState(args: WalletPaymentConfirmRouteArgs): WalletPaymentConfirmUiState
+    suspend fun submitWalletOrderPayment(
+        orderNo: String,
+        walletId: String,
+        chainAccountId: String,
+    ): SendSubmissionResult = SendSubmissionResult(success = false, errorMessage = "Wallet order payment unavailable")
     suspend fun getOrderResultState(args: OrderResultRouteArgs): OrderResultUiState
     suspend fun getOrderListState(): OrderListUiState
     suspend fun getOrderDetailState(args: OrderDetailRouteArgs): OrderDetailUiState
@@ -103,6 +108,15 @@ interface CryptoVpnRepository {
         mnemonic: String,
         walletName: String,
     ): WalletLifecycleMutationResult
+    suspend fun getImportWatchWalletState(): ImportWatchWalletUiState
+    suspend fun importWatchOnlyWallet(
+        walletName: String,
+        networkCode: String,
+        address: String,
+    ): WalletLifecycleMutationResult = WalletLifecycleMutationResult(
+        success = false,
+        errorMessage = "Watch-only import unavailable",
+    )
     suspend fun getImportPrivateKeyState(args: ImportPrivateKeyRouteArgs): ImportPrivateKeyUiState
     suspend fun getBackupMnemonicState(args: BackupMnemonicRouteArgs): BackupMnemonicUiState
     suspend fun getConfirmMnemonicState(args: ConfirmMnemonicRouteArgs): ConfirmMnemonicUiState
@@ -115,6 +129,8 @@ interface CryptoVpnRepository {
     suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState
     suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState
     suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState
+    suspend fun setDefaultWallet(walletId: String): WalletLifecycleMutationResult =
+        WalletLifecycleMutationResult(success = false, errorMessage = "Set default wallet unavailable")
     suspend fun getAddressBookState(args: AddressBookRouteArgs): AddressBookUiState
     suspend fun getGasSettingsState(args: GasSettingsRouteArgs): GasSettingsUiState
     suspend fun getSwapState(args: SwapRouteArgs): SwapUiState

@@ -9,11 +9,15 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.v2ray.ang.payment.data.local.dao.OrderDao
 import com.v2ray.ang.payment.data.local.dao.PaymentHistoryDao
 import com.v2ray.ang.payment.data.local.dao.UserDao
+import com.v2ray.ang.payment.data.local.dao.LocalWalletChainAccountDao
+import com.v2ray.ang.payment.data.local.dao.LocalWalletDao
 import com.v2ray.ang.payment.data.local.dao.VpnNodeCacheDao
 import com.v2ray.ang.payment.data.local.dao.VpnNodeRuntimeDao
 import com.v2ray.ang.payment.data.local.dao.WalletOverviewCacheDao
 import com.v2ray.ang.payment.data.local.dao.WalletPublicAddressCacheDao
 import com.v2ray.ang.payment.data.local.dao.WalletReceiveContextCacheDao
+import com.v2ray.ang.payment.data.local.entity.LocalWalletChainAccountEntity
+import com.v2ray.ang.payment.data.local.entity.LocalWalletEntity
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
 import com.v2ray.ang.payment.data.local.entity.PaymentHistoryEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
@@ -31,13 +35,15 @@ import com.v2ray.ang.payment.data.local.entity.WalletReceiveContextCacheEntity
         UserEntity::class,
         OrderEntity::class,
         PaymentHistoryEntity::class,
+        LocalWalletEntity::class,
+        LocalWalletChainAccountEntity::class,
         VpnNodeCacheEntity::class,
         VpnNodeRuntimeEntity::class,
         WalletPublicAddressCacheEntity::class,
         WalletReceiveContextCacheEntity::class,
         WalletOverviewCacheEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class PaymentDatabase : RoomDatabase() {
@@ -45,6 +51,8 @@ abstract class PaymentDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun orderDao(): OrderDao
     abstract fun paymentHistoryDao(): PaymentHistoryDao
+    abstract fun localWalletDao(): LocalWalletDao
+    abstract fun localWalletChainAccountDao(): LocalWalletChainAccountDao
     abstract fun vpnNodeCacheDao(): VpnNodeCacheDao
     abstract fun vpnNodeRuntimeDao(): VpnNodeRuntimeDao
     abstract fun walletPublicAddressCacheDao(): WalletPublicAddressCacheDao

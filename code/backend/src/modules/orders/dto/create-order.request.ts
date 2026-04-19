@@ -1,4 +1,5 @@
 import { IsIn, IsString } from 'class-validator';
+import { IsOptional } from 'class-validator';
 
 export class CreateOrderRequestDto {
   @IsString()
@@ -14,4 +15,12 @@ export class CreateOrderRequestDto {
   @IsString()
   @IsIn(['SOLANA', 'TRON'])
   quoteNetworkCode!: 'SOLANA' | 'TRON';
+
+  @IsOptional()
+  @IsString()
+  payerWalletId?: string;
+
+  @IsOptional()
+  @IsString()
+  payerChainAccountId?: string;
 }
