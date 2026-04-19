@@ -17,6 +17,15 @@ interface LocalWalletDao {
     @Query("SELECT * FROM local_wallets WHERE walletId = :walletId LIMIT 1")
     suspend fun getByWalletId(walletId: String): LocalWalletEntity?
 
+    @Query(
+        """
+        UPDATE local_wallets
+        SET isDefault = CASE WHEN walletId = :walletId THEN 1 ELSE 0 END
+        WHERE userId = :userId
+        """,
+    )
+    suspend fun setDefaultWallet(userId: String, walletId: String)
+
     @Query("DELETE FROM local_wallets WHERE userId = :userId")
     suspend fun deleteByUserId(userId: String)
 

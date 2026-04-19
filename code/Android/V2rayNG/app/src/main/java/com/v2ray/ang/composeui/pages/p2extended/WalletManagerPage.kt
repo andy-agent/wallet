@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,6 +28,7 @@ import com.v2ray.ang.composeui.components.app.AppPageScaffold
 import com.v2ray.ang.composeui.components.buttons.AppButtonVariant
 import com.v2ray.ang.composeui.components.chips.AppChip
 import com.v2ray.ang.composeui.components.chips.AppChipTone
+import com.v2ray.ang.composeui.components.cards.TechCard
 import com.v2ray.ang.composeui.components.navigation.AppTopBar
 import com.v2ray.ang.composeui.components.navigation.AppTopBarMode
 import com.v2ray.ang.composeui.components.navigation.CryptoVpnBottomBar
@@ -37,7 +39,10 @@ import com.v2ray.ang.composeui.p2extended.model.WalletManagerUiState
 import com.v2ray.ang.composeui.p2extended.model.walletManagerPreviewState
 import com.v2ray.ang.composeui.p2extended.viewmodel.WalletManagerViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.composeui.theme.TextMuted
 import com.v2ray.ang.composeui.theme.tokens.OverviewBaselineTokens
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun WalletManagerRoute(
@@ -56,12 +61,14 @@ fun WalletManagerRoute(
                 WalletManagerEvent.PrimaryActionClicked -> onPrimaryAction()
                 WalletManagerEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
                 is WalletManagerEvent.WalletSelected -> {
-                    viewModel.submitSetDefault(
-                        walletId = event.walletId,
-                        onError = { message ->
-                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                        },
-                    )
+                    if (!uiState.isSwitchingWallet) {
+                        viewModel.submitSetDefault(
+                            walletId = event.walletId,
+                            onError = { message ->
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            },
+                        )
+                    }
                 }
                 else -> Unit
             }
@@ -118,6 +125,8 @@ fun WalletManagerScreen(
                 uiState.wallets.forEach { wallet ->
                     WalletCard(
                         item = wallet,
+                        enabled = !uiState.isSwitchingWallet,
+                        isSwitching = uiState.switchingWalletId == wallet.walletId,
                         onClick = { onEvent(WalletManagerEvent.WalletSelected(wallet.walletId)) },
                     )
                 }
@@ -127,29 +136,47 @@ fun WalletManagerScreen(
                 actions = listOf(
                     ActionClusterAction(
                         label = uiState.secondaryActionLabel ?: "导入观察钱包",
-                        onClick = { onEvent(WalletManagerEvent.SecondaryActionClicked) },
+                        onClick = {
+                            if (!uiState.isSwitchingWallet) {
+                                onEvent(WalletManagerEvent.SecondaryActionClicked)
+                            }
+                        },
                         variant = AppButtonVariant.Secondary,
                     ),
                     ActionClusterAction(
                         label = uiState.primaryActionLabel,
-                        onClick = { onEvent(WalletManagerEvent.PrimaryActionClicked) },
+                        onClick = {
+                            if (!uiState.isSwitchingWallet) {
+                                onEvent(WalletManagerEvent.PrimaryActionClicked)
+                            }
+                        },
                         variant = AppButtonVariant.Primary,
                     ),
                 ),
             )
         }
     }
+    if (uiState.isSwitchingWallet) {
+        WalletSwitchingDialog(walletName = uiState.switchingWalletName.orEmpty())
+    }
 }
 
 @Composable
 private fun WalletCard(
     item: WalletManagerWalletItemUi,
+    enabled: Boolean,
+    isSwitching: Boolean,
     onClick: () -> Unit,
 ) {
+    val clickableModifier = if (enabled) {
+        Modifier.clickable(onClick = onClick)
+    } else {
+        Modifier
+    }
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .then(clickableModifier),
         tonalElevation = 1.dp,
         shadowElevation = 1.dp,
     ) {
@@ -166,10 +193,47 @@ private fun WalletCard(
                 Text(item.walletName, style = MaterialTheme.typography.titleMedium)
                 if (item.isDefault) {
                     AppChip(text = "默认", tone = AppChipTone.Brand)
+                } else if (isSwitching) {
+                    AppChip(text = "切换中", tone = AppChipTone.Brand)
                 }
             }
             Text(item.subtitle, style = MaterialTheme.typography.bodySmall)
             Text(item.walletKind, style = MaterialTheme.typography.labelMedium)
+        }
+    }
+}
+
+@Composable
+private fun WalletSwitchingDialog(walletName: String) {
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false,
+        ),
+    ) {
+        TechCard(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = "正在切换钱包",
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+                if (walletName.isNotBlank()) {
+                    Text(
+                        text = walletName,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+                Text(
+                    text = "请稍候，正在同步默认钱包。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextMuted,
+                )
+            }
         }
     }
 }

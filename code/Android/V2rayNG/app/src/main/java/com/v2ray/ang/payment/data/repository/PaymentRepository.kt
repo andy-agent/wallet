@@ -1533,7 +1533,7 @@ class PaymentRepository(context: Context) {
             val response = api.listWallets("Bearer $token")
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val wallets = response.body()?.data?.items.orEmpty()
-                cacheWalletGraph(wallets, emptyMap())
+                replaceWalletGraphCache(wallets, emptyMap())
                 Result.success(wallets)
             } else {
                 Result.failure(Exception(extractApiErrorMessage(response, "获取钱包列表失败")))
@@ -1541,6 +1541,11 @@ class PaymentRepository(context: Context) {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun getCachedWallets(): List<WalletSummaryData> = withContext(Dispatchers.IO) {
+        val userId = getCurrentUserId() ?: return@withContext emptyList()
+        localRepository.getLocalWallets(userId).map { it.toSummaryData() }
     }
 
     suspend fun getWallet(walletId: String): Result<WalletDetailData> = withContext(Dispatchers.IO) {
@@ -1553,7 +1558,7 @@ class PaymentRepository(context: Context) {
             val response = api.getWallet("Bearer $token", walletId)
             if (response.isSuccessful && response.body()?.code == "OK") {
                 response.body()?.data?.let { detail ->
-                    cacheWalletGraph(listOf(detail.wallet), mapOf(detail.wallet.walletId to detail.chainAccounts))
+                    mergeWalletGraphCache(listOf(detail.wallet), mapOf(detail.wallet.walletId to detail.chainAccounts))
                     Result.success(detail)
                 } ?: Result.failure(Exception("钱包详情为空"))
             } else {
@@ -1576,7 +1581,11 @@ class PaymentRepository(context: Context) {
                 val items = response.body()?.data?.items.orEmpty()
                 val wallet = localRepository.getLocalWallet(walletId)
                 if (wallet != null) {
-                    localRepository.syncLocalWallets(wallet.userId, listOf(wallet), items.map { it.toEntity(wallet.userId) })
+                    localRepository.mergeLocalWallets(
+                        wallet.userId,
+                        wallets = listOf(wallet),
+                        chainAccounts = items.map { it.toEntity(wallet.userId) },
+                    )
                 }
                 Result.success(items)
             } else {
@@ -1780,6 +1789,15 @@ class PaymentRepository(context: Context) {
             .remove(PaymentConfig.Prefs.WALLET_ASSET_CATALOG_CACHE_JSON)
             .remove(PaymentConfig.Prefs.WALLET_ASSET_CATALOG_CACHE_UPDATED_AT)
             .apply()
+    }
+
+    suspend fun setCachedDefaultWallet(walletId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        val userId = getCurrentUserId()
+            ?: return@withContext Result.failure(Exception("未登录"))
+        val wallet = localRepository.getLocalWallet(walletId)
+            ?: return@withContext Result.failure(Exception("本地未找到钱包"))
+        localRepository.setDefaultWallet(userId, wallet.walletId)
+        Result.success(Unit)
     }
 
     suspend fun getWalletSecretBackupExport(): Result<WalletSecretBackupExportData> = withContext(Dispatchers.IO) {
@@ -2424,7 +2442,10 @@ class PaymentRepository(context: Context) {
             val response = block(token)
             if (response.isSuccessful && response.body()?.code == "OK") {
                 response.body()?.data?.let { detail ->
-                    cacheWalletGraph(listOf(detail.wallet), mapOf(detail.wallet.walletId to detail.chainAccounts))
+                    mergeWalletGraphCache(
+                        listOf(detail.wallet),
+                        mapOf(detail.wallet.walletId to detail.chainAccounts),
+                    )
                     Result.success(detail)
                 } ?: Result.failure(Exception("钱包详情为空"))
             } else {
@@ -2435,7 +2456,7 @@ class PaymentRepository(context: Context) {
         }
     }
 
-    private suspend fun cacheWalletGraph(
+    private suspend fun replaceWalletGraphCache(
         wallets: List<WalletSummaryData>,
         chainAccountsByWalletId: Map<String, List<WalletChainAccountData>>,
     ) {
@@ -2447,6 +2468,18 @@ class PaymentRepository(context: Context) {
         localRepository.syncLocalWallets(userId, walletEntities, chainAccountEntities)
     }
 
+    private suspend fun mergeWalletGraphCache(
+        wallets: List<WalletSummaryData>,
+        chainAccountsByWalletId: Map<String, List<WalletChainAccountData>>,
+    ) {
+        val userId = getCurrentUserId() ?: return
+        val walletEntities = wallets.map { it.toEntity(userId) }
+        val chainAccountEntities = chainAccountsByWalletId.flatMap { (walletId, accounts) ->
+            accounts.map { it.toEntity(userId, walletId) }
+        }
+        localRepository.mergeLocalWallets(userId, walletEntities, chainAccountEntities)
+    }
+
     private fun WalletSummaryData.toEntity(userId: String) = LocalWalletEntity(
         walletId = walletId,
         userId = userId,
@@ -2456,6 +2489,18 @@ class PaymentRepository(context: Context) {
         isDefault = isDefault,
         isArchived = isArchived,
         updatedAt = parseIsoDateInternal(updatedAt) ?: System.currentTimeMillis(),
+    )
+
+    private fun LocalWalletEntity.toSummaryData() = WalletSummaryData(
+        walletId = walletId,
+        walletName = walletName,
+        walletKind = walletKind,
+        sourceType = sourceType,
+        isDefault = isDefault,
+        isArchived = isArchived,
+        deviceCapabilitySummary = null,
+        createdAt = isoDateFormatWithMs.format(Date(updatedAt)),
+        updatedAt = isoDateFormatWithMs.format(Date(updatedAt)),
     )
 
     private fun WalletChainAccountData.toEntity(userId: String, resolvedWalletId: String = walletId) =

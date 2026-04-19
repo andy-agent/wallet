@@ -40,6 +40,9 @@ data class WalletManagerUiState(
 ),
         val checklist: List<FeatureBullet> = emptyList(),
         val note: String = "",
+        val isSwitchingWallet: Boolean = false,
+        val switchingWalletId: String? = null,
+        val switchingWalletName: String? = null,
     )
 
     sealed interface WalletManagerEvent {

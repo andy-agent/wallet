@@ -138,6 +138,7 @@ interface CryptoVpnRepository {
     suspend fun logoutSession(): LogoutResult = LogoutResult(success = false, errorMessage = "Logout unavailable")
     suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState
     suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState
+    suspend fun getCachedWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState? = null
     suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState
     suspend fun setDefaultWallet(walletId: String): WalletLifecycleMutationResult =
         WalletLifecycleMutationResult(success = false, errorMessage = "Set default wallet unavailable")

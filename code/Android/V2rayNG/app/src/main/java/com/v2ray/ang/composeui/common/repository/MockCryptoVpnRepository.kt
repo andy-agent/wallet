@@ -380,6 +380,10 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         )
     }
 
+    override suspend fun getCachedWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState? {
+        return getWalletManagerState(args)
+    }
+
     override suspend fun setDefaultWallet(walletId: String): WalletLifecycleMutationResult {
         return WalletLifecycleMutationResult(success = walletId.isNotBlank(), walletId = walletId)
     }

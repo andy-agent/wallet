@@ -185,6 +185,31 @@ class LocalPaymentRepository(context: Context) {
         }
     }
 
+    suspend fun mergeLocalWallets(
+        userId: String,
+        wallets: List<LocalWalletEntity>,
+        chainAccounts: List<LocalWalletChainAccountEntity>,
+    ) = withContext(Dispatchers.IO) {
+        if (wallets.isNotEmpty()) {
+            localWalletDao.insertAll(wallets)
+            wallets.firstOrNull { it.isDefault }?.let { wallet ->
+                localWalletDao.setDefaultWallet(userId, wallet.walletId)
+            }
+        }
+        chainAccounts
+            .groupBy { it.walletId }
+            .forEach { (walletId, walletItems) ->
+                localWalletChainAccountDao.deleteByWalletId(walletId)
+                if (walletItems.isNotEmpty()) {
+                    localWalletChainAccountDao.insertAll(walletItems)
+                }
+            }
+    }
+
+    suspend fun setDefaultWallet(userId: String, walletId: String) = withContext(Dispatchers.IO) {
+        localWalletDao.setDefaultWallet(userId, walletId)
+    }
+
     suspend fun clearWalletDomainData(userId: String) = withContext(Dispatchers.IO) {
         localWalletDao.deleteByUserId(userId)
         localWalletChainAccountDao.deleteByUserId(userId)

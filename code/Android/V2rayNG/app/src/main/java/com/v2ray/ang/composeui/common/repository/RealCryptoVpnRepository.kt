@@ -167,6 +167,7 @@ import com.v2ray.ang.payment.wallet.WalletKeyManager
 import com.v2ray.ang.payment.wallet.WalletSecretStore
 import com.v2ray.ang.handler.MmkvManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
 import java.time.Instant
@@ -2124,55 +2125,123 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             note = "未接入",
         )
 
+    override suspend fun getCachedWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState? {
+        val wallets = paymentRepository.getCachedWallets()
+        if (wallets.isEmpty()) {
+            return null
+        }
+        val user = paymentRepository.getCachedCurrentUser()
+        val orders = loadCachedOrders()
+        val currentAccountId = paymentRepository.getCurrentUserId()
+        val conflictingWallet = currentAccountId?.let { walletSecretStore.getConflictingMnemonicRecord(it) }
+        return buildWalletManagerState(
+            args = args,
+            wallets = wallets,
+            userEmailOrName = user?.email ?: user?.username ?: "--",
+            orderCount = orders.size,
+            conflictingWalletDetected = conflictingWallet != null,
+            refreshFailed = true,
+        )
+    }
+
     override suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState {
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
         val currentAccountId = paymentRepository.getCurrentUserId()
         val conflictingWallet = currentAccountId?.let { walletSecretStore.getConflictingMnemonicRecord(it) }
-        val wallets = paymentRepository.listWallets().getOrNull().orEmpty()
+        val cachedWallets = paymentRepository.getCachedWallets()
+        var refreshFailed = false
+        var resolvedWallets = paymentRepository.listWallets().getOrNull()
+        if (resolvedWallets == null) {
+            refreshFailed = true
+            delay(250)
+            resolvedWallets = paymentRepository.listWallets().getOrNull() ?: cachedWallets
+        }
+
+        return buildWalletManagerState(
+            args = args,
+            wallets = resolvedWallets,
+            userEmailOrName = user?.email ?: user?.username ?: "--",
+            orderCount = orders.size,
+            conflictingWalletDetected = conflictingWallet != null,
+            refreshFailed = refreshFailed,
+        )
+    }
+
+    private fun buildWalletManagerState(
+        args: WalletManagerRouteArgs,
+        wallets: List<com.v2ray.ang.payment.data.api.WalletSummaryData>,
+        userEmailOrName: String,
+        orderCount: Int,
+        conflictingWalletDetected: Boolean,
+        refreshFailed: Boolean,
+    ): WalletManagerUiState {
         val selectedWallet = wallets.firstOrNull { it.walletId == args.walletId }
             ?: wallets.firstOrNull { it.isDefault }
             ?: wallets.firstOrNull()
-        val walletDisplayName = selectedWallet?.walletName ?: if (conflictingWallet != null) "当前账号未创建钱包" else "未创建"
+        val walletDisplayName = selectedWallet?.walletName ?: if (conflictingWalletDetected) "当前账号未创建钱包" else "未创建"
+        val walletItems = wallets.map { wallet ->
+            val capabilityLabel = resolveWalletManagerCapability(wallet)
+            WalletManagerWalletItemUi(
+                walletId = wallet.walletId,
+                walletName = wallet.walletName,
+                walletKind = wallet.walletKind,
+                isDefault = wallet.isDefault,
+                isArchived = wallet.isArchived,
+                subtitle = buildString {
+                    append(wallet.sourceType)
+                    if (capabilityLabel.isNotBlank()) {
+                        append(" · ")
+                        append(capabilityLabel)
+                    }
+                },
+            )
+        }
 
         return WalletManagerUiState(
             badge = "",
             metrics = listOf(
-                FeatureMetric("钱包数量", wallets.size.toString()),
+                FeatureMetric("钱包数量", walletItems.size.toString()),
                 FeatureMetric("当前钱包", walletDisplayName),
-                FeatureMetric("关联订单", orders.size.toString()),
+                FeatureMetric("关联订单", orderCount.toString()),
             ),
-            wallets = wallets.map { wallet ->
-                WalletManagerWalletItemUi(
-                    walletId = wallet.walletId,
-                    walletName = wallet.walletName,
-                    walletKind = wallet.walletKind,
-                    isDefault = wallet.isDefault,
-                    isArchived = wallet.isArchived,
-                    subtitle = buildString {
-                        append(wallet.sourceType)
-                        if (!wallet.deviceCapabilitySummary.isNullOrBlank()) {
-                            append(" · ")
-                            append(wallet.deviceCapabilitySummary)
-                        }
-                    },
-                )
-            },
+            wallets = walletItems,
             highlights = listOf(
                 FeatureListItem("当前钱包", walletDisplayName, selectedWallet?.walletKind ?: "NOT_CREATED", "REAL"),
                 FeatureListItem("新增钱包", "创建新的多链自托管钱包。", "创建", "CREATE"),
                 FeatureListItem("导入观察钱包", "导入只读地址用于查看资产。", "WATCH_ONLY", "SAFE"),
                 FeatureListItem(
                     "账户标签",
-                    user?.email ?: user?.username ?: "--",
-                    if (conflictingWallet != null) "检测到其他账号本地钱包" else "",
+                    userEmailOrName,
+                    if (conflictingWalletDetected) "检测到其他账号本地钱包" else "",
                     "ACCOUNT",
                 ),
             ),
-            summary = if (wallets.isNotEmpty()) "当前账号已配置多个钱包入口，可切换默认钱包。" else "当前账号还没有钱包。",
+            summary = when {
+                walletItems.isNotEmpty() && refreshFailed -> "当前网络不佳，已显示本地钱包缓存。"
+                walletItems.isNotEmpty() -> "当前账号已配置多个钱包入口，可切换默认钱包。"
+                else -> "当前账号还没有钱包。"
+            },
             checklist = emptyList(),
-            note = "",
+            note = if (refreshFailed && walletItems.isNotEmpty()) {
+                "钱包列表刷新失败，已自动重试并保留本地结果。"
+            } else {
+                ""
+            },
         )
+    }
+
+    private fun resolveWalletManagerCapability(
+        wallet: com.v2ray.ang.payment.data.api.WalletSummaryData,
+    ): String {
+        if (!wallet.deviceCapabilitySummary.isNullOrBlank()) {
+            return wallet.deviceCapabilitySummary
+        }
+        return when {
+            wallet.walletKind == "WATCH_ONLY" -> "VIEW_ONLY"
+            walletSecretStore.getMnemonicRecordByWalletId(wallet.walletId) != null -> "SIGNABLE"
+            else -> ""
+        }
     }
 
     override suspend fun getAddressBookState(args: AddressBookRouteArgs): AddressBookUiState =
