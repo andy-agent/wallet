@@ -1976,6 +1976,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         }
         val backupState = when {
             conflictingWallet != null -> "请登录原账号导出"
+            backupMetadata?.exists == true && localWallet == null -> "已保留"
             backupMetadata?.exists == true -> "已同步"
             else -> "未同步"
         }
@@ -2006,11 +2007,12 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 FeatureBullet("加密备份", backupState),
             ),
             summary = when {
+                localWallet == null && backupMetadata?.exists == true -> "当前未检测到本地钱包，但服务端加密备份仍保留。"
                 localWallet == null -> "当前未检测到本地钱包。"
                 conflictingWallet != null -> "检测到其他账号的钱包；可导出原账号的加密备份或清除本地钱包后切换账号。"
-                else -> "可在此导出加密备份或清除本地钱包后切换账号。"
+                else -> "清除本地钱包时会同步删除服务端钱包记录，但保留加密备份。"
             },
-            note = if (localWallet != null) "清除仅删除本机加密钱包材料，不会删除服务端钱包生命周期或备份记录。" else "",
+            note = if (localWallet != null) "清除会同步删除服务端钱包业务记录，并清空本地缓存；加密备份数据会保留。" else "",
         )
     }
 
@@ -2052,9 +2054,29 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 success = false,
                 errorMessage = "当前设备没有可清除的本地钱包",
             )
+        val currentAccountId = paymentRepository.getCurrentUserId()
         return@withContext try {
+            val serverCleared = if (!currentAccountId.isNullOrBlank() && currentAccountId == localWallet.accountId) {
+                paymentRepository.resetWalletDomain().getOrElse { error ->
+                    return@withContext LocalWalletActionResult(
+                        success = false,
+                        errorMessage = error.message ?: "清除服务端钱包记录失败",
+                    )
+                }
+                true
+            } else {
+                false
+            }
+            paymentRepository.clearWalletDomainCache(localWallet.accountId)
             walletSecretStore.clear(localWallet.accountId)
-            LocalWalletActionResult(success = true)
+            LocalWalletActionResult(
+                success = true,
+                message = if (serverCleared) {
+                    "本地钱包已清除，服务端钱包记录已同步删除，加密备份已保留"
+                } else {
+                    "本地钱包已清除；当前未同步删除服务端钱包记录，加密备份已保留"
+                },
+            )
         } catch (e: Exception) {
             LocalWalletActionResult(
                 success = false,

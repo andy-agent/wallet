@@ -166,5 +166,7 @@ export abstract class RuntimeStateRepository {
     record: PersistedWalletSecretBackupV2Record,
   ): Promise<PersistedWalletSecretBackupV2Record>;
 
+  abstract clearWalletDomainByAccountId(accountId: string): Promise<void>;
+
   onModuleDestroy?(): Promise<void>;
 }

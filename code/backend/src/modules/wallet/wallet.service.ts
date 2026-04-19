@@ -309,6 +309,27 @@ export class WalletService {
     return this.getWallet(accessToken, walletId);
   }
 
+  async resetWalletDomain(accessToken: string) {
+    const account = this.authService.getMe(accessToken);
+    const [wallets, publicAddresses, lifecycle, backup] = await Promise.all([
+      this.runtimeStateRepository.listWalletsByAccountId(account.accountId),
+      this.runtimeStateRepository.listWalletPublicAddressesByAccountId({
+        accountId: account.accountId,
+      }),
+      this.runtimeStateRepository.findWalletLifecycleByAccountId(account.accountId),
+      this.runtimeStateRepository.findWalletSecretBackupByAccountId(account.accountId),
+    ]);
+
+    await this.runtimeStateRepository.clearWalletDomainByAccountId(account.accountId);
+
+    return {
+      clearedWalletCount: wallets.length,
+      clearedPublicAddressCount: publicAddresses.length,
+      clearedLegacyLifecycle: lifecycle ? 1 : 0,
+      retainedBackup: Boolean(backup),
+    };
+  }
+
   async upsertWalletSecretBackupV2(
     accessToken: string,
     walletId: string,

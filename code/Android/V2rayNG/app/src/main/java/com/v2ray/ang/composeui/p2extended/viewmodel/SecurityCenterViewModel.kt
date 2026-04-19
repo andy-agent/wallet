@@ -83,7 +83,7 @@ class SecurityCenterViewModel(
             lastLocalWalletActionResult = result
             if (result.success) {
                 refresh()
-                onSuccess("本地钱包已清除")
+                onSuccess(result.message ?: "本地钱包已清除")
             } else {
                 onError(result.errorMessage ?: "清除本地钱包失败")
             }

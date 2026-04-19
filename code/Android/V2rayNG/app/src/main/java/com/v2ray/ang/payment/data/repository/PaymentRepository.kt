@@ -51,6 +51,7 @@ import com.v2ray.ang.payment.data.api.CreateMnemonicWalletRequest
 import com.v2ray.ang.payment.data.api.CreateMnemonicWalletKeySlotRequest
 import com.v2ray.ang.payment.data.api.CreateMnemonicWalletChainAccountRequest
 import com.v2ray.ang.payment.data.api.ImportWatchWalletRequest
+import com.v2ray.ang.payment.data.api.WalletResetData
 import com.v2ray.ang.payment.data.api.WalletTransferBuildData
 import com.v2ray.ang.payment.data.api.WalletTransferBuildRequest
 import com.v2ray.ang.payment.data.api.WalletTransferPrecheckData
@@ -1632,6 +1633,25 @@ class PaymentRepository(context: Context) {
         }
     }
 
+    suspend fun resetWalletDomain(): Result<WalletResetData> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.resetWalletDomain("Bearer $token")
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { Result.success(it) }
+                    ?: Result.failure(Exception("清空钱包域结果为空"))
+            } else {
+                Result.failure(Exception(extractApiErrorMessage(response, "清除服务端钱包记录失败")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun upsertWalletSecretBackupForWallet(
         walletId: String,
         request: WalletSecretBackupUpsertRequest,
@@ -1752,6 +1772,14 @@ class PaymentRepository(context: Context) {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun clearWalletDomainCache(userId: String) = withContext(Dispatchers.IO) {
+        localRepository.clearWalletDomainData(userId)
+        prefs.edit()
+            .remove(PaymentConfig.Prefs.WALLET_ASSET_CATALOG_CACHE_JSON)
+            .remove(PaymentConfig.Prefs.WALLET_ASSET_CATALOG_CACHE_UPDATED_AT)
+            .apply()
     }
 
     suspend fun getWalletSecretBackupExport(): Result<WalletSecretBackupExportData> = withContext(Dispatchers.IO) {

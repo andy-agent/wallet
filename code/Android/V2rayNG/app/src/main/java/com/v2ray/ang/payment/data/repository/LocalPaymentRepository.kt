@@ -185,6 +185,14 @@ class LocalPaymentRepository(context: Context) {
         }
     }
 
+    suspend fun clearWalletDomainData(userId: String) = withContext(Dispatchers.IO) {
+        localWalletDao.deleteByUserId(userId)
+        localWalletChainAccountDao.deleteByUserId(userId)
+        walletPublicAddressCacheDao.deleteByUserId(userId)
+        walletReceiveContextCacheDao.deleteByUserId(userId)
+        walletOverviewCacheDao.deleteByUserId(userId)
+    }
+
     suspend fun getLocalWalletChainAccounts(walletId: String): List<LocalWalletChainAccountEntity> = withContext(Dispatchers.IO) {
         localWalletChainAccountDao.getByWalletId(walletId)
     }

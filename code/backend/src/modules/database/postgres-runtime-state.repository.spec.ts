@@ -240,4 +240,132 @@ describe('PostgresRuntimeStateRepository matcher persistence', () => {
 
     await repository.onModuleDestroy();
   });
+
+  it('clears wallet domain records while preserving encrypted backups', async () => {
+    const db = newDb({
+      noAstCoverageCheck: true,
+    });
+    const { Pool } = db.adapters.createPg();
+    const repository = new PostgresRuntimeStateRepository(
+      {
+        connectionString: 'postgres://runtime:runtime@server2:5432/cryptovpn',
+      },
+      new Pool(),
+    );
+
+    await repository.initialize();
+
+    await repository.upsertWalletLifecycle({
+      accountId: 'acc-1',
+      walletId: 'legacy-wallet',
+      walletName: 'Legacy Wallet',
+      status: 'ACTIVE',
+      origin: 'CREATED',
+      mnemonicHash: 'hash',
+      mnemonicWordCount: 12,
+      backupAcknowledgedAt: '2026-04-19T00:00:00.000Z',
+      activatedAt: '2026-04-19T00:01:00.000Z',
+      createdAt: '2026-04-19T00:00:00.000Z',
+      updatedAt: '2026-04-19T00:01:00.000Z',
+    });
+    await repository.upsertWalletPublicAddress({
+      addressId: 'addr-1',
+      accountId: 'acc-1',
+      walletId: 'legacy-wallet',
+      networkCode: 'SOLANA',
+      assetCode: 'SOL',
+      address: '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV',
+      isDefault: true,
+      createdAt: '2026-04-19T00:00:00.000Z',
+      updatedAt: '2026-04-19T00:00:00.000Z',
+    });
+    await repository.insertWallet({
+      walletId: 'wallet-1',
+      accountId: 'acc-1',
+      walletName: 'Primary',
+      walletKind: 'SELF_CUSTODY',
+      sourceType: 'CREATED',
+      isDefault: true,
+      isArchived: false,
+      createdAt: '2026-04-19T00:00:00.000Z',
+      updatedAt: '2026-04-19T00:00:00.000Z',
+    });
+    await repository.insertWalletKeySlot({
+      keySlotId: 'slot-1',
+      walletId: 'wallet-1',
+      slotCode: 'SOLANA_0',
+      chainFamily: 'SOLANA',
+      derivationType: 'MNEMONIC',
+      derivationPath: "m/44'/501'/0'/0'",
+      createdAt: '2026-04-19T00:00:00.000Z',
+      updatedAt: '2026-04-19T00:00:00.000Z',
+    });
+    await repository.insertWalletChainAccount({
+      chainAccountId: 'chain-1',
+      walletId: 'wallet-1',
+      keySlotId: 'slot-1',
+      chainFamily: 'SOLANA',
+      networkCode: 'SOLANA',
+      address: '7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV',
+      capability: 'SIGN_AND_PAY',
+      isEnabled: true,
+      isDefaultReceive: true,
+      createdAt: '2026-04-19T00:00:00.000Z',
+      updatedAt: '2026-04-19T00:00:00.000Z',
+    });
+    await repository.upsertWalletSecretBackup({
+      backupId: 'backup-legacy',
+      accountId: 'acc-1',
+      walletId: 'legacy-wallet',
+      secretType: 'MNEMONIC',
+      encryptionScheme: 'AGE',
+      recoveryKeyVersion: 'v1',
+      recipientFingerprint: 'fingerprint',
+      ciphertext: 'ciphertext-legacy',
+      replicatedToBackupServer: false,
+      backupServerReference: null,
+      lastReplicationError: null,
+      createdAt: '2026-04-19T00:00:00.000Z',
+      updatedAt: '2026-04-19T00:00:00.000Z',
+    });
+    await repository.upsertWalletSecretBackupV2({
+      backupId: 'backup-v2',
+      accountId: 'acc-1',
+      walletId: 'wallet-1',
+      secretType: 'MNEMONIC',
+      encryptionScheme: 'AGE',
+      recoveryKeyVersion: 'v2',
+      recipientFingerprint: 'fingerprint-v2',
+      ciphertext: 'ciphertext-v2',
+      replicatedToBackupServer: false,
+      backupServerReference: null,
+      lastReplicationError: null,
+      createdAt: '2026-04-19T00:00:00.000Z',
+      updatedAt: '2026-04-19T00:00:00.000Z',
+    });
+
+    await repository.clearWalletDomainByAccountId('acc-1');
+
+    expect(await repository.findWalletLifecycleByAccountId('acc-1')).toBeNull();
+    expect(await repository.listWalletPublicAddressesByAccountId({ accountId: 'acc-1' })).toEqual(
+      [],
+    );
+    expect(await repository.listWalletsByAccountId('acc-1')).toEqual([]);
+    expect(await repository.listWalletKeySlotsByWalletId('wallet-1')).toEqual([]);
+    expect(await repository.listWalletChainAccountsByWalletId('wallet-1')).toEqual([]);
+    expect(await repository.findWalletSecretBackupByAccountId('acc-1')).toEqual(
+      expect.objectContaining({
+        backupId: 'backup-legacy',
+        walletId: 'legacy-wallet',
+      }),
+    );
+    expect(await repository.findWalletSecretBackupByWalletId('wallet-1')).toEqual(
+      expect.objectContaining({
+        backupId: 'backup-v2',
+        walletId: 'wallet-1',
+      }),
+    );
+
+    await repository.onModuleDestroy();
+  });
 });

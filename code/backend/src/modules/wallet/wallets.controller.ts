@@ -122,6 +122,11 @@ export class WalletsController {
     );
   }
 
+  @Post('reset')
+  resetWalletDomain(@Headers('authorization') authorization: string | undefined) {
+    return this.walletService.resetWalletDomain(this.extractBearer(authorization));
+  }
+
   private extractBearer(authorization?: string) {
     if (!authorization?.startsWith('Bearer ')) {
       return '';

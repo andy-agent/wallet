@@ -564,6 +564,36 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
     return record;
   }
 
+  async clearWalletDomainByAccountId(accountId: string): Promise<void> {
+    const snapshot = this.readSnapshot();
+    const walletIds = new Set(
+      snapshot.wallets
+        .filter((item) => item.accountId === accountId)
+        .map((item) => item.walletId),
+    );
+    const keySlotIds = new Set(
+      snapshot.walletKeySlots
+        .filter((item) => walletIds.has(item.walletId))
+        .map((item) => item.keySlotId),
+    );
+
+    snapshot.walletLifecycles = snapshot.walletLifecycles.filter(
+      (item) => item.accountId !== accountId,
+    );
+    snapshot.walletPublicAddresses = snapshot.walletPublicAddresses.filter(
+      (item) => item.accountId !== accountId,
+    );
+    snapshot.wallets = snapshot.wallets.filter((item) => item.accountId !== accountId);
+    snapshot.walletKeySlots = snapshot.walletKeySlots.filter(
+      (item) => !keySlotIds.has(item.keySlotId),
+    );
+    snapshot.walletChainAccounts = snapshot.walletChainAccounts.filter(
+      (item) => !walletIds.has(item.walletId),
+    );
+
+    this.writeSnapshot(snapshot);
+  }
+
   private ensureStateFile() {
     const directory = dirname(this.stateFilePath);
     if (!existsSync(directory)) {

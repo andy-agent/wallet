@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { createHash } from 'crypto';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
@@ -18,6 +19,7 @@ describe('Wallet (e2e)', () => {
     process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
   const originalSolanaCustomOrderAssetsJson =
     process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON;
+  const originalWalletBackupRecipients = process.env.WALLET_BACKUP_RECIPIENTS;
 
   async function bootstrapApp(
     tronClientOverride?: Partial<
@@ -54,6 +56,8 @@ describe('Wallet (e2e)', () => {
   beforeEach(async () => {
     delete process.env.TRON_SERVICE_ENABLED;
     delete process.env.SOLANA_ORDER_COLLECTION_ADDRESS;
+    process.env.WALLET_BACKUP_RECIPIENTS =
+      'age1wp4zfn93luhad3qmzrvw60p5knc7lg736pxuhs4kkkzty0c5m58sn8p004';
     await bootstrapApp();
     email = `wallet-${Date.now()}-${Math.random().toString(16).slice(2, 8)}@example.com`;
 
@@ -93,11 +97,16 @@ describe('Wallet (e2e)', () => {
 
     if (originalSolanaCustomOrderAssetsJson === undefined) {
       delete process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON;
-      return;
+    } else {
+      process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON =
+        originalSolanaCustomOrderAssetsJson;
     }
 
-    process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON =
-      originalSolanaCustomOrderAssetsJson;
+    if (originalWalletBackupRecipients === undefined) {
+      delete process.env.WALLET_BACKUP_RECIPIENTS;
+    } else {
+      process.env.WALLET_BACKUP_RECIPIENTS = originalWalletBackupRecipients;
+    }
   });
 
   it('wallet lifecycle exposes no-wallet vs created-wallet receive gating state', async () => {
@@ -704,6 +713,132 @@ describe('Wallet (e2e)', () => {
         submittedFromAddress: validTronAddress,
       })
       .expect(201);
+  });
+
+  it('clears wallet domain records while preserving encrypted backup metadata', async () => {
+    const mnemonic = Array(12).fill('abandon').join(' ');
+    const mnemonicHash = createHash('sha256').update(mnemonic).digest('hex');
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallet/lifecycle')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        action: 'CREATE',
+        displayName: 'Legacy Wallet',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallet/public-addresses')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        networkCode: 'SOLANA',
+        assetCode: 'USDT',
+        address: validSolanaAddress,
+        isDefault: true,
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallet/secret-backups')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        secretType: 'MNEMONIC',
+        mnemonic,
+        mnemonicHash,
+        mnemonicWordCount: 12,
+        walletName: 'Legacy Wallet',
+        sourceType: 'CREATE',
+        publicAddresses: [
+          {
+            networkCode: 'SOLANA',
+            assetCode: 'USDT',
+            address: validSolanaAddress,
+            isDefault: true,
+          },
+        ],
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallets/create-mnemonic')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        walletName: 'Main Wallet',
+        keySlots: [
+          {
+            slotCode: 'SOLANA_0',
+            chainFamily: 'SOLANA',
+            derivationType: 'MNEMONIC',
+            derivationPath: "m/44'/501'/0'/0'",
+          },
+        ],
+        chainAccounts: [
+          {
+            slotCode: 'SOLANA_0',
+            chainFamily: 'SOLANA',
+            networkCode: 'SOLANA',
+            address: validSolanaAddress,
+            isEnabled: true,
+            isDefaultReceive: true,
+          },
+        ],
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/api/client/v1/wallets/reset')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(201)
+      .expect((res) => {
+        expect(res.body.data.clearedWalletCount).toBe(1);
+        expect(res.body.data.clearedPublicAddressCount).toBeGreaterThanOrEqual(1);
+        expect(res.body.data.clearedLegacyLifecycle).toBe(1);
+        expect(res.body.data.retainedBackup).toBe(true);
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/client/v1/wallets')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.items).toEqual([]);
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/lifecycle')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.walletExists).toBe(false);
+        expect(res.body.data.receiveState).toBe('NO_WALLET');
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/public-addresses')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.items).toEqual([]);
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/secret-backups')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.exists).toBe(true);
+        expect(res.body.data.walletId).toBeDefined();
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/secret-backups/export')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.exists).toBe(true);
+        expect(res.body.data.payload.ciphertext).toBeDefined();
+      });
   });
 
   it('rejects known placeholder wallet public addresses', async () => {

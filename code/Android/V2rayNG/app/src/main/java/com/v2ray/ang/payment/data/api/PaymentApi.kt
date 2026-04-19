@@ -226,6 +226,11 @@ interface PaymentApi {
         @Path("walletId") walletId: String
     ): Response<WalletDetailResponse>
 
+    @POST("${PaymentConfig.API_VERSION}/wallets/reset")
+    suspend fun resetWalletDomain(
+        @Header("Authorization") authorization: String
+    ): Response<WalletResetResponse>
+
     @POST("${PaymentConfig.API_VERSION}/wallets/{walletId}/secret-backup")
     suspend fun upsertWalletSecretBackupV2(
         @Header("Authorization") authorization: String,
@@ -958,8 +963,25 @@ data class WalletChainAccountsResponse(
     val data: WalletChainAccountsData?
 )
 
+data class WalletResetResponse(
+    val code: String,
+    val message: String,
+    val data: WalletResetData?
+)
+
 data class WalletChainAccountsData(
     val items: List<WalletChainAccountData>
+)
+
+data class WalletResetData(
+    @SerializedName("clearedWalletCount")
+    val clearedWalletCount: Int,
+    @SerializedName("clearedPublicAddressCount")
+    val clearedPublicAddressCount: Int,
+    @SerializedName("clearedLegacyLifecycle")
+    val clearedLegacyLifecycle: Int,
+    @SerializedName("retainedBackup")
+    val retainedBackup: Boolean,
 )
 
 data class WalletSummaryData(

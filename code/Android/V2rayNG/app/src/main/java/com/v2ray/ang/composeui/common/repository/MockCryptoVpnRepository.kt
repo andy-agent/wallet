@@ -349,7 +349,10 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
     }
 
     override suspend fun clearLocalWallet(): LocalWalletActionResult {
-        return LocalWalletActionResult(success = true)
+        return LocalWalletActionResult(
+            success = true,
+            message = "本地钱包与服务端钱包记录已清除，加密备份已保留",
+        )
     }
 
     override suspend fun logoutSession(): LogoutResult {

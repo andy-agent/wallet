@@ -1864,6 +1864,69 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     return this.mapWalletSecretBackupV2(result.rows[0]);
   }
 
+  async clearWalletDomainByAccountId(accountId: string): Promise<void> {
+    await this.ensureReady();
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      await client.query(
+        `
+          DELETE FROM ${WALLET_CHAIN_ACCOUNTS_TABLE}
+          WHERE wallet_id IN (
+            SELECT wallet_id
+            FROM ${WALLETS_TABLE}
+            WHERE account_id = $1
+          )
+        `,
+        [accountId],
+      );
+
+      await client.query(
+        `
+          DELETE FROM ${WALLET_KEY_SLOTS_TABLE}
+          WHERE wallet_id IN (
+            SELECT wallet_id
+            FROM ${WALLETS_TABLE}
+            WHERE account_id = $1
+          )
+        `,
+        [accountId],
+      );
+
+      await client.query(
+        `
+          DELETE FROM ${WALLETS_TABLE}
+          WHERE account_id = $1
+        `,
+        [accountId],
+      );
+
+      await client.query(
+        `
+          DELETE FROM ${WALLET_PUBLIC_ADDRESSES_TABLE}
+          WHERE account_id = $1
+        `,
+        [accountId],
+      );
+
+      await client.query(
+        `
+          DELETE FROM ${WALLET_LIFECYCLES_TABLE}
+          WHERE account_id = $1
+        `,
+        [accountId],
+      );
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.pool.end();
   }

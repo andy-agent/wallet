@@ -36,6 +36,7 @@ data class LocalWalletActionResult(
     val exportContent: String? = null,
     val exportFileName: String? = null,
     val exportMimeType: String = "application/json",
+    val message: String? = null,
     val errorMessage: String? = null,
 )
 
