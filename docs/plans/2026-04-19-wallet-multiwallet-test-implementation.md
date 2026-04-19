@@ -10,6 +10,17 @@
 
 ---
 
+**Explicit constraints for this plan:**
+
+- keep server-side encrypted backup for self-custody wallets
+- backup scope is per wallet, not per account
+- the server may encrypt and store ciphertext, but must not store the AGE decryption identity
+- the AGE decryption identity is held only on an offline recovery machine
+- no user-facing wallet recovery flow is implemented in this phase
+- losing mnemonic/private-key material remains unrecoverable from the app in this phase
+
+---
+
 ### Task 1: Define the new backend wallet domain types
 
 **Files:**
@@ -153,6 +164,8 @@ Add end-to-end tests covering:
 - import watch-only wallet
 - set default wallet
 - get wallet chain accounts
+- self-custody backup records are wallet-scoped
+- watch-only wallets do not create backup records
 
 Do not include private-key import in the first test batch if it slows down the first closed loop.
 
@@ -184,6 +197,8 @@ Important:
 - do not generate mnemonic material on the backend
 - accept client-submitted chain-account metadata for create/import flows
 - keep secret backup APIs wallet-scoped
+- keep encrypted server backup for self-custody wallets
+- do not implement any user-facing wallet recovery flow
 
 **Step 4: Run test to verify it passes**
 
@@ -285,6 +300,7 @@ Add tests covering:
 - multiple wallets can be cached locally for one account
 - wallet secrets are keyed by `walletId + keySlotId`, not `accountId`
 - device-signable state resolves from local secret presence
+- local recovery UI is absent and not reintroduced in this phase
 
 **Step 2: Run test to verify it fails**
 

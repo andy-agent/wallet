@@ -428,9 +428,40 @@ Recommended behavior:
 - client generates mnemonic locally
 - client submits wallet creation metadata to the server
 - client stores secret material locally
-- client optionally uploads encrypted backup through a dedicated backup API
+- client uploads encrypted wallet backup through a dedicated backup API for self-custody wallets
 
 This matches the current system much better than a backend-generated mnemonic model.
+
+### 8.3 Wallet backup policy
+
+Phase 1 backup policy is mandatory for `SELF_CUSTODY` wallets:
+
+- each self-custody wallet has its own encrypted backup record scoped by `walletId`
+- watch-only wallets do not create mnemonic or private-key backup records
+- the server is allowed to encrypt and store ciphertext
+- the server must not store the AGE decryption identity or any equivalent decryption private key
+- the AGE decryption identity is stored only on an offline recovery machine
+- backup metadata stored by the service is limited to ciphertext and recovery metadata such as:
+  - `ciphertext`
+  - `recoveryKeyVersion`
+  - `recipientFingerprint`
+
+Clarification:
+
+- the AGE decryption identity is not a user wallet private key
+- it is the private key for the backup encryption system
+- user mnemonic or private-key material is encrypted for offline recovery, not for online decryption
+
+### 8.4 Wallet recovery policy
+
+Wallet recovery is explicitly out of scope for this phase.
+
+If a user loses local mnemonic or private-key material:
+
+- the system will not expose any user-facing self-service wallet recovery flow
+- the app will not offer wallet recovery in phase 1
+- the encrypted server backup exists for operational disaster-recovery purposes only
+- any future recovery workflow requires a separate approved design
 
 ---
 
