@@ -19,10 +19,12 @@ import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.api.CommissionLedgerPageData
 import com.v2ray.ang.payment.data.api.CommissionSummaryData
+import com.v2ray.ang.payment.data.api.CreateCustomTokenRequest
 import com.v2ray.ang.payment.data.api.CurrentSubscriptionData
 import com.v2ray.ang.payment.data.api.IssueVpnConfigRequest
 import com.v2ray.ang.payment.data.api.MeData
 import com.v2ray.ang.payment.data.api.PaymentApi
+import com.v2ray.ang.payment.data.api.CustomTokenSearchCandidateData
 import com.v2ray.ang.payment.data.api.RegisterEmailCodeRequest
 import com.v2ray.ang.payment.data.api.ReferralBindRequest
 import com.v2ray.ang.payment.data.api.ReferralOverviewData
@@ -59,6 +61,7 @@ import com.v2ray.ang.payment.data.api.WalletTransferPrecheckRequest
 import com.v2ray.ang.payment.data.api.WalletTransferProxyBroadcastData
 import com.v2ray.ang.payment.data.api.WalletTransferProxyBroadcastRequest
 import com.v2ray.ang.payment.data.api.WalletAssetItemData
+import com.v2ray.ang.payment.data.api.WalletCustomTokenData
 import com.v2ray.ang.payment.data.api.WalletReceiveContextData
 import com.v2ray.ang.payment.data.api.WithdrawalItem
 import com.v2ray.ang.payment.data.api.WithdrawalPageData
@@ -67,6 +70,9 @@ import com.v2ray.ang.payment.data.local.entity.PaymentHistoryEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
 import com.v2ray.ang.payment.data.local.entity.LocalWalletEntity
 import com.v2ray.ang.payment.data.local.entity.LocalWalletChainAccountEntity
+import com.v2ray.ang.payment.data.local.entity.LocalCustomTokenEntity
+import com.v2ray.ang.payment.data.local.entity.LocalTokenIconCacheEntity
+import com.v2ray.ang.payment.data.local.entity.LocalTokenVisibilityEntryEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeCacheEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
 import com.v2ray.ang.payment.data.local.entity.WalletOverviewCacheEntity
@@ -81,9 +87,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.Response
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.net.ssl.*
@@ -101,22 +109,20 @@ class PaymentRepository(context: Context) {
     private val localRepository = LocalPaymentRepository(appContext)
     private val paymentApiGson: Gson by lazy { createPaymentApiGson() }
     private val cacheSyncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-    val api: PaymentApi by lazy {
+    private val apiOkHttpClient: OkHttpClient by lazy {
         // 创建信任所有证书的 SSL Socket Factory (用于自签名证书)
         val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
             override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
             override fun checkServerTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
             override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
         })
-        
+
         val sslContext = SSLContext.getInstance("SSL")
         sslContext.init(null, trustAllCerts, java.security.SecureRandom())
-        
-        // 创建允许所有主机名的 HostnameVerifier
+
         val allHostsValid = HostnameVerifier { _, _ -> true }
-        
-        val client = OkHttpClient.Builder()
+
+        OkHttpClient.Builder()
             .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
             .hostnameVerifier(allHostsValid)
             .addInterceptor { chain ->
@@ -128,10 +134,12 @@ class PaymentRepository(context: Context) {
                 chain.proceed(request)
             }
             .build()
+    }
 
+    val api: PaymentApi by lazy {
         Retrofit.Builder()
             .baseUrl(PaymentConfig.API_BASE_URL)
-            .client(client)
+            .client(apiOkHttpClient)
             .addConverterFactory(GsonConverterFactory.create(paymentApiGson))
             .build()
             .create(PaymentApi::class.java)
@@ -150,6 +158,7 @@ class PaymentRepository(context: Context) {
         private const val VPN_NODE_SYNC_THROTTLE_MS = 60_000L
         private const val WALLET_CACHE_SYNC_THROTTLE_MS = 60_000L
         private const val ORDER_PAGE_SIZE = 100
+        private const val TOKEN_ICON_DIR = "token_icons"
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
             timeZone = java.util.TimeZone.getTimeZone("UTC")
@@ -1419,9 +1428,14 @@ class PaymentRepository(context: Context) {
         }
     }
 
-    suspend fun getCachedWalletOverview(userId: String? = getCurrentUserId()): WalletOverviewData? = withContext(Dispatchers.IO) {
+    suspend fun getCachedWalletOverview(
+        userId: String? = getCurrentUserId(),
+        walletId: String? = null,
+    ): WalletOverviewData? = withContext(Dispatchers.IO) {
         val resolvedUserId = userId ?: return@withContext null
-        localRepository.getWalletOverviewCache(resolvedUserId)?.toWalletOverviewData()
+        localRepository.getWalletOverviewCache(resolvedUserId)
+            ?.toWalletOverviewData()
+            ?.let { mergeWalletOverviewWithLocalCustomTokens(resolvedUserId, walletId, it) }
     }
 
     suspend fun syncWalletOverviewFromServer(
@@ -1462,21 +1476,43 @@ class PaymentRepository(context: Context) {
                             ),
                         )
                     }
-                    Result.success(data)
+                    Result.success(
+                        mergeWalletOverviewWithLocalCustomTokens(
+                            userId = cacheUserId ?: resolvedUserId,
+                            walletId = walletId,
+                            overview = data,
+                        ),
+                    )
                 } ?: cached?.let { Result.success(it.toWalletOverviewData()) }
                     ?: Result.failure(Exception("钱包总览为空"))
             } else {
-                cached?.let { Result.success(it.toWalletOverviewData()) }
+                cached?.let {
+                    Result.success(
+                        mergeWalletOverviewWithLocalCustomTokens(
+                            userId = resolvedUserId,
+                            walletId = walletId,
+                            overview = it.toWalletOverviewData(),
+                        ),
+                    )
+                }
                     ?: Result.failure(Exception(response.body()?.message ?: "获取钱包总览失败"))
             }
         } catch (e: Exception) {
-            cached?.let { Result.success(it.toWalletOverviewData()) } ?: Result.failure(e)
+            cached?.let {
+                Result.success(
+                    mergeWalletOverviewWithLocalCustomTokens(
+                        userId = resolvedUserId,
+                        walletId = walletId,
+                        overview = it.toWalletOverviewData(),
+                    ),
+                )
+            } ?: Result.failure(e)
         }
     }
 
     suspend fun getWalletOverview(walletId: String? = null): Result<WalletOverviewData> = withContext(Dispatchers.IO) {
         val resolvedUserId = getCurrentUserId()
-        val cached = if (walletId.isNullOrBlank()) getCachedWalletOverview(resolvedUserId) else null
+        val cached = if (walletId.isNullOrBlank()) getCachedWalletOverview(resolvedUserId, walletId) else null
         if (cached != null) {
             cacheSyncScope.launch {
                 syncWalletOverviewFromServer(force = true, userId = resolvedUserId, walletId = walletId)
@@ -1709,6 +1745,217 @@ class PaymentRepository(context: Context) {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun getTokenVisibilityEntries(
+        walletId: String,
+        chainId: String,
+    ): Result<List<LocalTokenVisibilityEntryEntity>> = withContext(Dispatchers.IO) {
+        val userId = getCurrentUserId()
+            ?: return@withContext Result.failure(Exception("未登录"))
+        Result.success(
+            localRepository.getTokenVisibilityEntries(
+                userId = userId,
+                walletId = walletId,
+                chainId = chainId.lowercase(Locale.ROOT),
+            ),
+        )
+    }
+
+    suspend fun setTokenVisibility(
+        walletId: String,
+        chainId: String,
+        tokenKey: String,
+        visibilityState: String?,
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        val userId = getCurrentUserId()
+            ?: return@withContext Result.failure(Exception("未登录"))
+        val normalizedChainId = chainId.lowercase(Locale.ROOT)
+        val normalizedTokenKey = tokenKey.trim()
+        if (normalizedTokenKey.isBlank()) {
+            return@withContext Result.failure(Exception("代币标识为空"))
+        }
+        if (visibilityState.isNullOrBlank()) {
+            localRepository.clearTokenVisibilityEntry(userId, walletId, normalizedChainId, normalizedTokenKey)
+        } else {
+            localRepository.upsertTokenVisibilityEntry(
+                LocalTokenVisibilityEntryEntity(
+                    userId = userId,
+                    walletId = walletId,
+                    chainId = normalizedChainId,
+                    tokenKey = normalizedTokenKey,
+                    visibilityState = visibilityState.uppercase(Locale.ROOT),
+                    updatedAt = System.currentTimeMillis(),
+                ),
+            )
+        }
+        Result.success(Unit)
+    }
+
+    suspend fun getCachedCustomTokens(
+        walletId: String,
+        chainId: String,
+    ): List<WalletCustomTokenData> = withContext(Dispatchers.IO) {
+        val userId = getCurrentUserId() ?: return@withContext emptyList()
+        localRepository.getCustomTokens(userId, walletId, chainId.lowercase(Locale.ROOT))
+            .map { it.toData() }
+    }
+
+    suspend fun listCustomTokens(
+        walletId: String,
+        chainId: String,
+    ): Result<List<WalletCustomTokenData>> = withContext(Dispatchers.IO) {
+        val userId = getCurrentUserId()
+            ?: return@withContext Result.failure(Exception("未登录"))
+        val normalizedChainId = chainId.lowercase(Locale.ROOT)
+        val cached = localRepository.getCustomTokens(userId, walletId, normalizedChainId).map { it.toData() }
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext if (cached.isNotEmpty()) Result.success(cached) else Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext if (cached.isNotEmpty()) Result.success(cached) else Result.failure(Exception("未登录"))
+            val response = api.listCustomTokens("Bearer $token", walletId, normalizedChainId)
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                val items = response.body()?.data?.items.orEmpty()
+                localRepository.replaceCustomTokens(
+                    userId = userId,
+                    walletId = walletId,
+                    chainId = normalizedChainId,
+                    items = items.map { it.toEntity(userId) },
+                )
+                cacheSyncScope.launch { ensureCustomTokenIconsCached(items) }
+                Result.success(items)
+            } else {
+                if (cached.isNotEmpty()) Result.success(cached)
+                else Result.failure(Exception(extractApiErrorMessage(response, "获取自定义代币失败")))
+            }
+        } catch (e: Exception) {
+            if (cached.isNotEmpty()) Result.success(cached) else Result.failure(e)
+        }
+    }
+
+    suspend fun searchCustomTokens(
+        chainId: String,
+        query: String,
+    ): Result<List<CustomTokenSearchCandidateData>> = withContext(Dispatchers.IO) {
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.searchCustomTokens(
+                authorization = "Bearer $token",
+                chainId = chainId.lowercase(Locale.ROOT),
+                query = query.trim(),
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                Result.success(response.body()?.data?.items.orEmpty())
+            } else {
+                Result.failure(Exception(extractApiErrorMessage(response, "搜索代币失败")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createCustomToken(
+        walletId: String,
+        chainId: String,
+        tokenAddress: String,
+        name: String,
+        symbol: String,
+        decimals: Int,
+        iconUrl: String?,
+    ): Result<WalletCustomTokenData> = withContext(Dispatchers.IO) {
+        val userId = getCurrentUserId()
+            ?: return@withContext Result.failure(Exception("未登录"))
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.createCustomToken(
+                authorization = "Bearer $token",
+                walletId = walletId,
+                request = CreateCustomTokenRequest(
+                    chainId = chainId.lowercase(Locale.ROOT),
+                    tokenAddress = tokenAddress.trim(),
+                    name = name.trim(),
+                    symbol = symbol.trim(),
+                    decimals = decimals,
+                    iconUrl = iconUrl?.trim()?.takeIf { it.isNotBlank() },
+                ),
+            )
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                response.body()?.data?.let { item ->
+                    localRepository.replaceCustomTokens(
+                        userId = userId,
+                        walletId = walletId,
+                        chainId = chainId.lowercase(Locale.ROOT),
+                        items = mergeCustomTokenReplace(
+                            existing = localRepository.getCustomTokens(userId, walletId, chainId.lowercase(Locale.ROOT)),
+                            replacement = item.toEntity(userId),
+                        ),
+                    )
+                    ensureCustomTokenIconCached(item)
+                    Result.success(item)
+                } ?: Result.failure(Exception("自定义代币结果为空"))
+            } else {
+                Result.failure(Exception(extractApiErrorMessage(response, "添加自定义代币失败")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteCustomToken(
+        walletId: String,
+        customTokenId: String,
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        val userId = getCurrentUserId()
+            ?: return@withContext Result.failure(Exception("未登录"))
+        try {
+            if (!refreshTokenIfNeeded()) {
+                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+            }
+            val token = getAccessToken()
+                ?: return@withContext Result.failure(Exception("未登录"))
+            val response = api.deleteCustomToken("Bearer $token", walletId, customTokenId)
+            if (response.isSuccessful && response.body()?.code == "OK") {
+                localRepository.deleteCustomToken(userId, customTokenId)
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(extractApiErrorMessage(response, "删除自定义代币失败")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getTokenIconLocalPath(
+        chainId: String,
+        tokenKey: String,
+        iconUrl: String?,
+    ): String? = withContext(Dispatchers.IO) {
+        val normalizedTokenKey = tokenKey.trim()
+        if (normalizedTokenKey.isBlank()) {
+            return@withContext null
+        }
+        val cached = localRepository.getTokenIconCache(normalizedTokenKey)
+        cached?.localPath?.takeIf { it.isNotBlank() }?.let { path ->
+            if (File(path).exists()) {
+                return@withContext path
+            }
+        }
+        val normalizedIconUrl = iconUrl?.trim()?.takeIf { it.isNotBlank() } ?: return@withContext null
+        return@withContext downloadTokenIcon(
+            chainId = chainId,
+            tokenKey = normalizedTokenKey,
+            iconUrl = normalizedIconUrl,
+        )
     }
 
     suspend fun upsertWalletLifecycle(
@@ -2379,6 +2626,138 @@ class PaymentRepository(context: Context) {
         return items.filter { it.networkCode.equals(networkCode, ignoreCase = true) }
     }
 
+    private suspend fun mergeWalletOverviewWithLocalCustomTokens(
+        userId: String?,
+        walletId: String?,
+        overview: WalletOverviewData,
+    ): WalletOverviewData {
+        if (userId.isNullOrBlank() || walletId.isNullOrBlank()) {
+            return overview
+        }
+        val chainIds = overview.chainItems
+            .map { normalizeChainId(it.networkCode) }
+            .plus(normalizeChainId(overview.selectedNetworkCode))
+            .distinct()
+        val customTokens = chainIds.flatMap { chainId ->
+            localRepository.getCustomTokens(userId, walletId, chainId).map { it.toData() }
+        }
+        if (customTokens.isEmpty()) {
+            return overview
+        }
+        val existingKeys = overview.assetItems.map { buildTokenKey(it.networkCode, it.contractAddress, it.symbol, it.isNative) }.toSet()
+        val mergedItems = overview.assetItems.toMutableList()
+        customTokens.forEach { customToken ->
+            val tokenKey = buildTokenKey(customToken.chainId, customToken.tokenAddress, customToken.symbol, isNative = false)
+            if (tokenKey !in existingKeys) {
+                mergedItems += customToken.toWalletAssetItemData()
+            }
+        }
+        return overview.copy(assetItems = mergedItems)
+    }
+
+    private fun mergeCustomTokenReplace(
+        existing: List<LocalCustomTokenEntity>,
+        replacement: LocalCustomTokenEntity,
+    ): List<LocalCustomTokenEntity> {
+        return existing
+            .filterNot { it.customTokenId == replacement.customTokenId }
+            .plus(replacement)
+    }
+
+    private suspend fun ensureCustomTokenIconsCached(items: List<WalletCustomTokenData>) {
+        items.forEach { item -> ensureCustomTokenIconCached(item) }
+    }
+
+    private suspend fun ensureCustomTokenIconCached(item: WalletCustomTokenData) {
+        val tokenKey = buildTokenKey(item.chainId, item.tokenAddress, item.symbol, isNative = false)
+        item.iconUrl?.takeIf { it.isNotBlank() }?.let { iconUrl ->
+            downloadTokenIcon(item.chainId, tokenKey, iconUrl)
+        }
+    }
+
+    private suspend fun downloadTokenIcon(
+        chainId: String,
+        tokenKey: String,
+        iconUrl: String,
+    ): String? {
+        val current = localRepository.getTokenIconCache(tokenKey)
+        current?.localPath?.takeIf { File(it).exists() }?.let { return it }
+        return try {
+            val request = Request.Builder().url(iconUrl).get().build()
+            val response = apiClient().newCall(request).execute()
+            if (!response.isSuccessful) {
+                localRepository.upsertTokenIconCache(
+                    LocalTokenIconCacheEntity(
+                        tokenKey = tokenKey,
+                        iconUrl = iconUrl,
+                        localPath = null,
+                        updatedAt = System.currentTimeMillis(),
+                        lastFetchSucceeded = false,
+                    ),
+                )
+                null
+            } else {
+                val body = response.body ?: return null
+                val ext = iconFileExtension(iconUrl)
+                val dir = File(appContext.filesDir, TOKEN_ICON_DIR).apply { mkdirs() }
+                val target = File(dir, sanitizeTokenFileName("${chainId}_${tokenKey}$ext"))
+                body.byteStream().use { input ->
+                    target.outputStream().use { output -> input.copyTo(output) }
+                }
+                localRepository.upsertTokenIconCache(
+                    LocalTokenIconCacheEntity(
+                        tokenKey = tokenKey,
+                        iconUrl = iconUrl,
+                        localPath = target.absolutePath,
+                        updatedAt = System.currentTimeMillis(),
+                        lastFetchSucceeded = true,
+                    ),
+                )
+                target.absolutePath
+            }
+        } catch (_: Exception) {
+            localRepository.upsertTokenIconCache(
+                LocalTokenIconCacheEntity(
+                    tokenKey = tokenKey,
+                    iconUrl = iconUrl,
+                    localPath = null,
+                    updatedAt = System.currentTimeMillis(),
+                    lastFetchSucceeded = false,
+                ),
+            )
+            null
+        }
+    }
+
+    private fun apiClient(): OkHttpClient = apiOkHttpClient
+
+    private fun buildTokenKey(
+        chainId: String,
+        tokenAddress: String?,
+        symbol: String,
+        isNative: Boolean,
+    ): String {
+        val normalizedChainId = normalizeChainId(chainId)
+        if (isNative || tokenAddress.isNullOrBlank()) {
+            return "${normalizedChainId}:native:${symbol.trim().uppercase(Locale.ROOT)}"
+        }
+        return tokenAddress.trim().lowercase(Locale.ROOT)
+    }
+
+    private fun normalizeChainId(chainId: String): String = when (chainId.uppercase(Locale.ROOT)) {
+        "AVALANCHE_C" -> "avalanche"
+        else -> chainId.lowercase(Locale.ROOT)
+    }
+
+    private fun iconFileExtension(iconUrl: String): String = when {
+        iconUrl.contains(".jpg", ignoreCase = true) || iconUrl.contains(".jpeg", ignoreCase = true) -> ".jpg"
+        iconUrl.contains(".webp", ignoreCase = true) -> ".webp"
+        else -> ".png"
+    }
+
+    private fun sanitizeTokenFileName(value: String): String =
+        value.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+
     private fun WalletOverviewCacheEntity.toWalletOverviewData(): WalletOverviewData {
         return WalletOverviewData(
             accountId = accountId,
@@ -2536,6 +2915,54 @@ class PaymentRepository(context: Context) {
             isDefaultReceive = isDefaultReceive,
             updatedAt = parseIsoDateInternal(updatedAt) ?: System.currentTimeMillis(),
         )
+
+    private fun WalletCustomTokenData.toEntity(userId: String) = LocalCustomTokenEntity(
+        userId = userId,
+        customTokenId = customTokenId,
+        walletId = walletId,
+        chainId = chainId.lowercase(Locale.ROOT),
+        tokenAddress = tokenAddress,
+        tokenKey = buildTokenKey(chainId, tokenAddress, symbol, isNative = false),
+        name = name,
+        symbol = symbol,
+        decimals = decimals,
+        iconUrl = iconUrl,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        cachedAt = System.currentTimeMillis(),
+    )
+
+    private fun LocalCustomTokenEntity.toData() = WalletCustomTokenData(
+        customTokenId = customTokenId,
+        walletId = walletId,
+        chainId = chainId,
+        tokenAddress = tokenAddress,
+        name = name,
+        symbol = symbol,
+        decimals = decimals,
+        iconUrl = iconUrl,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+
+    private fun WalletCustomTokenData.toWalletAssetItemData() = WalletAssetItemData(
+        assetId = "custom:$customTokenId",
+        networkCode = chainId.uppercase(Locale.ROOT),
+        assetCode = symbol,
+        displayName = name,
+        symbol = symbol,
+        decimals = decimals,
+        isNative = false,
+        contractAddress = tokenAddress,
+        walletVisible = true,
+        orderPayable = false,
+        availableBalanceMinor = "0",
+        availableBalanceUiAmount = "0.00",
+        availableBalanceStatus = "UNAVAILABLE",
+        customTokenId = customTokenId,
+        isCustom = true,
+        iconUrl = iconUrl,
+    )
 }
 
 private class OrderCreatedAtFallbackAdapterFactory : TypeAdapterFactory {

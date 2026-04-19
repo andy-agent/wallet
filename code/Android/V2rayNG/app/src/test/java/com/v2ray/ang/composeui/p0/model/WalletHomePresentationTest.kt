@@ -19,9 +19,9 @@ class WalletHomePresentationTest {
         }
 
         assertEquals("88.12 USDT", tronUsdt.balanceText)
-        assertEquals("Tether USD (TRC20)", tronUsdt.valueText)
+        assertEquals("链上可用余额", tronUsdt.valueText)
         assertEquals("7 笔交易", uiState.totalBalanceText)
-        assertEquals("估值待同步", buildWalletPortfolioValue(uiState.assets))
+        assertEquals("$0.00", buildWalletPortfolioValue(uiState.assets))
         assertFalse(tronUsdt.balanceText.contains("58.99"))
         assertFalse(tronUsdt.valueText.contains("58.99"))
     }
@@ -30,6 +30,7 @@ class WalletHomePresentationTest {
     fun `portfolio value sums only explicit dollar quotes`() {
         val assets = listOf(
             AssetHolding(
+                tokenKey = "tron:native:USDT",
                 symbol = "USDT",
                 chainLabel = "TRON",
                 balanceText = "88.12 USDT",
@@ -38,6 +39,7 @@ class WalletHomePresentationTest {
                 changePositive = true,
             ),
             AssetHolding(
+                tokenKey = "solana:native:SOL",
                 symbol = "SOL",
                 chainLabel = "Solana",
                 balanceText = "1.25 SOL",
@@ -46,6 +48,7 @@ class WalletHomePresentationTest {
                 changePositive = true,
             ),
             AssetHolding(
+                tokenKey = "tron:native:TRX",
                 symbol = "TRX",
                 chainLabel = "TRON",
                 balanceText = "15 TRX",

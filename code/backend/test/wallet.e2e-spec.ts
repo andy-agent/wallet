@@ -224,6 +224,85 @@ describe('Wallet (e2e)', () => {
       });
   });
 
+  it('supports wallet custom token CRUD by wallet and chain', async () => {
+    const walletResponse = await request(app.getHttpServer())
+      .post('/api/client/v1/wallets/create-mnemonic')
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        walletName: 'Token Wallet',
+        keySlots: [
+          {
+            slotCode: 'SOLANA_0',
+            chainFamily: 'SOLANA',
+            derivationType: 'MNEMONIC',
+          },
+        ],
+        chainAccounts: [
+          {
+            slotCode: 'SOLANA_0',
+            chainFamily: 'SOLANA',
+            networkCode: 'SOLANA',
+            address: validSolanaAddress,
+            isEnabled: true,
+            isDefaultReceive: true,
+          },
+        ],
+      })
+      .expect(201);
+
+    const walletId = walletResponse.body.data.wallet.walletId as string;
+
+    const createResponse = await request(app.getHttpServer())
+      .post(`/api/client/v1/wallets/${walletId}/custom-tokens`)
+      .set('authorization', `Bearer ${accessToken}`)
+      .send({
+        chainId: 'solana',
+        tokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+        name: 'USD Coin',
+        symbol: 'USDC',
+        decimals: 6,
+        iconUrl: 'https://example.com/usdc.png',
+      })
+      .expect(201);
+
+    const customTokenId = createResponse.body.data.customTokenId as string;
+
+    await request(app.getHttpServer())
+      .get(`/api/client/v1/wallets/${walletId}/custom-tokens?chainId=solana`)
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.items).toEqual([
+          expect.objectContaining({
+            customTokenId,
+            chainId: 'solana',
+            symbol: 'USDC',
+          }),
+        ]);
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/client/v1/wallet/custom-tokens/search?chainId=solana&query=definitely-not-found')
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(Array.isArray(res.body.data.items)).toBe(true);
+      });
+
+    await request(app.getHttpServer())
+      .delete(`/api/client/v1/wallets/${walletId}/custom-tokens/${customTokenId}`)
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get(`/api/client/v1/wallets/${walletId}/custom-tokens?chainId=solana`)
+      .set('authorization', `Bearer ${accessToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.items).toHaveLength(0);
+      });
+  });
+
   it('wallet public addresses survive app restart and keep READY receive state', async () => {
     const address = validSolanaAddress;
 

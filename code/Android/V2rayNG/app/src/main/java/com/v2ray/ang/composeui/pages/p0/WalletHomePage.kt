@@ -1,5 +1,6 @@
 package com.v2ray.ang.composeui.pages.p0
 
+import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +67,7 @@ import com.v2ray.ang.composeui.p0.ui.P01SearchField
 import com.v2ray.ang.composeui.p0.ui.P01SecondaryButton
 import com.v2ray.ang.composeui.p0.viewmodel.WalletHomeViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import java.io.File
 
 private val WalletCardBorder = Color(0x246880DB)
 private val WalletCardBackground = Color(0xF8FFFFFF)
@@ -829,10 +832,7 @@ private fun WalletTokenRow(
             .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ChainBadgeIcon(
-            chainId = token.iconChainId,
-            size = 42.dp,
-        )
+        TokenRowIcon(token)
         Spacer(modifier = Modifier.width(12.dp))
         Column(
             modifier = Modifier.weight(1f),
@@ -878,6 +878,7 @@ private data class WalletTokenRowUi(
     val balanceText: String,
     val valueText: String,
     val iconChainId: String,
+    val iconLocalPath: String? = null,
 )
 
 private data class WalletDailyPnlUi(
@@ -894,8 +895,28 @@ private fun buildWalletTokenRows(assets: List<AssetHolding>): List<WalletTokenRo
             balanceText = asset.balanceText,
             valueText = asset.chainLabel,
             iconChainId = inferChain(asset.chainLabel),
+            iconLocalPath = asset.iconLocalPath,
         )
     }
+}
+
+@Composable
+private fun TokenRowIcon(token: WalletTokenRowUi) {
+    val bitmap = token.iconLocalPath
+        ?.takeIf { it.isNotBlank() && File(it).exists() }
+        ?.let { BitmapFactory.decodeFile(it)?.asImageBitmap() }
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap,
+            contentDescription = token.symbol,
+            modifier = Modifier.size(42.dp),
+        )
+        return
+    }
+    ChainBadgeIcon(
+        chainId = token.iconChainId,
+        size = 42.dp,
+    )
 }
 
 private fun buildPortfolioValue(assets: List<AssetHolding>): String {

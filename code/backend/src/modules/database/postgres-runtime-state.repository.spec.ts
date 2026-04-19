@@ -241,6 +241,85 @@ describe('PostgresRuntimeStateRepository matcher persistence', () => {
     await repository.onModuleDestroy();
   });
 
+  it('persists wallet custom tokens by wallet and chain', async () => {
+    const db = newDb({
+      noAstCoverageCheck: true,
+    });
+    const { Pool } = db.adapters.createPg();
+    const repository = new PostgresRuntimeStateRepository(
+      {
+        connectionString: 'postgres://runtime:runtime@server2:5432/cryptovpn',
+      },
+      new Pool(),
+    );
+
+    await repository.initialize();
+
+    await repository.insertWallet({
+      walletId: 'wallet-1',
+      accountId: 'acc-1',
+      walletName: 'Primary',
+      walletKind: 'SELF_CUSTODY',
+      sourceType: 'CREATED',
+      isDefault: true,
+      isArchived: false,
+      createdAt: '2026-04-19T00:00:00.000Z',
+      updatedAt: '2026-04-19T00:00:00.000Z',
+    });
+
+    await repository.upsertWalletCustomToken({
+      customTokenId: 'custom-sol',
+      accountId: 'acc-1',
+      walletId: 'wallet-1',
+      chainId: 'solana',
+      tokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      iconUrl: 'https://example.com/usdc.png',
+      createdAt: '2026-04-19T00:00:00.000Z',
+      updatedAt: '2026-04-19T00:00:00.000Z',
+    });
+
+    await repository.upsertWalletCustomToken({
+      customTokenId: 'custom-base',
+      accountId: 'acc-1',
+      walletId: 'wallet-1',
+      chainId: 'base',
+      tokenAddress: '0x833589fCD6EDB6E08f4c7C32D4f71b54bdA02913',
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      iconUrl: null,
+      createdAt: '2026-04-19T00:00:01.000Z',
+      updatedAt: '2026-04-19T00:00:01.000Z',
+    });
+
+    expect(
+      await repository.listWalletCustomTokensByWalletId({
+        walletId: 'wallet-1',
+      }),
+    ).toHaveLength(2);
+    expect(
+      await repository.listWalletCustomTokensByWalletId({
+        walletId: 'wallet-1',
+        chainId: 'solana',
+      }),
+    ).toEqual([
+      expect.objectContaining({
+        customTokenId: 'custom-sol',
+        chainId: 'solana',
+      }),
+    ]);
+
+    await repository.deleteWalletCustomToken('custom-sol');
+    expect(
+      await repository.findWalletCustomTokenById('custom-sol'),
+    ).toBeNull();
+
+    await repository.onModuleDestroy();
+  });
+
   it('clears wallet domain records while preserving encrypted backups', async () => {
     const db = newDb({
       noAstCoverageCheck: true,

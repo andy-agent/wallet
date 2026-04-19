@@ -51,7 +51,7 @@ class RealP0Repository(context: Context) : P0Repository {
 
     override suspend fun getCachedWalletHomeState(selectedWalletId: String?): WalletHomeUiState? = withContext(Dispatchers.IO) {
         val currentUserId = paymentRepository.getCurrentUserId() ?: return@withContext null
-        val cachedOverview = paymentRepository.getCachedWalletOverview(currentUserId)
+        val cachedOverview = paymentRepository.getCachedWalletOverview(currentUserId, selectedWalletId)
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         val cachedUser = paymentRepository.getCachedCurrentUser()
         val walletOptions = buildWalletHomeWalletOptions(
@@ -842,6 +842,7 @@ class RealP0Repository(context: Context) : P0Repository {
                 val latest = items.maxByOrNull { it.createdAt } ?: items.first()
                 val totalAmount = items.sumOf { it.payment.amountCrypto.toDoubleOrNull() ?: 0.0 }
                 AssetHolding(
+                    tokenKey = "${latest.quoteNetworkCode.lowercase(Locale.ROOT)}:native:${latest.quoteAssetCode.uppercase(Locale.ROOT)}",
                     symbol = latest.quoteAssetCode,
                     chainLabel = latest.quoteNetworkCode,
                     balanceText = "${items.size} 笔订单",
@@ -1137,7 +1138,7 @@ class RealP0Repository(context: Context) : P0Repository {
         }
     }
 
-    private fun enrichWalletHomeState(
+    private suspend fun enrichWalletHomeState(
         baseState: WalletHomeUiState,
         walletOptions: List<WalletHomeWalletOption>,
         successfulOrders: List<Order>,
@@ -1151,6 +1152,27 @@ class RealP0Repository(context: Context) : P0Repository {
             ?: walletOptions.firstOrNull()
         val selectedChain = selectedWallet?.chainOptions?.firstOrNull { it.chainId == baseState.selectedChainId }
             ?: selectedWallet?.chainOptions?.firstOrNull()
+        val visibilityByTokenKey = selectedWallet?.walletId?.let { walletId ->
+            baseState.assets
+                .map { normalizeAssetChainId(it.chainLabel) }
+                .distinct()
+                .flatMap { chainId ->
+                    paymentRepository.getTokenVisibilityEntries(walletId, chainId)
+                        .getOrElse { emptyList() }
+                }
+                .associate { it.tokenKey to it.visibilityState.uppercase(Locale.ROOT) }
+        }.orEmpty()
+        val visibleAssets = baseState.assets
+            .filter { visibilityByTokenKey[it.tokenKey] == null }
+            .map { asset ->
+                asset.copy(
+                    iconLocalPath = paymentRepository.getTokenIconLocalPath(
+                        chainId = normalizeAssetChainId(asset.chainLabel),
+                        tokenKey = asset.tokenKey,
+                        iconUrl = asset.iconUrl,
+                    ),
+                )
+            }
 
         return baseState.copy(
             selectedWalletId = selectedWallet?.walletId,
@@ -1162,7 +1184,20 @@ class RealP0Repository(context: Context) : P0Repository {
             currentWalletAddressSuffix = selectedChain?.addressSuffix.orEmpty(),
             currentWalletChainLabel = selectedChain?.label.orEmpty(),
             totalBalanceText = "${successfulOrders.size} 笔交易",
+            assets = visibleAssets,
         )
+    }
+
+    private fun normalizeAssetChainId(chainLabel: String): String = when {
+        chainLabel.contains("sol", ignoreCase = true) -> "solana"
+        chainLabel.contains("eth", ignoreCase = true) -> "ethereum"
+        chainLabel.contains("bsc", ignoreCase = true) -> "bsc"
+        chainLabel.contains("polygon", ignoreCase = true) -> "polygon"
+        chainLabel.contains("arbitrum", ignoreCase = true) -> "arbitrum"
+        chainLabel.contains("optimism", ignoreCase = true) -> "optimism"
+        chainLabel.contains("avalanche", ignoreCase = true) -> "avalanche"
+        chainLabel.contains("base", ignoreCase = true) -> "base"
+        else -> "tron"
     }
 
     private fun normalizeWalletHomeChainId(networkCode: String): String = when (networkCode.uppercase(Locale.ROOT)) {

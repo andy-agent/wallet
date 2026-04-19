@@ -14,6 +14,7 @@ import {
 import { OrderStatus } from '../orders/orders.types';
 import {
   PersistedWalletChainAccountRecord,
+  PersistedWalletCustomTokenRecord,
   PersistedWalletKeySlotRecord,
   PersistedWalletLifecycleRecord,
   PersistedWalletPublicAddressRecord,
@@ -34,7 +35,7 @@ import {
 } from './runtime-state.types';
 
 const EMPTY_RUNTIME_STATE: RuntimeStateSnapshot = {
-  version: 6,
+  version: 7,
   orders: [],
   idempotencyIndex: {},
   subscriptions: [],
@@ -44,6 +45,7 @@ const EMPTY_RUNTIME_STATE: RuntimeStateSnapshot = {
   wallets: [],
   walletKeySlots: [],
   walletChainAccounts: [],
+  walletCustomTokens: [],
   walletSecretBackupsV2: [],
   accounts: [],
   sessions: [],
@@ -570,6 +572,50 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
     return chainAccount;
   }
 
+  async listWalletCustomTokensByWalletId(params: {
+    walletId: string;
+    chainId?: string;
+  }): Promise<PersistedWalletCustomTokenRecord[]> {
+    return this.readSnapshot().walletCustomTokens
+      .filter(
+        (item) =>
+          item.walletId === params.walletId &&
+          (!params.chainId || item.chainId === params.chainId),
+      )
+      .slice()
+      .sort((left, right) => left.symbol.localeCompare(right.symbol));
+  }
+
+  async findWalletCustomTokenById(
+    customTokenId: string,
+  ): Promise<PersistedWalletCustomTokenRecord | null> {
+    return (
+      this.readSnapshot().walletCustomTokens.find(
+        (item) => item.customTokenId === customTokenId,
+      ) ?? null
+    );
+  }
+
+  async upsertWalletCustomToken(
+    record: PersistedWalletCustomTokenRecord,
+  ): Promise<PersistedWalletCustomTokenRecord> {
+    const snapshot = this.readSnapshot();
+    snapshot.walletCustomTokens = snapshot.walletCustomTokens.filter(
+      (item) => item.customTokenId !== record.customTokenId,
+    );
+    snapshot.walletCustomTokens.push(record);
+    this.writeSnapshot(snapshot);
+    return record;
+  }
+
+  async deleteWalletCustomToken(customTokenId: string): Promise<void> {
+    const snapshot = this.readSnapshot();
+    snapshot.walletCustomTokens = snapshot.walletCustomTokens.filter(
+      (item) => item.customTokenId !== customTokenId,
+    );
+    this.writeSnapshot(snapshot);
+  }
+
   async findWalletSecretBackupByWalletId(
     walletId: string,
   ): Promise<PersistedWalletSecretBackupV2Record | null> {
@@ -616,6 +662,9 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
     snapshot.walletChainAccounts = snapshot.walletChainAccounts.filter(
       (item) => !walletIds.has(item.walletId),
     );
+    snapshot.walletCustomTokens = snapshot.walletCustomTokens.filter(
+      (item) => !walletIds.has(item.walletId),
+    );
 
     this.writeSnapshot(snapshot);
   }
@@ -653,7 +702,7 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
 
   private normalizeSnapshot(raw: Partial<RuntimeStateSnapshot>) {
     return {
-      version: 6,
+      version: 7,
       orders: raw.orders ?? [],
       idempotencyIndex: raw.idempotencyIndex ?? {},
       subscriptions: raw.subscriptions ?? [],
@@ -663,6 +712,7 @@ export class FileRuntimeStateRepository extends RuntimeStateRepository {
       wallets: raw.wallets ?? [],
       walletKeySlots: raw.walletKeySlots ?? [],
       walletChainAccounts: raw.walletChainAccounts ?? [],
+      walletCustomTokens: raw.walletCustomTokens ?? [],
       walletSecretBackupsV2: raw.walletSecretBackupsV2 ?? [],
       accounts: raw.accounts ?? [],
       sessions: raw.sessions ?? [],

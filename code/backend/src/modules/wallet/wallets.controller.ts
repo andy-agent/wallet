@@ -1,12 +1,15 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
+import { CreateCustomTokenRequestDto } from './dto/create-custom-token.request';
 import { CreateMnemonicWalletRequestDto } from './dto/create-mnemonic-wallet.request';
 import { ImportWatchWalletRequestDto } from './dto/import-watch-wallet.request';
 import { UpsertWalletSecretBackupRequestDto } from './dto/upsert-wallet-secret-backup.request';
@@ -38,6 +41,45 @@ export class WalletsController {
     return this.walletService.listWalletChainAccounts(
       this.extractBearer(authorization),
       walletId,
+    );
+  }
+
+  @Get(':walletId/custom-tokens')
+  listCustomTokens(
+    @Headers('authorization') authorization: string | undefined,
+    @Param('walletId') walletId: string,
+    @Query('chainId') chainId?: string,
+  ) {
+    return this.walletService.listCustomTokens(
+      this.extractBearer(authorization),
+      walletId,
+      chainId,
+    );
+  }
+
+  @Post(':walletId/custom-tokens')
+  createCustomToken(
+    @Headers('authorization') authorization: string | undefined,
+    @Param('walletId') walletId: string,
+    @Body() body: CreateCustomTokenRequestDto,
+  ) {
+    return this.walletService.createCustomToken(
+      this.extractBearer(authorization),
+      walletId,
+      body,
+    );
+  }
+
+  @Delete(':walletId/custom-tokens/:customTokenId')
+  deleteCustomToken(
+    @Headers('authorization') authorization: string | undefined,
+    @Param('walletId') walletId: string,
+    @Param('customTokenId') customTokenId: string,
+  ) {
+    return this.walletService.deleteCustomToken(
+      this.extractBearer(authorization),
+      walletId,
+      customTokenId,
     );
   }
 

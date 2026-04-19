@@ -27,6 +27,7 @@ import {
   type PaymentAssetDefinition,
 } from '../payments/payment-asset-catalog';
 import { BuildTransferRequestDto } from './dto/build-transfer.request';
+import { CreateCustomTokenRequestDto } from './dto/create-custom-token.request';
 import { CreateMnemonicWalletRequestDto } from './dto/create-mnemonic-wallet.request';
 import { ImportWatchWalletRequestDto } from './dto/import-watch-wallet.request';
 import { SolanaClientService } from '../solana-client/solana-client.service';
@@ -47,6 +48,7 @@ import {
 } from './wallet-public-address-policy';
 import {
   PersistedWalletChainAccountRecord,
+  PersistedWalletCustomTokenRecord,
   PersistedWalletKeySlotRecord,
   PersistedWalletLifecycleRecord,
   PersistedWalletPublicAddressRecord,
@@ -152,6 +154,111 @@ export class WalletService {
     return {
       items: await this.runtimeStateRepository.listWalletChainAccountsByWalletId(walletId),
     };
+  }
+
+  async listCustomTokens(
+    accessToken: string,
+    walletId: string,
+    chainId?: string,
+  ) {
+    const account = this.authService.getMe(accessToken);
+    await this.requireOwnedWallet(account.accountId, walletId);
+    return {
+      items: await this.runtimeStateRepository.listWalletCustomTokensByWalletId({
+        walletId,
+        chainId: chainId ? this.normalizeChainId(chainId) : undefined,
+      }),
+    };
+  }
+
+  async createCustomToken(
+    accessToken: string,
+    walletId: string,
+    dto: CreateCustomTokenRequestDto,
+  ) {
+    const account = this.authService.getMe(accessToken);
+    await this.requireOwnedWallet(account.accountId, walletId);
+    const chainId = this.normalizeChainId(dto.chainId);
+    const tokenAddress = dto.tokenAddress.trim();
+    if (!this.isSupportedCustomTokenChainId(chainId)) {
+      throw new BadRequestException({
+        code: 'WALLET_UNSUPPORTED_CHAIN',
+        message: 'Unsupported chain',
+      });
+    }
+    if (!this.isCustomTokenAddressValid(chainId, tokenAddress)) {
+      throw new BadRequestException({
+        code: 'WALLET_INVALID_TOKEN_ADDRESS',
+        message: 'Token address invalid',
+      });
+    }
+    const existing = await this.runtimeStateRepository.listWalletCustomTokensByWalletId({
+      walletId,
+      chainId,
+    });
+    if (
+      existing.some(
+        (item) => item.tokenAddress.trim().toLowerCase() === tokenAddress.toLowerCase(),
+      )
+    ) {
+      throw new ConflictException({
+        code: 'WALLET_CUSTOM_TOKEN_EXISTS',
+        message: 'Custom token already exists',
+      });
+    }
+    const now = new Date().toISOString();
+    return this.runtimeStateRepository.upsertWalletCustomToken({
+      customTokenId: randomUUID(),
+      accountId: account.accountId,
+      walletId,
+      chainId,
+      tokenAddress,
+      name: dto.name.trim(),
+      symbol: dto.symbol.trim().toUpperCase(),
+      decimals: dto.decimals,
+      iconUrl: dto.iconUrl?.trim() || null,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  async deleteCustomToken(
+    accessToken: string,
+    walletId: string,
+    customTokenId: string,
+  ) {
+    const account = this.authService.getMe(accessToken);
+    await this.requireOwnedWallet(account.accountId, walletId);
+    const token = await this.runtimeStateRepository.findWalletCustomTokenById(customTokenId);
+    if (!token || token.walletId !== walletId || token.accountId !== account.accountId) {
+      throw new NotFoundException({
+        code: 'WALLET_CUSTOM_TOKEN_NOT_FOUND',
+        message: 'Custom token not found',
+      });
+    }
+    await this.runtimeStateRepository.deleteWalletCustomToken(customTokenId);
+    return token;
+  }
+
+  async searchCustomTokens(
+    accessToken: string,
+    chainId?: string,
+    query?: string,
+  ) {
+    this.authService.getMe(accessToken);
+    const normalizedChainId = this.normalizeChainId(chainId);
+    const normalizedQuery = query?.trim() ?? '';
+    if (!normalizedChainId || !normalizedQuery) {
+      return { items: [] };
+    }
+    try {
+      return {
+        items: await this.searchCustomTokenCandidates(normalizedChainId, normalizedQuery),
+      };
+    } catch (error) {
+      this.logger.warn(`Custom token search failed for ${normalizedChainId}:${normalizedQuery}`, error as Error);
+      return { items: [] };
+    }
   }
 
   async createMnemonicWallet(
@@ -496,7 +603,15 @@ export class WalletService {
     const account = this.authService.getMe(accessToken);
     const lifecycle = await this.getWalletLifecycle(accessToken);
     const chains = this.getChains(accessToken).items;
-    const assets = this.getAssetCatalog(accessToken).items;
+    const baseAssets = this.getAssetCatalog(accessToken).items;
+    const customAssets = walletId
+      ? (
+          await this.runtimeStateRepository.listWalletCustomTokensByWalletId({
+            walletId,
+          })
+        ).map((item) => this.toCustomWalletAsset(item))
+      : [];
+    const assets = [...baseAssets, ...customAssets];
     const publicAddresses = (await this.listPublicAddresses(accessToken)).items
       .filter((item) => !walletId || item.walletId === walletId);
     const receiveSelection = await this.resolveReceiveSelection(accessToken, undefined, undefined, walletId);
@@ -582,7 +697,7 @@ export class WalletService {
     const assetItems = assets.map((asset) => {
       const assetKey = `${asset.networkCode}:${asset.assetCode}`;
       const assetStats = orderStatsByAsset.get(assetKey);
-      const balanceView = assetBalanceViews.get(assetKey);
+      const balanceView = assetBalanceViews.get(asset.assetId);
       return {
         assetId: asset.assetId,
         networkCode: asset.networkCode,
@@ -605,6 +720,9 @@ export class WalletService {
         balanceAddress: balanceView?.address ?? null,
         lastOrderAt: assetStats?.lastOrderAt ?? null,
         lastOrderStatus: assetStats?.lastOrderStatus ?? null,
+        customTokenId: 'customTokenId' in asset ? asset.customTokenId : null,
+        isCustom: 'isCustom' in asset ? asset.isCustom : false,
+        iconUrl: 'iconUrl' in asset ? asset.iconUrl : null,
       };
     });
 
@@ -646,9 +764,17 @@ export class WalletService {
 
   async getBalances(accessToken: string, walletId?: string) {
     const account = this.authService.getMe(accessToken);
-    const assets = this.getAssetCatalog(accessToken).items.filter(
+    const baseAssets = this.getAssetCatalog(accessToken).items.filter(
       (item) => item.walletVisible,
     );
+    const customAssets = walletId
+      ? (
+          await this.runtimeStateRepository.listWalletCustomTokensByWalletId({
+            walletId,
+          })
+        ).map((item) => this.toCustomWalletAsset(item))
+      : [];
+    const assets = [...baseAssets, ...customAssets];
     const publicAddresses = (
       await this.runtimeStateRepository.listWalletPublicAddressesByAccountId({
         accountId: account.accountId,
@@ -663,8 +789,7 @@ export class WalletService {
       accountId: account.accountId,
       accountEmail: account.email,
       items: assets.map((asset) => {
-        const assetKey = `${asset.networkCode}:${asset.assetCode}`;
-        const balanceView = assetBalanceViews.get(assetKey);
+        const balanceView = assetBalanceViews.get(asset.assetId);
         return {
           assetId: asset.assetId,
           networkCode: asset.networkCode,
@@ -1069,13 +1194,27 @@ export class WalletService {
   }
 
   private async resolveAssetBalanceViews(
-    assets: Array<ReturnType<WalletService['getAssetCatalog']>['items'][number]>,
+    assets: Array<{
+      assetId: string;
+      networkCode: WalletNetworkCode;
+      assetCode: string;
+      displayName: string;
+      symbol: string;
+      decimals: number;
+      isNative: boolean;
+      contractAddress: string | null;
+      walletVisible: boolean;
+      orderPayable: boolean;
+      customTokenId?: string;
+      isCustom?: boolean;
+      iconUrl?: string | null;
+    }>,
     publicAddresses: WalletPublicAddressItem[],
   ) {
     const usablePublicAddresses = publicAddresses.filter(isUsableWalletPublicAddress);
     const entries = await Promise.all(
       assets.map(async (asset) => {
-        const assetKey = `${asset.networkCode}:${asset.assetCode}`;
+        const assetKey = asset.assetId;
         const assetAddress =
           usablePublicAddresses.find(
             (item) =>
@@ -1139,6 +1278,20 @@ export class WalletService {
                 balanceMinor: balance.balance,
                 balanceUiAmount: balance.uiAmount,
                 balanceStatus: 'READY' as WalletAssetBalanceStatus,
+              },
+            ] as const;
+          }
+
+          if (asset.networkCode !== 'TRON') {
+            return [
+              assetKey,
+              {
+                networkCode: asset.networkCode,
+                assetCode: asset.assetCode,
+                address: assetAddress,
+                balanceMinor: null,
+                balanceUiAmount: null,
+                balanceStatus: 'UNAVAILABLE' as WalletAssetBalanceStatus,
               },
             ] as const;
           }
@@ -1989,6 +2142,132 @@ export class WalletService {
     const whole = raw.slice(0, raw.length - decimals);
     const fraction = raw.slice(raw.length - decimals);
     return `${negative ? '-' : ''}${whole}.${fraction}`;
+  }
+
+  private toCustomWalletAsset(item: PersistedWalletCustomTokenRecord) {
+    return {
+      assetId: `custom:${item.customTokenId}`,
+      networkCode: this.chainIdToNetworkCode(item.chainId),
+      assetCode: item.symbol,
+      displayName: item.name,
+      symbol: item.symbol,
+      decimals: item.decimals,
+      isNative: false,
+      contractAddress: item.tokenAddress,
+      walletVisible: true,
+      orderPayable: false,
+      customTokenId: item.customTokenId,
+      isCustom: true,
+      iconUrl: item.iconUrl,
+    };
+  }
+
+  private normalizeChainId(chainId?: string) {
+    const normalized = chainId?.trim().toLowerCase();
+    if (!normalized) {
+      return '';
+    }
+    return normalized === 'avalanche_c' ? 'avalanche' : normalized;
+  }
+
+  private isSupportedCustomTokenChainId(chainId: string) {
+    return [
+      'solana',
+      'tron',
+      'ethereum',
+      'bsc',
+      'polygon',
+      'arbitrum',
+      'base',
+      'optimism',
+      'avalanche',
+    ].includes(chainId);
+  }
+
+  private chainIdToNetworkCode(chainId: string): WalletNetworkCode {
+    switch (this.normalizeChainId(chainId)) {
+      case 'solana':
+        return 'SOLANA';
+      case 'tron':
+        return 'TRON';
+      case 'bsc':
+        return 'BSC';
+      case 'polygon':
+        return 'POLYGON';
+      case 'arbitrum':
+        return 'ARBITRUM';
+      case 'base':
+        return 'BASE';
+      case 'optimism':
+        return 'OPTIMISM';
+      case 'avalanche':
+        return 'AVALANCHE_C';
+      case 'ethereum':
+      default:
+        return 'ETHEREUM';
+    }
+  }
+
+  private isCustomTokenAddressValid(chainId: string, tokenAddress: string) {
+    const networkCode = this.chainIdToNetworkCode(chainId);
+    return this.isAddressValid(networkCode, tokenAddress);
+  }
+
+  private async searchCustomTokenCandidates(chainId: string, query: string) {
+    const response = await fetch(
+      `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(query)}`,
+    );
+    if (!response.ok) {
+      return [] as Array<{
+        tokenAddress: string;
+        name: string;
+        symbol: string;
+        decimals: number;
+        iconUrl: string | null;
+        chainId: string;
+      }>;
+    }
+    const payload = (await response.json()) as {
+      pairs?: Array<{
+        chainId?: string;
+        baseToken?: { address?: string; name?: string; symbol?: string };
+        info?: { imageUrl?: string };
+      }>;
+    };
+    const normalizedChainId = this.normalizeChainId(chainId);
+    const dedup = new Map<
+      string,
+      {
+        tokenAddress: string;
+        name: string;
+        symbol: string;
+        decimals: number;
+        iconUrl: string | null;
+        chainId: string;
+      }
+    >();
+    for (const pair of payload.pairs ?? []) {
+      const pairChainId = this.normalizeChainId(pair.chainId);
+      const address = pair.baseToken?.address?.trim();
+      if (pairChainId !== normalizedChainId || !address) {
+        continue;
+      }
+      if (!this.isCustomTokenAddressValid(normalizedChainId, address)) {
+        continue;
+      }
+      dedup.set(address.toLowerCase(), {
+        tokenAddress: address,
+        name: pair.baseToken?.name?.trim() || pair.baseToken?.symbol?.trim() || address,
+        symbol: pair.baseToken?.symbol?.trim()?.toUpperCase() || 'TOKEN',
+        decimals: 6,
+        iconUrl: pair.info?.imageUrl?.trim() || null,
+        chainId: normalizedChainId,
+      });
+      if (dedup.size >= 10) {
+        break;
+      }
+    }
+    return [...dedup.values()];
   }
 
   private toWalletSummaryView(wallet: PersistedWalletRecord): WalletSummaryView {

@@ -18,7 +18,7 @@ internal fun WalletOverviewData.toWalletHomeUiState(
     lifecycle: WalletLifecycleData?,
 ): WalletHomeUiState {
     val assets = assetItems
-        .filter { it.walletVisible && it.hasPositiveBalance() }
+        .filter { it.walletVisible && (it.hasPositiveBalance() || it.isCustom) }
         .map { it.toWalletAssetHolding() }
 
     return WalletHomeUiState(
@@ -76,6 +76,7 @@ private fun WalletChainItemData.toWalletChainSummary(): WalletChainSummary {
 
 private fun WalletAssetItemData.toWalletAssetHolding(): AssetHolding {
     return AssetHolding(
+        tokenKey = buildWalletAssetTokenKey(this),
         symbol = assetCode,
         chainLabel = walletHomeChainLabel(networkCode),
         balanceText = formatWalletAvailableBalance(availableBalanceUiAmount, assetCode),
@@ -83,7 +84,18 @@ private fun WalletAssetItemData.toWalletAssetHolding(): AssetHolding {
         changeText = walletHomeChainLabel(networkCode),
         changePositive = true,
         detailText = displayName,
+        customTokenId = customTokenId,
+        isCustom = isCustom,
+        iconUrl = iconUrl,
     )
+}
+
+private fun buildWalletAssetTokenKey(asset: WalletAssetItemData): String {
+    val chainId = asset.networkCode.lowercase(Locale.ROOT)
+    if (asset.isNative || asset.contractAddress.isNullOrBlank()) {
+        return "$chainId:native:${asset.symbol.uppercase(Locale.ROOT)}"
+    }
+    return asset.contractAddress.trim().lowercase(Locale.ROOT)
 }
 
 private fun WalletAssetItemData.hasPositiveBalance(): Boolean {

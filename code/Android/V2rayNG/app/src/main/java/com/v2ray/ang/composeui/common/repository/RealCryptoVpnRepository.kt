@@ -145,6 +145,8 @@ import com.v2ray.ang.composeui.p2extended.model.subscriptionDetailPreviewState
 import com.v2ray.ang.composeui.p2extended.model.swapPreviewState
 import com.v2ray.ang.composeui.p2extended.model.walletConnectSessionPreviewState
 import com.v2ray.ang.composeui.p2extended.model.walletManagerPreviewState
+import com.v2ray.ang.composeui.p2extended.model.AddCustomTokenCandidateUi
+import com.v2ray.ang.composeui.p2extended.model.ManagedTokenUi
 import com.v2ray.ang.payment.PaymentConfig
 import com.v2ray.ang.payment.data.api.CommissionLedgerItem
 import com.v2ray.ang.payment.data.api.CommissionSummaryData
@@ -153,6 +155,7 @@ import com.v2ray.ang.payment.data.api.MeData
 import com.v2ray.ang.payment.data.api.PasswordResetCodeRequest
 import com.v2ray.ang.payment.data.api.PasswordResetRequest
 import com.v2ray.ang.payment.data.api.ReferralOverviewData
+import com.v2ray.ang.payment.data.api.WalletAssetItemData
 import com.v2ray.ang.payment.data.api.WalletLifecycleData
 import com.v2ray.ang.payment.data.api.WithdrawalItem
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
@@ -2126,43 +2129,154 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         }
 
     override suspend fun getTokenManagerState(args: TokenManagerRouteArgs): TokenManagerUiState =
-        paymentRepository.getWalletOverview(args.walletId).getOrNull().let { overview ->
+        run {
             val normalizedChainId = args.chainId.lowercase(Locale.ROOT)
-            val assetItems = overview?.assetItems.orEmpty().filter { asset ->
-                asset.networkCode.lowercase(Locale.ROOT) == normalizedChainId && asset.walletVisible
+            val overview = paymentRepository.getWalletOverview(args.walletId).getOrNull()
+            val cachedCustomTokens = paymentRepository.getCachedCustomTokens(args.walletId, normalizedChainId)
+            val visibilityByTokenKey = paymentRepository
+                .getTokenVisibilityEntries(args.walletId, normalizedChainId)
+                .getOrElse { emptyList() }
+                .associate { it.tokenKey to it.visibilityState.uppercase(Locale.ROOT) }
+            val walletName = paymentRepository.getCachedWallets()
+                .firstOrNull { it.walletId == args.walletId }
+                ?.walletName
+                ?: paymentRepository.getWallet(args.walletId).getOrNull()?.wallet?.walletName
+                ?: args.walletId
+            val managedTokens = if (overview != null) {
+                overview.assetItems
+                .filter { normalizeWalletChainId(it.networkCode) == normalizedChainId }
+                .map { asset ->
+                    ManagedTokenUi(
+                        tokenKey = resolveTokenKey(asset),
+                        symbol = asset.symbol,
+                        name = asset.displayName,
+                        balanceText = formatManagedTokenBalance(asset),
+                        statusText = if (asset.isCustom) "自定义代币" else walletHomeChainLabel(asset.networkCode),
+                        chainLabel = walletHomeChainLabel(asset.networkCode),
+                        iconChainId = normalizeWalletChainId(asset.networkCode),
+                        iconLocalPath = paymentRepository.getTokenIconLocalPath(
+                            chainId = normalizedChainId,
+                            tokenKey = resolveTokenKey(asset),
+                            iconUrl = asset.iconUrl,
+                        ),
+                        iconUrl = asset.iconUrl,
+                        customTokenId = asset.customTokenId,
+                        isCustom = asset.isCustom,
+                    )
+                }
+                .sortedBy { it.symbol }
+            } else {
+                cachedCustomTokens.map { token ->
+                    ManagedTokenUi(
+                        tokenKey = token.tokenAddress.lowercase(Locale.ROOT),
+                        symbol = token.symbol,
+                        name = token.name,
+                        balanceText = "0.00 ${token.symbol}",
+                        statusText = "自定义代币",
+                        chainLabel = walletHomeChainLabel(token.chainId),
+                        iconChainId = token.chainId,
+                        iconLocalPath = paymentRepository.getTokenIconLocalPath(
+                            chainId = token.chainId,
+                            tokenKey = token.tokenAddress.lowercase(Locale.ROOT),
+                            iconUrl = token.iconUrl,
+                        ),
+                        iconUrl = token.iconUrl,
+                        customTokenId = token.customTokenId,
+                        isCustom = true,
+                    )
+                }.sortedBy { it.symbol }
             }
             TokenManagerUiState(
-                metrics = listOf(
-                    FeatureMetric("当前链", walletHomeChainLabel(args.chainId)),
-                    FeatureMetric("代币数量", assetItems.size.toString()),
-                    FeatureMetric(
-                        "可见资产",
-                        assetItems.count { !it.availableBalanceUiAmount.isNullOrBlank() }.toString(),
-                    ),
-                ),
-                highlights = assetItems.map {
-                    FeatureListItem(
-                        title = it.symbol,
-                        subtitle = it.displayName,
-                        trailing = (it.availableBalanceUiAmount ?: "0.00") + " / " + walletHomeChainLabel(it.networkCode),
-                        badge = "REAL",
-                    )
-                },
-                note = if (overview != null) "" else "暂无数据",
+                walletName = walletName,
+                chainLabel = walletHomeChainLabel(args.chainId),
+                visibleTokens = managedTokens.filter { visibilityByTokenKey[it.tokenKey] == null },
+                hiddenTokens = managedTokens.filter { visibilityByTokenKey[it.tokenKey] == "HIDDEN" },
+                spamTokens = managedTokens.filter { visibilityByTokenKey[it.tokenKey] == "SPAM" },
+                note = if (overview == null) "暂无链上资产，仍可添加自定义代币。" else "",
             )
         }
 
+    override suspend fun setTokenVisibility(
+        walletId: String,
+        chainId: String,
+        tokenKey: String,
+        visibilityState: String?,
+    ): TokenActionResult {
+        val result = paymentRepository.setTokenVisibility(walletId, chainId, tokenKey, visibilityState)
+        return if (result.isSuccess) {
+            TokenActionResult(success = true, message = when (visibilityState?.uppercase(Locale.ROOT)) {
+                "HIDDEN" -> "代币已隐藏"
+                "SPAM" -> "已标记为垃圾币"
+                else -> "代币已恢复显示"
+            })
+        } else {
+            TokenActionResult(success = false, errorMessage = result.exceptionOrNull()?.message ?: "代币操作失败")
+        }
+    }
+
+    override suspend fun deleteCustomToken(
+        walletId: String,
+        customTokenId: String,
+    ): TokenActionResult {
+        val result = paymentRepository.deleteCustomToken(walletId, customTokenId)
+        return if (result.isSuccess) {
+            TokenActionResult(success = true, message = "自定义代币已删除")
+        } else {
+            TokenActionResult(success = false, errorMessage = result.exceptionOrNull()?.message ?: "删除自定义代币失败")
+        }
+    }
+
     override suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState =
         AddCustomTokenUiState(
-            metrics = listOf(
-                FeatureMetric("钱包标识", args.walletId),
-                FeatureMetric("目标链", args.chainId),
-                FeatureMetric("录入模式", "手动"),
-                FeatureMetric("校验", "BLOCKED"),
-            ),
-            secondaryActionLabel = "返回代币管理",
-            note = "未接入",
+            walletName = paymentRepository.getCachedWallets()
+                .firstOrNull { it.walletId == args.walletId }
+                ?.walletName
+                ?: paymentRepository.getWallet(args.walletId).getOrNull()?.wallet?.walletName
+                ?: args.walletId,
+            chainLabel = walletHomeChainLabel(args.chainId),
         )
+
+    override suspend fun searchCustomTokens(
+        chainId: String,
+        query: String,
+    ): Result<List<AddCustomTokenCandidateUi>> {
+        return paymentRepository.searchCustomTokens(chainId, query).map { items ->
+            items.map { item ->
+                AddCustomTokenCandidateUi(
+                    tokenAddress = item.tokenAddress,
+                    name = item.name,
+                    symbol = item.symbol,
+                    decimals = item.decimals,
+                    iconUrl = item.iconUrl,
+                )
+            }
+        }
+    }
+
+    override suspend fun submitCustomToken(
+        walletId: String,
+        chainId: String,
+        tokenAddress: String,
+        name: String,
+        symbol: String,
+        decimals: Int,
+        iconUrl: String?,
+    ): TokenActionResult {
+        val result = paymentRepository.createCustomToken(
+            walletId = walletId,
+            chainId = chainId,
+            tokenAddress = tokenAddress,
+            name = name,
+            symbol = symbol,
+            decimals = decimals,
+            iconUrl = iconUrl,
+        )
+        return if (result.isSuccess) {
+            TokenActionResult(success = true, message = "自定义代币已加入资产列表")
+        } else {
+            TokenActionResult(success = false, errorMessage = result.exceptionOrNull()?.message ?: "保存自定义代币失败")
+        }
+    }
 
     override suspend fun getCachedWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState? {
         val wallets = paymentRepository.getCachedWallets()
@@ -2205,6 +2319,26 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             conflictingWalletDetected = conflictingWallet != null,
             refreshFailed = refreshFailed,
         )
+    }
+
+    private fun normalizeWalletChainId(networkCode: String): String = when (networkCode.uppercase(Locale.ROOT)) {
+        "AVALANCHE_C" -> "avalanche"
+        else -> networkCode.lowercase(Locale.ROOT)
+    }
+
+    private fun resolveTokenKey(asset: WalletAssetItemData): String {
+        if (asset.isNative || asset.contractAddress.isNullOrBlank()) {
+            return "${normalizeWalletChainId(asset.networkCode)}:native:${asset.symbol.uppercase(Locale.ROOT)}"
+        }
+        return asset.contractAddress.trim().lowercase(Locale.ROOT)
+    }
+
+    private fun formatManagedTokenBalance(asset: WalletAssetItemData): String {
+        val amount = asset.availableBalanceUiAmount
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() && !it.equals("null", ignoreCase = true) }
+            ?: "0.00"
+        return "$amount ${asset.symbol}"
     }
 
     private fun buildWalletManagerState(

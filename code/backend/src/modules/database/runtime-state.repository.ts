@@ -15,6 +15,7 @@ import {
 } from './runtime-state.types';
 import {
   PersistedWalletChainAccountRecord,
+  PersistedWalletCustomTokenRecord,
   PersistedWalletKeySlotRecord,
   PersistedWalletLifecycleRecord,
   PersistedWalletPublicAddressRecord,
@@ -162,6 +163,21 @@ export abstract class RuntimeStateRepository {
   abstract insertWalletChainAccount(
     chainAccount: PersistedWalletChainAccountRecord,
   ): Promise<PersistedWalletChainAccountRecord>;
+
+  abstract listWalletCustomTokensByWalletId(params: {
+    walletId: string;
+    chainId?: string;
+  }): Promise<PersistedWalletCustomTokenRecord[]>;
+
+  abstract findWalletCustomTokenById(
+    customTokenId: string,
+  ): Promise<PersistedWalletCustomTokenRecord | null>;
+
+  abstract upsertWalletCustomToken(
+    record: PersistedWalletCustomTokenRecord,
+  ): Promise<PersistedWalletCustomTokenRecord>;
+
+  abstract deleteWalletCustomToken(customTokenId: string): Promise<void>;
 
   abstract findWalletSecretBackupByWalletId(
     walletId: string,

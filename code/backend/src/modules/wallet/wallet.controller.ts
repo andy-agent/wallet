@@ -27,6 +27,19 @@ export class WalletController {
     );
   }
 
+  @Get('custom-tokens/search')
+  searchCustomTokens(
+    @Headers('authorization') authorization?: string,
+    @Query('chainId') chainId?: string,
+    @Query('query') query?: string,
+  ) {
+    return this.walletService.searchCustomTokens(
+      this.extractBearer(authorization),
+      chainId,
+      query,
+    );
+  }
+
   @Get('overview')
   getOverview(
     @Headers('authorization') authorization?: string,

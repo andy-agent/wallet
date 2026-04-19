@@ -163,6 +163,7 @@ data class WalletHomeWalletOption(
 )
 
 data class AssetHolding(
+    val tokenKey: String,
     val symbol: String,
     val chainLabel: String,
     val balanceText: String,
@@ -170,6 +171,10 @@ data class AssetHolding(
     val changeText: String,
     val changePositive: Boolean,
     val detailText: String = "",
+    val customTokenId: String? = null,
+    val isCustom: Boolean = false,
+    val iconLocalPath: String? = null,
+    val iconUrl: String? = null,
 )
 
 data class WalletHomeUiState(
@@ -283,12 +288,12 @@ fun walletHomePreviewState(): WalletHomeUiState = WalletHomeUiState(
         ),
     ),
     assets = listOf(
-        AssetHolding("ETH", "Ethereum", "2.84 ETH", "$9,214.80", "+2.4%", true),
-        AssetHolding("USDT", "TRON", "12,450 USDT", "$12,450.00", "0.0%", true),
-        AssetHolding("MATIC", "Polygon", "1,202 MATIC", "$1,103.24", "+6.1%", true),
-        AssetHolding("ARB", "Arbitrum", "856 ARB", "$1,202.84", "-3.4%", false),
-        AssetHolding("SOL", "Solana", "9.8 SOL", "$1,860.44", "+4.7%", true),
-        AssetHolding("BNB", "BSC", "1.2 BNB", "$685.10", "+1.3%", true),
+        AssetHolding("ethereum:native:ETH", "ETH", "Ethereum", "2.84 ETH", "$9,214.80", "+2.4%", true),
+        AssetHolding("tron:native:USDT", "USDT", "TRON", "12,450 USDT", "$12,450.00", "0.0%", true),
+        AssetHolding("polygon:native:MATIC", "MATIC", "Polygon", "1,202 MATIC", "$1,103.24", "+6.1%", true),
+        AssetHolding("arbitrum:native:ARB", "ARB", "Arbitrum", "856 ARB", "$1,202.84", "-3.4%", false),
+        AssetHolding("solana:native:SOL", "SOL", "Solana", "9.8 SOL", "$1,860.44", "+4.7%", true),
+        AssetHolding("bsc:native:BNB", "BNB", "BSC", "1.2 BNB", "$685.10", "+1.3%", true),
     ),
     currentWalletLabel = "Main Wallet",
     currentWalletAddress = "7YttLkHDo1B4ezgm6KPDLJrVN6a8GN28AL5soMgqd7qV",

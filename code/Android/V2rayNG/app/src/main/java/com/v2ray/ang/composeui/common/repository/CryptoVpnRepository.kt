@@ -40,6 +40,12 @@ data class LocalWalletActionResult(
     val errorMessage: String? = null,
 )
 
+data class TokenActionResult(
+    val success: Boolean,
+    val message: String? = null,
+    val errorMessage: String? = null,
+)
+
 interface CryptoVpnRepository {
     suspend fun getForceUpdateState(): ForceUpdateUiState
     suspend fun getOptionalUpdateState(): OptionalUpdateUiState
@@ -138,7 +144,30 @@ interface CryptoVpnRepository {
     suspend fun logoutSession(): LogoutResult = LogoutResult(success = false, errorMessage = "Logout unavailable")
     suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState
     suspend fun getTokenManagerState(args: TokenManagerRouteArgs): TokenManagerUiState
+    suspend fun setTokenVisibility(
+        walletId: String,
+        chainId: String,
+        tokenKey: String,
+        visibilityState: String?,
+    ): TokenActionResult = TokenActionResult(success = false, errorMessage = "Token visibility unavailable")
+    suspend fun deleteCustomToken(
+        walletId: String,
+        customTokenId: String,
+    ): TokenActionResult = TokenActionResult(success = false, errorMessage = "Custom token delete unavailable")
     suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState
+    suspend fun searchCustomTokens(
+        chainId: String,
+        query: String,
+    ): Result<List<AddCustomTokenCandidateUi>> = Result.failure(IllegalStateException("Token search unavailable"))
+    suspend fun submitCustomToken(
+        walletId: String,
+        chainId: String,
+        tokenAddress: String,
+        name: String,
+        symbol: String,
+        decimals: Int,
+        iconUrl: String? = null,
+    ): TokenActionResult = TokenActionResult(success = false, errorMessage = "Custom token save unavailable")
     suspend fun getCachedWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState? = null
     suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState
     suspend fun setDefaultWallet(walletId: String): WalletLifecycleMutationResult =

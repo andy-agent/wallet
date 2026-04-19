@@ -8,6 +8,7 @@ import {
 import { OrderStatus } from '../orders/orders.types';
 import {
   PersistedWalletChainAccountRecord,
+  PersistedWalletCustomTokenRecord,
   PersistedWalletKeySlotRecord,
   PersistedWalletLifecycleRecord,
   PersistedWalletPublicAddressRecord,
@@ -40,6 +41,7 @@ const WALLET_SECRET_BACKUPS_TABLE = 'runtime_state_wallet_secret_backups';
 const WALLETS_TABLE = 'runtime_state_wallets';
 const WALLET_KEY_SLOTS_TABLE = 'runtime_state_wallet_key_slots';
 const WALLET_CHAIN_ACCOUNTS_TABLE = 'runtime_state_wallet_chain_accounts';
+const WALLET_CUSTOM_TOKENS_TABLE = 'runtime_state_wallet_custom_tokens';
 const WALLET_SECRET_BACKUPS_V2_TABLE = 'runtime_state_wallet_secret_backups_v2';
 const ACCOUNT_COLUMNS = `
   id::text AS account_id,
@@ -184,6 +186,19 @@ const WALLET_CHAIN_ACCOUNT_COLUMNS = `
   capability,
   is_enabled,
   is_default_receive,
+  created_at,
+  updated_at
+`;
+const WALLET_CUSTOM_TOKEN_COLUMNS = `
+  custom_token_id,
+  account_id,
+  wallet_id,
+  chain_id,
+  token_address,
+  name,
+  symbol,
+  decimals,
+  icon_url,
   created_at,
   updated_at
 `;
@@ -358,6 +373,20 @@ interface RuntimeStateWalletChainAccountRow {
   capability: PersistedWalletChainAccountRecord['capability'];
   is_enabled: boolean;
   is_default_receive: boolean;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RuntimeStateWalletCustomTokenRow {
+  custom_token_id: string;
+  account_id: string;
+  wallet_id: string;
+  chain_id: string;
+  token_address: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+  icon_url: string | null;
   created_at: Date | string;
   updated_at: Date | string;
 }
@@ -1808,6 +1837,107 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     return this.mapWalletChainAccount(result.rows[0]);
   }
 
+  async listWalletCustomTokensByWalletId(params: {
+    walletId: string;
+    chainId?: string;
+  }): Promise<PersistedWalletCustomTokenRecord[]> {
+    await this.ensureReady();
+    const values: string[] = [params.walletId];
+    let whereClause = `wallet_id = $1`;
+    if (params.chainId) {
+      values.push(params.chainId);
+      whereClause += ` AND chain_id = $2`;
+    }
+    const result = await this.pool.query<RuntimeStateWalletCustomTokenRow>(
+      `
+        SELECT ${WALLET_CUSTOM_TOKEN_COLUMNS}
+        FROM ${WALLET_CUSTOM_TOKENS_TABLE}
+        WHERE ${whereClause}
+        ORDER BY symbol ASC, created_at ASC
+      `,
+      values,
+    );
+    return result.rows.map((row) => this.mapWalletCustomToken(row));
+  }
+
+  async findWalletCustomTokenById(
+    customTokenId: string,
+  ): Promise<PersistedWalletCustomTokenRecord | null> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletCustomTokenRow>(
+      `
+        SELECT ${WALLET_CUSTOM_TOKEN_COLUMNS}
+        FROM ${WALLET_CUSTOM_TOKENS_TABLE}
+        WHERE custom_token_id = $1
+        LIMIT 1
+      `,
+      [customTokenId],
+    );
+    return result.rows[0] ? this.mapWalletCustomToken(result.rows[0]) : null;
+  }
+
+  async upsertWalletCustomToken(
+    record: PersistedWalletCustomTokenRecord,
+  ): Promise<PersistedWalletCustomTokenRecord> {
+    await this.ensureReady();
+    const result = await this.pool.query<RuntimeStateWalletCustomTokenRow>(
+      `
+        INSERT INTO ${WALLET_CUSTOM_TOKENS_TABLE} (
+          custom_token_id,
+          account_id,
+          wallet_id,
+          chain_id,
+          token_address,
+          name,
+          symbol,
+          decimals,
+          icon_url,
+          created_at,
+          updated_at
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        ON CONFLICT (custom_token_id) DO UPDATE
+        SET
+          account_id = EXCLUDED.account_id,
+          wallet_id = EXCLUDED.wallet_id,
+          chain_id = EXCLUDED.chain_id,
+          token_address = EXCLUDED.token_address,
+          name = EXCLUDED.name,
+          symbol = EXCLUDED.symbol,
+          decimals = EXCLUDED.decimals,
+          icon_url = EXCLUDED.icon_url,
+          created_at = EXCLUDED.created_at,
+          updated_at = EXCLUDED.updated_at
+        RETURNING ${WALLET_CUSTOM_TOKEN_COLUMNS}
+      `,
+      [
+        record.customTokenId,
+        record.accountId,
+        record.walletId,
+        record.chainId,
+        record.tokenAddress,
+        record.name,
+        record.symbol,
+        record.decimals,
+        record.iconUrl,
+        record.createdAt,
+        record.updatedAt,
+      ],
+    );
+    return this.mapWalletCustomToken(result.rows[0]);
+  }
+
+  async deleteWalletCustomToken(customTokenId: string): Promise<void> {
+    await this.ensureReady();
+    await this.pool.query(
+      `
+        DELETE FROM ${WALLET_CUSTOM_TOKENS_TABLE}
+        WHERE custom_token_id = $1
+      `,
+      [customTokenId],
+    );
+  }
+
   async findWalletSecretBackupByWalletId(
     walletId: string,
   ): Promise<PersistedWalletSecretBackupV2Record | null> {
@@ -1886,6 +2016,18 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+
+      await client.query(
+        `
+          DELETE FROM ${WALLET_CUSTOM_TOKENS_TABLE}
+          WHERE wallet_id IN (
+            SELECT wallet_id
+            FROM ${WALLETS_TABLE}
+            WHERE account_id = $1
+          )
+        `,
+        [accountId],
+      );
 
       await client.query(
         `
@@ -2343,6 +2485,30 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       ON ${WALLET_CHAIN_ACCOUNTS_TABLE} (network_code)
     `);
     await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${WALLET_CUSTOM_TOKENS_TABLE} (
+        custom_token_id text PRIMARY KEY,
+        account_id text NOT NULL,
+        wallet_id text NOT NULL,
+        chain_id text NOT NULL,
+        token_address text NOT NULL,
+        name text NOT NULL,
+        symbol text NOT NULL,
+        decimals integer NOT NULL,
+        icon_url text NULL,
+        created_at timestamptz NOT NULL,
+        updated_at timestamptz NOT NULL,
+        UNIQUE (wallet_id, chain_id, token_address)
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_wallet_custom_tokens_wallet
+      ON ${WALLET_CUSTOM_TOKENS_TABLE} (wallet_id)
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_wallet_custom_tokens_chain
+      ON ${WALLET_CUSTOM_TOKENS_TABLE} (chain_id)
+    `);
+    await this.pool.query(`
       CREATE TABLE IF NOT EXISTS ${WALLET_SECRET_BACKUPS_V2_TABLE} (
         backup_id text PRIMARY KEY,
         account_id text NOT NULL,
@@ -2714,6 +2880,24 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       capability: row.capability,
       isEnabled: row.is_enabled,
       isDefaultReceive: row.is_default_receive,
+      createdAt: this.toIsoString(row.created_at)!,
+      updatedAt: this.toIsoString(row.updated_at)!,
+    };
+  }
+
+  private mapWalletCustomToken(
+    row: RuntimeStateWalletCustomTokenRow,
+  ): PersistedWalletCustomTokenRecord {
+    return {
+      customTokenId: row.custom_token_id,
+      accountId: row.account_id,
+      walletId: row.wallet_id,
+      chainId: row.chain_id,
+      tokenAddress: row.token_address,
+      name: row.name,
+      symbol: row.symbol,
+      decimals: row.decimals,
+      iconUrl: row.icon_url,
       createdAt: this.toIsoString(row.created_at)!,
       updatedAt: this.toIsoString(row.updated_at)!,
     };

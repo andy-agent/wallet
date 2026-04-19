@@ -10,6 +10,9 @@ import com.v2ray.ang.payment.data.local.dao.OrderDao
 import com.v2ray.ang.payment.data.local.dao.PaymentHistoryDao
 import com.v2ray.ang.payment.data.local.dao.UserDao
 import com.v2ray.ang.payment.data.local.dao.LocalWalletChainAccountDao
+import com.v2ray.ang.payment.data.local.dao.LocalCustomTokenDao
+import com.v2ray.ang.payment.data.local.dao.LocalTokenIconCacheDao
+import com.v2ray.ang.payment.data.local.dao.LocalTokenVisibilityEntryDao
 import com.v2ray.ang.payment.data.local.dao.LocalWalletDao
 import com.v2ray.ang.payment.data.local.dao.VpnNodeCacheDao
 import com.v2ray.ang.payment.data.local.dao.VpnNodeRuntimeDao
@@ -17,6 +20,9 @@ import com.v2ray.ang.payment.data.local.dao.WalletOverviewCacheDao
 import com.v2ray.ang.payment.data.local.dao.WalletPublicAddressCacheDao
 import com.v2ray.ang.payment.data.local.dao.WalletReceiveContextCacheDao
 import com.v2ray.ang.payment.data.local.entity.LocalWalletChainAccountEntity
+import com.v2ray.ang.payment.data.local.entity.LocalCustomTokenEntity
+import com.v2ray.ang.payment.data.local.entity.LocalTokenIconCacheEntity
+import com.v2ray.ang.payment.data.local.entity.LocalTokenVisibilityEntryEntity
 import com.v2ray.ang.payment.data.local.entity.LocalWalletEntity
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
 import com.v2ray.ang.payment.data.local.entity.PaymentHistoryEntity
@@ -37,13 +43,16 @@ import com.v2ray.ang.payment.data.local.entity.WalletReceiveContextCacheEntity
         PaymentHistoryEntity::class,
         LocalWalletEntity::class,
         LocalWalletChainAccountEntity::class,
+        LocalTokenVisibilityEntryEntity::class,
+        LocalCustomTokenEntity::class,
+        LocalTokenIconCacheEntity::class,
         VpnNodeCacheEntity::class,
         VpnNodeRuntimeEntity::class,
         WalletPublicAddressCacheEntity::class,
         WalletReceiveContextCacheEntity::class,
         WalletOverviewCacheEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class PaymentDatabase : RoomDatabase() {
@@ -53,6 +62,9 @@ abstract class PaymentDatabase : RoomDatabase() {
     abstract fun paymentHistoryDao(): PaymentHistoryDao
     abstract fun localWalletDao(): LocalWalletDao
     abstract fun localWalletChainAccountDao(): LocalWalletChainAccountDao
+    abstract fun localTokenVisibilityEntryDao(): LocalTokenVisibilityEntryDao
+    abstract fun localCustomTokenDao(): LocalCustomTokenDao
+    abstract fun localTokenIconCacheDao(): LocalTokenIconCacheDao
     abstract fun vpnNodeCacheDao(): VpnNodeCacheDao
     abstract fun vpnNodeRuntimeDao(): VpnNodeRuntimeDao
     abstract fun walletPublicAddressCacheDao(): WalletPublicAddressCacheDao
@@ -144,6 +156,90 @@ abstract class PaymentDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `local_token_visibility_entries` (
+                        `userId` TEXT NOT NULL,
+                        `walletId` TEXT NOT NULL,
+                        `chainId` TEXT NOT NULL,
+                        `tokenKey` TEXT NOT NULL,
+                        `visibilityState` TEXT NOT NULL,
+                        `updatedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`userId`, `walletId`, `chainId`, `tokenKey`),
+                        FOREIGN KEY(`userId`) REFERENCES `users`(`userId`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_local_token_visibility_entries_userId` ON `local_token_visibility_entries` (`userId`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_local_token_visibility_entries_walletId` ON `local_token_visibility_entries` (`walletId`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_local_token_visibility_entries_chainId` ON `local_token_visibility_entries` (`chainId`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_local_token_visibility_entries_visibilityState` ON `local_token_visibility_entries` (`visibilityState`)",
+                )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `local_custom_tokens` (
+                        `userId` TEXT NOT NULL,
+                        `customTokenId` TEXT NOT NULL,
+                        `walletId` TEXT NOT NULL,
+                        `chainId` TEXT NOT NULL,
+                        `tokenAddress` TEXT NOT NULL,
+                        `tokenKey` TEXT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `symbol` TEXT NOT NULL,
+                        `decimals` INTEGER NOT NULL,
+                        `iconUrl` TEXT,
+                        `createdAt` TEXT NOT NULL,
+                        `updatedAt` TEXT NOT NULL,
+                        `cachedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`userId`, `customTokenId`),
+                        FOREIGN KEY(`userId`) REFERENCES `users`(`userId`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_local_custom_tokens_userId` ON `local_custom_tokens` (`userId`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_local_custom_tokens_walletId` ON `local_custom_tokens` (`walletId`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_local_custom_tokens_chainId` ON `local_custom_tokens` (`chainId`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_local_custom_tokens_tokenKey` ON `local_custom_tokens` (`tokenKey`)",
+                )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `local_token_icon_cache` (
+                        `tokenKey` TEXT NOT NULL,
+                        `iconUrl` TEXT,
+                        `localPath` TEXT,
+                        `updatedAt` INTEGER NOT NULL,
+                        `lastFetchSucceeded` INTEGER NOT NULL,
+                        PRIMARY KEY(`tokenKey`)
+                    )
+                    """.trimIndent(),
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_local_token_icon_cache_updatedAt` ON `local_token_icon_cache` (`updatedAt`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_local_token_icon_cache_lastFetchSucceeded` ON `local_token_icon_cache` (`lastFetchSucceeded`)",
+                )
+            }
+        }
+
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
@@ -212,6 +308,7 @@ abstract class PaymentDatabase : RoomDatabase() {
                 )
                     .addMigrations(MIGRATION_3_4)
                     .addMigrations(MIGRATION_4_5)
+                    .addMigrations(MIGRATION_6_7)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

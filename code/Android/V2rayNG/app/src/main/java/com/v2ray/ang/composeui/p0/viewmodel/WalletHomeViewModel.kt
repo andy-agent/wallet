@@ -41,18 +41,19 @@ class WalletHomeViewModel(
                     currentWalletAddress = selectedChain.address,
                     currentWalletAddressSuffix = selectedChain.addressSuffix,
                 )
+                refresh(selectedWallet.walletId)
             }
 
             WalletHomeEvent.Refresh -> refresh()
         }
     }
 
-    private fun refresh() {
+    private fun refresh(selectedWalletId: String? = _uiState.value.selectedWalletId) {
         viewModelScope.launch {
-            repository.getCachedWalletHomeState()?.let { cached ->
+            repository.getCachedWalletHomeState(selectedWalletId)?.let { cached ->
                 _uiState.value = cached
             }
-            _uiState.value = repository.getWalletHomeState()
+            _uiState.value = repository.getWalletHomeState(selectedWalletId)
         }
     }
 

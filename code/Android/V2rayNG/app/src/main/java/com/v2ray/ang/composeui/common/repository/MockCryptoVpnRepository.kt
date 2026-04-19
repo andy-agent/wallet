@@ -373,11 +373,50 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         )
     }
 
+    override suspend fun setTokenVisibility(
+        walletId: String,
+        chainId: String,
+        tokenKey: String,
+        visibilityState: String?,
+    ): TokenActionResult {
+        return TokenActionResult(success = true, message = "Preview: $visibilityState")
+    }
+
+    override suspend fun deleteCustomToken(
+        walletId: String,
+        customTokenId: String,
+    ): TokenActionResult {
+        return TokenActionResult(success = true, message = "Preview delete")
+    }
+
     override suspend fun getAddCustomTokenState(args: AddCustomTokenRouteArgs): AddCustomTokenUiState {
         return addCustomTokenPreviewState().copy(
             summary = "Preview: 导航参数 ${args.chainId}",
             note = "Preview only",
         )
+    }
+
+    override suspend fun searchCustomTokens(
+        chainId: String,
+        query: String,
+    ): Result<List<AddCustomTokenCandidateUi>> {
+        return Result.success(
+            addCustomTokenPreviewState().searchResults.filter {
+                query.isBlank() || it.symbol.contains(query, ignoreCase = true) || it.name.contains(query, ignoreCase = true)
+            },
+        )
+    }
+
+    override suspend fun submitCustomToken(
+        walletId: String,
+        chainId: String,
+        tokenAddress: String,
+        name: String,
+        symbol: String,
+        decimals: Int,
+        iconUrl: String?,
+    ): TokenActionResult {
+        return TokenActionResult(success = tokenAddress.isNotBlank(), message = "Preview save")
     }
 
     override suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState {

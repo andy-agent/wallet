@@ -88,6 +88,20 @@ export interface PersistedWalletChainAccountRecord {
   updatedAt: string;
 }
 
+export interface PersistedWalletCustomTokenRecord {
+  customTokenId: string;
+  accountId: string;
+  walletId: string;
+  chainId: string;
+  tokenAddress: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+  iconUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PersistedWalletPublicAddressRecord {
   addressId: string;
   accountId: string;

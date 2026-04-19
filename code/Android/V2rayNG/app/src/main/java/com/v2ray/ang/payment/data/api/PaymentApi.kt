@@ -17,6 +17,7 @@ import com.v2ray.ang.payment.data.model.RegisterRequest
 import com.v2ray.ang.payment.data.model.RegisterResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.Header
@@ -245,6 +246,34 @@ interface PaymentApi {
         @Header("Authorization") authorization: String,
         @Path("walletId") walletId: String
     ): Response<WalletSecretBackupMetadataResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallet/custom-tokens/search")
+    suspend fun searchCustomTokens(
+        @Header("Authorization") authorization: String,
+        @Query("chainId") chainId: String,
+        @Query("query") query: String,
+    ): Response<CustomTokenSearchResponse>
+
+    @GET("${PaymentConfig.API_VERSION}/wallets/{walletId}/custom-tokens")
+    suspend fun listCustomTokens(
+        @Header("Authorization") authorization: String,
+        @Path("walletId") walletId: String,
+        @Query("chainId") chainId: String,
+    ): Response<WalletCustomTokensResponse>
+
+    @POST("${PaymentConfig.API_VERSION}/wallets/{walletId}/custom-tokens")
+    suspend fun createCustomToken(
+        @Header("Authorization") authorization: String,
+        @Path("walletId") walletId: String,
+        @Body request: CreateCustomTokenRequest,
+    ): Response<WalletCustomTokenResponse>
+
+    @DELETE("${PaymentConfig.API_VERSION}/wallets/{walletId}/custom-tokens/{customTokenId}")
+    suspend fun deleteCustomToken(
+        @Header("Authorization") authorization: String,
+        @Path("walletId") walletId: String,
+        @Path("customTokenId") customTokenId: String,
+    ): Response<WalletCustomTokenResponse>
 
     @POST("${PaymentConfig.API_VERSION}/wallet/transfer/build")
     suspend fun buildWalletTransfer(
@@ -692,6 +721,12 @@ data class WalletAssetItemData(
     val lastOrderStatus: String? = null,
     @SerializedName("selected")
     val selected: Boolean? = null,
+    @SerializedName("customTokenId")
+    val customTokenId: String? = null,
+    @SerializedName("isCustom")
+    val isCustom: Boolean = false,
+    @SerializedName("iconUrl")
+    val iconUrl: String? = null,
 )
 
 data class WalletPublicAddressesResponse(
@@ -1056,6 +1091,87 @@ data class WalletDetailData(
     val chainAccounts: List<WalletChainAccountData>,
     @SerializedName("backup")
     val backup: WalletSecretBackupMetadataData? = null,
+)
+
+data class CreateCustomTokenRequest(
+    @SerializedName("chainId")
+    val chainId: String,
+    @SerializedName("tokenAddress")
+    val tokenAddress: String,
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("symbol")
+    val symbol: String,
+    @SerializedName("decimals")
+    val decimals: Int,
+    @SerializedName("iconUrl")
+    val iconUrl: String? = null,
+)
+
+data class WalletCustomTokenData(
+    @SerializedName("customTokenId")
+    val customTokenId: String,
+    @SerializedName("walletId")
+    val walletId: String,
+    @SerializedName("chainId")
+    val chainId: String,
+    @SerializedName("tokenAddress")
+    val tokenAddress: String,
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("symbol")
+    val symbol: String,
+    @SerializedName("decimals")
+    val decimals: Int,
+    @SerializedName("iconUrl")
+    val iconUrl: String? = null,
+    @SerializedName("createdAt")
+    val createdAt: String,
+    @SerializedName("updatedAt")
+    val updatedAt: String,
+)
+
+data class WalletCustomTokensData(
+    @SerializedName("items")
+    val items: List<WalletCustomTokenData>,
+)
+
+data class WalletCustomTokensResponse(
+    val code: String,
+    val message: String,
+    val data: WalletCustomTokensData?,
+)
+
+data class WalletCustomTokenResponse(
+    val code: String,
+    val message: String,
+    val data: WalletCustomTokenData?,
+)
+
+data class CustomTokenSearchCandidateData(
+    @SerializedName("tokenAddress")
+    val tokenAddress: String,
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("symbol")
+    val symbol: String,
+    @SerializedName("decimals")
+    val decimals: Int,
+    @SerializedName("iconUrl")
+    val iconUrl: String? = null,
+    @SerializedName("chainId")
+    val chainId: String,
+)
+
+data class CustomTokenSearchData(
+    @SerializedName("items")
+    val items: List<CustomTokenSearchCandidateData>,
+)
+
+data class CustomTokenSearchResponse(
+    val code: String,
+    val message: String,
+    val data: CustomTokenSearchData?,
 )
 
 data class CreateMnemonicWalletKeySlotRequest(

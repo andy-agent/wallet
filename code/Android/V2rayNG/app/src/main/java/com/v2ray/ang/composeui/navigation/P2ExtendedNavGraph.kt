@@ -396,7 +396,11 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
                     CryptoVpnRouteSpec.tokenManagerRoute(args.walletId, args.chainId),
                 )
             },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern) },
+            onSecondaryAction = {
+                navController.navigateSingleTop(
+                    CryptoVpnRouteSpec.tokenManagerRoute(args.walletId, args.chainId),
+                )
+            },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }

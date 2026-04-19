@@ -6,6 +6,9 @@ import com.v2ray.ang.payment.data.local.entity.OrderEntity
 import com.v2ray.ang.payment.data.local.entity.PaymentHistoryEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
 import com.v2ray.ang.payment.data.local.entity.LocalWalletChainAccountEntity
+import com.v2ray.ang.payment.data.local.entity.LocalCustomTokenEntity
+import com.v2ray.ang.payment.data.local.entity.LocalTokenIconCacheEntity
+import com.v2ray.ang.payment.data.local.entity.LocalTokenVisibilityEntryEntity
 import com.v2ray.ang.payment.data.local.entity.LocalWalletEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeCacheEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
@@ -27,6 +30,9 @@ class LocalPaymentRepository(context: Context) {
     private val paymentHistoryDao = database.paymentHistoryDao()
     private val localWalletDao = database.localWalletDao()
     private val localWalletChainAccountDao = database.localWalletChainAccountDao()
+    private val localTokenVisibilityEntryDao = database.localTokenVisibilityEntryDao()
+    private val localCustomTokenDao = database.localCustomTokenDao()
+    private val localTokenIconCacheDao = database.localTokenIconCacheDao()
     private val vpnNodeCacheDao = database.vpnNodeCacheDao()
     private val vpnNodeRuntimeDao = database.vpnNodeRuntimeDao()
     private val walletPublicAddressCacheDao = database.walletPublicAddressCacheDao()
@@ -136,6 +142,9 @@ class LocalPaymentRepository(context: Context) {
         paymentHistoryDao.deleteAll()
         localWalletDao.deleteAll()
         localWalletChainAccountDao.deleteAll()
+        localTokenVisibilityEntryDao.deleteAll()
+        localCustomTokenDao.deleteAll()
+        localTokenIconCacheDao.deleteAll()
         vpnNodeCacheDao.deleteAll()
         vpnNodeRuntimeDao.deleteAll()
         walletPublicAddressCacheDao.deleteAll()
@@ -213,9 +222,71 @@ class LocalPaymentRepository(context: Context) {
     suspend fun clearWalletDomainData(userId: String) = withContext(Dispatchers.IO) {
         localWalletDao.deleteByUserId(userId)
         localWalletChainAccountDao.deleteByUserId(userId)
+        localTokenVisibilityEntryDao.deleteByUserId(userId)
+        localCustomTokenDao.deleteByUserId(userId)
         walletPublicAddressCacheDao.deleteByUserId(userId)
         walletReceiveContextCacheDao.deleteByUserId(userId)
         walletOverviewCacheDao.deleteByUserId(userId)
+    }
+
+    suspend fun getTokenVisibilityEntries(
+        userId: String,
+        walletId: String,
+        chainId: String,
+    ): List<LocalTokenVisibilityEntryEntity> = withContext(Dispatchers.IO) {
+        localTokenVisibilityEntryDao.getByScope(userId, walletId, chainId)
+    }
+
+    suspend fun upsertTokenVisibilityEntry(
+        item: LocalTokenVisibilityEntryEntity,
+    ) = withContext(Dispatchers.IO) {
+        localTokenVisibilityEntryDao.upsert(item)
+    }
+
+    suspend fun clearTokenVisibilityEntry(
+        userId: String,
+        walletId: String,
+        chainId: String,
+        tokenKey: String,
+    ) = withContext(Dispatchers.IO) {
+        localTokenVisibilityEntryDao.deleteByTokenKey(userId, walletId, chainId, tokenKey)
+    }
+
+    suspend fun getCustomTokens(
+        userId: String,
+        walletId: String,
+        chainId: String,
+    ): List<LocalCustomTokenEntity> = withContext(Dispatchers.IO) {
+        localCustomTokenDao.getByScope(userId, walletId, chainId)
+    }
+
+    suspend fun replaceCustomTokens(
+        userId: String,
+        walletId: String,
+        chainId: String,
+        items: List<LocalCustomTokenEntity>,
+    ) = withContext(Dispatchers.IO) {
+        localCustomTokenDao.deleteByScope(userId, walletId, chainId)
+        if (items.isNotEmpty()) {
+            localCustomTokenDao.insertAll(items)
+        }
+    }
+
+    suspend fun deleteCustomToken(
+        userId: String,
+        customTokenId: String,
+    ) = withContext(Dispatchers.IO) {
+        localCustomTokenDao.deleteByCustomTokenId(userId, customTokenId)
+    }
+
+    suspend fun getTokenIconCache(tokenKey: String): LocalTokenIconCacheEntity? = withContext(Dispatchers.IO) {
+        localTokenIconCacheDao.getByTokenKey(tokenKey)
+    }
+
+    suspend fun upsertTokenIconCache(
+        item: LocalTokenIconCacheEntity,
+    ) = withContext(Dispatchers.IO) {
+        localTokenIconCacheDao.upsert(item)
     }
 
     suspend fun getLocalWalletChainAccounts(walletId: String): List<LocalWalletChainAccountEntity> = withContext(Dispatchers.IO) {

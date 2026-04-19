@@ -6,6 +6,7 @@ import {
 import { OrderRecord } from '../orders/orders.types';
 import {
   PersistedWalletChainAccountRecord,
+  PersistedWalletCustomTokenRecord,
   PersistedWalletKeySlotRecord,
   PersistedWalletLifecycleRecord,
   PersistedWalletPublicAddressRecord,
@@ -68,7 +69,7 @@ export interface PaymentScanCursorRecord extends RuntimeStatePaymentContext {
 }
 
 export interface RuntimeStateSnapshot {
-  version: 1 | 2 | 3 | 4 | 5 | 6;
+  version: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   orders: StoredOrderRecord[];
   idempotencyIndex: Record<string, string>;
   subscriptions: PersistedSubscriptionRecord[];
@@ -78,6 +79,7 @@ export interface RuntimeStateSnapshot {
   wallets: PersistedWalletRecord[];
   walletKeySlots: PersistedWalletKeySlotRecord[];
   walletChainAccounts: PersistedWalletChainAccountRecord[];
+  walletCustomTokens: PersistedWalletCustomTokenRecord[];
   walletSecretBackupsV2: PersistedWalletSecretBackupV2Record[];
   accounts: AuthAccount[];
   sessions: AuthSession[];
