@@ -5,9 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -181,7 +179,7 @@ private fun TokenSection(
     actions: List<Pair<String, TokenVisibilityAction>>,
     onMutateToken: (ManagedTokenUi, TokenVisibilityAction) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         if (tokens.isEmpty()) {
             EmptyStateCard(title = emptyTitle, message = emptyMessage)
@@ -204,7 +202,7 @@ private fun TokenRowCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -234,25 +232,41 @@ private fun TokenRowCard(
                     Text(token.statusText, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                actions.forEach { (label, action) ->
-                    OutlinedButton(
-                        onClick = { onMutateToken(token, action) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(label)
+            if (actions.size > 1) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    actions.forEach { (label, action) ->
+                        OutlinedButton(
+                            onClick = { onMutateToken(token, action) },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(label)
+                        }
                     }
                 }
-                if (token.isCustom && token.customTokenId != null) {
-                    Button(
-                        onClick = { onMutateToken(token, TokenVisibilityAction.DeleteCustom) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text("删除")
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    actions.forEach { (label, action) ->
+                        OutlinedButton(
+                            onClick = { onMutateToken(token, action) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(label)
+                        }
                     }
+                }
+            }
+            if (token.isCustom && token.customTokenId != null) {
+                Button(
+                    onClick = { onMutateToken(token, TokenVisibilityAction.DeleteCustom) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("删除")
                 }
             }
         }

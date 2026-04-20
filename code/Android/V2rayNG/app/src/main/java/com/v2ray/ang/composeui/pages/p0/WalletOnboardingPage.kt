@@ -2,27 +2,19 @@ package com.v2ray.ang.composeui.pages.p0
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.model.WalletCreationMode
 import com.v2ray.ang.composeui.p0.model.WalletOnboardingEvent
 import com.v2ray.ang.composeui.p0.model.WalletOnboardingUiState
-import com.v2ray.ang.composeui.p0.model.resolveWalletActionLabel
 import com.v2ray.ang.composeui.p0.model.walletOnboardingPreviewState
 import com.v2ray.ang.composeui.p0.ui.P01Card
 import com.v2ray.ang.composeui.p0.ui.P01CardHeader
@@ -31,7 +23,6 @@ import com.v2ray.ang.composeui.p0.ui.P01Header
 import com.v2ray.ang.composeui.p0.ui.P01PhoneScaffold
 import com.v2ray.ang.composeui.p0.ui.P01PrimaryButton
 import com.v2ray.ang.composeui.p0.ui.P01Tab
-import com.v2ray.ang.composeui.p0.ui.P01Orb
 import com.v2ray.ang.composeui.p0.viewmodel.WalletOnboardingViewModel
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
 
@@ -40,6 +31,7 @@ fun WalletOnboardingRoute(
     viewModel: WalletOnboardingViewModel,
     onCreateWallet: () -> Unit,
     onImportWallet: () -> Unit,
+    onImportWatchWallet: () -> Unit,
     onContinue: () -> Unit,
     onBottomNav: (String) -> Unit = {},
 ) {
@@ -73,6 +65,7 @@ fun WalletOnboardingRoute(
             viewModel.onEvent(WalletOnboardingEvent.SelectMode(WalletCreationMode.IMPORT))
             onImportWallet()
         },
+        onImportWatchWallet = onImportWatchWallet,
         onContinue = {
             viewModel.onEvent(WalletOnboardingEvent.ContinueClicked)
             onContinue()
@@ -87,6 +80,7 @@ fun WalletOnboardingScreen(
     onSelectMode: (WalletCreationMode) -> Unit,
     onCreateWallet: () -> Unit = {},
     onImportWallet: () -> Unit = {},
+    onImportWatchWallet: () -> Unit = {},
     onContinue: () -> Unit = {},
     onBottomNav: (String) -> Unit = {},
 ) {
@@ -99,17 +93,6 @@ fun WalletOnboardingScreen(
             title = "配置您的多链钱包",
             subtitle = uiState.summary,
         )
-
-        P01Card(centered = true) {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(modifier = Modifier.size(170.dp)) {
-                    P01Orb(modifier = Modifier.fillMaxSize())
-                }
-            }
-        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -127,13 +110,12 @@ fun WalletOnboardingScreen(
             )
         }
 
-        P01Card(
-            modifier = Modifier.clickable { onCreateWallet() },
+        WalletOnboardingActionCard(
+            title = "创建新钱包",
+            subtitle = null,
+            trailing = { P01Chip(text = "推荐") },
+            onClick = onCreateWallet,
         ) {
-            P01CardHeader(
-                title = "创建新钱包",
-                trailing = { P01Chip(text = "推荐") },
-            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 uiState.focusedChains.forEach { label ->
                     P01Chip(text = label)
@@ -141,45 +123,43 @@ fun WalletOnboardingScreen(
             }
         }
 
-        P01Card(
-            modifier = Modifier.clickable { onImportWallet() },
-        ) {
-            P01CardHeader(title = "导入助记词 / 私钥")
-        }
+        WalletOnboardingActionCard(
+            title = "导入助记词 / 私钥",
+            subtitle = null,
+            onClick = onImportWallet,
+        )
 
-        P01Card {
-            P01CardHeader(
-                title = uiState.walletDisplayName ?: "当前状态",
-                trailing = { P01Chip(text = uiState.lifecycleStatus) },
-                subtitle = uiState.accountLabel,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                P01Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onContinue() },
-                ) {
-                    Text(
-                        text = uiState.resolveWalletActionLabel(),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                }
-                P01Card(
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(
-                        text = if (uiState.walletExists) "已建立" else "未建立",
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                }
-            }
-        }
+        WalletOnboardingActionCard(
+            title = "观察钱包",
+            subtitle = "导入只读地址用于查看资产",
+            onClick = onImportWatchWallet,
+        )
 
         P01PrimaryButton(
             text = uiState.primaryActionLabel,
             onClick = onContinue,
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+@Composable
+private fun WalletOnboardingActionCard(
+    title: String,
+    subtitle: String? = null,
+    trailing: @Composable (() -> Unit)? = null,
+    onClick: () -> Unit,
+    content: @Composable (() -> Unit)? = null,
+) {
+    P01Card(
+        modifier = Modifier.clickable { onClick() },
+    ) {
+        P01CardHeader(
+            title = title,
+            trailing = trailing,
+            subtitle = subtitle,
+        )
+        content?.invoke()
     }
 }
 
@@ -192,6 +172,7 @@ private fun WalletOnboardingPreview() {
             onSelectMode = {},
             onCreateWallet = {},
             onImportWallet = {},
+            onImportWatchWallet = {},
             onContinue = {},
         )
     }

@@ -65,6 +65,9 @@ fun NavGraphBuilder.installCryptoVpnP0Routes(
             onImportWallet = {
                 navController.navigateSingleTop(CryptoVpnRouteSpec.importWalletMethod.pattern)
             },
+            onImportWatchWallet = {
+                navController.navigateSingleTop(CryptoVpnRouteSpec.importWatchWalletRoute())
+            },
             onContinue = {
                 navController.navigateSingleTop(vm.uiState.value.resolveContinueRoute())
             },
