@@ -9,8 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,6 +44,24 @@ fun WalletOnboardingRoute(
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    LaunchedEffect(
+        uiState.walletExists,
+        uiState.walletDisplayName,
+        uiState.lifecycleStatus,
+        uiState.walletNextAction,
+        uiState.walletId,
+    ) {
+        val canEnterWalletHome =
+            uiState.walletExists ||
+                (
+                    !uiState.walletDisplayName.isNullOrBlank() &&
+                        uiState.lifecycleStatus.equals("ACTIVE", ignoreCase = true) &&
+                        uiState.walletNextAction.equals("READY", ignoreCase = true)
+                )
+        if (canEnterWalletHome) {
+            onContinue()
+        }
+    }
     WalletOnboardingScreen(
         uiState = uiState,
         onSelectMode = { viewModel.onEvent(WalletOnboardingEvent.SelectMode(it)) },

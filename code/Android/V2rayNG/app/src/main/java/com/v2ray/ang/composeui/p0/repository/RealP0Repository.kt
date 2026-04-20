@@ -58,6 +58,7 @@ class RealP0Repository(context: Context) : P0Repository {
             wallets = paymentRepository.getCachedWallets(),
             fetchRemoteIfMissing = false,
         )
+        val hasWalletGraph = walletOptions.isNotEmpty()
         val successfulOrders = readLocalOrders(currentUserId).filter { it.status == "COMPLETED" }
 
         val baseState = when {
@@ -69,7 +70,7 @@ class RealP0Repository(context: Context) : P0Repository {
                 accountSecondaryLabel = cachedUser.email ?: cachedUser.username,
                 totalBalanceText = "${successfulOrders.size} 笔交易",
                 summaryLabel = if (successfulOrders.isNotEmpty()) "成功交易" else "暂无成功交易",
-                walletExists = lifecycle.hasUsableWallet(),
+                walletExists = lifecycle.hasUsableWallet() || hasWalletGraph,
                 walletLifecycleStatus = lifecycle?.lifecycleStatus ?: "NOT_CREATED",
                 walletId = lifecycle?.walletId,
                 walletDisplayName = lifecycle?.displayName,
@@ -80,7 +81,9 @@ class RealP0Repository(context: Context) : P0Repository {
         }
 
         enrichWalletHomeState(
-            baseState = baseState,
+            baseState = baseState.copy(
+                walletExists = baseState.walletExists || hasWalletGraph,
+            ),
             walletOptions = walletOptions,
             successfulOrders = successfulOrders,
             accountSecondaryLabel = cachedOverview?.accountEmail ?: cachedUser?.email ?: cachedUser?.username ?: "",
@@ -464,8 +467,12 @@ class RealP0Repository(context: Context) : P0Repository {
         val me = paymentRepository.getMe().getOrNull()
         val subscription = paymentRepository.getSubscription().getOrNull() ?: me?.subscription
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
-        val hasUsableWallet = lifecycle?.walletExists == true &&
-            !lifecycle.sourceType.equals("LEGACY", ignoreCase = true)
+        val wallets = paymentRepository.listWallets().getOrElse { paymentRepository.getCachedWallets() }
+        val hasWalletGraph = wallets.isNotEmpty()
+        val hasUsableWallet = hasWalletGraph || (
+            lifecycle?.walletExists == true &&
+                !lifecycle.sourceType.equals("LEGACY", ignoreCase = true)
+            )
         val accountLabel = me?.email ?: cachedUser?.email ?: cachedUser?.username ?: "未登录"
         if (me == null && cachedUser == null) {
             return WalletOnboardingUiState(
@@ -760,10 +767,10 @@ class RealP0Repository(context: Context) : P0Repository {
         selectedWalletId: String?,
         forceRefresh: Boolean,
     ): WalletHomeUiState {
-        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
-        val hasUsableWallet = lifecycle.hasUsableWallet()
         val wallets = paymentRepository.listWallets().getOrElse { paymentRepository.getCachedWallets() }
         val walletOptions = buildWalletHomeWalletOptions(wallets, fetchRemoteIfMissing = true)
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        val hasUsableWallet = lifecycle.hasUsableWallet() || walletOptions.isNotEmpty()
         val resolvedWalletId = selectedWalletId
             ?: walletOptions.firstOrNull { it.isDefault }?.walletId
             ?: walletOptions.firstOrNull()?.walletId
@@ -909,6 +916,10 @@ class RealP0Repository(context: Context) : P0Repository {
     }
 
     private suspend fun resolvePostAuthRoute(): String {
+        val wallets = paymentRepository.listWallets().getOrElse { paymentRepository.getCachedWallets() }
+        if (wallets.isNotEmpty()) {
+            return CryptoVpnRouteSpec.walletHome.pattern
+        }
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         return when {
             lifecycle?.walletExists != true ||

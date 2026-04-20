@@ -2,10 +2,19 @@ package com.v2ray.ang.composeui.p0.model
 
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 
+private fun WalletOnboardingUiState.canEnterWalletHome(): Boolean {
+    return walletExists ||
+        (
+            walletDisplayName?.isNotBlank() == true &&
+                lifecycleStatus.equals("ACTIVE", ignoreCase = true) &&
+                walletNextAction.equals("READY", ignoreCase = true)
+            )
+}
+
 fun WalletOnboardingUiState.resolveWalletActionLabel(): String = when {
     walletExists && walletNextAction.equals("BACKUP_MNEMONIC", ignoreCase = true) -> "备份助记词"
     walletExists && walletNextAction.equals("CONFIRM_MNEMONIC", ignoreCase = true) -> "确认助记词"
-    walletExists -> "进入钱包"
+    canEnterWalletHome() -> "进入钱包"
     else -> "创建或导入"
 }
 
@@ -18,7 +27,7 @@ fun WalletOnboardingUiState.resolveContinueRoute(): String = when {
         walletNextAction.equals("CONFIRM_MNEMONIC", ignoreCase = true) &&
         !walletId.isNullOrBlank() -> CryptoVpnRouteSpec.confirmMnemonicRoute(walletId)
 
-    walletExists -> CryptoVpnRouteSpec.walletHome.pattern
+    canEnterWalletHome() -> CryptoVpnRouteSpec.walletHome.pattern
     selectedMode == WalletCreationMode.CREATE -> CryptoVpnRouteSpec.createWalletRoute("create")
     else -> CryptoVpnRouteSpec.importWalletMethod.pattern
 }
