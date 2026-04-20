@@ -224,7 +224,9 @@ describe('Wallet (e2e)', () => {
       });
   });
 
-  it('supports wallet custom token CRUD by wallet and chain', async () => {
+  it(
+    'supports wallet custom token CRUD by wallet and chain',
+    async () => {
     const walletResponse = await request(app.getHttpServer())
       .post('/api/client/v1/wallets/create-mnemonic')
       .set('authorization', `Bearer ${accessToken}`)
@@ -282,11 +284,18 @@ describe('Wallet (e2e)', () => {
       });
 
     await request(app.getHttpServer())
-      .get('/api/client/v1/wallet/custom-tokens/search?chainId=solana&query=definitely-not-found')
+      .get('/api/client/v1/wallet/custom-tokens/search?chainId=solana&query=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
       .set('authorization', `Bearer ${accessToken}`)
       .expect(200)
       .expect((res) => {
-        expect(Array.isArray(res.body.data.items)).toBe(true);
+        expect(res.body.data.items).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              tokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+              chainId: 'solana',
+            }),
+          ]),
+        );
       });
 
     await request(app.getHttpServer())
@@ -301,7 +310,45 @@ describe('Wallet (e2e)', () => {
       .expect((res) => {
         expect(res.body.data.items).toHaveLength(0);
       });
-  });
+    },
+    20000,
+  );
+
+  it(
+    'search endpoint returns real provider-backed results across chains',
+    async () => {
+      await request(app.getHttpServer())
+        .get('/api/client/v1/wallet/custom-tokens/search?chainId=base&query=0x833589fCD6EDB6E08f4c7C32D4f71b54bdA02913')
+        .set('authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                chainId: 'base',
+                tokenAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+              }),
+            ]),
+          );
+        });
+
+      await request(app.getHttpServer())
+        .get('/api/client/v1/wallet/custom-tokens/search?chainId=tron&query=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
+        .set('authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                chainId: 'tron',
+                tokenAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+              }),
+            ]),
+          );
+        });
+    },
+    20000,
+  );
 
   it('wallet public addresses survive app restart and keep READY receive state', async () => {
     const address = validSolanaAddress;

@@ -40,6 +40,7 @@ import { UpsertWalletPublicAddressRequestDto } from './dto/upsert-wallet-public-
 import { UpsertWalletSecretBackupRequestDto } from './dto/upsert-wallet-secret-backup.request';
 import { WalletBackupCryptoService } from './wallet-backup-crypto.service';
 import { WalletBackupRelayService } from './wallet-backup-relay.service';
+import { CustomTokenSearchService } from './token-search/custom-token-search.service';
 import {
   isKnownPlaceholderWalletPublicAddress,
   isUsableWalletPublicAddress,
@@ -120,6 +121,7 @@ export class WalletService {
     private readonly tronClient: TronClientService,
     private readonly walletBackupCryptoService: WalletBackupCryptoService,
     private readonly walletBackupRelayService: WalletBackupRelayService,
+    private readonly customTokenSearchService: CustomTokenSearchService,
   ) {}
 
   async listWallets(accessToken: string) {
@@ -253,7 +255,10 @@ export class WalletService {
     }
     try {
       return {
-        items: await this.searchCustomTokenCandidates(normalizedChainId, normalizedQuery),
+        items: await this.customTokenSearchService.search(
+          normalizedChainId,
+          normalizedQuery,
+        ),
       };
     } catch (error) {
       this.logger.warn(`Custom token search failed for ${normalizedChainId}:${normalizedQuery}`, error as Error);
@@ -2211,63 +2216,6 @@ export class WalletService {
   private isCustomTokenAddressValid(chainId: string, tokenAddress: string) {
     const networkCode = this.chainIdToNetworkCode(chainId);
     return this.isAddressValid(networkCode, tokenAddress);
-  }
-
-  private async searchCustomTokenCandidates(chainId: string, query: string) {
-    const response = await fetch(
-      `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(query)}`,
-    );
-    if (!response.ok) {
-      return [] as Array<{
-        tokenAddress: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        iconUrl: string | null;
-        chainId: string;
-      }>;
-    }
-    const payload = (await response.json()) as {
-      pairs?: Array<{
-        chainId?: string;
-        baseToken?: { address?: string; name?: string; symbol?: string };
-        info?: { imageUrl?: string };
-      }>;
-    };
-    const normalizedChainId = this.normalizeChainId(chainId);
-    const dedup = new Map<
-      string,
-      {
-        tokenAddress: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        iconUrl: string | null;
-        chainId: string;
-      }
-    >();
-    for (const pair of payload.pairs ?? []) {
-      const pairChainId = this.normalizeChainId(pair.chainId);
-      const address = pair.baseToken?.address?.trim();
-      if (pairChainId !== normalizedChainId || !address) {
-        continue;
-      }
-      if (!this.isCustomTokenAddressValid(normalizedChainId, address)) {
-        continue;
-      }
-      dedup.set(address.toLowerCase(), {
-        tokenAddress: address,
-        name: pair.baseToken?.name?.trim() || pair.baseToken?.symbol?.trim() || address,
-        symbol: pair.baseToken?.symbol?.trim()?.toUpperCase() || 'TOKEN',
-        decimals: 6,
-        iconUrl: pair.info?.imageUrl?.trim() || null,
-        chainId: normalizedChainId,
-      });
-      if (dedup.size >= 10) {
-        break;
-      }
-    }
-    return [...dedup.values()];
   }
 
   private toWalletSummaryView(wallet: PersistedWalletRecord): WalletSummaryView {
