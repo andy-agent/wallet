@@ -218,9 +218,19 @@ private fun TokenRowCard(
                 ) {
                     Text(token.symbol, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(token.name, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        text = "${token.unitPriceText} · ${token.changeText}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = when {
+                            token.changeText == "暂无报价" -> MaterialTheme.colorScheme.outline
+                            token.changePositive -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.error
+                        },
+                    )
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(token.balanceText, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(token.valueText, style = MaterialTheme.typography.bodySmall)
                     Text(token.statusText, style = MaterialTheme.typography.bodySmall)
                 }
             }
