@@ -44,16 +44,26 @@ export class WalletController {
   getOverview(
     @Headers('authorization') authorization?: string,
     @Query('walletId') walletId?: string,
+    @Query('forceRefresh') forceRefresh?: string,
   ) {
-    return this.walletService.getOverview(this.extractBearer(authorization), walletId);
+    return this.walletService.getOverview(
+      this.extractBearer(authorization),
+      walletId,
+      forceRefresh === 'true',
+    );
   }
 
   @Get('balances')
   getBalances(
     @Headers('authorization') authorization?: string,
     @Query('walletId') walletId?: string,
+    @Query('forceRefresh') forceRefresh?: string,
   ) {
-    return this.walletService.getBalances(this.extractBearer(authorization), walletId);
+    return this.walletService.getBalances(
+      this.extractBearer(authorization),
+      walletId,
+      forceRefresh === 'true',
+    );
   }
 
   @Get('lifecycle')

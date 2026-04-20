@@ -11,6 +11,7 @@ import type {
   ProviderMarketCoin,
   ProviderOhlcPoint,
   ProviderSearchCoin,
+  ProviderTokenQuote,
   ProviderTrendingCoin,
 } from './market.types';
 
@@ -99,6 +100,15 @@ type CoinGeckoDetailResponse = {
 };
 
 type CoinGeckoOhlcResponse = Array<[number, number, number, number, number]>;
+
+type CoinGeckoSimpleTokenPriceResponse = {
+  data?: {
+    attributes?: {
+      token_prices?: Record<string, string>;
+      h24_price_change_percentage?: Record<string, string>;
+    };
+  };
+};
 
 @Injectable()
 export class CoinGeckoMarketDataProvider implements MarketDataProvider {
@@ -198,7 +208,53 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
     );
   }
 
-  async getCoinDetail(coinId: string): Promise<ProviderCoinDetail> {
+  async getCoinDetail(
+    coinId: string,
+    forceRefresh = false,
+  ): Promise<ProviderCoinDetail> {
+    return this.getCoinDetailInternal(coinId, forceRefresh);
+  }
+
+  async getOnchainTokenQuote(
+    chainId: string,
+    address: string,
+    forceRefresh = false,
+  ): Promise<ProviderTokenQuote | null> {
+    const normalizedChainId = this.normalizeOnchainChainId(chainId);
+    const normalizedAddress = address.trim().toLowerCase();
+    if (!normalizedChainId || !normalizedAddress) {
+      return null;
+    }
+    return this.getCached(
+      `token-quote:${normalizedChainId}:${normalizedAddress}`,
+      async () => {
+        const response = await this.get<CoinGeckoSimpleTokenPriceResponse>(
+          `/onchain/simple/networks/${normalizedChainId}/token_price/${normalizedAddress}`,
+          {
+            include_24hr_price_change: true,
+          },
+        );
+        const tokenPrice = response.data?.attributes?.token_prices?.[normalizedAddress];
+        const priceChange =
+          response.data?.attributes?.h24_price_change_percentage?.[normalizedAddress];
+        if (tokenPrice === undefined && priceChange === undefined) {
+          return null;
+        }
+        return {
+          currentPrice: this.parseLooseNumber(tokenPrice),
+          priceChangePct24h: this.parseLooseNumber(priceChange),
+          lastUpdatedAt: Date.now(),
+        };
+      },
+      this.config.getCacheTtlMs(),
+      forceRefresh,
+    );
+  }
+
+  async getCoinDetailInternal(
+    coinId: string,
+    forceRefresh = false,
+  ): Promise<ProviderCoinDetail> {
     const normalizedCoinId = coinId.trim();
     if (!normalizedCoinId) {
       throw new NotFoundException({
@@ -256,6 +312,7 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
         };
       },
       this.config.getCacheTtlMs(),
+      forceRefresh,
     );
   }
 
@@ -288,10 +345,11 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
     key: string,
     loader: () => Promise<T>,
     ttlMs: number,
+    forceRefresh = false,
   ): Promise<T> {
     const now = Date.now();
     const cached = this.cache.get(key) as CacheEntry<T> | undefined;
-    if (cached && cached.expiresAt > now) {
+    if (!forceRefresh && cached && cached.expiresAt > now) {
       return cached.value;
     }
 
@@ -315,7 +373,18 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
         requestUrl.searchParams.set(key, String(value));
       });
 
+      const headers: Record<string, string> = {};
+      const apiKey = this.config.getProviderApiKey();
+      if (apiKey) {
+        if (this.config.useDemoApiKey()) {
+          headers['x-cg-demo-api-key'] = apiKey;
+        } else {
+          headers['x-cg-pro-api-key'] = apiKey;
+        }
+      }
+
       const response = await fetch(requestUrl, {
+        headers,
         signal: AbortSignal.timeout(this.config.getProviderTimeoutMs()),
       });
       if (response.status === 404) {
@@ -341,6 +410,32 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
         code: 'MARKET_PROVIDER_UNAVAILABLE',
         message: 'Market data provider is unavailable',
       });
+    }
+  }
+
+  private normalizeOnchainChainId(chainId: string): string | null {
+    switch (chainId.trim().toLowerCase()) {
+      case 'solana':
+        return 'solana';
+      case 'tron':
+        return 'tron';
+      case 'ethereum':
+        return 'eth';
+      case 'bsc':
+        return 'bsc';
+      case 'polygon':
+        return 'polygon_pos';
+      case 'arbitrum':
+        return 'arbitrum';
+      case 'base':
+        return 'base';
+      case 'optimism':
+        return 'optimism';
+      case 'avalanche':
+      case 'avalanche_c':
+        return 'avax';
+      default:
+        return null;
     }
   }
 

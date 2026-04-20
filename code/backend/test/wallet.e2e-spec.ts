@@ -548,10 +548,21 @@ describe('Wallet (e2e)', () => {
         );
         expect(res.body.data.assetItems).toEqual(
           expect.arrayContaining([
-            expect.objectContaining({ networkCode: 'SOLANA', assetCode: 'SOL' }),
-            expect.objectContaining({ networkCode: 'TRON', assetCode: 'USDT' }),
+            expect.objectContaining({
+              networkCode: 'SOLANA',
+              assetCode: 'SOL',
+              priceStatus: expect.any(String),
+              unitPriceUsd: expect.anything(),
+            }),
+            expect.objectContaining({
+              networkCode: 'TRON',
+              assetCode: 'USDT',
+              priceStatus: 'FIXED',
+              unitPriceUsd: '1.000000',
+            }),
           ]),
         );
+        expect(res.body.data.totalPortfolioValueUsd).toEqual(expect.any(String));
       });
 
     await request(app.getHttpServer())
@@ -1036,6 +1047,7 @@ describe('Wallet (e2e)', () => {
         expect(res.body.data.receiveState).toBe('READY');
         expect(res.body.data.configuredAddressCount).toBe(2);
         expect(res.body.data.alerts).not.toContain('当前账号尚未配置任何服务端收款地址');
+        expect(res.body.data.totalPortfolioValueUsd).toEqual(expect.any(String));
         expect(res.body.data.chainItems).toEqual(
           expect.arrayContaining([
             expect.objectContaining({

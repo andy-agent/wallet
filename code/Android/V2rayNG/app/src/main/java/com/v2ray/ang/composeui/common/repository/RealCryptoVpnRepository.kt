@@ -2151,7 +2151,15 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                         symbol = asset.symbol,
                         name = asset.displayName,
                         balanceText = formatManagedTokenBalance(asset),
-                        statusText = if (asset.isCustom) "自定义代币" else walletHomeChainLabel(asset.networkCode),
+                        unitPriceText = formatUsdDisplay(asset.unitPriceUsd, asset.priceStatus),
+                        valueText = formatUsdDisplay(asset.valueUsd, asset.priceStatus),
+                        changeText = formatPriceChangeText(asset.priceChangePct24h, asset.priceStatus),
+                        changePositive = (asset.priceChangePct24h?.toDoubleOrNull() ?: 0.0) >= 0,
+                        statusText = when {
+                            asset.isCustom -> "自定义代币"
+                            asset.priceStatus.equals("UNAVAILABLE", ignoreCase = true) -> "暂无报价"
+                            else -> walletHomeChainLabel(asset.networkCode)
+                        },
                         chainLabel = walletHomeChainLabel(asset.networkCode),
                         iconChainId = normalizeWalletChainId(asset.networkCode),
                         iconLocalPath = paymentRepository.getTokenIconLocalPath(
@@ -2164,7 +2172,18 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                         isCustom = asset.isCustom,
                     )
                 }
-                .sortedBy { it.symbol }
+                .sortedWith(
+                    compareBy<ManagedTokenUi>(
+                        {
+                            when {
+                                parseUsdValue(it.valueText) > 0.0 || parseBalanceValue(it.balanceText) > 0.0 -> 0
+                                it.isCustom -> 1
+                                else -> 2
+                            }
+                        },
+                        { it.symbol },
+                    ),
+                )
             } else {
                 cachedCustomTokens.map { token ->
                     ManagedTokenUi(
@@ -2172,6 +2191,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                         symbol = token.symbol,
                         name = token.name,
                         balanceText = "0.00 ${token.symbol}",
+                        unitPriceText = "$0.00",
+                        valueText = "$0.00",
+                        changeText = "暂无报价",
+                        changePositive = true,
                         statusText = "自定义代币",
                         chainLabel = walletHomeChainLabel(token.chainId),
                         iconChainId = token.chainId,
@@ -2339,6 +2362,32 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             ?.takeIf { it.isNotEmpty() && !it.equals("null", ignoreCase = true) }
             ?: "0.00"
         return "$amount ${asset.symbol}"
+    }
+
+    private fun formatUsdDisplay(value: String?, priceStatus: String?): String {
+        val parsed = value?.trim()?.toDoubleOrNull()
+        return when {
+            parsed != null -> "$" + "%.2f".format(parsed)
+            priceStatus.equals("UNAVAILABLE", ignoreCase = true) -> "$0.00"
+            else -> "$0.00"
+        }
+    }
+
+    private fun formatPriceChangeText(value: String?, priceStatus: String?): String {
+        val parsed = value?.trim()?.toDoubleOrNull()
+        return when {
+            parsed != null -> "%+.2f%%".format(parsed)
+            priceStatus.equals("UNAVAILABLE", ignoreCase = true) -> "暂无报价"
+            else -> "--"
+        }
+    }
+
+    private fun parseUsdValue(value: String): Double {
+        return value.replace("$", "").replace(",", "").trim().toDoubleOrNull() ?: 0.0
+    }
+
+    private fun parseBalanceValue(value: String): Double {
+        return value.substringBefore(" ").trim().toDoubleOrNull() ?: 0.0
     }
 
     private fun buildWalletManagerState(

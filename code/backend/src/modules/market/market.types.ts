@@ -226,6 +226,12 @@ export interface ProviderCoinDetail {
   lastUpdatedAt: TimestampMs;
 }
 
+export interface ProviderTokenQuote {
+  currentPrice: number | null;
+  priceChangePct24h: number | null;
+  lastUpdatedAt: TimestampMs;
+}
+
 export interface ProviderOhlcPoint {
   timestamp: TimestampMs;
   open: number;
@@ -239,8 +245,13 @@ export interface MarketDataProvider {
   getMarketsByIds(ids: string[]): Promise<ProviderMarketCoin[]>;
   searchCoins(query: string, limit: number): Promise<ProviderSearchCoin[]>;
   getTrendingCoins(limit: number): Promise<ProviderTrendingCoin[]>;
-  getCoinDetail(coinId: string): Promise<ProviderCoinDetail>;
+  getCoinDetail(coinId: string, forceRefresh?: boolean): Promise<ProviderCoinDetail>;
   getCoinOhlc(coinId: string, days: number): Promise<ProviderOhlcPoint[]>;
+  getOnchainTokenQuote(
+    chainId: string,
+    address: string,
+    forceRefresh?: boolean,
+  ): Promise<ProviderTokenQuote | null>;
 }
 
 export const MARKET_CATEGORIES: MarketCategorySummary[] = [

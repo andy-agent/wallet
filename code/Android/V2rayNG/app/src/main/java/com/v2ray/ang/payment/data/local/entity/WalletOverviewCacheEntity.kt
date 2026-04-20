@@ -24,6 +24,8 @@ data class WalletOverviewCacheEntity(
     val selectedNetworkCode: String,
     val chainItemsJson: String,
     val assetItemsJson: String,
+    val totalPortfolioValueUsd: String?,
+    val priceUpdatedAt: String?,
     val alertsJson: String,
     val updatedAt: Long,
 )

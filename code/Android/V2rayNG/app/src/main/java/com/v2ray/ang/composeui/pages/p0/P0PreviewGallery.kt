@@ -70,6 +70,7 @@ private fun WalletHomeRoutePreview() {
             currentRoute = "wallet_home",
             uiState = walletHomePreviewState(),
             onBottomNav = {},
+            onRefresh = {},
             onWalletContextSelected = { _, _ -> },
             onCopyAddress = {},
             onCreateWallet = {},

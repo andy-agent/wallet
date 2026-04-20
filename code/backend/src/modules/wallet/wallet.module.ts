@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { OrdersModule } from '../orders/orders.module';
+import { MarketModule } from '../market/market.module';
 import { SolanaClientModule } from '../solana-client/solana-client.module';
 import { TronClientModule } from '../tron-client/tron-client.module';
 import { WalletController } from './wallet.controller';
@@ -15,7 +16,7 @@ import { CoinGeckoTokenProvider } from './token-search/providers/coingecko-token
 import { TronScanTokenProvider } from './token-search/providers/tronscan-token.provider';
 
 @Module({
-  imports: [AuthModule, OrdersModule, SolanaClientModule, TronClientModule],
+  imports: [AuthModule, OrdersModule, MarketModule, SolanaClientModule, TronClientModule],
   controllers: [WalletController, WalletsController],
   providers: [
     WalletService,

@@ -5,6 +5,9 @@ import com.v2ray.ang.payment.data.api.WalletChainItemData
 import com.v2ray.ang.payment.data.api.WalletLifecycleData
 import com.v2ray.ang.payment.data.api.WalletOverviewData
 import java.math.BigDecimal
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val terminalWalletOrderStatuses = setOf("FAILED", "EXPIRED", "CANCELED")
@@ -19,6 +22,18 @@ internal fun WalletOverviewData.toWalletHomeUiState(
 ): WalletHomeUiState {
     val assets = assetItems
         .filter { it.walletVisible && (it.hasPositiveBalance() || it.isCustom) }
+        .sortedWith(
+            compareBy<WalletAssetItemData>(
+                {
+                    when {
+                        it.hasPositiveBalance() || (it.valueUsd?.toDoubleOrNull() ?: 0.0) > 0.0 -> 0
+                        it.isCustom -> 1
+                        else -> 2
+                    }
+                },
+                { it.symbol.uppercase(Locale.ROOT) },
+            ),
+        )
         .map { it.toWalletAssetHolding() }
 
     return WalletHomeUiState(
@@ -26,6 +41,8 @@ internal fun WalletOverviewData.toWalletHomeUiState(
         loadState = if (assets.isEmpty()) P0LoadState.EMPTY else P0LoadState.READY,
         accountLabel = accountEmail,
         totalBalanceText = "${assetItems.sumOf { it.orderCount ?: 0 }} 笔交易",
+        totalPortfolioValueText = formatWalletUsdValue(totalPortfolioValueUsd),
+        priceUpdatedLabel = formatWalletPriceUpdatedLabel(priceUpdatedAt),
         summaryLabel = alerts.firstOrNull() ?: "交易记录",
         selectedChainId = selectedNetworkCode.lowercase(Locale.ROOT),
         chains = chainItems.map { it.toWalletChainSummary() },
@@ -80,9 +97,12 @@ private fun WalletAssetItemData.toWalletAssetHolding(): AssetHolding {
         symbol = assetCode,
         chainLabel = walletHomeChainLabel(networkCode),
         balanceText = formatWalletAvailableBalance(availableBalanceUiAmount, assetCode),
-        valueText = balanceStatusLabel(availableBalanceStatus),
-        changeText = walletHomeChainLabel(networkCode),
-        changePositive = true,
+        valueText = formatWalletUsdValue(valueUsd),
+        unitPriceText = formatWalletUsdValue(unitPriceUsd),
+        changeText = formatWalletPriceChangeText(priceChangePct24h, priceStatus),
+        changePositive = isWalletPriceChangePositive(priceChangePct24h),
+        priceStatusText = balanceStatusLabel(priceStatus, availableBalanceStatus),
+        priceUpdatedAt = priceUpdatedAt,
         detailText = displayName,
         customTokenId = customTokenId,
         isCustom = isCustom,
@@ -131,9 +151,43 @@ private fun extractWalletUsdAmount(raw: String?): Double? {
     return match.groupValues.getOrNull(1)?.toDoubleOrNull()
 }
 
-private fun balanceStatusLabel(status: String?): String = when (status?.uppercase(Locale.US)) {
-    "READY" -> "链上可用余额"
-    "UNAVAILABLE" -> "余额待同步"
-    "NO_ADDRESS" -> "未配置地址"
+private fun formatWalletUsdValue(raw: String?): String {
+    val value = raw?.trim()?.toDoubleOrNull() ?: return "$0.00"
+    return "$" + "%.2f".format(Locale.US, value)
+}
+
+private fun formatWalletPriceChangeText(
+    raw: String?,
+    priceStatus: String?,
+): String = when {
+    !raw.isNullOrBlank() -> {
+        val value = raw.toDoubleOrNull()
+        if (value == null) "暂无报价" else "%+.2f%%".format(Locale.US, value)
+    }
+    priceStatus.equals("UNAVAILABLE", ignoreCase = true) -> "暂无报价"
+    else -> "--"
+}
+
+private fun isWalletPriceChangePositive(raw: String?): Boolean {
+    return (raw?.toDoubleOrNull() ?: 0.0) >= 0
+}
+
+private fun formatWalletPriceUpdatedLabel(raw: String?): String {
+    val instant = raw?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: return "价格待同步"
+    val formatter = DateTimeFormatter.ofPattern("MM-dd HH:mm", Locale.US)
+        .withZone(ZoneId.systemDefault())
+    return "价格更新于 ${formatter.format(instant)}"
+}
+
+private fun balanceStatusLabel(
+    priceStatus: String?,
+    balanceStatus: String?,
+): String = when {
+    priceStatus.equals("READY", ignoreCase = true) -> "已报价"
+    priceStatus.equals("FIXED", ignoreCase = true) -> "固定报价"
+    priceStatus.equals("UNAVAILABLE", ignoreCase = true) -> "暂无报价"
+    balanceStatus?.uppercase(Locale.US) == "READY" -> "链上可用余额"
+    balanceStatus?.uppercase(Locale.US) == "UNAVAILABLE" -> "余额待同步"
+    balanceStatus?.uppercase(Locale.US) == "NO_ADDRESS" -> "未配置地址"
     else -> "资产详情"
 }

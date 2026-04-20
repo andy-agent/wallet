@@ -159,6 +159,7 @@ describe('MarketController (e2e)', () => {
     getTrendingCoins: jest.fn().mockResolvedValue(trendingCoins),
     getCoinDetail: jest.fn().mockResolvedValue(detail),
     getCoinOhlc: jest.fn().mockResolvedValue(ohlc),
+    getOnchainTokenQuote: jest.fn().mockResolvedValue(null),
   };
 
   beforeEach(async () => {

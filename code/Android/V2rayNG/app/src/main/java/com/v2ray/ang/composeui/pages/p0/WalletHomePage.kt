@@ -115,6 +115,7 @@ fun WalletHomeRoute(
         currentRoute = currentRoute,
         uiState = uiState,
         onBottomNav = onBottomNav,
+        onRefresh = { viewModel.onEvent(WalletHomeEvent.Refresh) },
         onWalletContextSelected = { walletId, chainId ->
             viewModel.onEvent(WalletHomeEvent.WalletContextSelected(walletId, chainId))
         },
@@ -147,6 +148,7 @@ fun WalletHomeScreen(
     currentRoute: String,
     uiState: WalletHomeUiState,
     onBottomNav: (String) -> Unit,
+    onRefresh: () -> Unit,
     onWalletContextSelected: (String, String) -> Unit,
     onCopyAddress: () -> Unit,
     onCreateWallet: () -> Unit,
@@ -173,8 +175,8 @@ fun WalletHomeScreen(
         ?: "tron"
     val selectedAssets = uiState.assets.filter { inferChain(it.chainLabel) == selectedChainId }
     val tokenRows = remember(selectedAssets) { buildWalletTokenRows(selectedAssets) }
-    val totalValue = remember(uiState.assets) { buildPortfolioValue(uiState.assets) }
-    val dailyPnl = remember(uiState.assets) { buildDailyPnl(uiState.assets) }
+    val totalValue = uiState.totalPortfolioValueText
+    val dailyPnl = remember(selectedAssets) { buildDailyPnl(selectedAssets) }
     val securityCenterRoute = CryptoVpnRouteSpec.securityCenter.pattern
     val historyRoute = CryptoVpnRouteSpec.orderList.pattern
     val tokenManagerRoute = if (uiState.walletExists) {
@@ -253,6 +255,7 @@ fun WalletHomeScreen(
                 WalletBalanceBlock(
                     totalValue = totalValue,
                     dailyPnl = dailyPnl,
+                    updatedLabel = uiState.priceUpdatedLabel,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -310,6 +313,7 @@ fun WalletHomeScreen(
                 WalletSectionHeader(
                     title = "代币",
                     onManage = { onBottomNav(tokenManagerRoute) },
+                    onRefresh = onRefresh,
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -680,6 +684,7 @@ private fun ChainBadgeIcon(
 private fun WalletBalanceBlock(
     totalValue: String,
     dailyPnl: WalletDailyPnlUi,
+    updatedLabel: String,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
@@ -694,11 +699,15 @@ private fun WalletBalanceBlock(
         ) {
             Text(
                 text = dailyPnl.percentText,
-                color = if (dailyPnl.positive) WalletGain else WalletLoss,
+                color = when {
+                    dailyPnl.percentText == "暂无报价" -> WalletTextSoft
+                    dailyPnl.positive -> WalletGain
+                    else -> WalletLoss
+                },
                 style = MaterialTheme.typography.titleSmall,
             )
             Text(
-                text = "当日盈亏",
+                text = updatedLabel.ifBlank { "价格待同步" },
                 color = WalletTextBody,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -783,6 +792,7 @@ private fun WalletFeatureCard(
 private fun WalletSectionHeader(
     title: String,
     onManage: () -> Unit,
+    onRefresh: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -795,26 +805,43 @@ private fun WalletSectionHeader(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
         )
-        Row(
-            modifier = Modifier
-                .background(WalletSoftBackground, RoundedCornerShape(999.dp))
-                .border(1.dp, WalletCardBorder, RoundedCornerShape(999.dp))
-                .clickable(onClick = onManage)
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Tune,
-                contentDescription = "代币管理",
-                tint = WalletTextStrong,
-                modifier = Modifier.size(14.dp),
-            )
-            Text(
-                text = "管理",
-                color = WalletTextStrong,
-                style = MaterialTheme.typography.labelMedium,
-            )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier
+                    .background(WalletSoftBackground, RoundedCornerShape(999.dp))
+                    .border(1.dp, WalletCardBorder, RoundedCornerShape(999.dp))
+                    .clickable(onClick = onRefresh)
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "刷新",
+                    color = WalletTextStrong,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .background(WalletSoftBackground, RoundedCornerShape(999.dp))
+                    .border(1.dp, WalletCardBorder, RoundedCornerShape(999.dp))
+                    .clickable(onClick = onManage)
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Tune,
+                    contentDescription = "代币管理",
+                    tint = WalletTextStrong,
+                    modifier = Modifier.size(14.dp),
+                )
+                Text(
+                    text = "管理",
+                    color = WalletTextStrong,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
         }
     }
 }
@@ -851,6 +878,13 @@ private fun WalletTokenRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            Text(
+                text = "${token.unitPriceText} · ${token.changeText}",
+                color = if (token.changeText == "暂无报价") WalletTextSoft else if (token.changePositive) WalletGain else WalletLoss,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
         Column(
             horizontalAlignment = Alignment.End,
@@ -877,6 +911,10 @@ private data class WalletTokenRowUi(
     val tokenName: String,
     val balanceText: String,
     val valueText: String,
+    val unitPriceText: String,
+    val changeText: String,
+    val changePositive: Boolean,
+    val priceStatusText: String,
     val iconChainId: String,
     val iconLocalPath: String? = null,
 )
@@ -893,7 +931,11 @@ private fun buildWalletTokenRows(assets: List<AssetHolding>): List<WalletTokenRo
             chainLabel = asset.chainLabel,
             tokenName = asset.detailText.ifBlank { asset.symbol },
             balanceText = asset.balanceText,
-            valueText = asset.chainLabel,
+            valueText = asset.valueText,
+            unitPriceText = asset.unitPriceText,
+            changeText = asset.changeText,
+            changePositive = asset.changePositive,
+            priceStatusText = asset.priceStatusText,
             iconChainId = inferChain(asset.chainLabel),
             iconLocalPath = asset.iconLocalPath,
         )
@@ -919,14 +961,25 @@ private fun TokenRowIcon(token: WalletTokenRowUi) {
     )
 }
 
-private fun buildPortfolioValue(assets: List<AssetHolding>): String {
-    return buildWalletPortfolioValue(assets)
+private fun buildDailyPnl(assets: List<AssetHolding>): WalletDailyPnlUi {
+    val priced = assets.mapNotNull { asset ->
+        val pct = asset.changeText.removeSuffix("%").replace("+", "").toDoubleOrNull()
+        val value = asset.valueText.replace("$", "").replace(",", "").toDoubleOrNull()
+        if (pct == null || value == null) null else pct to value
+    }
+    if (priced.isEmpty()) {
+        return WalletDailyPnlUi(percentText = "暂无报价", positive = true)
+    }
+    val total = priced.sumOf { it.second }
+    if (total <= 0.0) {
+        return WalletDailyPnlUi(percentText = "暂无报价", positive = true)
+    }
+    val weighted = priced.sumOf { (pct, value) -> pct * value } / total
+    return WalletDailyPnlUi(
+        percentText = "%+.2f%%".format(weighted),
+        positive = weighted >= 0,
+    )
 }
-
-private fun buildDailyPnl(assets: List<AssetHolding>): WalletDailyPnlUi = WalletDailyPnlUi(
-    percentText = "(+0.00%)",
-    positive = true,
-)
 
 private fun inferChain(chainLabel: String): String = when {
     chainLabel.contains("sol", ignoreCase = true) -> "solana"
@@ -978,6 +1031,7 @@ private fun WalletHomePreview() {
             currentRoute = CryptoVpnRouteSpec.walletHome.name,
             uiState = walletHomePreviewState(),
             onBottomNav = {},
+            onRefresh = {},
             onWalletContextSelected = { _, _ -> },
             onCopyAddress = {},
             onCreateWallet = {},

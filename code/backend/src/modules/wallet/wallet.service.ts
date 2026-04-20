@@ -21,6 +21,7 @@ import {
 import { TronWeb } from 'tronweb';
 import { AuthService } from '../auth/auth.service';
 import { RuntimeStateRepository } from '../database/runtime-state.repository';
+import { MarketService } from '../market/market.service';
 import { OrdersService } from '../orders/orders.service';
 import {
   buildPaymentAssetCatalog,
@@ -101,6 +102,17 @@ interface WalletAssetBalanceView {
   balanceStatus: WalletAssetBalanceStatus;
 }
 
+type WalletAssetPriceStatus = 'READY' | 'FIXED' | 'UNAVAILABLE';
+
+interface WalletAssetPriceView {
+  assetId: string;
+  unitPriceUsd: string | null;
+  valueUsd: string | null;
+  priceChangePct24h: string | null;
+  priceStatus: WalletAssetPriceStatus;
+  priceUpdatedAt: string | null;
+}
+
 export interface WalletAggregateView {
   wallet: WalletSummaryView;
   keySlots: PersistedWalletKeySlotRecord[];
@@ -116,6 +128,7 @@ export class WalletService {
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
     private readonly ordersService: OrdersService,
+    private readonly marketService: MarketService,
     private readonly runtimeStateRepository: RuntimeStateRepository,
     private readonly solanaClient: SolanaClientService,
     private readonly tronClient: TronClientService,
@@ -604,7 +617,7 @@ export class WalletService {
     };
   }
 
-  async getOverview(accessToken: string, walletId?: string) {
+  async getOverview(accessToken: string, walletId?: string, forceRefresh = false) {
     const account = this.authService.getMe(accessToken);
     const lifecycle = await this.getWalletLifecycle(accessToken);
     const chains = this.getChains(accessToken).items;
@@ -679,6 +692,11 @@ export class WalletService {
       assets,
       publicAddresses,
     );
+    const assetPriceViews = await this.resolveAssetPriceViews(
+      assets,
+      assetBalanceViews,
+      forceRefresh,
+    );
 
     const chainItems = chains.map((chain) => {
       const assetsOnChain = assets.filter((item) => item.networkCode === chain.networkCode);
@@ -703,6 +721,7 @@ export class WalletService {
       const assetKey = `${asset.networkCode}:${asset.assetCode}`;
       const assetStats = orderStatsByAsset.get(assetKey);
       const balanceView = assetBalanceViews.get(asset.assetId);
+      const priceView = assetPriceViews.get(asset.assetId);
       return {
         assetId: asset.assetId,
         networkCode: asset.networkCode,
@@ -722,6 +741,11 @@ export class WalletService {
         availableBalanceMinor: balanceView?.balanceMinor ?? null,
         availableBalanceUiAmount: balanceView?.balanceUiAmount ?? null,
         availableBalanceStatus: balanceView?.balanceStatus ?? 'NO_ADDRESS',
+        unitPriceUsd: priceView?.unitPriceUsd ?? null,
+        valueUsd: priceView?.valueUsd ?? null,
+        priceChangePct24h: priceView?.priceChangePct24h ?? null,
+        priceStatus: priceView?.priceStatus ?? 'UNAVAILABLE',
+        priceUpdatedAt: priceView?.priceUpdatedAt ?? null,
         balanceAddress: balanceView?.address ?? null,
         lastOrderAt: assetStats?.lastOrderAt ?? null,
         lastOrderStatus: assetStats?.lastOrderStatus ?? null,
@@ -743,6 +767,16 @@ export class WalletService {
         })
         .at(0)?.networkCode ?? chains[0]?.networkCode ?? 'TRON';
 
+    const totalPortfolioValueUsd = [...assetPriceViews.values()]
+      .map((item) => item.valueUsd)
+      .filter((item): item is string => Boolean(item))
+      .reduce((acc, item) => acc + Number(item), 0);
+    const portfolioPriceUpdatedAt = [...assetPriceViews.values()]
+      .map((item) => item.priceUpdatedAt)
+      .filter((item): item is string => Boolean(item))
+      .sort()
+      .at(-1) ?? null;
+
     return {
       accountId: account.accountId,
       accountEmail: account.email,
@@ -753,6 +787,8 @@ export class WalletService {
       nextAction: lifecycle.nextAction,
       selectedNetworkCode: receiveSelection.selectedNetworkCode || selectedNetworkCode,
       selectedAssetCode: receiveSelection.selectedAssetCode,
+      totalPortfolioValueUsd: totalPortfolioValueUsd.toFixed(2),
+      priceUpdatedAt: portfolioPriceUpdatedAt,
       receiveState: lifecycle.receiveState,
       configuredAddressCount: lifecycle.configuredAddressCount,
       defaultAddress: receiveSelection.defaultAddress,
@@ -767,7 +803,7 @@ export class WalletService {
     };
   }
 
-  async getBalances(accessToken: string, walletId?: string) {
+  async getBalances(accessToken: string, walletId?: string, forceRefresh = false) {
     const account = this.authService.getMe(accessToken);
     const baseAssets = this.getAssetCatalog(accessToken).items.filter(
       (item) => item.walletVisible,
@@ -789,12 +825,18 @@ export class WalletService {
       assets,
       publicAddresses,
     );
+    const assetPriceViews = await this.resolveAssetPriceViews(
+      assets,
+      assetBalanceViews,
+      forceRefresh,
+    );
 
     return {
       accountId: account.accountId,
       accountEmail: account.email,
       items: assets.map((asset) => {
         const balanceView = assetBalanceViews.get(asset.assetId);
+        const priceView = assetPriceViews.get(asset.assetId);
         return {
           assetId: asset.assetId,
           networkCode: asset.networkCode,
@@ -806,6 +848,11 @@ export class WalletService {
           availableBalanceMinor: balanceView?.balanceMinor ?? null,
           availableBalanceUiAmount: balanceView?.balanceUiAmount ?? null,
           availableBalanceStatus: balanceView?.balanceStatus ?? 'NO_ADDRESS',
+          unitPriceUsd: priceView?.unitPriceUsd ?? null,
+          valueUsd: priceView?.valueUsd ?? null,
+          priceChangePct24h: priceView?.priceChangePct24h ?? null,
+          priceStatus: priceView?.priceStatus ?? 'UNAVAILABLE',
+          priceUpdatedAt: priceView?.priceUpdatedAt ?? null,
         };
       }),
     };
@@ -1350,6 +1397,102 @@ export class WalletService {
     return new Map<string, WalletAssetBalanceView>(entries);
   }
 
+  private async resolveAssetPriceViews(
+    assets: Array<{
+      assetId: string;
+      networkCode: WalletNetworkCode;
+      assetCode: string;
+      symbol: string;
+      decimals: number;
+      isNative: boolean;
+      contractAddress: string | null;
+      usdPriceMode?: 'fixed' | 'market';
+      usdPriceValue?: string | null;
+      marketInstrumentId?: string | null;
+    }>,
+    balanceViews: Map<string, WalletAssetBalanceView>,
+    forceRefresh: boolean,
+  ) {
+    const marketInstrumentCache = new Map<string, Awaited<ReturnType<MarketService['getInstrumentDetail']>>>();
+    const onchainPriceCache = new Map<string, Awaited<ReturnType<MarketService['getOnchainTokenQuote']>>>();
+
+    const entries = await Promise.all(
+      assets.map(async (asset) => {
+        const balanceView = balanceViews.get(asset.assetId);
+        const balanceAmount = balanceView?.balanceUiAmount ? Number(balanceView.balanceUiAmount) : 0;
+        if (asset.usdPriceMode === 'fixed' && asset.usdPriceValue) {
+          const unitPrice = Number(asset.usdPriceValue);
+          return [
+            asset.assetId,
+            {
+              assetId: asset.assetId,
+              unitPriceUsd: unitPrice.toFixed(6),
+              valueUsd: (balanceAmount * unitPrice).toFixed(2),
+              priceChangePct24h: null,
+              priceStatus: 'FIXED' as WalletAssetPriceStatus,
+              priceUpdatedAt: new Date().toISOString(),
+            },
+          ] as const;
+        }
+
+        if (asset.marketInstrumentId) {
+          const cached = marketInstrumentCache.get(asset.marketInstrumentId)
+            ?? await this.marketService.getInstrumentDetail(asset.marketInstrumentId, forceRefresh);
+          marketInstrumentCache.set(asset.marketInstrumentId, cached);
+          const unitPrice = cached.ticker24h.lastPrice ? Number(cached.ticker24h.lastPrice) : null;
+          return [
+            asset.assetId,
+            {
+              assetId: asset.assetId,
+              unitPriceUsd: unitPrice?.toFixed(6) ?? null,
+              valueUsd: unitPrice != null ? (balanceAmount * unitPrice).toFixed(2) : null,
+              priceChangePct24h: cached.ticker24h.pctChange24h ?? null,
+              priceStatus: unitPrice != null ? 'READY' as WalletAssetPriceStatus : 'UNAVAILABLE' as WalletAssetPriceStatus,
+              priceUpdatedAt: new Date(cached.serverTime).toISOString(),
+            },
+          ] as const;
+        }
+
+        if (asset.contractAddress) {
+          const priceKey = `${asset.networkCode}:${asset.contractAddress.toLowerCase()}`;
+          const cached = onchainPriceCache.get(priceKey)
+            ?? await this.marketService.getOnchainTokenQuote(
+              this.networkCodeToChainId(asset.networkCode),
+              asset.contractAddress,
+              forceRefresh,
+            );
+          onchainPriceCache.set(priceKey, cached);
+          const unitPrice = cached?.currentPrice ? Number(cached.currentPrice) : null;
+          return [
+            asset.assetId,
+            {
+              assetId: asset.assetId,
+              unitPriceUsd: unitPrice?.toFixed(6) ?? null,
+              valueUsd: unitPrice != null ? (balanceAmount * unitPrice).toFixed(2) : null,
+              priceChangePct24h: cached?.priceChangePct24h ?? null,
+              priceStatus: unitPrice != null ? 'READY' as WalletAssetPriceStatus : 'UNAVAILABLE' as WalletAssetPriceStatus,
+              priceUpdatedAt: cached?.updatedAt ? new Date(cached.updatedAt).toISOString() : null,
+            },
+          ] as const;
+        }
+
+        return [
+          asset.assetId,
+          {
+            assetId: asset.assetId,
+            unitPriceUsd: null,
+            valueUsd: null,
+            priceChangePct24h: null,
+            priceStatus: 'UNAVAILABLE' as WalletAssetPriceStatus,
+            priceUpdatedAt: null,
+          },
+        ] as const;
+      }),
+    );
+
+    return new Map<string, WalletAssetPriceView>(entries);
+  }
+
   private async getTronAssetBalance(
     address: string,
     asset: {
@@ -1623,6 +1766,9 @@ export class WalletService {
       contractAddress: item.contractAddress,
       walletVisible: item.walletVisible,
       orderPayable: item.orderPayable,
+      usdPriceMode: item.usdPriceMode,
+      usdPriceValue: item.usdPriceValue,
+      marketInstrumentId: item.marketInstrumentId,
     };
   }
 
@@ -2210,6 +2356,30 @@ export class WalletService {
       case 'ethereum':
       default:
         return 'ETHEREUM';
+    }
+  }
+
+  private networkCodeToChainId(networkCode: WalletNetworkCode): string {
+    switch (networkCode) {
+      case 'SOLANA':
+        return 'solana';
+      case 'TRON':
+        return 'tron';
+      case 'BSC':
+        return 'bsc';
+      case 'POLYGON':
+        return 'polygon';
+      case 'ARBITRUM':
+        return 'arbitrum';
+      case 'BASE':
+        return 'base';
+      case 'OPTIMISM':
+        return 'optimism';
+      case 'AVALANCHE_C':
+        return 'avalanche';
+      case 'ETHEREUM':
+      default:
+        return 'ethereum';
     }
   }
 

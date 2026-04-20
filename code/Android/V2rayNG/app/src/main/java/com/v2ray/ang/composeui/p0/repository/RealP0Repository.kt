@@ -756,7 +756,10 @@ class RealP0Repository(context: Context) : P0Repository {
         )
     }
 
-    override suspend fun getWalletHomeState(selectedWalletId: String?): WalletHomeUiState {
+    override suspend fun getWalletHomeState(
+        selectedWalletId: String?,
+        forceRefresh: Boolean,
+    ): WalletHomeUiState {
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         val hasUsableWallet = lifecycle.hasUsableWallet()
         val wallets = paymentRepository.listWallets().getOrElse { paymentRepository.getCachedWallets() }
@@ -764,7 +767,10 @@ class RealP0Repository(context: Context) : P0Repository {
         val resolvedWalletId = selectedWalletId
             ?: walletOptions.firstOrNull { it.isDefault }?.walletId
             ?: walletOptions.firstOrNull()?.walletId
-        val walletOverview = paymentRepository.getWalletOverview(resolvedWalletId).getOrNull()
+        val walletOverview = paymentRepository.getWalletOverview(
+            walletId = resolvedWalletId,
+            forceRefresh = forceRefresh,
+        ).getOrNull()
         val successfulOrders = loadOrdersSnapshot().orders.filter { it.status == "COMPLETED" }
         if (walletOverview != null) {
             return enrichWalletHomeState(

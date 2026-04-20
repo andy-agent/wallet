@@ -8,8 +8,17 @@ export class MarketConfig {
   getProviderBaseUrl(): string {
     return (
       this.configService.get<string>('MARKET_PROVIDER_BASE_URL') ??
+      this.configService.get<string>('COINGECKO_BASE_URL') ??
       'https://api.coingecko.com/api/v3'
     );
+  }
+
+  getProviderApiKey(): string | null {
+    return this.configService.get<string>('COINGECKO_API_KEY')?.trim() || null;
+  }
+
+  useDemoApiKey(): boolean {
+    return this.getProviderBaseUrl().includes('api.coingecko.com');
   }
 
   getProviderTimeoutMs(): number {

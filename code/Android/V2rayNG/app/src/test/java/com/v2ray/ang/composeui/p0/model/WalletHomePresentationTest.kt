@@ -19,9 +19,11 @@ class WalletHomePresentationTest {
         }
 
         assertEquals("88.12 USDT", tronUsdt.balanceText)
-        assertEquals("链上可用余额", tronUsdt.valueText)
+        assertEquals("$88.12", tronUsdt.valueText)
+        assertEquals("$1.00", tronUsdt.unitPriceText)
+        assertEquals("固定报价", tronUsdt.priceStatusText)
         assertEquals("7 笔交易", uiState.totalBalanceText)
-        assertEquals("$0.00", buildWalletPortfolioValue(uiState.assets))
+        assertEquals("$132.65", buildWalletPortfolioValue(uiState.assets))
         assertFalse(tronUsdt.balanceText.contains("58.99"))
         assertFalse(tronUsdt.valueText.contains("58.99"))
     }
@@ -35,6 +37,7 @@ class WalletHomePresentationTest {
                 chainLabel = "TRON",
                 balanceText = "88.12 USDT",
                 valueText = "累计 58.99 USDT",
+                unitPriceText = "$1.00",
                 changeText = "CONFIRMED",
                 changePositive = true,
             ),
@@ -44,6 +47,7 @@ class WalletHomePresentationTest {
                 chainLabel = "Solana",
                 balanceText = "1.25 SOL",
                 valueText = "$12.34",
+                unitPriceText = "$9.87",
                 changeText = "READY",
                 changePositive = true,
             ),
@@ -53,6 +57,7 @@ class WalletHomePresentationTest {
                 chainLabel = "TRON",
                 balanceText = "15 TRX",
                 valueText = "$0.66",
+                unitPriceText = "$0.04",
                 changeText = "READY",
                 changePositive = true,
             ),
@@ -107,6 +112,11 @@ class WalletHomePresentationTest {
                     totalPayableAmount = "12.000000",
                     availableBalanceUiAmount = "1.250000000",
                     availableBalanceStatus = "READY",
+                    unitPriceUsd = "12.34",
+                    valueUsd = "15.43",
+                    priceChangePct24h = "2.10",
+                    priceStatus = "READY",
+                    priceUpdatedAt = "2026-04-20T08:00:00Z",
                 ),
                 WalletAssetItemData(
                     assetId = "sol-usdt",
@@ -123,6 +133,11 @@ class WalletHomePresentationTest {
                     totalPayableAmount = "12.000000",
                     availableBalanceUiAmount = "25.500000",
                     availableBalanceStatus = "READY",
+                    unitPriceUsd = "1.00",
+                    valueUsd = "25.50",
+                    priceChangePct24h = "0.00",
+                    priceStatus = "FIXED",
+                    priceUpdatedAt = "2026-04-20T08:00:00Z",
                 ),
                 WalletAssetItemData(
                     assetId = "tron-native",
@@ -139,6 +154,11 @@ class WalletHomePresentationTest {
                     totalPayableAmount = "6.000000",
                     availableBalanceUiAmount = "15.000000",
                     availableBalanceStatus = "READY",
+                    unitPriceUsd = "0.24",
+                    valueUsd = "3.60",
+                    priceChangePct24h = "-1.50",
+                    priceStatus = "READY",
+                    priceUpdatedAt = "2026-04-20T08:00:00Z",
                 ),
                 WalletAssetItemData(
                     assetId = "tron-usdt",
@@ -156,8 +176,15 @@ class WalletHomePresentationTest {
                     availableBalanceUiAmount = "88.120000",
                     availableBalanceStatus = "READY",
                     lastOrderStatus = "CONFIRMED",
+                    unitPriceUsd = "1.00",
+                    valueUsd = "88.12",
+                    priceChangePct24h = "0.00",
+                    priceStatus = "FIXED",
+                    priceUpdatedAt = "2026-04-20T08:00:00Z",
                 ),
             ),
+            totalPortfolioValueUsd = "132.65",
+            priceUpdatedAt = "2026-04-20T08:00:00Z",
             alerts = emptyList(),
         )
     }

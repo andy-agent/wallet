@@ -15,7 +15,10 @@ interface P0Repository {
     suspend fun getCachedWalletHomeState(selectedWalletId: String? = null): WalletHomeUiState? = null
     suspend fun getCachedVpnHomeState(): VpnHomeUiState? = null
     suspend fun getVpnHomeState(): VpnHomeUiState
-    suspend fun getWalletHomeState(selectedWalletId: String? = null): WalletHomeUiState
+    suspend fun getWalletHomeState(
+        selectedWalletId: String? = null,
+        forceRefresh: Boolean = false,
+    ): WalletHomeUiState
     suspend fun clearLocalWallet(): Result<String> =
         Result.failure(IllegalStateException("Wallet clear unavailable"))
 }

@@ -206,9 +206,10 @@ export class MarketService {
 
   async getInstrumentDetail(
     identifier: string,
+    forceRefresh = false,
   ): Promise<MarketInstrumentDetailResponse> {
     const coinId = await this.resolveCoinId(identifier);
-    const coin = await this.getDetailableCoin(coinId);
+    const coin = await this.getDetailableCoin(coinId, forceRefresh);
     const categoryKeys = this.deriveCategoryKeysFromDetail(coin);
     const tags = this.buildTags(categoryKeys, coin.categories);
     const instrument = this.toInstrumentRef(
@@ -239,9 +240,32 @@ export class MarketService {
     };
   }
 
-  private async getDetailableCoin(coinId: string): Promise<ProviderCoinDetail> {
+  async getOnchainTokenQuote(
+    chainId: string,
+    address: string,
+    forceRefresh = false,
+  ) {
+    const quote = await this.provider.getOnchainTokenQuote(
+      chainId,
+      address,
+      forceRefresh,
+    );
+    if (!quote) {
+      return null;
+    }
+    return {
+      currentPrice: this.toDecimalString(quote.currentPrice),
+      priceChangePct24h: this.toDecimalString(quote.priceChangePct24h),
+      updatedAt: quote.lastUpdatedAt,
+    };
+  }
+
+  private async getDetailableCoin(
+    coinId: string,
+    forceRefresh = false,
+  ): Promise<ProviderCoinDetail> {
     try {
-      return await this.provider.getCoinDetail(coinId);
+      return await this.provider.getCoinDetail(coinId, forceRefresh);
     } catch (error) {
       if (!(error instanceof ServiceUnavailableException)) {
         throw error;

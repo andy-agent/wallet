@@ -44,16 +44,24 @@ class WalletHomeViewModel(
                 refresh(selectedWallet.walletId)
             }
 
-            WalletHomeEvent.Refresh -> refresh()
+            WalletHomeEvent.Refresh -> refresh(forceRefresh = true)
         }
     }
 
-    private fun refresh(selectedWalletId: String? = _uiState.value.selectedWalletId) {
+    private fun refresh(
+        selectedWalletId: String? = _uiState.value.selectedWalletId,
+        forceRefresh: Boolean = false,
+    ) {
         viewModelScope.launch {
-            repository.getCachedWalletHomeState(selectedWalletId)?.let { cached ->
-                _uiState.value = cached
+            if (!forceRefresh) {
+                repository.getCachedWalletHomeState(selectedWalletId)?.let { cached ->
+                    _uiState.value = cached
+                }
             }
-            _uiState.value = repository.getWalletHomeState(selectedWalletId)
+            _uiState.value = repository.getWalletHomeState(
+                selectedWalletId = selectedWalletId,
+                forceRefresh = forceRefresh,
+            )
         }
     }
 

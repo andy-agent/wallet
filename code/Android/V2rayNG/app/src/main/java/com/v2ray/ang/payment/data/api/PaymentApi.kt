@@ -138,13 +138,15 @@ interface PaymentApi {
     @GET("${PaymentConfig.API_VERSION}/wallet/overview")
     suspend fun getWalletOverview(
         @Header("Authorization") authorization: String,
-        @Query("walletId") walletId: String? = null
+        @Query("walletId") walletId: String? = null,
+        @Query("forceRefresh") forceRefresh: Boolean? = null,
     ): Response<WalletOverviewResponse>
 
     @GET("${PaymentConfig.API_VERSION}/wallet/balances")
     suspend fun getWalletBalances(
         @Header("Authorization") authorization: String,
-        @Query("walletId") walletId: String? = null
+        @Query("walletId") walletId: String? = null,
+        @Query("forceRefresh") forceRefresh: Boolean? = null,
     ): Response<WalletBalancesResponse>
 
     @GET("${PaymentConfig.API_VERSION}/wallet/lifecycle")
@@ -670,6 +672,16 @@ data class WalletBalanceItemData(
     val availableBalanceUiAmount: String? = null,
     @SerializedName("availableBalanceStatus")
     val availableBalanceStatus: String? = null,
+    @SerializedName("unitPriceUsd")
+    val unitPriceUsd: String? = null,
+    @SerializedName("valueUsd")
+    val valueUsd: String? = null,
+    @SerializedName("priceChangePct24h")
+    val priceChangePct24h: String? = null,
+    @SerializedName("priceStatus")
+    val priceStatus: String? = null,
+    @SerializedName("priceUpdatedAt")
+    val priceUpdatedAt: String? = null,
 )
 
 data class WalletAssetCatalogResponse(
@@ -727,6 +739,16 @@ data class WalletAssetItemData(
     val isCustom: Boolean = false,
     @SerializedName("iconUrl")
     val iconUrl: String? = null,
+    @SerializedName("unitPriceUsd")
+    val unitPriceUsd: String? = null,
+    @SerializedName("valueUsd")
+    val valueUsd: String? = null,
+    @SerializedName("priceChangePct24h")
+    val priceChangePct24h: String? = null,
+    @SerializedName("priceStatus")
+    val priceStatus: String? = null,
+    @SerializedName("priceUpdatedAt")
+    val priceUpdatedAt: String? = null,
 )
 
 data class WalletPublicAddressesResponse(
@@ -788,6 +810,10 @@ data class WalletOverviewData(
     val chainItems: List<WalletChainItemData>,
     @SerializedName("assetItems")
     val assetItems: List<WalletAssetItemData>,
+    @SerializedName("totalPortfolioValueUsd")
+    val totalPortfolioValueUsd: String? = null,
+    @SerializedName("priceUpdatedAt")
+    val priceUpdatedAt: String? = null,
     val alerts: List<String> = emptyList(),
 )
 

@@ -1458,7 +1458,7 @@ class PaymentRepository(context: Context) {
             val token = getAccessToken()
                 ?: return@withContext cached?.let { Result.success(it.toWalletOverviewData()) }
                     ?: Result.failure(Exception("未登录"))
-            val response = api.getWalletOverview("Bearer $token", walletId)
+            val response = api.getWalletOverview("Bearer $token", walletId, force)
             if (response.isSuccessful && response.body()?.code == "OK") {
                 response.body()?.data?.let { data ->
                     val cacheUserId = resolvedUserId ?: getCurrentUserId()
@@ -1471,6 +1471,8 @@ class PaymentRepository(context: Context) {
                                 selectedNetworkCode = data.selectedNetworkCode,
                                 chainItemsJson = paymentApiGson.toJson(data.chainItems),
                                 assetItemsJson = paymentApiGson.toJson(data.assetItems),
+                                totalPortfolioValueUsd = data.totalPortfolioValueUsd,
+                                priceUpdatedAt = data.priceUpdatedAt,
                                 alertsJson = paymentApiGson.toJson(data.alerts),
                                 updatedAt = now,
                             ),
@@ -1510,9 +1512,12 @@ class PaymentRepository(context: Context) {
         }
     }
 
-    suspend fun getWalletOverview(walletId: String? = null): Result<WalletOverviewData> = withContext(Dispatchers.IO) {
+    suspend fun getWalletOverview(
+        walletId: String? = null,
+        forceRefresh: Boolean = false,
+    ): Result<WalletOverviewData> = withContext(Dispatchers.IO) {
         val resolvedUserId = getCurrentUserId()
-        val cached = if (walletId.isNullOrBlank()) getCachedWalletOverview(resolvedUserId, walletId) else null
+        val cached = if (!forceRefresh && walletId.isNullOrBlank()) getCachedWalletOverview(resolvedUserId, walletId) else null
         if (cached != null) {
             cacheSyncScope.launch {
                 syncWalletOverviewFromServer(force = true, userId = resolvedUserId, walletId = walletId)
@@ -1522,14 +1527,17 @@ class PaymentRepository(context: Context) {
         syncWalletOverviewFromServer(force = true, userId = resolvedUserId, walletId = walletId)
     }
 
-    suspend fun getWalletBalances(): Result<WalletBalancesData> = withContext(Dispatchers.IO) {
+    suspend fun getWalletBalances(
+        walletId: String? = null,
+        forceRefresh: Boolean = false,
+    ): Result<WalletBalancesData> = withContext(Dispatchers.IO) {
         try {
             if (!refreshTokenIfNeeded()) {
                 return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
             }
             val token = getAccessToken()
                 ?: return@withContext Result.failure(Exception("未登录"))
-            val response = api.getWalletBalances("Bearer $token")
+            val response = api.getWalletBalances("Bearer $token", walletId, forceRefresh)
             if (response.isSuccessful && response.body()?.code == "OK") {
                 response.body()?.data?.let { Result.success(it) }
                     ?: Result.failure(Exception("钱包余额结果为空"))
@@ -2771,6 +2779,8 @@ class PaymentRepository(context: Context) {
                 assetItemsJson,
                 object : TypeToken<List<WalletAssetItemData>>() {}.type,
             ),
+            totalPortfolioValueUsd = totalPortfolioValueUsd,
+            priceUpdatedAt = priceUpdatedAt,
             alerts = paymentApiGson.fromJson(
                 alertsJson,
                 object : TypeToken<List<String>>() {}.type,

@@ -52,7 +52,7 @@ import com.v2ray.ang.payment.data.local.entity.WalletReceiveContextCacheEntity
         WalletReceiveContextCacheEntity::class,
         WalletOverviewCacheEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class PaymentDatabase : RoomDatabase() {
@@ -240,6 +240,17 @@ abstract class PaymentDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE wallet_overview_cache ADD COLUMN totalPortfolioValueUsd TEXT",
+                )
+                database.execSQL(
+                    "ALTER TABLE wallet_overview_cache ADD COLUMN priceUpdatedAt TEXT",
+                )
+            }
+        }
+
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
@@ -309,6 +320,7 @@ abstract class PaymentDatabase : RoomDatabase() {
                     .addMigrations(MIGRATION_3_4)
                     .addMigrations(MIGRATION_4_5)
                     .addMigrations(MIGRATION_6_7)
+                    .addMigrations(MIGRATION_7_8)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
