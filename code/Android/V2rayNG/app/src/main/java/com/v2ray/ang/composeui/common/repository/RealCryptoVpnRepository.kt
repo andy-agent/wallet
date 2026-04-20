@@ -2130,18 +2130,24 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getTokenManagerState(args: TokenManagerRouteArgs): TokenManagerUiState =
         run {
+            val wallets = paymentRepository.getCachedWallets()
+                .ifEmpty { paymentRepository.listWallets().getOrElse { emptyList() } }
+            val selectedWallet = wallets.firstOrNull { it.walletId == args.walletId }
+                ?: wallets.firstOrNull { it.isDefault }
+                ?: wallets.firstOrNull()
+            val resolvedWalletId = selectedWallet?.walletId ?: args.walletId
             val normalizedChainId = args.chainId.lowercase(Locale.ROOT)
-            val overview = paymentRepository.getWalletOverview(args.walletId).getOrNull()
-            val cachedCustomTokens = paymentRepository.getCachedCustomTokens(args.walletId, normalizedChainId)
+            val overview = paymentRepository.getWalletOverview(resolvedWalletId).getOrNull()
+            val cachedCustomTokens = paymentRepository.getCachedCustomTokens(resolvedWalletId, normalizedChainId)
             val visibilityByTokenKey = paymentRepository
-                .getTokenVisibilityEntries(args.walletId, normalizedChainId)
+                .getTokenVisibilityEntries(resolvedWalletId, normalizedChainId)
                 .getOrElse { emptyList() }
                 .associate { it.tokenKey to it.visibilityState.uppercase(Locale.ROOT) }
-            val walletName = paymentRepository.getCachedWallets()
-                .firstOrNull { it.walletId == args.walletId }
+            val walletName = wallets
+                .firstOrNull { it.walletId == resolvedWalletId }
                 ?.walletName
-                ?: paymentRepository.getWallet(args.walletId).getOrNull()?.wallet?.walletName
-                ?: args.walletId
+                ?: paymentRepository.getWallet(resolvedWalletId).getOrNull()?.wallet?.walletName
+                ?: resolvedWalletId
             val managedTokens = if (overview != null) {
                 overview.assetItems
                 .filter { normalizeWalletChainId(it.networkCode) == normalizedChainId }

@@ -179,14 +179,23 @@ fun WalletHomeScreen(
     val dailyPnl = remember(selectedAssets) { buildDailyPnl(selectedAssets) }
     val securityCenterRoute = CryptoVpnRouteSpec.securityCenter.pattern
     val historyRoute = CryptoVpnRouteSpec.orderList.pattern
-    val effectiveWalletId = uiState.selectedWalletId
-        ?: uiState.walletOptions.firstOrNull()?.walletId
-        ?: uiState.walletId
-    val canOpenTokenManager = !effectiveWalletId.isNullOrBlank() || uiState.walletOptions.isNotEmpty()
-    val tokenManagerRoute = if (canOpenTokenManager) {
+    val effectiveWallet = uiState.walletOptions
+        .firstOrNull { it.walletId == uiState.selectedWalletId }
+        ?: uiState.walletOptions.firstOrNull { it.walletName == uiState.currentWalletLabel }
+        ?: uiState.walletOptions.firstOrNull { it.isDefault }
+        ?: uiState.walletOptions.firstOrNull()
+    val effectiveWalletId = effectiveWallet?.walletId ?: uiState.walletId
+    val effectiveChainId = selectedChainId
+        .takeIf { it.isNotBlank() && it != "all" }
+        ?: effectiveWallet?.chainOptions
+            ?.firstOrNull { it.label.equals(uiState.currentWalletChainLabel, ignoreCase = true) }
+            ?.chainId
+        ?: effectiveWallet?.chainOptions?.firstOrNull()?.chainId
+        ?: "tron"
+    val tokenManagerRoute = if (!effectiveWalletId.isNullOrBlank()) {
         CryptoVpnRouteSpec.tokenManagerRoute(
-            effectiveWalletId ?: "primary_wallet",
-            selectedChainId,
+            effectiveWalletId,
+            effectiveChainId,
         )
     } else {
         CryptoVpnRouteSpec.walletOnboarding.pattern
