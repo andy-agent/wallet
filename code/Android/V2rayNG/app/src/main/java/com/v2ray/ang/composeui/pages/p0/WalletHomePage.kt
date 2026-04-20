@@ -179,9 +179,13 @@ fun WalletHomeScreen(
     val dailyPnl = remember(selectedAssets) { buildDailyPnl(selectedAssets) }
     val securityCenterRoute = CryptoVpnRouteSpec.securityCenter.pattern
     val historyRoute = CryptoVpnRouteSpec.orderList.pattern
-    val tokenManagerRoute = if (uiState.walletExists) {
+    val effectiveWalletId = uiState.selectedWalletId
+        ?: uiState.walletOptions.firstOrNull()?.walletId
+        ?: uiState.walletId
+    val canOpenTokenManager = !effectiveWalletId.isNullOrBlank() || uiState.walletOptions.isNotEmpty()
+    val tokenManagerRoute = if (canOpenTokenManager) {
         CryptoVpnRouteSpec.tokenManagerRoute(
-            uiState.selectedWalletId ?: (uiState.walletId ?: "primary_wallet"),
+            effectiveWalletId ?: "primary_wallet",
             selectedChainId,
         )
     } else {
