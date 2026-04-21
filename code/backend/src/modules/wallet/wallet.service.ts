@@ -2399,6 +2399,22 @@ export class WalletService {
         });
       }
       const mint = new PublicKey(asset.contractAddress.trim());
+      const mintAccount = await connection.getParsedAccountInfo(mint, 'confirmed');
+      const onchainDecimals =
+        (
+          mintAccount.value?.data as
+            | {
+                parsed?: {
+                  info?: {
+                    decimals?: number;
+                  };
+                };
+              }
+            | undefined
+        )?.parsed?.info?.decimals;
+      const tokenDecimals = Number.isFinite(onchainDecimals)
+        ? Number(onchainDecimals)
+        : asset.decimals;
       const fromAta = getAssociatedTokenAddressSync(mint, fromPubkey, false);
       const toAta = getAssociatedTokenAddressSync(mint, toPubkey, false);
       const destinationAccount = await connection.getAccountInfo(toAta);
@@ -2418,8 +2434,8 @@ export class WalletService {
           mint,
           toAta,
           fromPubkey,
-          this.toMinorUnits(dto.amount, asset.decimals),
-          asset.decimals,
+          this.toMinorUnits(dto.amount, tokenDecimals),
+          tokenDecimals,
         ),
       );
     }
