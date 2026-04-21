@@ -291,6 +291,25 @@ export class OrdersService {
           `Solana chain-side status check failed for order ${orderNo}, preserving persisted status`,
           error instanceof Error ? error.message : error,
         );
+        try {
+          const txStatus = await this.solanaClient.getTransactionStatus({
+            signature: order.submittedClientTxHash,
+          });
+          if (
+            txStatus.status === 'confirmed' ||
+            txStatus.status === 'finalized'
+          ) {
+            order.failureReason = null;
+            order.matcherRemark =
+              'Chain-side verify unavailable; promoted by confirmed submitted tx fallback';
+            return this.markPaidAndProvision(order);
+          }
+        } catch (statusError) {
+          this.logger.warn(
+            `Solana submitted tx fallback status check failed for order ${orderNo}`,
+            statusError instanceof Error ? statusError.message : statusError,
+          );
+        }
         return this.toOrderRecord(order);
       }
     }
@@ -436,7 +455,7 @@ export class OrdersService {
   }
 
   private toOrderRecord(order: StoredOrderRecord): OrderRecord {
-    const { collectionAddress: _collectionAddress, createdAt: _createdAt, idempotencyKey: _idempotencyKey, ...publicOrder } =
+    const { collectionAddress: _collectionAddress, idempotencyKey: _idempotencyKey, ...publicOrder } =
       order;
     return publicOrder;
   }

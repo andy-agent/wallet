@@ -3723,11 +3723,7 @@ private fun JsonObject.backfillOrderCreatedAt() {
     if (!createdAt.isNullOrBlank()) {
         return
     }
-
-    val fallback = getStringOrNull("expiresAt")
-    if (!fallback.isNullOrBlank()) {
-        addProperty("createdAt", fallback)
-    }
+    addProperty("createdAt", "")
 }
 
 private fun JsonObject.getStringOrNull(fieldName: String): String? {

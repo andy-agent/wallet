@@ -246,10 +246,19 @@ export class SolanaClientService {
       );
     } catch (error) {
       this.logger.error('Get transaction status failed', error);
-      throw new ServiceUnavailableException({
-        code: 'SOLANA_STATUS_CHECK_FAILED',
-        message: 'Failed to get transaction status',
-      });
+      try {
+        this.logger.warn(
+          'Falling back to direct Solana RPC transaction status lookup',
+          error instanceof Error ? error.message : String(error),
+        );
+        return await this.getTransactionStatusViaRpc(request);
+      } catch (rpcError) {
+        this.logger.error('Direct Solana RPC status fallback failed', rpcError);
+        throw new ServiceUnavailableException({
+          code: 'SOLANA_STATUS_CHECK_FAILED',
+          message: 'Failed to get transaction status',
+        });
+      }
     }
   }
 
@@ -666,6 +675,45 @@ export class SolanaClientService {
     return {
       signature,
       confirmed: !confirmation.value.err,
+    };
+  }
+
+  private async getTransactionStatusViaRpc(
+    request: GetTransactionStatusRequest,
+  ): Promise<GetTransactionStatusResponse> {
+    const network = this.getEffectiveNetwork(request.network);
+    const connection = new Connection(this.config.getRpcUrl(network), 'confirmed');
+    const response = await connection.getSignatureStatuses([request.signature], {
+      searchTransactionHistory: true,
+    });
+    const status = response.value[0];
+    if (!status) {
+      return {
+        signature: request.signature,
+        status: 'pending',
+        confirmations: 0,
+      };
+    }
+    if (status.err) {
+      return {
+        signature: request.signature,
+        status: 'failed',
+        confirmations: status.confirmations ?? 0,
+        error: JSON.stringify(status.err),
+        slot: status.slot,
+      };
+    }
+    const normalizedStatus: GetTransactionStatusResponse['status'] =
+      status.confirmationStatus === 'finalized'
+        ? 'finalized'
+        : status.confirmationStatus === 'confirmed'
+          ? 'confirmed'
+          : 'pending';
+    return {
+      signature: request.signature,
+      status: normalizedStatus,
+      confirmations: status.confirmations ?? 0,
+      slot: status.slot,
     };
   }
 

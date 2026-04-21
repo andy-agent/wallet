@@ -963,12 +963,16 @@ export class WalletService {
   }
 
   async buildTransfer(accessToken: string, dto: BuildTransferRequestDto) {
-    this.authService.getMe(accessToken);
+    const account = this.authService.getMe(accessToken);
     const chain = this.getChains(accessToken).items.find(
       (item) => item.networkCode === dto.networkCode,
     );
-    const asset = this.getAssetCatalog(accessToken, dto.networkCode).items.find(
-      (item) => item.assetCode === dto.assetCode,
+    const asset = await this.resolveTransferAsset(
+      account.accountId,
+      accessToken,
+      dto.networkCode,
+      dto.assetCode,
+      dto.fromAddress,
     );
     if (!chain || !asset) {
       throw new BadRequestException({
@@ -984,7 +988,11 @@ export class WalletService {
     }
 
     return dto.networkCode === 'SOLANA'
-      ? this.buildSolanaTransfer(chain.publicRpcUrl ?? 'https://api.mainnet-beta.solana.com', dto)
+      ? this.buildSolanaTransfer(
+          chain.publicRpcUrl ?? 'https://api.mainnet-beta.solana.com',
+          asset,
+          dto,
+        )
       : this.buildTronTransfer(asset.contractAddress, dto);
   }
 
@@ -2084,7 +2092,7 @@ export class WalletService {
   }
 
   async transferPrecheck(accessToken: string, dto: TransferPrecheckRequestDto) {
-    this.authService.getMe(accessToken);
+    const account = this.authService.getMe(accessToken);
     if (!this.isAddressValid(dto.networkCode, dto.toAddress)) {
       throw new BadRequestException({
         code: 'WALLET_INVALID_ADDRESS',
@@ -2095,8 +2103,11 @@ export class WalletService {
     const chain = this.getChains(accessToken).items.find(
       (item) => item.networkCode === dto.networkCode,
     );
-    const asset = this.getAssetCatalog(accessToken, dto.networkCode).items.find(
-      (item) => item.assetCode === dto.assetCode,
+    const asset = await this.resolveTransferAsset(
+      account.accountId,
+      accessToken,
+      dto.networkCode,
+      dto.assetCode,
     );
 
     if (!chain || !asset) {
@@ -2109,9 +2120,9 @@ export class WalletService {
     // For SOLANA network, use remote service when enabled
     if (dto.networkCode === 'SOLANA') {
       try {
-        const mint = dto.assetCode === 'USDT'
-          ? this.solanaClient.getUsdtMint()
-          : null;
+        const mint = asset.isNative
+          ? null
+          : asset.contractAddress?.trim() || null;
 
         const precheckResult = await this.solanaClient.precheckTransfer({
           network: this.solanaClient['config'].useDevnet() ? 'devnet' : 'mainnet',
@@ -2357,6 +2368,12 @@ export class WalletService {
 
   private async buildSolanaTransfer(
     rpcUrl: string,
+    asset: {
+      assetCode: string;
+      decimals: number;
+      isNative: boolean;
+      contractAddress: string | null;
+    },
     dto: BuildTransferRequestDto,
   ) {
     const connection = new Connection(rpcUrl, 'confirmed');
@@ -2366,7 +2383,7 @@ export class WalletService {
     transaction.feePayer = fromPubkey;
     transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-    if (dto.assetCode === 'SOL') {
+    if (asset.isNative) {
       transaction.add(
         SystemProgram.transfer({
           fromPubkey,
@@ -2375,7 +2392,13 @@ export class WalletService {
         }),
       );
     } else {
-      const mint = new PublicKey(this.solanaClient.getUsdtMint());
+      if (!asset.contractAddress?.trim()) {
+        throw new BadRequestException({
+          code: 'WALLET_UNSUPPORTED_ASSET',
+          message: 'Unsupported Solana token',
+        });
+      }
+      const mint = new PublicKey(asset.contractAddress.trim());
       const fromAta = getAssociatedTokenAddressSync(mint, fromPubkey, false);
       const toAta = getAssociatedTokenAddressSync(mint, toPubkey, false);
       const destinationAccount = await connection.getAccountInfo(toAta);
@@ -2395,8 +2418,8 @@ export class WalletService {
           mint,
           toAta,
           fromPubkey,
-          this.toMinorUnits(dto.amount, 6),
-          6,
+          this.toMinorUnits(dto.amount, asset.decimals),
+          asset.decimals,
         ),
       );
     }
@@ -2725,6 +2748,60 @@ export class WalletService {
       'OPTIMISM',
       'AVALANCHE_C',
     ].includes(networkCode);
+  }
+
+  private async resolveTransferAsset(
+    accountId: string,
+    accessToken: string,
+    networkCode: WalletNetworkCode,
+    assetCode: string,
+    fromAddress?: string,
+  ) {
+    const normalizedAssetCode = assetCode.trim().toUpperCase();
+    const baseAsset = this.getAssetCatalog(accessToken, networkCode).items.find(
+      (item) => item.assetCode.toUpperCase() === normalizedAssetCode,
+    );
+    if (baseAsset) {
+      return baseAsset;
+    }
+
+    const wallets = await this.runtimeStateRepository.listWalletsByAccountId(accountId);
+    const prioritizedWalletIds = fromAddress
+      ? await Promise.all(
+          wallets.map(async (wallet) => {
+            const chainAccounts =
+              await this.runtimeStateRepository.listWalletChainAccountsByWalletId(wallet.walletId);
+            return chainAccounts.some(
+              (item) =>
+                item.networkCode === networkCode &&
+                item.address.trim() === fromAddress.trim(),
+            )
+              ? wallet.walletId
+              : null;
+          }),
+        )
+      : [];
+
+    const walletIds = [
+      ...prioritizedWalletIds.filter((item): item is string => Boolean(item)),
+      ...wallets.map((item) => item.walletId),
+    ].filter((value, index, array) => array.indexOf(value) === index);
+
+    for (const walletId of walletIds) {
+      const customTokens =
+        await this.runtimeStateRepository.listWalletCustomTokensByWalletId({
+          walletId,
+          chainId: this.normalizeChainId(networkCode),
+        });
+      const matched = customTokens.find(
+        (item) => item.symbol.trim().toUpperCase() === normalizedAssetCode,
+      );
+      if (matched) {
+        return this.toCustomWalletAsset(matched);
+      }
+    }
+
+    return null;
   }
 
   private isAddressValid(networkCode: WalletNetworkCode | 'SOLANA' | 'TRON', address: string) {

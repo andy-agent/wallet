@@ -49,7 +49,7 @@ data class Order(
     @SerializedName("paymentMatchedAt")
     val paymentMatchedAt: String? = null,
     @SerializedName("createdAt")
-    val createdAt: String = expiresAt,
+    val createdAt: String = "",
     val paymentTarget: PaymentTarget? = null,
     val subscriptionUrl: String? = null
 ) {

@@ -6,8 +6,7 @@ export class ProxyBroadcastRequestDto {
   networkCode!: 'SOLANA' | 'TRON';
 
   @IsString()
-  @IsIn(['SOL', 'TRX', 'USDT'])
-  assetCode!: 'SOL' | 'TRX' | 'USDT';
+  assetCode!: string;
 
   @IsString()
   signedPayload!: string;
