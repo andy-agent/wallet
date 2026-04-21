@@ -171,6 +171,7 @@ import com.v2ray.ang.payment.data.api.WalletSecretBackupUpsertRequest
 import com.v2ray.ang.payment.data.api.WalletTransferProxyBroadcastRequest
 import com.v2ray.ang.payment.wallet.WalletMnemonicGenerator
 import com.v2ray.ang.payment.wallet.WalletKeyManager
+import com.v2ray.ang.payment.wallet.LocalWalletGraphRecoveryManager
 import com.v2ray.ang.payment.wallet.WalletSecretStore
 import com.v2ray.ang.handler.MmkvManager
 import kotlinx.coroutines.Dispatchers
@@ -187,6 +188,11 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     private val paymentRepository = PaymentRepository(context.applicationContext)
     private val walletSecretStore = WalletSecretStore(context.applicationContext)
     private val walletKeyManager = WalletKeyManager(walletSecretStore)
+    private val walletGraphRecoveryManager = LocalWalletGraphRecoveryManager(
+        paymentRepository = paymentRepository,
+        walletSecretStore = walletSecretStore,
+        walletKeyManager = walletKeyManager,
+    )
 
     override suspend fun getForceUpdateState(): ForceUpdateUiState {
         return ForceUpdateUiState(
@@ -995,16 +1001,16 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getOrderListState(): OrderListUiState {
-        val orders = loadCachedOrders().filter { it.status == "COMPLETED" }
+        val orders = loadCachedOrders()
         if (orders.isEmpty()) {
             return OrderListUiState(
-                summary = "当前账号暂无成功交易。",
-                screenState = P1ScreenState(emptyMessage = "当前账号没有成功交易记录。"),
-                note = "当前未查询到成功交易",
+                summary = "当前账号暂无订单。",
+                screenState = P1ScreenState(emptyMessage = "当前账号没有订单记录。"),
+                note = "当前未查询到订单",
             )
         }
         return OrderListUiState(
-            summary = "成功交易列表。",
+            summary = "订单列表。",
             screenState = P1ScreenState(),
             orders = orders.sortedByDescending { it.createdAt }.map {
                 OrderListItemUi(
@@ -1016,7 +1022,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                     createdAt = formatEpoch(it.createdAt),
                 )
             },
-            note = "仅显示成功交易缓存。",
+            note = "优先显示本地订单缓存，并按服务器结果覆盖同步。",
         )
     }
 
@@ -1251,12 +1257,17 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         amount: String,
         memo: String,
     ): SendSubmissionResult {
-        val accountId = paymentRepository.getCurrentUserId()
-            ?: return SendSubmissionResult(success = false, errorMessage = "未登录")
         val normalizedNetworkCode = sendChainIdToNetworkCode(args.chainId)
-        val fromAddress = when (normalizedNetworkCode) {
-            "SOLANA" -> walletKeyManager.deriveAddresses(accountId).solanaAddress
-            else -> walletKeyManager.deriveAddresses(accountId).tronAddress
+        val wallets = paymentRepository.getCachedWallets().ifEmpty {
+            paymentRepository.listWallets().getOrNull().orEmpty()
+        }
+        val selectedWallet = wallets.firstOrNull { it.isDefault } ?: wallets.firstOrNull()
+            ?: return SendSubmissionResult(success = false, errorMessage = "未找到可发送钱包")
+        val chainAccounts = paymentRepository.getWalletChainAccounts(selectedWallet.walletId).getOrNull().orEmpty()
+        val payerChainAccount = chainAccounts.firstOrNull { it.networkCode == normalizedNetworkCode }
+            ?: return SendSubmissionResult(success = false, errorMessage = "未找到对应链账户")
+        if (payerChainAccount.capability != "SIGN_AND_PAY") {
+            return SendSubmissionResult(success = false, errorMessage = "观察钱包不可发送")
         }
         val precheck = paymentRepository.precheckWalletTransfer(
             networkCode = normalizedNetworkCode,
@@ -1270,7 +1281,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val build = paymentRepository.buildWalletTransfer(
             networkCode = normalizedNetworkCode,
             assetCode = args.assetId,
-            fromAddress = fromAddress,
+            fromAddress = payerChainAccount.address,
             toAddress = precheck.toAddressNormalized,
             amount = amount,
             orderNo = memo.takeIf { it.isNotBlank() },
@@ -1279,8 +1290,8 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         }
 
         val signature = when (build.networkCode) {
-            "SOLANA" -> walletKeyManager.signSolanaMessage(accountId, build.signingPayload)
-            "TRON" -> walletKeyManager.signTronTransactionId(accountId, build.signingPayload)
+            "SOLANA" -> walletKeyManager.signSolanaMessage(selectedWallet.walletId, payerChainAccount.keySlotId, build.signingPayload)
+            "TRON" -> walletKeyManager.signTronTransactionId(selectedWallet.walletId, payerChainAccount.keySlotId, build.signingPayload)
             else -> return SendSubmissionResult(success = false, errorMessage = "暂不支持该链发送")
         }
 
@@ -1931,6 +1942,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         }
 
     override suspend fun getSecurityCenterState(): SecurityCenterUiState {
+        walletGraphRecoveryManager.ensureServerWalletGraphRecoveredIfMissing()
         val user = paymentRepository.getCachedCurrentUser()
         val currentAccountId = paymentRepository.getCurrentUserId()
         val localWallet = walletSecretStore.getAnyMnemonicRecord()
@@ -3203,6 +3215,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             walletSecretStore.upsertMnemonicForWallet(
                 accountId = accountId,
                 walletId = detail.wallet.walletId,
+                walletName = detail.wallet.walletName,
                 keySlotId = keySlot.keySlotId,
                 mnemonic = mnemonic,
                 mnemonicHash = mnemonicHash,

@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, randomUUID } from 'crypto';
@@ -2260,36 +2261,28 @@ export class WalletService {
             serviceEnabled: true,
           };
         } catch (error) {
-          this.logger.error('Solana broadcast failed, falling back to mock', error);
-          // Fall through to mock behavior (graceful degradation)
+          this.logger.error('Solana broadcast failed', error);
+          throw new ServiceUnavailableException({
+            code: 'SOLANA_BROADCAST_FAILED',
+            message:
+              error instanceof Error && error.message
+                ? error.message
+                : 'Failed to broadcast transaction',
+          });
         }
       }
 
-      // Service disabled or unavailable - use mock behavior with proper logging
       if (!this.solanaClient.isEnabled()) {
-        this.logger.warn(
-          'Solana service is disabled, using mock broadcast. ' +
-            'Set SOLANA_SERVICE_ENABLED=true to enable real chain calls.',
-        );
-      } else if (!dto.serializedTx) {
-        this.logger.warn(
-          'serializedTx not provided, using mock broadcast. ' +
-            'Provide serializedTx for real chain broadcast.',
-        );
+        throw new ServiceUnavailableException({
+          code: 'SOLANA_BROADCAST_DISABLED',
+          message: 'Solana broadcast service is disabled',
+        });
       }
 
-      return {
-        networkCode: dto.networkCode,
-        broadcasted: true,
-        txHash: dto.clientTxHash ?? `sol_proxy_${randomUUID().slice(0, 16)}`,
-        acceptedAt: new Date().toISOString(),
-        serviceEnabled: this.solanaClient.isEnabled(),
-        note: !this.solanaClient.isEnabled()
-          ? 'Mock mode - set SOLANA_SERVICE_ENABLED=true for real calls'
-          : !dto.serializedTx
-            ? 'Mock mode - provide serializedTx for real broadcast'
-            : 'Mock mode - service unavailable',
-      };
+      throw new BadRequestException({
+        code: 'WALLET_MISSING_SERIALIZED_TX',
+        message: 'Missing serialized transaction for Solana proxy broadcast',
+      });
     }
 
     if (dto.networkCode === 'TRON') {

@@ -190,8 +190,8 @@ fun NavGraphBuilder.installCryptoVpnP1Routes(
         )
         OrderDetailRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.orderList.pattern) },
-            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.plans.pattern) },
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletPaymentConfirmRoute(args.orderId)) },
+            onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.orderList.pattern) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )
     }

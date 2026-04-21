@@ -37,6 +37,8 @@ import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
 import com.v2ray.ang.payment.data.model.LoginRequest
 import com.v2ray.ang.payment.data.model.Order
 import com.v2ray.ang.payment.data.repository.PaymentRepository
+import com.v2ray.ang.payment.wallet.LocalWalletGraphRecoveryManager
+import com.v2ray.ang.payment.wallet.WalletKeyManager
 import com.v2ray.ang.payment.wallet.WalletSecretStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -50,6 +52,12 @@ class RealP0Repository(context: Context) : P0Repository {
     private val appContext = context.applicationContext
     private val paymentRepository = PaymentRepository(appContext)
     private val walletSecretStore = WalletSecretStore(appContext)
+    private val walletKeyManager = WalletKeyManager(walletSecretStore)
+    private val walletGraphRecoveryManager = LocalWalletGraphRecoveryManager(
+        paymentRepository = paymentRepository,
+        walletSecretStore = walletSecretStore,
+        walletKeyManager = walletKeyManager,
+    )
 
     override suspend fun getCachedWalletHomeState(selectedWalletId: String?): WalletHomeUiState? = withContext(Dispatchers.IO) {
         val currentUserId = paymentRepository.getCurrentUserId() ?: return@withContext null
@@ -955,6 +963,7 @@ class RealP0Repository(context: Context) : P0Repository {
     }
 
     private suspend fun resolvePostAuthRoute(): String {
+        walletGraphRecoveryManager.ensureServerWalletGraphRecoveredIfMissing()
         val cachedWallets = paymentRepository.getCachedWallets()
         val wallets = if (cachedWallets.isEmpty()) {
             paymentRepository.listWallets().getOrElse { cachedWallets }
@@ -962,6 +971,9 @@ class RealP0Repository(context: Context) : P0Repository {
             cachedWallets
         }
         if (wallets.isNotEmpty()) {
+            return CryptoVpnRouteSpec.walletHome.pattern
+        }
+        if (walletSecretStore.getAnyMnemonicRecord() != null) {
             return CryptoVpnRouteSpec.walletHome.pattern
         }
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
