@@ -39,6 +39,17 @@ class LaunchSplashActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        routeOverride?.let { overrideRoute ->
+            startActivity(
+                ComposeContainerActivity.createIntent(
+                    context = this,
+                    startRoute = overrideRoute,
+                ),
+            )
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+            finish()
+            return
+        }
         if (resumeExistingComposeTaskIfPresent()) {
             return
         }

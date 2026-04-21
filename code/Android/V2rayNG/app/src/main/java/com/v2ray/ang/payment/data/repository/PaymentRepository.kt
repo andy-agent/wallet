@@ -2411,11 +2411,14 @@ class PaymentRepository(context: Context) {
             }
         }
         val normalizedIconUrl = iconUrl?.trim()?.takeIf { it.isNotBlank() } ?: return@withContext null
-        return@withContext downloadTokenIcon(
-            chainId = chainId,
-            tokenKey = normalizedTokenKey,
-            iconUrl = normalizedIconUrl,
-        )
+        cacheSyncScope.launch {
+            downloadTokenIcon(
+                chainId = chainId,
+                tokenKey = normalizedTokenKey,
+                iconUrl = normalizedIconUrl,
+            )
+        }
+        return@withContext null
     }
 
     suspend fun upsertWalletLifecycle(

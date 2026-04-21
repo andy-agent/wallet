@@ -6,19 +6,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.lifecycle.lifecycleScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.v2ray.ang.composeui.navigation.AppNavGraph
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.v2ray.ang.composeui.common.repository.RealCryptoVpnRepository
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.repository.RealP0Repository
 import com.v2ray.ang.payment.data.repository.PaymentRepository
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
 /**
@@ -60,6 +62,17 @@ class ComposeContainerActivity : ComponentActivity() {
                         p0Repository = p0Repository,
                         repository = repository,
                     )
+                    LaunchedEffect(startRoute) {
+                        val currentRoute = navController.currentBackStackEntry?.destination?.route
+                        if (currentRoute != null && currentRoute != startRoute) {
+                            navController.navigate(startRoute) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
                 }
             }
         }

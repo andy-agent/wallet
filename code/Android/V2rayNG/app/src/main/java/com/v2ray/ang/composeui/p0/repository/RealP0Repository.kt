@@ -1,6 +1,8 @@
 package com.v2ray.ang.composeui.p0.repository
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.model.AssetHolding
@@ -57,7 +59,14 @@ class RealP0Repository(context: Context) : P0Repository {
         val walletOptions = buildWalletHomeWalletOptions(
             wallets = paymentRepository.getCachedWallets(),
             fetchRemoteIfMissing = false,
-        )
+        ).ifEmpty {
+            buildSyntheticWalletHomeWalletOptions(
+                walletId = cachedOverview?.walletId ?: lifecycle?.walletId,
+                walletName = cachedOverview?.walletName ?: lifecycle?.walletName ?: lifecycle?.displayName,
+                networkCode = cachedOverview?.selectedNetworkCode,
+                address = cachedOverview?.defaultAddress,
+            )
+        }
         val hasWalletGraph = walletOptions.isNotEmpty()
         val successfulOrders = readLocalOrders(currentUserId).filter { it.status == "COMPLETED" }
 
@@ -191,14 +200,39 @@ class RealP0Repository(context: Context) : P0Repository {
         val cachedUser = paymentRepository.getCachedCurrentUser()
         val currentUserId = paymentRepository.getCurrentUserId()
         val cachedOrders = currentUserId?.let { paymentRepository.getCachedOrders(it) }.orEmpty()
+        val cachedWallets = currentUserId?.let { paymentRepository.getCachedWallets() }.orEmpty()
+        val cachedLifecycle = currentUserId?.let { paymentRepository.getCachedWalletLifecycle(it) }
         val accessToken = paymentRepository.getAccessToken()
         val refreshToken = paymentRepository.getRefreshToken()
         val hasPersistedAccountContext = cachedUser != null
-        val hasPersistedBusinessCache = cachedOrders.isNotEmpty()
+        val hasPersistedBusinessCache = cachedOrders.isNotEmpty() || cachedWallets.isNotEmpty() || cachedLifecycle != null
         val hasTokenOnlyResidue =
             !currentUserId.isNullOrBlank() ||
                 !accessToken.isNullOrBlank() ||
                 !refreshToken.isNullOrBlank()
+        if (!hasUsableNetwork() && (hasPersistedAccountContext || hasPersistedBusinessCache)) {
+            return@withContext SplashUiState(
+                checkingSecureBoot = false,
+                versionLabel = "v${BuildConfig.VERSION_NAME}",
+                buildStatus = cachedUser?.email
+                    ?: cachedUser?.username
+                    ?: currentUserId
+                    ?: "已读取本地缓存",
+                progress = 1f,
+                progressHeadline = "离线进入应用",
+                progressDetail = "检测到本地账户和业务缓存，正在进入已缓存页面。",
+                authResolved = true,
+                readyToNavigate = true,
+                nextRoute = resolvePostAuthRoute(),
+                loadState = P0LoadState.READY,
+                accountLabel = cachedUser?.email ?: cachedUser?.username ?: "缓存账户",
+                subscriptionLabel = if (cachedOrders.isEmpty()) {
+                    if (cachedWallets.isNotEmpty()) "已读取本地钱包缓存" else "已读取本地账户数据"
+                } else {
+                    "${cachedOrders.size} 笔缓存订单"
+                },
+            )
+        }
         val meResult = paymentRepository.getMe()
 
         if (meResult.isSuccess) {
@@ -758,12 +792,22 @@ class RealP0Repository(context: Context) : P0Repository {
         forceRefresh: Boolean,
     ): WalletHomeUiState {
         val cachedWallets = paymentRepository.getCachedWallets()
+        val cachedLifecycle = paymentRepository.getCachedWalletLifecycle()
+        val cachedWalletOverview = paymentRepository.getCachedWalletOverview(walletId = selectedWalletId)
         val wallets = if (forceRefresh || cachedWallets.isEmpty()) {
             paymentRepository.listWallets().getOrElse { cachedWallets }
         } else {
             cachedWallets
         }
         val walletOptions = buildWalletHomeWalletOptions(wallets, fetchRemoteIfMissing = forceRefresh || wallets.isEmpty())
+            .ifEmpty {
+                buildSyntheticWalletHomeWalletOptions(
+                    walletId = cachedWalletOverview?.walletId ?: cachedLifecycle?.walletId,
+                    walletName = cachedWalletOverview?.walletName ?: cachedLifecycle?.walletName ?: cachedLifecycle?.displayName,
+                    networkCode = cachedWalletOverview?.selectedNetworkCode,
+                    address = cachedWalletOverview?.defaultAddress,
+                )
+            }
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         val hasUsableWallet = lifecycle.hasUsableWallet() || walletOptions.isNotEmpty()
         val resolvedWalletId = selectedWalletId
@@ -1153,6 +1197,46 @@ class RealP0Repository(context: Context) : P0Repository {
                     },
             )
         }
+    }
+
+    private fun buildSyntheticWalletHomeWalletOptions(
+        walletId: String?,
+        walletName: String?,
+        networkCode: String?,
+        address: String?,
+    ): List<WalletHomeWalletOption> {
+        val resolvedWalletId = walletId?.takeIf { it.isNotBlank() } ?: return emptyList()
+        val resolvedWalletName = walletName?.takeIf { it.isNotBlank() } ?: resolvedWalletId
+        val chainOptions = if (!networkCode.isNullOrBlank() && !address.isNullOrBlank()) {
+            listOf(
+                WalletHomeChainOption(
+                    chainId = normalizeWalletHomeChainId(networkCode),
+                    label = walletHomeChainLabel(networkCode),
+                    address = address,
+                    addressSuffix = address.takeLast(4),
+                ),
+            )
+        } else {
+            emptyList()
+        }
+        return listOf(
+            WalletHomeWalletOption(
+                walletId = resolvedWalletId,
+                walletName = resolvedWalletName,
+                walletKind = "cached",
+                isDefault = true,
+                chainOptions = chainOptions,
+            ),
+        )
+    }
+
+    private fun hasUsableNetwork(): Boolean {
+        val connectivityManager = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            ?: return false
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
     private suspend fun enrichWalletHomeState(
