@@ -5,7 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 
 @Entity(
-    tableName = "wallet_overview_cache",
+    tableName = "wallet_balances_cache",
     primaryKeys = ["userId", "walletId"],
     foreignKeys = [
         ForeignKey(
@@ -17,24 +17,13 @@ import androidx.room.Index
     ],
     indices = [Index(value = ["userId"]), Index(value = ["walletId"])],
 )
-data class WalletOverviewCacheEntity(
+data class WalletBalancesCacheEntity(
     val userId: String,
     val walletId: String,
     val accountId: String,
     val accountEmail: String,
     val walletName: String?,
-    val walletExists: Boolean,
-    val lifecycleStatus: String?,
-    val nextAction: String?,
-    val selectedNetworkCode: String,
-    val chainItemsJson: String,
-    val assetItemsJson: String,
-    val receiveState: String?,
-    val configuredAddressCount: Int,
-    val defaultAddress: String?,
-    val canShare: Boolean,
-    val totalPortfolioValueUsd: String?,
+    val itemsJson: String,
     val priceUpdatedAt: String?,
-    val alertsJson: String,
     val updatedAt: Long,
 )

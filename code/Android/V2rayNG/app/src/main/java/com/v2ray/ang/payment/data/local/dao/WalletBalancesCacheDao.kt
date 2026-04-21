@@ -4,17 +4,17 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.v2ray.ang.payment.data.local.entity.WalletOverviewCacheEntity
+import com.v2ray.ang.payment.data.local.entity.WalletBalancesCacheEntity
 
 @Dao
-interface WalletOverviewCacheDao {
+interface WalletBalancesCacheDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(item: WalletOverviewCacheEntity)
+    suspend fun upsert(item: WalletBalancesCacheEntity)
 
     @Query(
         """
-        SELECT * FROM wallet_overview_cache
+        SELECT * FROM wallet_balances_cache
         WHERE userId = :userId AND walletId = :walletId
         LIMIT 1
         """
@@ -22,21 +22,21 @@ interface WalletOverviewCacheDao {
     suspend fun getByUserIdAndWalletId(
         userId: String,
         walletId: String,
-    ): WalletOverviewCacheEntity?
+    ): WalletBalancesCacheEntity?
 
     @Query(
         """
-        SELECT * FROM wallet_overview_cache
+        SELECT * FROM wallet_balances_cache
         WHERE userId = :userId
         ORDER BY updatedAt DESC
         LIMIT 1
         """
     )
-    suspend fun getLatestByUserId(userId: String): WalletOverviewCacheEntity?
+    suspend fun getLatestByUserId(userId: String): WalletBalancesCacheEntity?
 
-    @Query("DELETE FROM wallet_overview_cache WHERE userId = :userId")
+    @Query("DELETE FROM wallet_balances_cache WHERE userId = :userId")
     suspend fun deleteByUserId(userId: String)
 
-    @Query("DELETE FROM wallet_overview_cache")
+    @Query("DELETE FROM wallet_balances_cache")
     suspend fun deleteAll()
 }

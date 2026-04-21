@@ -651,6 +651,10 @@ data class WalletBalancesData(
     val accountId: String,
     @SerializedName("accountEmail")
     val accountEmail: String,
+    @SerializedName("walletId")
+    val walletId: String? = null,
+    @SerializedName("walletName")
+    val walletName: String? = null,
     val items: List<WalletBalanceItemData>,
 )
 
@@ -804,12 +808,30 @@ data class WalletOverviewData(
     val accountId: String,
     @SerializedName("accountEmail")
     val accountEmail: String,
+    @SerializedName("walletExists")
+    val walletExists: Boolean = false,
+    @SerializedName("walletId")
+    val walletId: String? = null,
+    @SerializedName("walletName")
+    val walletName: String? = null,
+    @SerializedName("lifecycleStatus")
+    val lifecycleStatus: String? = null,
+    @SerializedName("nextAction")
+    val nextAction: String? = null,
     @SerializedName("selectedNetworkCode")
     val selectedNetworkCode: String,
     @SerializedName("chainItems")
     val chainItems: List<WalletChainItemData>,
     @SerializedName("assetItems")
     val assetItems: List<WalletAssetItemData>,
+    @SerializedName("receiveState")
+    val receiveState: String? = null,
+    @SerializedName("configuredAddressCount")
+    val configuredAddressCount: Int = 0,
+    @SerializedName("defaultAddress")
+    val defaultAddress: String? = null,
+    @SerializedName("canShare")
+    val canShare: Boolean = false,
     @SerializedName("totalPortfolioValueUsd")
     val totalPortfolioValueUsd: String? = null,
     @SerializedName("priceUpdatedAt")
