@@ -63,8 +63,7 @@ class ComposeContainerActivity : ComponentActivity() {
                         repository = repository,
                     )
                     LaunchedEffect(startRoute) {
-                        val currentRoute = navController.currentBackStackEntry?.destination?.route
-                        if (currentRoute != null && currentRoute != startRoute) {
+                        if (startRoute != CryptoVpnRouteSpec.splash.pattern) {
                             navController.navigate(startRoute) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     inclusive = true
