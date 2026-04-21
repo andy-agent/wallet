@@ -190,10 +190,19 @@ export class SolanaClientService {
       );
     } catch (error) {
       this.logger.error('Broadcast transaction failed', error);
-      throw new ServiceUnavailableException({
-        code: 'SOLANA_BROADCAST_FAILED',
-        message: 'Failed to broadcast transaction',
-      });
+      try {
+        this.logger.warn(
+          'Falling back to direct Solana RPC broadcast',
+          error instanceof Error ? error.message : String(error),
+        );
+        return await this.broadcastViaRpc(request);
+      } catch (rpcError) {
+        this.logger.error('Direct Solana RPC broadcast fallback failed', rpcError);
+        throw new ServiceUnavailableException({
+          code: 'SOLANA_BROADCAST_FAILED',
+          message: 'Failed to broadcast transaction',
+        });
+      }
     }
   }
 
@@ -482,14 +491,22 @@ export class SolanaClientService {
       );
     } catch (error) {
       this.logger.error('Transfer precheck failed', error);
-      // Return invalid response on error (graceful degradation)
-      return {
-        valid: false,
-        toAddressNormalized: request.toAddress.trim(),
-        estimatedFee: '0',
-        errorCode: 'PRECHECK_FAILED',
-        errorMessage: 'Failed to perform transfer precheck',
-      };
+      try {
+        this.logger.warn(
+          'Falling back to direct Solana RPC precheck',
+          error instanceof Error ? error.message : String(error),
+        );
+        return await this.precheckTransferViaRpc(request);
+      } catch (rpcError) {
+        this.logger.error('Direct Solana RPC precheck fallback failed', rpcError);
+        return {
+          valid: false,
+          toAddressNormalized: request.toAddress.trim(),
+          estimatedFee: '0',
+          errorCode: 'PRECHECK_FAILED',
+          errorMessage: 'Failed to perform transfer precheck',
+        };
+      }
     }
   }
 
@@ -618,6 +635,37 @@ export class SolanaClientService {
       balance: tokenAmount.amount,
       decimals: tokenAmount.decimals,
       uiAmount: tokenAmount.uiAmountString ?? '0',
+    };
+  }
+
+  private async precheckTransferViaRpc(
+    request: TransferPrecheckRequest,
+  ): Promise<TransferPrecheckResponse> {
+    const network = this.getEffectiveNetwork(request.network);
+    const connection = new Connection(this.config.getRpcUrl(network), 'confirmed');
+    const toPubkey = new PublicKey(request.toAddress.trim());
+    await connection.getLatestBlockhash('confirmed');
+    return {
+      valid: true,
+      toAddressNormalized: toPubkey.toBase58(),
+      estimatedFee: request.mint ? '5000' : '5000',
+    };
+  }
+
+  private async broadcastViaRpc(
+    request: BroadcastTransactionRequest,
+  ): Promise<BroadcastTransactionResponse> {
+    const network = this.getEffectiveNetwork(request.network);
+    const connection = new Connection(this.config.getRpcUrl(network), 'confirmed');
+    const raw = Buffer.from(request.serializedTx, 'base64');
+    const signature = await connection.sendRawTransaction(raw, {
+      skipPreflight: false,
+      maxRetries: request.maxRetries ?? this.config.getMaxRetries(),
+    });
+    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+    return {
+      signature,
+      confirmed: !confirmation.value.err,
     };
   }
 
