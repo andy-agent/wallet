@@ -311,7 +311,7 @@ fun NavGraphBuilder.installCryptoVpnP2ExtendedRoutes(
         )
         ConfirmMnemonicRoute(
             viewModel = vm,
-            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.walletHome.pattern) },
+            onPrimaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.securityCenter.pattern) },
             onSecondaryAction = { navController.navigateSingleTop(CryptoVpnRouteSpec.backupMnemonicRoute(args.walletId)) },
             onBottomNav = { navController.navigateSingleTop(it) },
         )

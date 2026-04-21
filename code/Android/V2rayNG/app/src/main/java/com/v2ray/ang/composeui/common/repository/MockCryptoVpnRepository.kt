@@ -184,6 +184,11 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         return withdrawPreviewState()
     }
 
+    override suspend fun submitWithdrawal(
+        amount: String,
+        payoutAddress: String,
+    ): Result<String> = Result.success("MOCK-WITHDRAW-001")
+
     override suspend fun getProfileState(): ProfileUiState {
         return profilePreviewState()
     }

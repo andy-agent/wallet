@@ -1,10 +1,12 @@
 package com.v2ray.ang.composeui.pages.p2
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import com.v2ray.ang.composeui.p2.model.WithdrawEvent
 import com.v2ray.ang.composeui.p2.model.WithdrawUiState
 import com.v2ray.ang.composeui.p2.model.withdrawPreviewState
@@ -19,12 +21,23 @@ fun WithdrawRoute(
     onBottomNav: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     WithdrawScreen(
         uiState = uiState,
         onEvent = { event ->
             viewModel.onEvent(event)
             when (event) {
-                WithdrawEvent.PrimaryActionClicked -> onPrimaryAction()
+                WithdrawEvent.PrimaryActionClicked -> {
+                    viewModel.submitWithdrawal(
+                        onSuccess = {
+                            Toast.makeText(context, "提现申请已提交", Toast.LENGTH_SHORT).show()
+                            onPrimaryAction()
+                        },
+                        onError = { message ->
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        },
+                    )
+                }
                 WithdrawEvent.SecondaryActionClicked -> onSecondaryAction?.invoke()
                 else -> Unit
             }

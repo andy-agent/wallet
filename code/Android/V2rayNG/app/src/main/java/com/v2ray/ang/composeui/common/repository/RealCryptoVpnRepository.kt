@@ -1380,6 +1380,14 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
     }
 
+    override suspend fun submitWithdrawal(
+        amount: String,
+        payoutAddress: String,
+    ): Result<String> {
+        val result = paymentRepository.createWithdrawal(amount.trim(), payoutAddress.trim())
+        return result.map { it.requestNo }
+    }
+
     override suspend fun getCachedProfileState(): ProfileUiState? {
         val user = paymentRepository.getCachedCurrentUser() ?: return null
         return buildProfileUiState(

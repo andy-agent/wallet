@@ -39,4 +39,25 @@ class WithdrawViewModel(
             _uiState.value = repository.getWithdrawState()
         }
     }
+
+    fun submitWithdrawal(
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit,
+    ) {
+        val address = _uiState.value.fields.firstOrNull { it.key == "address" }?.value.orEmpty().trim()
+        val amount = _uiState.value.fields.firstOrNull { it.key == "amount" }?.value.orEmpty().trim()
+        if (address.isBlank() || amount.isBlank()) {
+            onError("请填写提现地址和提现金额")
+            return
+        }
+        viewModelScope.launch {
+            val result = repository.submitWithdrawal(amount = amount, payoutAddress = address)
+            if (result.isSuccess) {
+                refresh()
+                onSuccess(result.getOrNull().orEmpty())
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "提交提现失败")
+            }
+        }
+    }
 }

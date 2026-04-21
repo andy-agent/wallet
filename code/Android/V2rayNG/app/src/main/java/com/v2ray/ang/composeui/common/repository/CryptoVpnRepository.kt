@@ -112,6 +112,10 @@ interface CryptoVpnRepository {
     suspend fun getCommissionLedgerState(): CommissionLedgerUiState
     suspend fun getCachedWithdrawState(): WithdrawUiState? = null
     suspend fun getWithdrawState(): WithdrawUiState
+    suspend fun submitWithdrawal(
+        amount: String,
+        payoutAddress: String,
+    ): Result<String> = Result.failure(IllegalStateException("Withdraw submit unavailable"))
     suspend fun getCachedProfileState(): ProfileUiState? = null
     suspend fun getProfileState(): ProfileUiState
     suspend fun getLegalDocumentsState(): LegalDocumentsUiState
