@@ -31,6 +31,17 @@ interface SolanaCustomAssetConfig {
 }
 
 const DEFAULT_TRON_USDT_CONTRACT = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+const DEFAULT_SOLANA_ORDER_ASSETS: SolanaCustomAssetConfig[] = [
+  {
+    assetCode: 'ANDY',
+    displayName: 'ANDY (Solana)',
+    symbol: 'ANDY',
+    decimals: 9,
+    contractAddress: '8zFP8GeszFz7FvuHesguekTxDjm4KLsJEYBZTKyMLEoE',
+    walletVisible: true,
+    orderPayable: true,
+  },
+];
 
 export function buildPaymentAssetCatalog(
   configService: ConfigService,
@@ -99,7 +110,7 @@ export function buildPaymentAssetCatalog(
   ];
 
   items.push(
-    ...parseSolanaCustomAssets(configService)
+    ...mergeSolanaCustomAssets(configService)
       .map((item) => toSolanaCustomPaymentAsset(item, solanaOrderPayable))
       .filter((item) => item !== null),
   );
@@ -172,6 +183,20 @@ function parseSolanaCustomAssets(
   }
 }
 
+function mergeSolanaCustomAssets(
+  configService: ConfigService,
+): SolanaCustomAssetConfig[] {
+  const configured = parseSolanaCustomAssets(configService);
+  const merged = new Map<string, SolanaCustomAssetConfig>();
+  for (const item of DEFAULT_SOLANA_ORDER_ASSETS) {
+    merged.set(item.assetCode.trim().toUpperCase(), item);
+  }
+  for (const item of configured) {
+    merged.set(item.assetCode.trim().toUpperCase(), item);
+  }
+  return Array.from(merged.values());
+}
+
 function toSolanaCustomPaymentAsset(
   item: SolanaCustomAssetConfig,
   solanaOrderPayable: boolean,
@@ -184,7 +209,8 @@ function toSolanaCustomPaymentAsset(
 
   const usdPrice = item.usdPrice?.trim() || null;
   const marketInstrumentId = item.marketInstrumentId?.trim() || null;
-  const usdPriceMode = marketInstrumentId ? 'market' : 'fixed';
+  const usdPriceMode =
+    marketInstrumentId || !usdPrice ? 'market' : 'fixed';
   if (usdPriceMode === 'fixed' && (!usdPrice || Number(usdPrice) <= 0)) {
     return null;
   }

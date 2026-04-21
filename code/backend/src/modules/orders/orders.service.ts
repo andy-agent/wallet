@@ -588,21 +588,34 @@ export class OrdersService {
 
     if (asset.usdPriceMode === 'market') {
       try {
-        const detail = await this.marketService.getInstrumentDetail(
-          asset.marketInstrumentId ?? 'solana',
-        );
-        const lastPrice = detail.ticker24h.lastPrice;
-        const usdPrice = lastPrice ? Number(lastPrice) : NaN;
+        const usdPrice = asset.contractAddress
+          ? Number(
+              (
+                await this.marketService.getOnchainTokenQuote(
+                  asset.networkCode.toLowerCase(),
+                  asset.contractAddress,
+                )
+              )?.currentPrice ?? NaN,
+            )
+          : Number(
+              (
+                await this.marketService.getInstrumentDetail(
+                  asset.marketInstrumentId ?? 'solana',
+                )
+              ).ticker24h.lastPrice ?? NaN,
+            );
         if (Number.isFinite(usdPrice) && usdPrice > 0) {
           return (Number(planPriceUsd) / usdPrice).toFixed(9);
         }
       } catch (error) {
         this.logger.warn(
-          'Failed to resolve live SOL/USD price for order amount conversion, falling back to static SOL amount',
+          `Failed to resolve live ${asset.assetCode}/USD price for order amount conversion, falling back to static amount`,
           error instanceof Error ? error.message : `${error}`,
         );
       }
-      return asset.assetCode === 'SOL' ? '0.045000000' : Number(planPriceUsd).toFixed(asset.decimals);
+      return asset.assetCode === 'SOL'
+        ? '0.045000000'
+        : Number(planPriceUsd).toFixed(asset.decimals);
     }
 
     if (asset.usdPriceValue) {
