@@ -5,6 +5,8 @@ import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { ResponseEnvelopeInterceptor } from '../src/common/interceptors/response-envelope.interceptor';
+import { MarketService } from '../src/modules/market/market.service';
+import { SolanaClientService } from '../src/modules/solana-client/solana-client.service';
 import { TronClientService } from '../src/modules/tron-client/tron-client.service';
 
 describe('Wallet (e2e)', () => {
@@ -20,21 +22,49 @@ describe('Wallet (e2e)', () => {
   const originalSolanaCustomOrderAssetsJson =
     process.env.SOLANA_CUSTOM_ORDER_ASSETS_JSON;
   const originalWalletBackupRecipients = process.env.WALLET_BACKUP_RECIPIENTS;
+  const hasLiveCustomTokenSearchProviders = Boolean(
+    process.env.JUPITER_API_KEY &&
+      process.env.COINGECKO_API_KEY &&
+      process.env.TRONSCAN_API_KEY,
+  );
 
-  async function bootstrapApp(
+  async function bootstrapApp(options?: {
     tronClientOverride?: Partial<
       Pick<
         TronClientService,
         'isEnabled' | 'validateAddress' | 'broadcastTransaction'
       >
-    >,
-  ) {
+    >;
+    solanaClientOverride?: Partial<
+      Pick<
+        SolanaClientService,
+        'isEnabled' | 'getBalance' | 'validateAddress' | 'getUsdtMint'
+      >
+    >;
+    marketServiceOverride?: Partial<
+      Pick<MarketService, 'getInstrumentDetail' | 'getOnchainTokenQuote'>
+    >;
+  }) {
     const moduleBuilder = Test.createTestingModule({
       imports: [AppModule],
     });
 
-    if (tronClientOverride) {
-      moduleBuilder.overrideProvider(TronClientService).useValue(tronClientOverride);
+    if (options?.tronClientOverride) {
+      moduleBuilder
+        .overrideProvider(TronClientService)
+        .useValue(options.tronClientOverride);
+    }
+
+    if (options?.solanaClientOverride) {
+      moduleBuilder
+        .overrideProvider(SolanaClientService)
+        .useValue(options.solanaClientOverride);
+    }
+
+    if (options?.marketServiceOverride) {
+      moduleBuilder
+        .overrideProvider(MarketService)
+        .useValue(options.marketServiceOverride);
     }
 
     const moduleFixture: TestingModule = await moduleBuilder.compile();
@@ -283,20 +313,22 @@ describe('Wallet (e2e)', () => {
         ]);
       });
 
-    await request(app.getHttpServer())
-      .get('/api/client/v1/wallet/custom-tokens/search?chainId=solana&query=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
-      .set('authorization', `Bearer ${accessToken}`)
-      .expect(200)
-      .expect((res) => {
-        expect(res.body.data.items).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              tokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-              chainId: 'solana',
-            }),
-          ]),
-        );
-      });
+    if (hasLiveCustomTokenSearchProviders) {
+      await request(app.getHttpServer())
+        .get('/api/client/v1/wallet/custom-tokens/search?chainId=solana&query=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
+        .set('authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                tokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+                chainId: 'solana',
+              }),
+            ]),
+          );
+        });
+    }
 
     await request(app.getHttpServer())
       .delete(`/api/client/v1/wallets/${walletId}/custom-tokens/${customTokenId}`)
@@ -315,6 +347,123 @@ describe('Wallet (e2e)', () => {
   );
 
   it(
+    'wallet overview scopes walletId and resolves custom sol token balance and price',
+    async () => {
+      await app.close();
+      await bootstrapApp({
+        solanaClientOverride: {
+          isEnabled: () => true,
+          validateAddress: jest.fn().mockReturnValue(true),
+          getUsdtMint: jest
+            .fn()
+            .mockReturnValue('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'),
+          getBalance: jest.fn().mockImplementation(async (request) => ({
+            address: request.address,
+            mint: request.mint ?? null,
+            balance: request.mint ? '12345000000000' : '1000000000',
+            decimals: 9,
+            uiAmount: request.mint ? '12345' : '1',
+          })),
+        },
+        marketServiceOverride: {
+          getInstrumentDetail: jest.fn().mockResolvedValue({
+            serverTime: Date.now(),
+            ticker24h: {
+              lastPrice: '85.620000',
+              pctChange24h: '-0.62',
+            },
+          }),
+          getOnchainTokenQuote: jest.fn().mockResolvedValue({
+            currentPrice: '0.0002841',
+            priceChangePct24h: '12.34',
+            updatedAt: Date.now(),
+          }),
+        },
+      });
+
+      const walletResponse = await request(app.getHttpServer())
+        .post('/api/client/v1/wallets/create-mnemonic')
+        .set('authorization', `Bearer ${accessToken}`)
+        .send({
+          walletName: 'Token Wallet',
+          keySlots: [
+            {
+              slotCode: 'SOLANA_0',
+              chainFamily: 'SOLANA',
+              derivationType: 'MNEMONIC',
+            },
+          ],
+          chainAccounts: [
+            {
+              slotCode: 'SOLANA_0',
+              chainFamily: 'SOLANA',
+              networkCode: 'SOLANA',
+              address: validSolanaAddress,
+              isEnabled: true,
+              isDefaultReceive: true,
+            },
+          ],
+        })
+        .expect(201);
+
+      const walletId = walletResponse.body.data.wallet.walletId as string;
+
+      await request(app.getHttpServer())
+        .post(`/api/client/v1/wallets/${walletId}/custom-tokens`)
+        .set('authorization', `Bearer ${accessToken}`)
+        .send({
+          chainId: 'solana',
+          tokenAddress: '8zFP8GeszFz7FvuHesguekTxDjm4KLsJEYBZTKyMLEoE',
+          name: 'ANDY',
+          symbol: 'ANDY',
+          decimals: 9,
+          iconUrl: 'https://example.com/andy.png',
+        })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .get(`/api/client/v1/wallet/overview?walletId=${walletId}&forceRefresh=true`)
+        .set('authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.walletId).toBe(walletId);
+          expect(res.body.data.walletName).toBe('Token Wallet');
+          expect(res.body.data.assetItems).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                symbol: 'ANDY',
+                contractAddress: '8zFP8GeszFz7FvuHesguekTxDjm4KLsJEYBZTKyMLEoE',
+                balanceAddress: validSolanaAddress,
+                availableBalanceStatus: 'READY',
+                unitPriceUsd: '0.000284',
+                priceStatus: 'READY',
+              }),
+            ]),
+          );
+        });
+
+      await request(app.getHttpServer())
+        .get(`/api/client/v1/wallet/balances?walletId=${walletId}&forceRefresh=true`)
+        .set('authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.items).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                symbol: 'ANDY',
+                address: validSolanaAddress,
+                availableBalanceStatus: 'READY',
+                unitPriceUsd: '0.000284',
+                priceStatus: 'READY',
+              }),
+            ]),
+          );
+        });
+    },
+    20000,
+  );
+
+  (hasLiveCustomTokenSearchProviders ? it : it.skip)(
     'search endpoint returns real provider-backed results across chains',
     async () => {
       await request(app.getHttpServer())
@@ -1095,17 +1244,19 @@ describe('Wallet (e2e)', () => {
     process.env.TRON_SERVICE_ENABLED = 'true';
 
     await bootstrapApp({
-      isEnabled: () => true,
-      validateAddress: jest.fn().mockResolvedValue({
-        address: 'TLa2f6VPqDgRE67v1736s7bJ8Ray5wYjU7',
-        valid: true,
-        type: 'tron',
-      }),
-      broadcastTransaction: jest.fn().mockResolvedValue({
-        success: true,
-        txHash: 'tron-remote-1',
-        acceptedAt: '2026-04-07T00:00:00.000Z',
-      }),
+      tronClientOverride: {
+        isEnabled: () => true,
+        validateAddress: jest.fn().mockResolvedValue({
+          address: 'TLa2f6VPqDgRE67v1736s7bJ8Ray5wYjU7',
+          valid: true,
+          type: 'tron',
+        }),
+        broadcastTransaction: jest.fn().mockResolvedValue({
+          success: true,
+          txHash: 'tron-remote-1',
+          acceptedAt: '2026-04-07T00:00:00.000Z',
+        }),
+      },
     });
 
     const tronEmail = `wallet-tron-${Date.now()}-${Math.random().toString(16).slice(2, 8)}@example.com`;
@@ -1163,15 +1314,17 @@ describe('Wallet (e2e)', () => {
     process.env.TRON_SERVICE_ENABLED = 'true';
 
     await bootstrapApp({
-      isEnabled: () => true,
-      validateAddress: jest.fn().mockResolvedValue({
-        address: 'TLa2f6VPqDgRE67v1736s7bJ8Ray5wYjU7',
-        valid: true,
-        type: 'tron',
-      }),
-      broadcastTransaction: jest
-        .fn()
-        .mockRejectedValue(new Error('tron remote unavailable')),
+      tronClientOverride: {
+        isEnabled: () => true,
+        validateAddress: jest.fn().mockResolvedValue({
+          address: 'TLa2f6VPqDgRE67v1736s7bJ8Ray5wYjU7',
+          valid: true,
+          type: 'tron',
+        }),
+        broadcastTransaction: jest
+          .fn()
+          .mockRejectedValue(new Error('tron remote unavailable')),
+      },
     });
 
     const tronFallbackEmail = `wallet-tron-fallback-${Date.now()}-${Math.random().toString(16).slice(2, 8)}@example.com`;

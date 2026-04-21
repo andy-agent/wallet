@@ -28,6 +28,14 @@ export class MarketConfig {
   }
 
   getCacheTtlMs(): number {
-    return Number(this.configService.get<string>('MARKET_CACHE_TTL_MS') ?? 60000);
+    return Number(this.configService.get<string>('MARKET_CACHE_TTL_MS') ?? 300000);
+  }
+
+  getDexScreenerBaseUrl(): string {
+    return (
+      this.configService.get<string>('MARKET_DEXSCREENER_BASE_URL') ??
+      this.configService.get<string>('DEXSCREENER_BASE_URL') ??
+      'https://api.dexscreener.com/latest'
+    );
   }
 }

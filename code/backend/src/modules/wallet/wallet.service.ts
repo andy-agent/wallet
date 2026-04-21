@@ -619,20 +619,33 @@ export class WalletService {
 
   async getOverview(accessToken: string, walletId?: string, forceRefresh = false) {
     const account = this.authService.getMe(accessToken);
+    const selectedWallet = walletId
+      ? await this.requireOwnedWallet(account.accountId, walletId)
+      : null;
+    const scopedWalletId = selectedWallet?.walletId;
     const lifecycle = await this.getWalletLifecycle(accessToken);
     const chains = this.getChains(accessToken).items;
     const baseAssets = this.getAssetCatalog(accessToken).items;
-    const customAssets = walletId
+    const scopedChainAccounts = scopedWalletId
+      ? await this.runtimeStateRepository.listWalletChainAccountsByWalletId(scopedWalletId)
+      : [];
+    const customAssets = scopedWalletId
       ? (
           await this.runtimeStateRepository.listWalletCustomTokensByWalletId({
-            walletId,
+            walletId: scopedWalletId,
           })
         ).map((item) => this.toCustomWalletAsset(item))
       : [];
     const assets = [...baseAssets, ...customAssets];
     const publicAddresses = (await this.listPublicAddresses(accessToken)).items
-      .filter((item) => !walletId || item.walletId === walletId);
-    const receiveSelection = await this.resolveReceiveSelection(accessToken, undefined, undefined, walletId);
+      .filter((item) => !scopedWalletId || item.walletId === scopedWalletId);
+    const receiveSelection = await this.resolveReceiveSelection(
+      accessToken,
+      undefined,
+      undefined,
+      scopedWalletId,
+      scopedChainAccounts,
+    );
     const orders = await this.listOwnedOrders(accessToken);
 
     const orderStatsByNetwork = new Map<
@@ -687,10 +700,28 @@ export class WalletService {
         (publicAddressCountByAsset.get(assetKey) ?? 0) + 1,
       );
     }
+    const chainAccountAddressByNetwork = this.buildChainAccountAddressByNetwork(
+      scopedChainAccounts,
+    );
+    assets.forEach((asset) => {
+      if (!chainAccountAddressByNetwork.has(asset.networkCode)) {
+        return;
+      }
+      publicAddressCountByNetwork.set(
+        asset.networkCode,
+        Math.max(publicAddressCountByNetwork.get(asset.networkCode) ?? 0, 1),
+      );
+      const assetKey = `${asset.networkCode}:${asset.assetCode}`;
+      publicAddressCountByAsset.set(
+        assetKey,
+        Math.max(publicAddressCountByAsset.get(assetKey) ?? 0, 1),
+      );
+    });
 
     const assetBalanceViews = await this.resolveAssetBalanceViews(
       assets,
       publicAddresses,
+      scopedChainAccounts,
     );
     const assetPriceViews = await this.resolveAssetPriceViews(
       assets,
@@ -780,17 +811,23 @@ export class WalletService {
     return {
       accountId: account.accountId,
       accountEmail: account.email,
-      walletExists: lifecycle.walletExists,
-      walletId: lifecycle.walletId,
-      walletName: lifecycle.walletName,
+      walletExists: scopedWalletId ? true : lifecycle.walletExists,
+      walletId: scopedWalletId ?? lifecycle.walletId,
+      walletName: selectedWallet?.walletName ?? lifecycle.walletName,
       lifecycleStatus: lifecycle.status,
-      nextAction: lifecycle.nextAction,
+      nextAction: scopedWalletId ? 'READY' : lifecycle.nextAction,
       selectedNetworkCode: receiveSelection.selectedNetworkCode || selectedNetworkCode,
       selectedAssetCode: receiveSelection.selectedAssetCode,
       totalPortfolioValueUsd: totalPortfolioValueUsd.toFixed(2),
       priceUpdatedAt: portfolioPriceUpdatedAt,
-      receiveState: lifecycle.receiveState,
-      configuredAddressCount: lifecycle.configuredAddressCount,
+      receiveState: scopedWalletId
+        ? receiveSelection.defaultAddress
+          ? 'READY'
+          : 'NO_ADDRESS'
+        : lifecycle.receiveState,
+      configuredAddressCount: scopedWalletId
+        ? this.countConfiguredAddresses(publicAddresses, chainAccountAddressByNetwork)
+        : lifecycle.configuredAddressCount,
       defaultAddress: receiveSelection.defaultAddress,
       canShare: Boolean(receiveSelection.defaultAddress),
       chainItems,
@@ -805,13 +842,20 @@ export class WalletService {
 
   async getBalances(accessToken: string, walletId?: string, forceRefresh = false) {
     const account = this.authService.getMe(accessToken);
+    const selectedWallet = walletId
+      ? await this.requireOwnedWallet(account.accountId, walletId)
+      : null;
+    const scopedWalletId = selectedWallet?.walletId;
     const baseAssets = this.getAssetCatalog(accessToken).items.filter(
       (item) => item.walletVisible,
     );
-    const customAssets = walletId
+    const scopedChainAccounts = scopedWalletId
+      ? await this.runtimeStateRepository.listWalletChainAccountsByWalletId(scopedWalletId)
+      : [];
+    const customAssets = scopedWalletId
       ? (
           await this.runtimeStateRepository.listWalletCustomTokensByWalletId({
-            walletId,
+            walletId: scopedWalletId,
           })
         ).map((item) => this.toCustomWalletAsset(item))
       : [];
@@ -820,10 +864,11 @@ export class WalletService {
       await this.runtimeStateRepository.listWalletPublicAddressesByAccountId({
         accountId: account.accountId,
       })
-    ).filter((item) => !walletId || item.walletId === walletId);
+    ).filter((item) => !scopedWalletId || item.walletId === scopedWalletId);
     const assetBalanceViews = await this.resolveAssetBalanceViews(
       assets,
       publicAddresses,
+      scopedChainAccounts,
     );
     const assetPriceViews = await this.resolveAssetPriceViews(
       assets,
@@ -1262,8 +1307,12 @@ export class WalletService {
       iconUrl?: string | null;
     }>,
     publicAddresses: WalletPublicAddressItem[],
+    chainAccounts: PersistedWalletChainAccountRecord[] = [],
   ) {
     const usablePublicAddresses = publicAddresses.filter(isUsableWalletPublicAddress);
+    const chainAccountAddressByNetwork = this.buildChainAccountAddressByNetwork(
+      chainAccounts,
+    );
     const entries = await Promise.all(
       assets.map(async (asset) => {
         const assetKey = asset.assetId;
@@ -1284,6 +1333,7 @@ export class WalletService {
           )?.address ??
           usablePublicAddresses.find((item) => item.networkCode === asset.networkCode)
             ?.address ??
+          chainAccountAddressByNetwork.get(asset.networkCode) ??
           null;
 
         if (!assetAddress) {
@@ -1691,6 +1741,7 @@ export class WalletService {
     requestedNetworkCode?: string,
     requestedAssetCode?: string,
     walletId?: string,
+    chainAccounts: PersistedWalletChainAccountRecord[] = [],
   ): Promise<WalletResolvedReceiveSelection> {
     const chains = this.getChains(accessToken).items;
     const assets = this.getAssetCatalog(accessToken).items.filter((item) => item.walletVisible);
@@ -1717,9 +1768,17 @@ export class WalletService {
           | undefined,
       )
     ).items.filter((item) => !walletId || item.walletId === walletId);
+    const chainAccountAddressByNetwork = this.buildChainAccountAddressByNetwork(
+      chainAccounts.length > 0
+        ? chainAccounts
+        : walletId
+          ? await this.runtimeStateRepository.listWalletChainAccountsByWalletId(walletId)
+          : [],
+    );
     const defaultAddress =
       publicAddresses.find((item) => item.isDefault)?.address ??
       publicAddresses[0]?.address ??
+      chainAccountAddressByNetwork.get(selectedNetworkCode as WalletNetworkCode) ??
       null;
 
     return {
@@ -1770,6 +1829,31 @@ export class WalletService {
       usdPriceValue: item.usdPriceValue,
       marketInstrumentId: item.marketInstrumentId,
     };
+  }
+
+  private buildChainAccountAddressByNetwork(
+    chainAccounts: PersistedWalletChainAccountRecord[],
+  ): Map<WalletNetworkCode, string> {
+    const resolved = new Map<WalletNetworkCode, string>();
+    chainAccounts
+      .filter((item) => item.isEnabled && item.address.trim().length > 0)
+      .sort((left, right) => Number(right.isDefaultReceive) - Number(left.isDefaultReceive))
+      .forEach((item) => {
+        if (!resolved.has(item.networkCode)) {
+          resolved.set(item.networkCode, item.address.trim());
+        }
+      });
+    return resolved;
+  }
+
+  private countConfiguredAddresses(
+    publicAddresses: WalletPublicAddressItem[],
+    chainAccountAddressByNetwork: Map<WalletNetworkCode, string>,
+  ) {
+    return new Set([
+      ...publicAddresses.map((item) => item.address),
+      ...Array.from(chainAccountAddressByNetwork.values()),
+    ]).size;
   }
 
   private resolveNextAction(

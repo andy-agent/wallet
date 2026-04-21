@@ -110,6 +110,25 @@ type CoinGeckoSimpleTokenPriceResponse = {
   };
 };
 
+type DexScreenerSearchResponse = {
+  pairs?: Array<{
+    chainId?: string;
+    priceUsd?: string | null;
+    priceChange?: {
+      h24?: string | number | null;
+    };
+    liquidity?: {
+      usd?: string | number | null;
+    };
+    baseToken?: {
+      address?: string;
+    };
+    quoteToken?: {
+      address?: string;
+    };
+  }>;
+};
+
 @Injectable()
 export class CoinGeckoMarketDataProvider implements MarketDataProvider {
   private readonly logger = new Logger(CoinGeckoMarketDataProvider.name);
@@ -238,7 +257,7 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
         const priceChange =
           response.data?.attributes?.h24_price_change_percentage?.[normalizedAddress];
         if (tokenPrice === undefined && priceChange === undefined) {
-          return null;
+          return this.getDexScreenerTokenQuote(normalizedChainId, normalizedAddress);
         }
         return {
           currentPrice: this.parseLooseNumber(tokenPrice),
@@ -431,6 +450,85 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
         return 'base';
       case 'optimism':
         return 'optimism';
+      case 'avalanche':
+      case 'avalanche_c':
+        return 'avax';
+      default:
+        return null;
+    }
+  }
+
+  private async getDexScreenerTokenQuote(
+    chainId: string,
+    address: string,
+  ): Promise<ProviderTokenQuote | null> {
+    const normalizedChainId = this.normalizeDexScreenerChainId(chainId);
+    if (!normalizedChainId) {
+      return null;
+    }
+    try {
+      const requestUrl = new URL(
+        `${this.config.getDexScreenerBaseUrl().replace(/\/$/, '')}/dex/search`,
+      );
+      requestUrl.searchParams.set('q', address);
+      const response = await fetch(requestUrl, {
+        signal: AbortSignal.timeout(this.config.getProviderTimeoutMs()),
+      });
+      if (!response.ok) {
+        return null;
+      }
+      const payload = (await response.json()) as DexScreenerSearchResponse;
+      const match = (payload.pairs ?? [])
+        .filter(
+          (pair) =>
+            this.normalizeDexScreenerChainId(pair.chainId) === normalizedChainId &&
+            pair.baseToken?.address?.trim().toLowerCase() === address,
+        )
+        .sort((left, right) => {
+          const leftLiquidity = this.toNumberOrNull(left.liquidity?.usd) ?? 0;
+          const rightLiquidity = this.toNumberOrNull(right.liquidity?.usd) ?? 0;
+          return rightLiquidity - leftLiquidity;
+        })
+        .find((pair) => this.parseLooseNumber(pair.priceUsd) != null);
+      if (!match) {
+        return null;
+      }
+      return {
+        currentPrice: this.parseLooseNumber(match.priceUsd),
+        priceChangePct24h: this.parseLooseNumber(match.priceChange?.h24),
+        lastUpdatedAt: Date.now(),
+      };
+    } catch (error) {
+      this.logger.warn(
+        `DexScreener token quote fallback failed for ${chainId}:${address}`,
+        error instanceof Error ? error.message : String(error),
+      );
+      return null;
+    }
+  }
+
+  private normalizeDexScreenerChainId(chainId?: string): string | null {
+    switch ((chainId ?? '').trim().toLowerCase()) {
+      case 'solana':
+        return 'solana';
+      case 'tron':
+        return 'tron';
+      case 'ethereum':
+        return 'eth';
+      case 'eth':
+        return 'eth';
+      case 'bsc':
+        return 'bsc';
+      case 'polygon':
+      case 'polygon_pos':
+        return 'polygon_pos';
+      case 'arbitrum':
+        return 'arbitrum';
+      case 'base':
+        return 'base';
+      case 'optimism':
+        return 'optimism';
+      case 'avax':
       case 'avalanche':
       case 'avalanche_c':
         return 'avax';
