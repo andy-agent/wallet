@@ -1370,6 +1370,17 @@ export class WalletService {
 
         try {
           if (asset.networkCode === 'SOLANA') {
+            const publicRpcBalance = await this.getSolanaBalanceViaPublicRpc(
+              assetAddress,
+              asset,
+            ).catch((error) => {
+              this.logger.warn(
+                `Public Solana RPC balance lookup failed for ${asset.assetCode}`,
+                error as Error,
+              );
+              return null;
+            });
+
             if (!this.solanaClient.isEnabled()) {
               return [
                 assetKey,
@@ -1377,17 +1388,42 @@ export class WalletService {
                   networkCode: asset.networkCode,
                   assetCode: asset.assetCode,
                   address: assetAddress,
-                  balanceMinor: null,
-                  balanceUiAmount: null,
-                  balanceStatus: 'UNAVAILABLE' as WalletAssetBalanceStatus,
+                  balanceMinor: publicRpcBalance?.balanceMinor ?? null,
+                  balanceUiAmount: publicRpcBalance?.balanceUiAmount ?? null,
+                  balanceStatus:
+                    publicRpcBalance?.balanceStatus ??
+                    ('UNAVAILABLE' as WalletAssetBalanceStatus),
                 },
               ] as const;
             }
 
-            const balance = await this.solanaClient.getBalance({
-              address: assetAddress,
-              mint: asset.isNative ? undefined : asset.contractAddress ?? undefined,
-            });
+            const serviceBalance = await this.solanaClient
+              .getBalance({
+                address: assetAddress,
+                mint: asset.isNative ? undefined : asset.contractAddress ?? undefined,
+              })
+              .then((balance) => ({
+                networkCode: asset.networkCode,
+                assetCode: asset.assetCode,
+                address: assetAddress,
+                balanceMinor: balance.balance,
+                balanceUiAmount: balance.uiAmount,
+                balanceStatus: 'READY' as WalletAssetBalanceStatus,
+              }))
+              .catch((error) => {
+                this.logger.warn(
+                  `Solana service balance lookup failed for ${asset.assetCode}, falling back to public RPC`,
+                  error as Error,
+                );
+                return null;
+              });
+
+            const preferredBalance = this.pickPreferredSolanaBalance(
+              serviceBalance,
+              publicRpcBalance,
+              asset,
+              assetAddress,
+            );
 
             return [
               assetKey,
@@ -1395,9 +1431,9 @@ export class WalletService {
                 networkCode: asset.networkCode,
                 assetCode: asset.assetCode,
                 address: assetAddress,
-                balanceMinor: balance.balance,
-                balanceUiAmount: balance.uiAmount,
-                balanceStatus: 'READY' as WalletAssetBalanceStatus,
+                balanceMinor: preferredBalance.balanceMinor,
+                balanceUiAmount: preferredBalance.balanceUiAmount,
+                balanceStatus: preferredBalance.balanceStatus,
               },
             ] as const;
           }
@@ -1463,6 +1499,114 @@ export class WalletService {
     );
 
     return new Map<string, WalletAssetBalanceView>(entries);
+  }
+
+  private pickPreferredSolanaBalance(
+    serviceBalance: WalletAssetBalanceView | null,
+    publicRpcBalance: WalletAssetBalanceView | null,
+    asset: {
+      networkCode: WalletNetworkCode;
+      assetCode: string;
+      contractAddress: string | null;
+    },
+    address: string,
+  ): WalletAssetBalanceView {
+    if (serviceBalance == null) {
+      return (
+        publicRpcBalance ?? {
+          networkCode: asset.networkCode,
+          assetCode: asset.assetCode,
+          address,
+          balanceMinor: null,
+          balanceUiAmount: null,
+          balanceStatus: 'UNAVAILABLE',
+        }
+      );
+    }
+
+    if (publicRpcBalance == null) {
+      return serviceBalance;
+    }
+
+    const serviceMinor = serviceBalance.balanceMinor?.trim() ?? '';
+    const publicMinor = publicRpcBalance.balanceMinor?.trim() ?? '';
+    if (serviceMinor.length > 0 && publicMinor.length > 0 && serviceMinor !== publicMinor) {
+      this.logger.warn(
+        `Solana balance mismatch for ${asset.assetCode}: service=${serviceMinor}, publicRpc=${publicMinor}`,
+      );
+    }
+
+    if (
+      serviceBalance.balanceStatus !== 'READY' ||
+      (serviceMinor === '0' && publicMinor.length > 0 && publicMinor !== '0')
+    ) {
+      return publicRpcBalance;
+    }
+    return serviceBalance;
+  }
+
+  private async getSolanaBalanceViaPublicRpc(
+    address: string,
+    asset: {
+      networkCode: WalletNetworkCode;
+      assetCode: string;
+      isNative: boolean;
+      contractAddress: string | null;
+    },
+  ): Promise<WalletAssetBalanceView> {
+    const rpcUrl = 'https://api.mainnet-beta.solana.com';
+    const connection = new Connection(rpcUrl, 'confirmed');
+    const owner = new PublicKey(address);
+
+    if (asset.isNative || !asset.contractAddress?.trim()) {
+      const lamports = await connection.getBalance(owner, 'confirmed');
+      return {
+        networkCode: asset.networkCode,
+        assetCode: asset.assetCode,
+        address,
+        balanceMinor: lamports.toString(),
+        balanceUiAmount: (lamports / 1_000_000_000).toString(),
+        balanceStatus: 'READY',
+      };
+    }
+
+    const mint = new PublicKey(asset.contractAddress.trim());
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+      owner,
+      { mint },
+      'confirmed',
+    );
+    const matchingAccount = tokenAccounts.value[0];
+    if (matchingAccount == null) {
+      return {
+        networkCode: asset.networkCode,
+        assetCode: asset.assetCode,
+        address,
+        balanceMinor: '0',
+        balanceUiAmount: '0',
+        balanceStatus: 'READY',
+      };
+    }
+
+    const tokenAmount = (
+      matchingAccount.account.data.parsed as {
+        info: {
+          tokenAmount: {
+            amount: string;
+            uiAmountString?: string;
+          };
+        };
+      }
+    ).info.tokenAmount;
+
+    return {
+      networkCode: asset.networkCode,
+      assetCode: asset.assetCode,
+      address,
+      balanceMinor: tokenAmount.amount,
+      balanceUiAmount: tokenAmount.uiAmountString ?? '0',
+      balanceStatus: 'READY',
+    };
   }
 
   private async resolveAssetPriceViews(
