@@ -83,6 +83,8 @@ interface CryptoVpnRepository {
     suspend fun getOrderListState(): OrderListUiState
     suspend fun getOrderDetailState(args: OrderDetailRouteArgs): OrderDetailUiState
     suspend fun getWalletPaymentState(): WalletPaymentUiState
+    fun getCurrentOrderIdHint(): String? = null
+    fun getPreferredWalletIdHint(): String = "primary_wallet"
     suspend fun getWalletLifecycleState(): Result<WalletLifecycleData> =
         Result.failure(IllegalStateException("Wallet lifecycle unavailable"))
     suspend fun hasWalletGraph(): Boolean = false

@@ -1072,6 +1072,10 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         )
     }
 
+    override fun getCurrentOrderIdHint(): String? = paymentRepository.getCurrentOrderId()
+
+    override fun getPreferredWalletIdHint(): String = "primary_wallet"
+
     override suspend fun getWalletLifecycleState(): Result<WalletLifecycleData> {
         return paymentRepository.getWalletLifecycle()
     }

@@ -136,6 +136,10 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         return walletPaymentPreviewState()
     }
 
+    override fun getCurrentOrderIdHint(): String? = "ORD-2025-0001"
+
+    override fun getPreferredWalletIdHint(): String = "primary_wallet"
+
     override suspend fun getAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState {
         return assetDetailPreviewState().copy(
             summary = "Preview: 导航参数 ${args.assetId}，${args.chainId}",
