@@ -52,7 +52,7 @@ class RealP0Repository(context: Context) : P0Repository {
     override suspend fun getCachedWalletHomeState(selectedWalletId: String?): WalletHomeUiState? = withContext(Dispatchers.IO) {
         val currentUserId = paymentRepository.getCurrentUserId() ?: return@withContext null
         val cachedOverview = paymentRepository.getCachedWalletOverview(currentUserId, selectedWalletId)
-        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        val lifecycle = paymentRepository.getCachedWalletLifecycle(currentUserId)
         val cachedUser = paymentRepository.getCachedCurrentUser()
         val walletOptions = buildWalletHomeWalletOptions(
             wallets = paymentRepository.getCachedWallets(),
@@ -467,7 +467,12 @@ class RealP0Repository(context: Context) : P0Repository {
         val me = paymentRepository.getMe().getOrNull()
         val subscription = paymentRepository.getSubscription().getOrNull() ?: me?.subscription
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
-        val wallets = paymentRepository.listWallets().getOrElse { paymentRepository.getCachedWallets() }
+        val cachedWallets = paymentRepository.getCachedWallets()
+        val wallets = if (cachedWallets.isEmpty()) {
+            paymentRepository.listWallets().getOrElse { cachedWallets }
+        } else {
+            cachedWallets
+        }
         val hasWalletGraph = wallets.isNotEmpty()
         val hasUsableWallet = hasWalletGraph || (
             lifecycle?.walletExists == true &&
@@ -767,8 +772,13 @@ class RealP0Repository(context: Context) : P0Repository {
         selectedWalletId: String?,
         forceRefresh: Boolean,
     ): WalletHomeUiState {
-        val wallets = paymentRepository.listWallets().getOrElse { paymentRepository.getCachedWallets() }
-        val walletOptions = buildWalletHomeWalletOptions(wallets, fetchRemoteIfMissing = true)
+        val cachedWallets = paymentRepository.getCachedWallets()
+        val wallets = if (forceRefresh || cachedWallets.isEmpty()) {
+            paymentRepository.listWallets().getOrElse { cachedWallets }
+        } else {
+            cachedWallets
+        }
+        val walletOptions = buildWalletHomeWalletOptions(wallets, fetchRemoteIfMissing = forceRefresh || wallets.isEmpty())
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         val hasUsableWallet = lifecycle.hasUsableWallet() || walletOptions.isNotEmpty()
         val resolvedWalletId = selectedWalletId
@@ -916,7 +926,12 @@ class RealP0Repository(context: Context) : P0Repository {
     }
 
     private suspend fun resolvePostAuthRoute(): String {
-        val wallets = paymentRepository.listWallets().getOrElse { paymentRepository.getCachedWallets() }
+        val cachedWallets = paymentRepository.getCachedWallets()
+        val wallets = if (cachedWallets.isEmpty()) {
+            paymentRepository.listWallets().getOrElse { cachedWallets }
+        } else {
+            cachedWallets
+        }
         if (wallets.isNotEmpty()) {
             return CryptoVpnRouteSpec.walletHome.pattern
         }

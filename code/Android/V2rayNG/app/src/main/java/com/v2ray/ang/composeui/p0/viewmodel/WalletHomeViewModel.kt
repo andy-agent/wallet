@@ -8,6 +8,9 @@ import com.v2ray.ang.composeui.p0.repository.P0Repository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class WalletHomeViewModel(
@@ -16,9 +19,11 @@ class WalletHomeViewModel(
 
     private val _uiState = MutableStateFlow(WalletHomeUiState())
     val uiState: StateFlow<WalletHomeUiState> = _uiState.asStateFlow()
+    private var periodicRefreshJob: Job? = null
 
     init {
         refresh()
+        startPeriodicRefresh()
     }
 
     fun onEvent(event: WalletHomeEvent) {
@@ -65,6 +70,16 @@ class WalletHomeViewModel(
         }
     }
 
+    private fun startPeriodicRefresh() {
+        periodicRefreshJob?.cancel()
+        periodicRefreshJob = viewModelScope.launch {
+            while (isActive) {
+                delay(60_000)
+                refresh(forceRefresh = true)
+            }
+        }
+    }
+
     fun clearLocalWallet(
         onSuccess: (String) -> Unit,
         onError: (String) -> Unit,
@@ -78,5 +93,10 @@ class WalletHomeViewModel(
                 onError(result.exceptionOrNull()?.message ?: "清除本地钱包失败")
             }
         }
+    }
+
+    override fun onCleared() {
+        periodicRefreshJob?.cancel()
+        super.onCleared()
     }
 }

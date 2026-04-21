@@ -13,6 +13,7 @@ import com.v2ray.ang.payment.data.local.entity.LocalWalletEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeCacheEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
 import com.v2ray.ang.payment.data.local.entity.WalletBalancesCacheEntity
+import com.v2ray.ang.payment.data.local.entity.WalletLifecycleCacheEntity
 import com.v2ray.ang.payment.data.local.entity.WalletOverviewCacheEntity
 import com.v2ray.ang.payment.data.local.entity.WalletPublicAddressCacheEntity
 import com.v2ray.ang.payment.data.local.entity.WalletReceiveContextCacheEntity
@@ -37,6 +38,7 @@ class LocalPaymentRepository(context: Context) {
     private val vpnNodeCacheDao = database.vpnNodeCacheDao()
     private val vpnNodeRuntimeDao = database.vpnNodeRuntimeDao()
     private val walletBalancesCacheDao = database.walletBalancesCacheDao()
+    private val walletLifecycleCacheDao = database.walletLifecycleCacheDao()
     private val walletPublicAddressCacheDao = database.walletPublicAddressCacheDao()
     private val walletReceiveContextCacheDao = database.walletReceiveContextCacheDao()
     private val walletOverviewCacheDao = database.walletOverviewCacheDao()
@@ -152,6 +154,7 @@ class LocalPaymentRepository(context: Context) {
         walletPublicAddressCacheDao.deleteAll()
         walletReceiveContextCacheDao.deleteAll()
         walletBalancesCacheDao.deleteAll()
+        walletLifecycleCacheDao.deleteAll()
         walletOverviewCacheDao.deleteAll()
         // 订单可以选择保留或删除，这里选择保留以便用户重新登录后仍能看到历史
     }
@@ -230,6 +233,7 @@ class LocalPaymentRepository(context: Context) {
         walletPublicAddressCacheDao.deleteByUserId(userId)
         walletReceiveContextCacheDao.deleteByUserId(userId)
         walletBalancesCacheDao.deleteByUserId(userId)
+        walletLifecycleCacheDao.deleteByUserId(userId)
         walletOverviewCacheDao.deleteByUserId(userId)
     }
 
@@ -357,6 +361,14 @@ class LocalPaymentRepository(context: Context) {
 
     suspend fun saveWalletBalancesCache(item: WalletBalancesCacheEntity) = withContext(Dispatchers.IO) {
         walletBalancesCacheDao.upsert(item)
+    }
+
+    suspend fun getWalletLifecycleCache(userId: String): WalletLifecycleCacheEntity? = withContext(Dispatchers.IO) {
+        walletLifecycleCacheDao.getByUserId(userId)
+    }
+
+    suspend fun saveWalletLifecycleCache(item: WalletLifecycleCacheEntity) = withContext(Dispatchers.IO) {
+        walletLifecycleCacheDao.upsert(item)
     }
 
     suspend fun getWalletReceiveContextCache(

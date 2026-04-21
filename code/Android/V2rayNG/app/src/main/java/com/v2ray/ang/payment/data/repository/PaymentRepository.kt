@@ -77,6 +77,7 @@ import com.v2ray.ang.payment.data.local.entity.LocalTokenVisibilityEntryEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeCacheEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
 import com.v2ray.ang.payment.data.local.entity.WalletBalancesCacheEntity
+import com.v2ray.ang.payment.data.local.entity.WalletLifecycleCacheEntity
 import com.v2ray.ang.payment.data.local.entity.WalletOverviewCacheEntity
 import com.v2ray.ang.payment.data.local.entity.WalletPublicAddressCacheEntity
 import com.v2ray.ang.payment.data.local.entity.WalletReceiveContextCacheEntity
@@ -1272,6 +1273,20 @@ class PaymentRepository(context: Context) {
             }
         }
 
+        val lifecycle = syncWalletLifecycleFromServer(force = true, userId = resolvedUserId).getOrNull()
+        val wallets = listWallets().getOrElse { getCachedWallets() }
+        linkedSetOf<String>().apply {
+            addAll(wallets.map { it.walletId }.filter { it.isNotBlank() })
+            lifecycle?.walletId?.takeIf { it.isNotBlank() }?.let(::add)
+        }.forEach { walletId ->
+            cacheSyncScope.launch {
+                syncWalletOverviewFromServer(force = true, userId = resolvedUserId, walletId = walletId)
+            }
+            cacheSyncScope.launch {
+                syncWalletBalancesFromServer(force = true, userId = resolvedUserId, walletId = walletId)
+            }
+        }
+
         val subscription = getSubscription().getOrElse {
             me?.subscription ?: return@withContext Result.failure(it)
         }
@@ -1534,7 +1549,7 @@ class PaymentRepository(context: Context) {
         val cached = if (!forceRefresh) getCachedWalletOverview(resolvedUserId, walletId) else null
         if (cached != null) {
             cacheSyncScope.launch {
-                syncWalletOverviewFromServer(force = true, userId = resolvedUserId, walletId = walletId)
+                syncWalletOverviewFromServer(force = false, userId = resolvedUserId, walletId = walletId)
             }
             return@withContext Result.success(cached)
         }
@@ -1559,7 +1574,7 @@ class PaymentRepository(context: Context) {
         val cached = if (!forceRefresh) getCachedWalletBalances(resolvedUserId, walletId) else null
         if (cached != null) {
             cacheSyncScope.launch {
-                syncWalletBalancesFromServer(force = true, userId = resolvedUserId, walletId = walletId)
+                syncWalletBalancesFromServer(force = false, userId = resolvedUserId, walletId = walletId)
             }
             return@withContext Result.success(cached)
         }
@@ -1617,23 +1632,83 @@ class PaymentRepository(context: Context) {
         }
     }
 
-    suspend fun getWalletLifecycle(): Result<WalletLifecycleData> = withContext(Dispatchers.IO) {
+    suspend fun getCachedWalletLifecycle(
+        userId: String? = getCurrentUserId(),
+    ): WalletLifecycleData? = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext null
+        localRepository.getWalletLifecycleCache(resolvedUserId)?.toWalletLifecycleData()
+    }
+
+    suspend fun syncWalletLifecycleFromServer(
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<WalletLifecycleData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId
+        val cached = resolvedUserId?.let { localRepository.getWalletLifecycleCache(it) }
+        val now = System.currentTimeMillis()
+        if (!force && cached != null && now - cached.updatedAt < WALLET_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached.toWalletLifecycleData())
+        }
         try {
             if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+                return@withContext cached?.let { Result.success(it.toWalletLifecycleData()) }
+                    ?: Result.failure(Exception("Token 已过期，请重新登录"))
             }
             val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
+                ?: return@withContext cached?.let { Result.success(it.toWalletLifecycleData()) }
+                    ?: Result.failure(Exception("未登录"))
             val response = api.getWalletLifecycle("Bearer $token")
             if (response.isSuccessful && response.body()?.code == "OK") {
-                response.body()?.data?.let { Result.success(it) }
+                response.body()?.data?.let { data ->
+                    val cacheUserId = resolvedUserId ?: getCurrentUserId()
+                    if (!cacheUserId.isNullOrBlank()) {
+                        localRepository.saveWalletLifecycleCache(
+                            WalletLifecycleCacheEntity(
+                                userId = cacheUserId,
+                                accountId = data.accountId,
+                                walletExists = data.walletExists,
+                                receiveState = data.receiveState,
+                                lifecycleStatus = data.lifecycleStatus,
+                                sourceType = data.sourceType,
+                                walletId = data.walletId,
+                                displayName = data.displayName,
+                                status = data.status,
+                                origin = data.origin,
+                                nextAction = data.nextAction,
+                                walletName = data.walletName,
+                                configuredAddressCount = data.configuredAddressCount,
+                                createdAt = data.createdAt,
+                                remoteUpdatedAt = data.updatedAt,
+                                backupAcknowledgedAt = data.backupAcknowledgedAt,
+                                activatedAt = data.activatedAt,
+                                updatedAt = now,
+                            ),
+                        )
+                    }
+                    Result.success(data)
+                } ?: cached?.let { Result.success(it.toWalletLifecycleData()) }
                     ?: Result.failure(Exception("钱包生命周期为空"))
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取钱包生命周期失败"))
+                cached?.let { Result.success(it.toWalletLifecycleData()) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取钱包生命周期失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(it.toWalletLifecycleData()) } ?: Result.failure(e)
         }
+    }
+
+    suspend fun getWalletLifecycle(
+        forceRefresh: Boolean = false,
+    ): Result<WalletLifecycleData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = getCurrentUserId()
+        val cached = if (!forceRefresh) getCachedWalletLifecycle(resolvedUserId) else null
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncWalletLifecycleFromServer(force = false, userId = resolvedUserId)
+            }
+            return@withContext Result.success(cached)
+        }
+        syncWalletLifecycleFromServer(force = true, userId = resolvedUserId)
     }
 
     suspend fun listWallets(): Result<List<WalletSummaryData>> = withContext(Dispatchers.IO) {
@@ -2058,7 +2133,33 @@ class PaymentRepository(context: Context) {
                 ),
             )
             if (response.isSuccessful && response.body()?.code == "OK") {
-                response.body()?.data?.let { Result.success(it) }
+                response.body()?.data?.let {
+                    getCurrentUserId()?.let { userId ->
+                        localRepository.saveWalletLifecycleCache(
+                            WalletLifecycleCacheEntity(
+                                userId = userId,
+                                accountId = it.accountId,
+                                walletExists = it.walletExists,
+                                receiveState = it.receiveState,
+                                lifecycleStatus = it.lifecycleStatus,
+                                sourceType = it.sourceType,
+                                walletId = it.walletId,
+                                displayName = it.displayName,
+                                status = it.status,
+                                origin = it.origin,
+                                nextAction = it.nextAction,
+                                walletName = it.walletName,
+                                configuredAddressCount = it.configuredAddressCount,
+                                createdAt = it.createdAt,
+                                remoteUpdatedAt = it.updatedAt,
+                                backupAcknowledgedAt = it.backupAcknowledgedAt,
+                                activatedAt = it.activatedAt,
+                                updatedAt = System.currentTimeMillis(),
+                            ),
+                        )
+                    }
+                    Result.success(it)
+                }
                     ?: Result.failure(Exception("钱包生命周期为空"))
             } else {
                 Result.failure(Exception(response.body()?.message ?: "更新钱包生命周期失败"))
@@ -2066,6 +2167,25 @@ class PaymentRepository(context: Context) {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun refreshCoreSnapshotsOnForeground(
+        force: Boolean = true,
+    ) = withContext(Dispatchers.IO) {
+        val userId = getCurrentUserId() ?: return@withContext
+        val cachedWallets = getCachedWallets()
+        val lifecycle = syncWalletLifecycleFromServer(force = force, userId = userId).getOrNull()
+        val wallets = listWallets().getOrElse { cachedWallets }
+        val walletIds = linkedSetOf<String>().apply {
+            addAll(wallets.map { it.walletId }.filter { it.isNotBlank() })
+            lifecycle?.walletId?.takeIf { it.isNotBlank() }?.let(::add)
+        }
+        walletIds.forEach { walletId ->
+            syncWalletOverviewFromServer(force = force, userId = userId, walletId = walletId)
+            syncWalletBalancesFromServer(force = force, userId = userId, walletId = walletId)
+        }
+        getSubscription().getOrNull()?.let { cacheSubscriptionMetadata(it) }
+        getVpnStatus().getOrNull()?.let { cacheVpnStatusMetadata(it) }
     }
 
     suspend fun upsertWalletSecretBackup(
@@ -2875,6 +2995,27 @@ class PaymentRepository(context: Context) {
                 itemsJson,
                 object : TypeToken<List<WalletBalanceItemData>>() {}.type,
             ),
+        )
+    }
+
+    private fun WalletLifecycleCacheEntity.toWalletLifecycleData(): WalletLifecycleData {
+        return WalletLifecycleData(
+            accountId = accountId,
+            walletExists = walletExists,
+            receiveState = receiveState,
+            lifecycleStatus = lifecycleStatus,
+            sourceType = sourceType,
+            walletId = walletId,
+            displayName = displayName,
+            status = status,
+            origin = origin,
+            nextAction = nextAction,
+            walletName = walletName,
+            configuredAddressCount = configuredAddressCount,
+            createdAt = createdAt,
+            updatedAt = remoteUpdatedAt,
+            backupAcknowledgedAt = backupAcknowledgedAt,
+            activatedAt = activatedAt,
         )
     }
 

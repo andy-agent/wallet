@@ -93,6 +93,7 @@ interface CryptoVpnRepository {
         Result.failure(IllegalStateException("Wallet backup acknowledgement unavailable"))
     suspend fun confirmWalletBackup(): Result<WalletLifecycleData> =
         Result.failure(IllegalStateException("Wallet backup confirmation unavailable"))
+    suspend fun getCachedAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState? = null
     suspend fun getAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState
     suspend fun getCachedReceiveState(args: ReceiveRouteArgs): ReceiveUiState? = null
     suspend fun getReceiveState(args: ReceiveRouteArgs): ReceiveUiState
@@ -143,6 +144,7 @@ interface CryptoVpnRepository {
         LocalWalletActionResult(success = false, errorMessage = "Wallet clear unavailable")
     suspend fun logoutSession(): LogoutResult = LogoutResult(success = false, errorMessage = "Logout unavailable")
     suspend fun getChainManagerState(args: ChainManagerRouteArgs): ChainManagerUiState
+    suspend fun getCachedTokenManagerState(args: TokenManagerRouteArgs): TokenManagerUiState? = null
     suspend fun getTokenManagerState(args: TokenManagerRouteArgs): TokenManagerUiState
     suspend fun setTokenVisibility(
         walletId: String,

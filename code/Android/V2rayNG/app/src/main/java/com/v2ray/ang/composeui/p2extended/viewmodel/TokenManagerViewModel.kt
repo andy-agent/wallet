@@ -7,20 +7,30 @@ import com.v2ray.ang.composeui.p2extended.model.TokenManagerRouteArgs
 import com.v2ray.ang.composeui.p2extended.model.TokenManagerUiState
 import com.v2ray.ang.composeui.p2extended.model.TokenVisibilityAction
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class TokenManagerViewModel(
     private val repository: CryptoVpnRepository,
     private val routeArgs: TokenManagerRouteArgs = TokenManagerRouteArgs(),
 ) : BaseFeatureViewModel<TokenManagerUiState>(TokenManagerUiState()) {
+    private var periodicRefreshJob: Job? = null
 
     init {
         refresh()
+        startPeriodicRefresh()
     }
 
-    fun refresh() {
-        launchLoad {
-            repository.getTokenManagerState(routeArgs)
+    fun refresh(forceRefresh: Boolean = false) {
+        viewModelScope.launch {
+            if (!forceRefresh) {
+                repository.getCachedTokenManagerState(routeArgs)?.let { cached ->
+                    _uiState.value = cached.copy(isRefreshing = true)
+                }
+            }
+            _uiState.value = repository.getTokenManagerState(routeArgs)
         }
     }
 
@@ -81,5 +91,20 @@ class TokenManagerViewModel(
                 )
             }
         }
+    }
+
+    private fun startPeriodicRefresh() {
+        periodicRefreshJob?.cancel()
+        periodicRefreshJob = viewModelScope.launch {
+            while (isActive) {
+                delay(60_000)
+                refresh(forceRefresh = true)
+            }
+        }
+    }
+
+    override fun onCleared() {
+        periodicRefreshJob?.cancel()
+        super.onCleared()
     }
 }

@@ -17,6 +17,7 @@ import com.v2ray.ang.payment.data.local.dao.LocalWalletDao
 import com.v2ray.ang.payment.data.local.dao.VpnNodeCacheDao
 import com.v2ray.ang.payment.data.local.dao.VpnNodeRuntimeDao
 import com.v2ray.ang.payment.data.local.dao.WalletBalancesCacheDao
+import com.v2ray.ang.payment.data.local.dao.WalletLifecycleCacheDao
 import com.v2ray.ang.payment.data.local.dao.WalletOverviewCacheDao
 import com.v2ray.ang.payment.data.local.dao.WalletPublicAddressCacheDao
 import com.v2ray.ang.payment.data.local.dao.WalletReceiveContextCacheDao
@@ -31,6 +32,7 @@ import com.v2ray.ang.payment.data.local.entity.UserEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeCacheEntity
 import com.v2ray.ang.payment.data.local.entity.VpnNodeRuntimeEntity
 import com.v2ray.ang.payment.data.local.entity.WalletBalancesCacheEntity
+import com.v2ray.ang.payment.data.local.entity.WalletLifecycleCacheEntity
 import com.v2ray.ang.payment.data.local.entity.WalletOverviewCacheEntity
 import com.v2ray.ang.payment.data.local.entity.WalletPublicAddressCacheEntity
 import com.v2ray.ang.payment.data.local.entity.WalletReceiveContextCacheEntity
@@ -51,11 +53,12 @@ import com.v2ray.ang.payment.data.local.entity.WalletReceiveContextCacheEntity
         VpnNodeCacheEntity::class,
         VpnNodeRuntimeEntity::class,
         WalletBalancesCacheEntity::class,
+        WalletLifecycleCacheEntity::class,
         WalletPublicAddressCacheEntity::class,
         WalletReceiveContextCacheEntity::class,
         WalletOverviewCacheEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 abstract class PaymentDatabase : RoomDatabase() {
@@ -71,6 +74,7 @@ abstract class PaymentDatabase : RoomDatabase() {
     abstract fun vpnNodeCacheDao(): VpnNodeCacheDao
     abstract fun vpnNodeRuntimeDao(): VpnNodeRuntimeDao
     abstract fun walletBalancesCacheDao(): WalletBalancesCacheDao
+    abstract fun walletLifecycleCacheDao(): WalletLifecycleCacheDao
     abstract fun walletPublicAddressCacheDao(): WalletPublicAddressCacheDao
     abstract fun walletReceiveContextCacheDao(): WalletReceiveContextCacheDao
     abstract fun walletOverviewCacheDao(): WalletOverviewCacheDao
@@ -348,6 +352,40 @@ abstract class PaymentDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `wallet_lifecycle_cache` (
+                        `userId` TEXT NOT NULL,
+                        `accountId` TEXT NOT NULL,
+                        `walletExists` INTEGER NOT NULL,
+                        `receiveState` TEXT NOT NULL,
+                        `lifecycleStatus` TEXT NOT NULL,
+                        `sourceType` TEXT,
+                        `walletId` TEXT,
+                        `displayName` TEXT,
+                        `status` TEXT,
+                        `origin` TEXT,
+                        `nextAction` TEXT,
+                        `walletName` TEXT,
+                        `configuredAddressCount` INTEGER NOT NULL,
+                        `createdAt` TEXT,
+                        `remoteUpdatedAt` TEXT,
+                        `backupAcknowledgedAt` TEXT,
+                        `activatedAt` TEXT,
+                        `updatedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`userId`),
+                        FOREIGN KEY(`userId`) REFERENCES `users`(`userId`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_wallet_lifecycle_cache_userId` ON `wallet_lifecycle_cache` (`userId`)",
+                )
+            }
+        }
+
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
@@ -419,6 +457,7 @@ abstract class PaymentDatabase : RoomDatabase() {
                     .addMigrations(MIGRATION_6_7)
                     .addMigrations(MIGRATION_7_8)
                     .addMigrations(MIGRATION_8_9)
+                    .addMigrations(MIGRATION_9_10)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

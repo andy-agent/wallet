@@ -1075,9 +1075,21 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         return paymentRepository.getWalletLifecycle()
     }
 
+    override suspend fun getCachedAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState? {
+        val overview = paymentRepository.getCachedWalletOverview()
+        return if (overview != null) buildAssetDetailUiState(args, overview) else null
+    }
+
     override suspend fun getAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState {
-        val normalizedNetworkCode = routeChainIdToNetworkCode(args.chainId)
         val overview = paymentRepository.getWalletOverview().getOrNull()
+        return buildAssetDetailUiState(args, overview)
+    }
+
+    private suspend fun buildAssetDetailUiState(
+        args: AssetDetailRouteArgs,
+        overview: com.v2ray.ang.payment.data.api.WalletOverviewData?,
+    ): AssetDetailUiState {
+        val normalizedNetworkCode = routeChainIdToNetworkCode(args.chainId)
         val assetItem = overview?.assetItems?.firstOrNull {
             it.assetCode.equals(args.assetId, ignoreCase = true) &&
                 it.networkCode.equals(normalizedNetworkCode, ignoreCase = true)
@@ -2128,16 +2140,37 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             )
         }
 
+    override suspend fun getCachedTokenManagerState(args: TokenManagerRouteArgs): TokenManagerUiState? {
+        val state = buildTokenManagerState(args, cachedOnly = true)
+        return if (state.walletName.isBlank() && state.visibleTokens.isEmpty() && state.hiddenTokens.isEmpty() && state.spamTokens.isEmpty()) {
+            null
+        } else {
+            state
+        }
+    }
+
     override suspend fun getTokenManagerState(args: TokenManagerRouteArgs): TokenManagerUiState =
+        buildTokenManagerState(args, cachedOnly = false)
+
+    private suspend fun buildTokenManagerState(
+        args: TokenManagerRouteArgs,
+        cachedOnly: Boolean,
+    ): TokenManagerUiState =
         run {
             val wallets = paymentRepository.getCachedWallets()
-                .ifEmpty { paymentRepository.listWallets().getOrElse { emptyList() } }
+                .ifEmpty {
+                    if (cachedOnly) emptyList() else paymentRepository.listWallets().getOrElse { emptyList() }
+                }
             val selectedWallet = wallets.firstOrNull { it.walletId == args.walletId }
                 ?: wallets.firstOrNull { it.isDefault }
                 ?: wallets.firstOrNull()
             val resolvedWalletId = selectedWallet?.walletId ?: args.walletId
             val normalizedChainId = args.chainId.lowercase(Locale.ROOT)
-            val overview = paymentRepository.getWalletOverview(resolvedWalletId).getOrNull()
+            val overview = if (cachedOnly) {
+                paymentRepository.getCachedWalletOverview(walletId = resolvedWalletId)
+            } else {
+                paymentRepository.getWalletOverview(resolvedWalletId).getOrNull()
+            }
             val cachedCustomTokens = paymentRepository.getCachedCustomTokens(resolvedWalletId, normalizedChainId)
             val visibilityByTokenKey = paymentRepository
                 .getTokenVisibilityEntries(resolvedWalletId, normalizedChainId)
@@ -2146,7 +2179,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
             val walletName = wallets
                 .firstOrNull { it.walletId == resolvedWalletId }
                 ?.walletName
-                ?: paymentRepository.getWallet(resolvedWalletId).getOrNull()?.wallet?.walletName
+                ?: if (cachedOnly) null else paymentRepository.getWallet(resolvedWalletId).getOrNull()?.wallet?.walletName
                 ?: resolvedWalletId
             val managedTokens = if (overview != null) {
                 overview.assetItems
@@ -2216,7 +2249,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 }.sortedBy { it.symbol }
             }
             TokenManagerUiState(
-                walletName = walletName,
+                walletName = walletName ?: resolvedWalletId,
                 chainLabel = walletHomeChainLabel(args.chainId),
                 visibleTokens = managedTokens.filter { visibilityByTokenKey[it.tokenKey] == null },
                 hiddenTokens = managedTokens.filter { visibilityByTokenKey[it.tokenKey] == "HIDDEN" },
