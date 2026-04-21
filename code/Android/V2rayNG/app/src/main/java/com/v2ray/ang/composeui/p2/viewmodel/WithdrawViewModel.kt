@@ -1,9 +1,11 @@
 package com.v2ray.ang.composeui.p2.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.WithdrawEvent
 import com.v2ray.ang.composeui.p2.model.WithdrawUiState
+import kotlinx.coroutines.launch
 
 class WithdrawViewModel(
     private val repository: CryptoVpnRepository,
@@ -30,8 +32,11 @@ class WithdrawViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getWithdrawState()
+        viewModelScope.launch {
+            repository.getCachedWithdrawState()?.let { cached ->
+                _uiState.value = cached
+            }
+            _uiState.value = repository.getWithdrawState()
         }
     }
 }

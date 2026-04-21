@@ -1,9 +1,11 @@
 package com.v2ray.ang.composeui.p2.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.CommissionLedgerEvent
 import com.v2ray.ang.composeui.p2.model.CommissionLedgerUiState
+import kotlinx.coroutines.launch
 
 class CommissionLedgerViewModel(
     private val repository: CryptoVpnRepository,
@@ -30,8 +32,11 @@ class CommissionLedgerViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getCommissionLedgerState()
+        viewModelScope.launch {
+            repository.getCachedCommissionLedgerState()?.let { cached ->
+                _uiState.value = cached
+            }
+            _uiState.value = repository.getCommissionLedgerState()
         }
     }
 }

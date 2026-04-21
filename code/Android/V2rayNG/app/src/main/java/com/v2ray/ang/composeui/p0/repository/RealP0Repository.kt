@@ -97,35 +97,20 @@ class RealP0Repository(context: Context) : P0Repository {
         val cachedNodeSnapshots = buildCachedNodeSnapshots(
             cachedNodes = paymentRepository.getCachedVpnNodes(userId = currentUserId),
             runtimes = paymentRepository.getCachedVpnNodeRuntime(userId = currentUserId),
-            selectedNodeId = paymentRepository.getCachedVpnNodeId(),
+            selectedNodeId = paymentRepository.getCachedVpnStatus(currentUserId)?.selectedNodeId ?: paymentRepository.getCachedVpnNodeId(),
         )
         val cachedOrders = readLocalOrders(currentUserId)
         val latestOrder = cachedOrders.maxByOrNull { it.createdAt }
-        val cachedSubscription = paymentRepository.getCachedSubscriptionStatus()
-        val cachedPlanCode = paymentRepository.getCachedSubscriptionPlanCode()
-        val cachedDaysRemaining = paymentRepository.getCachedSubscriptionDaysRemaining()
-        val cachedLineName = paymentRepository.getCachedVpnLineName()
+        val cachedSubscriptionData = paymentRepository.getCachedSubscription(currentUserId)
+        val cachedVpnStatusData = paymentRepository.getCachedVpnStatus(currentUserId)
+        val cachedLineName = cachedVpnStatusData?.selectedLineName ?: paymentRepository.getCachedVpnLineName()
         val cachedWalletOverview = paymentRepository.getCachedWalletOverview(currentUserId)
-        val selectedNode = selectedCachedNode(cachedNodeSnapshots, paymentRepository.getCachedVpnNodeId())
+        val selectedNode = selectedCachedNode(
+            cachedNodeSnapshots,
+            cachedVpnStatusData?.selectedNodeId ?: paymentRepository.getCachedVpnNodeId(),
+        )
         val hasLocalConfig = !MmkvManager.getSelectServer().isNullOrEmpty()
         val localSubscriptionUrl = latestOrder?.subscriptionUrl ?: paymentRepository.getSavedSubscriptionUrl()
-        val cachedSubscriptionData = buildCachedSubscriptionData(
-            planCode = cachedPlanCode,
-            status = cachedSubscription,
-            daysRemaining = cachedDaysRemaining,
-            expireAt = paymentRepository.getLastIssuedVpnConfigExpireAt(),
-            subscriptionUrl = localSubscriptionUrl,
-            marzbanUsername = paymentRepository.getSavedMarzbanUsername(),
-        )
-        val cachedVpnStatusData = buildCachedVpnStatusData(
-            subscriptionStatus = cachedSubscription,
-            currentRegionCode = paymentRepository.getLastIssuedVpnRegionCode(),
-            selectedLineCode = paymentRepository.getLastIssuedVpnRegionCode(),
-            selectedLineName = cachedLineName,
-            selectedNodeId = paymentRepository.getCachedVpnNodeId(),
-            selectedNodeName = paymentRepository.getCachedVpnNodeName(),
-            sessionStatus = paymentRepository.getCachedVpnSessionStatus(),
-        )
         val signals = buildVpnSignals(
             subscription = cachedSubscriptionData,
             vpnStatus = cachedVpnStatusData,

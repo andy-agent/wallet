@@ -1,9 +1,11 @@
 package com.v2ray.ang.composeui.p2.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.InviteCenterEvent
 import com.v2ray.ang.composeui.p2.model.InviteCenterUiState
+import kotlinx.coroutines.launch
 
 class InviteCenterViewModel(
     private val repository: CryptoVpnRepository,
@@ -30,8 +32,11 @@ class InviteCenterViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getInviteCenterState()
+        viewModelScope.launch {
+            repository.getCachedInviteCenterState()?.let { cached ->
+                _uiState.value = cached
+            }
+            _uiState.value = repository.getInviteCenterState()
         }
     }
 }

@@ -1,10 +1,12 @@
 package com.v2ray.ang.composeui.p2extended.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2extended.model.SubscriptionDetailEvent
 import com.v2ray.ang.composeui.p2extended.model.SubscriptionDetailUiState
 import com.v2ray.ang.composeui.p2extended.model.SubscriptionDetailRouteArgs
+import kotlinx.coroutines.launch
 
 class SubscriptionDetailViewModel(
     private val repository: CryptoVpnRepository,
@@ -32,8 +34,11 @@ class SubscriptionDetailViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getSubscriptionDetailState(routeArgs)
+        viewModelScope.launch {
+            repository.getCachedSubscriptionDetailState(routeArgs)?.let { cached ->
+                _uiState.value = cached
+            }
+            _uiState.value = repository.getSubscriptionDetailState(routeArgs)
         }
     }
 }

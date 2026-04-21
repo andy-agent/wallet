@@ -95,6 +95,7 @@ import retrofit2.Retrofit
 import retrofit2.Response
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
+import java.lang.reflect.Type
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.net.ssl.*
@@ -162,6 +163,16 @@ class PaymentRepository(context: Context) {
         private const val WALLET_CACHE_SYNC_THROTTLE_MS = 60_000L
         private const val ORDER_PAGE_SIZE = 100
         private const val TOKEN_ICON_DIR = "token_icons"
+        private const val CACHE_KEY_PLANS = "plans"
+        private const val CACHE_KEY_WALLET_ASSET_CATALOG = "wallet_asset_catalog"
+        private const val CACHE_KEY_SUBSCRIPTION = "subscription"
+        private const val CACHE_KEY_VPN_STATUS = "vpn_status"
+        private const val CACHE_KEY_VPN_REGIONS = "vpn_regions"
+        private const val CACHE_KEY_REFERRAL_OVERVIEW = "referral_overview"
+        private const val CACHE_KEY_REFERRAL_SHARE = "referral_share"
+        private const val CACHE_KEY_COMMISSION_SUMMARY = "commission_summary"
+        private const val CACHE_KEY_COMMISSION_LEDGER = "commission_ledger"
+        private const val CACHE_KEY_WITHDRAWALS = "withdrawals"
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
             timeZone = java.util.TimeZone.getTimeZone("UTC")
@@ -516,10 +527,10 @@ class PaymentRepository(context: Context) {
      * 获取套餐列表
      */
     suspend fun getPlans(): Result<List<Plan>> = withContext(Dispatchers.IO) {
-        val cached = readCachedPlans()
+        val cached = getCachedPlans()
         if (cached != null) {
             cacheSyncScope.launch {
-                syncPlansFromServer(force = true)
+                syncPlansFromServer(force = false)
             }
             cacheSyncScope.launch {
                 syncWalletAssetCatalogFromServer(force = false)
@@ -530,13 +541,22 @@ class PaymentRepository(context: Context) {
     }
 
     suspend fun getCachedPlans(): List<Plan>? = withContext(Dispatchers.IO) {
-        readCachedPlans()
+        readApiPayloadCache(
+            cacheKey = globalPayloadCacheKey(CACHE_KEY_PLANS),
+            type = object : TypeToken<List<Plan>>() {}.type,
+        ) ?: readCachedPlans()?.also { legacy ->
+            saveApiPayloadCache(
+                cacheKey = globalPayloadCacheKey(CACHE_KEY_PLANS),
+                payload = legacy,
+                updatedAt = prefs.getLong(PaymentConfig.Prefs.PLANS_CACHE_UPDATED_AT, System.currentTimeMillis()),
+            )
+        }
     }
 
     suspend fun syncPlansFromServer(force: Boolean = false): Result<List<Plan>> = withContext(Dispatchers.IO) {
         val now = System.currentTimeMillis()
-        val cached = readCachedPlans()
-        val lastSyncAt = prefs.getLong(PaymentConfig.Prefs.PLANS_CACHE_UPDATED_AT, 0L)
+        val cached = getCachedPlans()
+        val lastSyncAt = readApiPayloadUpdatedAt(globalPayloadCacheKey(CACHE_KEY_PLANS)) ?: 0L
         if (!force && cached != null && now - lastSyncAt < PLAN_CACHE_SYNC_THROTTLE_MS) {
             return@withContext Result.success(cached)
         }
@@ -547,6 +567,11 @@ class PaymentRepository(context: Context) {
             val response = api.getPlans("Bearer $token")
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val plans = response.body()?.data?.items ?: emptyList()
+                saveApiPayloadCache(
+                    cacheKey = globalPayloadCacheKey(CACHE_KEY_PLANS),
+                    payload = plans,
+                    updatedAt = now,
+                )
                 savePlansCache(plans, now)
                 cacheSyncScope.launch {
                     syncWalletAssetCatalogFromServer(force = false)
@@ -651,25 +676,81 @@ class PaymentRepository(context: Context) {
     /**
      * 获取订阅信息
      */
-    suspend fun getSubscription(): Result<CurrentSubscriptionData> = withContext(Dispatchers.IO) {
+    suspend fun getCachedSubscription(
+        userId: String? = getCurrentUserId(),
+    ): CurrentSubscriptionData? = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext null
+        readApiPayloadCache(
+            cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_SUBSCRIPTION),
+            type = object : TypeToken<CurrentSubscriptionData>() {}.type,
+        ) ?: run {
+            val status = getCachedSubscriptionStatus() ?: return@run null
+            CurrentSubscriptionData(
+                subscriptionId = null,
+                planCode = getCachedSubscriptionPlanCode(),
+                planName = null,
+                status = status,
+                startedAt = null,
+                expireAt = getLastIssuedVpnConfigExpireAt(),
+                daysRemaining = getCachedSubscriptionDaysRemaining(),
+                isUnlimitedTraffic = true,
+                maxActiveSessions = 1,
+                subscriptionUrl = getSavedSubscriptionUrl(),
+                marzbanUsername = getSavedMarzbanUsername(),
+            )
+        }
+    }
+
+    suspend fun syncSubscriptionFromServer(
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<CurrentSubscriptionData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext Result.failure(Exception("未识别当前用户"))
+        val cached = getCachedSubscription(resolvedUserId)
+        val now = System.currentTimeMillis()
+        val lastSyncAt = readApiPayloadUpdatedAt(userPayloadCacheKey(resolvedUserId, CACHE_KEY_SUBSCRIPTION)) ?: 0L
+        if (!force && cached != null && now - lastSyncAt < WALLET_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached)
+        }
         try {
             val (response, _) = executeAuthenticatedRequest {
                 api.getSubscription("Bearer $it")
-            } ?: return@withContext Result.failure(Exception("未登录"))
+            } ?: return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val data = response.body()?.data
                 if (data != null) {
                     cacheSubscriptionMetadata(data)
+                    saveApiPayloadCache(
+                        cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_SUBSCRIPTION),
+                        userId = resolvedUserId,
+                        payload = data,
+                        updatedAt = now,
+                    )
                     Result.success(data)
                 } else {
-                    Result.failure(Exception("订阅数据为空"))
+                    cached?.let { Result.success(it) } ?: Result.failure(Exception("订阅数据为空"))
                 }
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取订阅失败"))
+                cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取订阅失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(it) } ?: Result.failure(e)
         }
+    }
+
+    suspend fun getSubscription(
+        forceRefresh: Boolean = false,
+    ): Result<CurrentSubscriptionData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = getCurrentUserId()
+        val cached = if (!forceRefresh) getCachedSubscription(resolvedUserId) else null
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncSubscriptionFromServer(force = false, userId = resolvedUserId)
+            }
+            return@withContext Result.success(cached)
+        }
+        syncSubscriptionFromServer(force = true, userId = resolvedUserId)
     }
 
     // ==================== Token 管理方法 ====================
@@ -952,19 +1033,61 @@ class PaymentRepository(context: Context) {
         }
     }
 
-    suspend fun getVpnRegions(): Result<List<VpnRegionItem>> = withContext(Dispatchers.IO) {
+    suspend fun getCachedVpnRegions(
+        userId: String? = getCurrentUserId(),
+    ): List<VpnRegionItem>? = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext null
+        readApiPayloadCache(
+            cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_VPN_REGIONS),
+            type = object : TypeToken<List<VpnRegionItem>>() {}.type,
+        )
+    }
+
+    suspend fun syncVpnRegionsFromServer(
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<List<VpnRegionItem>> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext Result.failure(Exception("未识别当前用户"))
+        val cached = getCachedVpnRegions(resolvedUserId)
+        val now = System.currentTimeMillis()
+        val lastSyncAt = readApiPayloadUpdatedAt(userPayloadCacheKey(resolvedUserId, CACHE_KEY_VPN_REGIONS)) ?: 0L
+        if (!force && cached != null && now - lastSyncAt < WALLET_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached)
+        }
         try {
             val (response, _) = executeAuthenticatedRequest {
                 api.getVpnRegions("Bearer $it")
-            } ?: return@withContext Result.failure(Exception("未登录"))
+            } ?: return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
-                Result.success(response.body()?.data?.items.orEmpty())
+                val items = response.body()?.data?.items.orEmpty()
+                saveApiPayloadCache(
+                    cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_VPN_REGIONS),
+                    userId = resolvedUserId,
+                    payload = items,
+                    updatedAt = now,
+                )
+                Result.success(items)
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取 VPN 区域失败"))
+                cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取 VPN 区域失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(it) } ?: Result.failure(e)
         }
+    }
+
+    suspend fun getVpnRegions(
+        forceRefresh: Boolean = false,
+    ): Result<List<VpnRegionItem>> = withContext(Dispatchers.IO) {
+        val resolvedUserId = getCurrentUserId()
+        val cached = if (!forceRefresh) getCachedVpnRegions(resolvedUserId) else null
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncVpnRegionsFromServer(force = false, userId = resolvedUserId)
+            }
+            return@withContext Result.success(cached)
+        }
+        syncVpnRegionsFromServer(force = true, userId = resolvedUserId)
     }
 
     suspend fun getVpnNodes(
@@ -1012,10 +1135,10 @@ class PaymentRepository(context: Context) {
             return@withContext Result.success(cachedNodes)
         }
 
-        val vpnStatus = getVpnStatus().getOrElse {
+        val vpnStatus = syncVpnStatusFromServer(force = force, userId = resolvedUserId).getOrElse {
             return@withContext Result.failure(it)
         }
-        val regions = getVpnRegions().getOrElse {
+        val regions = syncVpnRegionsFromServer(force = force, userId = resolvedUserId).getOrElse {
             return@withContext Result.failure(it)
         }
         val allowedLines = regions.filter { it.isAllowed }
@@ -1197,23 +1320,80 @@ class PaymentRepository(context: Context) {
         }
     }
 
-    suspend fun getVpnStatus(): Result<VpnStatusData> = withContext(Dispatchers.IO) {
+    suspend fun getCachedVpnStatus(
+        userId: String? = getCurrentUserId(),
+    ): VpnStatusData? = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext null
+        readApiPayloadCache(
+            cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_VPN_STATUS),
+            type = object : TypeToken<VpnStatusData>() {}.type,
+        ) ?: run {
+            val sessionStatus = getCachedVpnSessionStatus() ?: return@run null
+            VpnStatusData(
+                subscriptionStatus = getCachedSubscriptionStatus() ?: "UNKNOWN",
+                currentRegionCode = getLastIssuedVpnRegionCode(),
+                selectedRegionCode = getLastIssuedVpnRegionCode(),
+                selectedRegionName = null,
+                selectedLineCode = null,
+                selectedLineName = getCachedVpnLineName(),
+                selectedNodeId = getCachedVpnNodeId(),
+                selectedNodeName = getCachedVpnNodeName(),
+                connectionMode = null,
+                canIssueConfig = !getSavedSubscriptionUrl().isNullOrBlank(),
+                sessionStatus = sessionStatus,
+            )
+        }
+    }
+
+    suspend fun syncVpnStatusFromServer(
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<VpnStatusData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext Result.failure(Exception("未识别当前用户"))
+        val cached = getCachedVpnStatus(resolvedUserId)
+        val now = System.currentTimeMillis()
+        val lastSyncAt = readApiPayloadUpdatedAt(userPayloadCacheKey(resolvedUserId, CACHE_KEY_VPN_STATUS)) ?: 0L
+        if (!force && cached != null && now - lastSyncAt < WALLET_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached)
+        }
         try {
             val (response, _) = executeAuthenticatedRequest {
                 api.getVpnStatus("Bearer $it")
-            } ?: return@withContext Result.failure(Exception("未登录"))
+            } ?: return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
                 response.body()?.data?.let {
                     cacheVpnStatusMetadata(it)
+                    saveApiPayloadCache(
+                        cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_VPN_STATUS),
+                        userId = resolvedUserId,
+                        payload = it,
+                        updatedAt = now,
+                    )
                     Result.success(it)
                 }
+                    ?: cached?.let { Result.success(it) }
                     ?: Result.failure(Exception("VPN 状态为空"))
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取 VPN 状态失败"))
+                cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取 VPN 状态失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(it) } ?: Result.failure(e)
         }
+    }
+
+    suspend fun getVpnStatus(
+        forceRefresh: Boolean = false,
+    ): Result<VpnStatusData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = getCurrentUserId()
+        val cached = if (!forceRefresh) getCachedVpnStatus(resolvedUserId) else null
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncVpnStatusFromServer(force = false, userId = resolvedUserId)
+            }
+            return@withContext Result.success(cached)
+        }
+        syncVpnStatusFromServer(force = true, userId = resolvedUserId)
     }
 
     private suspend fun <T> executeAuthenticatedRequest(
@@ -1336,42 +1516,128 @@ class PaymentRepository(context: Context) {
         return message?.contains("订单接口待同步") == true
     }
 
-    suspend fun getReferralOverview(): Result<ReferralOverviewData> = withContext(Dispatchers.IO) {
+    suspend fun getCachedReferralOverview(
+        userId: String? = getCurrentUserId(),
+    ): ReferralOverviewData? = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext null
+        readApiPayloadCache(
+            cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_REFERRAL_OVERVIEW),
+            type = object : TypeToken<ReferralOverviewData>() {}.type,
+        )
+    }
+
+    suspend fun syncReferralOverviewFromServer(
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<ReferralOverviewData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext Result.failure(Exception("未识别当前用户"))
+        val cached = getCachedReferralOverview(resolvedUserId)
+        val now = System.currentTimeMillis()
+        val lastSyncAt = readApiPayloadUpdatedAt(userPayloadCacheKey(resolvedUserId, CACHE_KEY_REFERRAL_OVERVIEW)) ?: 0L
+        if (!force && cached != null && now - lastSyncAt < WALLET_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached)
+        }
         try {
             if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+                return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("Token 已过期，请重新登录"))
             }
             val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
+                ?: return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("未登录"))
             val response = api.getReferralOverview("Bearer $token")
             if (response.isSuccessful && response.body()?.code == "OK") {
-                response.body()?.data?.let { Result.success(it) }
+                response.body()?.data?.let {
+                    saveApiPayloadCache(
+                        cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_REFERRAL_OVERVIEW),
+                        userId = resolvedUserId,
+                        payload = it,
+                        updatedAt = now,
+                    )
+                    Result.success(it)
+                } ?: cached?.let { Result.success(it) }
                     ?: Result.failure(Exception("邀请概览为空"))
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取邀请概览失败"))
+                cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取邀请概览失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(it) } ?: Result.failure(e)
         }
     }
 
-    suspend fun getReferralShareContext(): Result<ReferralShareContextData> = withContext(Dispatchers.IO) {
+    suspend fun getReferralOverview(
+        forceRefresh: Boolean = false,
+    ): Result<ReferralOverviewData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = getCurrentUserId()
+        val cached = if (!forceRefresh) getCachedReferralOverview(resolvedUserId) else null
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncReferralOverviewFromServer(force = false, userId = resolvedUserId)
+            }
+            return@withContext Result.success(cached)
+        }
+        syncReferralOverviewFromServer(force = true, userId = resolvedUserId)
+    }
+
+    suspend fun getCachedReferralShareContext(
+        userId: String? = getCurrentUserId(),
+    ): ReferralShareContextData? = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext null
+        readApiPayloadCache(
+            cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_REFERRAL_SHARE),
+            type = object : TypeToken<ReferralShareContextData>() {}.type,
+        )
+    }
+
+    suspend fun syncReferralShareContextFromServer(
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<ReferralShareContextData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext Result.failure(Exception("未识别当前用户"))
+        val cached = getCachedReferralShareContext(resolvedUserId)
+        val now = System.currentTimeMillis()
+        val lastSyncAt = readApiPayloadUpdatedAt(userPayloadCacheKey(resolvedUserId, CACHE_KEY_REFERRAL_SHARE)) ?: 0L
+        if (!force && cached != null && now - lastSyncAt < WALLET_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached)
+        }
         try {
             if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+                return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("Token 已过期，请重新登录"))
             }
             val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
+                ?: return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("未登录"))
             val response = api.getReferralShareContext("Bearer $token")
             if (response.isSuccessful && response.body()?.code == "OK") {
-                response.body()?.data?.let { Result.success(it) }
+                response.body()?.data?.let {
+                    saveApiPayloadCache(
+                        cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_REFERRAL_SHARE),
+                        userId = resolvedUserId,
+                        payload = it,
+                        updatedAt = now,
+                    )
+                    Result.success(it)
+                } ?: cached?.let { Result.success(it) }
                     ?: Result.failure(Exception("推广分享上下文为空"))
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取推广分享上下文失败"))
+                cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取推广分享上下文失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(it) } ?: Result.failure(e)
         }
+    }
+
+    suspend fun getReferralShareContext(
+        forceRefresh: Boolean = false,
+    ): Result<ReferralShareContextData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = getCurrentUserId()
+        val cached = if (!forceRefresh) getCachedReferralShareContext(resolvedUserId) else null
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncReferralShareContextFromServer(force = false, userId = resolvedUserId)
+            }
+            return@withContext Result.success(cached)
+        }
+        syncReferralShareContextFromServer(force = true, userId = resolvedUserId)
     }
 
     suspend fun bindReferralCode(referralCode: String): Result<Unit> = withContext(Dispatchers.IO) {
@@ -1426,23 +1692,66 @@ class PaymentRepository(context: Context) {
         }
     }
 
-    suspend fun getCommissionSummary(): Result<CommissionSummaryData> = withContext(Dispatchers.IO) {
+    suspend fun getCachedCommissionSummary(
+        userId: String? = getCurrentUserId(),
+    ): CommissionSummaryData? = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext null
+        readApiPayloadCache(
+            cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_COMMISSION_SUMMARY),
+            type = object : TypeToken<CommissionSummaryData>() {}.type,
+        )
+    }
+
+    suspend fun syncCommissionSummaryFromServer(
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<CommissionSummaryData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext Result.failure(Exception("未识别当前用户"))
+        val cached = getCachedCommissionSummary(resolvedUserId)
+        val now = System.currentTimeMillis()
+        val lastSyncAt = readApiPayloadUpdatedAt(userPayloadCacheKey(resolvedUserId, CACHE_KEY_COMMISSION_SUMMARY)) ?: 0L
+        if (!force && cached != null && now - lastSyncAt < WALLET_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached)
+        }
         try {
             if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+                return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("Token 已过期，请重新登录"))
             }
             val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
+                ?: return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("未登录"))
             val response = api.getCommissionSummary("Bearer $token")
             if (response.isSuccessful && response.body()?.code == "OK") {
-                response.body()?.data?.let { Result.success(it) }
+                response.body()?.data?.let {
+                    saveApiPayloadCache(
+                        cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_COMMISSION_SUMMARY),
+                        userId = resolvedUserId,
+                        payload = it,
+                        updatedAt = now,
+                    )
+                    Result.success(it)
+                } ?: cached?.let { Result.success(it) }
                     ?: Result.failure(Exception("佣金概览为空"))
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取佣金概览失败"))
+                cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取佣金概览失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(it) } ?: Result.failure(e)
         }
+    }
+
+    suspend fun getCommissionSummary(
+        forceRefresh: Boolean = false,
+    ): Result<CommissionSummaryData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = getCurrentUserId()
+        val cached = if (!forceRefresh) getCachedCommissionSummary(resolvedUserId) else null
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncCommissionSummaryFromServer(force = false, userId = resolvedUserId)
+            }
+            return@withContext Result.success(cached)
+        }
+        syncCommissionSummaryFromServer(force = true, userId = resolvedUserId)
     }
 
     suspend fun getCachedWalletOverview(
@@ -2184,8 +2493,11 @@ class PaymentRepository(context: Context) {
             syncWalletOverviewFromServer(force = force, userId = userId, walletId = walletId)
             syncWalletBalancesFromServer(force = force, userId = userId, walletId = walletId)
         }
-        getSubscription().getOrNull()?.let { cacheSubscriptionMetadata(it) }
-        getVpnStatus().getOrNull()?.let { cacheVpnStatusMetadata(it) }
+        syncSubscriptionFromServer(force = force, userId = userId).getOrNull()?.let { cacheSubscriptionMetadata(it) }
+        syncVpnStatusFromServer(force = force, userId = userId).getOrNull()?.let { cacheVpnStatusMetadata(it) }
+        syncVpnRegionsFromServer(force = force, userId = userId)
+        syncPlansFromServer(force = force)
+        syncWalletAssetCatalogFromServer(force = force)
     }
 
     suspend fun upsertWalletSecretBackup(
@@ -2396,10 +2708,10 @@ class PaymentRepository(context: Context) {
     suspend fun getWalletAssetCatalog(
         networkCode: String? = null,
     ): Result<List<WalletAssetItemData>> = withContext(Dispatchers.IO) {
-        val cached = readCachedWalletAssetCatalog()
+        val cached = getCachedWalletAssetCatalog()
         if (cached != null) {
             cacheSyncScope.launch {
-                syncWalletAssetCatalogFromServer(force = true)
+                syncWalletAssetCatalogFromServer(force = false)
             }
             return@withContext Result.success(filterWalletAssetCatalogByNetwork(cached, networkCode))
         }
@@ -2409,7 +2721,21 @@ class PaymentRepository(context: Context) {
     suspend fun getCachedWalletAssetCatalog(
         networkCode: String? = null,
     ): List<WalletAssetItemData>? = withContext(Dispatchers.IO) {
-        readCachedWalletAssetCatalog()?.let { filterWalletAssetCatalogByNetwork(it, networkCode) }
+        (
+            readApiPayloadCache(
+                cacheKey = globalPayloadCacheKey(CACHE_KEY_WALLET_ASSET_CATALOG),
+                type = object : TypeToken<List<WalletAssetItemData>>() {}.type,
+            ) ?: readCachedWalletAssetCatalog()?.also { legacy ->
+                saveApiPayloadCache(
+                    cacheKey = globalPayloadCacheKey(CACHE_KEY_WALLET_ASSET_CATALOG),
+                    payload = legacy,
+                    updatedAt = prefs.getLong(
+                        PaymentConfig.Prefs.WALLET_ASSET_CATALOG_CACHE_UPDATED_AT,
+                        System.currentTimeMillis(),
+                    ),
+                )
+            }
+        )?.let { filterWalletAssetCatalogByNetwork(it, networkCode) }
     }
 
     suspend fun syncWalletAssetCatalogFromServer(
@@ -2417,8 +2743,8 @@ class PaymentRepository(context: Context) {
         networkCode: String? = null,
     ): Result<List<WalletAssetItemData>> = withContext(Dispatchers.IO) {
         val now = System.currentTimeMillis()
-        val cached = readCachedWalletAssetCatalog()
-        val lastSyncAt = prefs.getLong(PaymentConfig.Prefs.WALLET_ASSET_CATALOG_CACHE_UPDATED_AT, 0L)
+        val cached = getCachedWalletAssetCatalog()
+        val lastSyncAt = readApiPayloadUpdatedAt(globalPayloadCacheKey(CACHE_KEY_WALLET_ASSET_CATALOG)) ?: 0L
         if (!force && cached != null && now - lastSyncAt < WALLET_ASSET_CATALOG_CACHE_SYNC_THROTTLE_MS) {
             return@withContext Result.success(filterWalletAssetCatalogByNetwork(cached, networkCode))
         }
@@ -2433,6 +2759,11 @@ class PaymentRepository(context: Context) {
             } ?: Result.failure(Exception("未登录"))
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val items = response.body()?.data?.items.orEmpty()
+                saveApiPayloadCache(
+                    cacheKey = globalPayloadCacheKey(CACHE_KEY_WALLET_ASSET_CATALOG),
+                    payload = items,
+                    updatedAt = now,
+                )
                 saveWalletAssetCatalogCache(items, now)
                 Result.success(filterWalletAssetCatalogByNetwork(items, networkCode))
             } else {
@@ -2596,23 +2927,75 @@ class PaymentRepository(context: Context) {
         )
     }
 
-    suspend fun getCommissionLedger(status: String? = null): Result<CommissionLedgerPageData> = withContext(Dispatchers.IO) {
+    suspend fun getCachedCommissionLedger(
+        status: String? = null,
+        userId: String? = getCurrentUserId(),
+    ): CommissionLedgerPageData? = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext null
+        readApiPayloadCache(
+            cacheKey = userPayloadCacheKey(
+                resolvedUserId,
+                CACHE_KEY_COMMISSION_LEDGER,
+                status?.trim()?.ifBlank { "all" } ?: "all",
+            ),
+            type = object : TypeToken<CommissionLedgerPageData>() {}.type,
+        )
+    }
+
+    suspend fun syncCommissionLedgerFromServer(
+        status: String? = null,
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<CommissionLedgerPageData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext Result.failure(Exception("未识别当前用户"))
+        val normalizedStatus = status?.trim()?.ifBlank { "all" } ?: "all"
+        val cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_COMMISSION_LEDGER, normalizedStatus)
+        val cached = getCachedCommissionLedger(status, resolvedUserId)
+        val now = System.currentTimeMillis()
+        val lastSyncAt = readApiPayloadUpdatedAt(cacheKey) ?: 0L
+        if (!force && cached != null && now - lastSyncAt < WALLET_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached)
+        }
         try {
             if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+                return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("Token 已过期，请重新登录"))
             }
             val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
+                ?: return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("未登录"))
             val response = api.getCommissionLedger("Bearer $token", status = status)
             if (response.isSuccessful && response.body()?.code == "OK") {
-                response.body()?.data?.let { Result.success(it) }
+                response.body()?.data?.let {
+                    saveApiPayloadCache(
+                        cacheKey = cacheKey,
+                        userId = resolvedUserId,
+                        payload = it,
+                        updatedAt = now,
+                    )
+                    Result.success(it)
+                } ?: cached?.let { Result.success(it) }
                     ?: Result.failure(Exception("佣金账本为空"))
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取佣金账本失败"))
+                cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取佣金账本失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(it) } ?: Result.failure(e)
         }
+    }
+
+    suspend fun getCommissionLedger(
+        status: String? = null,
+        forceRefresh: Boolean = false,
+    ): Result<CommissionLedgerPageData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = getCurrentUserId()
+        val cached = if (!forceRefresh) getCachedCommissionLedger(status, resolvedUserId) else null
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncCommissionLedgerFromServer(status = status, force = false, userId = resolvedUserId)
+            }
+            return@withContext Result.success(cached)
+        }
+        syncCommissionLedgerFromServer(status = status, force = true, userId = resolvedUserId)
     }
 
     suspend fun createWithdrawal(
@@ -2646,23 +3029,75 @@ class PaymentRepository(context: Context) {
         }
     }
 
-    suspend fun getWithdrawals(status: String? = null): Result<WithdrawalPageData> = withContext(Dispatchers.IO) {
+    suspend fun getCachedWithdrawals(
+        status: String? = null,
+        userId: String? = getCurrentUserId(),
+    ): WithdrawalPageData? = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext null
+        readApiPayloadCache(
+            cacheKey = userPayloadCacheKey(
+                resolvedUserId,
+                CACHE_KEY_WITHDRAWALS,
+                status?.trim()?.ifBlank { "all" } ?: "all",
+            ),
+            type = object : TypeToken<WithdrawalPageData>() {}.type,
+        )
+    }
+
+    suspend fun syncWithdrawalsFromServer(
+        status: String? = null,
+        force: Boolean = false,
+        userId: String? = getCurrentUserId(),
+    ): Result<WithdrawalPageData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = userId ?: return@withContext Result.failure(Exception("未识别当前用户"))
+        val normalizedStatus = status?.trim()?.ifBlank { "all" } ?: "all"
+        val cacheKey = userPayloadCacheKey(resolvedUserId, CACHE_KEY_WITHDRAWALS, normalizedStatus)
+        val cached = getCachedWithdrawals(status, resolvedUserId)
+        val now = System.currentTimeMillis()
+        val lastSyncAt = readApiPayloadUpdatedAt(cacheKey) ?: 0L
+        if (!force && cached != null && now - lastSyncAt < WALLET_CACHE_SYNC_THROTTLE_MS) {
+            return@withContext Result.success(cached)
+        }
         try {
             if (!refreshTokenIfNeeded()) {
-                return@withContext Result.failure(Exception("Token 已过期，请重新登录"))
+                return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("Token 已过期，请重新登录"))
             }
             val token = getAccessToken()
-                ?: return@withContext Result.failure(Exception("未登录"))
+                ?: return@withContext cached?.let { Result.success(it) } ?: Result.failure(Exception("未登录"))
             val response = api.getWithdrawals("Bearer $token", status = status)
             if (response.isSuccessful && response.body()?.code == "OK") {
-                response.body()?.data?.let { Result.success(it) }
+                response.body()?.data?.let {
+                    saveApiPayloadCache(
+                        cacheKey = cacheKey,
+                        userId = resolvedUserId,
+                        payload = it,
+                        updatedAt = now,
+                    )
+                    Result.success(it)
+                } ?: cached?.let { Result.success(it) }
                     ?: Result.failure(Exception("提现列表为空"))
             } else {
-                Result.failure(Exception(response.body()?.message ?: "获取提现列表失败"))
+                cached?.let { Result.success(it) }
+                    ?: Result.failure(Exception(response.body()?.message ?: "获取提现列表失败"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cached?.let { Result.success(it) } ?: Result.failure(e)
         }
+    }
+
+    suspend fun getWithdrawals(
+        status: String? = null,
+        forceRefresh: Boolean = false,
+    ): Result<WithdrawalPageData> = withContext(Dispatchers.IO) {
+        val resolvedUserId = getCurrentUserId()
+        val cached = if (!forceRefresh) getCachedWithdrawals(status, resolvedUserId) else null
+        if (cached != null) {
+            cacheSyncScope.launch {
+                syncWithdrawalsFromServer(status = status, force = false, userId = resolvedUserId)
+            }
+            return@withContext Result.success(cached)
+        }
+        syncWithdrawalsFromServer(status = status, force = true, userId = resolvedUserId)
     }
 
     fun getLastIssuedVpnConfigExpireAt(): String? {
@@ -2775,6 +3210,50 @@ class PaymentRepository(context: Context) {
     private fun parseIsoDate(dateString: String): Long? = parseIsoDateInternal(dateString)
 
     private fun normalizeWalletCacheKey(value: String?): String = value?.trim().orEmpty()
+
+    private fun globalPayloadCacheKey(scope: String): String = "global:$scope"
+
+    private fun userPayloadCacheKey(
+        userId: String,
+        scope: String,
+        qualifier: String? = null,
+    ): String = buildString {
+        append(userId)
+        append(':')
+        append(scope)
+        qualifier?.takeIf { it.isNotBlank() }?.let {
+            append(':')
+            append(it)
+        }
+    }
+
+    private suspend fun <T> readApiPayloadCache(
+        cacheKey: String,
+        type: Type,
+    ): T? {
+        val entity = localRepository.getApiPayloadCache(cacheKey) ?: return null
+        return runCatching { paymentApiGson.fromJson<T>(entity.payloadJson, type) }.getOrNull()
+    }
+
+    private suspend fun readApiPayloadUpdatedAt(cacheKey: String): Long? {
+        return localRepository.getApiPayloadCache(cacheKey)?.updatedAt
+    }
+
+    private suspend fun saveApiPayloadCache(
+        cacheKey: String,
+        userId: String? = null,
+        payload: Any,
+        updatedAt: Long,
+    ) {
+        localRepository.saveApiPayloadCache(
+            com.v2ray.ang.payment.data.local.entity.ApiPayloadCacheEntity(
+                cacheKey = cacheKey,
+                userId = userId,
+                payloadJson = paymentApiGson.toJson(payload),
+                updatedAt = updatedAt,
+            ),
+        )
+    }
 
     private fun readCachedPlans(): List<Plan>? {
         val payload = prefs.getString(PaymentConfig.Prefs.PLANS_CACHE_JSON, null)

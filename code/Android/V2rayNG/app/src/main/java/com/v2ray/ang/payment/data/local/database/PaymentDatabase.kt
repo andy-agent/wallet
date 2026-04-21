@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.v2ray.ang.payment.data.local.dao.ApiPayloadCacheDao
 import com.v2ray.ang.payment.data.local.dao.OrderDao
 import com.v2ray.ang.payment.data.local.dao.PaymentHistoryDao
 import com.v2ray.ang.payment.data.local.dao.UserDao
@@ -22,6 +23,7 @@ import com.v2ray.ang.payment.data.local.dao.WalletOverviewCacheDao
 import com.v2ray.ang.payment.data.local.dao.WalletPublicAddressCacheDao
 import com.v2ray.ang.payment.data.local.dao.WalletReceiveContextCacheDao
 import com.v2ray.ang.payment.data.local.entity.LocalWalletChainAccountEntity
+import com.v2ray.ang.payment.data.local.entity.ApiPayloadCacheEntity
 import com.v2ray.ang.payment.data.local.entity.LocalCustomTokenEntity
 import com.v2ray.ang.payment.data.local.entity.LocalTokenIconCacheEntity
 import com.v2ray.ang.payment.data.local.entity.LocalTokenVisibilityEntryEntity
@@ -43,6 +45,7 @@ import com.v2ray.ang.payment.data.local.entity.WalletReceiveContextCacheEntity
 @Database(
     entities = [
         UserEntity::class,
+        ApiPayloadCacheEntity::class,
         OrderEntity::class,
         PaymentHistoryEntity::class,
         LocalWalletEntity::class,
@@ -58,11 +61,12 @@ import com.v2ray.ang.payment.data.local.entity.WalletReceiveContextCacheEntity
         WalletReceiveContextCacheEntity::class,
         WalletOverviewCacheEntity::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 abstract class PaymentDatabase : RoomDatabase() {
 
+    abstract fun apiPayloadCacheDao(): ApiPayloadCacheDao
     abstract fun userDao(): UserDao
     abstract fun orderDao(): OrderDao
     abstract fun paymentHistoryDao(): PaymentHistoryDao
@@ -386,6 +390,28 @@ abstract class PaymentDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `api_payload_cache` (
+                        `cacheKey` TEXT NOT NULL,
+                        `userId` TEXT,
+                        `payloadJson` TEXT NOT NULL,
+                        `updatedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`cacheKey`)
+                    )
+                    """.trimIndent(),
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_api_payload_cache_userId` ON `api_payload_cache` (`userId`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_api_payload_cache_updatedAt` ON `api_payload_cache` (`updatedAt`)",
+                )
+            }
+        }
+
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
@@ -458,6 +484,7 @@ abstract class PaymentDatabase : RoomDatabase() {
                     .addMigrations(MIGRATION_7_8)
                     .addMigrations(MIGRATION_8_9)
                     .addMigrations(MIGRATION_9_10)
+                    .addMigrations(MIGRATION_10_11)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

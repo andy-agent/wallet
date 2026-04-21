@@ -1,9 +1,11 @@
 package com.v2ray.ang.composeui.p2.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.composeui.common.repository.CryptoVpnRepository
 import com.v2ray.ang.composeui.common.viewmodel.BaseFeatureViewModel
 import com.v2ray.ang.composeui.p2.model.ProfileEvent
 import com.v2ray.ang.composeui.p2.model.ProfileUiState
+import kotlinx.coroutines.launch
 
 class ProfileViewModel(
     private val repository: CryptoVpnRepository,
@@ -30,8 +32,11 @@ class ProfileViewModel(
     }
 
     private fun refresh() {
-        launchLoad {
-            repository.getProfileState()
+        viewModelScope.launch {
+            repository.getCachedProfileState()?.let { cached ->
+                _uiState.value = cached
+            }
+            _uiState.value = repository.getProfileState()
         }
     }
 }

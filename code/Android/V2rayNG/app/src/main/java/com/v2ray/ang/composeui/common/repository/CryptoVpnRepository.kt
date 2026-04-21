@@ -101,14 +101,20 @@ interface CryptoVpnRepository {
     suspend fun submitSend(args: SendRouteArgs, toAddress: String, amount: String, memo: String = ""): SendSubmissionResult =
         SendSubmissionResult(success = false, errorMessage = "Send unavailable")
     suspend fun getSendResultState(args: SendResultRouteArgs): SendResultUiState
+    suspend fun getCachedInviteCenterState(): InviteCenterUiState? = null
     suspend fun getInviteCenterState(): InviteCenterUiState
+    suspend fun getCachedInviteShareState(): InviteShareUiState? = null
     suspend fun getInviteShareState(): InviteShareUiState
+    suspend fun getCachedCommissionLedgerState(): CommissionLedgerUiState? = null
     suspend fun getCommissionLedgerState(): CommissionLedgerUiState
+    suspend fun getCachedWithdrawState(): WithdrawUiState? = null
     suspend fun getWithdrawState(): WithdrawUiState
+    suspend fun getCachedProfileState(): ProfileUiState? = null
     suspend fun getProfileState(): ProfileUiState
     suspend fun getLegalDocumentsState(): LegalDocumentsUiState
     suspend fun getAboutAppState(): AboutAppUiState
     suspend fun getLegalDocumentDetailState(args: LegalDocumentDetailRouteArgs): LegalDocumentDetailUiState
+    suspend fun getCachedSubscriptionDetailState(args: SubscriptionDetailRouteArgs): SubscriptionDetailUiState? = null
     suspend fun getSubscriptionDetailState(args: SubscriptionDetailRouteArgs): SubscriptionDetailUiState
     suspend fun getExpiryReminderState(args: ExpiryReminderRouteArgs): ExpiryReminderUiState
     suspend fun getNodeSpeedTestState(args: NodeSpeedTestRouteArgs): NodeSpeedTestUiState

@@ -2,6 +2,7 @@ package com.v2ray.ang.payment.data.repository
 
 import android.content.Context
 import com.v2ray.ang.payment.data.local.database.PaymentDatabase
+import com.v2ray.ang.payment.data.local.entity.ApiPayloadCacheEntity
 import com.v2ray.ang.payment.data.local.entity.OrderEntity
 import com.v2ray.ang.payment.data.local.entity.PaymentHistoryEntity
 import com.v2ray.ang.payment.data.local.entity.UserEntity
@@ -27,6 +28,7 @@ import kotlinx.coroutines.withContext
 class LocalPaymentRepository(context: Context) {
 
     private val database = PaymentDatabase.getDatabase(context)
+    private val apiPayloadCacheDao = database.apiPayloadCacheDao()
     private val userDao = database.userDao()
     private val orderDao = database.orderDao()
     private val paymentHistoryDao = database.paymentHistoryDao()
@@ -110,6 +112,18 @@ class LocalPaymentRepository(context: Context) {
         orderDao.deleteByUserId(userId)
     }
 
+    suspend fun getApiPayloadCache(cacheKey: String): ApiPayloadCacheEntity? = withContext(Dispatchers.IO) {
+        apiPayloadCacheDao.getByCacheKey(cacheKey)
+    }
+
+    suspend fun saveApiPayloadCache(item: ApiPayloadCacheEntity) = withContext(Dispatchers.IO) {
+        apiPayloadCacheDao.upsert(item)
+    }
+
+    suspend fun clearApiPayloadCacheByUserId(userId: String) = withContext(Dispatchers.IO) {
+        apiPayloadCacheDao.deleteByUserId(userId)
+    }
+
     // ==================== 支付历史相关操作 ====================
 
     suspend fun savePaymentHistory(paymentHistory: PaymentHistoryEntity) = withContext(Dispatchers.IO) {
@@ -142,6 +156,7 @@ class LocalPaymentRepository(context: Context) {
      * 清除所有本地数据（退出登录时调用）
      */
     suspend fun clearAllData() = withContext(Dispatchers.IO) {
+        apiPayloadCacheDao.deleteAll()
         userDao.deleteAll()
         paymentHistoryDao.deleteAll()
         localWalletDao.deleteAll()
