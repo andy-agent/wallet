@@ -44,8 +44,13 @@ class ComposeContainerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val startRoute = intent.getStringExtra(EXTRA_START_ROUTE)
+        val requestedRoute = intent.getStringExtra(EXTRA_START_ROUTE)
             ?: CryptoVpnRouteSpec.splash.pattern
+        val graphStartRoute = if (requestedRoute == CryptoVpnRouteSpec.splash.pattern) {
+            CryptoVpnRouteSpec.splash.pattern
+        } else {
+            CryptoVpnRouteSpec.walletHome.pattern
+        }
 
         setContent {
             CryptoVpnTheme {
@@ -58,13 +63,13 @@ class ComposeContainerActivity : ComponentActivity() {
                     val repository = remember { RealCryptoVpnRepository(applicationContext) }
                     AppNavGraph(
                         navController = navController,
-                        startDestination = startRoute,
+                        startDestination = graphStartRoute,
                         p0Repository = p0Repository,
                         repository = repository,
                     )
-                    LaunchedEffect(startRoute) {
-                        if (startRoute != CryptoVpnRouteSpec.splash.pattern) {
-                            navController.navigate(startRoute) {
+                    LaunchedEffect(requestedRoute, graphStartRoute) {
+                        if (requestedRoute != graphStartRoute) {
+                            navController.navigate(requestedRoute) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     inclusive = true
                                 }

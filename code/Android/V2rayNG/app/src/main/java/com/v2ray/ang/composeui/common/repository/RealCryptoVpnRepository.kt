@@ -1076,6 +1076,24 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         return paymentRepository.getWalletLifecycle()
     }
 
+    override suspend fun hasWalletGraph(): Boolean {
+        val cached = paymentRepository.getCachedWallets()
+        if (cached.isNotEmpty()) {
+            return true
+        }
+        paymentRepository.getCachedWalletOverview()?.let { overview ->
+            if (!overview.walletId.isNullOrBlank() || !overview.defaultAddress.isNullOrBlank()) {
+                return true
+            }
+        }
+        paymentRepository.getCachedWalletLifecycle()?.let { lifecycle ->
+            if (lifecycle.walletExists) {
+                return true
+            }
+        }
+        return paymentRepository.listWallets().getOrElse { emptyList() }.isNotEmpty()
+    }
+
     override suspend fun getCachedAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState? {
         val overview = paymentRepository.getCachedWalletOverview()
         return if (overview != null) buildAssetDetailUiState(args, overview) else null

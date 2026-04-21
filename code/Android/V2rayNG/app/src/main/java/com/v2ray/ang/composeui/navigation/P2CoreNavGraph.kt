@@ -90,7 +90,8 @@ fun NavGraphBuilder.installCryptoVpnP2CoreRoutes(
         )
         LaunchedEffect(args.assetId, args.chainId) {
             val lifecycle = repository.getWalletLifecycleState().getOrNull()
-            if (lifecycle?.walletExists != true || lifecycle.sourceType.equals("LEGACY", ignoreCase = true)) {
+            val hasWalletGraph = repository.hasWalletGraph()
+            if (!hasWalletGraph && lifecycle?.walletExists != true) {
                 navController.navigateSingleTop(CryptoVpnRouteSpec.walletOnboarding.pattern)
             }
         }
@@ -124,7 +125,8 @@ fun NavGraphBuilder.installCryptoVpnP2CoreRoutes(
         )
         LaunchedEffect(args.assetId, args.chainId) {
             val lifecycle = repository.getWalletLifecycleState().getOrNull()
-            if (lifecycle?.walletExists != true || lifecycle.sourceType.equals("LEGACY", ignoreCase = true)) {
+            val hasWalletGraph = repository.hasWalletGraph()
+            if (!hasWalletGraph && lifecycle?.walletExists != true) {
                 navController.navigateSingleTop(CryptoVpnRouteSpec.walletOnboarding.pattern)
             }
         }
