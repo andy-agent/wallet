@@ -85,6 +85,7 @@ interface CryptoVpnRepository {
     suspend fun getWalletPaymentState(): WalletPaymentUiState
     suspend fun getWalletLifecycleState(): Result<WalletLifecycleData> =
         Result.failure(IllegalStateException("Wallet lifecycle unavailable"))
+    suspend fun hasWalletGraph(): Boolean = false
     suspend fun createWalletProfile(displayName: String): Result<WalletLifecycleData> =
         Result.failure(IllegalStateException("Wallet create unavailable"))
     suspend fun importWalletProfile(displayName: String, mnemonic: String): Result<WalletLifecycleData> =
