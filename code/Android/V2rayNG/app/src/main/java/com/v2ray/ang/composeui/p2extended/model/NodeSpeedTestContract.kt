@@ -14,8 +14,8 @@ data class NodeSpeedTestUiState(
         val subtitle: String = "NODE SPEED TEST",
         val badge: String = "P2 · EXTENDED",
         val summary: String = "节点测速结果待接口返回。",
-        val primaryActionLabel: String = "返回节点选择",
-        val secondaryActionLabel: String? = "回到首页",
+        val primaryActionLabel: String = "回到首页",
+        val secondaryActionLabel: String? = "返回节点选择",
         val heroAccent: String = "node_speed_test",
         val metrics: List<FeatureMetric> = listOf(
     FeatureMetric(label = "已测速", value = "待接口返回"),

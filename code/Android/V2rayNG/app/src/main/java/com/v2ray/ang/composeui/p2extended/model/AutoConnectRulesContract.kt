@@ -13,7 +13,7 @@ data class AutoConnectRulesUiState(
         val badge: String = "P2 · EXTENDED",
         val summary: String = "自动连接规则待接口返回。",
         val primaryActionLabel: String = "保存并返回首页",
-        val secondaryActionLabel: String? = "回到个人中心",
+        val secondaryActionLabel: String? = "进入安全中心",
         val heroAccent: String = "auto_connect_rules",
         val metrics: List<FeatureMetric> = listOf(
     FeatureMetric(label = "规则数量", value = "待接口返回"),
