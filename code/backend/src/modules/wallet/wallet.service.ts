@@ -1067,6 +1067,10 @@ export class WalletService {
       await this.runtimeStateRepository.findWalletLifecycleByAccountId(
         account.accountId,
       );
+    const scopedWallet =
+      dto.walletId?.trim().length
+        ? await this.requireOwnedWallet(account.accountId, dto.walletId.trim())
+        : null;
 
     let next: PersistedWalletLifecycleRecord | null = null;
     switch (dto.action) {
@@ -1144,6 +1148,11 @@ export class WalletService {
         }
         next = {
           ...existing,
+          walletId: scopedWallet?.walletId ?? existing.walletId,
+          walletName: scopedWallet?.walletName ?? existing.walletName,
+          origin:
+            this.toLifecycleOriginFromWalletSource(scopedWallet?.sourceType) ??
+            existing.origin,
           status: 'BACKUP_PENDING_CONFIRMATION',
           backupAcknowledgedAt: now,
           updatedAt: now,
@@ -1158,6 +1167,11 @@ export class WalletService {
         }
         next = {
           ...existing,
+          walletId: scopedWallet?.walletId ?? existing.walletId,
+          walletName: scopedWallet?.walletName ?? existing.walletName,
+          origin:
+            this.toLifecycleOriginFromWalletSource(scopedWallet?.sourceType) ??
+            existing.origin,
           status: 'ACTIVE',
           backupAcknowledgedAt: existing.backupAcknowledgedAt ?? now,
           activatedAt: now,
@@ -1906,6 +1920,19 @@ export class WalletService {
         return 'IMPORT';
       case 'LEGACY':
         return 'LEGACY';
+      default:
+        return null;
+    }
+  }
+
+  private toLifecycleOriginFromWalletSource(
+    sourceType: WalletSourceType | null | undefined,
+  ): WalletLifecycleOrigin | null {
+    switch (sourceType) {
+      case 'CREATED':
+        return 'CREATED';
+      case 'IMPORTED_MNEMONIC':
+        return 'IMPORTED';
       default:
         return null;
     }

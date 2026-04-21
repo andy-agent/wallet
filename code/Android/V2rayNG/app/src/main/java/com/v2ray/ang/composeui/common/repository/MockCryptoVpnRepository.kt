@@ -254,7 +254,7 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         )
     }
 
-    override suspend fun acknowledgeWalletBackup(): Result<WalletLifecycleData> {
+    override suspend fun acknowledgeWalletBackup(walletId: String?): Result<WalletLifecycleData> {
         return Result.success(
             WalletLifecycleData(
                 accountId = "mock-account",
@@ -269,7 +269,7 @@ class MockCryptoVpnRepository : CryptoVpnRepository {
         )
     }
 
-    override suspend fun confirmWalletBackup(): Result<WalletLifecycleData> {
+    override suspend fun confirmWalletBackup(walletId: String?): Result<WalletLifecycleData> {
         return Result.success(
             WalletLifecycleData(
                 accountId = "mock-account",

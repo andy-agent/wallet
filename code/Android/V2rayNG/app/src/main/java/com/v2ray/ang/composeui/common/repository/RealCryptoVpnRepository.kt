@@ -1688,12 +1688,18 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         WalletLifecycleMutationResult(success = true, walletId = walletId)
     }
 
-    override suspend fun acknowledgeWalletBackup(): Result<WalletLifecycleData> {
-        return paymentRepository.upsertWalletLifecycle(action = "ACKNOWLEDGE_BACKUP")
+    override suspend fun acknowledgeWalletBackup(walletId: String?): Result<WalletLifecycleData> {
+        return paymentRepository.upsertWalletLifecycle(
+            action = "ACKNOWLEDGE_BACKUP",
+            walletId = walletId,
+        )
     }
 
-    override suspend fun confirmWalletBackup(): Result<WalletLifecycleData> {
-        return paymentRepository.upsertWalletLifecycle(action = "CONFIRM_BACKUP")
+    override suspend fun confirmWalletBackup(walletId: String?): Result<WalletLifecycleData> {
+        return paymentRepository.upsertWalletLifecycle(
+            action = "CONFIRM_BACKUP",
+            walletId = walletId,
+        )
     }
 
     override suspend fun getImportWalletMethodState(): ImportWalletMethodUiState {
@@ -1858,16 +1864,27 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     override suspend fun getBackupMnemonicState(args: BackupMnemonicRouteArgs): BackupMnemonicUiState {
         val user = paymentRepository.getCachedCurrentUser()
         val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
+        val walletDetail = paymentRepository.getWallet(args.walletId).getOrNull()
         val localSecret = paymentRepository.getCurrentUserId()
             ?.let { walletSecretStore.getMnemonicRecord(it) }
             ?: walletSecretStore.getMnemonicRecordByWalletId(args.walletId)
             ?: walletSecretStore.getAnyMnemonicRecord()
         val mnemonicWords = localSecret?.mnemonic?.split(Regex("\\s+"))?.filter { it.isNotBlank() }.orEmpty()
+        val walletName = walletDetail?.wallet?.walletName
+            ?: lifecycle?.walletName
+            ?: lifecycle?.displayName
+            ?: "Primary Wallet"
+        val walletStage = when {
+            lifecycle?.walletId == args.walletId && !lifecycle.status.isNullOrBlank() -> lifecycle.status
+            walletDetail?.wallet?.sourceType.equals("CREATED", ignoreCase = true) -> "CREATED_PENDING_BACKUP"
+            walletDetail?.wallet?.sourceType.equals("IMPORTED_MNEMONIC", ignoreCase = true) -> "ACTIVE"
+            else -> lifecycle?.status ?: lifecycle?.lifecycleStatus ?: "CREATED_PENDING_BACKUP"
+        }
         return BackupMnemonicUiState(
             metrics = listOf(
                 FeatureMetric("词数", mnemonicWords.size.takeIf { it > 0 }?.toString() ?: "待返回"),
                 FeatureMetric("账户状态", if (user != null) "已绑定" else "未绑定"),
-                FeatureMetric("当前阶段", lifecycle?.status ?: lifecycle?.lifecycleStatus ?: "CREATED_PENDING_BACKUP"),
+                FeatureMetric("当前阶段", walletStage),
             ),
             fields = mnemonicWords.chunked(3).mapIndexed { index, chunk ->
                 FeatureField(
@@ -1878,7 +1895,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 )
             },
             highlights = listOf(
-                FeatureListItem("钱包标识", args.walletId, lifecycle?.walletName ?: lifecycle?.displayName ?: "Primary Wallet", "REAL"),
+                FeatureListItem("钱包标识", args.walletId, walletName, "REAL"),
                 FeatureListItem("账户标签", user?.username ?: "--", user?.userId ?: "--", "ACCOUNT"),
                 FeatureListItem("数据来源", if (mnemonicWords.isNotEmpty()) "device-keystore" else "wallet/lifecycle", "", "REAL"),
             ),
@@ -1888,15 +1905,26 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
 
     override suspend fun getConfirmMnemonicState(args: ConfirmMnemonicRouteArgs): ConfirmMnemonicUiState =
         paymentRepository.getWalletLifecycle().getOrNull().let { lifecycle ->
+            val walletDetail = paymentRepository.getWallet(args.walletId).getOrNull()
+            val walletName = walletDetail?.wallet?.walletName
+                ?: lifecycle?.walletName
+                ?: lifecycle?.displayName
+                ?: "Primary Wallet"
+            val walletStatus = when {
+                lifecycle?.walletId == args.walletId && !lifecycle.status.isNullOrBlank() -> lifecycle.status
+                walletDetail?.wallet?.sourceType.equals("CREATED", ignoreCase = true) -> "BACKUP_PENDING_CONFIRMATION"
+                walletDetail?.wallet?.sourceType.equals("IMPORTED_MNEMONIC", ignoreCase = true) -> "ACTIVE"
+                else -> lifecycle?.status ?: lifecycle?.lifecycleStatus ?: "BACKUP_PENDING_CONFIRMATION"
+            }
             ConfirmMnemonicUiState(
                 metrics = listOf(
                     FeatureMetric("钱包标识", args.walletId),
-                    FeatureMetric("当前阶段", lifecycle?.nextAction ?: "CONFIRM_MNEMONIC"),
-                    FeatureMetric("状态", lifecycle?.status ?: lifecycle?.lifecycleStatus ?: "BACKUP_PENDING_CONFIRMATION"),
+                    FeatureMetric("当前阶段", if (walletStatus == "ACTIVE") "READY" else "CONFIRM_MNEMONIC"),
+                    FeatureMetric("状态", walletStatus),
                 ),
                 highlights = listOf(
-                    FeatureListItem("钱包名称", lifecycle?.walletName ?: lifecycle?.displayName ?: "Primary Wallet", "", "REAL"),
-                    FeatureListItem("生命周期", lifecycle?.status ?: lifecycle?.lifecycleStatus ?: "BACKUP_PENDING_CONFIRMATION", lifecycle?.origin ?: "", "STATE"),
+                    FeatureListItem("钱包名称", walletName, "", "REAL"),
+                    FeatureListItem("生命周期", walletStatus, lifecycle?.origin ?: walletDetail?.wallet?.sourceType.orEmpty(), "STATE"),
                 ),
                 note = "",
             )
@@ -2265,6 +2293,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         if (wallets.isEmpty()) {
             return null
         }
+        val lifecycle = paymentRepository.getCachedWalletLifecycle()
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
         val currentAccountId = paymentRepository.getCurrentUserId()
@@ -2272,6 +2301,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         return buildWalletManagerState(
             args = args,
             wallets = wallets,
+            lifecycle = lifecycle,
             userEmailOrName = user?.email ?: user?.username ?: "--",
             orderCount = orders.size,
             conflictingWalletDetected = conflictingWallet != null,
@@ -2280,6 +2310,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     }
 
     override suspend fun getWalletManagerState(args: WalletManagerRouteArgs): WalletManagerUiState {
+        val lifecycle = paymentRepository.getWalletLifecycle().getOrNull()
         val user = paymentRepository.getCachedCurrentUser()
         val orders = loadCachedOrders()
         val currentAccountId = paymentRepository.getCurrentUserId()
@@ -2296,6 +2327,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         return buildWalletManagerState(
             args = args,
             wallets = resolvedWallets,
+            lifecycle = lifecycle,
             userEmailOrName = user?.email ?: user?.username ?: "--",
             orderCount = orders.size,
             conflictingWalletDetected = conflictingWallet != null,
@@ -2360,6 +2392,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     private fun buildWalletManagerState(
         args: WalletManagerRouteArgs,
         wallets: List<com.v2ray.ang.payment.data.api.WalletSummaryData>,
+        lifecycle: WalletLifecycleData?,
         userEmailOrName: String,
         orderCount: Int,
         conflictingWalletDetected: Boolean,
@@ -2371,6 +2404,11 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
         val walletDisplayName = selectedWallet?.walletName ?: if (conflictingWalletDetected) "当前账号未创建钱包" else "未创建"
         val walletItems = wallets.map { wallet ->
             val capabilityLabel = resolveWalletManagerCapability(wallet)
+            val statusLabel = when {
+                lifecycle?.walletId == wallet.walletId && !lifecycle.status.isNullOrBlank() ->
+                    lifecycle.status
+                else -> wallet.sourceType
+            }
             WalletManagerWalletItemUi(
                 walletId = wallet.walletId,
                 walletName = wallet.walletName,
@@ -2378,7 +2416,7 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
                 isDefault = wallet.isDefault,
                 isArchived = wallet.isArchived,
                 subtitle = buildString {
-                    append(wallet.sourceType)
+                    append(statusLabel)
                     if (capabilityLabel.isNotBlank()) {
                         append(" · ")
                         append(capabilityLabel)

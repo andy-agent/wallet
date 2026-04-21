@@ -12,6 +12,11 @@ export class UpsertWalletLifecycleRequestDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(128)
+  walletId?: string;
+
+  @IsOptional()
+  @IsString()
   mnemonic?: string;
 
   @IsOptional()

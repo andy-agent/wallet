@@ -92,9 +92,9 @@ interface CryptoVpnRepository {
         Result.failure(IllegalStateException("Wallet create unavailable"))
     suspend fun importWalletProfile(displayName: String, mnemonic: String): Result<WalletLifecycleData> =
         Result.failure(IllegalStateException("Wallet import unavailable"))
-    suspend fun acknowledgeWalletBackup(): Result<WalletLifecycleData> =
+    suspend fun acknowledgeWalletBackup(walletId: String? = null): Result<WalletLifecycleData> =
         Result.failure(IllegalStateException("Wallet backup acknowledgement unavailable"))
-    suspend fun confirmWalletBackup(): Result<WalletLifecycleData> =
+    suspend fun confirmWalletBackup(walletId: String? = null): Result<WalletLifecycleData> =
         Result.failure(IllegalStateException("Wallet backup confirmation unavailable"))
     suspend fun getCachedAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState? = null
     suspend fun getAssetDetailState(args: AssetDetailRouteArgs): AssetDetailUiState

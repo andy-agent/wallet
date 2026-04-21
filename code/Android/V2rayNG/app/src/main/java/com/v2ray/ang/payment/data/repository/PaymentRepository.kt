@@ -2423,6 +2423,7 @@ class PaymentRepository(context: Context) {
 
     suspend fun upsertWalletLifecycle(
         action: String,
+        walletId: String? = null,
         displayName: String? = null,
         mnemonic: String? = null,
         mnemonicHash: String? = null,
@@ -2438,6 +2439,7 @@ class PaymentRepository(context: Context) {
                 authorization = "Bearer $token",
                 request = WalletLifecycleUpsertRequest(
                     action = action,
+                    walletId = walletId?.trim()?.takeIf { it.isNotBlank() },
                     displayName = displayName?.trim()?.takeIf { it.isNotBlank() },
                     mnemonic = mnemonic?.trim()?.takeIf { it.isNotBlank() },
                     mnemonicHash = mnemonicHash?.trim()?.takeIf { it.isNotBlank() },

@@ -46,7 +46,7 @@ class ConfirmMnemonicViewModel(
         onError: (String) -> Unit,
     ) {
         viewModelScope.launch {
-            val result = repository.confirmWalletBackup()
+            val result = repository.confirmWalletBackup(routeArgs.walletId)
             if (result.isSuccess) {
                 refresh()
                 onSuccess()

@@ -883,6 +883,8 @@ data class WalletLifecycleData(
 data class WalletLifecycleUpsertRequest(
     @SerializedName("action")
     val action: String,
+    @SerializedName("walletId")
+    val walletId: String? = null,
     @SerializedName("displayName")
     val displayName: String? = null,
     @SerializedName("mnemonic")
