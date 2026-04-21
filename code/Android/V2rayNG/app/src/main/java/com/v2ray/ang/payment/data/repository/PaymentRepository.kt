@@ -2498,6 +2498,11 @@ class PaymentRepository(context: Context) {
         syncVpnRegionsFromServer(force = force, userId = userId)
         syncPlansFromServer(force = force)
         syncWalletAssetCatalogFromServer(force = force)
+        syncReferralOverviewFromServer(force = force, userId = userId)
+        syncReferralShareContextFromServer(force = force, userId = userId)
+        syncCommissionSummaryFromServer(force = force, userId = userId)
+        syncCommissionLedgerFromServer(force = force, userId = userId)
+        syncWithdrawalsFromServer(force = force, userId = userId)
     }
 
     suspend fun upsertWalletSecretBackup(
