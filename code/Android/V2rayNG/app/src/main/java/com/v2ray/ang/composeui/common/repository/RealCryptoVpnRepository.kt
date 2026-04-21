@@ -2373,7 +2373,15 @@ class RealCryptoVpnRepository(context: Context) : CryptoVpnRepository {
     private fun formatUsdDisplay(value: String?, priceStatus: String?): String {
         val parsed = value?.trim()?.toDoubleOrNull()
         return when {
-            parsed != null -> "$" + "%.2f".format(parsed)
+            parsed != null -> {
+                val absolute = kotlin.math.abs(parsed)
+                when {
+                    absolute == 0.0 -> "$0.00"
+                    absolute >= 0.01 -> "$" + "%.2f".format(Locale.US, parsed)
+                    absolute >= 0.00000001 -> "$" + "%.8f".format(Locale.US, parsed)
+                    else -> "<$0.000001"
+                }
+            }
             priceStatus.equals("UNAVAILABLE", ignoreCase = true) -> "$0.00"
             else -> "$0.00"
         }

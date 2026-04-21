@@ -9,6 +9,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.abs
 
 private val terminalWalletOrderStatuses = setOf("FAILED", "EXPIRED", "CANCELED")
 
@@ -153,7 +154,13 @@ private fun extractWalletUsdAmount(raw: String?): Double? {
 
 private fun formatWalletUsdValue(raw: String?): String {
     val value = raw?.trim()?.toDoubleOrNull() ?: return "$0.00"
-    return "$" + "%.2f".format(Locale.US, value)
+    val absolute = abs(value)
+    return when {
+        absolute == 0.0 -> "$0.00"
+        absolute >= 0.01 -> "$" + "%.2f".format(Locale.US, value)
+        absolute >= 0.00000001 -> "$" + "%.8f".format(Locale.US, value)
+        else -> "<$0.000001"
+    }
 }
 
 private fun formatWalletPriceChangeText(

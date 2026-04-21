@@ -67,6 +67,40 @@ class WalletHomePresentationTest {
         assertEquals("累计 58.99 USDT", formatWalletAssetValueDisplay("累计 58.99 USDT"))
     }
 
+    @Test
+    fun `wallet home preserves sub cent usd prices`() {
+        val uiState = sampleOverview().copy(
+            assetItems = sampleOverview().assetItems + WalletAssetItemData(
+                assetId = "sol-andy",
+                networkCode = "SOLANA",
+                assetCode = "ANDY",
+                displayName = "ANDY",
+                symbol = "ANDY",
+                decimals = 9,
+                isNative = false,
+                contractAddress = "8zFP8GeszFz7FvuHesguekTxDjm4KLsJEYBZTKyMLEoE",
+                walletVisible = true,
+                orderPayable = false,
+                publicAddressCount = 1,
+                orderCount = 0,
+                totalPayableAmount = "0.000000",
+                availableBalanceUiAmount = "0",
+                availableBalanceStatus = "READY",
+                unitPriceUsd = "0.000288",
+                valueUsd = "0.00",
+                priceChangePct24h = "6.40",
+                priceStatus = "READY",
+                priceUpdatedAt = "2026-04-21T08:48:00Z",
+                isCustom = true,
+                customTokenId = "custom-andy",
+            ),
+        ).toWalletHomeUiState(sampleLifecycle())
+
+        val andy = uiState.assets.first { it.symbol == "ANDY" }
+        assertEquals("$0.00028800", andy.unitPriceText)
+        assertEquals("+6.40%", andy.changeText)
+    }
+
     private fun sampleOverview(): WalletOverviewData {
         return WalletOverviewData(
             accountId = "acct-1",

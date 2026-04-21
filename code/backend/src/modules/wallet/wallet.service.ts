@@ -1266,7 +1266,11 @@ export class WalletService {
     publicAddresses: WalletPublicAddressItem[];
   }) {
     const alerts: string[] = [];
-    if (input.publicAddresses.filter(isUsableWalletPublicAddress).length === 0) {
+    const hasConfiguredAddress =
+      input.publicAddresses.filter(isUsableWalletPublicAddress).length > 0 ||
+      input.chainItems.some((item) => item.hasConfiguredAddress) ||
+      input.assetItems.some((item) => item.publicAddressCount > 0);
+    if (!hasConfiguredAddress) {
       alerts.push('当前账号尚未配置收款地址');
     }
     const missingReceivableChains = input.chainItems
