@@ -278,7 +278,15 @@ export class VpnService {
 
     const plan = await this.clientCatalogService.findPlanByCode(planCode);
     const now = new Date();
-    const expireAt = this.addMonths(now, plan?.billingCycleMonths ?? 1);
+    const existingExpireAt =
+      existing?.expireAt ? new Date(existing.expireAt) : null;
+    const renewalBase =
+      existing?.status === 'ACTIVE' &&
+      existingExpireAt &&
+      existingExpireAt.getTime() > now.getTime()
+        ? existingExpireAt
+        : now;
+    const expireAt = this.addMonths(renewalBase, plan?.billingCycleMonths ?? 1);
     const subscription: PersistedSubscriptionRecord = {
       accountId,
       orderNo,
@@ -287,7 +295,7 @@ export class VpnService {
       subscriptionId: existing?.subscriptionId ?? randomUUID(),
       planCode,
       status: 'ACTIVE',
-      startedAt: now.toISOString(),
+      startedAt: existing?.startedAt ?? now.toISOString(),
       expireAt: expireAt.toISOString(),
       daysRemaining: this.calculateDaysRemaining(now, expireAt),
       isUnlimitedTraffic: plan?.isUnlimitedTraffic ?? true,
