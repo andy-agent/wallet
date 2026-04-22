@@ -343,6 +343,7 @@ class PaymentRepository(context: Context) {
                 localRepository.savePaymentHistory(paymentHistory)
             }
         }
+        ensureProvisionedAccessAvailable(order)
     }
 
     /**
@@ -661,6 +662,7 @@ class PaymentRepository(context: Context) {
                     getCurrentUserId()?.let { userId ->
                         updateOrderStatus(order)
                     }
+                    ensureProvisionedAccessAvailable(order)
                     Result.success(order)
                 } else {
                     Result.failure(Exception("订单数据为空"))
@@ -726,6 +728,23 @@ class PaymentRepository(context: Context) {
                         payload = data,
                         updatedAt = now,
                     )
+                    val subscriptionUrl = data.subscriptionUrl?.takeIf { it.isNotBlank() }
+                    val savedSubscriptionUrl = getSavedSubscriptionUrl()
+                    if (
+                        !subscriptionUrl.isNullOrBlank() &&
+                        (
+                            savedSubscriptionUrl.isNullOrBlank() ||
+                                savedSubscriptionUrl != subscriptionUrl ||
+                                MmkvManager.getSelectServer().isNullOrEmpty()
+                            )
+                    ) {
+                        importSubscriptionUrl(
+                            subscriptionUrl = subscriptionUrl,
+                            remarks = data.planCode?.takeIf { it.isNotBlank() }
+                                ?.let { code -> "Purchase $code" }
+                                ?: "CryptoVPN Subscription",
+                        )
+                    }
                     Result.success(data)
                 } else {
                     cached?.let { Result.success(it) } ?: Result.failure(Exception("订阅数据为空"))
@@ -3159,6 +3178,31 @@ class PaymentRepository(context: Context) {
             editor.putString(PaymentConfig.Prefs.LAST_VPN_SESSION_STATUS, it)
         }
         editor.apply()
+    }
+
+    private suspend fun ensureProvisionedAccessAvailable(order: Order) {
+        if (order.status != PaymentConfig.OrderStatus.FULFILLED && order.status != "PROVISIONING") {
+            return
+        }
+        val userId = getCurrentUserId() ?: return
+        val subscription =
+            syncSubscriptionFromServer(force = true, userId = userId).getOrNull()
+                ?: getCachedSubscription(userId)
+                ?: return
+        cacheSubscriptionMetadata(subscription)
+        val subscriptionUrl =
+            order.subscriptionUrl?.takeIf { it.isNotBlank() }
+                ?: subscription.subscriptionUrl?.takeIf { it.isNotBlank() }
+                ?: return
+        importSubscriptionUrl(
+            subscriptionUrl = subscriptionUrl,
+            remarks = order.planName.ifBlank { "CryptoVPN Subscription" },
+        )
+        syncVpnStatusFromServer(force = true, userId = userId).getOrNull()?.let {
+            cacheVpnStatusMetadata(it)
+        }
+        syncVpnRegionsFromServer(force = true, userId = userId)
+        syncVpnNodesFromServer(force = true, userId = userId)
     }
 
     private fun resolveBootstrapRegionCode(
