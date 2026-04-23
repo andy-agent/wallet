@@ -113,6 +113,22 @@ export class SolanaClientService {
     return this.config.isEnabled();
   }
 
+  getPreferredRpcUrl(network?: 'mainnet' | 'devnet'): string {
+    return this.config.getPreferredRpcUrl(this.getEffectiveNetwork(network));
+  }
+
+  getOrderedRpcUrls(network?: 'mainnet' | 'devnet'): string[] {
+    return this.config.getOrderedRpcUrls(this.getEffectiveNetwork(network));
+  }
+
+  getPreferredWsUrl(network?: 'mainnet' | 'devnet'): string {
+    return this.config.getPreferredWsUrl(this.getEffectiveNetwork(network));
+  }
+
+  getOrderedWsUrls(network?: 'mainnet' | 'devnet'): string[] {
+    return this.config.getOrderedWsUrls(this.getEffectiveNetwork(network));
+  }
+
   /**
    * Health check for sol/usdt service
    * Returns mock response when service is disabled
@@ -154,14 +170,10 @@ export class SolanaClientService {
     request: BroadcastTransactionRequest,
   ): Promise<BroadcastTransactionResponse> {
     if (!this.isEnabled()) {
-      this.logger.debug('Solana service disabled, returning mock broadcast', {
+      this.logger.warn('Solana service disabled, falling back to direct RPC broadcast', {
         network: request.network,
       });
-      // Mock response for wiring phase
-      return {
-        signature: `mock_sig_${Date.now()}`,
-        confirmed: false,
-      };
+      return this.broadcastViaRpc(request);
     }
 
     try {
@@ -214,15 +226,10 @@ export class SolanaClientService {
     request: GetTransactionStatusRequest,
   ): Promise<GetTransactionStatusResponse> {
     if (!this.isEnabled()) {
-      this.logger.debug('Solana service disabled, returning mock status', {
+      this.logger.warn('Solana service disabled, falling back to direct RPC status lookup', {
         signature: request.signature,
       });
-      // Mock response for wiring phase
-      return {
-        signature: request.signature,
-        status: 'confirmed',
-        confirmations: 1,
-      };
+      return this.getTransactionStatusViaRpc(request);
     }
 
     try {
@@ -294,6 +301,7 @@ export class SolanaClientService {
         recipientAddress: request.recipientAddress,
         assetCode: request.assetCode,
         mint: request.mint,
+        assetDecimals: request.assetDecimals,
         expectedAmount: request.expectedAmount,
         networkCode,
       });
@@ -396,19 +404,11 @@ export class SolanaClientService {
     request: GetBalanceRequest,
   ): Promise<GetBalanceResponse> {
     if (!this.isEnabled()) {
-      this.logger.debug('Solana service disabled, returning mock balance', {
+      this.logger.warn('Solana service disabled, falling back to direct RPC balance lookup', {
         address: request.address,
         mint: request.mint,
       });
-      // Mock response for wiring phase
-      const isNative = !request.mint;
-      return {
-        address: request.address,
-        mint: request.mint ?? null,
-        balance: isNative ? '1000000000' : '1000000',
-        decimals: isNative ? 9 : 6,
-        uiAmount: isNative ? '1.0' : '1.0',
-      };
+      return this.getBalanceViaRpc(request);
     }
 
     try {
@@ -465,15 +465,10 @@ export class SolanaClientService {
     }
 
     if (!this.isEnabled()) {
-      this.logger.debug('Solana service disabled, returning mock precheck', {
+      this.logger.warn('Solana service disabled, falling back to direct RPC precheck', {
         address: request.toAddress,
       });
-      // Mock response for wiring phase - simulate success
-      return {
-        valid: true,
-        toAddressNormalized: request.toAddress.trim(),
-        estimatedFee: '5000', // 0.000005 SOL in lamports
-      };
+      return this.precheckTransferViaRpc(request);
     }
 
     try {
@@ -585,142 +580,200 @@ export class SolanaClientService {
     request: GetBalanceRequest,
   ): Promise<GetBalanceResponse> {
     const network = this.getEffectiveNetwork(request.network);
-    const connection = new Connection(this.config.getRpcUrl(network), 'confirmed');
-    const owner = new PublicKey(request.address);
+    return this.executeRpcFallback(
+      network,
+      'balance query',
+      async (rpcUrl) => {
+        const connection = this.createConnection(network, rpcUrl);
+        const owner = new PublicKey(request.address);
 
-    if (!request.mint) {
-      const lamports = await connection.getBalance(owner, 'confirmed');
-      return {
-        address: request.address,
-        mint: null,
-        balance: lamports.toString(),
-        decimals: 9,
-        uiAmount: (lamports / 1_000_000_000).toString(),
-      };
-    }
+        if (!request.mint) {
+          const lamports = await connection.getBalance(owner, 'confirmed');
+          return {
+            address: request.address,
+            mint: null,
+            balance: lamports.toString(),
+            decimals: 9,
+            uiAmount: (lamports / 1_000_000_000).toString(),
+          };
+        }
 
-    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
-      owner,
-      { programId: SPL_TOKEN_PROGRAM_ID },
-      'confirmed',
-    );
+        const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+          owner,
+          { programId: SPL_TOKEN_PROGRAM_ID },
+          'confirmed',
+        );
 
-    const matchingAccount = tokenAccounts.value.find((item) => {
-      const parsed = item.account.data.parsed as
-        | {
-            info?: {
-              mint?: string;
+        const matchingAccount = tokenAccounts.value.find((item) => {
+          const parsed = item.account.data.parsed as
+            | {
+                info?: {
+                  mint?: string;
+                };
+              }
+            | undefined;
+          return parsed?.info?.mint === request.mint;
+        });
+
+        if (!matchingAccount) {
+          return {
+            address: request.address,
+            mint: request.mint,
+            balance: '0',
+            decimals: 6,
+            uiAmount: '0',
+          };
+        }
+
+        const tokenAmount = (
+          matchingAccount.account.data.parsed as {
+            info: {
+              tokenAmount: {
+                amount: string;
+                decimals: number;
+                uiAmountString?: string;
+              };
             };
           }
-        | undefined;
-      return parsed?.info?.mint === request.mint;
-    });
+        ).info.tokenAmount;
 
-    if (!matchingAccount) {
-      return {
-        address: request.address,
-        mint: request.mint,
-        balance: '0',
-        decimals: 6,
-        uiAmount: '0',
-      };
-    }
-
-    const tokenAmount = (
-      matchingAccount.account.data.parsed as {
-        info: {
-          tokenAmount: {
-            amount: string;
-            decimals: number;
-            uiAmountString?: string;
-          };
+        return {
+          address: request.address,
+          mint: request.mint,
+          balance: tokenAmount.amount,
+          decimals: tokenAmount.decimals,
+          uiAmount: tokenAmount.uiAmountString ?? '0',
         };
-      }
-    ).info.tokenAmount;
-
-    return {
-      address: request.address,
-      mint: request.mint,
-      balance: tokenAmount.amount,
-      decimals: tokenAmount.decimals,
-      uiAmount: tokenAmount.uiAmountString ?? '0',
-    };
+      },
+    );
   }
 
   private async precheckTransferViaRpc(
     request: TransferPrecheckRequest,
   ): Promise<TransferPrecheckResponse> {
     const network = this.getEffectiveNetwork(request.network);
-    const connection = new Connection(this.config.getRpcUrl(network), 'confirmed');
-    const toPubkey = new PublicKey(request.toAddress.trim());
-    await connection.getLatestBlockhash('confirmed');
-    return {
-      valid: true,
-      toAddressNormalized: toPubkey.toBase58(),
-      estimatedFee: request.mint ? '5000' : '5000',
-    };
+    return this.executeRpcFallback(
+      network,
+      'transfer precheck',
+      async (rpcUrl) => {
+        const connection = this.createConnection(network, rpcUrl);
+        const toPubkey = new PublicKey(request.toAddress.trim());
+        await connection.getLatestBlockhash('confirmed');
+        return {
+          valid: true,
+          toAddressNormalized: toPubkey.toBase58(),
+          estimatedFee: request.mint ? '5000' : '5000',
+        };
+      },
+    );
   }
 
   private async broadcastViaRpc(
     request: BroadcastTransactionRequest,
   ): Promise<BroadcastTransactionResponse> {
     const network = this.getEffectiveNetwork(request.network);
-    const connection = new Connection(this.config.getRpcUrl(network), 'confirmed');
-    const raw = Buffer.from(request.serializedTx, 'base64');
-    const signature = await connection.sendRawTransaction(raw, {
-      skipPreflight: false,
-      maxRetries: request.maxRetries ?? this.config.getMaxRetries(),
-    });
-    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
-    return {
-      signature,
-      confirmed: !confirmation.value.err,
-    };
+    return this.executeRpcFallback(
+      network,
+      'broadcast',
+      async (rpcUrl) => {
+        const connection = this.createConnection(network, rpcUrl);
+        const raw = Buffer.from(request.serializedTx, 'base64');
+        const signature = await connection.sendRawTransaction(raw, {
+          skipPreflight: false,
+          maxRetries: request.maxRetries ?? this.config.getMaxRetries(),
+        });
+        const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+        return {
+          signature,
+          confirmed: !confirmation.value.err,
+        };
+      },
+    );
   }
 
   private async getTransactionStatusViaRpc(
     request: GetTransactionStatusRequest,
   ): Promise<GetTransactionStatusResponse> {
     const network = this.getEffectiveNetwork(request.network);
-    const connection = new Connection(this.config.getRpcUrl(network), 'confirmed');
-    const response = await connection.getSignatureStatuses([request.signature], {
-      searchTransactionHistory: true,
-    });
-    const status = response.value[0];
-    if (!status) {
-      return {
-        signature: request.signature,
-        status: 'pending',
-        confirmations: 0,
-      };
+    return this.executeRpcFallback(
+      network,
+      'transaction status lookup',
+      async (rpcUrl) => {
+        const connection = this.createConnection(network, rpcUrl);
+        const response = await connection.getSignatureStatuses([request.signature], {
+          searchTransactionHistory: true,
+        });
+        const status = response.value[0];
+        if (!status) {
+          return {
+            signature: request.signature,
+            status: 'pending',
+            confirmations: 0,
+          };
+        }
+        if (status.err) {
+          return {
+            signature: request.signature,
+            status: 'failed',
+            confirmations: status.confirmations ?? 0,
+            error: JSON.stringify(status.err),
+            slot: status.slot,
+          };
+        }
+        const normalizedStatus: GetTransactionStatusResponse['status'] =
+          status.confirmationStatus === 'finalized'
+            ? 'finalized'
+            : status.confirmationStatus === 'confirmed'
+              ? 'confirmed'
+              : 'pending';
+        return {
+          signature: request.signature,
+          status: normalizedStatus,
+          confirmations: status.confirmations ?? 0,
+          slot: status.slot,
+        };
+      },
+    );
+  }
+
+  private async executeRpcFallback<T>(
+    network: 'mainnet' | 'devnet',
+    operation: string,
+    runner: (rpcUrl: string) => Promise<T>,
+  ): Promise<T> {
+    let lastError: unknown = null;
+
+    for (const rpcUrl of this.config.getOrderedRpcUrls(network)) {
+      try {
+        return await runner(rpcUrl);
+      } catch (error) {
+        lastError = error;
+        this.logger.warn(
+          `Solana ${operation} failed via ${rpcUrl}, trying next RPC`,
+          error as Error,
+        );
+      }
     }
-    if (status.err) {
-      return {
-        signature: request.signature,
-        status: 'failed',
-        confirmations: status.confirmations ?? 0,
-        error: JSON.stringify(status.err),
-        slot: status.slot,
-      };
-    }
-    const normalizedStatus: GetTransactionStatusResponse['status'] =
-      status.confirmationStatus === 'finalized'
-        ? 'finalized'
-        : status.confirmationStatus === 'confirmed'
-          ? 'confirmed'
-          : 'pending';
-    return {
-      signature: request.signature,
-      status: normalizedStatus,
-      confirmations: status.confirmations ?? 0,
-      slot: status.slot,
-    };
+
+    throw lastError instanceof Error
+      ? lastError
+      : new Error(`No Solana RPC available for ${operation}`);
   }
 
   private buildApiUrl(path: string) {
     const baseUrl = this.config.getBaseUrl().replace(/\/+$/, '');
     const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
     return `${apiBaseUrl}/${path.replace(/^\/+/, '')}`;
+  }
+
+  private createConnection(
+    network: 'mainnet' | 'devnet',
+    rpcUrl: string,
+  ) {
+    return new Connection(rpcUrl, {
+      commitment: 'confirmed',
+      wsEndpoint: this.config.getPreferredWsUrl(network),
+    });
   }
 
   private normalizeScanIncomingTransfersResponse(
@@ -941,6 +994,7 @@ export class SolanaClientService {
     recipientAddress: string;
     assetCode: string;
     mint?: string | null;
+    assetDecimals?: number;
     expectedAmount: string;
     networkCode: string;
   }) {
@@ -949,6 +1003,7 @@ export class SolanaClientService {
       recipientAddress: request.recipientAddress,
       assetCode: request.assetCode,
       mintAddress: request.mint,
+      assetDecimals: request.assetDecimals,
       expectedAmount: request.expectedAmount,
       networkCode: request.networkCode,
     };

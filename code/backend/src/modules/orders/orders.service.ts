@@ -16,6 +16,7 @@ import { resolvePaymentAsset } from '../payments/payment-asset-catalog';
 import { ProvisioningService } from '../provisioning/provisioning.service';
 import { SolanaClientService } from '../solana-client/solana-client.service';
 import { VerifyIncomingTransferResponse } from '../solana-client/solana-client.types';
+import { TronClientService } from '../tron-client/tron-client.service';
 import { CreateOrderRequestDto } from './dto/create-order.request';
 import { RefreshOrderStatusRequestDto } from './dto/refresh-order-status.request';
 import { SubmitClientTxRequestDto } from './dto/submit-client-tx.request';
@@ -33,6 +34,7 @@ export class OrdersService {
     private readonly marketService: MarketService,
     private readonly provisioningService: ProvisioningService,
     private readonly solanaClient: SolanaClientService,
+    private readonly tronClient: TronClientService,
   ) {}
 
   async createOrder(
@@ -56,6 +58,29 @@ export class OrdersService {
       throw new NotFoundException({
         code: 'PLAN_NOT_FOUND',
         message: 'Plan not found',
+      });
+    }
+    const purchasableRegions =
+      await this.clientCatalogService.listPurchasableRegionsForPlan(plan);
+    if (purchasableRegions.length === 0) {
+      throw new ConflictException({
+        code: 'PLAN_REGION_UNAVAILABLE',
+        message: 'Plan has no active regions configured',
+      });
+    }
+    const selectedRegion =
+      purchasableRegions.find((region) => region.regionCode === dto.selectedRegionCode) ??
+      null;
+    if (!dto.selectedRegionCode) {
+      throw new ConflictException({
+        code: 'ORDER_REGION_REQUIRED',
+        message: 'selectedRegionCode is required',
+      });
+    }
+    if (!selectedRegion) {
+      throw new ConflictException({
+        code: 'ORDER_REGION_INVALID',
+        message: 'Selected region is unavailable for the current plan',
       });
     }
     const quoteAsset = this.resolveQuoteAssetDefinition(
@@ -103,7 +128,10 @@ export class OrdersService {
       payerChainAccountId: dto.payerChainAccountId ?? null,
       submittedFromAddress: null,
       planCode: dto.planCode,
-      planName: plan.name,
+      planName: plan.displayNameZh || plan.name,
+      productTier: plan.productTier,
+      termMonths: plan.billingCycleMonths,
+      selectedRegionCode: selectedRegion.regionCode,
       orderType: dto.orderType,
       quoteAssetCode: dto.quoteAssetCode,
       quoteNetworkCode: dto.quoteNetworkCode,
@@ -249,6 +277,7 @@ export class OrdersService {
           recipientAddress: order.collectionAddress,
           assetCode: order.quoteAssetCode,
           mint: quoteAsset?.isNative ? null : quoteAsset?.contractAddress ?? null,
+          assetDecimals: quoteAsset?.decimals,
           expectedAmount: order.payableAmount,
         });
 
@@ -310,6 +339,57 @@ export class OrdersService {
             statusError instanceof Error ? statusError.message : statusError,
           );
         }
+        return this.toOrderRecord(order);
+      }
+    }
+
+    if (order.quoteNetworkCode === 'TRON') {
+      try {
+        const quoteAsset = this.resolveQuoteAssetDefinition(
+          order.quoteNetworkCode,
+          order.quoteAssetCode,
+        );
+        const verification = await this.tronClient.verifyIncomingTransfer({
+          txHash: order.submittedClientTxHash,
+          recipientAddress: order.collectionAddress,
+          assetCode: order.quoteAssetCode,
+          contractAddress: quoteAsset?.isNative ? null : quoteAsset?.contractAddress ?? null,
+          assetDecimals: quoteAsset?.decimals,
+          expectedAmount: order.payableAmount,
+        });
+
+        if (verification.status === 'confirmed') {
+          if (verification.verified) {
+            order.failureReason = null;
+            order.matchedOnchainTxHash =
+              order.matchedOnchainTxHash ?? order.submittedClientTxHash;
+            order.paymentMatchedAt =
+              order.paymentMatchedAt ?? new Date().toISOString();
+            return this.markPaidAndProvision(order);
+          }
+
+          order.status = this.mapVerificationFailureStatus(verification);
+          order.failureReason =
+            verification.failureReason ??
+            'Submitted transaction does not satisfy the expected payment target';
+          await this.runtimeStateRepository.saveOrder(order);
+          return this.toOrderRecord(order);
+        }
+
+        if (verification.status === 'failed') {
+          order.status = 'FAILED';
+          order.failureReason =
+            verification.error ?? 'Transaction failed on chain';
+          await this.runtimeStateRepository.saveOrder(order);
+          return this.toOrderRecord(order);
+        }
+
+        return this.toOrderRecord(order);
+      } catch (error) {
+        this.logger.warn(
+          `TRON chain-side status check failed for order ${orderNo}, preserving persisted status`,
+          error instanceof Error ? error.message : error,
+        );
         return this.toOrderRecord(order);
       }
     }
@@ -442,6 +522,9 @@ export class OrdersService {
       await this.provisioningService.provisionPaidOrder({
         accountId: order.accountId,
         planCode: order.planCode,
+        productTier: order.productTier,
+        termMonths: order.termMonths,
+        selectedRegionCode: order.selectedRegionCode,
         orderNo: order.orderNo,
         sourceAssetCode: order.quoteAssetCode,
         sourceAmount: order.quoteUsdAmount,

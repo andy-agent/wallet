@@ -9,6 +9,9 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { SolanaServiceConfig } from './solana-client.types';
 
+const DEFAULT_SOLANA_MAINNET_PUBLIC_RPC = 'https://api.mainnet-beta.solana.com';
+const DEFAULT_SOLANA_DEVNET_PUBLIC_RPC = 'https://api.devnet.solana.com';
+
 @Injectable()
 export class SolanaClientConfig {
   constructor(private readonly configService: ConfigService) {}
@@ -54,18 +57,142 @@ export class SolanaClientConfig {
   }
 
   getRpcUrl(network: 'mainnet' | 'devnet'): string {
-    if (network === 'devnet') {
-      return (
-        this.configService.get<string>('SOLANA_RPC_URL_DEVNET') ??
-        this.configService.get<string>('SOLANA_RPC_URL') ??
-        'https://api.devnet.solana.com'
-      );
+    return this.getPreferredRpcUrl(network);
+  }
+
+  getPreferredRpcUrl(network: 'mainnet' | 'devnet'): string {
+    return this.getOrderedRpcUrls(network)[0] ?? this.getDefaultPublicRpcUrl(network);
+  }
+
+  getPreferredWsUrl(network: 'mainnet' | 'devnet'): string {
+    return this.getOrderedWsUrls(network)[0] ?? this.deriveWsUrlFromRpcUrl(this.getPreferredRpcUrl(network));
+  }
+
+  getOrderedRpcUrls(network: 'mainnet' | 'devnet'): string[] {
+    return Array.from(
+      new Set([
+        ...this.getPrivateRpcUrls(network),
+        ...this.getPublicRpcUrls(network),
+      ]),
+    );
+  }
+
+  getOrderedWsUrls(network: 'mainnet' | 'devnet'): string[] {
+    const configured = Array.from(
+      new Set([
+        ...this.getPrivateWsUrls(network),
+        ...this.getPublicWsUrls(network),
+      ]),
+    );
+
+    if (configured.length > 0) {
+      return configured;
     }
 
-    return (
-      this.configService.get<string>('SOLANA_RPC_URL_MAINNET') ??
-      this.configService.get<string>('SOLANA_RPC_URL') ??
-      'https://api.mainnet-beta.solana.com'
+    return this.getOrderedRpcUrls(network).map((rpcUrl) =>
+      this.deriveWsUrlFromRpcUrl(rpcUrl),
+    );
+  }
+
+  getPrivateRpcUrls(network: 'mainnet' | 'devnet'): string[] {
+    if (network === 'devnet') {
+      return this.readUrlList([
+        'SOLANA_RPC_URL_DEVNETS',
+        'SOLANA_RPC_URL_DEVNET',
+        'SOLANA_RPC_URLS',
+        'SOLANA_RPC_URL',
+      ]);
+    }
+
+    return this.readUrlList([
+      'SOLANA_RPC_URL_MAINNETS',
+      'SOLANA_RPC_URL_MAINNET',
+      'SOLANA_RPC_URLS',
+      'SOLANA_RPC_URL',
+    ]);
+  }
+
+  getPublicRpcUrls(network: 'mainnet' | 'devnet'): string[] {
+    const configured =
+      network === 'devnet'
+        ? this.readUrlList([
+            'SOLANA_PUBLIC_RPC_URL_DEVNETS',
+            'SOLANA_PUBLIC_RPC_URL_DEVNET',
+            'SOLANA_PUBLIC_RPC_URLS',
+            'SOLANA_PUBLIC_RPC_URL',
+          ])
+        : this.readUrlList([
+            'SOLANA_PUBLIC_RPC_URL_MAINNETS',
+            'SOLANA_PUBLIC_RPC_URL_MAINNET',
+            'SOLANA_PUBLIC_RPC_URLS',
+            'SOLANA_PUBLIC_RPC_URL',
+          ]);
+
+    return configured.length > 0
+      ? configured
+      : [this.getDefaultPublicRpcUrl(network)];
+  }
+
+  getPrivateWsUrls(network: 'mainnet' | 'devnet'): string[] {
+    if (network === 'devnet') {
+      return this.readUrlList([
+        'SOLANA_WS_URL_DEVNETS',
+        'SOLANA_WS_URL_DEVNET',
+        'SOLANA_WS_URLS',
+        'SOLANA_WS_URL',
+      ]);
+    }
+
+    return this.readUrlList([
+      'SOLANA_WS_URL_MAINNETS',
+      'SOLANA_WS_URL_MAINNET',
+      'SOLANA_WS_URLS',
+      'SOLANA_WS_URL',
+    ]);
+  }
+
+  getPublicWsUrls(network: 'mainnet' | 'devnet'): string[] {
+    return network === 'devnet'
+      ? this.readUrlList([
+          'SOLANA_PUBLIC_WS_URL_DEVNETS',
+          'SOLANA_PUBLIC_WS_URL_DEVNET',
+          'SOLANA_PUBLIC_WS_URLS',
+          'SOLANA_PUBLIC_WS_URL',
+        ])
+      : this.readUrlList([
+          'SOLANA_PUBLIC_WS_URL_MAINNETS',
+          'SOLANA_PUBLIC_WS_URL_MAINNET',
+          'SOLANA_PUBLIC_WS_URLS',
+          'SOLANA_PUBLIC_WS_URL',
+        ]);
+  }
+
+  private getDefaultPublicRpcUrl(network: 'mainnet' | 'devnet') {
+    return network === 'devnet'
+      ? DEFAULT_SOLANA_DEVNET_PUBLIC_RPC
+      : DEFAULT_SOLANA_MAINNET_PUBLIC_RPC;
+  }
+
+  private deriveWsUrlFromRpcUrl(rpcUrl: string) {
+    if (rpcUrl.startsWith('https://')) {
+      return `wss://${rpcUrl.slice('https://'.length)}`;
+    }
+    if (rpcUrl.startsWith('http://')) {
+      return `ws://${rpcUrl.slice('http://'.length)}`;
+    }
+    return rpcUrl;
+  }
+
+  private readUrlList(keys: string[]): string[] {
+    return Array.from(
+      new Set(
+        keys.flatMap((key) =>
+          (this.configService.get<string>(key) ?? '')
+            .split(',')
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0),
+        ),
+      ),
     );
   }
 

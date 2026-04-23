@@ -83,6 +83,8 @@ export class PaymentService {
         address,
         effectiveNetworkCode,
       );
+      const balanceUiAmount =
+        balanceInfo.balanceUiAmount ?? balanceInfo.balanceInSOL;
       const txInfo = await this.solanaRpc.getRecentTransactions(
         address,
         effectiveNetworkCode,
@@ -103,7 +105,7 @@ export class PaymentService {
         address,
         networkCode: effectiveNetworkCode,
         status,
-        receivedAmount: balanceInfo.balanceInSOL,
+        receivedAmount: balanceUiAmount,
         expectedAmount: null,
         txHash: hasTransactions ? txInfo.signatures[0] : null,
         confirmations: hasTransactions ? 1 : 0,
@@ -148,13 +150,15 @@ export class PaymentService {
         body.address,
         effectiveNetworkCode,
       );
+      const balanceUiAmount =
+        balanceInfo.balanceUiAmount ?? balanceInfo.balanceInSOL;
       const txInfo = await this.solanaRpc.getRecentTransactions(
         body.address,
         effectiveNetworkCode,
         10,
       );
 
-      const receivedAmount = parseFloat(balanceInfo.balanceInSOL);
+      const receivedAmount = parseFloat(balanceUiAmount);
       const expectedAmount = body.expectedAmount
         ? parseFloat(body.expectedAmount)
         : null;
@@ -170,7 +174,7 @@ export class PaymentService {
         address: body.address,
         networkCode: effectiveNetworkCode,
         status,
-        receivedAmount: balanceInfo.balanceInSOL,
+        receivedAmount: balanceUiAmount,
         expectedAmount: body.expectedAmount ?? null,
         txHash: txInfo.signatures.length > 0 ? txInfo.signatures[0] : null,
         confirmations: txInfo.signatures.length,
@@ -181,7 +185,7 @@ export class PaymentService {
       this.paymentStore.set(body.address, result);
 
       this.logger.log(
-        `Payment detection result for ${body.address}: ${status}, ${balanceInfo.balanceInSOL} SOL`,
+        `Payment detection result for ${body.address}: ${status}, ${balanceUiAmount} SOL`,
       );
 
       return result;

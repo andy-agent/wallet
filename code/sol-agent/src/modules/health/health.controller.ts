@@ -11,11 +11,17 @@ export class HealthController {
   @ApiOperation({ summary: '服务健康检查' })
   async getHealth() {
     const rpcHealth = await this.solanaRpc.checkHealth();
+    const realtimeHealth = await this.solanaRpc.checkRealtimeHealth();
     
     return {
-      status: rpcHealth.healthy ? 'healthy' : 'degraded',
+      status: rpcHealth.healthy
+        ? realtimeHealth.healthy
+          ? 'healthy'
+          : 'degraded'
+        : 'degraded',
       service: 'sol-agent',
       rpc: rpcHealth,
+      realtime: realtimeHealth,
     };
   }
 }

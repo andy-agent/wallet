@@ -8,6 +8,8 @@ import { WalletController } from './wallet.controller';
 import { WalletsController } from './wallets.controller';
 import { WalletBackupCryptoService } from './wallet-backup-crypto.service';
 import { WalletBackupRelayService } from './wallet-backup-relay.service';
+import { WalletSnapshotScheduler } from './wallet-snapshot.scheduler';
+import { WalletSnapshotService } from './wallet-snapshot.service';
 import { WalletService } from './wallet.service';
 import { CustomTokenSearchService } from './token-search/custom-token-search.service';
 import { TokenSearchConfig } from './token-search/token-search.config';
@@ -20,6 +22,8 @@ import { TronScanTokenProvider } from './token-search/providers/tronscan-token.p
   controllers: [WalletController, WalletsController],
   providers: [
     WalletService,
+    WalletSnapshotService,
+    WalletSnapshotScheduler,
     WalletBackupCryptoService,
     WalletBackupRelayService,
     TokenSearchConfig,

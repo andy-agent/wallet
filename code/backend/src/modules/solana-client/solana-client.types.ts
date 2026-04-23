@@ -67,6 +67,8 @@ export interface VerifyIncomingTransferRequest {
   assetCode: string;
   /** Expected token mint (for SPL tokens) */
   mint?: string | null;
+  /** Token decimals for custom SPL assets */
+  assetDecimals?: number;
   /** Expected amount in UI units */
   expectedAmount: string;
 }

@@ -5,6 +5,10 @@ export class CreateOrderRequestDto {
   @IsString()
   planCode!: string;
 
+  @IsOptional()
+  @IsString()
+  selectedRegionCode?: string;
+
   @IsString()
   @IsIn(['NEW', 'RENEWAL'])
   orderType!: 'NEW' | 'RENEWAL';

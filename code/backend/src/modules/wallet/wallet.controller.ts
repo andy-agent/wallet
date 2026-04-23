@@ -24,6 +24,7 @@ export class WalletController {
     return this.walletService.getAssetCatalog(
       this.extractBearer(authorization),
       networkCode,
+      false,
     );
   }
 

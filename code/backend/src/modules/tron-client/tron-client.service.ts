@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import type { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
+import type { VerifyIncomingTransferResponse } from '../solana-client/solana-client.types';
 import { TronClientConfig } from './tron-client.config';
 import type {
   TronAddressValidationResponse,
@@ -10,6 +11,9 @@ import type {
   TronBroadcastResponse,
   TronCapabilitiesResponse,
   TronServiceHealth,
+  TronTransactionEnvelope,
+  TronTransactionQueryResponse,
+  VerifyIncomingTronTransferRequest,
 } from './tron-client.types';
 
 interface EnvelopeResponse<T> {
@@ -27,6 +31,14 @@ export class TronClientService {
 
   isEnabled(): boolean {
     return this.config.isEnabled();
+  }
+
+  getPreferredFullNodeUrl(): string {
+    return this.config.getPreferredFullNodeUrl();
+  }
+
+  getOrderedFullNodeUrls(): string[] {
+    return this.config.getOrderedFullNodeUrls();
   }
 
   async health(): Promise<TronServiceHealth> {
@@ -194,8 +206,116 @@ export class TronClientService {
     }
   }
 
+  async getTransaction(
+    txHash: string,
+  ): Promise<TronTransactionQueryResponse | null> {
+    if (!this.isEnabled()) {
+      return null;
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get(`${this.config.getBaseUrl()}/v1/chain/tx/${txHash}`, {
+          timeout: this.config.getTimeoutMs(),
+          headers: this.getAuthHeaders(),
+        }),
+      );
+
+      const payload = this.unwrapResponse<TronTransactionEnvelope>(
+        response as AxiosResponse<
+          TronTransactionEnvelope | EnvelopeResponse<TronTransactionEnvelope>
+        >,
+      );
+      return payload.transaction ?? null;
+    } catch (error) {
+      this.logger.error('Tron transaction query failed', error);
+      throw new ServiceUnavailableException({
+        code: 'TRON_TRANSACTION_QUERY_FAILED',
+        message: 'Failed to query TRON transaction',
+      });
+    }
+  }
+
+  async verifyIncomingTransfer(
+    request: VerifyIncomingTronTransferRequest,
+  ): Promise<VerifyIncomingTransferResponse> {
+    const transaction = await this.getTransaction(request.txHash);
+    if (!transaction || transaction.status === 'not_found' || transaction.status === 'pending') {
+      return {
+        signature: request.txHash,
+        status: 'pending',
+        confirmations: transaction?.confirmations ?? 0,
+        verified: false,
+        recipientAddress: transaction?.to || request.recipientAddress,
+        assetCode: transaction?.token || undefined,
+        amount: transaction?.amount,
+      };
+    }
+
+    if (transaction.status === 'failed') {
+      return {
+        signature: request.txHash,
+        status: 'failed',
+        confirmations: transaction.confirmations,
+        verified: false,
+        recipientAddress: transaction.to,
+        assetCode: transaction.token,
+        amount: transaction.amount,
+        error: 'Transaction failed on TRON chain',
+      };
+    }
+
+    const expectedRecipient = request.recipientAddress.trim();
+    const observedRecipient = transaction.to.trim();
+    const recipientMatched = observedRecipient === expectedRecipient;
+    const assetMatched = transaction.token.toUpperCase() === request.assetCode.trim().toUpperCase();
+    const decimals = request.assetDecimals ?? (transaction.token === 'TRX' ? 6 : 6);
+    const expectedMinor = this.toMinorUnits(request.expectedAmount, decimals);
+    const observedMinor = this.toMinorUnits(transaction.amount, decimals);
+    const amountSatisfied = observedMinor === expectedMinor;
+
+    let mismatchCode: VerifyIncomingTransferResponse['mismatchCode'];
+    if (!recipientMatched) {
+      mismatchCode = 'RECIPIENT_MISMATCH';
+    } else if (!assetMatched) {
+      mismatchCode = 'ASSET_MISMATCH';
+    } else if (observedMinor > expectedMinor) {
+      mismatchCode = 'AMOUNT_OVER';
+    } else if (observedMinor < expectedMinor) {
+      mismatchCode = 'AMOUNT_UNDER';
+    }
+
+    return {
+      signature: request.txHash,
+      status: 'confirmed',
+      confirmations: transaction.confirmations,
+      verified: !mismatchCode,
+      recipientAddress: observedRecipient,
+      assetCode: assetMatched ? transaction.token : undefined,
+      amount: transaction.amount,
+      mismatchCode,
+      failureReason:
+        mismatchCode === 'RECIPIENT_MISMATCH'
+          ? 'Submitted transaction recipient does not match the configured collection address'
+          : mismatchCode === 'ASSET_MISMATCH'
+            ? 'Submitted transaction asset does not match the expected payment asset'
+            : mismatchCode === 'AMOUNT_OVER'
+              ? 'Submitted transaction amount exceeds the expected payment target'
+              : mismatchCode === 'AMOUNT_UNDER'
+                ? 'Submitted transaction amount is below the expected payment target'
+                : undefined,
+    };
+  }
+
   validateAddressFormat(address: string): boolean {
     return /^T[0-9a-zA-Z]{33}$/.test(address.trim());
+  }
+
+  private toMinorUnits(amount: string, decimals: number) {
+    const [wholePart, fractionPart = ''] = amount.trim().split('.');
+    const whole = wholePart === '' ? '0' : wholePart;
+    const fraction = fractionPart.padEnd(decimals, '0').slice(0, decimals);
+    return BigInt(`${whole}${fraction}`);
   }
 
   private getAuthHeaders(): Record<string, string> {

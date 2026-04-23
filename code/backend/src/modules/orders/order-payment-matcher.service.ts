@@ -337,6 +337,9 @@ export class OrderPaymentMatcherService {
       await this.provisioningService.provisionPaidOrder({
         accountId: nextOrder.accountId,
         planCode: nextOrder.planCode,
+        productTier: nextOrder.productTier,
+        termMonths: nextOrder.termMonths,
+        selectedRegionCode: nextOrder.selectedRegionCode,
         orderNo: nextOrder.orderNo,
         sourceAssetCode: nextOrder.quoteAssetCode,
         sourceAmount: nextOrder.quoteUsdAmount,

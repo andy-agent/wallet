@@ -121,6 +121,8 @@ export interface WalletAggregateView {
   backup: PersistedWalletSecretBackupV2Record | null;
 }
 
+const SOLANA_BALANCE_FALLBACK_TIMEOUT_MS = 3_000;
+
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
@@ -591,7 +593,7 @@ export class WalletService {
           directBroadcastEnabled: true,
           proxyBroadcastEnabled: true,
           requiredConfirmations: 1,
-          publicRpcUrl: 'https://api.mainnet-beta.solana.com',
+          publicRpcUrl: this.getPreferredSolanaRpcUrl(),
         },
         {
           networkCode: 'TRON',
@@ -600,21 +602,65 @@ export class WalletService {
           directBroadcastEnabled: true,
           proxyBroadcastEnabled: true,
           requiredConfirmations: 20,
-          publicRpcUrl: 'https://api.trongrid.io',
+          publicRpcUrl: this.getPreferredTronFullNodeUrl(),
         },
       ],
     };
   }
 
-  getAssetCatalog(accessToken: string, networkCode?: string) {
+  private buildAssetCatalog(accessToken: string, networkCode?: string) {
     this.authService.getMe(accessToken);
     const items = buildPaymentAssetCatalog(
       this.configService,
       this.solanaClient,
     ).map((item) => this.toWalletAssetCatalogItem(item));
 
+    return networkCode
+      ? items.filter((item) => item.networkCode === networkCode)
+      : items;
+  }
+
+  private buildBaseWalletAssets() {
+    return buildPaymentAssetCatalog(
+      this.configService,
+      this.solanaClient,
+    )
+      .map((item) => this.toWalletAssetCatalogItem(item))
+      .filter(
+        (item) =>
+          item.walletVisible &&
+          (item.networkCode === 'SOLANA' || item.networkCode === 'TRON'),
+      );
+  }
+
+  async getAssetCatalog(
+    accessToken: string,
+    networkCode?: string,
+    forceRefresh = false,
+  ) {
+    const items = this.buildAssetCatalog(accessToken, networkCode);
+    if (!networkCode) {
+      return { items };
+    }
+    const priceViews = await this.resolveAssetPriceViews(
+      items,
+      new Map(),
+      forceRefresh,
+    );
+
     return {
-      items: networkCode ? items.filter((item) => item.networkCode === networkCode) : items,
+      items: items.map((item) => {
+        const priceView = priceViews.get(item.assetId);
+        return {
+          ...item,
+          iconUrl: item.iconUrl ?? null,
+          unitPriceUsd: priceView?.unitPriceUsd ?? null,
+          valueUsd: priceView?.valueUsd ?? '0.00',
+          priceChangePct24h: priceView?.priceChangePct24h ?? null,
+          priceStatus: priceView?.priceStatus ?? 'UNAVAILABLE',
+          priceUpdatedAt: priceView?.priceUpdatedAt ?? null,
+        };
+      }),
     };
   }
 
@@ -626,7 +672,7 @@ export class WalletService {
     const scopedWalletId = selectedWallet?.walletId;
     const lifecycle = await this.getWalletLifecycle(accessToken);
     const chains = this.getChains(accessToken).items;
-    const baseAssets = this.getAssetCatalog(accessToken).items;
+    const baseAssets = this.buildBaseWalletAssets();
     const scopedChainAccounts = scopedWalletId
       ? await this.runtimeStateRepository.listWalletChainAccountsByWalletId(scopedWalletId)
       : [];
@@ -719,16 +765,24 @@ export class WalletService {
       );
     });
 
-    const assetBalanceViews = await this.resolveAssetBalanceViews(
+    const assetSnapshots =
+      await this.runtimeStateRepository.listWalletAssetSnapshotsByAccountId({
+        accountId: account.accountId,
+        walletId: scopedWalletId ?? null,
+      });
+    const assetBalanceViews = this.resolveAssetBalanceViewsFromSnapshots(
       assets,
+      assetSnapshots,
       publicAddresses,
       scopedChainAccounts,
     );
-    const assetPriceViews = await this.resolveAssetPriceViews(
-      assets,
-      assetBalanceViews,
-      forceRefresh,
-    );
+    const assetPriceViews = this.shouldResolveAssetPrices(assetBalanceViews, forceRefresh)
+      ? await this.resolveAssetPriceViews(
+          assets,
+          assetBalanceViews,
+          forceRefresh,
+        )
+      : new Map();
 
     const chainItems = chains.map((chain) => {
       const assetsOnChain = assets.filter((item) => item.networkCode === chain.networkCode);
@@ -847,9 +901,7 @@ export class WalletService {
       ? await this.requireOwnedWallet(account.accountId, walletId)
       : null;
     const scopedWalletId = selectedWallet?.walletId;
-    const baseAssets = this.getAssetCatalog(accessToken).items.filter(
-      (item) => item.walletVisible,
-    );
+    const baseAssets = this.buildBaseWalletAssets();
     const scopedChainAccounts = scopedWalletId
       ? await this.runtimeStateRepository.listWalletChainAccountsByWalletId(scopedWalletId)
       : [];
@@ -866,16 +918,24 @@ export class WalletService {
         accountId: account.accountId,
       })
     ).filter((item) => !scopedWalletId || item.walletId === scopedWalletId);
-    const assetBalanceViews = await this.resolveAssetBalanceViews(
+    const assetSnapshots =
+      await this.runtimeStateRepository.listWalletAssetSnapshotsByAccountId({
+        accountId: account.accountId,
+        walletId: scopedWalletId ?? null,
+      });
+    const assetBalanceViews = this.resolveAssetBalanceViewsFromSnapshots(
       assets,
+      assetSnapshots,
       publicAddresses,
       scopedChainAccounts,
     );
-    const assetPriceViews = await this.resolveAssetPriceViews(
-      assets,
-      assetBalanceViews,
-      forceRefresh,
-    );
+    const assetPriceViews = this.shouldResolveAssetPrices(assetBalanceViews, forceRefresh)
+      ? await this.resolveAssetPriceViews(
+          assets,
+          assetBalanceViews,
+          forceRefresh,
+        )
+      : new Map();
 
     return {
       accountId: account.accountId,
@@ -962,6 +1022,78 @@ export class WalletService {
     };
   }
 
+  async syncWalletAssetSnapshotsForAccount(
+    accountId: string,
+    walletId?: string | null,
+  ): Promise<number> {
+    const [wallets, publicAddresses] = await Promise.all([
+      walletId
+        ? this.runtimeStateRepository.findWalletById(walletId).then((wallet) =>
+            wallet ? [wallet] : [],
+          )
+        : this.runtimeStateRepository.listWalletsByAccountId(accountId),
+      this.runtimeStateRepository.listWalletPublicAddressesByAccountId({ accountId }),
+    ]);
+
+    const targetWalletIds =
+      wallets.length > 0 ? wallets.map((wallet) => wallet.walletId) : [null];
+
+    let upserted = 0;
+    for (const scopedWalletId of targetWalletIds) {
+      const [chainAccounts, customTokens] = await Promise.all([
+        scopedWalletId
+          ? this.runtimeStateRepository.listWalletChainAccountsByWalletId(scopedWalletId)
+          : Promise.resolve([]),
+        scopedWalletId
+          ? this.runtimeStateRepository.listWalletCustomTokensByWalletId({
+              walletId: scopedWalletId,
+            })
+          : Promise.resolve([]),
+      ]);
+
+      const assets = [
+        ...this.buildBaseWalletAssets(),
+        ...customTokens.map((item) => this.toCustomWalletAsset(item)),
+      ];
+
+      if (assets.length === 0) {
+        continue;
+      }
+
+      const scopedPublicAddresses = publicAddresses.filter(
+        (item) => !scopedWalletId || item.walletId === scopedWalletId,
+      );
+      const balanceViews = await this.resolveAssetBalanceViews(
+        assets,
+        scopedPublicAddresses,
+        chainAccounts,
+      );
+
+      for (const asset of assets) {
+        const balanceView = balanceViews.get(asset.assetId);
+        if (!balanceView) {
+          continue;
+        }
+        await this.runtimeStateRepository.upsertWalletAssetSnapshot({
+          snapshotId: randomUUID(),
+          accountId,
+          walletId: scopedWalletId,
+          networkCode: asset.networkCode,
+          assetCode: asset.assetCode,
+          address: balanceView.address,
+          balanceMinor: balanceView.balanceMinor,
+          balanceUiAmount: balanceView.balanceUiAmount,
+          balanceStatus: balanceView.balanceStatus,
+          source: 'PUBLIC_RPC',
+          updatedAt: new Date().toISOString(),
+        });
+        upserted += 1;
+      }
+    }
+
+    return upserted;
+  }
+
   async buildTransfer(accessToken: string, dto: BuildTransferRequestDto) {
     const account = this.authService.getMe(accessToken);
     const chain = this.getChains(accessToken).items.find(
@@ -988,11 +1120,7 @@ export class WalletService {
     }
 
     return dto.networkCode === 'SOLANA'
-      ? this.buildSolanaTransfer(
-          chain.publicRpcUrl ?? 'https://api.mainnet-beta.solana.com',
-          asset,
-          dto,
-        )
+      ? this.buildSolanaTransfer(asset, dto)
       : this.buildTronTransfer(asset.contractAddress, dto);
   }
 
@@ -1379,60 +1507,29 @@ export class WalletService {
 
         try {
           if (asset.networkCode === 'SOLANA') {
-            const publicRpcBalance = await this.getSolanaBalanceViaPublicRpc(
+            const serviceBalance = await this.resolveSolanaBalanceViaService(
               assetAddress,
               asset,
-            ).catch((error) => {
-              this.logger.warn(
-                `Public Solana RPC balance lookup failed for ${asset.assetCode}`,
-                error as Error,
-              );
-              return null;
-            });
-
-            if (!this.solanaClient.isEnabled()) {
+            );
+            if (serviceBalance != null) {
               return [
                 assetKey,
                 {
-                  networkCode: asset.networkCode,
-                  assetCode: asset.assetCode,
-                  address: assetAddress,
-                  balanceMinor: publicRpcBalance?.balanceMinor ?? null,
-                  balanceUiAmount: publicRpcBalance?.balanceUiAmount ?? null,
-                  balanceStatus:
-                    publicRpcBalance?.balanceStatus ??
-                    ('UNAVAILABLE' as WalletAssetBalanceStatus),
+                  ...serviceBalance,
                 },
               ] as const;
             }
 
-            const serviceBalance = await this.solanaClient
-              .getBalance({
-                address: assetAddress,
-                mint: asset.isNative ? undefined : asset.contractAddress ?? undefined,
-              })
-              .then((balance) => ({
-                networkCode: asset.networkCode,
-                assetCode: asset.assetCode,
-                address: assetAddress,
-                balanceMinor: balance.balance,
-                balanceUiAmount: balance.uiAmount,
-                balanceStatus: 'READY' as WalletAssetBalanceStatus,
-              }))
-              .catch((error) => {
-                this.logger.warn(
-                  `Solana service balance lookup failed for ${asset.assetCode}, falling back to public RPC`,
-                  error as Error,
-                );
-                return null;
-              });
-
-            const preferredBalance = this.pickPreferredSolanaBalance(
-              serviceBalance,
-              publicRpcBalance,
-              asset,
+            const publicRpcBalance = await this.getSolanaBalanceViaPreferredRpc(
               assetAddress,
-            );
+              asset,
+            ).catch((error) => {
+              this.logger.warn(
+                `Preferred Solana RPC balance lookup failed for ${asset.assetCode}`,
+                error as Error,
+              );
+              return null;
+            });
 
             return [
               assetKey,
@@ -1440,9 +1537,11 @@ export class WalletService {
                 networkCode: asset.networkCode,
                 assetCode: asset.assetCode,
                 address: assetAddress,
-                balanceMinor: preferredBalance.balanceMinor,
-                balanceUiAmount: preferredBalance.balanceUiAmount,
-                balanceStatus: preferredBalance.balanceStatus,
+                balanceMinor: publicRpcBalance?.balanceMinor ?? null,
+                balanceUiAmount: publicRpcBalance?.balanceUiAmount ?? null,
+                balanceStatus:
+                  publicRpcBalance?.balanceStatus ??
+                  ('UNAVAILABLE' as WalletAssetBalanceStatus),
               },
             ] as const;
           }
@@ -1510,51 +1609,158 @@ export class WalletService {
     return new Map<string, WalletAssetBalanceView>(entries);
   }
 
-  private pickPreferredSolanaBalance(
-    serviceBalance: WalletAssetBalanceView | null,
-    publicRpcBalance: WalletAssetBalanceView | null,
+  private resolveAssetBalanceViewsFromSnapshots(
+    assets: Array<{
+      assetId: string;
+      networkCode: WalletNetworkCode;
+      assetCode: string;
+      displayName: string;
+      symbol: string;
+      decimals: number;
+      isNative: boolean;
+      contractAddress: string | null;
+      walletVisible: boolean;
+      orderPayable: boolean;
+      customTokenId?: string;
+      isCustom?: boolean;
+      iconUrl?: string | null;
+    }>,
+    snapshots: Array<{
+      walletId: string | null;
+      networkCode: string;
+      assetCode: string;
+      address: string | null;
+      balanceMinor: string | null;
+      balanceUiAmount: string | null;
+      balanceStatus: 'NO_ADDRESS' | 'UNAVAILABLE' | 'READY';
+    }>,
+    publicAddresses: WalletPublicAddressItem[],
+    chainAccounts: PersistedWalletChainAccountRecord[] = [],
+  ) {
+    const usablePublicAddresses = publicAddresses.filter(isUsableWalletPublicAddress);
+    const chainAccountAddressByNetwork = this.buildChainAccountAddressByNetwork(
+      chainAccounts,
+    );
+    const snapshotByKey = new Map(
+      snapshots.map((snapshot) => [
+        `${snapshot.networkCode}:${snapshot.assetCode}`,
+        snapshot,
+      ]),
+    );
+
+    return new Map<string, WalletAssetBalanceView>(
+      assets.map((asset) => {
+        const assetAddress =
+          usablePublicAddresses.find(
+            (item) =>
+              item.networkCode === asset.networkCode &&
+              item.assetCode === asset.assetCode &&
+              item.isDefault,
+          )?.address ??
+          usablePublicAddresses.find(
+            (item) =>
+              item.networkCode === asset.networkCode &&
+              item.assetCode === asset.assetCode,
+          )?.address ??
+          usablePublicAddresses.find(
+            (item) => item.networkCode === asset.networkCode && item.isDefault,
+          )?.address ??
+          usablePublicAddresses.find((item) => item.networkCode === asset.networkCode)
+            ?.address ??
+          chainAccountAddressByNetwork.get(asset.networkCode) ??
+          null;
+
+        const snapshot = snapshotByKey.get(`${asset.networkCode}:${asset.assetCode}`);
+        const balanceView: WalletAssetBalanceView = snapshot
+          ? {
+              networkCode: asset.networkCode,
+              assetCode: asset.assetCode,
+              address: snapshot.address ?? assetAddress,
+              balanceMinor: snapshot.balanceMinor,
+              balanceUiAmount: snapshot.balanceUiAmount,
+              balanceStatus: snapshot.balanceStatus,
+            }
+          : {
+              networkCode: asset.networkCode,
+              assetCode: asset.assetCode,
+              address: assetAddress,
+              balanceMinor: null,
+              balanceUiAmount: null,
+              balanceStatus: assetAddress ? 'UNAVAILABLE' : 'NO_ADDRESS',
+            };
+
+        return [asset.assetId, balanceView] as const;
+      }),
+    );
+  }
+
+  private shouldResolveAssetPrices(
+    assetBalanceViews: Map<string, WalletAssetBalanceView>,
+    forceRefresh: boolean,
+  ) {
+    if (forceRefresh) {
+      return true;
+    }
+
+    return Array.from(assetBalanceViews.values()).some(
+      (item) => item.balanceStatus === 'READY',
+    );
+  }
+
+  private async resolveSolanaBalanceViaService(
+    address: string,
     asset: {
       networkCode: WalletNetworkCode;
       assetCode: string;
+      isNative: boolean;
       contractAddress: string | null;
     },
-    address: string,
-  ): WalletAssetBalanceView {
-    if (serviceBalance == null) {
-      return (
-        publicRpcBalance ?? {
+  ): Promise<WalletAssetBalanceView | null> {
+    if (!this.solanaClient.isEnabled()) {
+      return null;
+    }
+
+    let timeoutHandle: NodeJS.Timeout | undefined;
+    try {
+      const servicePromise = this.solanaClient
+        .getBalance({
+          address,
+          mint: asset.isNative ? undefined : asset.contractAddress ?? undefined,
+        })
+        .then((balance) => ({
           networkCode: asset.networkCode,
           assetCode: asset.assetCode,
           address,
-          balanceMinor: null,
-          balanceUiAmount: null,
-          balanceStatus: 'UNAVAILABLE',
-        }
-      );
-    }
+          balanceMinor: balance.balance,
+          balanceUiAmount: balance.uiAmount,
+          balanceStatus: 'READY' as WalletAssetBalanceStatus,
+        }));
 
-    if (publicRpcBalance == null) {
-      return serviceBalance;
-    }
+      const timeoutPromise = new Promise<WalletAssetBalanceView>((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+          reject(
+            new Error(
+              `Solana service balance timeout after ${SOLANA_BALANCE_FALLBACK_TIMEOUT_MS}ms`,
+            ),
+          );
+        }, SOLANA_BALANCE_FALLBACK_TIMEOUT_MS);
+      });
 
-    const serviceMinor = serviceBalance.balanceMinor?.trim() ?? '';
-    const publicMinor = publicRpcBalance.balanceMinor?.trim() ?? '';
-    if (serviceMinor.length > 0 && publicMinor.length > 0 && serviceMinor !== publicMinor) {
-      this.logger.warn(
-        `Solana balance mismatch for ${asset.assetCode}: service=${serviceMinor}, publicRpc=${publicMinor}`,
-      );
+      return await Promise.race([servicePromise, timeoutPromise]);
+    } catch (error) {
+        this.logger.warn(
+          `Solana service balance lookup failed for ${asset.assetCode}, falling back across configured RPC chain`,
+          error as Error,
+        );
+        return null;
+      } finally {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
     }
-
-    if (
-      serviceBalance.balanceStatus !== 'READY' ||
-      (serviceMinor === '0' && publicMinor.length > 0 && publicMinor !== '0')
-    ) {
-      return publicRpcBalance;
-    }
-    return serviceBalance;
   }
 
-  private async getSolanaBalanceViaPublicRpc(
+  private async getSolanaBalanceViaPreferredRpc(
     address: string,
     asset: {
       networkCode: WalletNetworkCode;
@@ -1563,59 +1769,72 @@ export class WalletService {
       contractAddress: string | null;
     },
   ): Promise<WalletAssetBalanceView> {
-    const rpcUrl = 'https://api.mainnet-beta.solana.com';
-    const connection = new Connection(rpcUrl, 'confirmed');
-    const owner = new PublicKey(address);
+    let lastError: unknown = null;
 
-    if (asset.isNative || !asset.contractAddress?.trim()) {
-      const lamports = await connection.getBalance(owner, 'confirmed');
-      return {
-        networkCode: asset.networkCode,
-        assetCode: asset.assetCode,
-        address,
-        balanceMinor: lamports.toString(),
-        balanceUiAmount: (lamports / 1_000_000_000).toString(),
-        balanceStatus: 'READY',
-      };
-    }
+    for (const rpcUrl of this.getOrderedSolanaRpcUrls()) {
+      try {
+        const connection = this.createSolanaConnection(rpcUrl);
+        const owner = new PublicKey(address);
 
-    const mint = new PublicKey(asset.contractAddress.trim());
-    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
-      owner,
-      { mint },
-      'confirmed',
-    );
-    const matchingAccount = tokenAccounts.value[0];
-    if (matchingAccount == null) {
-      return {
-        networkCode: asset.networkCode,
-        assetCode: asset.assetCode,
-        address,
-        balanceMinor: '0',
-        balanceUiAmount: '0',
-        balanceStatus: 'READY',
-      };
-    }
-
-    const tokenAmount = (
-      matchingAccount.account.data.parsed as {
-        info: {
-          tokenAmount: {
-            amount: string;
-            uiAmountString?: string;
+        if (asset.isNative || !asset.contractAddress?.trim()) {
+          const lamports = await connection.getBalance(owner, 'confirmed');
+          return {
+            networkCode: asset.networkCode,
+            assetCode: asset.assetCode,
+            address,
+            balanceMinor: lamports.toString(),
+            balanceUiAmount: (lamports / 1_000_000_000).toString(),
+            balanceStatus: 'READY',
           };
-        };
-      }
-    ).info.tokenAmount;
+        }
 
-    return {
-      networkCode: asset.networkCode,
-      assetCode: asset.assetCode,
-      address,
-      balanceMinor: tokenAmount.amount,
-      balanceUiAmount: tokenAmount.uiAmountString ?? '0',
-      balanceStatus: 'READY',
-    };
+        const mint = new PublicKey(asset.contractAddress.trim());
+        const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+          owner,
+          { mint },
+          'confirmed',
+        );
+        const matchingAccount = tokenAccounts.value[0];
+        if (matchingAccount == null) {
+          return {
+            networkCode: asset.networkCode,
+            assetCode: asset.assetCode,
+            address,
+            balanceMinor: '0',
+            balanceUiAmount: '0',
+            balanceStatus: 'READY',
+          };
+        }
+
+        const tokenAmount = (
+          matchingAccount.account.data.parsed as {
+            info: {
+              tokenAmount: {
+                amount: string;
+                uiAmountString?: string;
+              };
+            };
+          }
+        ).info.tokenAmount;
+
+        return {
+          networkCode: asset.networkCode,
+          assetCode: asset.assetCode,
+          address,
+          balanceMinor: tokenAmount.amount,
+          balanceUiAmount: tokenAmount.uiAmountString ?? '0',
+          balanceStatus: 'READY',
+        };
+      } catch (error) {
+        lastError = error;
+        this.logger.warn(
+          `Solana RPC balance lookup failed via ${rpcUrl}, trying next RPC`,
+          error as Error,
+        );
+      }
+    }
+
+    throw lastError instanceof Error ? lastError : new Error('No Solana RPC available');
   }
 
   private async resolveAssetPriceViews(
@@ -1639,62 +1858,69 @@ export class WalletService {
 
     const entries = await Promise.all(
       assets.map(async (asset) => {
-        const balanceView = balanceViews.get(asset.assetId);
-        const balanceAmount = balanceView?.balanceUiAmount ? Number(balanceView.balanceUiAmount) : 0;
-        if (asset.usdPriceMode === 'fixed' && asset.usdPriceValue) {
-          const unitPrice = Number(asset.usdPriceValue);
-          return [
-            asset.assetId,
-            {
-              assetId: asset.assetId,
-              unitPriceUsd: unitPrice.toFixed(6),
-              valueUsd: (balanceAmount * unitPrice).toFixed(2),
-              priceChangePct24h: null,
-              priceStatus: 'FIXED' as WalletAssetPriceStatus,
-              priceUpdatedAt: new Date().toISOString(),
-            },
-          ] as const;
-        }
+        try {
+          const balanceView = balanceViews.get(asset.assetId);
+          const balanceAmount = balanceView?.balanceUiAmount ? Number(balanceView.balanceUiAmount) : 0;
+          if (asset.usdPriceMode === 'fixed' && asset.usdPriceValue) {
+            const unitPrice = Number(asset.usdPriceValue);
+            return [
+              asset.assetId,
+              {
+                assetId: asset.assetId,
+                unitPriceUsd: unitPrice.toFixed(6),
+                valueUsd: (balanceAmount * unitPrice).toFixed(2),
+                priceChangePct24h: null,
+                priceStatus: 'FIXED' as WalletAssetPriceStatus,
+                priceUpdatedAt: new Date().toISOString(),
+              },
+            ] as const;
+          }
 
-        if (asset.marketInstrumentId) {
-          const cached = marketInstrumentCache.get(asset.marketInstrumentId)
-            ?? await this.marketService.getInstrumentDetail(asset.marketInstrumentId, forceRefresh);
-          marketInstrumentCache.set(asset.marketInstrumentId, cached);
-          const unitPrice = cached.ticker24h.lastPrice ? Number(cached.ticker24h.lastPrice) : null;
-          return [
-            asset.assetId,
-            {
-              assetId: asset.assetId,
-              unitPriceUsd: unitPrice?.toFixed(6) ?? null,
-              valueUsd: unitPrice != null ? (balanceAmount * unitPrice).toFixed(2) : null,
-              priceChangePct24h: cached.ticker24h.pctChange24h ?? null,
-              priceStatus: unitPrice != null ? 'READY' as WalletAssetPriceStatus : 'UNAVAILABLE' as WalletAssetPriceStatus,
-              priceUpdatedAt: new Date(cached.serverTime).toISOString(),
-            },
-          ] as const;
-        }
+          if (asset.marketInstrumentId) {
+            const cached = marketInstrumentCache.get(asset.marketInstrumentId)
+              ?? await this.marketService.getInstrumentDetail(asset.marketInstrumentId, forceRefresh);
+            marketInstrumentCache.set(asset.marketInstrumentId, cached);
+            const unitPrice = cached.ticker24h.lastPrice ? Number(cached.ticker24h.lastPrice) : null;
+            return [
+              asset.assetId,
+              {
+                assetId: asset.assetId,
+                unitPriceUsd: unitPrice?.toFixed(6) ?? null,
+                valueUsd: unitPrice != null ? (balanceAmount * unitPrice).toFixed(2) : null,
+                priceChangePct24h: cached.ticker24h.pctChange24h ?? null,
+                priceStatus: unitPrice != null ? 'READY' as WalletAssetPriceStatus : 'UNAVAILABLE' as WalletAssetPriceStatus,
+                priceUpdatedAt: new Date(cached.serverTime).toISOString(),
+              },
+            ] as const;
+          }
 
-        if (asset.contractAddress) {
-          const priceKey = `${asset.networkCode}:${asset.contractAddress.toLowerCase()}`;
-          const cached = onchainPriceCache.get(priceKey)
-            ?? await this.marketService.getOnchainTokenQuote(
-              this.networkCodeToChainId(asset.networkCode),
-              asset.contractAddress,
-              forceRefresh,
-            );
-          onchainPriceCache.set(priceKey, cached);
-          const unitPrice = cached?.currentPrice ? Number(cached.currentPrice) : null;
-          return [
-            asset.assetId,
-            {
-              assetId: asset.assetId,
-              unitPriceUsd: unitPrice?.toFixed(6) ?? null,
-              valueUsd: unitPrice != null ? (balanceAmount * unitPrice).toFixed(2) : null,
-              priceChangePct24h: cached?.priceChangePct24h ?? null,
-              priceStatus: unitPrice != null ? 'READY' as WalletAssetPriceStatus : 'UNAVAILABLE' as WalletAssetPriceStatus,
-              priceUpdatedAt: cached?.updatedAt ? new Date(cached.updatedAt).toISOString() : null,
-            },
-          ] as const;
+          if (asset.contractAddress) {
+            const priceKey = `${asset.networkCode}:${asset.contractAddress.toLowerCase()}`;
+            const cached = onchainPriceCache.get(priceKey)
+              ?? await this.marketService.getOnchainTokenQuote(
+                this.networkCodeToChainId(asset.networkCode),
+                asset.contractAddress,
+                forceRefresh,
+              );
+            onchainPriceCache.set(priceKey, cached);
+            const unitPrice = cached?.currentPrice ? Number(cached.currentPrice) : null;
+            return [
+              asset.assetId,
+              {
+                assetId: asset.assetId,
+                unitPriceUsd: unitPrice?.toFixed(6) ?? null,
+                valueUsd: unitPrice != null ? (balanceAmount * unitPrice).toFixed(2) : null,
+                priceChangePct24h: cached?.priceChangePct24h ?? null,
+                priceStatus: unitPrice != null ? 'READY' as WalletAssetPriceStatus : 'UNAVAILABLE' as WalletAssetPriceStatus,
+                priceUpdatedAt: cached?.updatedAt ? new Date(cached.updatedAt).toISOString() : null,
+              },
+            ] as const;
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Failed to resolve asset price for ${asset.networkCode}:${asset.assetCode}`,
+            error as Error,
+          );
         }
 
         return [
@@ -1723,26 +1949,28 @@ export class WalletService {
       isNative: boolean;
     },
   ) {
-    const tronWeb = this.createTronWeb();
-    if (asset.isNative || asset.assetCode === 'TRX') {
-      const balanceSun = await tronWeb.trx.getBalance(address);
-      return {
-        balanceMinor: balanceSun.toString(),
-        balanceUiAmount: this.fromMinorUnits(BigInt(balanceSun), asset.decimals),
-      };
-    }
-
     const contractAddress =
       asset.contractAddress?.trim() ||
       process.env.TRON_USDT_CONTRACT?.trim() ||
       'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
-    const contract = await tronWeb.contract().at(contractAddress);
-    const rawBalance = await contract.balanceOf(address).call();
-    const balanceMinor = rawBalance?.toString?.() ?? String(rawBalance ?? '0');
-    return {
-      balanceMinor,
-      balanceUiAmount: this.fromMinorUnits(BigInt(balanceMinor), asset.decimals),
-    };
+
+    return this.executeTronRpcFallback('balance query', async (tronWeb) => {
+      if (asset.isNative || asset.assetCode === 'TRX') {
+        const balanceSun = await tronWeb.trx.getBalance(address);
+        return {
+          balanceMinor: balanceSun.toString(),
+          balanceUiAmount: this.fromMinorUnits(BigInt(balanceSun), asset.decimals),
+        };
+      }
+
+      const contract = await tronWeb.contract().at(contractAddress);
+      const rawBalance = await contract.balanceOf(address).call();
+      const balanceMinor = rawBalance?.toString?.() ?? String(rawBalance ?? '0');
+      return {
+        balanceMinor,
+        balanceUiAmount: this.fromMinorUnits(BigInt(balanceMinor), asset.decimals),
+      };
+    });
   }
 
   async listPublicAddresses(
@@ -1915,7 +2143,7 @@ export class WalletService {
     chainAccounts: PersistedWalletChainAccountRecord[] = [],
   ): Promise<WalletResolvedReceiveSelection> {
     const chains = this.getChains(accessToken).items;
-    const assets = this.getAssetCatalog(accessToken).items.filter((item) => item.walletVisible);
+    const assets = this.buildAssetCatalog(accessToken).filter((item) => item.walletVisible);
     const selectedNetworkCode =
       requestedNetworkCode && chains.some((item) => item.networkCode === requestedNetworkCode)
         ? requestedNetworkCode
@@ -1999,6 +2227,7 @@ export class WalletService {
       usdPriceMode: item.usdPriceMode,
       usdPriceValue: item.usdPriceValue,
       marketInstrumentId: item.marketInstrumentId,
+      iconUrl: item.iconUrl,
     };
   }
 
@@ -2255,10 +2484,9 @@ export class WalletService {
         });
       }
 
-      // Check if real service is enabled and has serializedTx for broadcast
-      if (this.solanaClient.isEnabled() && dto.serializedTx) {
+      if (dto.serializedTx) {
         try {
-          this.logger.debug('Calling real Solana service for broadcast');
+          this.logger.debug('Calling Solana broadcast pipeline');
           const result = await this.solanaClient.broadcastTransaction({
             serializedTx: dto.serializedTx,
             network: this.solanaClient['config'].useDevnet() ? 'devnet' : 'mainnet',
@@ -2281,13 +2509,6 @@ export class WalletService {
                 : 'Failed to broadcast transaction',
           });
         }
-      }
-
-      if (!this.solanaClient.isEnabled()) {
-        throw new ServiceUnavailableException({
-          code: 'SOLANA_BROADCAST_DISABLED',
-          message: 'Solana broadcast service is disabled',
-        });
       }
 
       throw new BadRequestException({
@@ -2335,27 +2556,42 @@ export class WalletService {
           }
 
           this.logger.warn(
-            'Tron broadcast rejected by remote service, falling back to mock behavior',
+            'Tron broadcast rejected by remote service, falling back to configured RPC chain',
             result,
           );
         } catch (error) {
           if (error instanceof BadRequestException) {
             throw error;
           }
-          this.logger.warn('Tron broadcast failed, falling back to mock behavior', error);
+          this.logger.warn(
+            'Tron broadcast failed via remote service, falling back to configured RPC chain',
+            error,
+          );
         }
       }
 
-      return {
-        networkCode: dto.networkCode,
-        broadcasted: true,
-        txHash: dto.clientTxHash ?? `tron_proxy_${randomUUID()}`,
-        acceptedAt: new Date().toISOString(),
-        serviceEnabled: false,
-        note: this.tronClient.isEnabled()
-          ? 'Mock mode - TRON service unavailable'
-          : 'Mock mode - set TRON_SERVICE_ENABLED=true for real calls',
-      };
+      const directFallbackTransaction = this.decodeTronSignedTransactionPayload(
+        dto.serializedTx ?? dto.signedPayload,
+      );
+      if (directFallbackTransaction) {
+        try {
+          return await this.broadcastBuiltTronTransaction(
+            dto.networkCode,
+            directFallbackTransaction,
+          );
+        } catch (error) {
+          this.logger.warn(
+            'Tron direct RPC fallback failed after remote service attempt',
+            error as Error,
+          );
+        }
+      }
+
+      throw new ServiceUnavailableException({
+        code: 'TRON_BROADCAST_UNAVAILABLE',
+        message:
+          'TRON broadcast requires either the chain-side service or a decodable signed transaction payload for direct RPC fallback',
+      });
     }
 
     return {
@@ -2367,7 +2603,6 @@ export class WalletService {
   }
 
   private async buildSolanaTransfer(
-    rpcUrl: string,
     asset: {
       assetCode: string;
       decimals: number;
@@ -2376,99 +2611,145 @@ export class WalletService {
     },
     dto: BuildTransferRequestDto,
   ) {
-    const connection = new Connection(rpcUrl, 'confirmed');
-    const fromPubkey = new PublicKey(dto.fromAddress);
-    const toPubkey = new PublicKey(dto.toAddress);
-    const transaction = new Transaction();
-    transaction.feePayer = fromPubkey;
-    transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    let lastError: unknown = null;
 
-    if (asset.isNative) {
-      transaction.add(
-        SystemProgram.transfer({
-          fromPubkey,
-          toPubkey,
-          lamports: Number(this.toMinorUnits(dto.amount, 9)),
-        }),
-      );
-    } else {
-      if (!asset.contractAddress?.trim()) {
-        throw new BadRequestException({
-          code: 'WALLET_UNSUPPORTED_ASSET',
-          message: 'Unsupported Solana token',
-        });
-      }
-      const mint = new PublicKey(asset.contractAddress.trim());
-      const mintAccount = await connection.getParsedAccountInfo(mint, 'confirmed');
-      const onchainDecimals =
-        (
-          mintAccount.value?.data as
-            | {
-                parsed?: {
-                  info?: {
-                    decimals?: number;
-                  };
-                };
-              }
-            | undefined
-        )?.parsed?.info?.decimals;
-      const tokenDecimals = Number.isFinite(onchainDecimals)
-        ? Number(onchainDecimals)
-        : asset.decimals;
-      const fromAta = getAssociatedTokenAddressSync(mint, fromPubkey, false);
-      const toAta = getAssociatedTokenAddressSync(mint, toPubkey, false);
-      const destinationAccount = await connection.getAccountInfo(toAta);
-      if (!destinationAccount) {
-        transaction.add(
-          createAssociatedTokenAccountInstruction(
-            fromPubkey,
-            toAta,
-            toPubkey,
-            mint,
-          ),
+    for (const rpcUrl of this.getOrderedSolanaRpcUrls()) {
+      try {
+        const connection = this.createSolanaConnection(rpcUrl);
+        const fromPubkey = new PublicKey(dto.fromAddress);
+        const toPubkey = new PublicKey(dto.toAddress);
+        const transaction = new Transaction();
+        transaction.feePayer = fromPubkey;
+        transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+        if (asset.isNative) {
+          transaction.add(
+            SystemProgram.transfer({
+              fromPubkey,
+              toPubkey,
+              lamports: Number(this.toMinorUnits(dto.amount, 9)),
+            }),
+          );
+        } else {
+          if (!asset.contractAddress?.trim()) {
+            throw new BadRequestException({
+              code: 'WALLET_UNSUPPORTED_ASSET',
+              message: 'Unsupported Solana token',
+            });
+          }
+          const mint = new PublicKey(asset.contractAddress.trim());
+          const mintAccount = await connection.getParsedAccountInfo(mint, 'confirmed');
+          const onchainDecimals =
+            (
+              mintAccount.value?.data as
+                | {
+                    parsed?: {
+                      info?: {
+                        decimals?: number;
+                      };
+                    };
+                  }
+                | undefined
+            )?.parsed?.info?.decimals;
+          const tokenDecimals = Number.isFinite(onchainDecimals)
+            ? Number(onchainDecimals)
+            : asset.decimals;
+          const fromAta = getAssociatedTokenAddressSync(mint, fromPubkey, false);
+          const toAta = getAssociatedTokenAddressSync(mint, toPubkey, false);
+          const destinationAccount = await connection.getAccountInfo(toAta);
+          if (!destinationAccount) {
+            transaction.add(
+              createAssociatedTokenAccountInstruction(
+                fromPubkey,
+                toAta,
+                toPubkey,
+                mint,
+              ),
+            );
+          }
+          transaction.add(
+            createTransferCheckedInstruction(
+              fromAta,
+              mint,
+              toAta,
+              fromPubkey,
+              this.toMinorUnits(dto.amount, tokenDecimals),
+              tokenDecimals,
+            ),
+          );
+        }
+
+        const estimatedFee =
+          (await connection.getFeeForMessage(transaction.compileMessage(), 'confirmed')).value ?? 0;
+
+        return {
+          networkCode: dto.networkCode,
+          assetCode: dto.assetCode,
+          fromAddress: dto.fromAddress,
+          toAddress: dto.toAddress,
+          amount: dto.amount,
+          signingKind: 'SOLANA_MESSAGE',
+          signingPayload: transaction.serializeMessage().toString('base64'),
+          unsignedPayload: transaction.serialize({
+            verifySignatures: false,
+            requireAllSignatures: false,
+          }).toString('base64'),
+          estimatedFee: this.fromMinorUnits(BigInt(estimatedFee), 9),
+        };
+      } catch (error) {
+        lastError = error;
+        this.logger.warn(
+          `Solana build transfer failed via ${rpcUrl}, trying next RPC`,
+          error as Error,
         );
       }
-      transaction.add(
-        createTransferCheckedInstruction(
-          fromAta,
-          mint,
-          toAta,
-          fromPubkey,
-          this.toMinorUnits(dto.amount, tokenDecimals),
-          tokenDecimals,
-        ),
-      );
     }
 
-    const estimatedFee =
-      (await connection.getFeeForMessage(transaction.compileMessage(), 'confirmed')).value ?? 0;
-
-    return {
-      networkCode: dto.networkCode,
-      assetCode: dto.assetCode,
-      fromAddress: dto.fromAddress,
-      toAddress: dto.toAddress,
-      amount: dto.amount,
-      signingKind: 'SOLANA_MESSAGE',
-      signingPayload: transaction.serializeMessage().toString('base64'),
-      unsignedPayload: transaction.serialize({
-        verifySignatures: false,
-        requireAllSignatures: false,
-      }).toString('base64'),
-      estimatedFee: this.fromMinorUnits(BigInt(estimatedFee), 9),
-    };
+    throw lastError instanceof Error
+      ? lastError
+      : new ServiceUnavailableException({
+          code: 'SOLANA_RPC_UNAVAILABLE',
+          message: 'No Solana RPC available to build transfer',
+        });
   }
 
   private async buildTronTransfer(
     contractAddress: string | null,
     dto: BuildTransferRequestDto,
   ) {
-    const tronWeb = this.createTronWeb();
+    const resolvedContract =
+      contractAddress && !contractAddress.startsWith('<')
+        ? contractAddress
+        : process.env.TRON_USDT_CONTRACT?.trim() || 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
 
-    if (dto.assetCode === 'TRX') {
-      const transaction = await tronWeb.transactionBuilder.sendTrx(
-        dto.toAddress,
-        Number(this.toMinorUnits(dto.amount, 6)),
+    return this.executeTronRpcFallback('build transfer', async (tronWeb) => {
+      if (dto.assetCode === 'TRX') {
+        const transaction = await tronWeb.transactionBuilder.sendTrx(
+          dto.toAddress,
+          Number(this.toMinorUnits(dto.amount, 6)),
+          dto.fromAddress,
+        );
+        return {
+          networkCode: dto.networkCode,
+          assetCode: dto.assetCode,
+          fromAddress: dto.fromAddress,
+          toAddress: dto.toAddress,
+          amount: dto.amount,
+          signingKind: 'TRON_TX_ID',
+          signingPayload: transaction.txID,
+          unsignedPayload: Buffer.from(JSON.stringify(transaction), 'utf8').toString('base64'),
+          estimatedFee: '1.000000',
+        };
+      }
+
+      const wrapped = await tronWeb.transactionBuilder.triggerSmartContract(
+        resolvedContract,
+        'transfer(address,uint256)',
+        { feeLimit: 100_000_000 },
+        [
+          { type: 'address', value: dto.toAddress },
+          { type: 'uint256', value: this.toMinorUnits(dto.amount, 6).toString() },
+        ],
         dto.fromAddress,
       );
       return {
@@ -2478,37 +2759,11 @@ export class WalletService {
         toAddress: dto.toAddress,
         amount: dto.amount,
         signingKind: 'TRON_TX_ID',
-        signingPayload: transaction.txID,
-        unsignedPayload: Buffer.from(JSON.stringify(transaction), 'utf8').toString('base64'),
-        estimatedFee: '1.000000',
+        signingPayload: wrapped.transaction.txID,
+        unsignedPayload: Buffer.from(JSON.stringify(wrapped.transaction), 'utf8').toString('base64'),
+        estimatedFee: '20.000000',
       };
-    }
-
-    const resolvedContract =
-      contractAddress && !contractAddress.startsWith('<')
-        ? contractAddress
-        : process.env.TRON_USDT_CONTRACT?.trim() || 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
-    const wrapped = await tronWeb.transactionBuilder.triggerSmartContract(
-      resolvedContract,
-      'transfer(address,uint256)',
-      { feeLimit: 100_000_000 },
-      [
-        { type: 'address', value: dto.toAddress },
-        { type: 'uint256', value: this.toMinorUnits(dto.amount, 6).toString() },
-      ],
-      dto.fromAddress,
-    );
-    return {
-      networkCode: dto.networkCode,
-      assetCode: dto.assetCode,
-      fromAddress: dto.fromAddress,
-      toAddress: dto.toAddress,
-      amount: dto.amount,
-      signingKind: 'TRON_TX_ID',
-      signingPayload: wrapped.transaction.txID,
-      unsignedPayload: Buffer.from(JSON.stringify(wrapped.transaction), 'utf8').toString('base64'),
-      estimatedFee: '20.000000',
-    };
+    });
   }
 
   private attachSolanaSignature(unsignedPayload: string, signature: string): string {
@@ -2539,31 +2794,216 @@ export class WalletService {
     networkCode: 'SOLANA' | 'TRON',
     transaction: Record<string, unknown>,
   ) {
-    const tronWeb = this.createTronWeb();
-    const result = await tronWeb.trx.sendRawTransaction(transaction as any);
-    if (!result.result) {
-      throw new ConflictException({
-        code: 'TRON_BROADCAST_FAILED',
-        message: result.code || result.message || 'Tron broadcast failed',
-      });
-    }
-    return {
-      networkCode,
-      broadcasted: true,
-      txHash: (transaction as { txID?: string }).txID ?? result.txid ?? `tron_proxy_${randomUUID()}`,
-      acceptedAt: new Date().toISOString(),
-      serviceEnabled: true,
-    };
+    return this.executeTronRpcFallback(
+      'broadcast',
+      async (tronWeb) => {
+        const result = await tronWeb.trx.sendRawTransaction(transaction as any);
+        if (!result.result) {
+          throw new ConflictException({
+            code: 'TRON_BROADCAST_FAILED',
+            message: result.code || result.message || 'Tron broadcast failed',
+          });
+        }
+        return {
+          networkCode,
+          broadcasted: true,
+          txHash:
+            (transaction as { txID?: string }).txID ??
+            result.txid ??
+            `tron_proxy_${randomUUID()}`,
+          acceptedAt: new Date().toISOString(),
+          serviceEnabled: true,
+        };
+      },
+    );
   }
 
-  private createTronWeb() {
+  private createTronWeb(fullHost: string) {
     const headers = process.env.TRON_API_KEY?.trim()
       ? { 'TRON-PRO-API-KEY': process.env.TRON_API_KEY.trim() }
       : undefined;
     return new TronWeb({
-      fullHost: process.env.TRON_FULL_NODE?.trim() || 'https://api.trongrid.io',
+      fullHost,
       headers,
     });
+  }
+
+  private getPreferredSolanaRpcUrl() {
+    if (typeof this.solanaClient.getPreferredRpcUrl === 'function') {
+      return this.solanaClient.getPreferredRpcUrl('mainnet');
+    }
+    return this.getOrderedSolanaRpcUrls()[0] ?? 'https://api.mainnet-beta.solana.com';
+  }
+
+  private getPreferredSolanaWsUrl() {
+    if (typeof this.solanaClient.getPreferredWsUrl === 'function') {
+      return this.solanaClient.getPreferredWsUrl('mainnet');
+    }
+    return this.getOrderedSolanaWsUrls()[0] ?? this.deriveWsUrlFromRpcUrl(this.getPreferredSolanaRpcUrl());
+  }
+
+  private getOrderedSolanaRpcUrls() {
+    if (typeof this.solanaClient.getOrderedRpcUrls === 'function') {
+      return this.solanaClient.getOrderedRpcUrls('mainnet');
+    }
+    return Array.from(
+      new Set(
+        [
+          this.configService.get<string>('SOLANA_RPC_URL_MAINNETS'),
+          this.configService.get<string>('SOLANA_RPC_URL_MAINNET'),
+          this.configService.get<string>('SOLANA_RPC_URLS'),
+          this.configService.get<string>('SOLANA_RPC_URL'),
+          this.configService.get<string>('SOLANA_PUBLIC_RPC_URL_MAINNETS'),
+          this.configService.get<string>('SOLANA_PUBLIC_RPC_URL_MAINNET'),
+          this.configService.get<string>('SOLANA_PUBLIC_RPC_URLS'),
+          this.configService.get<string>('SOLANA_PUBLIC_RPC_URL'),
+          'https://api.mainnet-beta.solana.com',
+        ]
+          .flatMap((item) =>
+            (item ?? '')
+              .split(',')
+              .map((candidate) => candidate.trim()),
+          )
+          .filter((item): item is string => item.length > 0),
+      ),
+    );
+  }
+
+  private getOrderedSolanaWsUrls() {
+    if (typeof this.solanaClient.getOrderedWsUrls === 'function') {
+      return this.solanaClient.getOrderedWsUrls('mainnet');
+    }
+    const configured = Array.from(
+      new Set(
+        [
+          this.configService.get<string>('SOLANA_WS_URL_MAINNETS'),
+          this.configService.get<string>('SOLANA_WS_URL_MAINNET'),
+          this.configService.get<string>('SOLANA_WS_URLS'),
+          this.configService.get<string>('SOLANA_WS_URL'),
+          this.configService.get<string>('SOLANA_PUBLIC_WS_URL_MAINNETS'),
+          this.configService.get<string>('SOLANA_PUBLIC_WS_URL_MAINNET'),
+          this.configService.get<string>('SOLANA_PUBLIC_WS_URLS'),
+          this.configService.get<string>('SOLANA_PUBLIC_WS_URL'),
+        ]
+          .flatMap((item) =>
+            (item ?? '')
+              .split(',')
+              .map((candidate) => candidate.trim()),
+          )
+          .filter((item): item is string => item.length > 0),
+      ),
+    );
+
+    if (configured.length > 0) {
+      return configured;
+    }
+
+    return this.getOrderedSolanaRpcUrls().map((rpcUrl) =>
+      this.deriveWsUrlFromRpcUrl(rpcUrl),
+    );
+  }
+
+  private createSolanaConnection(rpcUrl: string) {
+    return new Connection(rpcUrl, {
+      commitment: 'confirmed',
+      wsEndpoint: this.getPreferredSolanaWsUrl(),
+    });
+  }
+
+  private deriveWsUrlFromRpcUrl(rpcUrl: string) {
+    if (rpcUrl.startsWith('https://')) {
+      return `wss://${rpcUrl.slice('https://'.length)}`;
+    }
+    if (rpcUrl.startsWith('http://')) {
+      return `ws://${rpcUrl.slice('http://'.length)}`;
+    }
+    return rpcUrl;
+  }
+
+  private getPreferredTronFullNodeUrl() {
+    if (typeof this.tronClient.getPreferredFullNodeUrl === 'function') {
+      return this.tronClient.getPreferredFullNodeUrl();
+    }
+    return this.getOrderedTronFullNodeUrls()[0] ?? 'https://api.trongrid.io';
+  }
+
+  private getOrderedTronFullNodeUrls() {
+    if (typeof this.tronClient.getOrderedFullNodeUrls === 'function') {
+      return this.tronClient.getOrderedFullNodeUrls();
+    }
+    return Array.from(
+      new Set(
+        [
+          this.configService.get<string>('TRON_FULL_NODES'),
+          this.configService.get<string>('TRON_FULL_NODE'),
+          this.configService.get<string>('TRON_RPC_URLS'),
+          this.configService.get<string>('TRON_RPC_URL'),
+          this.configService.get<string>('TRON_PUBLIC_FULL_NODES'),
+          this.configService.get<string>('TRON_PUBLIC_FULL_NODE'),
+          this.configService.get<string>('TRON_PUBLIC_RPC_URLS'),
+          this.configService.get<string>('TRON_PUBLIC_RPC_URL'),
+          'https://api.trongrid.io',
+        ]
+          .flatMap((item) =>
+            (item ?? '')
+              .split(',')
+              .map((candidate) => candidate.trim()),
+          )
+          .filter((item): item is string => item.length > 0),
+      ),
+    );
+  }
+
+  private decodeTronSignedTransactionPayload(payload?: string) {
+    if (!payload?.trim()) {
+      return null;
+    }
+
+    const candidates = [payload.trim()];
+    try {
+      candidates.push(Buffer.from(payload.trim(), 'base64').toString('utf8'));
+    } catch {
+      // Ignore base64 decode failure and keep raw candidate only.
+    }
+
+    for (const candidate of candidates) {
+      try {
+        const parsed = JSON.parse(candidate) as Record<string, unknown>;
+        if (parsed && typeof parsed === 'object') {
+          return parsed;
+        }
+      } catch {
+        // Ignore parse failures and continue.
+      }
+    }
+
+    return null;
+  }
+
+  private async executeTronRpcFallback<T>(
+    operation: string,
+    runner: (tronWeb: TronWeb, rpcUrl: string) => Promise<T>,
+  ): Promise<T> {
+    let lastError: unknown = null;
+
+    for (const rpcUrl of this.getOrderedTronFullNodeUrls()) {
+      try {
+        return await runner(this.createTronWeb(rpcUrl), rpcUrl);
+      } catch (error) {
+        lastError = error;
+        this.logger.warn(
+          `Tron ${operation} failed via ${rpcUrl}, trying next RPC`,
+          error as Error,
+        );
+      }
+    }
+
+    throw lastError instanceof Error
+      ? lastError
+      : new ServiceUnavailableException({
+          code: 'TRON_RPC_UNAVAILABLE',
+          message: `No TRON RPC available for ${operation}`,
+        });
   }
 
   private toMinorUnits(amount: string, decimals: number) {
@@ -2774,7 +3214,7 @@ export class WalletService {
     fromAddress?: string,
   ) {
     const normalizedAssetCode = assetCode.trim().toUpperCase();
-    const baseAsset = this.getAssetCatalog(accessToken, networkCode).items.find(
+    const baseAsset = this.buildAssetCatalog(accessToken, networkCode).find(
       (item) => item.assetCode.toUpperCase() === normalizedAssetCode,
     );
     if (baseAsset) {

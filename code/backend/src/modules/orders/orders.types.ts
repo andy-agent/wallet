@@ -20,6 +20,9 @@ export interface OrderRecord {
   submittedFromAddress: string | null;
   planCode: string;
   planName: string;
+  productTier: 'BASIC' | 'PREMIUM' | 'BUSINESS';
+  termMonths: number;
+  selectedRegionCode: string | null;
   orderType: 'NEW' | 'RENEWAL';
   quoteAssetCode: string;
   quoteNetworkCode: 'SOLANA' | 'TRON';

@@ -27,6 +27,7 @@ describe('SolanaClientService', () => {
       useDevnet: () => false,
       getBaseUrl: () => 'https://sol.residential-agent.com',
       getMaxRetries: () => 3,
+      getOrderedRpcUrls: () => ['https://private-solana-rpc.local'],
     };
 
     const service = new SolanaClientService(
@@ -47,6 +48,7 @@ describe('SolanaClientService', () => {
       recipientAddress: 'ChbtUwZqyi2wePLDTs57UyPPbn8jSpHTbn49FQWuX6wG',
       assetCode: 'USDT',
       mint: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+      assetDecimals: 6,
       expectedAmount: '9.990000',
     });
 
@@ -58,6 +60,73 @@ describe('SolanaClientService', () => {
       'https://sol.residential-agent.com/api/internal/v1/payment/verify',
       expect.objectContaining({
         mintAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+        assetDecimals: 6,
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it('passes mint and decimals for custom SPL token verification', async () => {
+    const httpService = {
+      post: jest.fn().mockReturnValue(
+        of({
+          data: {
+            status: 'verified',
+            signature: 'sig-andy',
+            recipientAddress: 'EVYe1JoVU9m46o5QLgJdZM6CCG996jfCvYoKu5DTNEjj',
+            assetCode: 'ANDY',
+            mintAddress: '8zFP8GeszFz7FvuHesguekTxDjm4KLsJEYBZTKyMLEoE',
+            expectedAmount: '29693.170570770',
+            receivedAmount: '29693.170570770',
+            recipientMatched: true,
+            amountSatisfied: true,
+            blockTime: 1776950131,
+            slot: 412450900,
+          },
+        }),
+      ),
+      get: jest.fn(),
+    };
+
+    const config = {
+      isEnabled: () => true,
+      getTimeoutMs: () => 1000,
+      getApiKey: () => 'test-token',
+      useDevnet: () => false,
+      getBaseUrl: () => 'https://sol.residential-agent.com',
+      getMaxRetries: () => 3,
+      getOrderedRpcUrls: () => ['https://private-solana-rpc.local'],
+    };
+
+    const service = new SolanaClientService(
+      httpService as never,
+      config as never,
+    );
+
+    jest
+      .spyOn(service, 'getTransactionStatus')
+      .mockResolvedValue({
+        signature: 'sig-andy',
+        status: 'confirmed',
+        confirmations: 1,
+      });
+
+    const result = await service.verifyIncomingTransfer({
+      signature: 'sig-andy',
+      recipientAddress: 'EVYe1JoVU9m46o5QLgJdZM6CCG996jfCvYoKu5DTNEjj',
+      assetCode: 'ANDY',
+      mint: '8zFP8GeszFz7FvuHesguekTxDjm4KLsJEYBZTKyMLEoE',
+      assetDecimals: 9,
+      expectedAmount: '29693.170570770',
+    });
+
+    expect(result.verified).toBe(true);
+    expect(httpService.post).toHaveBeenCalledWith(
+      'https://sol.residential-agent.com/api/internal/v1/payment/verify',
+      expect.objectContaining({
+        assetCode: 'ANDY',
+        mintAddress: '8zFP8GeszFz7FvuHesguekTxDjm4KLsJEYBZTKyMLEoE',
+        assetDecimals: 9,
       }),
       expect.any(Object),
     );
@@ -76,6 +145,7 @@ describe('SolanaClientService', () => {
       useDevnet: () => false,
       getBaseUrl: () => 'https://sol.residential-agent.com',
       getMaxRetries: () => 3,
+      getOrderedRpcUrls: () => ['https://private-solana-rpc.local'],
     };
 
     const service = new SolanaClientService(
@@ -155,6 +225,7 @@ describe('SolanaClientService', () => {
       useDevnet: () => false,
       getBaseUrl: () => 'https://sol.residential-agent.com',
       getMaxRetries: () => 3,
+      getOrderedRpcUrls: () => ['https://private-solana-rpc.local'],
     };
 
     const service = new SolanaClientService(
@@ -266,6 +337,7 @@ describe('SolanaClientService', () => {
       useDevnet: () => false,
       getBaseUrl: () => 'https://sol.residential-agent.com',
       getMaxRetries: () => 3,
+      getOrderedRpcUrls: () => ['https://private-solana-rpc.local'],
     };
 
     const service = new SolanaClientService(
@@ -305,7 +377,10 @@ describe('SolanaClientService', () => {
       useDevnet: () => false,
       getBaseUrl: () => 'https://sol.residential-agent.com',
       getMaxRetries: () => 3,
-      getRpcUrl: () => 'https://api.mainnet-beta.solana.com',
+      getOrderedRpcUrls: () => [
+        'https://private-solana-rpc.local',
+        'https://api.mainnet-beta.solana.com',
+      ],
     };
 
     const service = new SolanaClientService(
