@@ -10,12 +10,29 @@ android {
     namespace = "com.v2ray.ang"
     compileSdk = 36
 
+    val releaseStoreFilePath =
+        (project.findProperty("GHOST_RELEASE_STORE_FILE") as? String)
+            ?: System.getenv("GHOST_RELEASE_STORE_FILE")
+            ?: "${System.getProperty("user.home")}/.android/debug.keystore"
+    val releaseStorePassword =
+        (project.findProperty("GHOST_RELEASE_STORE_PASSWORD") as? String)
+            ?: System.getenv("GHOST_RELEASE_STORE_PASSWORD")
+            ?: "android"
+    val releaseKeyAlias =
+        (project.findProperty("GHOST_RELEASE_KEY_ALIAS") as? String)
+            ?: System.getenv("GHOST_RELEASE_KEY_ALIAS")
+            ?: "androiddebugkey"
+    val releaseKeyPassword =
+        (project.findProperty("GHOST_RELEASE_KEY_PASSWORD") as? String)
+            ?: System.getenv("GHOST_RELEASE_KEY_PASSWORD")
+            ?: "android"
+
     defaultConfig {
         applicationId = "com.v2ray.ang"
         minSdk = 24
         targetSdk = 36
-        versionCode = 723
-        versionName = "2.0.17.06"
+        versionCode = 728
+        versionName = "2.0.17.11"
         multiDexEnabled = true
 
         val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
@@ -40,9 +57,21 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("ghostRelease") {
+            storeFile = file(releaseStoreFilePath)
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
+            enableV1Signing = true
+            enableV2Signing = true
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("ghostRelease")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
