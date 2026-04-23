@@ -10,6 +10,7 @@ import com.v2ray.ang.composeui.p0.model.LoginResult
 import com.v2ray.ang.composeui.p0.model.LoginUiState
 import com.v2ray.ang.composeui.p0.model.P0LoadState
 import com.v2ray.ang.composeui.p0.model.RegionSpeed
+import com.v2ray.ang.composeui.p0.model.buildWalletHomeChainOptions
 import com.v2ray.ang.composeui.p0.model.resolveVpnOverviewValueText
 import com.v2ray.ang.composeui.p0.model.SplashUiState
 import com.v2ray.ang.composeui.p0.model.SubscriptionSummary
@@ -22,6 +23,7 @@ import com.v2ray.ang.composeui.p0.model.WalletHomeWalletOption
 import com.v2ray.ang.composeui.p0.model.WalletOnboardingUiState
 import com.v2ray.ang.composeui.p0.model.WatchSignal
 import com.v2ray.ang.composeui.p0.model.hasUsableWallet
+import com.v2ray.ang.composeui.p0.model.normalizeWalletHomeChainId
 import com.v2ray.ang.composeui.p0.model.toWalletHomeUiState
 import com.v2ray.ang.composeui.p0.model.walletHomeChainLabel
 import com.v2ray.ang.handler.MmkvManager
@@ -1181,6 +1183,7 @@ class RealP0Repository(context: Context) : P0Repository {
         wallets: List<com.v2ray.ang.payment.data.api.WalletSummaryData>,
         fetchRemoteIfMissing: Boolean,
     ): List<WalletHomeWalletOption> {
+        val cachedAssetCatalog = paymentRepository.getCachedWalletAssetCatalog().orEmpty()
         return wallets.map { wallet ->
             val chainAccounts = paymentRepository.getCachedWalletChainAccounts(wallet.walletId)
                 .ifEmpty {
@@ -1195,18 +1198,11 @@ class RealP0Repository(context: Context) : P0Repository {
                 walletName = wallet.walletName,
                 walletKind = wallet.walletKind,
                 isDefault = wallet.isDefault,
-                chainOptions = chainAccounts
-                    .filter { it.isEnabled && it.address.isNotBlank() }
-                    .distinctBy { it.networkCode.uppercase(Locale.ROOT) }
-                    .map { chain ->
-                        val chainId = normalizeWalletHomeChainId(chain.networkCode)
-                        WalletHomeChainOption(
-                            chainId = chainId,
-                            label = walletHomeChainLabel(chain.networkCode),
-                            address = chain.address,
-                            addressSuffix = chain.address.takeLast(4),
-                        )
-                    },
+                chainOptions = buildWalletHomeChainOptions(
+                    wallet = wallet,
+                    chainAccounts = chainAccounts,
+                    assetCatalog = cachedAssetCatalog,
+                ),
             )
         }
     }
@@ -1311,12 +1307,6 @@ class RealP0Repository(context: Context) : P0Repository {
         chainLabel.contains("avalanche", ignoreCase = true) -> "avalanche"
         chainLabel.contains("base", ignoreCase = true) -> "base"
         else -> "tron"
-    }
-
-    private fun normalizeWalletHomeChainId(networkCode: String): String = when (networkCode.uppercase(Locale.ROOT)) {
-        "AVALANCHE_C" -> "avalanche"
-        "BSC", "SMARTCHAIN" -> "bsc"
-        else -> networkCode.lowercase(Locale.ROOT)
     }
 
     private suspend fun readLocalOrders(userId: String): List<Order> {

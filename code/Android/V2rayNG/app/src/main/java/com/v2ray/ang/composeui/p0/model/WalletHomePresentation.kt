@@ -45,7 +45,7 @@ internal fun WalletOverviewData.toWalletHomeUiState(
         totalPortfolioValueText = formatWalletUsdValue(totalPortfolioValueUsd),
         priceUpdatedLabel = formatWalletPriceUpdatedLabel(priceUpdatedAt),
         summaryLabel = alerts.firstOrNull() ?: "交易记录",
-        selectedChainId = selectedNetworkCode.lowercase(Locale.ROOT),
+        selectedChainId = normalizeWalletHomeChainId(selectedNetworkCode),
         chains = chainItems.map { it.toWalletChainSummary() },
         assets = assets,
         alertBanner = alerts.joinToString(" · "),
@@ -74,17 +74,9 @@ internal fun formatWalletAssetValueDisplay(raw: String?): String {
     return raw?.trim().takeUnless { it.isNullOrBlank() } ?: "$0.00"
 }
 
-internal fun walletHomeChainLabel(chainId: String): String = when (chainId.lowercase(Locale.ROOT)) {
-    "tron" -> "TRON"
-    "solana" -> "Solana"
-    "ethereum" -> "Ethereum"
-    "base" -> "Base"
-    else -> chainId.uppercase(Locale.ROOT)
-}
-
 private fun WalletChainItemData.toWalletChainSummary(): WalletChainSummary {
     return WalletChainSummary(
-        chainId = networkCode.lowercase(Locale.ROOT),
+        chainId = normalizeWalletHomeChainId(networkCode),
         label = walletHomeChainLabel(networkCode),
         balanceText = "${orderCount ?: 0} 笔订单",
         accent = if (hasConfiguredAddress == true) "已配置地址" else "待配置地址",
@@ -112,7 +104,7 @@ private fun WalletAssetItemData.toWalletAssetHolding(): AssetHolding {
 }
 
 private fun buildWalletAssetTokenKey(asset: WalletAssetItemData): String {
-    val chainId = asset.networkCode.lowercase(Locale.ROOT)
+    val chainId = normalizeWalletHomeChainId(asset.networkCode)
     if (asset.isNative || asset.contractAddress.isNullOrBlank()) {
         return "$chainId:native:${asset.symbol.uppercase(Locale.ROOT)}"
     }

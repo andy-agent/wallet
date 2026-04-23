@@ -298,7 +298,7 @@ describe('MarketController (e2e)', () => {
         enabled: true,
       },
     });
-    expect(marketProvider.getCoinDetail).toHaveBeenCalledWith('zcash');
+    expect(marketProvider.getCoinDetail).toHaveBeenCalledWith('zcash', false);
     expect(marketProvider.getMarketsByIds).toHaveBeenCalledWith(['zcash']);
   });
 

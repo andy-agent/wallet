@@ -2049,7 +2049,10 @@ class PaymentRepository(context: Context) {
             val response = api.listWallets("Bearer $token")
             if (response.isSuccessful && response.body()?.code == "OK") {
                 val wallets = response.body()?.data?.items.orEmpty()
-                replaceWalletGraphCache(wallets, emptyMap())
+                val cachedChainAccountsByWalletId = wallets.associate { wallet ->
+                    wallet.walletId to localRepository.getLocalWalletChainAccounts(wallet.walletId).map { it.toData() }
+                }
+                replaceWalletGraphCache(wallets, cachedChainAccountsByWalletId)
                 Result.success(wallets)
             } else {
                 Result.failure(Exception(extractApiErrorMessage(response, "获取钱包列表失败")))
