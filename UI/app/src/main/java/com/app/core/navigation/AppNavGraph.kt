@@ -64,7 +64,7 @@ fun AppNavGraph() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route.orEmpty()
-    val showTopLevel = AppRoutes.topLevelRoutes.contains(currentRoute)
+    val showTopLevel = AppRoutes.topLevelRoutes.contains(currentRoute) && currentRoute != AppRoutes.VpnHome
 
     AdaptiveScaffold(
         showNavigation = showTopLevel,
@@ -80,7 +80,7 @@ fun AppNavGraph() {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = AppRoutes.Splash,
+            startDestination = AppRoutes.VpnHome,
             modifier = Modifier.padding(padding),
         ) {
             composable(AppRoutes.Splash) {
@@ -169,6 +169,12 @@ fun AppNavGraph() {
                     onOpenPlans = { navController.navigate(AppRoutes.PlanList) },
                     onOpenSubscription = { navController.navigate(AppRoutes.Subscription) },
                     onOpenOrders = { navController.navigate(AppRoutes.OrdersCenter) },
+                    onOpenWalletHome = { navController.navigate(AppRoutes.WalletHome) },
+                    onOpenMarket = { navController.navigate(AppRoutes.MarketOverview) },
+                    onOpenInvite = { navController.navigate(AppRoutes.InviteCenter) },
+                    onOpenProfile = { navController.navigate(AppRoutes.Profile) },
+                    onOpenLedger = { navController.navigate(AppRoutes.CommissionLedger) },
+                    onOpenSecurity = { navController.navigate(AppRoutes.SecurityCenter) },
                 )
             }
             composable(AppRoutes.NodeList) { NodeListScreen(onBack = { navController.popBackStack() }, onOpenNode = { navController.navigate(AppRoutes.nodeDetail(it)) }) }

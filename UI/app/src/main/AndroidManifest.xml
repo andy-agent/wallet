@@ -6,13 +6,13 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:name=".App"
+        android:name="com.app.App"
         android:allowBackup="true"
-        android:label="UI"
+        android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
-            android:name=".MainActivity"
+            android:name="com.app.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,7 +21,7 @@
         </activity>
 
         <service
-            android:name=".vpncore.service.VpnConnectionService"
+            android:name="com.app.vpncore.service.VpnConnectionService"
             android:exported="false"
             android:permission="android.permission.BIND_VPN_SERVICE">
             <intent-filter>

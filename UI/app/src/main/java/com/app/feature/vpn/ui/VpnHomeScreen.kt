@@ -1,28 +1,41 @@
 package com.app.feature.vpn.ui
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.app.common.components.*
-import com.app.common.widgets.*
-import com.app.core.theme.TextSecondary
-import com.app.core.ui.AppScaffold
-import com.app.feature.vpn.components.*
+import com.app.R
 import com.app.feature.vpn.viewmodel.VpnViewModel
-import com.app.vpncore.model.VpnState
+
+private const val OverviewFrameWidth = 390f
+private const val OverviewFrameHeight = 844f
+
+private data class OverviewHotspot(
+    val x: Float,
+    val y: Float,
+    val width: Float,
+    val height: Float,
+    val onClick: () -> Unit,
+)
 
 @Composable
 fun VpnHomeScreen(
@@ -31,47 +44,81 @@ fun VpnHomeScreen(
     onOpenPlans: () -> Unit = {},
     onOpenSubscription: () -> Unit = {},
     onOpenOrders: () -> Unit = {},
+    onOpenWalletHome: () -> Unit = {},
+    onOpenMarket: () -> Unit = {},
+    onOpenInvite: () -> Unit = {},
+    onOpenProfile: () -> Unit = {},
+    onOpenLedger: () -> Unit = {},
+    onOpenSecurity: () -> Unit = {},
 ) {
-    val state by viewModel.uiState.collectAsState()
-    AppScaffold(title = "", showTopBar = false) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
-                Text("安全连接", style = MaterialTheme.typography.headlineLarge)
-            }
-            item {
-                GradientCard(title = "连接状态", subtitle = when (val s = state.vpnState) {
-                    is VpnState.Connected -> "已连接 ${s.nodeName}"
-                    is VpnState.Connecting -> "连接中 ${s.nodeName}"
-                    is VpnState.Disconnecting -> "断开中"
-                    is VpnState.Error -> s.message
-                    else -> "未连接"
-                }) {
-                    Text("连接层已保持节点、订阅与状态切换的一致性反馈。", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
-                    Box(modifier = Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 18.dp), contentAlignment = Alignment.Center) {
-                        VpnPowerButton(active = state.vpnState is VpnState.Connected, onClick = viewModel::connectOrDisconnect)
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        MetricPill("节点", state.selectedNode?.country ?: "--")
-                        MetricPill("延迟", state.selectedNode?.latencyMs?.let { "$it ms" } ?: "--")
-                    }
+    val interactionSource = remember { MutableInteractionSource() }
+    val hotspots = listOf(
+        OverviewHotspot(36f, 227f, 96f, 34f, onOpenWalletHome),
+        OverviewHotspot(146f, 227f, 96f, 34f, onOpenWalletHome),
+        OverviewHotspot(256f, 227f, 96f, 34f, onOpenWalletHome),
+        OverviewHotspot(133f, 308f, 124f, 124f, viewModel::connectOrDisconnect),
+        OverviewHotspot(329f, 291f, 30f, 30f, onOpenNodes),
+        OverviewHotspot(36f, 421f, 43f, 24f, onOpenNodes),
+        OverviewHotspot(22f, 476f, 346f, 136f, onOpenMarket),
+        OverviewHotspot(24f, 634f, 62f, 58f, onOpenPlans),
+        OverviewHotspot(95f, 634f, 60f, 58f, onOpenInvite),
+        OverviewHotspot(164f, 634f, 62f, 58f, onOpenProfile),
+        OverviewHotspot(234f, 634f, 62f, 58f, onOpenLedger),
+        OverviewHotspot(304f, 634f, 62f, 58f, onOpenSubscription),
+        OverviewHotspot(24f, 684f, 62f, 58f, onOpenOrders),
+        OverviewHotspot(95f, 684f, 60f, 58f, onOpenProfile),
+        OverviewHotspot(164f, 684f, 62f, 58f, onOpenInvite),
+        OverviewHotspot(234f, 684f, 62f, 58f, onOpenSecurity),
+        OverviewHotspot(304f, 684f, 62f, 58f, onOpenProfile),
+        OverviewHotspot(45f, 779f, 72f, 22f, onOpenPlans),
+        OverviewHotspot(0f, 801f, 78f, 43f, {}),
+        OverviewHotspot(78f, 801f, 78f, 43f, onOpenMarket),
+        OverviewHotspot(156f, 801f, 78f, 43f, onOpenWalletHome),
+        OverviewHotspot(234f, 801f, 78f, 43f, onOpenInvite),
+        OverviewHotspot(312f, 801f, 78f, 43f, onOpenProfile),
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .verticalScroll(rememberScrollState()),
+    ) {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val scale = maxWidth / OverviewFrameWidth.dp
+            val imageHeight = OverviewFrameHeight.dp * scale
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(imageHeight),
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ui_rebuild_super_home_reference),
+                    contentDescription = "UI重构版本总览页",
+                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                hotspots.forEach { hotspot ->
+                    Box(
+                        modifier = Modifier
+                            .offset(
+                                x = hotspot.x.scaled(scale),
+                                y = hotspot.y.scaled(scale),
+                            )
+                            .size(
+                                width = hotspot.width.scaled(scale),
+                                height = hotspot.height.scaled(scale),
+                            )
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null,
+                                onClick = hotspot.onClick,
+                            ),
+                    )
                 }
             }
-            item {
-                GradientCard(title = "当前节点", subtitle = state.selectedNode?.name ?: "尚未选择") {
-                    Text(state.selectedNode?.host ?: "请先刷新订阅并选择节点", style = MaterialTheme.typography.bodyMedium)
-                    PrimaryButton(text = "节点列表", onClick = onOpenNodes, modifier = Modifier.padding(top = 12.dp))
-                }
-            }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Box(Modifier.weight(1f)) { SecondaryButton(text = "套餐", onClick = onOpenPlans) }
-                    Box(Modifier.weight(1f)) { SecondaryButton(text = "订阅", onClick = onOpenSubscription) }
-                }
-            }
-            item { SecondaryButton(text = "订单中心", onClick = onOpenOrders) }
         }
     }
 }
+
+private fun Float.scaled(scale: Float): Dp = (this * scale).dp
