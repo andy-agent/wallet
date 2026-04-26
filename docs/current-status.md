@@ -1,20 +1,6 @@
 # 当前状态
 
-**最后更新**: 2026-04-26
-
-## 2026-04-26 维护文档状态
-
-- 已建立面向接手人/维护人/值班人的主维护作业手册：
-  - [MAINTENANCE_OPERATIONS_MANUAL.md](/Users/cnyirui/git/projects/liaojiang/docs/MAINTENANCE_OPERATIONS_MANUAL.md)
-- 已新增模块 runbook：
-  - [android-client.md](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/android-client.md)
-  - [auth-accounts.md](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/auth-accounts.md)
-  - [plans-orders-vpn.md](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/plans-orders-vpn.md)
-  - [wallet-chain.md](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/wallet-chain.md)
-  - [growth-withdrawal.md](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/growth-withdrawal.md)
-  - [admin-release-market.md](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/admin-release-market.md)
-- 已新增 [docs/README.md](/Users/cnyirui/git/projects/liaojiang/docs/README.md) 作为文档索引，区分当前主文档、历史记录、计划文档和回归/证据目录。
-- 维护入口约定：后续接手先读 `docs/MAINTENANCE_OPERATIONS_MANUAL.md`，再按问题归属进入 `docs/maintenance/` 对应模块。
+**最后更新**: 2026-04-16
 
 ## 系统状态概览
 
