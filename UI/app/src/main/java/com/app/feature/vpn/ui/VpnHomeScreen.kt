@@ -1,45 +1,163 @@
 package com.app.feature.vpn.ui
 
-import androidx.compose.foundation.Image
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.CompareArrows
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.automirrored.outlined.ShowChart
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Apps
+import androidx.compose.material.icons.outlined.ArrowDownward
+import androidx.compose.material.icons.outlined.CardGiftcard
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.CropFree
+import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.PersonAddAlt1
+import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.PowerSettingsNew
+import androidx.compose.material.icons.outlined.Redeem
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Security
+import androidx.compose.material.icons.outlined.SouthWest
+import androidx.compose.material.icons.outlined.Stars
+import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.VerifiedUser
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material3.Badge
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.app.R
+import com.app.common.widgets.TokenIcon
+import com.app.core.theme.AppWhite
+import com.app.core.theme.BluePrimary
+import com.app.core.theme.BlueSecondary
+import com.app.core.theme.BorderSubtle
+import com.app.core.theme.GlowBlue
+import com.app.core.theme.GlowCyan
+import com.app.core.theme.GlowPurple
+import com.app.core.theme.MintPositive
+import com.app.core.theme.RedNegative
+import com.app.core.theme.TextPrimary
+import com.app.core.theme.TextSecondary
+import com.app.core.theme.TextTertiary
+import com.app.core.ui.AppScaffold
+import com.app.core.utils.Formatters
+import com.app.data.model.MarketTicker
+import com.app.data.model.TokenPricePoint
+import com.app.feature.market.viewmodel.MarketUiState
+import com.app.feature.market.viewmodel.MarketViewModel
+import com.app.feature.vpn.viewmodel.VpnUiState
 import com.app.feature.vpn.viewmodel.VpnViewModel
+import com.app.feature.wallet.viewmodel.WalletUiState
+import com.app.feature.wallet.viewmodel.WalletViewModel
+import com.app.vpncore.model.VpnNode
+import com.app.vpncore.model.VpnState
+import java.text.DecimalFormat
+import java.util.Locale
+import kotlinx.coroutines.delay
 
-private const val OverviewFrameWidth = 390f
-private const val OverviewFrameHeight = 844f
+private val OverviewHeroStart = Color(0xFF0D66FF)
+private val OverviewHeroCenter = Color(0xFF1547E8)
+private val OverviewHeroEnd = Color(0xFF5F2BFF)
+private val OverviewCardShadow = Color(0x1A173D8A)
+private val OverviewSoftBlue = Color(0xFFF3F8FF)
+private val OverviewSoftBorder = Color(0x183868CC)
+private val OverviewDeepNavy = Color(0xFF08163A)
+private val OverviewAccentCyan = Color(0xFF23E3FF)
+private val OverviewAccentBlue = Color(0xFF2C7CFF)
+private val OverviewAccentPurple = Color(0xFF764BFF)
+private val OverviewAccentGreen = Color(0xFF1ECE7A)
+private val OverviewMuted = Color(0xFF8A9BC0)
 
-private data class OverviewHotspot(
-    val x: Float,
-    val y: Float,
-    val width: Float,
-    val height: Float,
+private val MarketTabTitles = listOf("自选", "热门", "涨幅榜")
+
+private data class HeroAction(
+    val label: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit,
+)
+
+private data class FeatureShortcut(
+    val label: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit,
+    val badgeText: String? = null,
+    val dot: Boolean = false,
+)
+
+private data class BottomBarAction(
+    val label: String,
+    val icon: ImageVector,
+    val active: Boolean = false,
     val onClick: () -> Unit,
 )
 
 @Composable
 fun VpnHomeScreen(
-    viewModel: VpnViewModel = viewModel(),
+    vpnViewModel: VpnViewModel = viewModel(),
+    walletViewModel: WalletViewModel = viewModel(),
+    marketViewModel: MarketViewModel = viewModel(),
     onOpenNodes: () -> Unit = {},
     onOpenPlans: () -> Unit = {},
     onOpenSubscription: () -> Unit = {},
@@ -50,69 +168,1236 @@ fun VpnHomeScreen(
     onOpenProfile: () -> Unit = {},
     onOpenLedger: () -> Unit = {},
     onOpenSecurity: () -> Unit = {},
+    onOpenAssets: () -> Unit = {},
+    onOpenTicker: (String) -> Unit = {},
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val hotspots = listOf(
-        OverviewHotspot(36f, 227f, 96f, 34f, onOpenWalletHome),
-        OverviewHotspot(146f, 227f, 96f, 34f, onOpenWalletHome),
-        OverviewHotspot(256f, 227f, 96f, 34f, onOpenWalletHome),
-        OverviewHotspot(133f, 308f, 124f, 124f, viewModel::connectOrDisconnect),
-        OverviewHotspot(329f, 291f, 30f, 30f, onOpenNodes),
-        OverviewHotspot(36f, 421f, 43f, 24f, onOpenNodes),
-        OverviewHotspot(22f, 476f, 346f, 136f, onOpenMarket),
-        OverviewHotspot(24f, 634f, 62f, 58f, onOpenPlans),
-        OverviewHotspot(95f, 634f, 60f, 58f, onOpenInvite),
-        OverviewHotspot(164f, 634f, 62f, 58f, onOpenProfile),
-        OverviewHotspot(234f, 634f, 62f, 58f, onOpenLedger),
-        OverviewHotspot(304f, 634f, 62f, 58f, onOpenSubscription),
-        OverviewHotspot(24f, 684f, 62f, 58f, onOpenOrders),
-        OverviewHotspot(95f, 684f, 60f, 58f, onOpenProfile),
-        OverviewHotspot(164f, 684f, 62f, 58f, onOpenInvite),
-        OverviewHotspot(234f, 684f, 62f, 58f, onOpenSecurity),
-        OverviewHotspot(304f, 684f, 62f, 58f, onOpenProfile),
-        OverviewHotspot(45f, 779f, 72f, 22f, onOpenPlans),
-        OverviewHotspot(0f, 801f, 78f, 43f, {}),
-        OverviewHotspot(78f, 801f, 78f, 43f, onOpenMarket),
-        OverviewHotspot(156f, 801f, 78f, 43f, onOpenWalletHome),
-        OverviewHotspot(234f, 801f, 78f, 43f, onOpenInvite),
-        OverviewHotspot(312f, 801f, 78f, 43f, onOpenProfile),
-    )
+    val vpnState by vpnViewModel.uiState.collectAsState()
+    val walletState by walletViewModel.uiState.collectAsState()
+    val marketState by marketViewModel.uiState.collectAsState()
+    val bottomInset = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .verticalScroll(rememberScrollState()),
+    val totalAssetsUsd = walletState.profile?.totalAssetsUsd
+        ?: walletState.assets.sumOf { it.balance * it.priceUsd }
+    val dailyPnlUsd = walletState.assets.sumOf { asset ->
+        asset.balance * asset.priceUsd * (asset.change24h / 100.0)
+    }
+    val dailyPnlPct = if (totalAssetsUsd == 0.0) 0.0 else (dailyPnlUsd / totalAssetsUsd) * 100.0
+    val btcTicker = marketState.overview.firstOrNull { it.symbol.equals("BTC", true) }
+    val btcEquivalent = btcTicker?.priceUsd?.takeIf { it > 0.0 }?.let { totalAssetsUsd / it }
+    val primaryTicker = remember(walletState.assets, marketState.overview) {
+        val bestHeld = walletState.assets
+            .map { asset -> asset.symbol to (asset.balance * asset.priceUsd) }
+            .maxByOrNull { it.second }
+            ?.first
+        marketState.overview.firstOrNull { it.symbol.equals(bestHeld, true) }
+            ?: marketState.overview.firstOrNull()
+    }
+    val heroSeries = rememberPriceSeries(marketViewModel, primaryTicker?.symbol)
+    val heroActions = remember(onOpenAssets, onOpenWalletHome) {
+        listOf(
+            HeroAction("充值", Icons.Outlined.ArrowDownward, onOpenAssets),
+            HeroAction("转账", Icons.Outlined.SwapHoriz, onOpenWalletHome),
+            HeroAction("钱包", Icons.Outlined.AccountBalanceWallet, onOpenWalletHome),
+        )
+    }
+    val shortcuts = remember(
+        onOpenWalletHome,
+        onOpenInvite,
+        onOpenPlans,
+        onOpenLedger,
+        onOpenSubscription,
+        onOpenOrders,
+        onOpenProfile,
+        onOpenSecurity,
     ) {
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            val scale = maxWidth / OverviewFrameWidth.dp
-            val imageHeight = OverviewFrameHeight.dp * scale
-            Box(
+        listOf(
+            FeatureShortcut("加密支付", Icons.Outlined.AccountBalanceWallet, onOpenWalletHome, badgeText = "NEW"),
+            FeatureShortcut("邀请好友", Icons.Outlined.PersonAddAlt1, onOpenInvite, dot = true),
+            FeatureShortcut("会员中心", Icons.Outlined.Stars, onOpenPlans),
+            FeatureShortcut("收益中心", Icons.Outlined.SouthWest, onOpenLedger),
+            FeatureShortcut("节点订阅", Icons.Outlined.Security, onOpenSubscription),
+            FeatureShortcut("代理中心", Icons.Outlined.GridView, onOpenInvite),
+            FeatureShortcut("帮助中心", Icons.AutoMirrored.Outlined.HelpOutline, onOpenProfile),
+            FeatureShortcut("活动中心", Icons.Outlined.CardGiftcard, onOpenOrders),
+            FeatureShortcut("安全检测", Icons.Outlined.VerifiedUser, onOpenSecurity),
+            FeatureShortcut("更多功能", Icons.Outlined.Apps, onOpenProfile),
+        )
+    }
+    val bottomBarActions = remember(onOpenMarket, onOpenWalletHome, onOpenInvite, onOpenProfile) {
+        listOf(
+            BottomBarAction("首页", Icons.Outlined.Home, active = true, onClick = {}),
+            BottomBarAction("行情", Icons.AutoMirrored.Outlined.ShowChart, onClick = onOpenMarket),
+            BottomBarAction("交易", Icons.AutoMirrored.Outlined.CompareArrows, onClick = onOpenWalletHome),
+            BottomBarAction("发现", Icons.Outlined.Explore, onClick = onOpenInvite),
+            BottomBarAction("我的", Icons.Outlined.PersonOutline, onClick = onOpenProfile),
+        )
+    }
+
+    AppScaffold(
+        title = "",
+        showTopBar = false,
+        useProductionMotion = false,
+    ) { padding ->
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = padding.calculateTopPadding(),
+                    bottom = bottomInset + 118.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
+                item {
+                    OverviewHeader(
+                        onSearch = onOpenMarket,
+                        onNotifications = onOpenOrders,
+                        onScan = onOpenSecurity,
+                    )
+                }
+                item {
+                    PortfolioHeroCard(
+                        totalAssetsUsd = totalAssetsUsd,
+                        btcEquivalent = btcEquivalent,
+                        dailyPnlUsd = dailyPnlUsd,
+                        dailyPnlPct = dailyPnlPct,
+                        points = heroSeries,
+                        actions = heroActions,
+                    )
+                }
+                item {
+                    VpnConnectionCard(
+                        uiState = vpnState,
+                        connectionDuration = rememberConnectionTimer(vpnState.vpnState),
+                        onOpenNodes = onOpenNodes,
+                        onToggleConnection = vpnViewModel::connectOrDisconnect,
+                    )
+                }
+                item {
+                    MarketStrip(
+                        marketState = marketState,
+                        marketViewModel = marketViewModel,
+                        onOpenMarket = onOpenMarket,
+                        onOpenTicker = onOpenTicker,
+                    )
+                }
+                item {
+                    QuickCenterCard(shortcuts = shortcuts)
+                }
+                item {
+                    ExploreBanner(onExplore = onOpenWalletHome)
+                }
+            }
+
+            OverviewBottomBar(
+                actions = bottomBarActions,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 12.dp)
+                    .padding(bottom = bottomInset + 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun OverviewHeader(
+    onSearch: () -> Unit,
+    onNotifications: () -> Unit,
+    onScan: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BrandMark()
+            Text(
+                text = "CryptoVPN",
+                style = MaterialTheme.typography.headlineSmall,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            HeaderIconButton(icon = Icons.Outlined.Search, onClick = onSearch)
+            HeaderIconButton(
+                icon = Icons.Outlined.NotificationsNone,
+                onClick = onNotifications,
+                badgeText = "12",
+            )
+            HeaderIconButton(icon = Icons.Outlined.CropFree, onClick = onScan)
+        }
+    }
+}
+
+@Composable
+private fun BrandMark() {
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(OverviewAccentBlue, OverviewAccentPurple),
+                ),
+            ),
+            contentAlignment = Alignment.Center,
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+            val shape = Path().apply {
+                moveTo(size.width * 0.18f, size.height * 0.18f)
+                lineTo(size.width * 0.62f, size.height * 0.02f)
+                lineTo(size.width * 0.88f, size.height * 0.2f)
+                lineTo(size.width * 0.48f, size.height * 0.36f)
+                lineTo(size.width * 0.68f, size.height * 0.5f)
+                lineTo(size.width * 0.36f, size.height * 0.64f)
+                lineTo(size.width * 0.36f, size.height * 0.94f)
+                lineTo(size.width * 0.08f, size.height * 0.74f)
+                close()
+            }
+            drawPath(
+                path = shape,
+                brush = Brush.linearGradient(
+                    colors = listOf(Color.White, Color(0xB3FFFFFF)),
+                    start = Offset.Zero,
+                    end = Offset(size.width, size.height),
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun HeaderIconButton(
+    icon: ImageVector,
+    onClick: () -> Unit,
+    badgeText: String? = null,
+) {
+    Box(contentAlignment = Alignment.TopEnd) {
+        Surface(
+            modifier = Modifier
+                .size(42.dp)
+                .clickable(onClick = onClick),
+            shape = CircleShape,
+            color = AppWhite.copy(alpha = 0.92f),
+            shadowElevation = 8.dp,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = TextPrimary,
+                )
+            }
+        }
+        if (badgeText != null) {
+            Badge(
+                modifier = Modifier.padding(top = 2.dp, end = 1.dp),
+                containerColor = Color(0xFFFF4B4B),
+                contentColor = Color.White,
+            ) {
+                Text(text = badgeText, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PortfolioHeroCard(
+    totalAssetsUsd: Double,
+    btcEquivalent: Double?,
+    dailyPnlUsd: Double,
+    dailyPnlPct: Double,
+    points: List<Float>,
+    actions: List<HeroAction>,
+) {
+    val pnlPositive = dailyPnlUsd >= 0.0
+    val pnlColor = if (pnlPositive) OverviewAccentCyan else Color(0xFFFF8585)
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        shadowElevation = 16.dp,
+        color = Color.Transparent,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(OverviewHeroStart, OverviewHeroCenter, OverviewHeroEnd),
+                    ),
+                )
+                .drawWithCache {
+                    val topGlow = Brush.radialGradient(
+                        colors = listOf(GlowCyan.copy(alpha = 0.22f), Color.Transparent),
+                        center = Offset(size.width * 0.78f, size.height * 0.22f),
+                        radius = size.width * 0.56f,
+                    )
+                    val sideGlow = Brush.radialGradient(
+                        colors = listOf(GlowPurple.copy(alpha = 0.26f), Color.Transparent),
+                        center = Offset(size.width * 0.96f, size.height * 0.62f),
+                        radius = size.width * 0.62f,
+                    )
+                    onDrawWithContent {
+                        drawRect(brush = topGlow)
+                        drawRect(brush = sideGlow)
+                        drawContent()
+                    }
+                }
+                .padding(horizontal = 18.dp, vertical = 20.dp),
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "总资产估值",
+                                color = Color.White,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Icon(
+                                imageVector = Icons.Outlined.Visibility,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.88f),
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                        Text(
+                            text = Formatters.money(totalAssetsUsd),
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineLarge.copy(fontSize = 30.sp),
+                            fontWeight = FontWeight.ExtraBold,
+                        )
+                        Text(
+                            text = btcEquivalent?.let { "≈ ${btcFormat(it)} BTC" } ?: "≈ -- BTC",
+                            color = Color.White.copy(alpha = 0.8f),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "今日收益",
+                                color = Color.White.copy(alpha = 0.92f),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = signedMoney(dailyPnlUsd),
+                                    color = pnlColor,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Surface(
+                                    color = Color.White.copy(alpha = 0.14f),
+                                    shape = RoundedCornerShape(999.dp),
+                                ) {
+                                    Text(
+                                        text = Formatters.percent(dailyPnlPct),
+                                        color = pnlColor,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Column(
+                        modifier = Modifier.width(150.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.ShowChart,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.86f),
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "资产分析",
+                                color = Color.White.copy(alpha = 0.92f),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                        OverviewHeroSparkline(
+                            points = points,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(168.dp),
+                        )
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    actions.forEach { action ->
+                        HeroActionButton(
+                            action = action,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroActionButton(
+    action: HeroAction,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier
+            .height(58.dp)
+            .clickable(onClick = action.onClick),
+        shape = RoundedCornerShape(18.dp),
+        color = Color.White.copy(alpha = 0.12f),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = action.icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(24.dp),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = action.label,
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun OverviewHeroSparkline(
+    points: List<Float>,
+    modifier: Modifier = Modifier,
+) {
+    val safePoints = if (points.size >= 2) points else listOf(1f, 1.3f, 1.2f, 1.5f, 1.46f, 1.72f, 1.68f, 1.9f)
+    Canvas(modifier = modifier) {
+        val left = 8.dp.toPx()
+        val right = size.width - 6.dp.toPx()
+        val top = 18.dp.toPx()
+        val bottom = size.height - 24.dp.toPx()
+        val width = right - left
+        val height = bottom - top
+        val min = safePoints.minOrNull() ?: 0f
+        val max = safePoints.maxOrNull() ?: 1f
+        val range = (max - min).takeIf { it > 0f } ?: 1f
+        val stepX = width / (safePoints.lastIndex).coerceAtLeast(1)
+
+        repeat(3) { index ->
+            val y = top + (height / 2f) * index
+            drawLine(
+                color = Color.White.copy(alpha = if (index == 2) 0.16f else 0.08f),
+                start = Offset(left, y),
+                end = Offset(right, y),
+                strokeWidth = if (index == 2) 2f else 1f,
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f)),
+            )
+        }
+
+        val line = Path()
+        val fill = Path()
+        safePoints.forEachIndexed { index, point ->
+            val x = left + (stepX * index)
+            val y = bottom - (((point - min) / range) * height)
+            if (index == 0) {
+                line.moveTo(x, y)
+                fill.moveTo(x, bottom)
+                fill.lineTo(x, y)
+            } else {
+                line.lineTo(x, y)
+                fill.lineTo(x, y)
+            }
+        }
+        fill.lineTo(right, bottom)
+        fill.close()
+
+        drawPath(
+            path = fill,
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    OverviewAccentCyan.copy(alpha = 0.32f),
+                    Color.Transparent,
+                ),
+                startY = top,
+                endY = bottom,
+            ),
+        )
+        drawPath(
+            path = line,
+            color = OverviewAccentCyan.copy(alpha = 0.2f),
+            style = Stroke(width = 10f, cap = StrokeCap.Round),
+        )
+        drawPath(
+            path = line,
+            brush = Brush.horizontalGradient(
+                colors = listOf(OverviewAccentCyan, Color(0xFF66E9FF)),
+            ),
+            style = Stroke(width = 5f, cap = StrokeCap.Round),
+        )
+
+        safePoints.forEachIndexed { index, point ->
+            val x = left + (stepX * index)
+            val y = bottom - (((point - min) / range) * height)
+            drawCircle(
+                color = OverviewAccentCyan,
+                radius = if (index == safePoints.lastIndex) 8f else 5f,
+                center = Offset(x, y),
+            )
+            drawCircle(
+                color = Color.White.copy(alpha = 0.9f),
+                radius = if (index == safePoints.lastIndex) 4f else 2.6f,
+                center = Offset(x, y),
+            )
+        }
+    }
+}
+
+@Composable
+private fun VpnConnectionCard(
+    uiState: VpnUiState,
+    connectionDuration: String,
+    onOpenNodes: () -> Unit,
+    onToggleConnection: () -> Unit,
+) {
+    val status = remember(uiState.vpnState) { vpnStatusMeta(uiState.vpnState) }
+    val node = uiState.selectedNode ?: uiState.nodes.firstOrNull()
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = Color.White.copy(alpha = 0.95f),
+        shadowElevation = 16.dp,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color.White, OverviewSoftBlue),
+                    ),
+                )
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+        ) {
+            DottedWorldBackdrop(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(imageHeight),
+                    .height(172.dp)
+                    .align(Alignment.TopCenter)
+                    .padding(top = 26.dp, start = 40.dp, end = 34.dp),
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(999.dp),
+                            color = status.containerColor,
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .clip(CircleShape)
+                                        .background(status.tint),
+                                )
+                                Text(
+                                    text = "VPN ${status.label}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = status.tint,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                    }
+                    HeaderLiteAction(
+                        icon = Icons.Outlined.ChevronRight,
+                        onClick = onOpenNodes,
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Text(
+                            text = "当前节点",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = TextSecondary,
+                        )
+                        NodeIdentity(node = node)
+                        Surface(
+                            modifier = Modifier.clickable(onClick = onOpenNodes),
+                            shape = RoundedCornerShape(999.dp),
+                            color = Color(0xFFF1F6FF),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4F7CFF)),
+                        ) {
+                            Text(
+                                text = "切换",
+                                color = BluePrimary,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 22.dp, vertical = 9.dp),
+                            )
+                        }
+                    }
+
+                    PowerConnectionOrb(
+                        statusLabel = status.orbText,
+                        actionLabel = status.actionLabel,
+                        enabled = !status.loading,
+                        onClick = onToggleConnection,
+                    )
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(18.dp),
+                    ) {
+                        MetricColumn(
+                            label = "连接时长",
+                            value = connectionDuration,
+                            valueColor = TextPrimary,
+                        )
+                        MetricColumn(
+                            label = "网络延迟",
+                            value = node?.latencyMs?.let { "$it ms" } ?: "-- ms",
+                            valueColor = OverviewAccentGreen,
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "⚡ 智能模式",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = BluePrimary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = "  |  全局代理",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextSecondary,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NodeIdentity(node: VpnNode?) {
+    if (node == null) {
+        Text(
+            text = "暂无节点",
+            style = MaterialTheme.typography.bodyLarge,
+            color = TextSecondary,
+        )
+        return
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = countryFlag(node.country),
+                style = MaterialTheme.typography.titleLarge,
+            )
+            Text(
+                text = countryName(node.country),
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Text(
+            text = node.name,
+            style = MaterialTheme.typography.bodyLarge,
+            color = TextSecondary,
+        )
+    }
+}
+
+@Composable
+private fun PowerConnectionOrb(
+    statusLabel: String,
+    actionLabel: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val transition = rememberInfiniteTransition(label = "vpn-power")
+    val pulse = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "vpn-power-pulse",
+    )
+
+    Box(
+        modifier = Modifier
+            .size(176.dp)
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(12.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            OverviewAccentPurple.copy(alpha = 0.18f + pulse.value * 0.1f),
+                            Color.Transparent,
+                        ),
+                    ),
+                ),
+        )
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color.White.copy(alpha = 0.98f), Color(0xFFEAF2FF)),
+                ),
+                radius = size.minDimension / 2f,
+            )
+            drawCircle(
+                brush = Brush.sweepGradient(
+                    colors = listOf(
+                        Color(0xFFE9F5FF),
+                        OverviewAccentCyan.copy(alpha = 0.8f),
+                        OverviewAccentPurple.copy(alpha = 0.8f),
+                        Color(0xFFE9F5FF),
+                    ),
+                ),
+                radius = size.minDimension * (0.46f + (pulse.value * 0.02f)),
+                style = Stroke(width = 12f),
+            )
+            drawCircle(
+                brush = Brush.sweepGradient(
+                    colors = listOf(
+                        OverviewAccentPurple.copy(alpha = 0.82f),
+                        OverviewAccentBlue,
+                        OverviewAccentCyan,
+                        OverviewAccentPurple.copy(alpha = 0.82f),
+                    ),
+                ),
+                radius = size.minDimension * 0.36f,
+                style = Stroke(width = 16f),
+            )
+        }
+        Surface(
+            modifier = Modifier.size(118.dp),
+            shape = CircleShape,
+            color = Color.Transparent,
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(OverviewAccentPurple, OverviewAccentBlue),
+                        ),
+                    ),
+                contentAlignment = Alignment.Center,
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ui_rebuild_super_home_reference),
-                    contentDescription = "UI重构版本总览页",
-                    contentScale = ContentScale.FillBounds,
-                    modifier = Modifier.fillMaxSize(),
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.PowerSettingsNew,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(34.dp),
+                    )
+                    Text(
+                        text = actionLabel,
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+        }
+        Text(
+            text = statusLabel,
+            color = Color.Transparent,
+        )
+    }
+}
+
+@Composable
+private fun MetricColumn(
+    label: String,
+    value: String,
+    valueColor: Color,
+) {
+    Column(
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
+            color = TextSecondary,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineSmall,
+            color = valueColor,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun HeaderLiteAction(
+    icon: ImageVector,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .size(38.dp)
+            .clickable(onClick = onClick),
+        shape = CircleShape,
+        color = Color(0xFFF4F8FF),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = TextPrimary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DottedWorldBackdrop(
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val clusters = listOf(
+            listOf(0.10f to 0.40f, 0.16f to 0.32f, 0.23f to 0.38f, 0.29f to 0.30f, 0.34f to 0.36f),
+            listOf(0.42f to 0.24f, 0.48f to 0.19f, 0.54f to 0.23f, 0.60f to 0.18f, 0.66f to 0.26f),
+            listOf(0.68f to 0.42f, 0.74f to 0.36f, 0.80f to 0.43f, 0.87f to 0.34f, 0.92f to 0.42f),
+            listOf(0.56f to 0.58f, 0.48f to 0.64f, 0.40f to 0.58f, 0.24f to 0.62f, 0.82f to 0.62f),
+        )
+        clusters.forEachIndexed { row, points ->
+            points.forEachIndexed { index, (x, y) ->
+                val radius = 3f + ((row + index) % 3) * 1.2f
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            if ((row + index) % 2 == 0) GlowBlue.copy(alpha = 0.34f) else GlowPurple.copy(alpha = 0.26f),
+                            Color.Transparent,
+                        ),
+                    ),
+                    radius = radius * 4.4f,
+                    center = Offset(size.width * x, size.height * y),
                 )
-                hotspots.forEach { hotspot ->
+                drawCircle(
+                    color = Color(0xFFB7CAFF).copy(alpha = 0.52f),
+                    radius = radius,
+                    center = Offset(size.width * x, size.height * y),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MarketStrip(
+    marketState: MarketUiState,
+    marketViewModel: MarketViewModel,
+    onOpenMarket: () -> Unit,
+    onOpenTicker: (String) -> Unit,
+) {
+    var selectedTab by rememberSaveable { mutableIntStateOf(1) }
+    val cards = remember(selectedTab, marketState) {
+        val base = when (selectedTab) {
+            0 -> marketState.watchlist
+            1 -> marketState.overview.sortedByDescending { it.marketCapUsd }
+            else -> marketState.hotRisers.sortedByDescending { it.change24h }
+        }
+        val fallback = marketState.overview.filterNot { candidate ->
+            base.any { it.symbol.equals(candidate.symbol, true) }
+        }
+        (base + fallback).distinctBy { it.symbol }.take(4)
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = Color.White.copy(alpha = 0.96f),
+        shadowElevation = 16.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "行情",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    MarketTabTitles.forEachIndexed { index, title ->
+                        Text(
+                            text = title,
+                            color = if (selectedTab == index) TextPrimary else OverviewMuted,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium,
+                            modifier = Modifier.clickable { selectedTab = index },
+                        )
+                    }
+                }
+                Row(
+                    modifier = Modifier.clickable(onClick = onOpenMarket),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "更多",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = OverviewMuted,
+                    )
+                    Icon(
+                        imageVector = Icons.Outlined.ChevronRight,
+                        contentDescription = null,
+                        tint = OverviewMuted,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                cards.forEach { ticker ->
+                    MarketTickerCard(
+                        ticker = ticker,
+                        marketViewModel = marketViewModel,
+                        onClick = { onOpenTicker(ticker.symbol) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MarketTickerCard(
+    ticker: MarketTicker,
+    marketViewModel: MarketViewModel,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val points = rememberPriceSeries(marketViewModel, ticker.symbol)
+    val positive = ticker.change24h >= 0.0
+
+    Surface(
+        modifier = modifier
+            .height(188.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(22.dp),
+        color = Color(0xFFFBFDFF),
+        shadowElevation = 8.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, OverviewSoftBorder),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 10.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TokenIcon(symbol = ticker.symbol, size = 40.dp)
+                Text(
+                    text = "${ticker.symbol}/USDT",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = plainMoney(ticker.priceUsd),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = Formatters.percent(ticker.change24h),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (positive) OverviewAccentGreen else RedNegative,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            MiniSparkline(
+                points = points,
+                positive = positive,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickCenterCard(
+    shortcuts: List<FeatureShortcut>,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = Color.White.copy(alpha = 0.97f),
+        shadowElevation = 16.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            shortcuts.chunked(5).forEach { rowItems ->
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    rowItems.forEach { item ->
+                        ShortcutItem(
+                            item = item,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShortcutItem(
+    item: FeatureShortcut,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .height(92.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(onClick = item.onClick)
+            .padding(top = 4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(contentAlignment = Alignment.TopEnd) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = null,
+                    tint = TextPrimary,
+                    modifier = Modifier.size(30.dp),
+                )
+                if (item.badgeText != null) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = (-6).dp, end = (-16).dp),
+                        shape = RoundedCornerShape(999.dp),
+                        color = Color(0xFFFF5A47),
+                    ) {
+                        Text(
+                            text = item.badgeText,
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        )
+                    }
+                }
+                if (item.dot) {
                     Box(
                         modifier = Modifier
-                            .offset(
-                                x = hotspot.x.scaled(scale),
-                                y = hotspot.y.scaled(scale),
-                            )
-                            .size(
-                                width = hotspot.width.scaled(scale),
-                                height = hotspot.height.scaled(scale),
-                            )
-                            .clickable(
-                                interactionSource = interactionSource,
-                                indication = null,
-                                onClick = hotspot.onClick,
+                            .align(Alignment.TopEnd)
+                            .padding(top = (-2).dp, end = (-6).dp)
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFF4747)),
+                    )
+                }
+            }
+            Text(
+                text = item.label,
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                lineHeight = 18.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExploreBanner(
+    onExplore: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = Color.Transparent,
+        shadowElevation = 18.dp,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(170.dp)
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(OverviewDeepNavy, Color(0xFF071847), Color(0xFF141A71)),
+                    ),
+                )
+                .padding(horizontal = 20.dp, vertical = 20.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .blur(50.dp)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(GlowBlue.copy(alpha = 0.36f), Color.Transparent),
+                            center = Offset(860f, 120f),
+                            radius = 420f,
+                        ),
+                    ),
+            )
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text(
+                        text = "开启你的加密之旅",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = "安全 · 自由 · 财富",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White.copy(alpha = 0.88f),
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Surface(
+                        modifier = Modifier
+                            .padding(top = 10.dp)
+                            .clickable(onClick = onExplore),
+                        shape = RoundedCornerShape(999.dp),
+                        color = Color.White.copy(alpha = 0.12f),
+                    ) {
+                        Text(
+                            text = "立即探索",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 26.dp, vertical = 10.dp),
+                        )
+                    }
+                }
+                CryptoJourneyArtwork(
+                    modifier = Modifier
+                        .width(182.dp)
+                        .height(120.dp),
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                repeat(4) { index ->
+                    Box(
+                        modifier = Modifier
+                            .size(if (index == 1) 10.dp else 8.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (index == 1) Color.White else Color.White.copy(alpha = 0.36f),
                             ),
                     )
                 }
@@ -121,4 +1406,276 @@ fun VpnHomeScreen(
     }
 }
 
-private fun Float.scaled(scale: Float): Dp = (this * scale).dp
+@Composable
+private fun CryptoJourneyArtwork(
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val center = Offset(size.width * 0.58f, size.height * 0.54f)
+        repeat(3) { index ->
+            drawOval(
+                color = Color.White.copy(alpha = 0.14f - index * 0.03f),
+                topLeft = Offset(size.width * 0.14f, size.height * (0.18f + index * 0.1f)),
+                size = Size(size.width * (0.8f - index * 0.08f), size.height * (0.5f - index * 0.06f)),
+                style = Stroke(width = 2f),
+            )
+        }
+        repeat(12) { index ->
+            val orbitT = index / 12f
+            val x = center.x + kotlin.math.cos(orbitT * Math.PI * 2.0).toFloat() * size.width * (0.34f + (index % 3) * 0.05f)
+            val y = center.y + kotlin.math.sin(orbitT * Math.PI * 2.0).toFloat() * size.height * (0.18f + (index % 3) * 0.04f)
+            val accent = when (index % 3) {
+                0 -> OverviewAccentCyan
+                1 -> Color(0xFFFFA94D)
+                else -> Color(0xFFFFC54D)
+            }
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(accent.copy(alpha = 0.9f), Color.Transparent),
+                ),
+                radius = 14f,
+                center = Offset(x, y),
+            )
+            drawCircle(
+                color = accent,
+                radius = 5.5f,
+                center = Offset(x, y),
+            )
+        }
+        drawRoundRect(
+            brush = Brush.linearGradient(
+                colors = listOf(Color(0xFF3159FF), Color(0xFF5BD5FF)),
+            ),
+            topLeft = Offset(size.width * 0.44f, size.height * 0.22f),
+            size = Size(size.width * 0.24f, size.height * 0.38f),
+            cornerRadius = CornerRadius(24f, 24f),
+        )
+        drawRoundRect(
+            brush = Brush.linearGradient(
+                colors = listOf(Color.White.copy(alpha = 0.96f), Color(0xFFE9F6FF)),
+            ),
+            topLeft = Offset(size.width * 0.495f, size.height * 0.31f),
+            size = Size(size.width * 0.13f, size.height * 0.18f),
+            cornerRadius = CornerRadius(18f, 18f),
+        )
+    }
+}
+
+@Composable
+private fun OverviewBottomBar(
+    actions: List<BottomBarAction>,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = Color.White.copy(alpha = 0.96f),
+        shadowElevation = 14.dp,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            actions.forEach { action ->
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(20.dp))
+                        .clickable(onClick = action.onClick)
+                        .padding(vertical = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Icon(
+                        imageVector = action.icon,
+                        contentDescription = null,
+                        tint = if (action.active) BluePrimary else TextTertiary,
+                        modifier = Modifier.size(28.dp),
+                    )
+                    Text(
+                        text = action.label,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (action.active) BluePrimary else TextTertiary,
+                        fontWeight = if (action.active) FontWeight.Bold else FontWeight.Medium,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MiniSparkline(
+    points: List<Float>,
+    positive: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val safePoints = if (points.size >= 2) points else listOf(0.4f, 0.36f, 0.5f, 0.44f, 0.58f, 0.52f)
+    val strokeColor = if (positive) OverviewAccentGreen else RedNegative
+
+    Canvas(modifier = modifier) {
+        val left = 2.dp.toPx()
+        val right = size.width - 2.dp.toPx()
+        val top = 4.dp.toPx()
+        val bottom = size.height - 4.dp.toPx()
+        val width = right - left
+        val height = bottom - top
+        val min = safePoints.minOrNull() ?: 0f
+        val max = safePoints.maxOrNull() ?: 1f
+        val range = (max - min).takeIf { it > 0f } ?: 1f
+        val stepX = width / safePoints.lastIndex.coerceAtLeast(1)
+        val path = Path()
+        val fill = Path()
+
+        safePoints.forEachIndexed { index, point ->
+            val x = left + (stepX * index)
+            val y = bottom - (((point - min) / range) * height)
+            if (index == 0) {
+                path.moveTo(x, y)
+                fill.moveTo(x, bottom)
+                fill.lineTo(x, y)
+            } else {
+                path.lineTo(x, y)
+                fill.lineTo(x, y)
+            }
+        }
+        fill.lineTo(right, bottom)
+        fill.close()
+
+        drawPath(
+            path = fill,
+            brush = Brush.verticalGradient(
+                colors = listOf(strokeColor.copy(alpha = 0.24f), Color.Transparent),
+                startY = top,
+                endY = bottom,
+            ),
+            style = Fill,
+        )
+        drawPath(
+            path = path,
+            color = strokeColor,
+            style = Stroke(width = 4f, cap = StrokeCap.Round),
+        )
+    }
+}
+
+@Composable
+private fun rememberPriceSeries(
+    marketViewModel: MarketViewModel,
+    symbol: String?,
+): List<Float> {
+    val series by produceState(initialValue = emptyList<TokenPricePoint>(), symbol) {
+        if (symbol.isNullOrBlank()) {
+            value = emptyList()
+        } else {
+            marketViewModel.loadPriceSeries(symbol) { points -> value = points }
+        }
+    }
+    return series.map { it.price }
+}
+
+@Composable
+private fun rememberConnectionTimer(
+    vpnState: VpnState,
+): String {
+    val connectedAt = (vpnState as? VpnState.Connected)?.connectedAt
+    val text by produceState(initialValue = "00:00:00", connectedAt) {
+        if (connectedAt == null) {
+            value = "00:00:00"
+            return@produceState
+        }
+        while (true) {
+            value = formatElapsed(System.currentTimeMillis() - connectedAt)
+            delay(1000)
+        }
+    }
+    return text
+}
+
+private data class VpnStatusPresentation(
+    val label: String,
+    val orbText: String,
+    val actionLabel: String,
+    val tint: Color,
+    val containerColor: Color,
+    val loading: Boolean = false,
+)
+
+private fun vpnStatusMeta(state: VpnState): VpnStatusPresentation = when (state) {
+    is VpnState.Connected -> VpnStatusPresentation(
+        label = "已连接",
+        orbText = "已连接",
+        actionLabel = "点击断开",
+        tint = OverviewAccentGreen,
+        containerColor = Color(0xFFEAFBF3),
+    )
+    is VpnState.Connecting -> VpnStatusPresentation(
+        label = "连接中",
+        orbText = "连接中",
+        actionLabel = "正在连接",
+        tint = BluePrimary,
+        containerColor = Color(0xFFEAF1FF),
+        loading = true,
+    )
+    is VpnState.Disconnecting -> VpnStatusPresentation(
+        label = "断开中",
+        orbText = "断开中",
+        actionLabel = "正在断开",
+        tint = TextSecondary,
+        containerColor = Color(0xFFF3F6FC),
+        loading = true,
+    )
+    is VpnState.Error -> VpnStatusPresentation(
+        label = "异常",
+        orbText = "连接异常",
+        actionLabel = "重试连接",
+        tint = RedNegative,
+        containerColor = Color(0xFFFFEFF1),
+    )
+    VpnState.Disconnected -> VpnStatusPresentation(
+        label = "未连接",
+        orbText = "未连接",
+        actionLabel = "点击连接",
+        tint = BluePrimary,
+        containerColor = Color(0xFFEFF4FF),
+    )
+}
+
+private fun formatElapsed(millis: Long): String {
+    val totalSeconds = (millis / 1000L).coerceAtLeast(0L)
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds)
+}
+
+private fun signedMoney(value: Double): String = if (value >= 0.0) {
+    "+ ${Formatters.money(value)}"
+} else {
+    "- ${Formatters.money(kotlin.math.abs(value))}"
+}
+
+private fun plainMoney(value: Double): String = DecimalFormat("#,##0.00").format(value)
+
+private fun btcFormat(value: Double): String = String.format(Locale.getDefault(), "%.4f", value)
+
+private fun countryFlag(code: String): String = when (code.uppercase(Locale.ROOT)) {
+    "US" -> "🇺🇸"
+    "JP" -> "🇯🇵"
+    "SG" -> "🇸🇬"
+    "DE" -> "🇩🇪"
+    "HK" -> "🇭🇰"
+    else -> "🌐"
+}
+
+private fun countryName(code: String): String = when (code.uppercase(Locale.ROOT)) {
+    "US" -> "美国"
+    "JP" -> "日本"
+    "SG" -> "新加坡"
+    "DE" -> "德国"
+    "HK" -> "中国香港"
+    else -> code.uppercase(Locale.ROOT)
+}

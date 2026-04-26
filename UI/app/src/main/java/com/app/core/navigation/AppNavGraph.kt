@@ -175,6 +175,8 @@ fun AppNavGraph() {
                     onOpenProfile = { navController.navigate(AppRoutes.Profile) },
                     onOpenLedger = { navController.navigate(AppRoutes.CommissionLedger) },
                     onOpenSecurity = { navController.navigate(AppRoutes.SecurityCenter) },
+                    onOpenAssets = { navController.navigate(AppRoutes.AssetList) },
+                    onOpenTicker = { navController.navigate(AppRoutes.marketTickerDetail(it)) },
                 )
             }
             composable(AppRoutes.NodeList) { NodeListScreen(onBack = { navController.popBackStack() }, onOpenNode = { navController.navigate(AppRoutes.nodeDetail(it)) }) }
