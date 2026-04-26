@@ -1,5 +1,29 @@
 # 开发日志
 
+## 2026-04-26
+
+### 今日工作
+
+1. **建立多项目维护作业文档体系**
+   - 新增主维护作业手册: [MAINTENANCE_OPERATIONS_MANUAL.md](/Users/cnyirui/git/projects/liaojiang/docs/MAINTENANCE_OPERATIONS_MANUAL.md)
+   - 新增文档索引: [README.md](/Users/cnyirui/git/projects/liaojiang/docs/README.md)
+   - 新增模块 runbook:
+     - [Android App](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/android-client.md)
+     - [Auth & Accounts](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/auth-accounts.md)
+     - [Plans / Orders / VPN](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/plans-orders-vpn.md)
+     - [Wallet / Chain](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/wallet-chain.md)
+     - [Referral / Commission / Withdrawal](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/growth-withdrawal.md)
+     - [Admin / Market / Release](/Users/cnyirui/git/projects/liaojiang/docs/maintenance/admin-release-market.md)
+
+2. **纳入现有资产索引**
+   - 将 `docs/current-status.md`、`handoff/task-state.md`、`handoff/progress.md`、`docs/plans/`、`final_engineering_delivery_package/`、`deliverables/`、`test-results/`、`code/deploy/`、`code/backend/migrations/` 等纳入维护文档入口。
+   - 明确当前主文档、历史记录文档、计划文档、回归/证据目录的区别，避免接手人从旧报告误判当前线上口径。
+
+3. **维护约束**
+   - 模块 runbook 均包含改哪里、联动哪里、验证什么、常见坑、接口清单、关键表、发布前检查项、关键源码/脚本、SQL、排障顺序、数据修复模板、线上禁忌和回滚示例。
+   - 数据修复统一采用“先备份、再预览、再定向修复、再回滚路径”的结构。
+   - 敏感运维信息仍只引用 `环境测试服务器.md`，不在新增文档中复制密码、token、私钥或助记词。
+
 ## 2026-03-31
 
 ### 今日工作
