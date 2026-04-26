@@ -37,9 +37,28 @@ export class OrderPaymentMatcherService {
   ) {}
 
   isEnabled(): boolean {
-    return (
-      this.configService.get<string>('PAYMENT_MATCHER_ENABLED') === 'true'
-    );
+    const explicitToggle = this.configService
+      .get<string>('PAYMENT_MATCHER_ENABLED')
+      ?.trim()
+      .toLowerCase();
+
+    if (explicitToggle === 'false') {
+      return false;
+    }
+
+    if (explicitToggle === 'true') {
+      return true;
+    }
+
+    const collectionAddress = this.configService
+      .get<string>('SOLANA_ORDER_COLLECTION_ADDRESS')
+      ?.trim();
+    const solanaServiceEnabled = this.configService
+      .get<string>('SOLANA_SERVICE_ENABLED')
+      ?.trim()
+      .toLowerCase();
+
+    return Boolean(collectionAddress) && solanaServiceEnabled !== 'false';
   }
 
   async scanActiveContextsOnce() {

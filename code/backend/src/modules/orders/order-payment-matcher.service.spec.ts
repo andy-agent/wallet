@@ -34,6 +34,44 @@ describe('OrderPaymentMatcherService', () => {
     expect(provisioningService.provisionPaidOrder).not.toHaveBeenCalled();
   });
 
+  it('defaults matcher on when Solana collection is configured and service is enabled', () => {
+    const configValues: Record<string, string | undefined> = {
+      PAYMENT_MATCHER_ENABLED: undefined,
+      SOLANA_ORDER_COLLECTION_ADDRESS:
+        'EVYe1JoVU9m46o5QLgJdZM6CCG996jfCvYoKu5DTNEjj',
+      SOLANA_SERVICE_ENABLED: 'true',
+    };
+    const service = new OrderPaymentMatcherService(
+      {
+        get: jest.fn((key: string) => configValues[key]),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    expect(service.isEnabled()).toBe(true);
+  });
+
+  it('keeps matcher off when Solana service is explicitly disabled', () => {
+    const configValues: Record<string, string | undefined> = {
+      PAYMENT_MATCHER_ENABLED: undefined,
+      SOLANA_ORDER_COLLECTION_ADDRESS:
+        'EVYe1JoVU9m46o5QLgJdZM6CCG996jfCvYoKu5DTNEjj',
+      SOLANA_SERVICE_ENABLED: 'false',
+    };
+    const service = new OrderPaymentMatcherService(
+      {
+        get: jest.fn((key: string) => configValues[key]),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    expect(service.isEnabled()).toBe(false);
+  });
+
   it('stores scanned receipts and advances the cursor when enabled', async () => {
     const runtimeStateRepository = {
       listActivePaymentContexts: jest.fn().mockResolvedValue([
