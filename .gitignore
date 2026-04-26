@@ -4,6 +4,23 @@
 *.db
 .beads-credential-key
 
+# OS files
+**/.DS_Store
+Thumbs.db
+
+# Local dependency directories
+**/node_modules/
+
+# Android / UI local build artifacts
+code/Android/**/.gradle/
+code/Android/**/build/
+!code/Android/**/src/main/**/build/
+!code/Android/**/src/test/**/build/
+UI/.gradle/
+UI/**/build/
+!UI/**/src/main/**/build/
+!UI/**/src/test/**/build/
+
 # Backend build artifacts
 code/backend/node_modules/
 code/backend/dist/
@@ -24,3 +41,10 @@ code/backend-chain-usdt/coverage/
 code/backend-chain-usdt/.env
 
 .parallel/artifacts/
+
+# Local delivery / archive artifacts
+/deliverables/
+/UI重构/
+/V*.zip
+/v*.zip
+/vpn_pages_delivery.zip
