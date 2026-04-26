@@ -77,6 +77,15 @@ android {
                 "proguard-rules.pro"
             )
         }
+        create("uiRebuild") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".uirebuild"
+            versionNameSuffix = "-ui-rebuild"
+            resValue("string", "app_name", "UI重构版本")
+            resValue("string", "app_widget_name", "UI重构版本")
+            resValue("string", "app_tile_name", "UI重构版本")
+            matchingFallbacks += listOf("debug")
+        }
     }
 
     flavorDimensions.add("distribution")
@@ -123,7 +132,11 @@ android {
                 .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
                 .forEach { output ->
                     val abi = output.getFilter("ABI") ?: "universal"
-                    output.outputFileName = "v2rayNG_${variant.versionName}-fdroid_${abi}.apk"
+                    output.outputFileName = if (variant.buildType.name == "uiRebuild") {
+                        "ghost_ui_rebuild_${variant.versionName}-fdroid_${abi}.apk"
+                    } else {
+                        "v2rayNG_${variant.versionName}-fdroid_${abi}.apk"
+                    }
                     if (versionCodes.containsKey(abi)) {
                         output.versionCodeOverride =
                             (100 * variant.versionCode + versionCodes[abi]!!).plus(5000000)
@@ -143,7 +156,11 @@ android {
                     else
                         "universal"
 
-                    output.outputFileName = "v2rayNG_${variant.versionName}_${abi}.apk"
+                    output.outputFileName = if (variant.buildType.name == "uiRebuild") {
+                        "ghost_ui_rebuild_${variant.versionName}_${abi}.apk"
+                    } else {
+                        "v2rayNG_${variant.versionName}_${abi}.apk"
+                    }
                     if (versionCodes.containsKey(abi)) {
                         output.versionCodeOverride =
                             (1000000 * versionCodes[abi]!!).plus(variant.versionCode)
