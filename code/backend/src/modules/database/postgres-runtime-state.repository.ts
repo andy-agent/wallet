@@ -49,6 +49,7 @@ const ACCOUNT_COLUMNS = `
   password_hash,
   status::text AS status,
   referral_code,
+  inviter_account_id,
   created_at,
   updated_at
 `;
@@ -446,6 +447,7 @@ interface AuthAccountRow {
   password_hash: string;
   status: AuthAccount['status'];
   referral_code: string;
+  inviter_account_id: string | null;
   created_at: Date | string;
   updated_at: Date | string;
 }
@@ -518,17 +520,19 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
           password_hash,
           status,
           referral_code,
+          inviter_account_id,
           email_verified_at,
           created_at,
           updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         ON CONFLICT (id) DO UPDATE
         SET
           email = EXCLUDED.email,
           password_hash = EXCLUDED.password_hash,
           status = EXCLUDED.status,
           referral_code = EXCLUDED.referral_code,
+          inviter_account_id = EXCLUDED.inviter_account_id,
           email_verified_at = COALESCE(
             ${ACCOUNTS_TABLE}.email_verified_at,
             EXCLUDED.email_verified_at
@@ -543,6 +547,7 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
         account.passwordHash,
         account.status,
         account.referralCode,
+        account.inviterAccountId,
         account.status === 'ACTIVE' ? account.createdAt : null,
         account.createdAt,
         account.updatedAt,
@@ -914,7 +919,10 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     return this.mapOrder(result.rows[0]);
   }
 
-  async purgeExpiredOrders(accountId: string, expiredBefore: number): Promise<number> {
+  async purgeExpiredOrders(
+    accountId: string,
+    expiredBefore: number,
+  ): Promise<number> {
     await this.ensureReady();
     const result = await this.pool.query<CountRow>(
       `
@@ -1427,7 +1435,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     return result.rows.map((row) => this.mapWalletPublicAddress(row));
   }
 
-  async countWalletPublicAddressesByAccountId(accountId: string): Promise<number> {
+  async countWalletPublicAddressesByAccountId(
+    accountId: string,
+  ): Promise<number> {
     await this.ensureReady();
     const result = await this.pool.query<CountRow>(
       `
@@ -1607,7 +1617,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     return result.rows.map((row) => this.mapWallet(row));
   }
 
-  async findWalletById(walletId: string): Promise<PersistedWalletRecord | null> {
+  async findWalletById(
+    walletId: string,
+  ): Promise<PersistedWalletRecord | null> {
     await this.ensureReady();
     const result = await this.pool.query<RuntimeStateWalletRow>(
       `
@@ -1621,7 +1633,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     return result.rows[0] ? this.mapWallet(result.rows[0]) : null;
   }
 
-  async insertWallet(wallet: PersistedWalletRecord): Promise<PersistedWalletRecord> {
+  async insertWallet(
+    wallet: PersistedWalletRecord,
+  ): Promise<PersistedWalletRecord> {
     await this.ensureReady();
     const result = await this.pool.query<RuntimeStateWalletRow>(
       `
@@ -1664,7 +1678,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     return this.mapWallet(result.rows[0]);
   }
 
-  async updateWallet(wallet: PersistedWalletRecord): Promise<PersistedWalletRecord> {
+  async updateWallet(
+    wallet: PersistedWalletRecord,
+  ): Promise<PersistedWalletRecord> {
     return this.insertWallet(wallet);
   }
 
@@ -2115,6 +2131,10 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       CREATE INDEX IF NOT EXISTS idx_accounts_status
       ON ${ACCOUNTS_TABLE} (status)
     `);
+    await this.pool.query(`
+      ALTER TABLE ${ACCOUNTS_TABLE}
+      ADD COLUMN IF NOT EXISTS inviter_account_id text NULL
+    `);
 
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS ${ACCOUNT_INSTALLATIONS_TABLE} (
@@ -2552,9 +2572,7 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
 
     return {
       values,
-      whereClause: conditions.length
-        ? `WHERE ${conditions.join(' AND ')}`
-        : '',
+      whereClause: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '',
     };
   }
 
@@ -2565,12 +2583,16 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       passwordHash: row.password_hash,
       status: row.status,
       referralCode: row.referral_code,
+      inviterAccountId: row.inviter_account_id ?? null,
       createdAt: this.toIsoString(row.created_at)!,
       updatedAt: this.toIsoString(row.updated_at)!,
     };
   }
 
-  private mapSession(row: AuthSessionRow, rawSession?: AuthSession): AuthSession {
+  private mapSession(
+    row: AuthSessionRow,
+    rawSession?: AuthSession,
+  ): AuthSession {
     const createdAt = this.toIsoString(row.created_at)!;
     return {
       sessionId: row.session_id,
@@ -2580,7 +2602,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
       refreshToken: rawSession?.refreshToken ?? '',
       accessTokenExpiresAt:
         rawSession?.accessTokenExpiresAt ??
-        new Date(new Date(createdAt).getTime() + 2 * 60 * 60 * 1000).toISOString(),
+        new Date(
+          new Date(createdAt).getTime() + 2 * 60 * 60 * 1000,
+        ).toISOString(),
       refreshTokenExpiresAt:
         rawSession?.refreshTokenExpiresAt ??
         this.toIsoString(row.refresh_token_expires_at)!,
@@ -2836,9 +2860,7 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     };
   }
 
-  private mapWallet(
-    row: RuntimeStateWalletRow,
-  ): PersistedWalletRecord {
+  private mapWallet(row: RuntimeStateWalletRow): PersistedWalletRecord {
     return {
       walletId: row.wallet_id,
       accountId: row.account_id,
@@ -2927,7 +2949,9 @@ export class PostgresRuntimeStateRepository extends RuntimeStateRepository {
     if (!value) {
       return null;
     }
-    return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+    return value instanceof Date
+      ? value.toISOString()
+      : new Date(value).toISOString();
   }
 
   private toNumber(value: string | number | null): number | null {

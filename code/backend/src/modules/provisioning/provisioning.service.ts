@@ -6,6 +6,9 @@ import { VpnService } from '../vpn/vpn.service';
 interface ProvisionOrderInput {
   accountId: string;
   planCode: string;
+  productTier?: 'BASIC' | 'PREMIUM' | 'BUSINESS';
+  termMonths?: number;
+  selectedRegionCode?: string | null;
 }
 
 @Injectable()
@@ -39,7 +42,7 @@ export class ProvisioningService {
       subscriptionUrl: marzbanUser.subscriptionUrl,
       expireAt: marzbanUser.expireAt,
     });
-    this.referralService.recordCompletedOrder({
+    await this.referralService.recordCompletedOrder({
       accountId: input.accountId,
       orderNo: input.orderNo,
       sourceAssetCode: input.sourceAssetCode,

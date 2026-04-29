@@ -18,7 +18,21 @@ export interface CommissionLedgerRecord {
   sourceAmount: string;
   fxRateSnapshot: string;
   settlementAmountUsdt: string;
-  status: 'FROZEN' | 'AVAILABLE' | 'LOCKED_WITHDRAWAL' | 'WITHDRAWN' | 'REVERSED';
+  status:
+    | 'FROZEN'
+    | 'AVAILABLE'
+    | 'LOCKED_WITHDRAWAL'
+    | 'WITHDRAWN'
+    | 'REVERSED';
   createdAt: string;
   availableAt: string | null;
+  withdrawRequestNo?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface CommissionSummaryRecord {
+  available: number;
+  frozen: number;
+  withdrawing: number;
+  withdrawn: number;
 }

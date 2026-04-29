@@ -36,7 +36,10 @@ export interface WithdrawalRecord {
 
 @Injectable()
 export class WithdrawalsService {
-  private readonly withdrawalsByAccountId = new Map<string, WithdrawalRecord[]>();
+  private readonly withdrawalsByAccountId = new Map<
+    string,
+    WithdrawalRecord[]
+  >();
   private readonly idempotencyIndex = new Map<string, string>();
 
   constructor(
@@ -51,7 +54,7 @@ export class WithdrawalsService {
     idempotencyKey: string,
   ) {
     const account = this.authService.getMe(accessToken);
-    const balances = this.referralService.getBalances(account.accountId);
+    const balances = await this.referralService.getBalances(account.accountId);
     const amount = Number(dto.amount);
 
     if (amount < 10) {
@@ -97,26 +100,48 @@ export class WithdrawalsService {
       completedAt: null,
     };
 
-    this.referralService.lockAvailableForWithdrawal(account.accountId, amount);
-    this.idempotencyIndex.set(compositeKey, record.requestNo);
-
-    if (this.postgresDataAccessService.isEnabled()) {
-      const persisted = await this.postgresDataAccessService.createWithdrawalRequest({
-        requestNo: record.requestNo,
-        accountId: record.accountId,
-        amount: record.amount,
-        assetCode: record.assetCode,
-        networkCode: record.networkCode,
-        payoutAddress: record.payoutAddress,
+    const lockedEntries = await this.referralService.lockAvailableForWithdrawal(
+      account.accountId,
+      amount,
+      requestNo,
+    );
+    if (lockedEntries.length === 0) {
+      throw new ConflictException({
+        code: 'WITHDRAW_INSUFFICIENT_AVAILABLE_BALANCE',
+        message: 'Insufficient available balance',
       });
-      if (persisted) {
-        return persisted;
+    }
+    if (this.postgresDataAccessService.isEnabled()) {
+      try {
+        const persisted =
+          await this.postgresDataAccessService.createWithdrawalRequest({
+            requestNo: record.requestNo,
+            accountId: record.accountId,
+            amount: record.amount,
+            assetCode: record.assetCode,
+            networkCode: record.networkCode,
+            payoutAddress: record.payoutAddress,
+          });
+        if (persisted) {
+          this.idempotencyIndex.set(compositeKey, record.requestNo);
+          return persisted;
+        }
+      } catch (error) {
+        await this.referralService.unlockWithdrawal(requestNo);
+        throw error;
       }
+
+      await this.referralService.unlockWithdrawal(requestNo);
+      throw new ConflictException({
+        code: 'WITHDRAW_PERSISTENCE_FAILED',
+        message: 'Withdrawal request could not be persisted',
+      });
     }
 
     const current = this.withdrawalsByAccountId.get(account.accountId) ?? [];
     current.push(record);
     this.withdrawalsByAccountId.set(account.accountId, current);
+    this.idempotencyIndex.set(compositeKey, record.requestNo);
     return record;
   }
 
@@ -156,10 +181,11 @@ export class WithdrawalsService {
   async getWithdrawal(accessToken: string, requestNo: string) {
     const account = this.authService.getMe(accessToken);
     if (this.postgresDataAccessService.isEnabled()) {
-      const item = await this.postgresDataAccessService.findWithdrawalByAccountAndRequestNo(
-        account.accountId,
-        requestNo,
-      );
+      const item =
+        await this.postgresDataAccessService.findWithdrawalByAccountAndRequestNo(
+          account.accountId,
+          requestNo,
+        );
       if (!item) {
         throw new NotFoundException({
           code: 'WITHDRAW_NOT_FOUND',
@@ -199,14 +225,17 @@ export class WithdrawalsService {
 
     const page = Math.max(1, params.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
-    let items = Array.from(this.withdrawalsByAccountId.values()).flatMap((value) => value);
+    let items = Array.from(this.withdrawalsByAccountId.values()).flatMap(
+      (value) => value,
+    );
     if (params.status) {
       items = items.filter((item) => item.status === params.status);
     }
     if (params.accountEmail) {
       const loweredEmail = params.accountEmail.toLowerCase();
       items = items.filter((item) => {
-        const email = this.authService.getAccountById(item.accountId)?.email ?? '';
+        const email =
+          this.authService.getAccountById(item.accountId)?.email ?? '';
         return email.toLowerCase().includes(loweredEmail);
       });
     }
@@ -216,7 +245,8 @@ export class WithdrawalsService {
     return {
       items: items.slice(start, end).map((item) => ({
         ...item,
-        accountEmail: this.authService.getAccountById(item.accountId)?.email ?? null,
+        accountEmail:
+          this.authService.getAccountById(item.accountId)?.email ?? null,
       })),
       page,
       pageSize,
@@ -235,7 +265,10 @@ export class WithdrawalsService {
     }
     return {
       ...record,
-      accountEmail: accountEmail ?? this.authService.getAccountById(accountId)?.email ?? null,
+      accountEmail:
+        accountEmail ??
+        this.authService.getAccountById(accountId)?.email ??
+        null,
     };
   }
 }

@@ -3,37 +3,45 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
 import { AuthService } from '../auth/auth.service';
-import { ReferralBindingRecord, CommissionLedgerRecord } from './referral.types';
+import { PostgresDataAccessService } from '../database/postgres-data-access.service';
+import {
+  CommissionLedgerRecord,
+  CommissionSummaryRecord,
+  ReferralBindingRecord,
+} from './referral.types';
+
+const LEVEL1_COMMISSION_RATE = 0.25;
+const LEVEL2_COMMISSION_RATE = 0.05;
+const DEFAULT_COMMISSION_FREEZE_MS = 20 * 60 * 1000;
 
 @Injectable()
 export class ReferralService {
   private readonly bindings = new Map<string, ReferralBindingRecord>();
-  private readonly ledgerByBeneficiary = new Map<string, CommissionLedgerRecord[]>();
+  private readonly ledgerByBeneficiary = new Map<
+    string,
+    CommissionLedgerRecord[]
+  >();
 
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly postgresDataAccessService?: PostgresDataAccessService,
   ) {}
 
-  getOverview(accessToken: string) {
+  async getOverview(accessToken: string) {
     const account = this.authService.getMe(accessToken);
-    const binding = this.bindings.get(account.accountId);
-    const ledger = this.ledgerByBeneficiary.get(account.accountId) ?? [];
+    const binding = this.resolveBinding(account.accountId);
+    const ledger = await this.getLedgerForAccount(account.accountId);
     const level1Income = ledger
       .filter((item) => item.commissionLevel === 'LEVEL1')
       .reduce((sum, item) => sum + Number(item.settlementAmountUsdt), 0);
     const level2Income = ledger
       .filter((item) => item.commissionLevel === 'LEVEL2')
       .reduce((sum, item) => sum + Number(item.settlementAmountUsdt), 0);
-    const available = ledger
-      .filter((item) => item.status === 'AVAILABLE')
-      .reduce((sum, item) => sum + Number(item.settlementAmountUsdt), 0);
-    const frozen = ledger
-      .filter((item) => item.status === 'FROZEN')
-      .reduce((sum, item) => sum + Number(item.settlementAmountUsdt), 0);
+    const amounts = this.sumAmounts(ledger);
 
     return {
       accountId: account.accountId,
@@ -43,14 +51,14 @@ export class ReferralService {
       level2InviteCount: this.countInvitees(account.accountId, 'LEVEL2'),
       level1IncomeUsdt: level1Income.toFixed(2),
       level2IncomeUsdt: level2Income.toFixed(2),
-      availableAmountUsdt: available.toFixed(2),
-      frozenAmountUsdt: frozen.toFixed(2),
+      availableAmountUsdt: amounts.available.toFixed(2),
+      frozenAmountUsdt: amounts.frozen.toFixed(2),
       minWithdrawAmountUsdt: '10.00',
     };
   }
 
-  getShareContext(accessToken: string) {
-    const overview = this.getOverview(accessToken);
+  async getShareContext(accessToken: string) {
+    const overview = await this.getOverview(accessToken);
     const shareBaseUrl =
       this.configService.get<string>('REFERRAL_SHARE_BASE_URL')?.trim() ||
       'https://api.residential-agent.com/invite?code=';
@@ -98,10 +106,10 @@ export class ReferralService {
     };
   }
 
-  bind(accessToken: string, referralCode: string) {
+  async bind(accessToken: string, referralCode: string) {
     const account = this.authService.getMe(accessToken);
     const normalizedCode = referralCode.trim().toUpperCase();
-    if (this.bindings.has(account.accountId)) {
+    if (this.resolveBinding(account.accountId)) {
       throw new ConflictException({
         code: 'REFERRAL_BINDING_LOCKED',
         message: 'Referral binding already exists',
@@ -123,25 +131,31 @@ export class ReferralService {
       });
     }
 
-    const inviterBinding = this.bindings.get(inviter.accountId);
+    const inviterBinding = this.resolveBinding(inviter.accountId);
     const binding: ReferralBindingRecord = {
       inviteeAccountId: account.accountId,
       inviterLevel1AccountId: inviter.accountId,
-      inviterLevel2AccountId: inviterBinding?.inviterLevel1AccountId ?? null,
+      inviterLevel2AccountId:
+        inviterBinding?.inviterLevel1AccountId ??
+        inviter.inviterAccountId ??
+        null,
       codeUsed: normalizedCode,
       status: 'BOUND',
       boundAt: new Date().toISOString(),
       lockedAt: null,
     };
 
+    await this.authService.setAccountInviter(
+      account.accountId,
+      inviter.accountId,
+    );
     this.bindings.set(account.accountId, binding);
     return {};
   }
 
-  getSummary(accessToken: string) {
+  async getSummary(accessToken: string) {
     const account = this.authService.getMe(accessToken);
-    const ledger = this.ledgerByBeneficiary.get(account.accountId) ?? [];
-    const amounts = this.sumAmounts(ledger);
+    const amounts = await this.getBalances(account.accountId);
 
     return {
       settlementAssetCode: 'USDT',
@@ -153,14 +167,11 @@ export class ReferralService {
     };
   }
 
-  getLedger(accessToken: string, status?: string) {
+  async getLedger(accessToken: string, status?: string) {
     const account = this.authService.getMe(accessToken);
-    let items = this.ledgerByBeneficiary.get(account.accountId) ?? [];
-    if (status) {
-      items = items.filter((item) => item.status === status);
-    }
+    const ledger = await this.getLedgerForAccount(account.accountId, status);
     return {
-      items: items.map((item) => ({
+      items: ledger.map((item) => ({
         entryNo: item.entryNo,
         sourceOrderNo: item.sourceOrderNo,
         sourceAccountMasked: this.authService.maskEmail(item.sourceAccountId),
@@ -175,37 +186,37 @@ export class ReferralService {
       })),
       page: {
         page: 1,
-        pageSize: items.length || 20,
-        total: items.length,
+        pageSize: ledger.length || 20,
+        total: ledger.length,
       },
     };
   }
 
-  recordCompletedOrder(input: {
+  async recordCompletedOrder(input: {
     accountId: string;
     orderNo: string;
     sourceAssetCode: string;
     sourceAmount: string;
   }) {
-    const binding = this.bindings.get(input.accountId);
+    const binding = this.resolveBinding(input.accountId);
     if (!binding) {
       return;
     }
 
     if (binding.inviterLevel1AccountId) {
-      this.addLedgerEntry(
+      await this.addLedgerEntry(
         binding.inviterLevel1AccountId,
         input,
         'LEVEL1',
-        0.25,
+        LEVEL1_COMMISSION_RATE,
       );
     }
     if (binding.inviterLevel2AccountId) {
-      this.addLedgerEntry(
+      await this.addLedgerEntry(
         binding.inviterLevel2AccountId,
         input,
         'LEVEL2',
-        0.05,
+        LEVEL2_COMMISSION_RATE,
       );
     }
 
@@ -213,43 +224,110 @@ export class ReferralService {
     binding.lockedAt = new Date().toISOString();
   }
 
-  lockAvailableForWithdrawal(accountId: string, amount: number) {
+  async lockAvailableForWithdrawal(
+    accountId: string,
+    amount: number,
+    requestNo: string,
+  ) {
+    await this.releaseMaturedCommissions();
+    if (this.postgresDataAccessService?.isEnabled()) {
+      return this.postgresDataAccessService.lockAvailableCommissionEntries({
+        accountId,
+        amountUsdt: amount,
+        requestNo,
+      });
+    }
+
     const items = this.ledgerByBeneficiary.get(accountId) ?? [];
     let remaining = amount;
+    const locked: CommissionLedgerRecord[] = [];
     for (const item of items) {
       if (item.status !== 'AVAILABLE') {
         continue;
       }
       item.status = 'LOCKED_WITHDRAWAL';
+      item.withdrawRequestNo = requestNo;
+      locked.push(item);
       remaining -= Number(item.settlementAmountUsdt);
       if (remaining <= 0) {
         break;
       }
     }
+    if (remaining > 0.00000001) {
+      for (const item of locked) {
+        item.status = 'AVAILABLE';
+        item.withdrawRequestNo = null;
+      }
+      return [];
+    }
+    return locked;
   }
 
-  unlockWithdrawal(accountId: string) {
-    const items = this.ledgerByBeneficiary.get(accountId) ?? [];
-    for (const item of items) {
-      if (item.status === 'LOCKED_WITHDRAWAL') {
-        item.status = 'AVAILABLE';
+  async unlockWithdrawal(requestNo: string) {
+    if (this.postgresDataAccessService?.isEnabled()) {
+      await this.postgresDataAccessService.updateCommissionLedgerStatusForWithdrawal(
+        {
+          requestNo,
+          status: 'AVAILABLE',
+        },
+      );
+      return;
+    }
+
+    for (const items of this.ledgerByBeneficiary.values()) {
+      for (const item of items) {
+        if (
+          item.status === 'LOCKED_WITHDRAWAL' &&
+          item.withdrawRequestNo === requestNo
+        ) {
+          item.status = 'AVAILABLE';
+          item.withdrawRequestNo = null;
+        }
       }
     }
   }
 
-  getBalances(accountId: string) {
-    return this.sumAmounts(this.ledgerByBeneficiary.get(accountId) ?? []);
+  async markWithdrawalCompleted(requestNo: string) {
+    if (this.postgresDataAccessService?.isEnabled()) {
+      await this.postgresDataAccessService.updateCommissionLedgerStatusForWithdrawal(
+        {
+          requestNo,
+          status: 'WITHDRAWN',
+        },
+      );
+      return;
+    }
+
+    for (const items of this.ledgerByBeneficiary.values()) {
+      for (const item of items) {
+        if (
+          item.status === 'LOCKED_WITHDRAWAL' &&
+          item.withdrawRequestNo === requestNo
+        ) {
+          item.status = 'WITHDRAWN';
+        }
+      }
+    }
   }
 
-  private addLedgerEntry(
+  async getBalances(accountId: string): Promise<CommissionSummaryRecord> {
+    return this.sumAmounts(await this.getLedgerForAccount(accountId));
+  }
+
+  private async addLedgerEntry(
     beneficiaryAccountId: string,
-    input: { accountId: string; orderNo: string; sourceAssetCode: string; sourceAmount: string },
+    input: {
+      accountId: string;
+      orderNo: string;
+      sourceAssetCode: string;
+      sourceAmount: string;
+    },
     level: 'LEVEL1' | 'LEVEL2',
     rate: number,
   ) {
-    const existing = this.ledgerByBeneficiary.get(beneficiaryAccountId) ?? [];
+    const now = new Date();
     const amount = Number(input.sourceAmount) * rate;
-    existing.push({
+    const entry: CommissionLedgerRecord = {
       entryNo: `LEDGER-${randomUUID()}`,
       beneficiaryAccountId,
       sourceOrderNo: input.orderNo,
@@ -258,28 +336,104 @@ export class ReferralService {
       sourceAssetCode: input.sourceAssetCode,
       sourceAmount: input.sourceAmount,
       fxRateSnapshot: '1.00',
-      settlementAmountUsdt: amount.toFixed(2),
+      settlementAmountUsdt: amount.toFixed(8),
       status: 'FROZEN',
-      createdAt: new Date().toISOString(),
-      availableAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    });
+      createdAt: now.toISOString(),
+      availableAt: new Date(
+        now.getTime() + this.getCommissionFreezeMs(),
+      ).toISOString(),
+      withdrawRequestNo: null,
+      updatedAt: now.toISOString(),
+    };
+
+    if (this.postgresDataAccessService?.isEnabled()) {
+      await this.postgresDataAccessService.upsertCommissionLedgerEntry(entry);
+      return;
+    }
+
+    const existing = this.ledgerByBeneficiary.get(beneficiaryAccountId) ?? [];
+    if (
+      existing.some(
+        (item) =>
+          item.sourceOrderNo === input.orderNo &&
+          item.commissionLevel === level,
+      )
+    ) {
+      return;
+    }
+    existing.push(entry);
     this.ledgerByBeneficiary.set(beneficiaryAccountId, existing);
   }
 
   private countInvitees(accountId: string, level: 'LEVEL1' | 'LEVEL2') {
-    let count = 0;
-    for (const binding of this.bindings.values()) {
-      if (
-        (level === 'LEVEL1' && binding.inviterLevel1AccountId === accountId) ||
-        (level === 'LEVEL2' && binding.inviterLevel2AccountId === accountId)
-      ) {
-        count += 1;
-      }
-    }
-    return count;
+    return this.authService.countInvitees(accountId, level);
   }
 
-  private sumAmounts(items: CommissionLedgerRecord[]) {
+  private resolveBinding(accountId: string): ReferralBindingRecord | null {
+    const binding = this.bindings.get(accountId);
+    if (binding) {
+      return binding;
+    }
+    const account = this.authService.getAccountById(accountId);
+    if (!account?.inviterAccountId) {
+      return null;
+    }
+    const inviter = this.authService.getAccountById(account.inviterAccountId);
+    if (!inviter) {
+      return null;
+    }
+    return {
+      inviteeAccountId: account.accountId,
+      inviterLevel1AccountId: inviter.accountId,
+      inviterLevel2AccountId: inviter.inviterAccountId ?? null,
+      codeUsed: inviter.referralCode,
+      status: 'BOUND',
+      boundAt: account.createdAt,
+      lockedAt: null,
+    };
+  }
+
+  private async getLedgerForAccount(accountId: string, status?: string) {
+    await this.releaseMaturedCommissions();
+    if (this.postgresDataAccessService?.isEnabled()) {
+      const result = await this.postgresDataAccessService.listCommissionLedger({
+        beneficiaryAccountId: accountId,
+        status,
+        page: 1,
+        pageSize: 1000,
+      });
+      return result.items;
+    }
+
+    let items = this.ledgerByBeneficiary.get(accountId) ?? [];
+    if (status) {
+      items = items.filter((item) => item.status === status);
+    }
+    return items;
+  }
+
+  private async releaseMaturedCommissions() {
+    const now = new Date().toISOString();
+    if (this.postgresDataAccessService?.isEnabled()) {
+      await this.postgresDataAccessService.releaseMaturedCommissions(now);
+      return;
+    }
+
+    for (const items of this.ledgerByBeneficiary.values()) {
+      for (const item of items) {
+        if (
+          item.status === 'FROZEN' &&
+          item.availableAt &&
+          new Date(item.availableAt).getTime() <= Date.now()
+        ) {
+          item.status = 'AVAILABLE';
+          item.updatedAt = now;
+        }
+      }
+    }
+  }
+
+  private sumAmounts(items: CommissionLedgerRecord[]): CommissionSummaryRecord {
     return items.reduce(
       (acc, item) => {
         const amount = Number(item.settlementAmountUsdt);
@@ -291,6 +445,16 @@ export class ReferralService {
       },
       { available: 0, frozen: 0, withdrawing: 0, withdrawn: 0 },
     );
+  }
+
+  private getCommissionFreezeMs() {
+    const configured = this.configService
+      .get<string>('COMMISSION_FREEZE_MS')
+      ?.trim();
+    const parsed = configured ? Number(configured) : Number.NaN;
+    return Number.isFinite(parsed) && parsed >= 0
+      ? parsed
+      : DEFAULT_COMMISSION_FREEZE_MS;
   }
 
   private buildShareLink(base: string, referralCode: string) {

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { Pool, QueryResultRow } from 'pg';
+import type { CommissionLedgerRecord } from '../referral/referral.types';
 import { resolveRuntimeStateConfig } from './runtime-state.config';
 
 type PageQuery = {
@@ -151,6 +152,23 @@ type WithdrawalRow = QueryResultRow & {
   completed_at: Date | string | null;
 };
 
+type CommissionLedgerRow = QueryResultRow & {
+  entry_no: string;
+  beneficiary_account_id: string;
+  source_order_no: string;
+  source_account_id: string;
+  commission_level: 'LEVEL1' | 'LEVEL2';
+  source_asset_code: string;
+  source_amount: string;
+  fx_rate_snapshot: string;
+  settlement_amount_usdt: string;
+  status: CommissionLedgerRecord['status'];
+  withdraw_request_no: string | null;
+  created_at: Date | string;
+  available_at: Date | string | null;
+  updated_at: Date | string;
+};
+
 type CountRow = QueryResultRow & { count: number };
 
 @Injectable()
@@ -169,6 +187,240 @@ export class PostgresDataAccessService {
 
   isEnabled() {
     return this.enabled && this.pool !== null;
+  }
+
+  async ensureCommissionRuntimeTables(): Promise<void> {
+    if (!this.pool) {
+      return;
+    }
+
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS runtime_state_commission_ledger (
+        entry_no text PRIMARY KEY,
+        beneficiary_account_id text NOT NULL,
+        source_order_no text NOT NULL,
+        source_account_id text NOT NULL,
+        commission_level text NOT NULL,
+        source_asset_code text NOT NULL,
+        source_amount text NOT NULL,
+        fx_rate_snapshot text NOT NULL DEFAULT '1.00',
+        settlement_amount_usdt text NOT NULL,
+        status text NOT NULL,
+        withdraw_request_no text NULL,
+        created_at timestamptz NOT NULL,
+        available_at timestamptz NULL,
+        updated_at timestamptz NOT NULL,
+        UNIQUE (beneficiary_account_id, source_order_no, commission_level)
+      )
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_commission_ledger_beneficiary_status
+      ON runtime_state_commission_ledger (beneficiary_account_id, status, created_at DESC)
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_state_commission_ledger_available_at
+      ON runtime_state_commission_ledger (available_at)
+    `);
+  }
+
+  async upsertCommissionLedgerEntry(
+    entry: CommissionLedgerRecord,
+  ): Promise<CommissionLedgerRecord | null> {
+    if (!this.pool) {
+      return null;
+    }
+    await this.ensureCommissionRuntimeTables();
+    const now = new Date().toISOString();
+    const rows = await this.fetchRows<CommissionLedgerRow>(
+      `
+        INSERT INTO runtime_state_commission_ledger (
+          entry_no,
+          beneficiary_account_id,
+          source_order_no,
+          source_account_id,
+          commission_level,
+          source_asset_code,
+          source_amount,
+          fx_rate_snapshot,
+          settlement_amount_usdt,
+          status,
+          withdraw_request_no,
+          created_at,
+          available_at,
+          updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        ON CONFLICT (beneficiary_account_id, source_order_no, commission_level) DO UPDATE
+        SET updated_at = runtime_state_commission_ledger.updated_at
+        RETURNING *
+      `,
+      [
+        entry.entryNo,
+        entry.beneficiaryAccountId,
+        entry.sourceOrderNo,
+        entry.sourceAccountId,
+        entry.commissionLevel,
+        entry.sourceAssetCode,
+        entry.sourceAmount,
+        entry.fxRateSnapshot,
+        entry.settlementAmountUsdt,
+        entry.status,
+        entry.withdrawRequestNo ?? null,
+        entry.createdAt,
+        entry.availableAt,
+        now,
+      ],
+    );
+    return rows[0] ? this.mapCommissionLedgerRow(rows[0]) : null;
+  }
+
+  async listCommissionLedger(params: {
+    beneficiaryAccountId?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<PaginatedResult<CommissionLedgerRecord>> {
+    if (!this.pool) {
+      const { page, pageSize } = this.normalizePage(params);
+      return { items: [], page, pageSize, total: 0 };
+    }
+    await this.ensureCommissionRuntimeTables();
+    const { page, pageSize } = this.normalizePage(params);
+    const where: string[] = [];
+    const values: Array<string | number> = [];
+    if (params.beneficiaryAccountId) {
+      values.push(params.beneficiaryAccountId);
+      where.push(`beneficiary_account_id = $${values.length}`);
+    }
+    if (params.status) {
+      values.push(params.status);
+      where.push(`UPPER(status) = UPPER($${values.length})`);
+    }
+    const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const total = await this.fetchTotal(
+      `SELECT COUNT(*)::int AS count FROM runtime_state_commission_ledger ${whereClause}`,
+      values,
+    );
+    const rows = await this.fetchRows<CommissionLedgerRow>(
+      `
+        SELECT *
+        FROM runtime_state_commission_ledger
+        ${whereClause}
+        ORDER BY created_at DESC
+        LIMIT $${values.length + 1} OFFSET $${values.length + 2}
+      `,
+      [...values, pageSize, (page - 1) * pageSize],
+    );
+    return {
+      items: rows.map((row) => this.mapCommissionLedgerRow(row)),
+      page,
+      pageSize,
+      total,
+    };
+  }
+
+  async releaseMaturedCommissions(nowIso: string): Promise<number> {
+    if (!this.pool) {
+      return 0;
+    }
+    await this.ensureCommissionRuntimeTables();
+    const result = await this.pool.query(
+      `
+        UPDATE runtime_state_commission_ledger
+        SET status = 'AVAILABLE', updated_at = $1
+        WHERE status = 'FROZEN'
+          AND available_at IS NOT NULL
+          AND available_at <= $1
+      `,
+      [nowIso],
+    );
+    return result.rowCount ?? 0;
+  }
+
+  async lockAvailableCommissionEntries(params: {
+    accountId: string;
+    amountUsdt: number;
+    requestNo: string;
+  }): Promise<CommissionLedgerRecord[]> {
+    if (!this.pool) {
+      return [];
+    }
+    await this.ensureCommissionRuntimeTables();
+    const client = await this.pool.connect();
+    const locked: CommissionLedgerRow[] = [];
+    try {
+      await client.query('BEGIN');
+      const candidates = await client.query<CommissionLedgerRow>(
+        `
+          SELECT *
+          FROM runtime_state_commission_ledger
+          WHERE beneficiary_account_id = $1 AND status = 'AVAILABLE'
+          ORDER BY created_at ASC
+          FOR UPDATE
+        `,
+        [params.accountId],
+      );
+      let remaining = params.amountUsdt;
+      for (const row of candidates.rows) {
+        if (remaining <= 0) {
+          break;
+        }
+        locked.push(row);
+        remaining -= Number(row.settlement_amount_usdt);
+      }
+      if (remaining > 0.00000001) {
+        await client.query('ROLLBACK');
+        return [];
+      }
+      await client.query(
+        `
+          UPDATE runtime_state_commission_ledger
+          SET status = 'LOCKED_WITHDRAWAL',
+              withdraw_request_no = $2,
+              updated_at = $3
+          WHERE entry_no = ANY($1::text[])
+        `,
+        [
+          locked.map((row) => row.entry_no),
+          params.requestNo,
+          new Date().toISOString(),
+        ],
+      );
+      await client.query('COMMIT');
+      return locked.map((row) =>
+        this.mapCommissionLedgerRow({
+          ...row,
+          status: 'LOCKED_WITHDRAWAL',
+          withdraw_request_no: params.requestNo,
+        }),
+      );
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async updateCommissionLedgerStatusForWithdrawal(params: {
+    requestNo: string;
+    status: CommissionLedgerRecord['status'];
+  }): Promise<number> {
+    if (!this.pool) {
+      return 0;
+    }
+    await this.ensureCommissionRuntimeTables();
+    const result = await this.pool.query(
+      `
+        UPDATE runtime_state_commission_ledger
+        SET status = $2,
+            withdraw_request_no = CASE WHEN $2 = 'AVAILABLE' THEN NULL ELSE withdraw_request_no END,
+            updated_at = $3
+        WHERE withdraw_request_no = $1
+      `,
+      [params.requestNo, params.status, new Date().toISOString()],
+    );
+    return result.rowCount ?? 0;
   }
 
   async listPlans(params: {
@@ -194,7 +446,9 @@ export class PostgresDataAccessService {
       values,
     );
     const pagedValues = [...values, pageSize, (page - 1) * pageSize];
-    const rows = await this.fetchRows<PlanRow & { allowed_region_ids: string[] | null }>(
+    const rows = await this.fetchRows<
+      PlanRow & { allowed_region_ids: string[] | null }
+    >(
       `
         SELECT
           id::text AS plan_id,
@@ -280,7 +534,9 @@ export class PostgresDataAccessService {
     return this.mapPlans(rows, permissionsByPlanId)[0] ?? null;
   }
 
-  async createPlan(input: PlanMutationInput): Promise<Record<string, unknown> | null> {
+  async createPlan(
+    input: PlanMutationInput,
+  ): Promise<Record<string, unknown> | null> {
     return this.writePlan(null, input);
   }
 
@@ -440,8 +696,11 @@ export class PostgresDataAccessService {
         versionNo: String(row.version_no),
         title: row.title,
         content: row.content,
-        status: row.status.toUpperCase() === 'DEPRECATED' ? 'ARCHIVED' : row.status,
-        effectiveAt: row.effective_at ? this.toIsoString(row.effective_at) : null,
+        status:
+          row.status.toUpperCase() === 'DEPRECATED' ? 'ARCHIVED' : row.status,
+        effectiveAt: row.effective_at
+          ? this.toIsoString(row.effective_at)
+          : null,
         createdAt: this.toIsoString(row.created_at),
         updatedAt: this.toIsoString(row.updated_at),
         updatedBy: null,
@@ -574,14 +833,18 @@ export class PostgresDataAccessService {
         versionName: row.version_name,
         versionCode: row.version_code,
         minAndroidVersionCode:
-          row.platform.toLowerCase() === 'android' ? row.min_supported_code : null,
+          row.platform.toLowerCase() === 'android'
+            ? row.min_supported_code
+            : null,
         minIosVersionCode:
           row.platform.toLowerCase() === 'ios' ? row.min_supported_code : null,
         downloadUrl: row.download_url,
         forceUpdate: row.force_update,
         releaseNotes: row.release_notes,
         status: row.status,
-        publishedAt: row.published_at ? this.toIsoString(row.published_at) : null,
+        publishedAt: row.published_at
+          ? this.toIsoString(row.published_at)
+          : null,
         createdAt: this.toIsoString(row.created_at),
         updatedAt: this.toIsoString(row.updated_at),
       })),
@@ -939,12 +1202,17 @@ export class PostgresDataAccessService {
     );
   }
 
-  async getSystemConfigValue(scope: string, configKey: string): Promise<string | null> {
+  async getSystemConfigValue(
+    scope: string,
+    configKey: string,
+  ): Promise<string | null> {
     if (!this.pool) {
       return null;
     }
 
-    const rows = await this.fetchRows<QueryResultRow & { config_value: string }>(
+    const rows = await this.fetchRows<
+      QueryResultRow & { config_value: string }
+    >(
       `
         SELECT config_value
         FROM system_configs
@@ -953,7 +1221,10 @@ export class PostgresDataAccessService {
         ORDER BY updated_at DESC
         LIMIT 1
       `,
-      [this.expandConfigScopes(scope).map((item) => item.toUpperCase()), configKey],
+      [
+        this.expandConfigScopes(scope).map((item) => item.toUpperCase()),
+        configKey,
+      ],
     );
 
     return rows[0]?.config_value ?? null;
@@ -976,10 +1247,7 @@ export class PostgresDataAccessService {
     }
   }
 
-  private async fetchTotal(
-    text: string,
-    values: unknown[],
-  ): Promise<number> {
+  private async fetchTotal(text: string, values: unknown[]): Promise<number> {
     const rows = await this.fetchRows<CountRow>(text, values);
     return rows[0]?.count ?? 0;
   }
@@ -990,7 +1258,9 @@ export class PostgresDataAccessService {
     return { page, pageSize };
   }
 
-  private emptyResult(params: PageQuery = {}): PaginatedResult<Record<string, unknown>> {
+  private emptyResult(
+    params: PageQuery = {},
+  ): PaginatedResult<Record<string, unknown>> {
     const { page, pageSize } = this.normalizePage(params);
     return {
       items: [],
@@ -1001,7 +1271,9 @@ export class PostgresDataAccessService {
   }
 
   private toIsoString(value: Date | string) {
-    return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+    return value instanceof Date
+      ? value.toISOString()
+      : new Date(value).toISOString();
   }
 
   private mapPlans(
@@ -1175,7 +1447,9 @@ export class PostgresDataAccessService {
     }
   }
 
-  private inferValueType(value: string): 'STRING' | 'NUMBER' | 'BOOLEAN' | 'JSON' {
+  private inferValueType(
+    value: string,
+  ): 'STRING' | 'NUMBER' | 'BOOLEAN' | 'JSON' {
     if (value === 'true' || value === 'false') {
       return 'BOOLEAN';
     }
@@ -1239,7 +1513,11 @@ export class PostgresDataAccessService {
     ) {
       return 'RISK_DISCLOSURE';
     }
-    if (normalized === 'TERMS_OF_SERVICE' || normalized === 'SERVICE_TERMS' || normalized === 'USER_AGREEMENT') {
+    if (
+      normalized === 'TERMS_OF_SERVICE' ||
+      normalized === 'SERVICE_TERMS' ||
+      normalized === 'USER_AGREEMENT'
+    ) {
       return 'TERMS_OF_SERVICE';
     }
     return 'TERMS_OF_SERVICE';
@@ -1345,6 +1623,27 @@ export class PostgresDataAccessService {
       createdAt: this.toIsoString(row.created_at),
       reviewedAt: row.reviewed_at ? this.toIsoString(row.reviewed_at) : null,
       completedAt: row.completed_at ? this.toIsoString(row.completed_at) : null,
+    };
+  }
+
+  private mapCommissionLedgerRow(
+    row: CommissionLedgerRow,
+  ): CommissionLedgerRecord {
+    return {
+      entryNo: row.entry_no,
+      beneficiaryAccountId: row.beneficiary_account_id,
+      sourceOrderNo: row.source_order_no,
+      sourceAccountId: row.source_account_id,
+      commissionLevel: row.commission_level,
+      sourceAssetCode: row.source_asset_code,
+      sourceAmount: row.source_amount,
+      fxRateSnapshot: row.fx_rate_snapshot,
+      settlementAmountUsdt: row.settlement_amount_usdt,
+      status: row.status,
+      withdrawRequestNo: row.withdraw_request_no,
+      createdAt: this.toIsoString(row.created_at),
+      availableAt: row.available_at ? this.toIsoString(row.available_at) : null,
+      updatedAt: this.toIsoString(row.updated_at),
     };
   }
 }

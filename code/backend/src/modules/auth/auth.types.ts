@@ -7,6 +7,7 @@ export interface AuthAccount {
   passwordHash: string;
   status: AccountStatus;
   referralCode: string;
+  inviterAccountId: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -103,7 +103,8 @@ export class AuthService implements OnModuleInit {
       updatedAt: now,
     };
 
-    const persisted = await this.runtimeStateRepository.saveVerificationCode(record);
+    const persisted =
+      await this.runtimeStateRepository.saveVerificationCode(record);
     this.codes.set(this.codeKey(normalizedEmail, persisted.purpose), persisted);
   }
 
@@ -119,7 +120,8 @@ export class AuthService implements OnModuleInit {
       updatedAt: now,
     };
 
-    const persisted = await this.runtimeStateRepository.saveVerificationCode(record);
+    const persisted =
+      await this.runtimeStateRepository.saveVerificationCode(record);
     this.codes.set(this.codeKey(account.email, persisted.purpose), persisted);
   }
 
@@ -147,11 +149,13 @@ export class AuthService implements OnModuleInit {
       passwordHash: this.hashPassword(params.password),
       status: 'ACTIVE',
       referralCode: this.generateReferralCode(),
+      inviterAccountId: null,
       createdAt: now,
       updatedAt: now,
     };
 
-    const persistedAccount = await this.runtimeStateRepository.saveAccount(account);
+    const persistedAccount =
+      await this.runtimeStateRepository.saveAccount(account);
     this.storeAccount(persistedAccount);
     return this.issueSession(persistedAccount, params.installationId);
   }
@@ -162,7 +166,10 @@ export class AuthService implements OnModuleInit {
     installationId?: string;
   }) {
     const account = this.getAccountByEmail(params.email);
-    const passwordCheck = this.verifyPassword(params.password, account.passwordHash);
+    const passwordCheck = this.verifyPassword(
+      params.password,
+      account.passwordHash,
+    );
     if (!passwordCheck.valid) {
       throw new UnauthorizedException({
         code: 'AUTH_INVALID_CREDENTIALS',
@@ -183,9 +190,8 @@ export class AuthService implements OnModuleInit {
         passwordHash: this.hashPassword(params.password),
         updatedAt: new Date().toISOString(),
       };
-      persistedAccount = await this.runtimeStateRepository.saveAccount(
-        persistedAccount,
-      );
+      persistedAccount =
+        await this.runtimeStateRepository.saveAccount(persistedAccount);
       this.storeAccount(persistedAccount);
     }
 
@@ -201,9 +207,8 @@ export class AuthService implements OnModuleInit {
         status: 'EXPIRED' as const,
         updatedAt: new Date().toISOString(),
       };
-      const persistedExpiredSession = await this.runtimeStateRepository.saveSession(
-        expiredSession,
-      );
+      const persistedExpiredSession =
+        await this.runtimeStateRepository.saveSession(expiredSession);
       this.storeSession(persistedExpiredSession);
       throw new UnauthorizedException({
         code: 'AUTH_REFRESH_INVALID',
@@ -251,7 +256,9 @@ export class AuthService implements OnModuleInit {
     });
     this.storeAccount(persistedAccount);
 
-    for (const activeSession of this.listActiveSessionsForAccount(account.accountId)) {
+    for (const activeSession of this.listActiveSessionsForAccount(
+      account.accountId,
+    )) {
       const persistedSession = await this.runtimeStateRepository.saveSession({
         ...activeSession,
         status: 'REVOKED',
@@ -303,6 +310,45 @@ export class AuthService implements OnModuleInit {
 
   getAccountById(accountId: string) {
     return this.accounts.get(accountId) ?? null;
+  }
+
+  async setAccountInviter(
+    accountId: string,
+    inviterAccountId: string,
+  ): Promise<AuthAccount> {
+    const account = this.accounts.get(accountId);
+    if (!account) {
+      throw new NotFoundException({
+        code: 'ACCOUNT_NOT_FOUND',
+        message: 'Account not found',
+      });
+    }
+
+    const persistedAccount = await this.runtimeStateRepository.saveAccount({
+      ...account,
+      inviterAccountId,
+      updatedAt: new Date().toISOString(),
+    });
+    this.storeAccount(persistedAccount);
+    return persistedAccount;
+  }
+
+  countInvitees(accountId: string, level: 'LEVEL1' | 'LEVEL2') {
+    let count = 0;
+    for (const account of this.accounts.values()) {
+      if (level === 'LEVEL1' && account.inviterAccountId === accountId) {
+        count += 1;
+      }
+      if (level === 'LEVEL2') {
+        const directInviter = account.inviterAccountId
+          ? this.accounts.get(account.inviterAccountId)
+          : null;
+        if (directInviter?.inviterAccountId === accountId) {
+          count += 1;
+        }
+      }
+    }
+    return count;
   }
 
   getTotalAccounts() {
@@ -387,7 +433,9 @@ export class AuthService implements OnModuleInit {
 
     const email = (
       process.env.AUTH_BOOTSTRAP_SYSTEM_EMAIL ?? 'system@cnyirui.cn'
-    ).trim().toLowerCase();
+    )
+      .trim()
+      .toLowerCase();
     const now = new Date().toISOString();
     const existing = this.findAccountByEmail(email);
     const account: AuthAccount = existing
@@ -404,11 +452,13 @@ export class AuthService implements OnModuleInit {
           passwordHash,
           status: 'ACTIVE',
           referralCode: this.generateReferralCode(),
+          inviterAccountId: null,
           createdAt: now,
           updatedAt: now,
         };
 
-    const persistedAccount = await this.runtimeStateRepository.saveAccount(account);
+    const persistedAccount =
+      await this.runtimeStateRepository.saveAccount(account);
     this.storeAccount(persistedAccount);
   }
 
@@ -418,7 +468,8 @@ export class AuthService implements OnModuleInit {
     reusableSession?: AuthSession | null,
   ) {
     const previous =
-      reusableSession ?? this.findReusableSession(account.accountId, installationId);
+      reusableSession ??
+      this.findReusableSession(account.accountId, installationId);
     const now = Date.now();
     const nowIso = new Date(now).toISOString();
     const session: AuthSession = {
@@ -428,7 +479,9 @@ export class AuthService implements OnModuleInit {
       accessToken: '',
       refreshToken: '',
       accessTokenExpiresAt: new Date(now + this.accessTokenTtlMs).toISOString(),
-      refreshTokenExpiresAt: new Date(now + this.refreshTokenTtlMs).toISOString(),
+      refreshTokenExpiresAt: new Date(
+        now + this.refreshTokenTtlMs,
+      ).toISOString(),
       status: 'ACTIVE',
       createdAt: previous?.createdAt ?? nowIso,
       updatedAt: nowIso,
@@ -448,7 +501,8 @@ export class AuthService implements OnModuleInit {
     session.accessToken = this.createSignedToken('access', payload);
     session.refreshToken = this.createSignedToken('refresh', payload);
 
-    const persistedSession = await this.runtimeStateRepository.saveSession(session);
+    const persistedSession =
+      await this.runtimeStateRepository.saveSession(session);
     this.storeSession(persistedSession);
 
     return {
@@ -477,7 +531,8 @@ export class AuthService implements OnModuleInit {
 
   private listActiveSessionsForAccount(accountId: string) {
     return Array.from(this.sessionsById.values()).filter(
-      (session) => session.accountId === accountId && session.status === 'ACTIVE',
+      (session) =>
+        session.accountId === accountId && session.status === 'ACTIVE',
     );
   }
 
@@ -534,7 +589,7 @@ export class AuthService implements OnModuleInit {
 
   private findAccountByEmail(email: string) {
     const accountId = this.accountsByEmail.get(email.toLowerCase());
-    return accountId ? this.accounts.get(accountId) ?? null : null;
+    return accountId ? (this.accounts.get(accountId) ?? null) : null;
   }
 
   private assertCode(
@@ -557,16 +612,20 @@ export class AuthService implements OnModuleInit {
     }
   }
 
-  private codeKey(
-    email: string,
-    purpose: VerificationCodeRecord['purpose'],
-  ) {
+  private codeKey(email: string, purpose: VerificationCodeRecord['purpose']) {
     return `${purpose}:${email.toLowerCase()}`;
   }
 
   private storeAccount(account: AuthAccount) {
-    this.accounts.set(account.accountId, account);
-    this.accountsByEmail.set(account.email.toLowerCase(), account.accountId);
+    const normalizedAccount = {
+      ...account,
+      inviterAccountId: account.inviterAccountId ?? null,
+    };
+    this.accounts.set(normalizedAccount.accountId, normalizedAccount);
+    this.accountsByEmail.set(
+      normalizedAccount.email.toLowerCase(),
+      normalizedAccount.accountId,
+    );
   }
 
   private storeSession(session: AuthSession) {
@@ -608,10 +667,7 @@ export class AuthService implements OnModuleInit {
     }
   }
 
-  private resolveSessionByToken(
-    token: string,
-    expectedType: SignedTokenType,
-  ) {
+  private resolveSessionByToken(token: string, expectedType: SignedTokenType) {
     const cachedSession =
       expectedType === 'access'
         ? this.sessionsByAccessToken.get(token)
@@ -691,7 +747,8 @@ export class AuthService implements OnModuleInit {
   }
 
   private resolveBootstrapSystemPasswordHash() {
-    const passwordHash = process.env.AUTH_BOOTSTRAP_SYSTEM_PASSWORD_HASH?.trim();
+    const passwordHash =
+      process.env.AUTH_BOOTSTRAP_SYSTEM_PASSWORD_HASH?.trim();
     if (passwordHash) {
       return passwordHash;
     }
