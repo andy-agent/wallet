@@ -31,8 +31,8 @@ android {
         applicationId = "com.v2ray.ang"
         minSdk = 24
         targetSdk = 36
-        versionCode = 732
-        versionName = "2.0.17.15"
+        versionCode = 735
+        versionName = "2.0.17.18"
         multiDexEnabled = true
 
         val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')

@@ -3,6 +3,7 @@ package com.v2ray.ang.ui.compose
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -15,11 +16,14 @@ import androidx.compose.ui.Modifier
 import com.v2ray.ang.composeui.navigation.AppNavGraph
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.v2ray.ang.AppConfig
 import com.v2ray.ang.composeui.common.repository.RealCryptoVpnRepository
 import com.v2ray.ang.composeui.navigation.CryptoVpnRouteSpec
 import com.v2ray.ang.composeui.p0.repository.RealP0Repository
 import com.v2ray.ang.payment.data.repository.PaymentRepository
 import com.v2ray.ang.composeui.theme.CryptoVpnTheme
+import com.v2ray.ang.handler.UpdateCheckerManager
+import com.v2ray.ang.ui.AppUpdateDialog
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
@@ -28,6 +32,9 @@ import kotlinx.coroutines.launch
  */
 class ComposeContainerActivity : ComponentActivity() {
     private val paymentRepository by lazy { PaymentRepository(applicationContext) }
+    private var startupUpdateCheckInFlight = false
+    private var startupUpdateDialogShowing = false
+    private var promptedVersionCodeThisSession: Long? = null
 
     companion object {
         const val EXTRA_START_ROUTE = "compose_start_route"
@@ -86,6 +93,35 @@ class ComposeContainerActivity : ComponentActivity() {
         super.onResume()
         lifecycleScope.launch {
             paymentRepository.refreshCoreSnapshotsOnForeground(force = true)
+        }
+        checkForStartupUpdate()
+    }
+
+    private fun checkForStartupUpdate() {
+        if (startupUpdateCheckInFlight || startupUpdateDialogShowing) {
+            return
+        }
+
+        startupUpdateCheckInFlight = true
+        lifecycleScope.launch {
+            try {
+                val result = UpdateCheckerManager.checkForUpdate(this@ComposeContainerActivity)
+                val latestVersionCode = result.latestVersionCode
+                val alreadyPrompted = !result.forceUpdate &&
+                    latestVersionCode != null &&
+                    promptedVersionCodeThisSession == latestVersionCode
+                if (result.hasUpdate && !alreadyPrompted) {
+                    promptedVersionCodeThisSession = latestVersionCode
+                    startupUpdateDialogShowing = true
+                    AppUpdateDialog.show(this@ComposeContainerActivity, result) {
+                        startupUpdateDialogShowing = false
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(AppConfig.TAG, "Startup app update check failed: ${e.message}", e)
+            } finally {
+                startupUpdateCheckInFlight = false
+            }
         }
     }
 }

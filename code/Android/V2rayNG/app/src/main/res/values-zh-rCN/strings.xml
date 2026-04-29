@@ -346,6 +346,13 @@
     <string name="update_now">立即更新</string>
     <string name="update_check_pre_release">检查 Pre-release</string>
     <string name="update_checking_for_update">正在检查更新中…</string>
+    <string name="update_optional_available">发现 Ghost 新版本，你可以立即手动更新。</string>
+    <string name="update_force_required">当前 Ghost 版本已不再支持，请更新后继续使用。</string>
+    <string name="update_version_summary">当前版本：%1$s（%2$s）\n最新版本：%3$s（%4$s）</string>
+    <string name="update_release_notes">更新说明</string>
+    <string name="update_later">稍后</string>
+    <string name="update_exit_app">退出应用</string>
+    <string name="update_download_url_missing">缺少下载地址</string>
 
     <string name="title_policy_group_type">策略组类型</string>
     <string name="title_policy_group_subscription_id">来自订阅分组</string>
