@@ -18,7 +18,13 @@ export class MarketConfig {
   }
 
   useDemoApiKey(): boolean {
-    return this.getProviderBaseUrl().includes('api.coingecko.com');
+    try {
+      return (
+        new URL(this.getProviderBaseUrl()).hostname === 'api.coingecko.com'
+      );
+    } catch {
+      return true;
+    }
   }
 
   getProviderTimeoutMs(): number {
@@ -28,7 +34,9 @@ export class MarketConfig {
   }
 
   getCacheTtlMs(): number {
-    return Number(this.configService.get<string>('MARKET_CACHE_TTL_MS') ?? 300000);
+    return Number(
+      this.configService.get<string>('MARKET_CACHE_TTL_MS') ?? 300000,
+    );
   }
 
   getDexScreenerBaseUrl(): string {

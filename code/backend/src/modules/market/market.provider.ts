@@ -183,7 +183,10 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
     );
   }
 
-  async searchCoins(query: string, limit: number): Promise<ProviderSearchCoin[]> {
+  async searchCoins(
+    query: string,
+    limit: number,
+  ): Promise<ProviderSearchCoin[]> {
     const normalizedQuery = query.trim();
     if (!normalizedQuery) {
       return [];
@@ -214,9 +217,8 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
     return this.getCached(
       `trending:${limit}`,
       async () => {
-        const response = await this.get<CoinGeckoTrendingResponse>(
-          '/search/trending',
-        );
+        const response =
+          await this.get<CoinGeckoTrendingResponse>('/search/trending');
 
         return (response.coins ?? [])
           .map((entry) => this.mapTrendingCoin(entry.item))
@@ -240,24 +242,44 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
     forceRefresh = false,
   ): Promise<ProviderTokenQuote | null> {
     const normalizedChainId = this.normalizeOnchainChainId(chainId);
-    const normalizedAddress = address.trim().toLowerCase();
+    const normalizedAddress = this.normalizeTokenAddressForChain(
+      normalizedChainId,
+      address,
+    );
     if (!normalizedChainId || !normalizedAddress) {
       return null;
     }
     return this.getCached(
       `token-quote:${normalizedChainId}:${normalizedAddress}`,
       async () => {
-        const response = await this.get<CoinGeckoSimpleTokenPriceResponse>(
-          `/onchain/simple/networks/${normalizedChainId}/token_price/${normalizedAddress}`,
-          {
-            include_24hr_price_change: true,
-          },
+        let response: CoinGeckoSimpleTokenPriceResponse | null = null;
+        try {
+          response = await this.get<CoinGeckoSimpleTokenPriceResponse>(
+            `/onchain/simple/networks/${normalizedChainId}/token_price/${normalizedAddress}`,
+            {
+              include_24hr_price_change: true,
+            },
+          );
+        } catch {
+          return this.getDexScreenerTokenQuote(
+            normalizedChainId,
+            normalizedAddress,
+          );
+        }
+
+        const tokenPrice = this.getValueByTokenAddress(
+          response.data?.attributes?.token_prices,
+          normalizedAddress,
         );
-        const tokenPrice = response.data?.attributes?.token_prices?.[normalizedAddress];
-        const priceChange =
-          response.data?.attributes?.h24_price_change_percentage?.[normalizedAddress];
+        const priceChange = this.getValueByTokenAddress(
+          response.data?.attributes?.h24_price_change_percentage,
+          normalizedAddress,
+        );
         if (tokenPrice === undefined && priceChange === undefined) {
-          return this.getDexScreenerTokenQuote(normalizedChainId, normalizedAddress);
+          return this.getDexScreenerTokenQuote(
+            normalizedChainId,
+            normalizedAddress,
+          );
         }
         return {
           currentPrice: this.parseLooseNumber(tokenPrice),
@@ -335,7 +357,10 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
     );
   }
 
-  async getCoinOhlc(coinId: string, days: number): Promise<ProviderOhlcPoint[]> {
+  async getCoinOhlc(
+    coinId: string,
+    days: number,
+  ): Promise<ProviderOhlcPoint[]> {
     const normalizedCoinId = coinId.trim();
     return this.getCached(
       `ohlc:${normalizedCoinId}:${days}`,
@@ -458,6 +483,42 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
     }
   }
 
+  private normalizeTokenAddressForChain(
+    normalizedChainId: string | null,
+    address: string,
+  ): string {
+    const trimmedAddress = address.trim();
+    const evmChainIds = new Set([
+      'eth',
+      'bsc',
+      'polygon_pos',
+      'arbitrum',
+      'base',
+      'optimism',
+      'avax',
+    ]);
+    if (normalizedChainId && evmChainIds.has(normalizedChainId)) {
+      return trimmedAddress.toLowerCase();
+    }
+    return trimmedAddress;
+  }
+
+  private getValueByTokenAddress(
+    values: Record<string, string> | undefined,
+    address: string,
+  ): string | undefined {
+    if (!values) {
+      return undefined;
+    }
+    return (
+      values[address] ??
+      values[address.toLowerCase()] ??
+      Object.entries(values).find(
+        ([key]) => key.toLowerCase() === address.toLowerCase(),
+      )?.[1]
+    );
+  }
+
   private async getDexScreenerTokenQuote(
     chainId: string,
     address: string,
@@ -478,11 +539,13 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
         return null;
       }
       const payload = (await response.json()) as DexScreenerSearchResponse;
+      const comparableAddress = address.trim().toLowerCase();
       const match = (payload.pairs ?? [])
         .filter(
           (pair) =>
-            this.normalizeDexScreenerChainId(pair.chainId) === normalizedChainId &&
-            pair.baseToken?.address?.trim().toLowerCase() === address,
+            this.normalizeDexScreenerChainId(pair.chainId) ===
+              normalizedChainId &&
+            pair.baseToken?.address?.trim().toLowerCase() === comparableAddress,
         )
         .sort((left, right) => {
           const leftLiquidity = this.toNumberOrNull(left.liquidity?.usd) ?? 0;
