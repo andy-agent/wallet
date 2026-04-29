@@ -7,6 +7,31 @@
 # OS files
 .DS_Store
 
+# Local agent / IDE / temporary artifacts
+.codex/
+.gstack/
+.idea/
+.parallel/
+tmp/
+test-results/
+payment_backup/
+*.zip
+*.py[cod]
+__pycache__/
+tmp_*
+
+# Beads runtime artifacts
+.beads/backup/
+.beads/dolt/
+.beads/*.lock
+.beads/*.log
+.beads/*.pid
+.beads/*.port
+.beads/.local_version
+.beads/interactions.jsonl
+.beads/last-touched
+.beads/push-state.json
+
 # Backend build artifacts
 code/backend/node_modules/
 code/backend/dist/
