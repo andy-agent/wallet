@@ -12,6 +12,7 @@ import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import com.v2ray.ang.BuildConfig
+import com.v2ray.ang.dto.SubscriptionCache
 import com.v2ray.ang.dto.SubscriptionItem
 import com.v2ray.ang.fmt.VlessFmt
 import com.v2ray.ang.handler.AngConfigManager
@@ -162,6 +163,7 @@ class PaymentRepository(context: Context) {
         private const val VPN_NODE_SYNC_THROTTLE_MS = 60_000L
         private const val WALLET_CACHE_SYNC_THROTTLE_MS = 60_000L
         private const val ORDER_PAGE_SIZE = 100
+        private const val SUBSCRIPTION_IMPORT_SYNC_THROTTLE_MS = 60_000L
         private const val TOKEN_ICON_DIR = "token_icons"
         private const val CACHE_KEY_PLANS = "plans"
         private const val CACHE_KEY_WALLET_ASSET_CATALOG = "wallet_asset_catalog"
@@ -512,10 +514,11 @@ class PaymentRepository(context: Context) {
         subscriptionItem.url = subscriptionUrl
         subscriptionItem.enabled = true
         subscriptionItem.autoUpdate = true
-        subscriptionItem.lastUpdated = System.currentTimeMillis()
         MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
 
-        val updateResult = AngConfigManager.updateConfigViaSubAll()
+        val updateResult = AngConfigManager.updateConfigViaSub(
+            SubscriptionCache(subscriptionId, subscriptionItem),
+        )
         val serverList = MmkvManager.decodeServerList(subscriptionId)
         if (MmkvManager.getSelectServer().isNullOrEmpty()) {
             serverList.firstOrNull()?.let { MmkvManager.setSelectServer(it) }
@@ -525,6 +528,24 @@ class PaymentRepository(context: Context) {
     }
 
     /**
+    private fun shouldRefreshImportedSubscription(
+        subscriptionUrl: String,
+        force: Boolean = false,
+    ): Boolean {
+        val existing = MmkvManager.decodeSubscriptions()
+            .firstOrNull { it.subscription.url == subscriptionUrl }
+            ?: return true
+        if (MmkvManager.getSelectServer().isNullOrEmpty()) {
+            return true
+        }
+        if (force) {
+            return true
+        }
+        val lastUpdated = existing.subscription.lastUpdated
+        return lastUpdated <= 0L ||
+            System.currentTimeMillis() - lastUpdated >= SUBSCRIPTION_IMPORT_SYNC_THROTTLE_MS
+    }
+
      * 获取套餐列表
      */
     suspend fun getPlans(): Result<List<Plan>> = withContext(Dispatchers.IO) {
@@ -735,7 +756,7 @@ class PaymentRepository(context: Context) {
                         (
                             savedSubscriptionUrl.isNullOrBlank() ||
                                 savedSubscriptionUrl != subscriptionUrl ||
-                                MmkvManager.getSelectServer().isNullOrEmpty()
+                                shouldRefreshImportedSubscription(subscriptionUrl, force = force)
                             )
                     ) {
                         importSubscriptionUrl(
@@ -1486,7 +1507,7 @@ class PaymentRepository(context: Context) {
             }
         }
 
-        val subscription = getSubscription().getOrElse {
+        val subscription = syncSubscriptionFromServer(force = true, userId = resolvedUserId).getOrElse {
             me?.subscription ?: return@withContext Result.failure(it)
         }
         cacheSubscriptionMetadata(subscription)
@@ -1514,17 +1535,17 @@ class PaymentRepository(context: Context) {
             syncVpnNodesFromServer(force = true, userId = resolvedUserId)
         }
 
-        val shouldBootstrapConfig = MmkvManager.getSelectServer().isNullOrEmpty()
-        if (shouldBootstrapConfig) {
-            val subscriptionUrl = subscription?.subscriptionUrl?.takeIf { it.isNotBlank() }
-            if (!subscriptionUrl.isNullOrBlank()) {
-                importSubscriptionUrl(
-                    subscriptionUrl = subscriptionUrl,
-                    remarks = subscription.planCode?.takeIf { code -> code.isNotBlank() }
-                        ?.let { code -> "Purchase $code" }
-                        ?: "CryptoVPN Subscription",
-                )
-            }
+        val subscriptionUrl = subscription.subscriptionUrl?.takeIf { it.isNotBlank() }
+        if (
+            !subscriptionUrl.isNullOrBlank() &&
+            shouldRefreshImportedSubscription(subscriptionUrl, force = false)
+        ) {
+            importSubscriptionUrl(
+                subscriptionUrl = subscriptionUrl,
+                remarks = subscription.planCode?.takeIf { code -> code.isNotBlank() }
+                    ?.let { code -> "Purchase $code" }
+                    ?: "CryptoVPN Subscription",
+            )
         }
 
         SessionKeepAliveService.start(appContext)
