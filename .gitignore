@@ -4,6 +4,9 @@
 *.db
 .beads-credential-key
 
+# OS files
+.DS_Store
+
 # Backend build artifacts
 code/backend/node_modules/
 code/backend/dist/
@@ -22,5 +25,13 @@ code/backend-chain-usdt/node_modules/
 code/backend-chain-usdt/dist/
 code/backend-chain-usdt/coverage/
 code/backend-chain-usdt/.env
+
+# Android build artifacts outside nested Android gitignores
+code/Android/V2rayNG_old/.gradle/
+code/Android/V2rayNG_old/.kotlin/
+code/Android/V2rayNG_old/build/
+code/Android/V2rayNG_old/app/build/
+code/Android/V2rayNG_old/**/*.apk
+code/Android/V2rayNG_old/**/*.aab
 
 .parallel/artifacts/
