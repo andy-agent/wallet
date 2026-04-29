@@ -49,7 +49,7 @@ class PlansActivity : AppCompatActivity() {
         lifecycleScope.launch {
             binding.progressBar.visibility = View.VISIBLE
             
-            val result = repository.getPlans()
+            val result = repository.syncPlansFromServer(force = true)
             
             binding.progressBar.visibility = View.GONE
             
